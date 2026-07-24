@@ -405,14 +405,26 @@ public class ExerciseVariantJobService {
      * Refreshes the job's heartbeat without changing its state — called by the agent tools on every tool call
      * so the long internal agent round (whose only other update is at its boundary) keeps the job from being
      * misjudged as stale. No-op once the job is terminal or gone.
+     * <p>
+     * Goes through the same per-key {@link IMap#lock} as {@link #mutate}: a tool call fires this on nearly every
+     * turn, so without the lock a heartbeat's get-modify-put could interleave with e.g. {@link #requestCancel}'s
+     * — both read a stale pre-mutation copy, and whichever writes last silently discards the other's change
+     * (observed live: a cancel request landing between a heartbeat's read and write got reverted back to
+     * uncancelled).
      *
      * @param jobId the job id
      */
     public void heartbeat(String jobId) {
-        VariantJob job = jobMap.get(jobId);
-        if (job != null && !job.getPhase().isTerminal()) {
-            job.setLastHeartbeatAt(Instant.now());
-            jobMap.put(jobId, job);
+        jobMap.lock(jobId);
+        try {
+            VariantJob job = jobMap.get(jobId);
+            if (job != null && !job.getPhase().isTerminal()) {
+                job.setLastHeartbeatAt(Instant.now());
+                jobMap.put(jobId, job);
+            }
+        }
+        finally {
+            jobMap.unlock(jobId);
         }
     }
 
@@ -440,15 +452,26 @@ public class ExerciseVariantJobService {
         return staleJob;
     }
 
+    /**
+     * The single read-modify-write path for every field mutation on a job record. Takes the same per-key
+     * {@link IMap#lock} {@link #heartbeat} does, so the two can never interleave (see its javadoc) — Hazelcast's
+     * per-key lock is distributed and reentrant, held only for the duration of this one get-mutate-put cycle.
+     */
     private VariantJob mutate(String jobId, Consumer<VariantJob> mutation) {
-        VariantJob job = jobMap.get(jobId);
-        if (job == null) {
-            throw new IllegalStateException("Variant job " + jobId + " no longer exists");
+        jobMap.lock(jobId);
+        try {
+            VariantJob job = jobMap.get(jobId);
+            if (job == null) {
+                throw new IllegalStateException("Variant job " + jobId + " no longer exists");
+            }
+            mutation.accept(job);
+            job.setLastHeartbeatAt(Instant.now());
+            jobMap.put(jobId, job);
+            return job;
         }
-        mutation.accept(job);
-        job.setLastHeartbeatAt(Instant.now());
-        jobMap.put(jobId, job);
-        return job;
+        finally {
+            jobMap.unlock(jobId);
+        }
     }
 
     private void publish(VariantJob job, VariantGenerationEventDTO event) {

@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -35,28 +33,22 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
-import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
  * The programming-exercise toolset for one agent round. One instance is created per round by
  * {@link ProgrammingVariantAdapters#createTools}; it is NOT a Spring bean — it carries per-round state
- * (checked-out repositories, last build outcomes, the touched-test-repo flag).
+ * (checked-out repositories, the touched-test-repo flag).
  *
  * All tools operate ONLY on the variant's repositories (never the source). Diff-style edits of existing files
  * ("transform, don't regenerate") are the main consistency lever. Validation errors (file not found, ambiguous
@@ -79,6 +71,9 @@ class ProgrammingVariantTools implements VariantToolset {
     private static final String GIT_METADATA_SEGMENT = ".git";
 
     private static final int MAX_FILE_CONTENT_LENGTH = 100_000;
+
+    /** Total character budget for one {@link #readFiles} call — bounds how much a single batch read can add to the round's context. */
+    private static final int MAX_BATCH_READ_TOTAL_CHARS = 40_000;
 
     private static final int MAX_SEARCH_RESULTS = 50;
 
@@ -112,14 +107,6 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final RepositoryService repositoryService;
 
-    private final VariantBuildVerificationService buildVerificationService;
-
-    private final VariantBuildTrigger buildTrigger;
-
-    private final ProgrammingExerciseParticipationService participationService;
-
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
@@ -136,11 +123,6 @@ class ProgrammingVariantTools implements VariantToolset {
     /** Read-only checkouts of the source exercise's repositories, lazily resolved by {@link #diffFile}. */
     private final Map<RepositoryType, Repository> sourceCheckouts = new EnumMap<>(RepositoryType.class);
 
-    private final Map<RepositoryType, String> lastBuildResults = new EnumMap<>(RepositoryType.class);
-
-    /** See {@link VariantToolset#lastGreenBuildCommits()}. */
-    private final Map<RepositoryType, String> lastGreenBuildCommits = new EnumMap<>(RepositoryType.class);
-
     private boolean touchedTestRepo;
 
     private String finishSummary;
@@ -149,28 +131,15 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
 
-    /** Small indirection so tests can stub CI triggering without a full CI setup. */
-    @FunctionalInterface
-    interface VariantBuildTrigger {
-
-        void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType repositoryType) throws ContinuousIntegrationException;
-    }
-
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
-            VariantBuildVerificationService buildVerificationService, VariantBuildTrigger buildTrigger, ProgrammingExerciseParticipationService participationService,
-            ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch, ProgrammingExercise sourceExercise,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch,
+            ProgrammingExercise sourceExercise, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.exercise = exercise;
         this.user = user;
         this.jobId = jobId;
         this.jobService = jobService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
-        this.buildVerificationService = buildVerificationService;
-        this.buildTrigger = buildTrigger;
-        this.participationService = participationService;
-        this.programmingSubmissionService = programmingSubmissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.sourceExercise = sourceExercise;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -193,13 +162,8 @@ class ProgrammingVariantTools implements VariantToolset {
         return touchedTestRepo;
     }
 
-    @Override
-    public Map<RepositoryType, String> lastGreenBuildCommits() {
-        return Map.copyOf(lastGreenBuildCommits);
-    }
-
     // Performance lever A4: the transform agent otherwise starts every round blind and spends its first several
-    // calls on listFiles/readFile just to see what it's working with — a ChatClient call has no memory of a
+    // calls on listFiles/readFiles just to see what it's working with — a ChatClient call has no memory of a
     // previous round's reads (each round is a fresh conversation), so this cost repeats on every repair round too.
     @Override
     public String prefetchContext(ChangePlan plan) {
@@ -266,7 +230,7 @@ class ProgrammingVariantTools implements VariantToolset {
                     continue;
                 }
                 if (content.length() > remainingBudget) {
-                    context.append("\n[prefetch budget exhausted — further planned files omitted; read them with readFile if needed]\n");
+                    context.append("\n[prefetch budget exhausted — further planned files omitted; read them with readFiles if needed]\n");
                     break outer;
                 }
                 context.append("\n=== ").append(repositoryType).append(":").append(path).append(" (prefetched — plan references an identifier found here) ===\n").append(content)
@@ -338,31 +302,57 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
-    @Tool(description = "Read the content of a file in one of the variant exercise's repositories (TEMPLATE, SOLUTION, or TESTS).")
-    public String readFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the file path relative to the repository root, e.g. src/de/tum/Sorting.java") String path) {
+    /** One read entry for the batch {@link #readFiles} tool, targeting its own repository. */
+    public record FileRead(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
+            @JsonPropertyDescription("the file path relative to the repository root") String path) {
+    }
+
+    @Tool(description = "Read one or more files in a SINGLE call, each entry targeting any of TEMPLATE, SOLUTION, or TESTS — for example the template AND solution version "
+            + "of the same file, or every file a rename touches, in one round trip. Pass a single entry for a one-off read. Each file's content is returned under its own "
+            + "'repository:path' header; a missing file or read error is reported inline instead of failing the whole call. Bounded total size — if you hit the budget "
+            + "notice, split the remaining files into another call.")
+    public String readFiles(@ToolParam(description = "the files to read; each has repository and path") List<FileRead> reads) {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
         }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
+        if (reads == null || reads.isEmpty()) {
+            return "Error: no files were provided. Pass at least one { repository, path } entry.";
         }
-        try {
-            Repository checkout = checkout(repositoryType);
-            String content = new String(repositoryService.getFile(checkout, path), StandardCharsets.UTF_8);
-            if (content.length() > MAX_FILE_CONTENT_LENGTH) {
-                return content.substring(0, MAX_FILE_CONTENT_LENGTH) + "\n[truncated]";
+        StringBuilder report = new StringBuilder();
+        for (int index = 0; index < reads.size(); index++) {
+            FileRead read = reads.get(index);
+            report.append("--- ").append(read == null ? "?" : read.repository() + ":" + read.path()).append(" ---\n");
+            if (read == null) {
+                report.append("Error: the entry is missing.\n\n");
+                continue;
             }
-            return content;
+            RepositoryType repositoryType = parseRepositoryType(read.repository());
+            if (repositoryType == null) {
+                report.append(invalidRepositoryMessage(read.repository())).append("\n\n");
+                continue;
+            }
+            try {
+                Repository checkout = checkout(repositoryType);
+                String content = new String(repositoryService.getFile(checkout, read.path()), StandardCharsets.UTF_8);
+                if (content.length() > MAX_FILE_CONTENT_LENGTH) {
+                    content = content.substring(0, MAX_FILE_CONTENT_LENGTH) + "\n[truncated]";
+                }
+                report.append(content).append("\n\n");
+            }
+            catch (IOException e) {
+                report.append("Error: could not read file '").append(read.path()).append("' in the ").append(repositoryType).append(" repository: ").append(e.getMessage())
+                        .append(". Use listFiles to see the existing file paths.\n\n");
+            }
+            catch (Exception e) {
+                report.append("Error: could not access the ").append(repositoryType).append(" repository: ").append(e.getMessage()).append("\n\n");
+            }
+            if (report.length() > MAX_BATCH_READ_TOTAL_CHARS && index < reads.size() - 1) {
+                report.append("[remaining file(s) omitted — total content exceeded the batch budget; read them in a separate readFiles call]");
+                return report.toString();
+            }
         }
-        catch (IOException e) {
-            return "Error: could not read file '" + path + "' in the " + repositoryType + " repository: " + e.getMessage() + ". Use listFiles to see the existing file paths.";
-        }
-        catch (Exception e) {
-            return "Error: could not access the " + repositoryType + " repository: " + e.getMessage();
-        }
+        return report.toString();
     }
 
     @Tool(description = "Search for a text snippet across all files of one of the variant exercise's repositories (TEMPLATE, SOLUTION, or TESTS). "
@@ -414,52 +404,9 @@ class ProgrammingVariantTools implements VariantToolset {
         }
     }
 
-    @Tool(description = "Apply a search-and-replace edit to an EXISTING file in one of the variant's repositories. "
-            + "The search text must occur exactly once in the file; otherwise the edit is rejected and you must make the search text more specific. "
-            + "Prefer small, targeted edits over rewriting whole files — unchanged code must stay identical to the source. "
-            + "Every file in the repository is editable, including build files (build.gradle, settings.gradle, pom.xml); only git's own .git directory is off limits.")
-    public String applyEdit(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
-            @ToolParam(description = "the file path relative to the repository root") String path,
-            @ToolParam(description = "the exact text to search for; must match exactly one occurrence") String search,
-            @ToolParam(description = "the replacement text") String replace) {
-        String stop = stopNotice();
-        if (stop != null) {
-            return stop;
-        }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
-        }
-        String normalizedPath = normalizeWritablePath(path);
-        if (normalizedPath == null) {
-            return unwritablePathMessage(path, repositoryType, "editable");
-        }
-        try {
-            Repository checkout = checkout(repositoryType);
-            String content;
-            try {
-                content = new String(repositoryService.getFile(checkout, normalizedPath), StandardCharsets.UTF_8);
-            }
-            catch (IOException e) {
-                return "Error: file '" + path + "' does not exist in the " + repositoryType + " repository. Use listFiles to see the existing file paths.";
-            }
-            EditOutcome outcome = applySearchReplace(content, normalizedPath, search, replace);
-            if (outcome.failed()) {
-                return "Error: " + outcome.error();
-            }
-            writeFileContent(checkout, normalizedPath, outcome.updatedContent());
-            markTouched(repositoryType);
-            return "Edit applied to '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
-        }
-        catch (Exception e) {
-            return "Error: could not edit '" + path + "' in the " + repositoryType + " repository: " + e.getMessage();
-        }
-    }
-
     /**
-     * One search-and-replace edit for the batch {@link #applyEdits} tool. Same shape as a single
-     * {@link #applyEdit} call, plus its own {@code repository} so a batch can span all three repositories in one
-     * call instead of one call per repository.
+     * One search-and-replace edit for the batch {@link #applyEdits} tool, targeting its own repository so a batch
+     * can span all three repositories in one call instead of one call per repository.
      */
     public record BatchEdit(@JsonPropertyDescription("the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @JsonPropertyDescription("the file path relative to the repository root") String path,
@@ -467,12 +414,12 @@ class ProgrammingVariantTools implements VariantToolset {
             @JsonPropertyDescription("the replacement text") String replace) {
     }
 
-    @Tool(description = "Apply MULTIPLE search-and-replace edits in a SINGLE call, each targeting any of TEMPLATE, SOLUTION, or TESTS. "
-            + "Strongly prefer this over many separate applyEdit round trips: gather every edit needed — including edits that span several repositories, for example a rename that "
-            + "touches the solution, template, AND test repositories — and submit them all as one batch. Edits are applied IN ORDER and each sees the effect of the previous ones "
-            + "in the same file. Each edit is reported independently as applied or with a precise error, and a failed edit never blocks the others — only re-submit the failed ones "
-            + "in a follow-up call. Each edit's search text must occur exactly once in its current file. Every file is editable, including build files (build.gradle, "
-            + "settings.gradle, pom.xml); only git's own .git directory is off limits.")
+    @Tool(description = "Apply one or more search-and-replace edits to EXISTING files in a SINGLE call, each targeting any of TEMPLATE, SOLUTION, or TESTS. "
+            + "Gather every edit needed — including edits that span several repositories, for example a rename that touches the solution, template, AND test "
+            + "repositories — and submit them all as one batch; pass a single entry for a one-off edit. Edits are applied IN ORDER and each sees the effect of the "
+            + "previous ones in the same file. Each edit is reported independently as applied or with a precise error, and a failed edit never blocks the others — "
+            + "only re-submit the failed ones in a follow-up call. Each edit's search text must occur exactly once in its current file. Every file is editable, "
+            + "including build files (build.gradle, settings.gradle, pom.xml); only git's own .git directory is off limits.")
     public String applyEdits(@ToolParam(description = "the edits to apply in order; each has repository, path, search, and replace") List<BatchEdit> edits) {
         String stop = stopNotice();
         if (stop != null) {
@@ -550,18 +497,24 @@ class ProgrammingVariantTools implements VariantToolset {
             }
             markTouched(repositoryType);
         }
-        report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied. Remember to run runBuild/runBuilds to verify your changes.");
+        report.append(appliedCount).append(" of ").append(edits.size()).append(" edit(s) applied.");
         return report.toString();
     }
 
     /**
-     * Applies a single search-and-replace to {@code content} without touching the repository, so both the
-     * single {@link #applyEdit} tool and the batch {@link #applyEdits} tool share one definition of a valid
-     * edit (unique-match requirement, error wording). Returns the updated content or a precise error.
+     * Applies a single search-and-replace to {@code content} without touching the repository — one definition of
+     * a valid edit (unique-match requirement, error wording) shared by every entry the batch {@link #applyEdits}
+     * tool applies. Returns the updated content or a precise error.
      */
     private static EditOutcome applySearchReplace(String content, String path, String search, String replace) {
         if (search == null || search.isEmpty()) {
             return EditOutcome.error("the search text must not be empty for '" + path + "'.");
+        }
+        if (replace == null) {
+            // Without this check, string concatenation below would silently turn a null replace into the
+            // literal 4-character text "null" in the file instead of erroring — a real, silent corruption
+            // observed only by code review, never by a failing test, since the tool would still report success.
+            return EditOutcome.error("the replace text must not be null for '" + path + "'. Use an empty string \"\" to delete the matched text.");
         }
         int firstIndex = content.indexOf(search);
         if (firstIndex < 0) {
@@ -596,7 +549,7 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Tool(description = "Create new files (or fully overwrite existing ones) in a SINGLE call, each entry targeting any of TEMPLATE, SOLUTION, or TESTS — for example writing a "
             + "renamed build file in template and solution at once. Use this for NEW files, for complete rewrites of files the plan replaces wholesale, and for an EXISTING file "
-            + "with many scattered changes where crafting unique applyEdit/applyEdits search text for every change would be awkward — a full-file rewrite is a fine choice there "
+            + "with many scattered changes where crafting unique applyEdits search text for every change would be awkward — a full-file rewrite is a fine choice there "
             + "too. Every path in a repository is writable except git's own .git directory. Each entry is reported independently as written or with a precise error.")
     public String writeFiles(@ToolParam(description = "the files to write; each has repository, path, and the full new content") List<FileWrite> writes) {
         String stop = stopNotice();
@@ -638,7 +591,7 @@ class ProgrammingVariantTools implements VariantToolset {
             }
         }
         touchedRepositoryTypes.forEach(this::markTouched);
-        report.append(appliedCount).append(" of ").append(writes.size()).append(" file(s) written. Remember to run runBuild/runBuilds to verify your changes.");
+        report.append(appliedCount).append(" of ").append(writes.size()).append(" file(s) written.");
         return report.toString();
     }
 
@@ -694,7 +647,7 @@ class ProgrammingVariantTools implements VariantToolset {
             }
         }
         touchedRepositoryTypes.forEach(this::markTouched);
-        report.append(appliedCount).append(" of ").append(deletes.size()).append(" file(s) deleted. Remember to run runBuild/runBuilds to verify your changes.");
+        report.append(appliedCount).append(" of ").append(deletes.size()).append(" file(s) deleted.");
         return report.toString();
     }
 
@@ -734,122 +687,6 @@ class ProgrammingVariantTools implements VariantToolset {
         catch (Exception e) {
             return "Error: could not update the problem statement: " + e.getMessage();
         }
-    }
-
-    @Tool(description = "Commit and push all pending changes in the given repository, trigger a CI build, and wait for the result. "
-            + "Build targets: SOLUTION must pass 100% of tests, TEMPLATE must compile but score 0% (tests must run and fail), TESTS must build successfully. "
-            + "Changing the TESTS repository invalidates earlier SOLUTION/TEMPLATE results — re-run both afterwards.")
-    public String runBuild(@ToolParam(description = "the repository to build: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        String stop = stopNotice();
-        if (stop != null) {
-            return stop;
-        }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
-        }
-        try {
-            Repository checkout = checkout(repositoryType);
-            repositoryService.commitChanges(checkout, user);
-            LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
-            String commitHash = gitService.getLastCommitHash(repositoryUri);
-            ProgrammingExerciseParticipation participation = resolveParticipation(repositoryType);
-            if (repositoryType == RepositoryType.TESTS) {
-                programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
-                markTouched(RepositoryType.TESTS);
-            }
-            Instant triggeredAt = Instant.now();
-            try {
-                buildTrigger.triggerBuild(participation, commitHash, repositoryType);
-            }
-            catch (ContinuousIntegrationException e) {
-                return "Error: could not trigger the CI build for the " + repositoryType + " repository: " + e.getMessage();
-            }
-            // Freshness bound: only accept a result produced by THIS trigger. Without it, rebuilding an unchanged
-            // solution/template commit after a test-repo edit would instantly return the stale pre-change result
-            // and mislead the agent (build-dependency constraint).
-            BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
-            jobService.recordBuildStat(jobId, repositoryType.name(), Duration.between(triggeredAt, Instant.now()).toMillis());
-            recordGreenBuildCommit(repositoryType, commitHash, outcome);
-            String description = describeOutcome(repositoryType, outcome);
-            lastBuildResults.put(repositoryType, description);
-            return description;
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "Error: the build wait was interrupted.";
-        }
-        catch (GitAPIException | RuntimeException e) {
-            return "Error: could not run the build for the " + repositoryType + " repository: " + e.getMessage();
-        }
-    }
-
-    @Tool(description = "Commit, push, and trigger the SOLUTION and TEMPLATE CI builds TOGETHER, then wait for BOTH results in one call. "
-            + "Strongly prefer this over two separate runBuild calls whenever you need to check both (a green verify or a repair cycle): the two builds are independent and run "
-            + "concurrently, so waiting jointly takes about as long as the slower single build instead of the sum of the two. "
-            + "SOLUTION must pass 100% of tests; TEMPLATE must compile and execute at least one test but score 0%. "
-            + "For the TESTS repository use runBuild — a tests change invalidates both other builds and must be rebuilt first on its own.")
-    public String runBuilds() {
-        String stop = stopNotice();
-        if (stop != null) {
-            return stop;
-        }
-        Map<RepositoryType, PendingBuild> pending = new EnumMap<>(RepositoryType.class);
-        StringBuilder report = new StringBuilder();
-        for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE)) {
-            try {
-                Repository checkout = checkout(repositoryType);
-                repositoryService.commitChanges(checkout, user);
-                LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
-                String commitHash = gitService.getLastCommitHash(repositoryUri);
-                ProgrammingExerciseParticipation participation = resolveParticipation(repositoryType);
-                Instant triggeredAt = Instant.now();
-                buildTrigger.triggerBuild(participation, commitHash, repositoryType);
-                pending.put(repositoryType, new PendingBuild(commitHash, triggeredAt));
-            }
-            catch (ContinuousIntegrationException e) {
-                report.append("Error: could not trigger the ").append(repositoryType).append(" build: ").append(e.getMessage()).append('\n');
-            }
-            catch (GitAPIException | RuntimeException e) {
-                report.append("Error: could not prepare the ").append(repositoryType).append(" build: ").append(e.getMessage()).append('\n');
-            }
-        }
-        if (pending.isEmpty()) {
-            return report.append("No builds were triggered.").toString();
-        }
-        Instant jointTriggeredAt = Instant.now();
-        try {
-            Map<RepositoryType, BuildResultOutcome> outcomes = buildVerificationService.waitForBuildResults(exercise, pending);
-            jobService.recordBuildStat(jobId, "SOLUTION+TEMPLATE (joint)", Duration.between(jointTriggeredAt, Instant.now()).toMillis());
-            for (RepositoryType repositoryType : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE)) {
-                BuildResultOutcome outcome = outcomes.get(repositoryType);
-                if (outcome == null) {
-                    continue;
-                }
-                recordGreenBuildCommit(repositoryType, pending.get(repositoryType).commitHash(), outcome);
-                String description = describeOutcome(repositoryType, outcome);
-                lastBuildResults.put(repositoryType, description);
-                report.append("=== ").append(repositoryType).append(" build ===\n").append(description).append('\n');
-            }
-            return report.toString();
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "Error: the build wait was interrupted.";
-        }
-    }
-
-    @Tool(description = "Get the detailed result of the most recent runBuild call for a repository (compiler output and failed test names/messages).")
-    public String getBuildAndTestResults(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        String stop = stopNotice();
-        if (stop != null) {
-            return stop;
-        }
-        RepositoryType repositoryType = parseRepositoryType(repository);
-        if (repositoryType == null) {
-            return invalidRepositoryMessage(repository);
-        }
-        return lastBuildResults.getOrDefault(repositoryType, "No build has been run for the " + repositoryType + " repository in this round yet. Use runBuild first.");
     }
 
     @Tool(description = "Show a unified diff between a file's ORIGINAL content in the SOURCE exercise this variant was generated from and its CURRENT content in this variant. "
@@ -993,59 +830,13 @@ class ProgrammingVariantTools implements VariantToolset {
         repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
     }
 
-    /**
-     * Tracks the commit hash of the last build that reached its target for SOLUTION/TEMPLATE, so the VERIFYING
-     * gate can reuse it instead of re-triggering (see {@link VariantToolset#lastGreenBuildCommits()}). A
-     * non-SUCCESS outcome clears any earlier green record for the same repository — a regression must never be
-     * masked by a stale green entry from an earlier build this round.
-     */
-    private void recordGreenBuildCommit(RepositoryType repositoryType, String commitHash, BuildResultOutcome outcome) {
-        if (repositoryType != RepositoryType.SOLUTION && repositoryType != RepositoryType.TEMPLATE) {
-            return;
-        }
-        if (outcome.state() == VariantBuildVerificationService.BuildResultState.SUCCESS) {
-            lastGreenBuildCommits.put(repositoryType, commitHash);
-        }
-        else {
-            lastGreenBuildCommits.remove(repositoryType);
-        }
-    }
-
     private void markTouched(RepositoryType repositoryType) {
         if (repositoryType == RepositoryType.TESTS) {
-            // A test-repo change invalidates every previously green build result (build-dependency constraint).
-            // The VERIFYING gate always re-triggers with a freshness bound regardless, and dropping the
-            // solution/template entries here means it can never mistake a same-commit match for a still-valid
-            // green build after the tests they were built against have changed.
+            // A test-repo change invalidates the previous round's build evidence (build-dependency constraint):
+            // the VERIFYING gate always re-triggers both builds regardless, but this flag tells the pipeline to
+            // treat both as unverified even if this round never itself checked them.
             touchedTestRepo = true;
-            lastGreenBuildCommits.remove(RepositoryType.SOLUTION);
-            lastGreenBuildCommits.remove(RepositoryType.TEMPLATE);
         }
-    }
-
-    private ProgrammingExerciseParticipation resolveParticipation(RepositoryType repositoryType) {
-        // TESTS reuses the solution participation: tests-repo builds run against the solution checkout.
-        return switch (repositoryType) {
-            case TEMPLATE -> participationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
-            case SOLUTION, TESTS -> participationService.retrieveSolutionParticipation(exercise);
-            default -> throw new IllegalArgumentException("Unsupported repository type: " + repositoryType);
-        };
-    }
-
-    private String describeOutcome(RepositoryType repositoryType, BuildResultOutcome outcome) {
-        String target = switch (repositoryType) {
-            case SOLUTION -> "the SOLUTION build must pass 100% of tests";
-            case TEMPLATE -> "the TEMPLATE build must execute at least one test and score 0%";
-            case TESTS -> "the TESTS build must succeed";
-            default -> "";
-        };
-        return switch (outcome.state()) {
-            case SUCCESS -> "Build target reached (" + target + ").\n" + buildVerificationService.describeBuildResult(outcome.result());
-            case FAILED -> "Build target NOT reached (" + target + ").\n" + buildVerificationService.describeBuildResult(outcome.result());
-            case TIMED_OUT -> "The build result did not arrive within the timeout (" + target + "). The build may still be running; you can retry runBuild.";
-            case PARTICIPATION_NOT_FOUND -> "Internal error: no participation found for the " + repositoryType + " repository.";
-            case CI_TRIGGER_FAILED -> "Internal error: the CI build could not be triggered.";
-        };
     }
 
     private static RepositoryType parseRepositoryType(String repository) {
@@ -1094,7 +885,9 @@ class ProgrammingVariantTools implements VariantToolset {
                 return null;
             }
             for (String segment : normalized.split("/")) {
-                if (GIT_METADATA_SEGMENT.equals(segment)) {
+                // Case-insensitive: on a case-insensitive filesystem (macOS default, Windows) ".GIT"/".Git"
+                // resolves to the same directory as ".git" and must be blocked the same way.
+                if (GIT_METADATA_SEGMENT.equalsIgnoreCase(segment)) {
                     return null;
                 }
             }

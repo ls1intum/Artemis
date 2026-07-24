@@ -31,7 +31,7 @@ class ProgrammingVariantToolsListTestCasesTest {
         ExerciseVariantJobService jobService = mock(ExerciseVariantJobService.class);
         when(jobService.isCancelRequested(JOB_ID)).thenReturn(false);
 
-        return new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, null, null, null, null, null, null, null, null, "main", null, testCaseRepository);
+        return new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, null, null, null, null, "main", null, testCaseRepository);
     }
 
     @Test

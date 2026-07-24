@@ -63,7 +63,7 @@ class ProgrammingVariantToolsPrefetchTest {
             return files.get(path).getBytes(UTF_8);
         });
 
-        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, null, null, null, null, "main", null, null);
+        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null);
     }
 
     @Test

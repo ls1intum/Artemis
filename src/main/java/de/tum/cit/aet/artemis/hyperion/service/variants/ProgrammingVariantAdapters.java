@@ -7,6 +7,12 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -22,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
@@ -45,7 +52,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportServi
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
@@ -61,6 +67,14 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     /** Suffix-retry budget for short-name/project-key collisions. */
     private static final int MAX_NAME_ATTEMPTS = 10;
+
+    /**
+     * Bounds Gate 3's (LLM consistency check) concurrent wait — comfortably shorter than Gate 1's own build
+     * timeout ({@code VariantBuildVerificationService.TIMEOUT}, 3 minutes) so a hung LLM endpoint never becomes
+     * the long pole, and short enough that a genuinely slow response still gets treated as best-effort-skipped
+     * (see {@link #checkConsistency}) instead of blocking the whole VERIFYING call indefinitely.
+     */
+    private static final Duration CONSISTENCY_CHECK_TIMEOUT = Duration.ofMinutes(2);
 
     private final HyperionProgrammingExerciseContextRendererService contextRendererService;
 
@@ -86,8 +100,6 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
     private final VariantBuildVerificationService buildVerificationService;
 
     private final HyperionConsistencyCheckService consistencyCheckService;
@@ -96,6 +108,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private final ExerciseVariantJobService jobService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final String defaultBranch;
 
     public ProgrammingVariantAdapters(HyperionProgrammingExerciseContextRendererService contextRendererService, ProgrammingExerciseImportService programmingExerciseImportService,
@@ -103,9 +117,8 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, GitService gitService, RepositoryService repositoryService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingSubmissionService programmingSubmissionService, VariantBuildVerificationService buildVerificationService,
-            HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
-            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            VariantBuildVerificationService buildVerificationService, HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService,
+            ExerciseVariantJobService jobService, ExerciseDeletionService exerciseDeletionService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -118,11 +131,11 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         this.repositoryService = repositoryService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.programmingSubmissionService = programmingSubmissionService;
         this.buildVerificationService = buildVerificationService;
         this.consistencyCheckService = consistencyCheckService;
         this.variantPlacementService = variantPlacementService;
         this.jobService = jobService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.defaultBranch = defaultBranch;
     }
 
@@ -163,24 +176,40 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
         try {
             ProgrammingExercise imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
-            // The import service unconditionally resets the problem statement to the ORIGINAL's (its REST flow
-            // forbids editing the statement while importing) — re-apply the plan's statement afterwards, or the
-            // skeleton's value from buildVariantSkeleton is silently lost and the variant keeps the source text.
-            imported.setProblemStatement(stripPlantUmlCodeFences(plan.problemStatement()));
-            // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
-            // reference the source's test case ids — remap them to the variant's test cases (matched by test
-            // name, both sides straight from the import) like the import flow itself does.
-            Map<String, Long> variantTestIdByName = imported.getTestCases().stream()
-                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
-            Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
-                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
-            programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
-            imported = programmingExerciseRepository.save(imported);
-            programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
-            // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
-            // (agent problem-statement updates, the final FINALIZING re-sync), and saving this instance later
-            // (group placement) with a stale initialized orphanRemoval collection fails with EntityNotFound.
-            return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(imported.getId());
+            try {
+                // The import service unconditionally resets the problem statement to the ORIGINAL's (its REST
+                // flow forbids editing the statement while importing) — re-apply the plan's statement afterwards,
+                // or the skeleton's value from buildVariantSkeleton is silently lost and the variant keeps the
+                // source text.
+                imported.setProblemStatement(stripPlantUmlCodeFences(plan.problemStatement()));
+                // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
+                // reference the source's test case ids — remap them to the variant's test cases (matched by test
+                // name, both sides straight from the import) like the import flow itself does.
+                Map<String, Long> variantTestIdByName = imported.getTestCases().stream()
+                        .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
+                Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
+                        .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
+                programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
+                imported = programmingExerciseRepository.save(imported);
+                programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
+                // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
+                // (agent problem-statement updates, the final FINALIZING re-sync), and saving this instance later
+                // (group placement) with a stale initialized orphanRemoval collection fails with EntityNotFound.
+                return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(imported.getId());
+            }
+            catch (Exception e) {
+                // importProgrammingExercise above already persisted the DB row + VCS repos + CI build plans. This
+                // method never returns on that path, so the pipeline's own null-variant cleanup
+                // (ExerciseVariantGenerationPipeline.cleanupProvisionedVariant) can never find this exercise to
+                // remove it — delete it here instead of leaking it forever.
+                try {
+                    exerciseDeletionService.delete(imported.getId(), true);
+                }
+                catch (Exception cleanupException) {
+                    log.error("Failed to clean up partially provisioned variant exercise {} after a provisioning failure", imported.getId(), cleanupException);
+                }
+                throw e;
+            }
         }
         catch (Exception e) {
             throw new RuntimeException("Importing the variant clone failed: " + e.getMessage(), e);
@@ -192,36 +221,80 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(job.getSourceExerciseId());
         User user = userRepository.getUserWithGroupsAndAuthorities(job.getInitiatorLogin());
-        return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, buildVerificationService,
-                continuousIntegrationTriggerService::triggerBuild, programmingExerciseParticipationService, programmingSubmissionService, programmingExerciseRepository,
-                programmingExerciseTaskService, defaultBranch, sourceExercise, programmingExerciseTestCaseRepository);
+        return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, programmingExerciseRepository, programmingExerciseTaskService,
+                defaultBranch, sourceExercise, programmingExerciseTestCaseRepository);
     }
 
     @Override
     public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job, VariantToolset toolset) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
+        // The agent is expected to hand back a complete, working exercise each round, so verification reports as
+        // many TRUE findings together in one pass as it can, rather than always waiting for the previous gate to
+        // be clean before running the next. Gate 3 has no such dependency and always runs; Gate 2 is skipped (not
+        // just deferred) when Gate 1 isn't clean yet, because its result would otherwise not be true (see below).
+        List<VerificationReport.VerificationFinding> consistencyFindings = new ArrayList<>();
+        try (ExecutorService virtualThreads = Executors.newVirtualThreadPerTaskExecutor()) {
+            // Gate 3 (LLM consistency check) only reads the problem statement and repository content — it never
+            // depends on a build result — so it runs CONCURRENTLY with Gate 1's build wait instead of after it,
+            // on its own virtual thread. Never submit blocking work like this to the bounded
+            // hyperionVariantTaskExecutor pool the job itself is already occupying a thread of: that pool is
+            // sized for one thread per running job, so a saturated pool would deadlock waiting on itself.
+            Future<?> consistencyTask = virtualThreads.submit(() -> checkConsistency(exercise, consistencyFindings));
+            try {
+                // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with
+                // tests present. Triggered together and awaited jointly, since the builds run concurrently in CI
+                // and the gate then costs about the slower build, not the sum.
+                verifyBuilds(exercise, findings, job.getJobId());
 
-        // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with tests
-        // present. A repository whose current commit matches the agent's own last green build for it this round
-        // (toolset.lastGreenBuildCommits(), invalidated on any test-repo change) reuses that result instead of
-        // re-triggering; everything else is triggered together and awaited jointly, since the builds run
-        // concurrently in CI and the gate then costs about the slower build, not the sum.
-        verifyBuilds(exercise, findings, job.getJobId(), toolset.lastGreenBuildCommits());
-
-        // Gate 2: every test referenced in the problem statement's task markers must resolve to a real test case
-        // — test cases are only known after a build, so this runs after Gate 1. Deterministic and cheap, so it
-        // runs before the LLM consistency gate.
-        if (findings.isEmpty()) {
-            checkTestReferences(exercise, findings);
+                // Gate 2: every test referenced in the problem statement's task markers must resolve to a real
+                // test case. This one CANNOT run concurrently with Gate 1, and it must not run at all when Gate 1
+                // found a problem: a test added this round only becomes a real ProgrammingExerciseTestCase row
+                // once the SOLUTION build has compiled and executed it, so a failed/still-pending Gate 1 means the
+                // current test-case data is not yet settled — reporting a brand-new reference as "unresolved" in
+                // that state would be a FALSE finding, not an incomplete one (it resolves itself once Gate 1 is
+                // green, without the agent touching the problem statement at all). Only trust it once Gate 1 is
+                // fully clean.
+                if (findings.isEmpty()) {
+                    checkTestReferences(exercise, findings);
+                }
+            }
+            finally {
+                // Bounds the wait on Gate 3 NO MATTER how Gate 1/2 above exit — including via an exception, which
+                // would otherwise skip straight past a plain "consistencyTask.get()" call and fall through to the
+                // try-with-resources' own implicit ExecutorService.close(): that call has no timeout at all and
+                // would block this whole VERIFYING call (and the job's one thread from the bounded
+                // hyperionVariantTaskExecutor pool) on a still-running, still-unbounded consistency check
+                // indefinitely.
+                awaitConsistencyTask(consistencyTask, exercise);
+            }
         }
-
-        // Gate 3: semantic consistency between problem statement and artifacts — only worth
-        // its LLM cost once the deterministic gates are green.
-        if (findings.isEmpty()) {
-            checkConsistency(exercise, findings);
-        }
+        findings.addAll(consistencyFindings);
         return new VerificationReport(findings.isEmpty(), List.copyOf(findings));
+    }
+
+    /**
+     * Waits for Gate 3 (LLM consistency check) with a bounded timeout, called from a {@code finally} block so it
+     * must never itself throw — that would suppress whatever Gate 1/2 exception may already be propagating.
+     * Best-effort, same philosophy as an unavailable checker (see {@link #checkConsistency}): a timeout or
+     * failure here contributes zero consistency findings for this round rather than failing verification.
+     */
+    static void awaitConsistencyTask(Future<?> consistencyTask, ProgrammingExercise exercise) {
+        try {
+            consistencyTask.get(CONSISTENCY_CHECK_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        }
+        catch (TimeoutException e) {
+            consistencyTask.cancel(true);
+            log.warn("Consistency check for variant exercise {} did not complete within {}. Skipping the semantic gate for this round.", exercise.getId(),
+                    CONSISTENCY_CHECK_TIMEOUT);
+        }
+        catch (ExecutionException e) {
+            log.warn("Consistency check for variant exercise {} failed: {}. Skipping the semantic gate for this round.", exercise.getId(),
+                    e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
@@ -346,8 +419,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
      * under a single shared timeout. The builds run concurrently in CI, so joint waiting costs about the slower
      * build instead of the sum of the two.
      */
-    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings, String jobId,
-            Map<RepositoryType, String> lastGreenBuildCommits) {
+    private void verifyBuilds(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings, String jobId) {
         Map<RepositoryType, BuildGate> gates = new EnumMap<>(RepositoryType.class);
         gates.put(RepositoryType.SOLUTION, new BuildGate(VerificationReport.VerificationGate.SOLUTION_BUILD, "The solution repository build must compile and pass 100% of tests."));
         gates.put(RepositoryType.TEMPLATE,
@@ -363,14 +435,6 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 continue;
             }
             String commitHash = gitService.getLastCommitHash(repositoryUri);
-            if (commitHash != null && commitHash.equals(lastGreenBuildCommits.get(repositoryType))) {
-                // The agent's own last build this round already reached this repository's target on this EXACT
-                // commit (and no test-repo change invalidated it since) — reproducing that result would just
-                // cost another full CI build for no new information.
-                jobService.recordBuildStat(jobId, "VERIFYING:" + repositoryType + " (reused)", 0);
-                log.debug("Reusing the agent's last green {} build for exercise {} (commit {}) instead of re-verifying", repositoryType, exercise.getId(), commitHash);
-                continue;
-            }
             ProgrammingExerciseParticipation participation = switch (repositoryType) {
                 case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
                 default -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
@@ -406,14 +470,38 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
             List<VerificationReport.VerificationFinding> findings) {
         switch (outcome.state()) {
             case SUCCESS -> log.debug("Verification build for {} of exercise {} reached its target", repositoryType, exercise.getId());
-            case FAILED -> findings.add(new VerificationReport.VerificationFinding(buildGate.gate(),
-                    buildGate.target() + " Current result: " + buildVerificationService.describeBuildResult(outcome.result())));
+            case FAILED -> findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), buildFailureMessage(repositoryType, buildGate, outcome)));
             // Distinct detail for CI timeouts.
             case TIMED_OUT -> findings.add(new VerificationReport.VerificationFinding(buildGate.gate(),
                     "The " + repositoryType + " build result did not arrive within the timeout (BuildResultState.TIMED_OUT). " + buildGate.target()));
             case PARTICIPATION_NOT_FOUND, CI_TRIGGER_FAILED ->
                 findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "The " + repositoryType + " build could not be verified: " + outcome.state()));
         }
+    }
+
+    /**
+     * Builds the FAILED-outcome finding message. For SOLUTION (and TEMPLATE with no test executed at all, or a
+     * compile failure with nothing to distinguish) this is the plain generic description. For a TEMPLATE build
+     * that DID execute tests, the generic description is a long list of "FAILED" entries that are actually the
+     * CORRECT, desired state (an unimplemented template must fail every test) — a repair round reading that list
+     * without this framing has, in practice, misread ordinary expected failures as things to fix and gone on to
+     * implement the missing scaffolding instead of the one real defect. Naming the actual problem — which
+     * test(s) unexpectedly PASSED against the stub — up front avoids that misreading.
+     */
+    private String buildFailureMessage(RepositoryType repositoryType, BuildGate buildGate, BuildResultOutcome outcome) {
+        String fullResult = buildVerificationService.describeBuildResult(outcome.result());
+        if (repositoryType != RepositoryType.TEMPLATE) {
+            return buildGate.target() + " Current result: " + fullResult;
+        }
+        List<String> unexpectedPasses = buildVerificationService.unexpectedlyPassingTestNames(outcome.result());
+        if (unexpectedPasses.isEmpty()) {
+            return buildGate.target() + " Current result: " + fullResult;
+        }
+        return buildGate.target() + " Every OTHER test failing in the template below is CORRECT and expected — the template intentionally has nothing implemented yet, so do "
+                + "NOT implement anything to make a failing test pass. The actual problem is the opposite: " + unexpectedPasses.size()
+                + " test(s) unexpectedly PASSED against the unimplemented template and must be prevented from passing (harden or simplify whatever accidentally satisfies "
+                + "them — e.g. make a stub throw instead of silently doing nothing — never add scaffolding to make other tests fail instead): "
+                + String.join(", ", unexpectedPasses) + ".\n\nFull result for reference:\n" + fullResult;
     }
 
     /**

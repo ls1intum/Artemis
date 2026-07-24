@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +48,32 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
      *                    validation error, consistency issue description
      */
     public record VerificationFinding(VerificationGate gate, String message) implements Serializable {
+
+        /**
+         * Digit runs (line numbers, timestamps, container/job IDs, test counts) vary between otherwise-identical
+         * build logs across rounds and would defeat signature matching if left in.
+         */
+        private static final Pattern DIGITS = Pattern.compile("\\d+");
+
+        /**
+         * Long enough to keep the actual failure line (which sits at the end of a build log — see
+         * {@code VariantBuildVerificationService.extractBuildLogs}, which keeps only the tail for the same
+         * reason) while bounding how much of a long log this fingerprint depends on.
+         */
+        private static final int SIGNATURE_TAIL_LENGTH = 400;
+
+        /**
+         * A crude but round-to-round-stable fingerprint of this finding, used to detect a repair round stuck on
+         * the same underlying problem: {@link #gate()} plus the TAIL of {@link #message()} with all digit runs
+         * collapsed. A missed match only means a stuck loop goes undetected one round longer, never a false
+         * escalation — it does not need to be precise, only stable across rounds when the underlying problem
+         * genuinely hasn't changed.
+         */
+        String stableSignature() {
+            String normalized = DIGITS.matcher(message() == null ? "" : message()).replaceAll("#").replaceAll("\\s+", " ").strip();
+            String tail = normalized.length() > SIGNATURE_TAIL_LENGTH ? normalized.substring(normalized.length() - SIGNATURE_TAIL_LENGTH) : normalized;
+            return gate() + "|" + tail;
+        }
     }
 
     /**
@@ -55,5 +83,15 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
      */
     public String toAgentFeedback() {
         return findings.stream().map(finding -> "[" + finding.gate() + "] " + finding.message()).collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * The stable signatures of every finding in this report, for stuck-repair-loop detection across rounds (see
+     * {@code ExerciseVariantGenerationPipeline.transformAndVerify}).
+     *
+     * @return one signature per finding, empty when the report passed
+     */
+    Set<String> findingSignatures() {
+        return findings.stream().map(VerificationFinding::stableSignature).collect(Collectors.toSet());
     }
 }

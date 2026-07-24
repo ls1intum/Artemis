@@ -98,10 +98,16 @@ public class VariantAgentLoopRunner {
      * @param job            the running job (cancellation flag, telemetry attribution)
      * @param repairFeedback null on the first round; the previous round's VerificationReport on repair rounds —
      *                           injected verbatim as the repair signal (closed-loop repair on real signals)
+     * @param escalationNote null unless the pipeline detected the same finding(s) recurring across consecutive
+     *                           repair rounds; when present, appended to the repair message as a strong nudge to
+     *                           stop repeating the same kind of edit (deterministic stuck-loop backstop — the
+     *                           prompt's own "search again instead of repeating" text is not reliable enough on
+     *                           its own once a smaller model has committed to a wrong approach)
      * @param promptTemplate resource path of the type's transform system prompt
      * @return the round result
      */
-    public AgentResult runLoop(ChangePlan plan, VariantToolset toolset, AgentBudgets budgets, VariantJob job, @Nullable VerificationReport repairFeedback, String promptTemplate) {
+    public AgentResult runLoop(ChangePlan plan, VariantToolset toolset, AgentBudgets budgets, VariantJob job, @Nullable VerificationReport repairFeedback,
+            @Nullable String escalationNote, String promptTemplate) {
         if (chatClient == null) {
             throw new IllegalStateException("AI chat client is not configured");
         }
@@ -113,7 +119,7 @@ public class VariantAgentLoopRunner {
         // so the round doesn't have to spend its first several calls just discovering what it's working with —
         // every round is a fresh conversation, so this applies to repair rounds too.
         String prefetchedContext = toolset.prefetchContext(plan);
-        String userMessage = repairFeedback == null ? initialUserMessage(plan, prefetchedContext) : repairUserMessage(repairFeedback, prefetchedContext);
+        String userMessage = repairFeedback == null ? initialUserMessage(plan, prefetchedContext) : repairUserMessage(repairFeedback, escalationNote, prefetchedContext);
 
         log.debug("Starting agent round for job {} with {} tools (repair: {})", job.getJobId(), tools.size(), repairFeedback != null);
         ChatResponse chatResponse = callAgent(job, systemPrompt, userMessage, tools);
@@ -177,8 +183,13 @@ public class VariantAgentLoopRunner {
     }
 
     private String renderPlanContract(ChangePlan plan) {
-        return "Variant title: " + plan.variantTitle() + "\n\nTarget problem statement:\n" + plan.problemStatement() + "\n\nIntended changes (apply exactly these):\n"
-                + plan.intendedChanges().stream().map(change -> "- " + change).collect(Collectors.joining("\n")) + "\n\nInvariants (must be preserved):\n"
+        // intendedChanges as a Markdown task list (not a plain bullet list): an explicit, self-trackable checklist
+        // the agent can check off as it works — and, on a repair round, that persists visibly in its own finish
+        // summary instead of prose the next round has to re-derive from findings alone. Invariants stay plain
+        // bullets: they are properties to maintain throughout, not discrete steps to complete.
+        return "Variant title: " + plan.variantTitle() + "\n\nTarget problem statement:\n" + plan.problemStatement() + "\n\nIntended changes (apply exactly these; check off "
+                + "each as you complete it, and report the checklist with its final state in your finish summary):\n"
+                + plan.intendedChanges().stream().map(change -> "- [ ] " + change).collect(Collectors.joining("\n")) + "\n\nInvariants (must be preserved):\n"
                 + plan.invariants().stream().map(invariant -> "- " + invariant).collect(Collectors.joining("\n"));
     }
 
@@ -190,11 +201,14 @@ public class VariantAgentLoopRunner {
         return appendPrefetchedContext(message, prefetchedContext);
     }
 
-    private String repairUserMessage(VerificationReport report, String prefetchedContext) {
+    private String repairUserMessage(VerificationReport report, @Nullable String escalationNote, String prefetchedContext) {
         String findings = report.toAgentFeedback();
         String message = "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
                 + "then call finish with a short summary. Be efficient: you have a limited tool-call budget for this round — "
                 + "fix each finding once, validate once, then call finish.\n\nFindings:\n" + findings;
+        if (escalationNote != null && !escalationNote.isBlank()) {
+            message += "\n\nStuck-loop warning:\n" + escalationNote;
+        }
         return appendPrefetchedContext(message, prefetchedContext);
     }
 

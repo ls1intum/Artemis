@@ -12,8 +12,6 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-
 /**
  * One agent round's toolset plus the per-round state the pipeline needs back after the round: the agent's own
  * finish summary and — for programming — whether the round touched the test repository (build-dependency
@@ -109,20 +107,6 @@ public interface VariantToolset {
     }
 
     /**
-     * @return the commit hash of the LAST build this round that reached its repository-type target (solution
-     *         100%, template 0%-with-tests), keyed by repository type — empty when the toolset has nothing to
-     *         reuse (no build ran this round, quiz has no builds, or the last build for a repository failed).
-     *         The deterministic VERIFYING gate compares this against the repository's current commit: an exact
-     *         match means the agent's OWN build already proved the target on the exact commit being verified, so
-     *         the gate can skip re-triggering a build that would just reproduce the same result. A test-repo
-     *         change invalidates the solution/template entries here (build-dependency constraint), so a stale
-     *         match is never possible.
-     */
-    default Map<RepositoryType, String> lastGreenBuildCommits() {
-        return Map.of();
-    }
-
-    /**
      * Prefetched repository context to seed the round's OPENING user message (performance lever A4): each
      * ChatClient call is a fresh conversation with no memory of a previous round's reads, so a round otherwise
      * starts blind and spends its first several tool calls just discovering what it's working with — on every
@@ -139,11 +123,11 @@ public interface VariantToolset {
 
     /**
      * Persists any work the round left unpersisted, called by the loop runner at the end of every round
-     * (after the model's final response, before the round result is reported). For programming this
-     * commits and pushes uncommitted working-tree edits: only runBuild commits during the round, so a round
-     * that ends without a final runBuild would otherwise silently drop its edits — and verification, which
-     * builds the last PUSHED commit, would trivially pass on the unchanged provision commit. Default: no-op
-     * for toolsets whose tools persist immediately (quiz).
+     * (after the model's final response, before the round result is reported). For programming this commits
+     * and pushes uncommitted working-tree edits: nothing else in the round commits, so without this call a
+     * round would otherwise silently drop its edits — and verification, which builds the last PUSHED commit,
+     * would trivially pass on the unchanged provision commit. Default: no-op for toolsets whose tools persist
+     * immediately (quiz).
      */
     default void flushPendingChanges() {
     }

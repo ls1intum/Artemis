@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +55,7 @@ class ProgrammingVariantToolsPathTest {
         // No file exists yet, so writeFile creates instead of replacing.
         when(gitService.getFileByName(any(), anyString())).thenReturn(Optional.empty());
 
-        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, null, null, null, null, "main", null, null);
+        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null);
     }
 
     @Test
@@ -100,6 +101,28 @@ class ProgrammingVariantToolsPathTest {
 
     @Test
     void shouldRejectEditingGitMetadata() {
-        assertThat(tools.applyEdit("SOLUTION", ".git/config", "a", "b")).startsWith("Error:").contains("not an editable path");
+        String result = tools.applyEdits(List.of(new ProgrammingVariantTools.BatchEdit("SOLUTION", ".git/config", "a", "b")));
+
+        assertThat(result).contains("not an editable path").contains("0 of 1 edit(s) applied");
+    }
+
+    @Test
+    void shouldRejectGitMetadataRegardlessOfCase() throws Exception {
+        // Case-insensitive filesystems (macOS default, Windows) resolve ".GIT"/".Git" to the same directory as
+        // ".git" — the guard must reject them the same way, not just the lowercase spelling.
+        assertThat(tools.writeFiles(List.of(new ProgrammingVariantTools.FileWrite("SOLUTION", ".GIT/config", "[core]")))).contains("not a writable path")
+                .contains("0 of 1 file(s) written");
+        assertThat(tools.deleteFiles(List.of(new ProgrammingVariantTools.FileDelete("SOLUTION", ".Git/HEAD")))).contains("not a deletable path").contains("0 of 1 file(s) deleted");
+        verify(repositoryService, never()).createFile(any(), eq(".GIT/config"), any());
+    }
+
+    @Test
+    void shouldRejectANullReplaceInsteadOfWritingTheLiteralTextNull() throws Exception {
+        when(repositoryService.getFile(any(), eq("settings.gradle"))).thenReturn("rootProject.name = 'cargo-bay'".getBytes(StandardCharsets.UTF_8));
+
+        String result = tools.applyEdits(List.of(new ProgrammingVariantTools.BatchEdit("SOLUTION", "settings.gradle", "cargo-bay", null)));
+
+        assertThat(result).contains("replace text must not be null");
+        verify(repositoryService, never()).createFile(any(), eq("settings.gradle"), any());
     }
 }

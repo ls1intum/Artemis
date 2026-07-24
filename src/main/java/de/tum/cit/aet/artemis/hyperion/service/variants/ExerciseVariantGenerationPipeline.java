@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
@@ -39,8 +43,26 @@ public class ExerciseVariantGenerationPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGenerationPipeline.class);
 
-    /** Verify-iteration budget: 1 initial transform + up to (N-1) repair rounds (≈3–5). */
-    private static final int MAX_VERIFY_ATTEMPTS = 3;
+    /**
+     * Verify-iteration budget: 1 initial transform + up to (N-1) repair rounds. Builds now only run in
+     * VERIFYING (never mid-round inside TRANSFORMING/REPAIRING), so each attempt costs a bounded, fixed amount
+     * of CI time instead of an agent-driven, open-ended number of rebuilds. TOKEN_BUDGET below is the actual
+     * cost backstop regardless of how many attempts are allowed.
+     */
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
+
+    /**
+     * Stuck-repair-loop detection (see {@link #computeEscalationNote}): how many of the most recent rounds'
+     * finding-signature sets are compared against the current round's.
+     */
+    private static final int STUCK_LOOP_WINDOW = 3;
+
+    /**
+     * A finding signature recurring in this many of the last {@link #STUCK_LOOP_WINDOW} rounds (this one
+     * included) triggers the escalation note — 2 rather than 3 so it can still fire with room left in the
+     * {@link #MAX_VERIFY_ATTEMPTS} budget instead of only on the very last round.
+     */
+    private static final int STUCK_LOOP_REPEAT_THRESHOLD = 2;
 
     /** Re-prompts for malformed planner output before FAILED. */
     private static final int MAX_PLANNING_RETRIES = 2;
@@ -193,6 +215,10 @@ public class ExerciseVariantGenerationPipeline {
         VariantAgentLoopRunner.AgentBudgets budgets = new VariantAgentLoopRunner.AgentBudgets(MAX_VERIFY_ATTEMPTS, TOKEN_BUDGET);
         String transformTemplate = transformPromptTemplate(job);
         VerificationReport report = null;
+        // Stuck-repair-loop detection (see computeEscalationNote): the most recent rounds' finding signatures, a
+        // deterministic backstop for when the prompt's own "search again instead of repeating" text doesn't land.
+        Deque<Set<String>> recentSignatures = new ArrayDeque<>(STUCK_LOOP_WINDOW);
+        String escalationNote = null;
 
         long tokensUsed = 0;
         for (int attempt = 1; attempt <= MAX_VERIFY_ATTEMPTS; attempt++) {
@@ -202,9 +228,12 @@ public class ExerciseVariantGenerationPipeline {
             jobService.recordAttempt(jobId, attempt, MAX_VERIFY_ATTEMPTS, attempt == 1 ? "Applying the change plan" : "Repairing verification findings");
 
             VariantToolset toolset = adapters.createTools(variant, job);
-            // Repair rounds receive the previous round's findings as the closed-loop repair signal.
+            // Repair rounds receive the previous round's findings (and, if stuck, the escalation note) as the
+            // closed-loop repair signal.
             VerificationReport repairFeedback = report;
-            VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, transformTemplate));
+            String repairEscalationNote = escalationNote;
+            VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase,
+                    () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, repairEscalationNote, transformTemplate));
             tokensUsed += agentResult.tokensUsed();
             jobService.addTokensUsed(jobId, agentResult.tokensUsed());
             jobService.recordToolCallStats(jobId, toolset.toolCallStats());
@@ -222,6 +251,7 @@ public class ExerciseVariantGenerationPipeline {
             if (report.passed()) {
                 return report;
             }
+            escalationNote = computeEscalationNote(report, recentSignatures);
             // Token budget for the TRANSFORMING/REPAIRING sequence: when exhausted with
             // red gates, stop repairing — the job ends as DRAFT_WITH_WARNINGS with the budget noted.
             if (tokensUsed > TOKEN_BUDGET && attempt < MAX_VERIFY_ATTEMPTS) {
@@ -233,6 +263,35 @@ public class ExerciseVariantGenerationPipeline {
             }
         }
         return report;
+    }
+
+    /**
+     * Deterministic stuck-repair-loop detection: if the current round's failing findings share a signature (see
+     * {@link VerificationReport#findingSignatures()}) with a round already recorded in the sliding window, the
+     * prompt's own "search again instead of repeating" text has not worked for this problem — the escalation
+     * note it returns gets injected into the NEXT repair round's prompt instead of relying on that text alone.
+     * Checking the whole window (not just the immediately preceding round) also catches an oscillating A/B/A/B
+     * stuck pattern, not just strict back-to-back repeats.
+     *
+     * @param report           this round's (failing) VerificationReport
+     * @param recentSignatures the sliding window of previous rounds' finding-signature sets, mutated in place —
+     *                             capped at {@link #STUCK_LOOP_WINDOW}, oldest dropped first
+     * @return the escalation note for the next round's repair prompt, or {@code null} when nothing looks stuck
+     */
+    @Nullable
+    private String computeEscalationNote(VerificationReport report, Deque<Set<String>> recentSignatures) {
+        Set<String> currentSignatures = report.findingSignatures();
+        long occurrences = 1 + recentSignatures.stream().filter(previous -> !Collections.disjoint(previous, currentSignatures)).count();
+        if (recentSignatures.size() == STUCK_LOOP_WINDOW) {
+            recentSignatures.removeFirst();
+        }
+        recentSignatures.addLast(currentSignatures);
+        if (occurrences < STUCK_LOOP_REPEAT_THRESHOLD) {
+            return null;
+        }
+        return "This exact problem was already reported unresolved after your last fix — whatever you tried didn't work, do not repeat the same kind of edit. "
+                + "Check whether the thing causing this is even listed in the plan's intendedChanges above; if it isn't, you introduced it yourself in an earlier round, "
+                + "and removing it (deleteFiles/applyEdit) is more likely to fix this than patching it further.";
     }
 
     /**

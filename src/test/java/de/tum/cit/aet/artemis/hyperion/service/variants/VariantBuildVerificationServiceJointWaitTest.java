@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerification
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -127,5 +128,26 @@ class VariantBuildVerificationServiceJointWaitTest {
 
         assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.PARTICIPATION_NOT_FOUND);
         assertThat(outcomes.get(RepositoryType.TEMPLATE).state()).isEqualTo(BuildResultState.SUCCESS);
+    }
+
+    /**
+     * A mismatched commit hash must never change the accept/reject outcome — this class matches by PARTICIPATION
+     * + freshness on purpose (see the class-level javadoc): once a TEST-type submission exists for the current
+     * tests commit, Artemis attaches every subsequent build result to THAT submission rather than one carrying
+     * the just-triggered commit's own hash, so a hard hash check would reject genuinely-correct results. The
+     * mismatch is only logged, never rejected.
+     */
+    @Test
+    void shouldStillAcceptAFreshResultWhoseSubmissionCommitDiffersFromTheTriggeredOne() throws Exception {
+        Result solutionResult = freshResult(100.0, 5);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        when(submission.getCommitHash()).thenReturn("a-completely-different-commit");
+        when(solutionResult.getSubmission()).thenReturn(submission);
+        stubResult(SOLUTION_PARTICIPATION_ID, solutionResult);
+        stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
+
+        Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
+
+        assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.SUCCESS);
     }
 }

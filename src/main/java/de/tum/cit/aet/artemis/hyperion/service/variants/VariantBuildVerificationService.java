@@ -149,6 +149,7 @@ public class VariantBuildVerificationService {
                 Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
                 if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
                     log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
+                    warnIfCommitMismatch(repositoryType, exercise.getId(), commitHash, result.get());
                     return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                 }
 
@@ -217,6 +218,7 @@ public class VariantBuildVerificationService {
                 try {
                     Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(entry.getValue().getId());
                     if (result.isPresent() && isFreshEnough(result.get(), pendingBuild.triggeredAt())) {
+                        warnIfCommitMismatch(repositoryType, exercise.getId(), pendingBuild.commitHash(), result.get());
                         outcomes.put(repositoryType,
                                 new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED));
                         iterator.remove();
@@ -278,6 +280,31 @@ public class VariantBuildVerificationService {
         return result.getCompletionDate() != null && result.getCompletionDate().toInstant().isAfter(notBefore);
     }
 
+    /**
+     * Logs (never rejects) when the accepted result's own commit hash differs from the one this poll actually
+     * triggered. Deliberately observational, not a gate: this class already matches by PARTICIPATION + freshness
+     * rather than by commit hash on purpose (see the class-level javadoc) — once a TEST-type submission exists
+     * for the current tests commit, Artemis attaches every subsequent template/solution build result to THAT
+     * submission and never creates one carrying the just-built commit's own hash, so a HARD hash check here
+     * would reject genuinely-correct results and hang forever waiting for a hash that will never appear (exactly
+     * the regression the freshness-based design was already changed to avoid — see exercise 54 in the history
+     * above). This only adds visibility for the rarer, opposite failure mode — a stale straggler result from an
+     * earlier, abandoned wait arriving inside a later round's freshness window — without risking that same
+     * regression.
+     */
+    private void warnIfCommitMismatch(RepositoryType repositoryType, long exerciseId, @Nullable String expectedCommitHash, Result result) {
+        if (expectedCommitHash == null || !(result.getSubmission() instanceof ProgrammingSubmission submission)) {
+            return;
+        }
+        String actualCommitHash = submission.getCommitHash();
+        if (actualCommitHash != null && !actualCommitHash.equals(expectedCommitHash)) {
+            log.warn(
+                    "Accepted {} build result for exercise {} whose submission commit ({}) differs from the commit this poll triggered ({}) — likely a stale result attached to "
+                            + "an earlier submission (see warnIfCommitMismatch javadoc), not necessarily wrong, but worth checking if this gate's verdict looks surprising.",
+                    repositoryType, exerciseId, actualCommitHash, expectedCommitHash);
+        }
+    }
+
     // Truncation limits for build/test feedback fed back to the agent: enough signal to debug failures, small enough
     // to keep the LLM context cheap (mirrors the codegen retry-prompt limits).
     private static final int MAX_FEEDBACK_SUMMARY_ITEMS = 20;
@@ -313,6 +340,32 @@ public class VariantBuildVerificationService {
             return scoreLine + BUILD_LOGS_SECTION + buildLogs;
         }
         return scoreLine + "\n\nTest results:\n" + testFeedback + BUILD_LOGS_SECTION + buildLogs;
+    }
+
+    /**
+     * Names of tests that PASSED in a build result — the actual defect for a TEMPLATE_BUILD gate finding, since
+     * every OTHER test failing there is the correct, expected state (the template intentionally has nothing
+     * implemented yet). {@link #describeBuildResult} dumps every test PASSED/FAILED undifferentiated, which reads
+     * to a repair round as a long list of things to fix — when for this one gate FAILED is the goal and only an
+     * unexpected PASS is the real problem. Callers that know they are describing a template build use this to
+     * point the agent at exactly what regressed instead of the whole list.
+     *
+     * @param result the build result, or {@code null} when the build produced none
+     * @return the names of tests that unexpectedly passed, empty when none did (or feedback could not be loaded)
+     */
+    public List<String> unexpectedlyPassingTestNames(@Nullable Result result) {
+        if (result == null) {
+            return List.of();
+        }
+        try {
+            return result.getFeedbacks().stream().filter(Objects::nonNull).filter(feedback -> feedback.getTestCase() != null)
+                    .filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).map(feedback -> feedback.getTestCase().getTestName())
+                    .filter(name -> name != null && !name.isBlank()).toList();
+        }
+        catch (LazyInitializationException e) {
+            log.warn("Could not load feedback entries for result {}: {}. Cannot pinpoint unexpectedly passing tests.", result.getId(), e.getMessage());
+            return List.of();
+        }
     }
 
     private String extractBuildLogs(Result result) {

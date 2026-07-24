@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -20,6 +22,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -72,8 +75,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
  * canned arguments — so the REAL tool implementations run against the REAL provisioned variant.
  *
  * The quiz pipeline is the vehicle for all pipeline-level tests; the programming pipeline's CI-backed
- * verify path (runBuild, build verification, collision retry) needs real local CI builds and is covered
- * manually and via the E2E suite instead.
+ * verify path (VERIFYING's build gate, collision retry) needs real local CI builds and is covered manually
+ * and via the E2E suite instead.
  */
 class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -431,15 +434,28 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         // The verify history keeps ONE output per attempt, oldest first — earlier failures stay inspectable
         // instead of being overwritten by the latest message (debugging aid for the modal's step panels).
         List<StepOutput> verifyOutputs = job.getStepOutputs().get(VariantJobPhase.VERIFYING);
-        assertThat(verifyOutputs).hasSize(3);
-        assertThat(verifyOutputs.getFirst().summary()).contains("attempt 1/3");
-        assertThat(verifyOutputs.getLast().summary()).contains("attempt 3/3");
+        assertThat(verifyOutputs).hasSize(5);
+        assertThat(verifyOutputs.getFirst().summary()).contains("attempt 1/5");
+        assertThat(verifyOutputs.getLast().summary()).contains("attempt 5/5");
         assertThat(verifyOutputs).allSatisfy(output -> assertThat(output.detail()).contains("compiler output line"));
-        assertThat(script.agentRounds()).hasValue(3);
+        assertThat(script.agentRounds()).hasValue(5);
         assertThat(job.getStepOutputs()).containsKey(VariantJobPhase.REPAIRING);
         // The draft is kept for the instructor to repair in the editor.
         assertThat(job.getVariantExerciseId()).isNotNull();
         assertThat(quizExerciseRepository.findById(job.getVariantExerciseId())).isPresent();
+
+        // Stuck-repair-loop detection: the SAME QUIZ_CRITIQUE finding recurs every round here, so the pipeline
+        // must inject the escalation note starting from the round AFTER it has recurred twice (attempt 3's
+        // prompt) — never on the first two, which have only seen the problem once/twice respectively by the
+        // time each of THEIR prompts was built.
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(azureOpenAiChatModel, atLeast(5)).call(promptCaptor.capture());
+        List<String> agentRoundUserMessages = promptCaptor.getAllValues().stream().filter(prompt -> !toolCallbacksOf(prompt).isEmpty())
+                .map(ExerciseVariantGenerationIntegrationTest::lastUserMessage).toList();
+        assertThat(agentRoundUserMessages).hasSize(5);
+        assertThat(agentRoundUserMessages.get(0)).doesNotContain("Stuck-loop warning");
+        assertThat(agentRoundUserMessages.get(1)).doesNotContain("Stuck-loop warning");
+        assertThat(agentRoundUserMessages.subList(2, 5)).allSatisfy(message -> assertThat(message).contains("Stuck-loop warning"));
     }
 
     // --- Cooperative cancellation -------------------------------------------------------------------------
