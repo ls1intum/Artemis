@@ -889,6 +889,28 @@ repositories {
 }
 ```
 
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>The <code>repositories</code> block does not cover Gradle plugins.</strong> The <code>plugins {"{ id '...' }"}</code> block in <code>build.gradle</code> (e.g. <code>id 'org.springframework.boot'</code>) is <strong>not</strong> resolved through <code>repositories {"{ ... }"}</code>. Gradle resolves plugins via the Gradle Plugin Portal, which falls back to Maven Central — bypassing the mirror entirely and still hitting HTTP 429 rate limits.
+
+  To route plugin resolution through the mirror as well, add a <code>pluginManagement</code> block at the <strong>top</strong> of <code>settings.gradle</code> (create the file if it does not exist yet):
+
+  ```groovy
+  pluginManagement {
+      repositories {
+          maven {
+              name "reposiliteRepositoryReleases"
+              url "https://reposilite.aet.cit.tum.de/releases"
+          }
+          gradlePluginPortal()
+      }
+  }
+  ```
+
+  As with dependencies, the mirror must be listed <strong>before</strong> <code>gradlePluginPortal()</code> so that plugins are resolved from the mirror first.
+
+</Callout>
+
 **Maven exercises:** In the `pom.xml` file of the test repository, add the mirror as the **first** entry in the `<repositories>` section (create the section if it does not exist yet):
 
 ```xml

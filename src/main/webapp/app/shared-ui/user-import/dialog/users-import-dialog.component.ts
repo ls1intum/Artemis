@@ -19,7 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { PrimeTemplate } from 'primeng/api';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
@@ -28,7 +27,7 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);

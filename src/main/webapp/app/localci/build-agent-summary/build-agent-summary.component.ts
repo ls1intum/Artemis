@@ -6,11 +6,9 @@ import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -40,9 +38,11 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        ButtonModule,
-        TableModule,
-        TagModule,
+        TumUiButtonComponent,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        BuildAgentPauseAllModalComponent,
+        BuildAgentClearDistributedDataComponent,
     ],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
@@ -50,9 +50,13 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+
+    /** Controls the visibility of the "pause all build agents" confirmation dialog */
+    readonly pauseAllModalVisible = signal(false);
+
+    /** Controls the visibility of the "clear distributed data" confirmation dialog */
+    readonly clearDataModalVisible = signal(false);
 
     /** Signal containing the list of all build agents with their current status */
     readonly buildAgents = signal<BuildAgentInformation[]>([]);
@@ -188,19 +192,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the pause operation.
      */
     displayPauseBuildAgentModal(): void {
-        const dialogRef = this.dialogService.open(BuildAgentPauseAllModalComponent, {
-            header: this.translateService.instant('artemisApp.buildAgents.pauseAll'),
-            width: '32rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-        });
-        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (confirmed) {
-                this.pauseAllBuildAgents();
-            }
-        });
+        this.pauseAllModalVisible.set(true);
     }
 
     /**
@@ -208,19 +200,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the clear operation.
      */
     displayClearDistributedDataModal(): void {
-        const dialogRef = this.dialogService.open(BuildAgentClearDistributedDataComponent, {
-            header: this.translateService.instant('artemisApp.buildAgents.clearDistributedData.title'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-        });
-        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (confirmed) {
-                this.clearDistributedData();
-            }
-        });
+        this.clearDataModalVisible.set(true);
     }
 
     /**

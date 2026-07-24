@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-unsaved-changes-warning',
     templateUrl: './unsaved-changes-warning.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, TranslateDirective, ButtonModule, DialogModule, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, TumUiButtonDirective, TumUiDialogComponent, ArtemisTranslatePipe],
 })
 export class UnsavedChangesWarningComponent {
     readonly visible = model<boolean>(false);
