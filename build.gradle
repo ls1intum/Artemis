@@ -400,10 +400,8 @@ dependencies {
     // Java Time (JSR310) support for Jackson
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
-    // Use hibernate7 variant for Hibernate 7.x compatibility.
-    // NOTE: version pinned because jackson-bom does not include the hibernate7 variant (separate project).
-    // Must be kept in sync with the Jackson 2.x version (jackson-bom 2.22.1 import above).
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.22.1"
+    // Use hibernate7 variant for Hibernate 7.x compatibility. Version is managed by the jackson-bom import above.
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
     // Support YML serialization and deserialization
