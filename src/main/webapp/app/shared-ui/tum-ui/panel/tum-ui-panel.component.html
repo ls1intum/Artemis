@@ -1,0 +1,16 @@
+<div class="tum-ui-panel-header" [class.tum-ui-panel-header-toggleable]="toggleable()">
+    <span class="tum-ui-panel-title">{{ header() }}</span>
+    @if (toggleable()) {
+        <button type="button" class="tum-ui-panel-toggler" [attr.aria-expanded]="!collapsed()" [attr.aria-controls]="contentId" [attr.aria-label]="header()" (click)="toggle()">
+            <fa-icon [icon]="collapsed() ? faChevronDown : faChevronUp" />
+        </button>
+    }
+</div>
+<div [id]="contentId" class="tum-ui-panel-content-container">
+    <div class="tum-ui-panel-content-wrapper">
+        <div class="tum-ui-panel-content">
+            <ng-content />
+        </div>
+        <ng-content select="[tumUiPanelFooter]" />
+    </div>
+</div>

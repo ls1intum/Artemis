@@ -24,37 +24,41 @@
         <h3 class="mt-4">
             <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
         </h3>
-        <jhi-table-view
-            [cols]="courseColumns()"
-            [vals]="courses()"
-            [totalRows]="coursesTotal()"
+        <tum-ui-table
+            [columns]="courseColumns()"
+            [rows]="courses()"
+            [totalRecords]="coursesTotal()"
+            [trackBy]="trackByCourseId"
             [loading]="coursesLoading()"
-            (onLazyLoad)="loadCourses($event)"
-            [options]="tableOptions"
+            (dataRequest)="loadCourses($event)"
+            [striped]="true"
+            [scrollable]="true"
+            scrollHeight="60vh"
         />
 
-        <h3 class="mt-4">
-            <span jhiTranslate="artemisApp.organizationManagement.users"></span>
-        </h3>
-        <jhi-table-view
-            [cols]="userColumns()"
-            [vals]="users()"
-            [totalRows]="usersTotal()"
+        <div class="mt-4 flex items-center justify-between">
+            <h3 class="mb-0">
+                <span jhiTranslate="artemisApp.organizationManagement.users"></span>
+            </h3>
+            <button tumUiButton type="button" size="small" (click)="openAddUsersModal()">
+                <fa-icon [icon]="faUserPlus" class="me-1" />
+                <span jhiTranslate="artemisApp.organizationManagement.userSearch.addUsersButton"></span>
+            </button>
+        </div>
+        <tum-ui-table
+            [columns]="userColumns()"
+            [rows]="users()"
+            [totalRecords]="usersTotal()"
+            [trackBy]="trackByUserId"
             [loading]="usersLoading()"
             [rowActions]="userActions"
-            [tableActions]="usersTableActionsRef"
-            (onLazyLoad)="loadUsers($event)"
-            [options]="tableOptions"
+            (dataRequest)="loadUsers($event)"
+            [striped]="true"
+            [scrollable]="true"
+            scrollHeight="60vh"
         />
     </div>
 </div>
-
-<ng-template #usersTableActionsRef>
-    <button pButton type="button" size="small" (click)="openAddUsersModal()">
-        <i class="pi pi-user-plus me-1"></i>
-        <span jhiTranslate="artemisApp.organizationManagement.userSearch.addUsersButton"></span>
-    </button>
-</ng-template>
 
 <ng-template #userIdTemplate let-cell>
     <a [routerLink]="['/admin/user-management', cell.data.login]">{{ cell.value }}</a>
@@ -66,7 +70,7 @@
 
 <ng-template #userActions let-user>
     <button
-        pButton
+        tumUiButton
         severity="danger"
         size="small"
         [renderButtonStyle]="false"
