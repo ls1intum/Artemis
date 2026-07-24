@@ -19,10 +19,10 @@
             <dd>
                 <span>{{ u.login }}</span>
                 @if (u.activated) {
-                    <p-tag severity="success" [value]="'artemisApp.userManagement.activated' | artemisTranslate" data-testid="user-activated-tag" />
+                    <tum-ui-tag severity="success" [value]="'artemisApp.userManagement.activated' | artemisTranslate" data-testid="user-activated-tag" />
                 }
                 @if (!u.activated) {
-                    <p-tag severity="danger" [value]="'artemisApp.userManagement.deactivated' | artemisTranslate" data-testid="user-deactivated-tag" />
+                    <tum-ui-tag severity="danger" [value]="'artemisApp.userManagement.deactivated' | artemisTranslate" data-testid="user-deactivated-tag" />
                 }
             </dd>
             <dt class="font-semibold"><span jhiTranslate="artemisApp.userManagement.internal"></span></dt>
@@ -50,7 +50,7 @@
                 <ul class="m-0 flex list-none flex-col gap-1 p-0">
                     @for (authority of u.authorities; track authority) {
                         <li>
-                            <p-tag severity="info" [value]="authority" />
+                            <tum-ui-tag severity="info" [value]="authority" />
                         </li>
                     }
                 </ul>
@@ -67,7 +67,7 @@
             </dd>
         </dl>
         <div class="mt-4">
-            <a [routerLink]="['edit']" pButton size="small" severity="warn" data-testid="edit-user-button">
+            <a [routerLink]="['edit']" tumUiButton size="small" severity="warn" data-testid="edit-user-button">
                 <fa-icon [icon]="faPencil" />
                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
             </a>

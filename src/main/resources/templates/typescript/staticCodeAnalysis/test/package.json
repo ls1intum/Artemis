@@ -31,7 +31,8 @@
     },
     "overrides": {
         "@babel/core": "7.29.7",
-        "js-yaml": "4.2.0",
+        "brace-expansion": "5.0.8",
+        "js-yaml": "4.3.0",
         "uuid": "11.1.1"
     }
 }

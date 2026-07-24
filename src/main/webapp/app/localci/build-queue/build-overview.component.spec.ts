@@ -2,7 +2,7 @@ import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
@@ -17,7 +17,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
@@ -270,8 +269,6 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
-    let dialogService: DialogService;
-
     beforeEach(async () => {
         // Set default return values for all methods
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of([]));
@@ -292,7 +289,6 @@ describe('BuildQueueComponent', () => {
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
-                MockProvider(DialogService),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 {
                     provide: BuildAgentsService,
@@ -308,7 +304,6 @@ describe('BuildQueueComponent', () => {
 
         fixture = TestBed.createComponent(BuildOverviewComponent);
         component = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
     });
 
     beforeEach(() => {
@@ -579,21 +574,23 @@ describe('BuildQueueComponent', () => {
         }
     });
 
-    it('should correctly set filterModal values', () => {
-        const onClose = new Subject<FinishedBuildJobFilter | undefined>();
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+    it('should open the filter modal', () => {
         component.finishedBuildJobs.set(mockFinishedJobs);
         component.finishedBuildJobFilter.set(new FinishedBuildJobFilter());
 
         component.openFilterModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        const dialogConfig = openSpy.mock.calls[0][1] as {
-            data?: { finishedBuildJobFilter?: FinishedBuildJobFilter; finishedBuildJobs?: FinishedBuildJob[]; buildAgentFilterable?: boolean };
-        };
-        expect(dialogConfig?.data?.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
-        expect(dialogConfig?.data?.finishedBuildJobs).toEqual(component.finishedBuildJobs());
-        expect(dialogConfig?.data?.buildAgentFilterable).toBeTruthy();
+        expect(component.filterModalVisible()).toBeTruthy();
+    });
+
+    it('should apply the filter returned by the modal and reload', () => {
+        const newFilter = new FinishedBuildJobFilter('agent1');
+        const loadSpy = vi.spyOn(component, 'loadFinishedBuildJobs');
+
+        component.onFilterConfirmed(newFilter);
+
+        expect(component.finishedBuildJobFilter()).toBe(newFilter);
+        expect(loadSpy).toHaveBeenCalled();
     });
 
     describe('BuildOverviewComponent Download Logs', () => {

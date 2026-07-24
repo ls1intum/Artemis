@@ -5,15 +5,15 @@
     <div *adminTitleBarActions>
         @if (buildAgent(); as agent) {
             @if (agent.status === 'PAUSED' || agent.status === 'SELF_PAUSED') {
-                <p-button size="small" severity="success" (onClick)="resumeBuildAgent()">
+                <tum-ui-button size="small" severity="success" (clicked)="resumeBuildAgent()">
                     <fa-icon [icon]="faPlay" />
                     <span jhiTranslate="artemisApp.buildAgents.resume"></span>
-                </p-button>
+                </tum-ui-button>
             } @else {
-                <p-button size="small" severity="danger" (onClick)="pauseBuildAgent()">
+                <tum-ui-button size="small" severity="danger" (clicked)="pauseBuildAgent()">
                     <fa-icon [icon]="faPause" />
                     <span jhiTranslate="artemisApp.buildAgents.pause"></span>
-                </p-button>
+                </tum-ui-button>
             }
         }
     </div>
@@ -74,7 +74,7 @@
             <div>
                 <h4 id="build-queue-running-heading" class="flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
-                    <p-tag severity="info" [value]="runningBuildJobs().length.toString()" />
+                    <tum-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h4>
                 <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
                 <jhi-running-jobs-table
@@ -89,13 +89,13 @@
         </div>
     }
     @if (agentNotFound()) {
-        <p-message severity="warn" class="mb-4 block">
+        <tum-ui-message severity="warn" styleClass="mb-4 block">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />
                 <span class="text-muted-color" jhiTranslate="artemisApp.buildAgents.notFoundHint"></span>
             </div>
-        </p-message>
+        </tum-ui-message>
     }
     @if (buildAgent() || agentNotFound()) {
         <div>
@@ -103,30 +103,30 @@
                 <div class="flex items-center gap-2">
                     <h4 id="build-agents-recent-builds-heading" class="my-0 flex items-center gap-2">
                         <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
-                        <p-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
+                        <tum-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h4>
                     <div class="flex items-center gap-2">
-                        <input pInputText type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
+                        <input tumUiInput type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
                         <jhi-help-icon text="artemisApp.buildQueue.filter.search.tooltip" />
-                        <p-button size="small" (onClick)="triggerLoadFinishedJobs()">
+                        <tum-ui-button size="small" (clicked)="triggerLoadFinishedJobs()">
                             <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
-                        </p-button>
+                        </tum-ui-button>
                     </div>
-                    <p-button size="small" (onClick)="loadFinishedBuildJobs()">
+                    <tum-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>
-                    </p-button>
+                    </tum-ui-button>
                     @if (isLoading()) {
                         <span jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
                     }
                 </div>
                 <div>
-                    <p-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (onClick)="this.openFilterModal()">
+                    <tum-ui-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (clicked)="this.openFilterModal()">
                         <fa-icon [icon]="faFilter" />
                         <span class="hidden md:inline">
                             <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
                         </span>
-                    </p-button>
+                    </tum-ui-button>
                 </div>
             </div>
             <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
@@ -147,4 +147,11 @@
             }
         </div>
     }
+
+    <jhi-finished-builds-filter-modal
+        [(visible)]="filterModalVisible"
+        [finishedBuildJobFilterInput]="finishedBuildJobFilter()"
+        [finishedBuildJobsInput]="finishedBuildJobs()"
+        (confirmed)="onFilterConfirmed($event)"
+    />
 </div>
