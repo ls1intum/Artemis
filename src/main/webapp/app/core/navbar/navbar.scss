@@ -18,6 +18,7 @@ a:not(.btn):hover {
     align-items: center;
     transition: color 0.2s;
     padding: 0 10px 0 20px;
+    flex: 1;
 
     .perspective-switch {
         display: flex;
