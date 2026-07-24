@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Services } from 'app/admin/metrics/metrics.model';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
 
 @Component({
     selector: 'jhi-metrics-endpoints-requests',
     templateUrl: './metrics-endpoints-requests.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TableModule, DecimalPipe, KeyValuePipe],
+    imports: [TumUiTableDirective, DecimalPipe, KeyValuePipe],
 })
 export class MetricsEndpointsRequestsComponent {
     /**

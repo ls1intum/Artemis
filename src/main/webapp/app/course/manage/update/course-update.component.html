@@ -121,6 +121,21 @@
                             (click)="openOrganizationsModal()"
                             jhiTranslate="entity.action.add"
                         ></button>
+                        <tum-ui-dialog
+                            [(visible)]="orgSelectorVisible"
+                            [modal]="true"
+                            [dismissableMask]="true"
+                            [style]="{ width: '80vw' }"
+                            [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
+                        >
+                            @if (orgSelectorVisible()) {
+                                <jhi-organization-selector
+                                    [assignedOrganizations]="courseOrganizations()"
+                                    (selected)="onOrgSelected($event); orgSelectorVisible.set(false)"
+                                    (cancelled)="orgSelectorVisible.set(false)"
+                                />
+                            }
+                        </tum-ui-dialog>
                     </div>
                 }
                 <div class="row g-2">
