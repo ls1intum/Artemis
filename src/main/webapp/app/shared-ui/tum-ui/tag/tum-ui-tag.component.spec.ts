@@ -48,4 +48,11 @@ describe('TumUiTagComponent', () => {
         fixture.detectChanges();
         expect(tag().className).toContain('rounded-full');
     });
+
+    it('forwards styleClass onto the tag pill', () => {
+        fixture.componentRef.setInput('styleClass', 'break whitespace-nowrap');
+        fixture.detectChanges();
+        expect(tag().className).toContain('break');
+        expect(tag().className).toContain('whitespace-nowrap');
+    });
 });

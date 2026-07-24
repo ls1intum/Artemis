@@ -410,12 +410,37 @@ so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-s
 
 | Legacy                                                     | Replacement                                       |
 | ---------------------------------------------------------- | ------------------------------------------------- |
-| `<p-button>` / `<button pButton>`                          | `<tum-ui-button>`                                 |
+| `<p-button (onClick)>`                                     | `<tum-ui-button (clicked)>`                       |
+| `<a pButton>` / `<button pButton jhiDeleteButton>`         | `<a tumUiButton>` / `<button tumUiButton …>` (attribute form; `[outlined]="true"`→`variant="outlined"`) |
 | `<p-tag>`                                                  | `<tum-ui-tag>`                                    |
 | `pTooltip` / `NgbTooltip`                                  | `[tumUiTooltip]`                                  |
 | `NgbPopover` / `p-overlaypanel` / `NgbModal` (lightweight) | `tum-ui-popover`                                  |
-| `<jhi-table-view>` / `<p-table>`                           | `<tum-ui-table>` (+ `buildDbQueryFromTableEvent`) |
+| `<p-message>`                                              | `<tum-ui-message>`                                |
+| `pInputText` / `pTextarea`                                 | `[tumUiInput]` / `[tumUiTextarea]`                |
+| `<p-iconfield>` + `<p-inputicon>`                          | `<tum-ui-icon-field>`                             |
+| `<p-inputgroup>` + `<p-inputgroup-addon>`                  | `<tum-ui-input-group>` + `<tum-ui-input-group-addon>` |
+| `<p-select>`                                               | `<tum-ui-select>`                                 |
+| `<p-checkbox>`                                             | `<tum-ui-checkbox>`                               |
+| `<p-radiobutton>`                                          | `<tum-ui-radio-button>`                           |
+| `<p-toggleswitch (onChange)>`                              | `<tum-ui-toggle-switch (changed)>`                |
+| `<p-selectbutton (onChange)>` (+ `#item`)                  | `<tum-ui-select-button (changed)>` (+ `[itemTemplate]`) |
+| `<p-chip>` / `<p-autocomplete>`                            | `<tum-ui-chip>` / `<tum-ui-autocomplete>`         |
+| `<p-progressbar>` / `<p-progressspinner>`                  | `<tum-ui-progress-bar>` / `<tum-ui-progress-spinner>` |
+| `<p-card>` / `<p-panel>`                                   | `<tum-ui-card>` / `<tum-ui-panel>`                |
+| `<p-tabs>` / `<p-tablist>` / `<p-tab>` / `<p-tabpanels>` / `<p-tabpanel>` | `<tum-ui-tabs>` / `<tum-ui-tab-list>` / `<tum-ui-tab>` / `<tum-ui-tab-panels>` / `<tum-ui-tab-panel>` |
+| `<p-buttongroup>`                                          | `<tum-ui-button-group>`                           |
+| `<p-dialog>` / `DialogService.open(...)`                   | `<tum-ui-dialog [(visible)]>` (declarative; expose data via `input()`, result via `output()`) |
+| `<jhi-table-view>` / `<p-table>` (data-driven)             | `<tum-ui-table>` (+ `buildDbQueryFromTableEvent`) |
+| `<p-table>` (hand-templated) + `pSortableColumn` / `p-sortIcon` / `(onSort)` | native `<table tumUiTable>` + `[tumUiSortableColumn]` + `(sortChange)`; `tum-ui-table-virtual-scroll` for `[virtualScroll]` |
 | `<jhi-date-time-picker>` / `<p-datepicker>`                | `<tum-ui-date-picker>`                            |
+
+The severity-color house rule: `tum-ui` maps `severity` to the four Artemis semantic state tokens
+(`--info` = cyan, `--success`, `--warning` = yellow, `--danger`), not Aura's blue / sky / orange primitives,
+so a message and a tag of the same severity share one hue. Pixel-match new components by extracting the Aura
+tokens from `@primeuix/themes` + `@primeuix/styles` in `node_modules` and translating the formulas onto those
+state vars (as `primeng-artemis-theme.ts` remaps green / red / yellow / orange / cyan). Because admin specs blank
+their templates (`overrideTemplate`), template bindings are only type-checked by the Angular build — run
+`pnpm run webapp:build`, not just Vitest, after a template migration.
 
 Migrate one screen at a time and keep the existing component for everything else. Because the kit uses
 distinct selectors and the PrimeNG / ng-bootstrap dependencies stay installed, a partial migration is
