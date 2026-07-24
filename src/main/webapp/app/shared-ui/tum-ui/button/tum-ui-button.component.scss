@@ -2,6 +2,12 @@
     display: inline-flex;
 }
 
+// Fully-rounded variant (PrimeNG `[rounded]`). Set via SCSS (not a `rounded-full` utility) for the same reason
+// as the base radius: Artemis' global <button> reset zeroes utility border-radius on native buttons.
+.tum-ui-btn.tum-ui-btn-rounded {
+    border-radius: 9999px;
+}
+
 // Structural styling only. Colors come from the token utility classes on the element (see
 // tum-ui-button.variants.ts). Metrics chosen to match the PrimeNG Aura button; the focus ring is
 // keyed to brand CSS vars (sanctioned, same source primeng-artemis-theme.ts uses).
@@ -11,6 +17,7 @@
     line-height: 1.25;
     cursor: pointer;
     white-space: nowrap;
+
     // Radius from the Tailwind design token (--radius-md = 0.375rem, matching the PrimeNG Aura button). Referenced
     // as the CSS variable rather than the `rounded-md` utility class because Artemis' global `button` reset zeroes
     // the utility's border-radius on native <button> elements, which made the kit buttons render square (PR #13226
@@ -32,7 +39,7 @@
     }
 
     &:hover:not(:disabled)::after {
-        background-color: rgb(0 0 0 / 4.5%);
+        background-color: rgb(0 0 0 / 0.045);
     }
 
     &:focus-visible {
@@ -51,5 +58,5 @@
 // the framework-neutral data-theme attribute (set on <html> by ThemeService) like the tag, to stay
 // decoupled from PrimeNG's theming.
 :host-context(html[data-theme='dark']) .tum-ui-btn:hover:not(:disabled)::after {
-    background-color: rgb(255 255 255 / 6%);
+    background-color: rgb(255 255 255 / 0.06);
 }
