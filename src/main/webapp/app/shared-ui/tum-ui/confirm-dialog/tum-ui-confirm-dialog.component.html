@@ -1,0 +1,14 @@
+@if (request(); as req) {
+    <tum-ui-dialog [visible]="visible()" [modal]="true" [closable]="true" [header]="req.header" (onHide)="onDialogHide()">
+        <div class="flex items-center gap-4">
+            @if (req.icon) {
+                <fa-icon [icon]="req.icon" [style.font-size.rem]="2" [style.width.rem]="2" [style.height.rem]="2" class="shrink-0 text-muted-color" />
+            }
+            <span class="tum-ui-confirm-dialog-message">{{ req.message }}</span>
+        </div>
+        <ng-template #footer>
+            <tum-ui-button [severity]="req.rejectSeverity ?? 'secondary'" (clicked)="reject()">{{ req.rejectLabel ?? 'No' }}</tum-ui-button>
+            <tum-ui-button [severity]="req.acceptSeverity ?? 'primary'" (clicked)="accept()">{{ req.acceptLabel ?? 'Yes' }}</tum-ui-button>
+        </ng-template>
+    </tum-ui-dialog>
+}
