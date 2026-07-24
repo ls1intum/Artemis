@@ -1,0 +1,16 @@
+// The tab list is a relative flex row so the projected tabs lay out horizontally and the active bar can be
+// absolutely positioned against it. The bottom border (content color) comes from the `border-b` utility on
+// the host; the active bar matches the Aura `activeBar` tokens: a 1px primary line at bottom -1px that
+// slides between tabs. Overflow scrolling / nav buttons are intentionally omitted (see component docs).
+.tum-ui-tab-list-active-bar {
+    position: absolute;
+    inset-block-end: -1px; // activeBar.bottom
+    inset-inline-start: 0;
+    height: 1px; // activeBar.height
+    width: 0;
+    opacity: 0;
+    transition:
+        transform 250ms cubic-bezier(0.35, 0, 0.25, 1),
+        width 250ms cubic-bezier(0.35, 0, 0.25, 1);
+    will-change: transform, width;
+}

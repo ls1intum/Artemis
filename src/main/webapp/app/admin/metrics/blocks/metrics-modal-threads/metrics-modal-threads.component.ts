@@ -4,12 +4,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { Thread, ThreadState } from '../../metrics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TableModule } from 'primeng/table';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
 
 type ThreadStateFilter = ThreadState | 'ALL';
 
@@ -25,7 +25,17 @@ interface ThreadStateFilterOption {
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule, InputTextModule, TableModule, SelectButtonModule],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TumUiDialogComponent,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiTableDirective,
+        TumUiSelectButtonComponent,
+    ],
 })
 export class MetricsModalThreadsComponent {
     /** Active thread-state filter; 'ALL' shows every thread. */

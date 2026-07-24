@@ -1,0 +1,50 @@
+// Join rules matched to PrimeNG's p-buttongroup (Aura base style): collapse the shared border between adjacent
+// buttons and square off the inner corners, leaving only the group's outer corners rounded. The rounded,
+// bordered element is the native <button> INSIDE each tum-ui-button (.tum-ui-btn) or a raw projected
+// <button>. Those live in another component's / the consumer's style scope, so ::ng-deep — scoped under
+// :host, so it never leaks globally — is the only way to reach them from here (this is exactly what PrimeNG
+// does with its unencapsulated `.p-buttongroup .p-button` rules). Raw <button> children are matched via
+// `button:not(.tum-ui-btn)` so the same rules never double-hit the .tum-ui-btn inside a tum-ui-button.
+:host {
+    display: inline-flex;
+}
+
+:host ::ng-deep {
+    .tum-ui-btn,
+    button:not(.tum-ui-btn) {
+        margin: 0;
+    }
+
+    // Middle children: no rounded corners on either side.
+    tum-ui-button:not(:first-of-type):not(:last-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):not(:first-of-type):not(:last-of-type) {
+        border-radius: 0;
+    }
+
+    // First of many: square the trailing (inline-end) corners.
+    tum-ui-button:first-of-type:not(:only-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):first-of-type:not(:only-of-type) {
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    // Last of many: square the leading (inline-start) corners.
+    tum-ui-button:last-of-type:not(:only-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):last-of-type:not(:only-of-type) {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
+
+    // Collapse the shared border: drop the inline-end border of every button except the last.
+    tum-ui-button:not(:last-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):not(:last-of-type) {
+        border-inline-end: 0 none;
+    }
+
+    // Keep the focused button's ring above its neighbours.
+    .tum-ui-btn:focus-visible,
+    button:not(.tum-ui-btn):focus-visible {
+        position: relative;
+        z-index: 1;
+    }
+}
