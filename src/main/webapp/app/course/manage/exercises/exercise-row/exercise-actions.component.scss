@@ -18,7 +18,7 @@ a {
 }
 
 // Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
-// Qualified with the element to outrank PrimeNG's lazily-injected `.p-button` (same specificity, later in source order).
+// Qualified with the element so it outranks the kit button's padding utilities on the same host element.
 button.action-more {
     flex: none;
     justify-content: center;

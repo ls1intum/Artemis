@@ -37,9 +37,9 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ButtonModule } from 'primeng/button';
 import { Popover, PopoverModule } from 'primeng/popover';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -61,7 +61,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
-/** The PrimeNG button severities the action buttons use. */
+/** The kit button severities the action buttons use (a subset of `TumUiButtonSeverity`). */
 type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
 
 /** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
@@ -116,9 +116,9 @@ function widthOf(element: HTMLElement): number {
         RouterLink,
         NgTemplateOutlet,
         FaIconComponent,
-        ButtonModule,
+        TumUiButtonDirective,
         PopoverModule,
-        TooltipModule,
+        TumUiTooltipDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         DeleteButtonDirective,
@@ -460,9 +460,9 @@ export class ExerciseActionsComponent {
             this.languageVersion.update((version) => version + 1);
         });
 
-        // Observe (not read once) the row width and the reserved quiz-button width: the quiz buttons are PrimeNG with
-        // lazily-injected CSS, so a single measurement can catch them unstyled and too narrow, and the observer also
-        // tracks the quiz group appearing/disappearing and label-width changes. Change detection is flushed synchronously
+        // Observe (not read once) the row width and the reserved quiz-button width: the quiz lifecycle buttons are still
+        // PrimeNG with lazily-injected CSS, so a single measurement can catch them unstyled and too narrow, and the
+        // observer also tracks the quiz group appearing/disappearing and label-width changes. Change detection is flushed synchronously
         // in the callback (after layout, before paint) so the show/hide lands on the same frame.
         afterNextRender(() => {
             const rowEl = this.actionsRow()?.nativeElement;
@@ -488,9 +488,9 @@ export class ExerciseActionsComponent {
             measure();
         });
 
-        // Keep each distinct button's natural width up to date: PrimeNG's lazily-injected CSS (or a web font, or a
-        // longer label) can change a width after the first layout, so a one-shot measurement would cache a too-narrow
-        // width and the overflow calculation would keep a button inline that then gets clipped.
+        // Keep each distinct button's natural width up to date: a web font, a longer label, or the quiz buttons'
+        // lazily-injected PrimeNG CSS can change a width after the first layout, so a one-shot measurement would cache
+        // a too-narrow width and the overflow calculation would keep a button inline that then gets clipped.
         afterRenderEffect(() => {
             // Re-observe whenever the buttons or their labels change. Observing always emits an initial callback, so this
             // also seeds a brand-new signature after a language switch. The elements persist across a collapse (only

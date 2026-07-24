@@ -6,7 +6,8 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PopoverModule } from 'primeng/popover';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -78,8 +79,9 @@ describe('ExerciseActionsComponent', () => {
                         RouterLink,
                         NgTemplateOutlet,
                         FaIconComponent,
+                        TumUiButtonDirective,
                         PopoverModule,
-                        TooltipModule,
+                        TumUiTooltipDirective,
                         ArtemisTranslatePipe,
                         DeleteButtonDirective,
                         QuizLifecycleButtonsStubComponent,

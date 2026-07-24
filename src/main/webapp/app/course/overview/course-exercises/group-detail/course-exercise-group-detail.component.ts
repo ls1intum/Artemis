@@ -24,7 +24,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',
@@ -39,7 +39,7 @@ import { TooltipModule } from 'primeng/tooltip';
         TranslateDirective,
         ExerciseHeadersInformationComponent,
         InformationBoxComponent,
-        TooltipModule,
+        TumUiTooltipDirective,
     ],
     /* preserveWhitespaces: false is required here because the global tsconfig sets preserveWhitespaces: true,
      * which inserts whitespace text nodes that break [contentComponent] slot matching in jhi-information-box. */

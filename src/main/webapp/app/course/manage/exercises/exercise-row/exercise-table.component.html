@@ -155,16 +155,15 @@
                 }
                 @if (showGroupSelector()) {
                     <td>
-                        <span [pTooltip]="row.nonIndividualQuizTooltip" tooltipPosition="top">
-                            <p-select
+                        <span [tumUiTooltip]="row.nonIndividualQuizTooltip ?? ''" tumUiTooltipPlacement="top">
+                            <tum-ui-select
                                 [options]="groupOptions()"
-                                [ngModel]="row.owningGroupId"
+                                [ngModel]="row.owningGroupId ?? NO_GROUP_OPTION_VALUE"
                                 (ngModelChange)="onGroupSelect(row.exercise, $event)"
                                 optionLabel="label"
                                 optionValue="value"
                                 size="small"
                                 styleClass="col-group-select"
-                                appendTo="body"
                                 [disabled]="row.isQuizNonIndividual"
                             />
                         </span>

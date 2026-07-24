@@ -2,10 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
@@ -45,10 +46,11 @@ describe('ExerciseGroupEditModalComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
-                        InputTextModule,
+                        TumUiInputDirective,
                         InputNumberModule,
-                        ButtonModule,
-                        TooltipModule,
+                        TumUiButtonComponent,
+                        TumUiMessageComponent,
+                        TumUiTooltipDirective,
                         FaIconComponent,
                         ArtemisTranslatePipe,
                         TranslateDirective,

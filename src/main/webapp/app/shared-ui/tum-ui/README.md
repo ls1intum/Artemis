@@ -59,7 +59,7 @@ back to PrimeNG only for widgets the kit does not provide yet.
 | Progress bar    | `tum-ui-progress-bar`                      | Determinate bar with `[value]` and an optional label.                                                                                     |
 | Progress spinner| `tum-ui-progress-spinner`                  | Indeterminate loading spinner (`role="status"`).                                                                                          |
 | Card            | `tum-ui-card`                              | Surface card with `[tumUiCardHeader]` / body / `[tumUiCardFooter]` slots.                                                                  |
-| Panel           | `tum-ui-panel`                             | Titled, optionally collapsible content panel.                                                                                             |
+| Panel           | `tum-ui-panel`                             | Titled, optionally collapsible panel; `[header]` text or a `[tumUiPanelHeader]` slot for custom header markup.                            |
 | Tabs            | `tum-ui-tabs` (+ `-tab-list` / `-tab` / `-tab-panels` / `-tab-panel`) | Tabbed navigation with a sliding active bar; `[value]` / `(valueChange)`.                    |
 | Button group    | `tum-ui-button-group`                      | Visually joins adjacent buttons (collapses shared borders / inner radii).                                                                  |
 | Dialog          | `tum-ui-dialog`                            | Declarative modal on the shared overlay; `[(visible)]`, `[header]`, `#header` / `#footer` slots, focus trap + Escape.                      |

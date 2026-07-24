@@ -6,7 +6,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
+import { ExerciseTableComponent, NO_GROUP_OPTION_VALUE, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
@@ -223,7 +223,7 @@ describe('ExerciseTableComponent', () => {
             fixture.componentRef.setInput('groups', [group]);
             const options = component.groupOptions();
             expect(options).toHaveLength(2);
-            expect(options[0].value).toBeUndefined();
+            expect(options[0].value).toBe(NO_GROUP_OPTION_VALUE);
             expect(options[1].value).toBe(10);
         });
     });
@@ -388,9 +388,25 @@ describe('ExerciseTableComponent', () => {
             const element = renderRows([text]);
             // Drag-and-drop and the per-row group dropdown coexist in the group view.
             expect(element.querySelector('.drag-handle')).not.toBeNull();
-            expect(element.querySelector('p-select')).not.toBeNull();
+            expect(element.querySelector('tum-ui-select')).not.toBeNull();
             // The group column replaces the difficulty column, so the difficulty badge is not rendered.
             expect(element.querySelector('p-tag')).toBeNull();
+        });
+
+        it('labels the group dropdown of an ungrouped exercise with "no group" rather than leaving it blank', async () => {
+            // tum-ui-select renders the placeholder for an undefined value, so "no group" is modelled as a sentinel
+            // (NO_GROUP_OPTION_VALUE) — this asserts the label the sentinel exists to keep visible.
+            const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5 } as Exercise;
+            fixture.componentRef.setInput('groups', [{ id: 10, title: 'Group A', exercises: [] } as CourseExerciseGroup]);
+            fixture.componentRef.setInput('showGroupSelector', true);
+
+            const element = renderRows([text]);
+            // ngModel writes the value through a resolved promise, so the trigger label only settles after a flush.
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            const label = element.querySelector('[data-testid="tum-ui-select-label"]');
+            expect(label?.textContent).toContain('artemisApp.exerciseManagement.table.noGroup');
         });
 
         it('reflects the active sort column in the header', () => {

@@ -9,10 +9,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TableModule } from 'primeng/table';
-import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -28,6 +28,13 @@ import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-r
 type TagSeverity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
+
+/**
+ * Value of the group dropdown's "no group" entry. It cannot simply be `undefined`: `tum-ui-select` treats an
+ * undefined model value as "nothing selected" and would render a blank trigger for every ungrouped exercise
+ * instead of the "no group" label. A negative id can never collide with a real (auto-increment) group id.
+ */
+export const NO_GROUP_OPTION_VALUE = -1;
 
 const DIFFICULTY_ORDER: Record<string, number> = {
     [DifficultyLevel.EASY]: 0,
@@ -87,10 +94,10 @@ interface SortIndicator {
         FormsModule,
         FaIconComponent,
         TableModule,
-        SelectModule,
+        TumUiSelectComponent,
         CheckboxModule,
         TagModule,
-        TooltipModule,
+        TumUiTooltipDirective,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
@@ -135,6 +142,7 @@ export class ExerciseTableComponent {
 
     /** Only the enums the template still references need a passthrough; the rest are used from TypeScript only. */
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly NO_GROUP_OPTION_VALUE = NO_GROUP_OPTION_VALUE;
 
     protected readonly faSort = faSort;
     protected readonly faCaretUp = faCaretUp;
@@ -268,7 +276,7 @@ export class ExerciseTableComponent {
         // The labels are translated strings, so rebuild the options on a language switch.
         this.languageChange();
         return [
-            { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
+            { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: NO_GROUP_OPTION_VALUE },
             ...this.groups().map((g) => ({
                 label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
                 value: g.id,
@@ -374,7 +382,8 @@ export class ExerciseTableComponent {
     }
 
     onGroupSelect(exercise: Exercise, groupId: number | undefined): void {
-        const group = this.groups().find((g) => g.id === groupId);
+        // The dropdown reports "no group" as the sentinel (see NO_GROUP_OPTION_VALUE); map it back to "no group".
+        const group = groupId === NO_GROUP_OPTION_VALUE ? undefined : this.groups().find((g) => g.id === groupId);
         this.groupChange.emit({ exercise, group });
     }
 

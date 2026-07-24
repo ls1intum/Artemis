@@ -19,8 +19,10 @@
                                 <fa-icon
                                     [icon]="faCircleInfo"
                                     class="text-body-tertiary"
-                                    [pTooltip]="'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }"
-                                    tooltipPosition="top"
+                                    [tumUiTooltip]="
+                                        'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }
+                                    "
+                                    tumUiTooltipPlacement="top"
                                 />
                             }
                         </span>

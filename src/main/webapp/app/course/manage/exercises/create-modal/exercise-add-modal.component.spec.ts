@@ -102,7 +102,7 @@ describe('ExerciseAddModalComponent', () => {
             fixture.componentRef.setInput('visible', true);
             fixture.detectChanges();
             // The dialog is appended to the body, so it is not reachable from the fixture element.
-            expect(document.body.querySelector('.p-dialog-title')?.textContent).toBe('artemisApp.exerciseManagement.addModal.header');
+            expect(document.body.querySelector('.tum-ui-dialog-title')?.textContent?.trim()).toBe('artemisApp.exerciseManagement.addModal.header');
         });
     });
 

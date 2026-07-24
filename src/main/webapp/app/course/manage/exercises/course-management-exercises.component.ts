@@ -9,11 +9,12 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { PanelModule } from 'primeng/panel';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
+import { TumUiPanelComponent } from 'app/shared-ui/tum-ui/panel/tum-ui-panel.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -83,11 +84,12 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
     styleUrl: './course-management-exercises.component.scss',
     imports: [
         FormsModule,
-        SelectButtonModule,
-        PanelModule,
-        ButtonModule,
-        MessageModule,
-        TooltipModule,
+        TumUiSelectButtonComponent,
+        TumUiPanelComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        TumUiTooltipDirective,
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,

@@ -13,7 +13,9 @@ let nextPanelId = 0;
  * `aria-controls` wiring the collapsible region, and `collapsed` is a two-way `model` so callers can bind
  * `[collapsed]` (as the Iris dashboard does) or `[(collapsed)]`. The collapse uses the Aura grid-rows
  * animation. Body content projects via the default slot; an optional `[tumUiPanelFooter]` slot mirrors
- * p-card/p-panel footers.
+ * p-card/p-panel footers, and an optional `[tumUiPanelHeader]` slot replaces the plain `header` text with
+ * arbitrary markup (the equivalent of p-panel's `pTemplate="header"`) — set `toggleAriaLabel` alongside it
+ * so the toggle button keeps an accessible name.
  */
 @Component({
     selector: 'tum-ui-panel',
@@ -27,8 +29,13 @@ let nextPanelId = 0;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPanelComponent {
-    /** Header title text (parity with p-panel `[header]`). */
+    /** Header title text (parity with p-panel `[header]`). Omit when projecting a `[tumUiPanelHeader]` slot. */
     readonly header = input<string>('');
+    /**
+     * Accessible name for the collapse toggle, defaulting to `header`. Required when the header comes from the
+     * `[tumUiPanelHeader]` slot instead of `header`, since the projected markup does not label the button.
+     */
+    readonly toggleAriaLabel = input<string>();
     /** Whether the panel can be collapsed via the header toggle (parity with p-panel `[toggleable]`). */
     readonly toggleable = input(false);
     /** Collapsed state; two-way so `[collapsed]` and `[(collapsed)]` both work (parity with p-panel `[(collapsed)]`). */
@@ -38,6 +45,8 @@ export class TumUiPanelComponent {
 
     /** Stable id linking the toggle's `aria-controls` to the collapsible region. */
     protected readonly contentId = `tum-ui-panel-content-${nextPanelId++}`;
+    /** `null` rather than an empty string so an unlabelled toggle drops the attribute instead of carrying a blank one. */
+    protected readonly togglerLabel = computed(() => this.toggleAriaLabel() || this.header() || null);
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
 

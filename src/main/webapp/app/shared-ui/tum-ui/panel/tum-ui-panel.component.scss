@@ -19,6 +19,11 @@
 .tum-ui-panel-title {
     line-height: 1;
     font-weight: var(--font-weight-semibold); // 600
+
+    // Claim the row so projected `[tumUiPanelHeader]` markup can lay itself out across the full width; the
+    // toggler stays right-aligned either way (the header is space-between). min-width:0 lets it shrink.
+    flex: 1;
+    min-width: 0;
 }
 
 .tum-ui-panel-toggler {

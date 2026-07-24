@@ -5,13 +5,13 @@
             <label class="fw-semibold d-block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
             <input
                 id="group-edit-title"
-                pInputText
+                tumUiInput
                 class="w-100"
                 [attr.maxlength]="MAX_TITLE_LENGTH"
                 [ngModel]="draftTitle()"
                 (ngModelChange)="draftTitle.set($event)"
                 [placeholder]="'artemisApp.exerciseManagement.groupEdit.namePlaceholder' | artemisTranslate"
-                [class.ng-invalid]="!isTitleValid()"
+                [tumUiInputInvalid]="!isTitleValid()"
             />
         </div>
         <div>
@@ -19,8 +19,8 @@
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
                 <fa-icon
                     [icon]="faCircleInfo"
-                    [pTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
-                    tooltipPosition="top"
+                    [tumUiTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
+                    tumUiTooltipPlacement="top"
                     class="text-muted"
                 />
             </div>
@@ -36,19 +36,23 @@
     <!-- Dates -->
     <div>
         <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
-        <p-message severity="warn" icon="pi pi-exclamation-triangle" size="small" styleClass="mb-2">
+        <tum-ui-message severity="warn" [icon]="faTriangleExclamation" styleClass="mb-2">
             <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
-        </p-message>
+        </tum-ui-message>
         <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
         @if (!timelineStatus().valid) {
-            <p-message severity="error" icon="pi pi-times-circle" size="small" styleClass="mt-2">
+            <tum-ui-message severity="error" [icon]="faCircleXmark" styleClass="mt-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
-            </p-message>
+            </tum-ui-message>
         }
     </div>
 </div>
 
 <div class="d-flex justify-content-end gap-2 mt-4">
-    <p-button severity="secondary" [text]="true" [label]="'entity.action.cancel' | artemisTranslate" (onClick)="onCancel()" />
-    <p-button [label]="'entity.action.save' | artemisTranslate" [disabled]="isSaveDisabled()" (onClick)="onSave()" />
+    <tum-ui-button severity="secondary" variant="text" (clicked)="onCancel()">
+        <span jhiTranslate="entity.action.cancel"></span>
+    </tum-ui-button>
+    <tum-ui-button [disabled]="isSaveDisabled()" (clicked)="onSave()">
+        <span jhiTranslate="entity.action.save"></span>
+    </tum-ui-button>
 </div>

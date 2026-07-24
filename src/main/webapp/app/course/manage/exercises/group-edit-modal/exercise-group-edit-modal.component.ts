@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { InputTextModule } from 'primeng/inputtext';
+import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
@@ -25,11 +25,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [
         FormsModule,
-        InputTextModule,
+        TumUiInputDirective,
         InputNumberModule,
-        ButtonModule,
-        MessageModule,
-        TooltipModule,
+        TumUiButtonComponent,
+        TumUiMessageComponent,
+        TumUiTooltipDirective,
         FaIconComponent,
         ExerciseTimelineComponent,
         ArtemisTranslatePipe,
@@ -39,6 +39,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faCircleXmark = faCircleXmark;
     protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
 
     /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
