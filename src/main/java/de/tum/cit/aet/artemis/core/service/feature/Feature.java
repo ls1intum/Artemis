@@ -2,6 +2,6 @@ package de.tum.cit.aet.artemis.core.service.feature;
 
 // Must be the same as FeatureToggle in feature-toggle.service.ts on the client side
 public enum Feature {
-    ProgrammingExercises, PlagiarismChecks, Exports, LearningPaths, Science, StandardizedCompetencies, TutorSuggestions, AtlasML, AtlasAgent,
-    Memiris, LectureContentProcessing, RateLimit, GlobalSearch, AutonomousTutor, Deimos
+    ProgrammingExercises, PlagiarismChecks, Exports, LearningPaths, Science, StandardizedCompetencies, TutorSuggestions, AtlasML, AtlasAgent, Memiris, LectureContentProcessing,
+    RateLimit, GlobalSearch, AutonomousTutor, Deimos
 }

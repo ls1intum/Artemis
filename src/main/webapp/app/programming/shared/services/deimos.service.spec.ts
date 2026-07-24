@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -8,8 +7,6 @@ import dayjs from 'dayjs/esm';
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 
 describe('DeimosService', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let deimosService: DeimosService;
 
