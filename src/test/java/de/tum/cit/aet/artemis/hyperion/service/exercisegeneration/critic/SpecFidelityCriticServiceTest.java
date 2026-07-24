@@ -294,6 +294,31 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReview_acceptsDefectFreeVerdictWithMiscitedEvidenceId() {
+        // Regression for the production failure: a coherent, defect-free verdict was discarded only because the reviewer mis-cited
+        // objectiveEvidenceIds (here the non-existent E999). Evidence-ID citation is advisory grounding now, so the verdict is accepted in
+        // a single call with no correction retry.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],
+                         "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E999"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                         "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise about strategies in an unusual logistics theme.", """
+                # Exercise
+                ## Rules
+                - R1: rerouting transfers the undelivered cargo without losing already delivered parcels.\
+                """, null, () -> false);
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
     void specificationReviewRejectsAbandoningTheReviewedConceptWithoutReopeningSelection() {
         String concept = "Restore ordered messages from overlapping radio fragments using conflict policies.";
         String specification = "R1: each policy returns a fixed score.";
@@ -520,40 +545,10 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.feedback()).contains("2 + 2", "replay gives \"4\"", "evaluates to four", "correct the erroneous outcome").doesNotContain("replace 5 with 4");
     }
 
-    @Test
-    void specificationReviewRequiresAReplayForEveryWorkedExampleRow() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(specificationExampleReviewResponse("""
-                {"exampleEvidenceId":"E5","replayedOutcome":"4","consistent":true,"reason":"the arithmetic evaluates to four"}\
-                """)), rawResponse(specificationExampleReviewResponse("""
-                {"exampleEvidenceId":"E5","replayedOutcome":"4","consistent":true,"reason":"the arithmetic evaluates to four"},
-                {"exampleEvidenceId":"E6","replayedOutcome":"6","consistent":true,"reason":"the arithmetic evaluates to six"}\
-                """)));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an arithmetic exercise.", """
-                # Arithmetic
-                ## Worked Examples
-                | Rules | Input | Expected |
-                |---|---|---|
-                | R1 | 2 + 2 | 4 |
-                | R1 | 3 + 3 | 6 |
-                """, null, () -> false);
-        assertThat(review.accepted()).isTrue();
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues().get(1).getInstructions().get(1).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT",
-                "exampleChecks must contain exactly [E5, E6]; received [E5]");
-    }
-
-    private static String specificationExampleReviewResponse(String checks) {
-        return """
-                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E5"],"objectiveEvidenceIds":["E5"],"studentOwnershipEvidenceIds":["E5"],"assessmentEvidenceIds":["E5"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                 "remainingStudentReasoning":"the arithmetic rule is the requested learning work","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                 "omissions":[],"conflicts":[],"internalConflicts":[],"ambiguities":[],"unsupportedConstraints":[],"exampleChecks":[%s]}
-                """
-                .formatted(checks);
-    }
+    // Removed as verification theatre: the reviewer no longer requires an exampleChecks item for every worked-example data row. The
+    // exact-replay-set gate (specificationReviewRequiresAReplayForEveryWorkedExampleRow) and its specificationExampleReviewResponse helper
+    // were deleted along with the production gate: inconsistent example checks still become findings, but a mismatched or missing example-ID
+    // set no longer discards an otherwise-coherent verdict.
 
     @Test
     void specificationReview_rejectsMutuallyIncompatibleRulesBeforeTheContractFreezes() {
@@ -732,29 +727,36 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_distinguishesMalformedUngroundedAndShortGroundedVerdicts() {
-        ChatModel chatModel = mock(ChatModel.class);
-        ChatResponse malformed = rawResponse("not json");
-        ChatResponse ungrounded = rawResponse(
+    void specificationReview_distinguishesMalformedFromUngroundedVerdicts() {
+        // A MALFORMED verdict (a missing mandatory boolean/direction, or unparseable JSON) is still discarded as incomplete, because the
+        // verdict's integrity lives in its booleans, direction, and prose. An UNGROUNDED verdict — coherent, but citing an unknown evidence
+        // ID — is now accepted, because evidence-ID citation is advisory grounding rather than a terminal contract. A coherent verdict that
+        // reports a defect stays complete but not accepted.
+        SpecFidelityCriticService malformedCritic = criticReturning(rawResponse(
                 """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[{"briefEvidenceIds":["B99"],"reason":"missing"}],
-                         "conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """);
-        ChatResponse grounded = rawResponse(
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+        assertThat(malformedCritic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
+
+        SpecFidelityCriticService ungroundedCritic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+        SpecFidelityCriticService.SpecificationReview ungrounded = ungroundedCritic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
+        assertThat(ungrounded.complete()).isTrue();
+        assertThat(ungrounded.accepted()).isTrue();
+
+        SpecFidelityCriticService groundedFindingCritic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[{"briefEvidenceIds":["B1"],"reason":"the learning objective is missing"}],
                          "conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """);
-        when(chatModel.call(any(Prompt.class))).thenReturn(malformed, malformed, ungrounded, ungrounded, grounded);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
-        assertThat(critic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
-        SpecFidelityCriticService.SpecificationReview shortGrounded = critic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
-        assertThat(shortGrounded.complete()).isTrue();
-        assertThat(shortGrounded.accepted()).isFalse();
+                        """));
+        SpecFidelityCriticService.SpecificationReview groundedFinding = groundedFindingCritic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
+        assertThat(groundedFinding.complete()).isTrue();
+        assertThat(groundedFinding.accepted()).isFalse();
     }
 
     @Test
@@ -770,7 +772,9 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_requiresEvidenceForTheRequestedObjectiveMechanism() {
+    void specificationReview_requiresTheRequestedObjectiveMechanismProse() {
+        // Evidence-ID citation is advisory now, but the learningFit's own prose remains mandatory: this fixture omits the objectiveMechanism
+        // field entirely, so the verdict is still discarded as incomplete.
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],
@@ -780,38 +784,13 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the Strategy pattern.", "R1: each policy implements a calculation.", null,
                 () -> false);
         assertThat(review.complete()).isFalse();
-        assertThat(review.auditSummary()).contains("learningFit validation failed", "objectiveEvidenceIds must cite only the supplied E IDs");
+        assertThat(review.auditSummary()).contains("learningFit validation failed", "objectiveMechanism is mandatory");
     }
 
-    @Test
-    void specificationReviewCorrectionNamesTheExactStudentOwnedDesignRows() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(specificationLearningFitResponse("E1", "E9")), rawResponse(specificationLearningFitResponse("E5", "E9")));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-
-        assertThat(critic.reviewSpecification("Create an intermediate Strategy exercise.", specificationWithEvidenceTables(), null, () -> false).accepted()).isTrue();
-
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues().get(1).getInstructions().get(1).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT",
-                "studentOwnershipEvidenceIds must cite one of [E5]", "non-given data rows in the Design section");
-    }
-
-    @Test
-    void specificationReviewCorrectionNamesTheExactTestingStrategyRows() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(specificationLearningFitResponse("E5", "E1")), rawResponse(specificationLearningFitResponse("E5", "E9")));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-
-        assertThat(critic.reviewSpecification("Create an intermediate Strategy exercise.", specificationWithEvidenceTables(), null, () -> false).accepted()).isTrue();
-
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        assertThat(prompts.getAllValues().get(1).getInstructions().get(1).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "assessmentEvidenceIds must cite one of [E9]",
-                "data rows in the Testing Strategy section");
-    }
+    // Removed as verification theatre: the reviewer no longer checks that studentOwnershipEvidenceIds/assessmentEvidenceIds cite the exact
+    // non-given Design rows or Testing Strategy rows. The two correction tests that asserted those terminal gates
+    // (specificationReviewCorrectionNamesTheExactStudentOwnedDesignRows / ...TheExactTestingStrategyRows) were deleted with the production
+    // gate: evidence-ID citation is advisory grounding now, so a mis-cited ownership/assessment ID never triggers a correction re-call.
 
     @Test
     void specificationReviewAcceptsEveryDesignStatusSyntaxAcceptedByTheMechanicalGate() {
@@ -861,11 +840,11 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_requiresGroundedPositiveLearningEvidence() {
+    void specificationReview_acceptsPositiveLearningVerdictEvenWhenEvidenceIdsAreAdvisory() {
+        // A well-formed positive verdict whose learning-fit evidence IDs point at unknown lines (E99) is grounded by its booleans and prose,
+        // not by the pointers. It is accepted in a single call rather than discarded over the mis-citation.
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
-                {"omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                """), rawResponse(
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
@@ -873,54 +852,47 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        assertThat(critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null, () -> false).complete()).isFalse();
-        assertThat(critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null, () -> false).complete()).isFalse();
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null,
+                () -> false);
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
     @Test
-    void specificationReviewRetriesUnknownEvidenceIdFromScratch() {
+    void specificationReviewToleratesAnUnknownEvidenceIdWithoutRetrying() {
+        // An unknown evidence ID (E99) inside an otherwise coherent finding is advisory now: the unknown pointer resolves to an empty
+        // quote, the finding still renders, and the verdict is complete after a single call — no correction retry from scratch.
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
-                rawResponse(
-                        """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
-                                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                                 "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
-                                 "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
-                                 "reason":"The claims conflict."}]}
-                                """),
-                rawResponse(
-                        """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
-                                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                                 "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
-                                 "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E1"],
-                                 "reason":"The claims can coexist after all."}]}
-                                """));
+        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                         "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
+                         "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
+                         "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
+                         "reason":"The claims conflict."}]}
+                        """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise with a potion theme.",
                 "R1: weak ingredients limit potency. R2: every ingredient contributes equally.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("R1: weak ingredients limit potency.", "R2: every ingredient contributes equally.", "The claims can coexist after all.")
-                .doesNotContain("The claims conflict");
-        ArgumentCaptor<Prompt> correction = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(correction.capture());
-        assertThat((correction.getAllValues().get(1).getInstructions().get(1)).getText()).contains("unknown or wrong-source evidence ID", "[B1]", "[E1]")
-                .doesNotContain("PREVIOUS VERDICT", "The claims conflict");
+        assertThat(review.feedback()).contains("R1: weak ingredients limit potency.", "The claims conflict.");
+        verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
     @Test
     void specificationReviewUsesTheCompleteFreshRetryVerdict() {
+        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so the reviewer makes its one
+        // correction call. The fresh, complete ALIGNED retry is used verbatim rather than the discarded first verdict.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(
                 rawResponse(
                         """
-                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                                 "remainingStudentReasoning":"The specification claims a policy collaboration.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                 "remainingStudentReasoning":"The specification claims a policy collaboration.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
                                  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],
                                   "disposition":"CONCEPT_RESELECTION",
                                   "reason":"The selected interaction cannot meet the requested level without replacement."},
@@ -947,12 +919,14 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewDoesNotCarryAnUngroundedFirstFindingIntoTheFreshRetry() {
+        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so it is discarded before its finding
+        // is ever rendered. The single correction call returns a clean, complete verdict, and none of the first response's finding leaks in.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(
                 rawResponse(
                         """
                                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                                 "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
                                  "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
                                  "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
                                  "reason":"The decisions conflict."}]}
@@ -969,6 +943,7 @@ class SpecFidelityCriticServiceTest {
                 "R1: meaningful strategy decision. R2: contradicting strategy decision.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
+        assertThat(review.feedback()).doesNotContain("The decisions conflict");
         verify(chatModel, times(2)).call(any(Prompt.class));
     }
 

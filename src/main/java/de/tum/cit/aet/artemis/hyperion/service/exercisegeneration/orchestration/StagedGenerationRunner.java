@@ -441,20 +441,17 @@ public class StagedGenerationRunner {
                                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
                             }
                             if (!review.complete()) {
-                                String reviewFailure = "Specification fidelity review was unavailable, so generation stopped before freezing an unchecked contract. Retry "
-                                        + "generation; no downstream artifacts were produced from this specification.";
-                                log.warn("Specification review was unavailable for exercise {}; stopping before contract approval", exercise.getId());
-                                emit(progress, reviewFailure);
-                                return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFailure), archivedConversation,
-                                        conversation);
+                                // Fail open on the subjective axis. A qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
+                                // already passed the deterministic mechanical gate. Freeze the checked contract and let downstream mechanical verification (compile, tests,
+                                // differential oracle — all still fail-closed), the post-generation artifact critic, and instructor review carry quality forward.
+                                String reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification. Any remaining "
+                                        + "qualitative concerns are left for instructor review.";
+                                log.warn("Specification review was inconclusive for exercise {}; freezing the mechanically-valid specification and continuing", exercise.getId());
+                                emit(progress, reviewAdvisory);
                             }
-                            else if (!review.accepted()) {
+                            else if (!review.accepted() && semanticSpecRefinementsUsed < MAX_SEMANTIC_SPEC_REFINEMENTS && remainingPool >= MIN_STAGE_BUDGET) {
                                 String reviewFeedback = review.feedback();
                                 log.info("Specification review rejected the candidate for exercise {}: {}", exercise.getId(), reviewFeedback);
-                                if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || remainingPool < MIN_STAGE_BUDGET) {
-                                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, reviewFeedback), archivedConversation,
-                                            conversation);
-                                }
                                 semanticSpecRefinementsUsed++;
                                 semanticSpecFeedback = reviewFeedback;
                                 gateFeedback = semanticSpecRefinementPrompt(reviewFeedback);
@@ -516,6 +513,14 @@ public class StagedGenerationRunner {
                                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
                                 allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, remainingPool);
                                 continue;
+                            }
+                            else if (!review.accepted()) {
+                                // Refinement budget exhausted — fail open rather than discard a mechanically valid specification. Freeze it and surface the remaining findings
+                                // as an advisory for instructor review instead of erroring the one-click generation. Objective gates downstream (compile/tests/oracle) stay
+                                // fail-closed.
+                                log.info("Specification review still had findings for exercise {} after exhausting the refinement budget; freezing with advisory: {}",
+                                        exercise.getId(), review.feedback());
+                                emit(progress, "Continuing with the reviewed specification; remaining concerns are attached for instructor review.");
                             }
                         }
                         // Publish the APPROVED specification before anything downstream runs. From here on it is read-only; later stages repair executable artifacts

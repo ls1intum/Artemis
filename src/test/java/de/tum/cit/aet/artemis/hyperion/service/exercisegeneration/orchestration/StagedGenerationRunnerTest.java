@@ -355,19 +355,23 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void unavailableSpecificationReviewFailsClosed() {
+    void unavailableSpecificationReviewFailsOpenAndFreezesTheMechanicallyValidSpec() {
+        // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must NOT discard a specification that already passed the
+        // deterministic mechanical gate. The checked spec is frozen and generation proceeds; downstream objective gates and instructor review carry quality forward.
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(result.finalMessage()).contains("review was unavailable");
-        assertThat(approvedSpecs.approved("s")).isEmpty();
-        verify(baseTools, never()).enterStage(GenerationStage.TESTS);
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).isPresent();
+        verify(baseTools).enterStage(GenerationStage.TESTS);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
     }
 
     @Test

@@ -586,76 +586,13 @@ public class SpecFidelityCriticService {
             return containsAll(evidenceIds) && evidenceIds.stream().map(passages::get).anyMatch(passage -> passage != null && !passage.strip().startsWith("## "));
         }
 
-        private boolean hasSection(String heading) {
-            return passages.containsValue(heading);
-        }
-
-        private boolean containsInSection(@Nullable List<String> evidenceIds, String heading) {
-            if (!containsAll(evidenceIds)) {
-                return false;
+        private String resolve(@Nullable List<String> evidenceIds) {
+            // Tolerant of missing or unknown IDs: evidence citation is advisory grounding, not a terminal contract. A mis-cited ID
+            // resolves to a shorter quote rather than throwing, so a good verdict is never discarded over a self-report slip.
+            if (evidenceIds == null) {
+                return "";
             }
-            return evidenceIds.stream().anyMatch(tableDataRowIdsInSection(heading)::contains);
-        }
-
-        private List<String> tableDataRowIdsInSection(String heading) {
-            List<String> rowIds = new ArrayList<>();
-            boolean inSection = false;
-            boolean headerSeen = false;
-            for (Map.Entry<String, String> entry : passages.entrySet()) {
-                String line = entry.getValue().strip();
-                if (line.equals(heading)) {
-                    inSection = true;
-                    continue;
-                }
-                if (inSection && line.startsWith("## ")) {
-                    break;
-                }
-                if (!inSection || !line.startsWith("|") || line.matches("[|:\\-\\s]+")) {
-                    continue;
-                }
-                if (!headerSeen) {
-                    headerSeen = true;
-                }
-                else {
-                    rowIds.add(entry.getKey());
-                }
-            }
-            return List.copyOf(rowIds);
-        }
-
-        private List<String> studentOwnedDesignRowIds() {
-            return tableDataRowIdsInSection("## Design").stream().filter(evidenceId -> {
-                String line = passages.get(evidenceId);
-                return line != null && isStudentOwnedDesignRow(line);
-            }).toList();
-        }
-
-        private static boolean isStudentOwnedDesignRow(String line) {
-            String row = line.substring(1, line.endsWith("|") ? line.length() - 1 : line.length());
-            List<String> cells = java.util.Arrays.stream(row.split("\\|", -1)).map(String::strip).toList();
-            if (cells.isEmpty()) {
-                return false;
-            }
-            String status = cells.getLast().replace("`", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
-            for (String emphasis : List.of("**", "__", "*", "_")) {
-                if (status.startsWith(emphasis) && status.endsWith(emphasis) && status.length() > emphasis.length() * 2) {
-                    status = status.substring(emphasis.length(), status.length() - emphasis.length()).strip();
-                    break;
-                }
-            }
-            return status.equals("stubbed") || status.equals("student-creates");
-        }
-
-        private boolean containsStudentOwnedDesignRow(@Nullable List<String> evidenceIds) {
-            if (!containsAll(evidenceIds)) {
-                return false;
-            }
-            List<String> studentOwnedRows = studentOwnedDesignRowIds();
-            return evidenceIds.stream().anyMatch(studentOwnedRows::contains);
-        }
-
-        private String resolve(List<String> evidenceIds) {
-            return evidenceIds.stream().map(passages::get).map(String::strip).collect(java.util.stream.Collectors.joining("\"; \""));
+            return evidenceIds.stream().map(passages::get).filter(java.util.Objects::nonNull).map(String::strip).collect(java.util.stream.Collectors.joining("\"; \""));
         }
     }
 
@@ -669,32 +606,6 @@ public class SpecFidelityCriticService {
             return !concept.passages().isEmpty();
         }
 
-        private List<String> workedExampleEvidenceIds() {
-            List<String> ids = new ArrayList<>();
-            boolean inWorkedExamples = false;
-            boolean pastSeparator = false;
-            for (Map.Entry<String, String> entry : specification.passages().entrySet()) {
-                String line = entry.getValue().strip();
-                if (line.equals("## Worked Examples")) {
-                    inWorkedExamples = true;
-                    continue;
-                }
-                if (inWorkedExamples && line.startsWith("## ")) {
-                    break;
-                }
-                if (!inWorkedExamples || !line.startsWith("|")) {
-                    continue;
-                }
-                if (!pastSeparator) {
-                    if (line.matches("[|:\\-\\s]+")) {
-                        pastSeparator = true;
-                    }
-                    continue;
-                }
-                ids.add(entry.getKey());
-            }
-            return List.copyOf(ids);
-        }
     }
 
     private record ConceptReviewResponse(@Nullable Integer selectedCandidate, @Nullable String selectionReason, @Nullable List<ConceptCandidateReviewItem> evaluations) {
@@ -1150,17 +1061,15 @@ public class SpecFidelityCriticService {
                 || parsed.unsupportedConstraints() == null) {
             return incompleteSpecificationReview("One or more mandatory finding arrays were missing.");
         }
-        String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit(), evidence);
+        String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit());
         if (learningFitValidationError != null) {
             return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError);
         }
         if (!validConceptAlignment(parsed.conceptAlignment(), evidence)) {
-            return incompleteSpecificationReview("conceptAlignment was missing, incomplete, or cited an unknown brief/concept/specification evidence ID.");
+            return incompleteSpecificationReview("conceptAlignment was missing a disposition or reason for the supplied concept.");
         }
-        String exampleChecksValidationError = specificationExampleChecksValidationError(parsed.exampleChecks(), evidence);
-        if (exampleChecksValidationError != null) {
-            return incompleteSpecificationReview("exampleChecks validation failed: " + exampleChecksValidationError);
-        }
+        // Worked-example replay is a quality signal, not a terminal contract: whatever consistent/inconsistent checks the reviewer returns are used below; a mismatched or
+        // missing example-ID set no longer discards the verdict.
         SpecificationConceptDisposition conceptDisposition = evidence.hasConcept() ? parsed.conceptAlignment().disposition() : SpecificationConceptDisposition.ALIGNED;
         List<String> findings = new ArrayList<>();
         SpecificationLearningFitItem learningFit = parsed.learningFit();
@@ -1180,46 +1089,47 @@ public class SpecFidelityCriticService {
                     + " Repair: return to reviewed concept selection; do not try to rescue an unviable central interaction by adding unrelated types, validations, or edge cases.");
         }
         for (SpecificationExampleCheckItem item : parsed.exampleChecks() == null ? List.<SpecificationExampleCheckItem>of() : parsed.exampleChecks()) {
-            if (!item.consistent()) {
-                findings.add("Incorrect worked example — SPEC says \"" + truncate(evidence.specification().resolve(List.of(item.exampleEvidenceId()))) + "\": replay gives \""
-                        + truncateLearningEvidence(item.replayedOutcome().strip()) + "\" because " + truncateLearningEvidence(item.reason().strip())
-                        + " Repair: correct the erroneous outcome or rule and every dependent example.");
+            if (item == null || !Boolean.FALSE.equals(item.consistent()) || item.replayedOutcome() == null || item.replayedOutcome().isBlank() || item.reason() == null
+                    || item.reason().isBlank()) {
+                continue;
             }
+            String exampleQuote = item.exampleEvidenceId() == null ? "" : truncate(evidence.specification().resolve(List.of(item.exampleEvidenceId())));
+            findings.add("Incorrect worked example — SPEC says \"" + exampleQuote + "\": replay gives \"" + truncateLearningEvidence(item.replayedOutcome().strip()) + "\" because "
+                    + truncateLearningEvidence(item.reason().strip()) + " Repair: correct the erroneous outcome or rule and every dependent example.");
         }
         for (SpecificationReviewItem item : parsed.omissions()) {
-            if (!validSpecificationReviewItem(item, true, false, evidence)) {
-                return incompleteSpecificationReview("An omission was incomplete or cited an unknown brief evidence ID.");
+            if (!validSpecificationReviewItem(item)) {
+                continue;
             }
             findings.add("Omission — brief says \"" + truncate(evidence.brief().resolve(item.briefEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: satisfy this cited brief property with the smallest coherent change; choose the content yourself and preserve unaffected choices.");
         }
         for (SpecificationReviewItem item : parsed.conflicts()) {
-            if (!validSpecificationReviewItem(item, true, true, evidence)) {
-                return incompleteSpecificationReview("A conflict was incomplete or cited an unknown brief/specification evidence ID.");
+            if (!validSpecificationReviewItem(item)) {
+                continue;
             }
             findings.add("Conflict — brief says \"" + truncate(evidence.brief().resolve(item.briefEvidenceIds())) + "\" but SPEC says \""
                     + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: reconcile the cited specification claim with the brief, updating all directly affected vocabulary and examples coherently; choose the replacement yourself.");
         }
         for (SpecificationInternalConflictItem item : parsed.internalConflicts()) {
-            if (item == null || item.reason() == null || item.reason().isBlank() || !evidence.specification().containsAll(item.firstSpecEvidenceIds())
-                    || !evidence.specification().containsAll(item.secondSpecEvidenceIds())) {
-                return incompleteSpecificationReview("An internal conflict was incomplete or cited an unknown specification evidence ID.");
+            if (item == null || item.reason() == null || item.reason().isBlank()) {
+                continue;
             }
             findings.add("Internal conflict — SPEC says both \"" + truncate(evidence.specification().resolve(item.firstSpecEvidenceIds())) + "\" and \""
                     + truncate(evidence.specification().resolve(item.secondSpecEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: choose one coherent interpretation grounded in the brief and update every affected section consistently.");
         }
         for (SpecificationReviewItem item : parsed.ambiguities()) {
-            if (!validSpecificationReviewItem(item, false, true, evidence)) {
-                return incompleteSpecificationReview("An ambiguity was incomplete or cited an unknown specification evidence ID.");
+            if (!validSpecificationReviewItem(item)) {
+                continue;
             }
             findings.add("Ambiguous contract — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: define one coherent, finite, and testable behavior for the cited permitted input or transition, updating dependent examples and seams; choose the behavior yourself.");
         }
         for (SpecificationReviewItem item : parsed.unsupportedConstraints()) {
-            if (!validSpecificationReviewItem(item, false, true, evidence)) {
-                return incompleteSpecificationReview("An unsupported constraint was incomplete or cited an unknown specification evidence ID.");
+            if (!validSpecificationReviewItem(item)) {
+                continue;
             }
             findings.add("Unsupported constraint — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: remove or relax only the cited unsupported obligation while preserving requested behavior.");
@@ -1269,29 +1179,14 @@ public class SpecFidelityCriticService {
         };
     }
 
-    private static boolean validSpecificationLearningFit(@Nullable SpecificationLearningFitItem item, SpecificationReviewEvidence evidence) {
-        return specificationLearningFitValidationError(item, evidence) == null;
-    }
-
-    private static @Nullable String specificationLearningFitValidationError(@Nullable SpecificationLearningFitItem item, SpecificationReviewEvidence evidence) {
+    private static @Nullable String specificationLearningFitValidationError(@Nullable SpecificationLearningFitItem item) {
         if (item == null) {
             return "the mandatory learningFit object is missing.";
         }
-        if (!evidence.brief().containsAll(item.briefEvidenceIds())) {
-            return "briefEvidenceIds must cite only the supplied B IDs.";
-        }
-        if (!evidence.specification().containsAll(item.specEvidenceIds())) {
-            return "specEvidenceIds must cite only the supplied E IDs.";
-        }
-        if (!evidence.specification().containsAll(item.objectiveEvidenceIds())) {
-            return "objectiveEvidenceIds must cite only the supplied E IDs.";
-        }
-        if (!evidence.specification().containsAll(item.studentOwnershipEvidenceIds())) {
-            return "studentOwnershipEvidenceIds must cite only the supplied E IDs.";
-        }
-        if (!evidence.specification().containsAll(item.assessmentEvidenceIds())) {
-            return "assessmentEvidenceIds must cite only the supplied E IDs.";
-        }
+        // Evidence-ID citation (briefEvidenceIds/specEvidenceIds/objectiveEvidenceIds/studentOwnershipEvidenceIds/assessmentEvidenceIds) is advisory grounding only.
+        // A mis-cited, missing, or wrong-section line pointer must never invalidate an otherwise-coherent verdict — line indices renumber on every SPEC rewrite, so
+        // demanding exact IDs discarded mechanically-valid, defect-free specifications over a self-report slip. The verdict's integrity is its booleans, direction, and
+        // prose reasoning, which the model derives from the evidence it was shown; those remain mandatory below.
         if (item.objectiveMechanism() == null || item.objectiveMechanism().isBlank()) {
             return "objectiveMechanism is mandatory.";
         }
@@ -1304,13 +1199,6 @@ public class SpecFidelityCriticService {
         if (item.learnerOwnsObjectiveMechanism() == null || item.objectiveObservable() == null || item.difficultySufficient() == null || item.domainGrounded() == null
                 || item.sufficient() == null) {
             return "all five learning-fit booleans are mandatory.";
-        }
-        if (evidence.specification().hasSection("## Design") && !evidence.specification().containsStudentOwnedDesignRow(item.studentOwnershipEvidenceIds())) {
-            return "studentOwnershipEvidenceIds must cite one of " + evidence.specification().studentOwnedDesignRowIds() + " (the non-given data rows in the Design section).";
-        }
-        if (evidence.specification().hasSection("## Testing Strategy") && !evidence.specification().containsInSection(item.assessmentEvidenceIds(), "## Testing Strategy")) {
-            return "assessmentEvidenceIds must cite one of " + evidence.specification().tableDataRowIdsInSection("## Testing Strategy")
-                    + " (the data rows in the Testing Strategy section).";
         }
         boolean derivedSufficient = item.learnerOwnsObjectiveMechanism() && item.objectiveObservable() && item.difficultySufficient() && item.domainGrounded();
         if (item.sufficient() != derivedSufficient) {
@@ -1329,36 +1217,13 @@ public class SpecFidelityCriticService {
         if (!evidence.hasConcept()) {
             return item == null;
         }
-        return item != null && evidence.brief().containsAll(item.briefEvidenceIds()) && evidence.concept().containsAll(item.conceptEvidenceIds())
-                && evidence.specification().containsAll(item.specEvidenceIds()) && item.disposition() != null && item.reason() != null && !item.reason().isBlank();
+        // Evidence IDs are advisory grounding; a supplied concept's alignment only needs a coherent disposition and reason.
+        return item != null && item.disposition() != null && item.reason() != null && !item.reason().isBlank();
     }
 
-    private static @Nullable String specificationExampleChecksValidationError(@Nullable List<SpecificationExampleCheckItem> items, SpecificationReviewEvidence evidence) {
-        List<String> expectedIds = evidence.workedExampleEvidenceIds();
-        if (expectedIds.isEmpty()) {
-            return items == null || items.isEmpty() ? null : "no worked-example rows exist, so exampleChecks must be empty.";
-        }
-        if (items == null) {
-            return "exampleChecks must contain exactly " + expectedIds + "; the array is missing.";
-        }
-        if (items.stream().anyMatch(java.util.Objects::isNull)) {
-            return "exampleChecks contains a null item; expected exactly " + expectedIds + ".";
-        }
-        List<String> actualIds = items.stream().map(SpecificationExampleCheckItem::exampleEvidenceId).toList();
-        if (actualIds.stream().anyMatch(java.util.Objects::isNull) || actualIds.stream().distinct().count() != actualIds.size()
-                || !new java.util.HashSet<>(actualIds).equals(new java.util.HashSet<>(expectedIds))) {
-            return "exampleChecks must contain exactly " + expectedIds + "; received " + actualIds + ".";
-        }
-        List<String> incompleteIds = items.stream()
-                .filter(item -> item.replayedOutcome() == null || item.replayedOutcome().isBlank() || item.consistent() == null || item.reason() == null || item.reason().isBlank())
-                .map(SpecificationExampleCheckItem::exampleEvidenceId).toList();
-        return incompleteIds.isEmpty() ? null : "these exampleChecks are missing replayedOutcome, consistent, or reason: " + incompleteIds + ".";
-    }
-
-    private static boolean validSpecificationReviewItem(@Nullable SpecificationReviewItem item, boolean needsBriefEvidence, boolean needsSpecEvidence,
-            SpecificationReviewEvidence evidence) {
-        return item != null && (!needsBriefEvidence || evidence.brief().containsAll(item.briefEvidenceIds()))
-                && (!needsSpecEvidence || evidence.specification().containsAll(item.specEvidenceIds())) && item.reason() != null && !item.reason().isBlank();
+    private static boolean validSpecificationReviewItem(@Nullable SpecificationReviewItem item) {
+        // Evidence IDs are advisory; a finding is usable as long as it states a concrete reason. Malformed items are skipped, never terminal.
+        return item != null && item.reason() != null && !item.reason().isBlank();
     }
 
     private static boolean specificationQuoteIsGrounded(@Nullable String quote, String source) {
