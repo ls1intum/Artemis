@@ -435,12 +435,12 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
 A **styling-only** attribute directive for a native `<input>` or `<textarea>` — the drop-in for PrimeNG's `pInputText` / `pTextarea`. It never touches the element's value or events, so `[(ngModel)]`, `formControlName`, `type`, `placeholder`, `pattern`, `maxlength`, `required`, and a static `class` all keep working; the host class binding merges with (does not clobber) template classes like `class="w-full"`. `[tumUiTextarea]` is a `<textarea>`-only alias of the same directive.
 
-<Shots light={TumuiInputLight} dark={TumuiInputDark} alt="tum-ui input directive: default, small, invalid, textarea" />
+<Shots light={TumuiInputLight} dark={TumuiInputDark} alt="tum-ui input directive: default, small, disabled, textarea" />
 
 | Input               | Type                 | Default | Notes                                                                                                           |
 | ------------------- | -------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
 | `tumUiInputSize`    | `'small' \| 'large'` | –       | Mirrors PrimeNG `pSize`; omit for the normal size. Named distinctly so the native `size` attribute still works. |
-| `tumUiInputInvalid` | `boolean`            | `false` | Mirrors PrimeNG `[invalid]`; paints a fixed danger border that wins over hover/focus.                           |
+| `tumUiInputInvalid` | `boolean`            | `false` | Mirrors PrimeNG `[invalid]`; marks the field invalid (danger border).                                           |
 
 The directive has no outputs and is not a form-control itself — bind `[(ngModel)]` / `formControlName` directly on the element.
 
@@ -505,6 +505,8 @@ A single-select dropdown on the CDK overlay — the drop-in for `p-select`. A `r
 | `styleClass`        | `string`             | `''`                     | Classes forwarded onto the host (e.g. `w-full`).                                                                                                                 |
 | `inputId`           | `string`             | unique per instance      | `id` of the trigger; set it for a stable `<label for>` target.                                                                                                   |
 | `ariaLabel`         | `string`             | –                        | Accessible name when there is no visible label.                                                                                                                  |
+| `name`              | `string`             | –                        | Forwarded onto the trigger for template-driven-form parity.                                                                                                      |
+| `clearAriaLabel`    | `string`             | `'Clear selection'`      | Accessible name for the clear (×) button (shown when `showClear` is set).                                                                                        |
 | `emptyMessage`      | `string`             | `'No available options'` | Panel text when there are no options.                                                                                                                            |
 | `onChange` (output) | `unknown`            | –                        | The newly selected value (resolved `optionValue`, or the whole option; `undefined` on clear). Not PrimeNG's `{ originalEvent, value }` wrapper — just the value. |
 
@@ -536,6 +538,10 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 | `completeOnFocus`       | `boolean`                   | `false`              | Fire `completeMethod` (even empty) and open the panel on focus.                            |
 | `styleClass`            | `string`                    | `''`                 | Classes forwarded onto the host (e.g. `w-full`).                                           |
 | `emptyMessage`          | `string`                    | `'No results found'` | Panel text when a search returns nothing.                                                  |
+| `inputId`               | `string`                    | unique per instance  | `id` of the text input, for a stable `<label for>` target.                                 |
+| `name`                  | `string`                    | –                    | Forwarded onto the input for template-driven-form parity.                                  |
+| `ariaLabel`             | `string`                    | –                    | Accessible name for the input when there is no visible label.                              |
+| `removeAriaLabel`       | `string`                    | `'Remove'`           | Accessible name for each selected chip's remove button.                                    |
 | `completeMethod` (out)  | `{ originalEvent?, query }` | –                    | The debounced typed query is ready — filter and push into `[suggestions]`.                 |
 | `onSelect` (out)        | `{ originalEvent?, value }` | –                    | A suggestion was chosen.                                                                   |
 | `onUnselect` (out)      | `{ originalEvent?, value }` | –                    | A selected value (chip) was removed (button, or Backspace on an empty input).              |
@@ -604,11 +610,11 @@ A boolean on/off switch — the drop-in for `p-toggleswitch`. The host element i
 
 <Shots light={TumuiToggleSwitchLight} dark={TumuiToggleSwitchDark} alt="tum-ui-toggle-switch: off, on, disabled" />
 
-| Input / Output     | Type      | Default | Notes                                                                       |
-| ------------------ | --------- | ------- | --------------------------------------------------------------------------- |
-| `disabled`         | `boolean` | `false` | Merged with the reactive-forms disabled state.                              |
-| `inputId`          | `string`  | –       | Forwarded onto the host `id` so an external `<label for>` targets it.       |
-| `changed` (output) | `boolean` | –       | The new boolean, whenever the switch is toggled (parity with `(onChange)`). |
+| Input / Output     | Type      | Default | Notes                                                                                                                                                                                                               |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`         | `boolean` | `false` | Merged with the reactive-forms disabled state.                                                                                                                                                                      |
+| `inputId`          | `string`  | –       | Sets the host `id`. The switch is a custom element (not a labelable control), so a `<label for>` will **not** toggle it — give it an accessible name with `aria-label`, or point an `aria-labelledby` at this `id`. |
+| `changed` (output) | `boolean` | –       | The new boolean, whenever the switch is toggled (parity with `(onChange)`).                                                                                                                                         |
 
 ```html
 <tum-ui-toggle-switch
@@ -661,6 +667,7 @@ A rounded pill with a text `[label]` (or projected content) and an optional keyb
 | `removable`         | `boolean` | `false`    | Renders the accessible remove (×) button.                                                |
 | `size`              | `'small'` | –          | `'small'` renders the compact in-field chip; omit for the default size.                  |
 | `removeAriaLabel`   | `string`  | `'Remove'` | Accessible name for the remove button; override for i18n.                                |
+| `styleClass`        | `string`  | `''`       | Classes forwarded onto the pill.                                                         |
 | `onRemove` (output) | `Event`   | –          | The remove control was activated (click, Enter/Space, or Backspace/Delete when focused). |
 
 ```html
@@ -780,18 +787,20 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
 
 <Shots light={TumuiDialogLight} dark={TumuiDialogDark} alt="tum-ui-dialog with a title, body and footer buttons" />
 
-| Input / Output            | Type                     | Default   | Notes                                                                        |
-| ------------------------- | ------------------------ | --------- | ---------------------------------------------------------------------------- |
-| `visible` (`model`)       | `boolean`                | `false`   | Two-way `[(visible)]`; opens/closes the overlay. Emits `visibleChange`.      |
-| `modal`                   | `boolean`                | `true`    | Dimmed, pointer-blocking mask behind the dialog.                             |
-| `header`                  | `string`                 | –         | Plain-text title; ignored when a `#header` template is projected.            |
-| `closable`                | `boolean`                | `true`    | Show the × close button.                                                     |
-| `closeOnEscape`           | `boolean`                | `true`    | Close on Escape.                                                             |
-| `dismissableMask`         | `boolean`                | `false`   | Close on mask/backdrop click.                                                |
-| `style` / `contentStyle`  | `Record<string, string>` | `{}`      | Style records on the panel / scrollable content (e.g. `{ width: '30rem' }`). |
-| `closeButtonAriaLabel`    | `string`                 | `'Close'` | Accessible label for the × button.                                           |
-| `visibleChange` (out)     | `boolean`                | –         | Whenever visibility flips.                                                   |
-| `onShow` / `onHide` (out) | `void`                   | –         | When the dialog becomes visible / hidden (any close path).                   |
+| Input / Output            | Type                     | Default   | Notes                                                                                              |
+| ------------------------- | ------------------------ | --------- | -------------------------------------------------------------------------------------------------- |
+| `visible` (`model`)       | `boolean`                | `false`   | Two-way `[(visible)]`; opens/closes the overlay. Emits `visibleChange`.                            |
+| `modal`                   | `boolean`                | `true`    | Dimmed, pointer-blocking mask behind the dialog.                                                   |
+| `header`                  | `string`                 | –         | Plain-text title; ignored when a `#header` template is projected.                                  |
+| `showHeader`              | `boolean`                | `true`    | Render the header region (title + close button).                                                   |
+| `ariaLabel`               | `string`                 | –         | Accessible-name fallback for the dialog when neither `header` nor a `#header` template is present. |
+| `closable`                | `boolean`                | `true`    | Show the × close button.                                                                           |
+| `closeOnEscape`           | `boolean`                | `true`    | Close on Escape.                                                                                   |
+| `dismissableMask`         | `boolean`                | `false`   | Close on mask/backdrop click.                                                                      |
+| `style` / `contentStyle`  | `Record<string, string>` | `{}`      | Style records on the panel / scrollable content (e.g. `{ width: '30rem' }`).                       |
+| `closeButtonAriaLabel`    | `string`                 | `'Close'` | Accessible label for the × button.                                                                 |
+| `visibleChange` (out)     | `boolean`                | –         | Whenever visibility flips.                                                                         |
+| `onShow` / `onHide` (out) | `void`                   | –         | When the dialog becomes visible / hidden (any close path).                                         |
 
 `appendTo` and `draggable` are accepted for parity but are no-ops (always portaled, never draggable). Provide the footer via a `#footer` template; it only renders when present.
 
@@ -867,6 +876,7 @@ The **low-level, hand-templated** table primitive — the drop-in for using `p-t
 | `styleClass`                  | `string`                           | `''`       | Classes forwarded onto the table (e.g. `mt-3`).                                                                       |
 | `sortField`                   | `string`                           | –          | Active sort field (**controlled**); drives icons + `aria-sort`.                                                       |
 | `sortOrder`                   | `number`                           | `1`        | Active sort order: `1` ascending, `-1` descending.                                                                    |
+| `defaultSortOrder`            | `number`                           | `1`        | Order applied when a previously-unsorted column is first clicked.                                                     |
 | `sortChange` (output)         | `{ field: string; order: number }` | –          | On a sortable-column activation. Shape matches PrimeNG's `SortEvent`, so existing `(onSort)` handlers work unchanged. |
 
 `[tumUiSortableColumn]="'field'"` is **required** on a sortable `<th>`; add `[disabled]="true"` to make a column non-sortable. Sorting is controlled — the directive holds no internal state; feed `sortChange` back into your query and pass the new `sortField` / `sortOrder` back in.
