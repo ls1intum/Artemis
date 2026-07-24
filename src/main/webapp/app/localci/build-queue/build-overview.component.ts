@@ -154,6 +154,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
 
+    /** Number of applied finished-build-job filters, or 0 when the filter is unset. */
+    readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
+
     /**
      * Course ID from route params. When 0, operates in admin mode showing all courses.
      * When > 0, filters to show only build jobs for that specific course.
