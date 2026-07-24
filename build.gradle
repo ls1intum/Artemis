@@ -294,8 +294,8 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
-    // Align all Spring AI modules to the same version
-    // 2.0.0-M6+ fixes GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
+    // Align all Spring AI modules to the same version, pinned to a release addressing
+    // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
     implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
@@ -522,7 +522,7 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
-    // required by sshd-git; 1.84 fixes GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
+    // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
     implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
     implementation "org.bouncycastle:bcprov-jdk18on:1.84"
     // pulled transitively by sshd-git; pin to patched version
