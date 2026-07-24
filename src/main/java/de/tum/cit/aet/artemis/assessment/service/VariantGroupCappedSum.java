@@ -10,11 +10,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 /**
  * Accumulates per-exercise point contributions while enforcing the cap of {@link ExerciseVariantGroup}s.
  * <p>
- * Contributions of exercises that do not belong to a variant group are summed up individually. Contributions of
- * exercises in the same variant group are always summed together first; if the group has a configured cap, the sum is
- * then capped at the group's {@code maxPoints}, so a capped group never contributes more than its cap to the
- * {@link #total()}: {@code min(sum(contributions of the group's variants), cap)}. Groups without a configured cap
- * contribute their raw, uncapped sum.
+ * Ungrouped exercises are summed individually. Variants of the same group are summed first, then capped at the group's
+ * {@code maxPoints} if one is configured, so a capped group contributes {@code min(sum(its variants), cap)} to
+ * {@link #total()}; groups without a cap contribute their raw sum.
  */
 final class VariantGroupCappedSum {
 

@@ -290,8 +290,6 @@ public class ExerciseVariantGroupService {
      * Validates via {@link Exercise#validateBaseDates()} rather than the polymorphic {@link Exercise#validateDates()}, which
      * for a {@link QuizExercise} would iterate the uninitialized lazy {@code quizBatches} and throw. Group quizzes are always
      * individual-mode, so the skipped batch check is irrelevant here.
-     *
-     * @param exercise the exercise whose (already updated) dates should be validated
      */
     private void validateDates(Exercise exercise) {
         exercise.validateBaseDates();

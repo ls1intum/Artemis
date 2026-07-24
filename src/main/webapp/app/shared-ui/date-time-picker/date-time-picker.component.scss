@@ -1,8 +1,5 @@
-// Fill the available width when the picker is placed inside a flex container (e.g. a Bootstrap
-// `.input-group`, as in the build-queue "finished builds" filter and the repo-export dialog). As a
-// block element in normal form layouts the host already spans the full width, so `flex`/`min-width`
-// here only take effect when the host is a flex item — without it the picker collapses to its
-// intrinsic width and looks cramped inside modals.
+// Fill the available width when the host is a flex item; no effect in normal
+// block form layouts where the host already spans full width.
 :host {
     flex: 1 1 auto;
     min-width: 0;

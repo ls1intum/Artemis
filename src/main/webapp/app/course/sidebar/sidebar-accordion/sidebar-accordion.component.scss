@@ -28,16 +28,12 @@ hr {
     align-items: center;
 }
 
-// A course-level exercise group: the header card and its exercise cards sit inside one bordered
-// container so the exercises read as part of the group. Only used when an item has groupedItems.
 .sidebar-group {
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     padding: 0.5rem;
     background-color: var(--module-bg);
 
-    // Whole group looks clickable: darken just the container on hover. The nested exercise cards keep
-    // their own direct-hover effect, so they only darken when hovered individually.
     &--clickable {
         cursor: pointer;
         transition: background-color 0.15s ease-in-out;
@@ -52,12 +48,10 @@ hr {
     margin-top: 0.5rem;
 }
 
-// Plain (non-card) group heading, used when groupHeaderStyle is 'label'.
 .sidebar-group-label {
     padding: 0.15rem 0.25rem;
     border-radius: 0.25rem;
 
-    // Only the heading looks clickable.
     &--clickable {
         cursor: pointer;
         transition: background-color 0.15s ease-in-out;
@@ -68,24 +62,18 @@ hr {
     }
 }
 
-// Title row sized in em (like the tile text) so it lands just slightly larger than the exercise
-// tiles' 0.875em, not dominating them.
 .sidebar-group-title {
     font-size: 0.9em;
 }
 
-// Optional "Pick 1 of X" helper line, matching the exercise card text size (0.875em).
 .sidebar-group-hint {
     font-size: 0.875em;
 }
 
-// Anchor for the select checkbox overlaid inside the exercise tile.
 .sidebar-group-variant {
     position: relative;
 }
 
-// Compact select checkbox, overlaid in the top-right corner of the exercise tile. The p-checkbox host is our own
-// element, so only its PrimeNG internals need piercing.
 .sidebar-group-checkbox {
     position: absolute;
     top: 0.4rem;
@@ -107,32 +95,18 @@ hr {
     }
 }
 
-// Connected variant: the group header tile and its exercise tiles form one connected stack with only
-// the outer corners rounded. The container border + radius (with the overflow clip) draws the outline;
-// the tiles drop their own border and are separated by thin dividers, sitting flush with no indent.
+// Connected variant
 .sidebar-group--connected {
     padding: 0;
     overflow: hidden;
-
-    // Purple stripe across the TOP of the group — marking it as an exercise with several variants, using the
-    // purple from the instructor variant-generation view. Placed on the container's top border so it spans the
-    // full width and both rounded top corners match (the rest of the outline stays 1px grey).
     border-top: 5px solid var(--purple);
 
-    // No gap above the exercises; a 2px divider line stands in for the header tile's missing bottom border.
-    // This divider stays at 2px to clearly separate the header from the first exercise; the rest of the
-    // group outline and the tile dividers are 1px.
     .sidebar-group-content {
         margin-top: 0;
         border-top: 2px solid var(--border-color);
     }
 
-    // Divider between stacked exercise tiles (the last one keeps the container's rounded bottom corners).
     .sidebar-group-variant:not(:last-child) {
         border-bottom: 1px solid var(--border-color);
     }
-
-    // The tiles square themselves off, drop their own outline, and (for the header tile) draw the purple accent
-    // tint — see the `:host-context(.sidebar-group--connected)` and `.group-header` rules in
-    // sidebar-card-medium.component.scss. Styling them from here would mean reaching into another component.
 }

@@ -14,9 +14,7 @@
     cursor: grab;
 }
 
-// Mass-actions bar: expand its height (and fade in) on appear instead of snapping in and shoving the
-// exercise cards down, and collapse it again on the last deselect. `overflow: hidden` clips the row
-// while the height animates; `max-height` is animatable where `height: auto` is not.
+// Mass-actions bar animates its height open/closed rather than snapping in and shoving the cards down
 .selection-entering {
     display: block;
     overflow: hidden;
@@ -72,8 +70,6 @@
     min-width: 0;
 }
 
-// Lets the card shrink below its content's intrinsic width so the table inside can scroll instead of
-// stretching the page (the default `min-width: auto` on a flex item would prevent that).
 .exercise-card-host {
     min-width: 0;
 }

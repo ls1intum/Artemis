@@ -87,8 +87,6 @@
     }
 }
 
-// Per-exercise-type accent, set by `accentClass` in the component. The values live in the theme files
-// (--exercise-accent-*) so they stay theme-aware; this only selects which one applies.
 .card--programming {
     --card-accent: var(--exercise-accent-programming);
 }

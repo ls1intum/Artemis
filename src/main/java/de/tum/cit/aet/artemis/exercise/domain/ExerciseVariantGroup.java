@@ -32,8 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  * are non-owning and outlive the group's removal.
  * <p>
  * A {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}'s "build and test student submissions after due
- * date" is <em>not</em> shared: it is derived per exercise from its own build plan, so members legitimately differ. Since it
- * derives from the (shared) due date, each member simply keeps its own.
+ * date" is <em>not</em> shared: it is derived per exercise from the due date and build plan, so each member keeps its own.
  */
 @Entity
 @Table(name = "exercise_variant_group")

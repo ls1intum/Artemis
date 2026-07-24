@@ -13,27 +13,18 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
  * Contains a course (e.g. shown in the course-card.component) and different types of scores.
  *
  * @param course                        the course
- * @param totalScores                   the total scores for the course, including the total max and reachable points and the total scores of the currently logged in student
- *                                          (including
- *                                          total absolute and relative scores).
- * @param textScores                    the scores for just the text exercises in the course, including the max and reachable points and the scores of the currently logged in
- *                                          student
- * @param programmingScores             the scores for just the programming exercises in the course, including the max and reachable points and the scores of the currently logged
- *                                          in
- *                                          student
- * @param modelingScores                the scores for just the modeling exercises in the course, including the max and reachable points and the scores of the currently logged in
- *                                          student
- * @param fileUploadScores              the scores for just the file upload exercises in the course, including the max and reachable points and the scores of the currently logged
- *                                          in
- *                                          student
- * @param quizScores                    the scores for just the quiz exercises in the course, including the max and reachable points and the scores of the currently logged in
- *                                          student
- * @param participationResults          the relevant result for each participation.
+ * @param totalScores                   the total scores for the course (max and reachable points plus the student's absolute and relative scores)
+ * @param textScores                    the scores for just the text exercises (max and reachable points plus the student's scores)
+ * @param programmingScores             the scores for just the programming exercises (max and reachable points plus the student's scores)
+ * @param modelingScores                the scores for just the modeling exercises (max and reachable points plus the student's scores)
+ * @param fileUploadScores              the scores for just the file upload exercises (max and reachable points plus the student's scores)
+ * @param quizScores                    the scores for just the quiz exercises (max and reachable points plus the student's scores)
+ * @param participationResults          the relevant result for each participation
  * @param courseNotificationCount       the number of notifications for the course
  * @param irisEnabledInCourse           whether the Iris course chat is enabled for this course
- * @param achievedPointsPerVariantGroup the points the student earns from each exercise variant group, keyed by group id and already capped at the group's maxPoints and adjusted
- *                                          for plagiarism verdicts. Empty when the course has no capped variant groups. Lets the client show a group's course-score contribution
- *                                          without re-deriving it (which would miss plagiarism deductions).
+ * @param achievedPointsPerVariantGroup the points the student earns from each exercise variant group, keyed by group id, already capped at the group's maxPoints and adjusted for
+ *                                          plagiarism verdicts. Empty when the course has no capped variant groups. Lets the client show a group's contribution without
+ *                                          re-deriving it (which would miss plagiarism deductions).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,

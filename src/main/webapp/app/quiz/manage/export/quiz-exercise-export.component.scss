@@ -1,6 +1,3 @@
-// The component host sits between PrimeNG's .p-dialog-content and the root div. It must be a flex
-// column that fills the (fixed-height) dialog content so the inner table can scroll and the footer
-// can stay pinned to the bottom.
 :host {
     display: flex;
     flex-direction: column;
@@ -9,7 +6,6 @@
 }
 
 .edit-quiz-footer {
-    // Pinned to the bottom of the dialog as a non-scrolling flex item; the table above it scrolls.
     flex: 0 0 auto;
     padding: 0.75rem 0;
     border-top: 1px solid var(--border-color);
