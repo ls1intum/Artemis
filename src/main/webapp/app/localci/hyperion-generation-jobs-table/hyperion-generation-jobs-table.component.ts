@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,7 +12,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
     selector: 'jhi-hyperion-generation-jobs-table',
     templateUrl: './hyperion-generation-jobs-table.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TableModule, TagModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe],
+    imports: [RouterLink, TumUiTableDirective, TumUiTagComponent, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class HyperionGenerationJobsTableComponent implements OnDestroy {
     readonly jobs = input.required<GenerationSandboxJob[]>();

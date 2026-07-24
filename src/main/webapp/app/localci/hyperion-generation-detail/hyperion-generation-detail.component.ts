@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faCircleCheck, faRotate, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faRotate, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -25,10 +23,10 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
     imports: [
         RouterLink,
         FaIconComponent,
-        ButtonModule,
-        ConfirmDialogModule,
-        MessageModule,
-        TagModule,
+        TumUiButtonComponent,
+        TumUiDialogComponent,
+        TumUiMessageComponent,
+        TumUiTagComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         TranslateDirective,
@@ -36,13 +34,10 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
         ArtemisDatePipe,
         ArtemisDurationFromSecondsPipe,
     ],
-    providers: [ConfirmationService],
 })
 export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly buildAgentsService = inject(BuildAgentsService);
-    private readonly confirmationService = inject(ConfirmationService);
-    private readonly translateService = inject(TranslateService);
 
     readonly job = signal<GenerationSandboxJob | undefined>(undefined);
     readonly loading = signal(false);
@@ -55,12 +50,14 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     readonly released = signal(false);
     readonly naturallyEnded = signal(false);
     readonly now = signal(Date.now());
+    readonly confirmCancelVisible = signal(false);
 
     readonly jobId = this.route.snapshot.paramMap.get('jobId') ?? '';
     readonly agentName = this.route.snapshot.queryParamMap.get('agentName') ?? '';
     readonly faRotate = faRotate;
     readonly faSpinner = faSpinner;
     readonly faCircleCheck = faCircleCheck;
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     private durationInterval?: ReturnType<typeof setInterval>;
     private refreshInterval?: ReturnType<typeof setInterval>;
@@ -144,20 +141,16 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
         if (!job || this.canceling()) {
             return;
         }
-        this.confirmationService.confirm({
-            header: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.cancelTitle'),
-            message: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.cancelQuestion', {
-                exerciseId: job.exerciseId,
-                userLogin: job.userLogin,
-            }),
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.confirmCancel'),
-            rejectLabel: this.translateService.instant('artemisApp.buildAgents.generationSandboxes.keepRunning'),
-            acceptButtonProps: { severity: 'danger' },
-            rejectButtonProps: { severity: 'secondary', outlined: true },
-            defaultFocus: 'reject',
-            accept: () => this.cancel(job),
-        });
+        this.confirmCancelVisible.set(true);
+    }
+
+    acceptCancel(): void {
+        this.confirmCancelVisible.set(false);
+        const job = this.job();
+        if (!job || this.canceling()) {
+            return;
+        }
+        this.cancel(job);
     }
 
     elapsedSeconds(timestamp: string): number {

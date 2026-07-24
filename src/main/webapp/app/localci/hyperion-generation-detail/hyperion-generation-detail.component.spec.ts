@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
-import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
@@ -98,11 +97,11 @@ describe('HyperionGenerationDetailComponent', () => {
         const cancellation = new Subject<void>();
         service.cancelGeneration.mockReturnValue(cancellation);
         fixture.componentInstance.ngOnInit();
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirm = vi.spyOn(confirmationService, 'confirm');
 
         fixture.componentInstance.confirmCancel();
-        confirm.mock.calls[0][0].accept?.();
+        expect(fixture.componentInstance.confirmCancelVisible()).toBe(true);
+        fixture.componentInstance.acceptCancel();
+        expect(fixture.componentInstance.confirmCancelVisible()).toBe(false);
 
         expect(service.cancelGeneration).toHaveBeenCalledWith(42, 'job-1');
         expect(fixture.componentInstance.canceling()).toBe(true);

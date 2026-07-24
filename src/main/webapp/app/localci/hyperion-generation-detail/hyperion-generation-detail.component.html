@@ -1,14 +1,12 @@
-<p-confirmDialog />
-
 <h1 *adminTitleBarTitle id="hyperion-generation-detail-heading" class="mb-0 text-xl" jhiTranslate="artemisApp.buildAgents.generationSandboxes.detailTitle"></h1>
 
 <div *adminTitleBarActions class="flex items-center gap-2">
     @if (job() && !released() && !naturallyEnded()) {
-        <p-button severity="danger" size="small" [loading]="canceling()" [disabled]="cancellationRequested()" (onClick)="confirmCancel()">
+        <tum-ui-button severity="danger" size="small" [loading]="canceling()" [disabled]="cancellationRequested()" (clicked)="confirmCancel()">
             <span
                 [jhiTranslate]="cancellationRequested() ? 'artemisApp.buildAgents.generationSandboxes.cancellationRequested' : 'artemisApp.buildAgents.generationSandboxes.cancel'"
             ></span>
-        </p-button>
+        </tum-ui-button>
     }
 </div>
 
@@ -29,33 +27,45 @@
         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></span>
     </div>
 } @else if (loadFailed()) {
-    <p-message severity="error" class="mb-3 block">
+    <tum-ui-message severity="error" styleClass="mb-3 block">
         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
-        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load()">
+        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load()">
             <fa-icon [icon]="faRotate" />
             <span jhiTranslate="metrics.refresh.button"></span>
-        </p-button>
-    </p-message>
+        </tum-ui-button>
+    </tum-ui-message>
 } @else if (notFound()) {
-    <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound" />
+    <tum-ui-message severity="warn" styleClass="mb-3 block">
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound"></span>
+    </tum-ui-message>
 }
 
 @if (job(); as generation) {
     @if (backgroundRefreshFailed()) {
-        <p-message severity="warn" class="mb-3 block">
+        <tum-ui-message severity="warn" styleClass="mb-3 block">
             <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.refreshFailed"></span>
-            <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load(false)" jhiTranslate="metrics.refresh.button" />
-        </p-message>
+            <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load(false)">
+                <span jhiTranslate="metrics.refresh.button"></span>
+            </tum-ui-button>
+        </tum-ui-message>
     }
     @if (cancelFailed()) {
-        <p-message severity="error" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed" />
+        <tum-ui-message severity="error" styleClass="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed"></span>
+        </tum-ui-message>
     }
     @if (released()) {
-        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.endedAfterCancellationRequest" />
+        <tum-ui-message severity="info" styleClass="mb-3 block" role="status">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.endedAfterCancellationRequest"></span>
+        </tum-ui-message>
     } @else if (naturallyEnded()) {
-        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.completed" />
+        <tum-ui-message severity="info" styleClass="mb-3 block" role="status">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.completed"></span>
+        </tum-ui-message>
     } @else if (cancellationRequested()) {
-        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancellationPending" />
+        <tum-ui-message severity="info" styleClass="mb-3 block" role="status">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancellationPending"></span>
+        </tum-ui-message>
     }
 
     <div class="mb-3 rounded-lg border p-4">
@@ -63,7 +73,7 @@
             <fa-icon [icon]="released() || naturallyEnded() ? faCircleCheck : faSpinner" [animation]="released() || naturallyEnded() ? undefined : 'spin'" size="2x" />
             <div class="flex flex-wrap items-center gap-2">
                 <h2 class="mb-0 text-xl">{{ modeKey(generation.mode) | artemisTranslate }} · {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})</h2>
-                <p-tag
+                <tum-ui-tag
                     [severity]="released() || naturallyEnded() ? 'secondary' : 'info'"
                     [value]="
                         (released()
@@ -137,4 +147,32 @@
             </dd>
         </dl>
     </section>
+
+    <tum-ui-dialog
+        [(visible)]="confirmCancelVisible"
+        [modal]="true"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [dismissableMask]="true"
+        [draggable]="false"
+        [appendTo]="'body'"
+        [style]="{ width: '32rem' }"
+        [header]="'artemisApp.buildAgents.generationSandboxes.cancelTitle' | artemisTranslate"
+    >
+        <div class="flex items-start gap-2">
+            <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+            <span
+                jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelQuestion"
+                [translateValues]="{ exerciseId: generation.exerciseId, userLogin: generation.userLogin }"
+            ></span>
+        </div>
+        <ng-template #footer>
+            <tum-ui-button type="button" severity="secondary" size="small" variant="outlined" (clicked)="confirmCancelVisible.set(false)">
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.keepRunning"></span>
+            </tum-ui-button>
+            <tum-ui-button type="button" severity="danger" size="small" (clicked)="acceptCancel()">
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.confirmCancel"></span>
+            </tum-ui-button>
+        </ng-template>
+    </tum-ui-dialog>
 }
