@@ -377,9 +377,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     private Exam prepareExamDataWithSummaryPublicationDateInTheFuture() throws Exception {
         var exam = prepareExamDataForDataExportCreation("examNoSummary");
-        // both dates in the future so neither the summary-publication gate nor the results-published safeguard releases the exercise content
-        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
-        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        // both dates in the future (summary strictly before results, preserving the invariant) so neither the summary-publication gate nor the results-published safeguard
+        // releases the exercise content
+        var baseTime = ZonedDateTime.now();
+        exam.setExamSummaryPublicationDate(baseTime.plusDays(1));
+        exam.setPublishResultsDate(baseTime.plusDays(2));
         return examRepository.save(exam);
     }
 

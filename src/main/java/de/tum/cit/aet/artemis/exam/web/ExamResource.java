@@ -388,7 +388,14 @@ public class ExamResource {
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
-        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        ZonedDateTime newEndDate = exam.getEndDate().plusSeconds(workingTimeChange);
+        // The submission overview must never become visible while the exam is still running. Reject an extension that would move the end date to or past the configured
+        // examSummaryPublicationDate (the same invariant enforced on create/update). The instructor has to move the publication date first in that case.
+        if (exam.getExamSummaryPublicationDate() != null && !newEndDate.isBefore(exam.getExamSummaryPublicationDate())) {
+            throw new BadRequestAlertException("The working time cannot be extended to or past the submission overview publication date. Move that date first.", ENTITY_NAME,
+                    "examSummaryPublicationDateConflict");
+        }
+        exam.setEndDate(newEndDate);
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
