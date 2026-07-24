@@ -62,6 +62,15 @@ describe('TumUiTableDirective', () => {
         return fixture.debugElement.query(By.directive(TumUiTableDirective)).injector.get(TumUiTableDirective);
     }
 
+    it('projects the consumer thead/tbody through unwrapped', () => {
+        // The attribute component templates a bare <ng-content />; the rendered DOM must stay a plain
+        // <table> whose direct children are the consumer's own sections, with no wrapper element added.
+        const table = (fixture.nativeElement as HTMLElement).querySelector('table')!;
+        expect(Array.from(table.children).map((child) => child.tagName)).toEqual(['THEAD', 'TBODY']);
+        expect(table.querySelector('thead th')?.textContent?.trim()).toBe('Header');
+        expect(table.querySelector('tbody td')?.textContent?.trim()).toBe('Cell');
+    });
+
     it('applies the base + normal-size p-table-matched styling classes', () => {
         const cls = tableClass();
         expect(cls).toContain('tum-ui-table');

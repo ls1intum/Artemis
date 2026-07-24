@@ -7,12 +7,12 @@ import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TableModule } from 'primeng/table';
 import { CheckboxModule } from 'primeng/checkbox';
-import { TagModule } from 'primeng/tag';
 import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -23,9 +23,6 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
-
-/** The severities a PrimeNG `p-tag` accepts. */
-type TagSeverity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
@@ -60,25 +57,19 @@ interface ExerciseRow {
     releaseDate: dayjs.Dayjs | undefined;
     dueDate: dayjs.Dayjs | undefined;
     assessmentDueDate: dayjs.Dayjs | undefined;
-    difficultySeverity: TagSeverity;
+    difficultySeverity: TumUiTagSeverity;
     owningGroupId: number | undefined;
     isQuizNonIndividual: boolean;
     nonIndividualQuizTooltip: string | undefined;
     /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
     quizStatusLabel: string | undefined;
-    /** `undefined` renders the tag in the brand primary colour — see {@link ExerciseTableComponent.quizStatusSeverity}. */
-    quizStatusSeverity: TagSeverity | undefined;
+    /** Severity of the quiz status badge. Only read when {@link quizStatusLabel} is set, so non-quiz rows carry a default. */
+    quizStatusSeverity: TumUiTagSeverity;
     /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
     quizModeKey: string | undefined;
     hasCategories: boolean;
     /** True when the row has neither categories nor any quiz badge, so the "none" placeholder is shown instead. */
     showNoCategoriesPlaceholder: boolean;
-}
-
-/** Sort indicator (caret icon + `aria-sort` value) for one column header. */
-interface SortIndicator {
-    icon: IconProp;
-    ariaSort: 'ascending' | 'descending' | 'none';
 }
 
 @Component({
@@ -93,10 +84,11 @@ interface SortIndicator {
         RouterLink,
         FormsModule,
         FaIconComponent,
-        TableModule,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
         TumUiSelectComponent,
         CheckboxModule,
-        TagModule,
+        TumUiTagComponent,
         TumUiTooltipDirective,
         CdkDropList,
         CdkDrag,
@@ -143,10 +135,6 @@ export class ExerciseTableComponent {
     /** Only the enums the template still references need a passthrough; the rest are used from TypeScript only. */
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly NO_GROUP_OPTION_VALUE = NO_GROUP_OPTION_VALUE;
-
-    protected readonly faSort = faSort;
-    protected readonly faCaretUp = faCaretUp;
-    protected readonly faCaretDown = faCaretDown;
 
     readonly sortColumn = signal<SortColumn>('title');
     readonly sortAsc = signal(true);
@@ -205,23 +193,12 @@ export class ExerciseTableComponent {
                 isQuizNonIndividual: this.isQuizNonIndividual(exercise),
                 nonIndividualQuizTooltip: this.nonIndividualQuizTooltip(exercise),
                 quizStatusLabel,
-                quizStatusSeverity: quiz ? this.quizStatusSeverity(quiz) : undefined,
+                quizStatusSeverity: quiz ? this.quizStatusSeverity(quiz) : 'secondary',
                 quizModeKey: quiz?.quizMode ? this.quizModeKey(quiz) : undefined,
                 hasCategories,
                 showNoCategoriesPlaceholder: !hasCategories && !quiz?.quizMode && !quizStatusLabel,
             };
         });
-    });
-
-    /** Caret icon and `aria-sort` value per sortable column, so the header does not call a method per binding. */
-    readonly sortIndicators = computed<Record<SortColumn, SortIndicator>>(() => {
-        const indicatorFor = (column: SortColumn): SortIndicator => ({ icon: this.sortIcon(column), ariaSort: this.ariaSort(column) });
-        return {
-            title: indicatorFor('title'),
-            dueDate: indicatorFor('dueDate'),
-            points: indicatorFor('points'),
-            difficulty: indicatorFor('difficulty'),
-        };
     });
 
     /**
@@ -293,21 +270,15 @@ export class ExerciseTableComponent {
         }
     }
 
-    sortIcon(col: SortColumn) {
-        if (this.sortColumn() !== col) return this.faSort;
-        return this.sortAsc() ? this.faCaretUp : this.faCaretDown;
-    }
-
-    /** Current sort state of a column for `aria-sort`, so assistive tech announces the active order. */
-    ariaSort(col: SortColumn): 'ascending' | 'descending' | 'none' {
-        if (this.sortColumn() !== col) return 'none';
-        return this.sortAsc() ? 'ascending' : 'descending';
-    }
-
-    /** Keyboard equivalent of the header click; prevents default so Space does not scroll the page. */
-    onSortKeydown(event: Event, col: SortColumn): void {
-        event.preventDefault();
-        this.sortBy(col);
+    /**
+     * Applies a sort requested by a `[tumUiSortableColumn]` header. The kit table is *controlled*: it holds no sort
+     * state of its own, it only reports the field and the order (1 ascending / -1 descending) that the click implies,
+     * so the state stays in {@link sortColumn} / {@link sortAsc} here and {@link sortedExercises} keeps driving the
+     * rendering. The kit's toggle rule mirrors {@link sortBy}, so clicking and calling `sortBy` behave identically.
+     */
+    protected onSortChange(event: TumUiTableSortEvent): void {
+        this.sortColumn.set(event.field as SortColumn);
+        this.sortAsc.set(event.order > 0);
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {
@@ -356,7 +327,7 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
-    difficultySeverity(exercise: Exercise): TagSeverity {
+    difficultySeverity(exercise: Exercise): TumUiTagSeverity {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
                 return 'success';
@@ -401,8 +372,6 @@ export class ExerciseTableComponent {
         return `${exercise.id}|${q.exerciseVariantGroup?.id ?? ''}|${q.status ?? ''}|${q.visibleToStudents ?? ''}`;
     }
 
-    protected readonly rowTrackBy = (_index: number, row: ExerciseRow): unknown => this.exerciseTrackKey(row.exercise);
-
     /**
      * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.
      * Synchronized/batched quizzes must stay out of groups; the server enforces this independently.
@@ -437,11 +406,13 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * Practice mode returns `undefined` on purpose: `p-tag` applies a severity class only for the six named
-     * severities, so an unset severity falls back to the base tag, which the theme paints in the brand primary
-     * colour — the equivalent of the `bg-primary` badge this replaced, and distinct from the (cyan) visible state.
+     * Under `p-tag` the practice state relied on an *unset* severity falling through to the brand-primary base tag.
+     * The kit tag has no `primary` and defaults to `secondary`, which would make practice mode indistinguishable from
+     * both the invisible badge and the quiz-mode badge beside it, so it shares `info` with the visible state instead.
+     * The two never collide on screen — a quiz has exactly one status, so a row shows either the visible badge or the
+     * practice one, never both.
      */
-    quizStatusSeverity(exercise: QuizExercise): TagSeverity | undefined {
+    quizStatusSeverity(exercise: QuizExercise): TumUiTagSeverity {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
                 return 'secondary';
@@ -450,7 +421,7 @@ export class ExerciseTableComponent {
             case QuizStatus.ACTIVE:
                 return 'success';
             case QuizStatus.OPEN_FOR_PRACTICE:
-                return undefined;
+                return 'info';
             default:
                 return 'secondary';
         }

@@ -4,7 +4,6 @@ import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import dayjs from 'dayjs/esm';
-import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseTableComponent, NO_GROUP_OPTION_VALUE, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
@@ -122,24 +121,18 @@ describe('ExerciseTableComponent', () => {
         });
     });
 
-    describe('sort header helpers', () => {
-        it('reports icon and aria-sort per column state', () => {
+    describe('sort state', () => {
+        it('toggles the direction on the active column and resets to ascending on a new one', () => {
             component.sortBy('points');
-            expect(component.ariaSort('points')).toBe('ascending');
-            expect(component.ariaSort('title')).toBe('none');
-            expect(component.sortIcon('points')).toBe(component['faCaretUp']);
-            expect(component.sortIcon('title')).toBe(component['faSort']);
-
-            component.sortBy('points');
-            expect(component.ariaSort('points')).toBe('descending');
-            expect(component.sortIcon('points')).toBe(component['faCaretDown']);
-        });
-
-        it('handles keyboard sorting and prevents the default scroll', () => {
-            const event = { preventDefault: vi.fn() } as unknown as Event;
-            component.onSortKeydown(event, 'points');
-            expect(event.preventDefault).toHaveBeenCalled();
             expect(component.sortColumn()).toBe('points');
+            expect(component.sortAsc()).toBe(true);
+
+            component.sortBy('points');
+            expect(component.sortAsc()).toBe(false);
+
+            component.sortBy('title');
+            expect(component.sortColumn()).toBe('title');
+            expect(component.sortAsc()).toBe(true);
         });
     });
 
@@ -289,8 +282,8 @@ describe('ExerciseTableComponent', () => {
             expect(component.quizStatusSeverity({ status: QuizStatus.INVISIBLE } as QuizExercise)).toBe('secondary');
             expect(component.quizStatusSeverity({ status: QuizStatus.VISIBLE } as QuizExercise)).toBe('info');
             expect(component.quizStatusSeverity({ status: QuizStatus.ACTIVE } as QuizExercise)).toBe('success');
-            // Unset severity: the tag falls back to the brand primary colour.
-            expect(component.quizStatusSeverity({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBeUndefined();
+            // Practice mode shares `info` with the visible state; the two can never appear on the same row.
+            expect(component.quizStatusSeverity({ status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise)).toBe('info');
             expect(component.quizStatusSeverity({} as QuizExercise)).toBe('secondary');
         });
 
@@ -345,10 +338,10 @@ describe('ExerciseTableComponent', () => {
             expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
             expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
 
-            const difficultyTag = element.querySelector('p-tag');
+            const difficultyTag = element.querySelector('tum-ui-tag');
             expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);
-            // PrimeNG puts the severity class on the tag host element.
-            expect(difficultyTag?.classList).toContain('p-tag-success');
+            // The kit tag carries its severity on the inner pill span, not the host element.
+            expect(difficultyTag?.querySelector('span')?.getAttribute('data-severity')).toBe('success');
         });
 
         it('renders the effective dates of a row', () => {
@@ -359,7 +352,7 @@ describe('ExerciseTableComponent', () => {
 
         it('renders the quiz status and mode badges for a quiz row', () => {
             const element = renderRows([quiz]);
-            const tags = Array.from(element.querySelectorAll('p-tag')).map((tag) => tag.textContent ?? '');
+            const tags = Array.from(element.querySelectorAll('tum-ui-tag')).map((tag) => tag.textContent ?? '');
 
             expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
             expect(tags.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
@@ -369,7 +362,7 @@ describe('ExerciseTableComponent', () => {
             const bare = { id: 4, title: 'Bare', type: ExerciseType.TEXT, maxPoints: 1 } as Exercise;
             expect(renderRows([bare]).textContent).toContain('artemisApp.exerciseManagement.table.none');
             // The quiz row carries status and mode badges, so the categories cell must not fall back to the placeholder.
-            expect(renderRows([quiz]).querySelector('p-tag')).not.toBeNull();
+            expect(renderRows([quiz]).querySelector('tum-ui-tag')).not.toBeNull();
         });
 
         it('disables the drag handle for a non-individual quiz', () => {
@@ -390,7 +383,7 @@ describe('ExerciseTableComponent', () => {
             expect(element.querySelector('.drag-handle')).not.toBeNull();
             expect(element.querySelector('tum-ui-select')).not.toBeNull();
             // The group column replaces the difficulty column, so the difficulty badge is not rendered.
-            expect(element.querySelector('p-tag')).toBeNull();
+            expect(element.querySelector('tum-ui-tag')).toBeNull();
         });
 
         it('labels the group dropdown of an ungrouped exercise with "no group" rather than leaving it blank', async () => {
@@ -411,12 +404,30 @@ describe('ExerciseTableComponent', () => {
 
         it('reflects the active sort column in the header', () => {
             renderRows([quiz]);
-            const titleHeader = fixture.nativeElement.querySelectorAll('th.sort-col')[0] as HTMLElement;
+            const titleHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="title"]') as HTMLElement;
             expect(titleHeader.getAttribute('aria-sort')).toBe('ascending');
 
             component.sortBy('title');
             fixture.detectChanges();
             expect(titleHeader.getAttribute('aria-sort')).toBe('descending');
+        });
+
+        it('sorts when a sortable header is clicked', () => {
+            // Proves the onSortChange adapter is wired: the kit table is controlled, so a header click only
+            // emits (field, order) and this component must apply it to sortColumn/sortAsc.
+            renderRows([quiz]);
+            const pointsHeader = fixture.nativeElement.querySelector('th[tumUiSortableColumn="points"]') as HTMLElement;
+
+            pointsHeader.click();
+            fixture.detectChanges();
+            expect(component.sortColumn()).toBe('points');
+            expect(component.sortAsc()).toBe(true);
+            expect(pointsHeader.getAttribute('aria-sort')).toBe('ascending');
+
+            pointsHeader.click();
+            fixture.detectChanges();
+            expect(component.sortAsc()).toBe(false);
+            expect(pointsHeader.getAttribute('aria-sort')).toBe('descending');
         });
     });
 });

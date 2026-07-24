@@ -1,4 +1,4 @@
-import { Directive, booleanAttribute, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, booleanAttribute, computed, input, output } from '@angular/core';
 
 /** Cell density, mirroring PrimeNG's p-table `size` (Aura `sm` / default / `lg` paddings). */
 export type TumUiTableSize = 'small' | 'normal' | 'large';
@@ -27,9 +27,13 @@ const SIZE_PADDING: Record<TumUiTableSize, string> = {
 
 // Header + body cell chrome, expressed as arbitrary-variant descendant utilities on the <table> host so
 // they reach the consumer's hand-written thead/th and tbody/td (same technique the existing tum-ui-table
-// uses for its striping). Colors are the semantic surface ramp; the 1px separators carry an explicit
-// `border-solid` because Artemis ships no Tailwind Preflight (a bare `border-b` would default to
-// `border-style: none` and render nothing). Matches PrimeNG's p-table content border + header styling.
+// uses for its striping). Colors are the semantic surface ramp, matching PrimeNG's p-table content border
+// + header styling.
+//
+// NOTE: the separator WIDTH/STYLE below is inert while Bootstrap is loaded — its unlayered Reboot outranks
+// these layered utilities — so the actual 1px lines come from tum-ui-table.directive.scss. The `border-b` /
+// `border-solid` utilities are kept so the intent stays visible here and the chrome survives Bootstrap's
+// eventual removal; the `border-surface-*` COLOR utilities are unaffected and still apply. See the SCSS.
 const HEADER_CLASSES =
     '[&_thead_th]:text-left [&_thead_th]:font-semibold [&_thead_th]:whitespace-nowrap ' +
     '[&_thead_th]:bg-surface-0 [&_thead_th]:text-surface-700 dark:[&_thead_th]:bg-surface-900 dark:[&_thead_th]:text-surface-0 ' +
@@ -66,12 +70,26 @@ const SCROLLABLE_CLASSES = '[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:
  * (parity with p-table's `[customSort]` + `[sortField]` + `[sortOrder]`): the directive holds no internal
  * sort state, it reflects the bound `sortField`/`sortOrder` into the header icons and emits
  * {@link TumUiTableSortEvent} on `sortChange` for the consumer to run its own server/manual sort.
+ *
+ * Implemented as an attribute-selector `@Component` (the Angular Material `button[mat-button]` pattern), not a
+ * plain `@Directive`, because it needs a stylesheet — see below and {@link TumUiButtonDirective}, which is a
+ * component for the same reason. The template is a bare `<ng-content />`, so the consumer's `<thead>`/`<tbody>`
+ * project through unwrapped and the rendered DOM stays a plain `<table>`.
+ *
+ * `ViewEncapsulation.None` is REQUIRED here, unlike everywhere else in the kit: emulated encapsulation compiles
+ * a `:host th` rule to `[_nghost-x] th[_ngcontent-x]`, and projected cells carry the *consumer's* `_ngcontent`
+ * attribute, so a scoped rule could never match them. Every selector in the stylesheet is therefore scoped under
+ * the `.tum-ui-table` class this component already applies, which keeps the blast radius to kit tables only.
  */
-@Directive({
+@Component({
     selector: 'table[tumUiTable]',
+    template: '<ng-content />',
+    styleUrl: './tum-ui-table.directive.scss',
+    encapsulation: ViewEncapsulation.None,
     host: {
         '[class]': 'hostClasses()',
     },
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableDirective {
     /** Cell density (parity with p-table `size`; admin tables use `'small'`). */
