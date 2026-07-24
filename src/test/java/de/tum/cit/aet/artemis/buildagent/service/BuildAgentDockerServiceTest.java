@@ -146,7 +146,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         BuildAgentDTO buildAgent = new BuildAgentDTO("buildagent1", "address1", "buildagent1");
-        var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null, null, null, null);
         // The Docker client mock is shared by the whole class, so drop what earlier tests recorded on it. This keeps its
         // stubs but makes the verification below speak about this test only.
         clearInvocations(dockerClient);

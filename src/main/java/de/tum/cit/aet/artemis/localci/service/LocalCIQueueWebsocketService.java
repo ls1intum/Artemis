@@ -128,7 +128,7 @@ public class LocalCIQueueWebsocketService {
             // record component is what actually keeps it out of every payload, including the single-item updates and
             // the admin endpoints that do not pass through here; clearing it is a redundant second layer on this path.
             filteredQueuedJobs.add(new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(),
-                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, null));
+                    job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, job.submissionId(), job.containerName(), null));
 
         }
         return filteredQueuedJobs;

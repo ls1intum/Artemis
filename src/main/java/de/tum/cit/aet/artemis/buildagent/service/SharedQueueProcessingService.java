@@ -787,7 +787,7 @@ public class SharedQueueProcessingService {
                 // accepted. This item travels on to the result queue and the finished build job records.
                 BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
                         buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
-                        null, null);
+                        null, buildJob.submissionId(), buildJob.containerName(), null);
 
                 List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
                 buildLogsMap.removeBuildLogs(buildJob.id());

@@ -274,8 +274,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // rather than adding to it.
         String cloneToken = buildJobCloneTokenService.generateCloneToken();
 
+        // submissionId and containerName stay null here: multi-container scheduling sets them when a build plan with
+        // containers is split into one job per container. A build plan without containers builds the whole submission.
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, cloneToken);
+                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, cloneToken);
 
         long buildJobDataNanos = System.nanoTime() - stageStart;
         stageStart = System.nanoTime();
