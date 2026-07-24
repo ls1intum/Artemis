@@ -867,7 +867,7 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
 
 ### Confirm dialog — `tum-ui-confirm-dialog` + `TumUiConfirmationService`
 
-The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **per component** (like PrimeNG) so each dialog has its own request stream.
+The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback.
 
 <Shots light={TumuiConfirmDialogLight} dark={TumuiConfirmDialogDark} alt="tum-ui-confirm-dialog" />
 
