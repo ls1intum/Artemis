@@ -923,13 +923,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Determines the maximum number of decimal places allowed for this exercise's max points and bonus points.
-     * <p>
-     * Programming exercises use the course's {@link Course#getAccuracyOfScores()} (the "decimal places for score
-     * calculations" course setting) whenever the course can already be resolved at validation time. This is
-     * intentionally checked at write-time only: lowering a course's accuracy afterwards never retroactively
-     * invalidates already-persisted exercises, it only takes effect the next time an exercise is created/imported/saved.
-     * All other cases (other exercise types, or a course/exam that cannot yet be resolved, e.g. a transient exercise
-     * during creation before the course is attached) fall back to {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES}.
+     * Programming exercises use the course's {@link Course#getAccuracyOfScores()} setting when the course can already
+     * be resolved (checked at write-time only - lowering a course's accuracy later never retroactively invalidates
+     * persisted exercises, it only applies on the next save). All other cases fall back to
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES}.
      *
      * @return the maximum number of decimal places allowed for this exercise
      */
@@ -944,11 +941,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Checks that a points value (if present) does not exceed the given number of decimal places.
-     * <p>
-     * Trailing zeros are stripped before checking the scale: {@code BigDecimal.valueOf(100.0)} has a scale of 1 (not
-     * 0), since {@code Double#toString} always renders at least one fractional digit, which would otherwise reject
-     * whole numbers whenever {@code maxDecimalPlaces} is 0 (a valid {@link Course#getAccuracyOfScores()} value).
+     * Checks that a points value (if present) does not exceed the given number of decimal places. Trailing zeros are
+     * stripped before checking scale, since {@code BigDecimal.valueOf(100.0).scale()} is 1 (not 0) - {@code Double#toString}
+     * always renders a fractional digit, which would wrongly reject whole numbers when {@code maxDecimalPlaces} is 0.
      *
      * @param points           the points value to check, may be {@code null}
      * @param maxDecimalPlaces the maximum number of decimal places allowed
