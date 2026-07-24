@@ -17,7 +17,7 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import type { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -370,9 +370,9 @@ export class ExerciseService {
      * Replace dates in http-response including an array of exercises with the corresponding client time
      * @param res - Response from server including an array of exercise
      */
-    static convertExerciseArrayDatesFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseArrayDatesFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: E) => {
+            res.body.forEach((exercise: Exercise) => {
                 ExerciseService.convertExerciseDatesFromServer(exercise);
             });
         }
@@ -407,9 +407,9 @@ export class ExerciseService {
      * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
      */
-    static convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: E) => ExerciseService.parseExerciseCategories(exercise));
+            res.body.forEach((exercise: Exercise) => ExerciseService.parseExerciseCategories(exercise));
         }
         return res;
     }

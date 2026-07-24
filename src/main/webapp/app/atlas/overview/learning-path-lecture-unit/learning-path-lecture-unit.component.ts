@@ -39,7 +39,7 @@ export class LearningPathLectureUnitComponent {
     constructor() {
         effect(() => {
             const lectureUnitId = this.lectureUnitId();
-            untracked(() => this.loadLectureUnit(lectureUnitId));
+            void untracked(() => this.loadLectureUnit(lectureUnitId));
         });
     }
 
@@ -56,9 +56,10 @@ export class LearningPathLectureUnitComponent {
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
-        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
-        if (this.lectureUnit()?.completed === completionEvent.completed) {
+        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent, () => {
+            // Publish a new reference so the unit card reacts (zoneless change detection), then propagate to the navigation.
+            this.lectureUnit.update((unit) => (unit ? Object.assign({}, unit, { completed: completionEvent.completed }) : unit));
             this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
-        }
+        });
     }
 }

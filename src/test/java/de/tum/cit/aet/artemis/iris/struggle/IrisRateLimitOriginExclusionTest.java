@@ -59,7 +59,7 @@ class IrisRateLimitOriginExclusionTest extends AbstractIrisIntegrationTest {
         var start = ZonedDateTime.now().minusHours(1);
         var end = ZonedDateTime.now().plusMinutes(1);
 
-        int count = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(userId, start, end);
+        int count = irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(userId, start, end);
         assertThat(count).isEqualTo(1);
     }
 }

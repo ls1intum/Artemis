@@ -53,10 +53,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
 
     readonly globalSearchEnabled = signal(false);
-    private examStartedSubscription: Subscription;
-    private testRunSubscription: Subscription;
-    private ltiSubscription: Subscription;
-    private globalSearchSubscription: Subscription;
+    private examStartedSubscription?: Subscription;
+    private testRunSubscription?: Subscription;
+    private ltiSubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -72,13 +72,13 @@ export class AppComponent implements OnInit, OnDestroy {
     readonly showPageRibbon = signal(true);
 
     constructor() {
-        this.setupErrorHandling().then(undefined);
+        void this.setupErrorHandling();
     }
 
     private async setupErrorHandling() {
         const profileInfo = this.profileService.getProfileInfo();
         // sentry is only activated if it was specified in the application.yml file
-        this.sentryErrorHandler.initSentry(profileInfo);
+        void this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -146,7 +146,7 @@ export class AppComponent implements OnInit, OnDestroy {
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
-                this.router.navigate(['/404']);
+                void this.router.navigate(['/404']);
             }
         });
 

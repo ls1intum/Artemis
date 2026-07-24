@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -9,11 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -140,5 +148,21 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
         // which can control the committed side; this integration path never checks out a real committed repo.)
         assertThat(pyrisDTOService.toPyrisSubmissionDTO(submission).submittedRepository()).isEmpty();
         assertThat(pyrisDTOService.toPyrisSubmissionDTO(submission, Map.<String, String>of()).submittedRepository()).isEmpty();
+    }
+
+    @Test
+    void testToPyrisMessageDTOList_excludesStoredActivityTrailFromHistory() throws Exception {
+        var message = new IrisMessage();
+        message.setId(1L);
+        message.setSender(IrisMessageSender.LLM);
+        message.addContent(new IrisTextMessageContent("visible answer"));
+        var activity = new PyrisActivityDTO("activity-1", PyrisActivityKind.TOOL, "lecture_content_retrieval", PyrisActivityState.FINISHED, "Lecture 1", "2 chunks", 120L);
+        message.setToolActivity(List.of(activity));
+
+        var result = pyrisDTOService.toPyrisMessageDTOList(List.of(message));
+
+        String serializedHistory = JsonObjectMapper.get().writeValueAsString(result);
+        assertThat(serializedHistory).contains("visible answer");
+        assertThat(serializedHistory).doesNotContain("activities", "toolActivity", "tool_activity", "lecture_content_retrieval");
     }
 }

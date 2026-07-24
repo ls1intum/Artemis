@@ -176,11 +176,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     // Tuple: [filePath, fileType]
     readonly creatingFile = signal<[string, FileType] | undefined>(undefined);
 
-    // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
-    treeViewMaxHeight: 5000;
+    // On develop this was a value-less type annotation (`treeViewMaxHeight: 5000`), i.e. undefined at runtime, so the
+    // intended 5000 cap was never actually applied to the [maxHeight] binding. Kept undefined-at-runtime here (via the
+    // definite-assignment marker) to preserve that exact behavior; actually applying the cap is a follow-up change.
+    treeViewMaxHeight!: number;
 
-    gitConflictState: GitConflictState;
-    conflictSubscription: Subscription;
+    gitConflictState?: GitConflictState;
+    conflictSubscription?: Subscription;
 
     // Icons
     faPlus = faPlus;
@@ -497,7 +499,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return { ...node, children: node.children.map(this.compressTree.bind(this)) };
+            return { ...node, children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)) };
         }
         // If the node has no children, there is nothing to compress.
         else {
@@ -738,6 +740,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
             }
         }
         return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
+    }
+
+    /**
+     * Returns the badges for a single file, or an empty array when the file has none.
+     * `fileBadges` is keyed by file path and may not contain an entry for every tree item.
+     */
+    getFileBadges(item: TreeViewItem<string>): FileBadge[] {
+        return this.fileBadges()[item.value] ?? [];
     }
 
     private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {

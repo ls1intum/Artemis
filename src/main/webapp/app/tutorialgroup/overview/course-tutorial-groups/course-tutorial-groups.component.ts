@@ -8,8 +8,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
@@ -17,14 +19,13 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
-import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -48,7 +49,7 @@ export class CourseTutorialGroupsComponent {
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
@@ -59,7 +60,11 @@ export class CourseTutorialGroupsComponent {
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
+
+    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | CourseLectureDetailsComponent | undefined>(undefined);
+    protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     constructor() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
@@ -90,6 +95,16 @@ export class CourseTutorialGroupsComponent {
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
     }
 
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent || componentRef instanceof CourseLectureDetailsComponent) {
+            this.activeDetail.set(componentRef);
+        }
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     private setTutorialGroupsAndTutorialLectures(courseId: number) {
         const course = this.courseStorageService.getCourse(courseId);
         const cachedTutorialGroups = course?.tutorialGroups;
@@ -108,11 +123,10 @@ export class CourseTutorialGroupsComponent {
 
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)))
+            .getTutorialGroupsForCourse(courseId)
+            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
             .subscribe({
-                next: ({ body }) => {
-                    const tutorialGroups = body ?? [];
+                next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
                     this.updateCachedTutorialGroups(tutorialGroups, courseId);
                 },
@@ -213,9 +227,9 @@ export class CourseTutorialGroupsComponent {
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
-            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
         } else if (nothingSelected && upcomingTutorialGroup) {
-            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
     }
 
@@ -226,11 +240,11 @@ export class CourseTutorialGroupsComponent {
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
         return toSignal(
             this.activatedRoute.parent!.paramMap.pipe(
-                map((parameterMap) => {
+                map((parameterMap): number | undefined => {
                     const courseIdParameter = parameterMap.get('courseId');
                     return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
                 }),
-                distinctUntilChanged(),
+                distinctUntilChanged<number | undefined>(),
             ),
             { initialValue: undefined },
         );

@@ -1,4 +1,6 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -7,8 +9,12 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonGroupComponent } from 'app/shared-ui/tum-ui/button-group/tum-ui-button-group.component';
+import { TumUiTableVirtualScrollComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-virtual-scroll.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 
 /**
  * Component for managing application log levels.
@@ -17,17 +23,42 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
-    styleUrls: ['./logs.component.scss'],
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        SlicePipe,
+        AdminTitleBarTitleDirective,
+        TumUiButtonComponent,
+        TumUiButtonGroupComponent,
+        TumUiTableVirtualScrollComponent,
+        TumUiInputDirective,
+    ],
 })
 export class LogsComponent implements OnInit {
     private readonly logsService = inject(LogsService);
 
+    /** Debounce delay (ms) before the filter is applied to the (potentially large) logger list */
+    private static readonly FILTER_DEBOUNCE_MS = 200;
+
+    /**
+     * Fixed virtual-scroll row height (px). MUST match the rendered body-row height, or the virtual scroller
+     * miscomputes the spacer and the list jumps / last rows become unreachable. ~60px for the current theme
+     * (small level button group + cell padding); keep in sync if the row markup changes.
+     */
+    protected readonly logsTableRowHeight = 60;
+
     /** All available loggers */
     readonly loggers = signal<Log[]>([]);
 
-    /** Filter string for logger names */
-    readonly filter = signal('');
+    /** Immediate value bound to the filter input (keeps typing responsive) */
+    readonly filterInput = signal('');
+
+    /** Debounced filter string actually used for filtering/sorting the logger list */
+    readonly filter = toSignal(toObservable(this.filterInput).pipe(debounceTime(LogsComponent.FILTER_DEBOUNCE_MS)), { initialValue: '' });
 
     /** Property to sort by */
     readonly orderProp = signal<keyof Log>('name');
@@ -77,10 +108,12 @@ export class LogsComponent implements OnInit {
 
     /**
      * Updates filter value for logger filtering.
+     * The bound input updates immediately for responsiveness, while the actual filter applied to the
+     * (potentially large) logger list is debounced so the filter+sort computation does not re-run on every keystroke.
      * @param value - The filter string
      */
     updateFilter(value: string): void {
-        this.filter.set(value);
+        this.filterInput.set(value);
     }
 
     /**

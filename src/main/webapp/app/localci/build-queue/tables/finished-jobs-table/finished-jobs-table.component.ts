@@ -1,23 +1,39 @@
 import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',
     styleUrl: './finished-jobs-table.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, NgClass, RouterLink, SortDirective, SortByDirective, ResultComponent, ArtemisDatePipe, SlicePipe],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        NgClass,
+        RouterLink,
+        ResultComponent,
+        ArtemisDatePipe,
+        SlicePipe,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class FinishedJobsTableComponent {
     // Inputs
@@ -45,7 +61,6 @@ export class FinishedJobsTableComponent {
     sortChange = output<void>();
 
     // Font Awesome icons
-    readonly faSort = faSort;
     readonly faCircleCheck = faCircleCheck;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
@@ -70,6 +85,23 @@ export class FinishedJobsTableComponent {
         if (jobId) {
             this.viewLogs.emit(jobId);
         }
+    }
+
+    /**
+     * Handles the table sort event emitted by the tum-ui sortable column.
+     * Maps the event onto the two-way `predicate`/`ascending` models and triggers a (server-side)
+     * reload via `onSortChange`. Guarded to ignore no-op events, which would otherwise cause redundant reloads.
+     * @param event The tum-ui table sort event ({ field, order }, order 1 = ascending, -1 = descending)
+     */
+    onTableSort(event: TumUiTableSortEvent): void {
+        const field = event.field ?? this.predicate();
+        const ascending = (event.order ?? 1) === 1;
+        if (field === this.predicate() && ascending === this.ascending()) {
+            return;
+        }
+        this.predicate.set(field);
+        this.ascending.set(ascending);
+        this.onSortChange();
     }
 
     /**

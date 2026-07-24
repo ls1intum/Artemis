@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -309,6 +310,25 @@ public class PyrisJobService {
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, ttl, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Runs the supplied action while holding the Hazelcast lock for the given Pyris job id.
+     *
+     * @param jobId    the job id whose map entry should be locked
+     * @param supplier the action to run under the lock
+     * @param <T>      the result type
+     * @return the result returned by the supplier
+     */
+    public <T> T runWithJobLock(String jobId, Supplier<T> supplier) {
+        var pyrisJobMap = getPyrisJobMap();
+        pyrisJobMap.lock(jobId);
+        try {
+            return supplier.get();
+        }
+        finally {
+            pyrisJobMap.unlock(jobId);
+        }
     }
 
     /**

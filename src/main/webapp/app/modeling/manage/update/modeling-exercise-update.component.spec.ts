@@ -2,7 +2,6 @@
  * Vitest tests for ModelingExerciseUpdateComponent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -17,7 +16,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -116,8 +115,6 @@ class StubMarkdownEditorMonacoComponent {
 }
 
 describe('ModelingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
@@ -151,12 +148,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = createModelingExercise(course);
         modelingExercise.id = 123;
 
-        routeData$ = new BehaviorSubject({ modelingExercise });
+        routeData$ = new BehaviorSubject<Data>({ modelingExercise });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [ModelingExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [ModelingExerciseUpdateComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -224,6 +221,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .overrideComponent(ModelingExerciseUpdateComponent, {

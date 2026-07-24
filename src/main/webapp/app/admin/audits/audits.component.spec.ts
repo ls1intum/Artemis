@@ -3,10 +3,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
 import { of } from 'rxjs';
 import { DatePipe } from '@angular/common';
 
@@ -37,8 +35,6 @@ function getDate(isToday = true) {
 }
 
 describe('AuditsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AuditsComponent;
     let fixture: ComponentFixture<AuditsComponent>;
     let service: AuditsService;
@@ -112,6 +108,50 @@ describe('AuditsComponent', () => {
         });
     });
 
+    describe('picker value round-trip', () => {
+        // The picker emits a Date/dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The conversion
+        // must use dayjs format tokens (YYYY-MM-DD), not Angular DatePipe tokens, or the URL value is malformed
+        // (e.g. "yyyy-06-We") and the picker can never round-trip it back.
+        it('stores a picker date as a yyyy-MM-dd string', () => {
+            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+            expect(comp.fromDate()).toBe('2026-06-17');
+            comp.updateToDate(new Date(2026, 5, 20, 0, 0, 0));
+            expect(comp.toDate()).toBe('2026-06-20');
+        });
+
+        it('clears the filter for an invalid picker value instead of keeping the previous date', () => {
+            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+
+            // The template passes undefined when fromPicker.isValid() is false (an invalid manual entry the picker
+            // keeps visible via keepInvalid); the previous valid date must not be written back, so the filter
+            // clears and canLoad() becomes false, pausing transition() rather than navigating with a stale value.
+            comp.updateFromDate(undefined);
+
+            expect(comp.fromDate()).toBe('');
+            expect(comp.canLoad()).toBe(false);
+        });
+
+        it('drops the loaded results when a date is deselected, so the table and paginator do not linger with dead pages', () => {
+            // Load a page of results whose total spans several pages.
+            const headers = new HttpHeaders().append('X-Total-Count', '42');
+            const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
+            vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse({ body: [audit], headers })));
+            comp.ngOnInit();
+            expect(comp.audits()).toHaveLength(1);
+            expect(comp.totalItems()).toBe(42);
+
+            // Deselecting the "from" date makes the range incomplete: transition() can no longer navigate/reload, so
+            // the stale rows + total must be cleared — otherwise the table and a multi-page paginator stay visible
+            // while the paginator's page change is a no-op (reported on the Audits page after deselecting a date).
+            comp.updateFromDate(undefined);
+            comp.transition();
+
+            expect(comp.canLoad()).toBe(false);
+            expect(comp.audits()).toEqual([]);
+            expect(comp.totalItems()).toBe(0);
+        });
+    });
+
     describe('By default, on init', () => {
         it('should set all default values correctly', () => {
             vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
@@ -146,13 +186,13 @@ describe('AuditsComponent', () => {
         });
     });
 
-    describe('pagination (PrimeNG paginator)', () => {
+    describe('pagination (tum-ui paginator)', () => {
         it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
             comp.ngOnInit(); // sets a valid date range so canLoad() is true
             const router = TestBed.inject(Router);
             (router.navigate as unknown as ReturnType<typeof vi.fn>).mockClear();
 
-            comp.onPageChange({ page: 2 } as PaginatorState);
+            comp.onPageChange(2);
 
             expect(comp.page()).toBe(3);
             expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
@@ -163,7 +203,7 @@ describe('AuditsComponent', () => {
             comp.fromDate.set('');
             const before = comp.page();
 
-            comp.onPageChange({ page: 4 } as PaginatorState);
+            comp.onPageChange(4);
 
             expect(comp.page()).toBe(before);
         });

@@ -25,7 +25,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     // set this attribute to hide the options to import relation
     allowRelationImport = false;
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route paramMap
     readonly isLoading = signal(false);
     isSubmitted = false;
     importRelations = true;
@@ -95,6 +95,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
                                 case CourseCompetencyType.PREREQUISITE:
                                     return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
                             }
+                            return undefined;
                         })
                         .filter((id): id is number => !!id),
                 );
@@ -198,7 +199,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      * Cancels the import and navigates back
      */
     onCancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**

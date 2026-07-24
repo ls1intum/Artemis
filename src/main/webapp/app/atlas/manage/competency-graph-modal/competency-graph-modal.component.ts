@@ -44,7 +44,7 @@ export class CompetencyGraphModalComponent {
 
             this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
 
-            untracked(() => this.loadCompetencyGraph(learningPathId));
+            untracked(() => void this.loadCompetencyGraph(learningPathId));
         });
     }
 

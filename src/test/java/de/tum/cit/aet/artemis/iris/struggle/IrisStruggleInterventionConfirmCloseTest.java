@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -138,7 +139,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-cc".equals(m.getProactiveEpisodeId())), eq(session),
                 eq(IrisMessageSender.LLM));
-        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         verify(irisMessageRepository).setProactiveOutcomeIfNull(201L, IrisProactiveOutcome.RECOVERED);
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && "You nailed it!".equals(e.closingSentence())
@@ -146,7 +147,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // Outcome-last invariant: persist -> broadcast -> outcome write (a resolved=true close must never gate away its own row).
         InOrder order = inOrder(irisMessageService, irisChatWebsocketService, irisMessageRepository);
         order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
-        order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         order.verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), eq(IrisProactiveOutcome.RECOVERED));
     }
 
@@ -261,7 +262,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         service.handleConfirmClose(progressJob, update);   // must not throw
 
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null));
     }
@@ -286,7 +287,8 @@ class IrisStruggleInterventionConfirmCloseTest {
     }
 
     private PyrisStruggleInterventionStatusUpdateDTO closeUpdate(boolean resolved, String closingSentence, String episodeLabel, String rationale) {
-        return new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, rationale, List.of(), List.of(), null, null, null, resolved, closingSentence, episodeLabel);
+        return new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, rationale, PyrisRunState.FINISHED, null, List.of(), null, null, null, resolved, closingSentence,
+                episodeLabel);
     }
 
     private PyrisStruggleInterventionStatusUpdateDTO closeUpdateWithRationale(boolean resolved, String rationale) {

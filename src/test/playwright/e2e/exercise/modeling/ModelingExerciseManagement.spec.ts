@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { SEED_COURSES } from '../../../support/seedData';
@@ -33,7 +33,7 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseCreation.setDueDate(dayjs().add(1, 'day'));
             await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
             const response = await modelingExerciseCreation.save();
-            modelingExercise = await response.json();
+            modelingExercise = await readResponseJson(response);
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
             await page.waitForLoadState('domcontentloaded');

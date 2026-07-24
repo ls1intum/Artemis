@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -39,8 +38,6 @@ type AttachmentVideoUnitsResponseType = {
 };
 
 describe('AttachmentVideoUnitsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let attachmentVideoUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
     let attachmentVideoUnitsComponent: AttachmentVideoUnitsComponent;
 
@@ -99,6 +96,7 @@ describe('AttachmentVideoUnitsComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                                 parent: {
@@ -108,6 +106,7 @@ describe('AttachmentVideoUnitsComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
+                                            return null;
                                         },
                                     }),
                                 },

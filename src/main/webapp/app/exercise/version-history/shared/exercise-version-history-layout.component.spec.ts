@@ -1,11 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { ExerciseVersionHistoryLayoutComponent } from 'app/exercise/version-history/shared/exercise-version-history-layout.component';
 
 describe('ExerciseVersionHistoryLayoutComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseVersionHistoryLayoutComponent>;
 
     beforeEach(async () => {

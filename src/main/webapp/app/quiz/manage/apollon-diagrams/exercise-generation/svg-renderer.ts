@@ -166,9 +166,7 @@ export function cropRenderedSVGToElement(renderedSVG: SVG, elementId: string): S
 // Some browsers (such as IE or Edge) don't support the HTMLCanvasElement.toBlob() method,
 // so we use the (much more inefficient) toDataURL() method as a fallback
 function toPNGBlob(canvas: HTMLCanvasElement, callback: (blob: Blob) => void) {
-    if (typeof canvas.toBlob === 'function') {
-        canvas.toBlob(callback);
-    } else {
+    const fallbackViaDataUrl = () =>
         setTimeout(() => {
             const binaryRepresentation = window.atob(canvas.toDataURL().split(',')[1]);
             const length = binaryRepresentation.length;
@@ -180,5 +178,11 @@ function toPNGBlob(canvas: HTMLCanvasElement, callback: (blob: Blob) => void) {
 
             callback(new Blob([buffer], { type: 'image/png' }));
         });
+    if (typeof canvas.toBlob === 'function') {
+        // toBlob may invoke its callback with null (e.g. an empty canvas); fall back to the toDataURL path so
+        // the callback is always invoked and callers awaiting the PNG blob never hang.
+        canvas.toBlob((blob) => (blob ? callback(blob) : fallbackViaDataUrl()));
+    } else {
+        fallbackViaDataUrl();
     }
 }

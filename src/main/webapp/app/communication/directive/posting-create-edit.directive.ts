@@ -21,8 +21,8 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     readonly isLoading = signal(false);
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;
-    content: string;
-    formGroup: FormGroup;
+    content = '';
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
 
     readonly EditType = PostingEditType;
 

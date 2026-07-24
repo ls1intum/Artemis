@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -11,8 +10,6 @@ import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-req
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 
 describe('IrisChatHttpService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 
@@ -80,14 +77,14 @@ describe('IrisChatHttpService', () => {
             req.flush(returnedFromService);
         });
 
-        it('should create a session', async () => {
+        it('should create a course session', async () => {
             const courseId = 1;
             const returnedFromService = { id: '1' };
             service
-                .createSession(ChatServiceMode.COURSE, courseId)
+                .createCourseSession(courseId)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
-            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/sessions`);
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/sessions` && r.params.get('courseId') === String(courseId));
             req.flush(returnedFromService, { status: 201, statusText: 'Created' });
         });
 

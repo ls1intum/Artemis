@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from './tutorial-group-detail.component';
 import { HttpResponse } from '@angular/common/http';
@@ -21,18 +20,16 @@ import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
-import { ConfirmationService } from 'primeng/api';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
 describe('TutorialGroupDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupDetailComponent;
     let fixture: ComponentFixture<TutorialGroupDetailComponent>;
 
@@ -823,7 +820,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });
@@ -843,7 +840,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });

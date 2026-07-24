@@ -27,7 +27,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
      * @param editor The editor to register the completion provider for.
      * @param translateService The translate service to use for translations.
      */
-    register(editor: TextEditor, translateService: TranslateService): void {
+    override register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
         this.faqSubscription?.unsubscribe();
         // Rebuild completion values when FAQs arrive from MetisService (which now emits after REST load)
@@ -66,7 +66,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
         editor.focus();
     }
 
-    dispose(): void {
+    override dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
         this.faqSubscription?.unsubscribe();

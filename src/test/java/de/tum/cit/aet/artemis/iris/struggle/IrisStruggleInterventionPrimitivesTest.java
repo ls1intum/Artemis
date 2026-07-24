@@ -128,7 +128,7 @@ class IrisStruggleInterventionPrimitivesTest {
                 argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-1".equals(m.getProactiveEpisodeId()) && "cid-1".equals(m.getProactiveClientMessageId())),
                 eq(session), eq(IrisMessageSender.LLM));
         // CRITICAL: reveal must NOT broadcast over the chat websocket (client owns the optimistic bubble)
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
 
     @Test

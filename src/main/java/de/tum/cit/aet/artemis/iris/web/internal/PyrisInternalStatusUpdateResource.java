@@ -188,7 +188,7 @@ public class PyrisInternalStatusUpdateResource {
      * <p>
      * Pyris sends two callbacks per request:
      * <ol>
-     * <li>Thinking – when the query is classified as a real question ({@code stages[0].state == IN_PROGRESS}).</li>
+     * <li>Thinking – when the query is classified as a real question ({@code runState == RUNNING}).</li>
      * <li>Result – when the LLM pipeline finishes ({@code answer} is non-null or null for nav queries).</li>
      * </ol>
      * Uses custom token-based authentication.

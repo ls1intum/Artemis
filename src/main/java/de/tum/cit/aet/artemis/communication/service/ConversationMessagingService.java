@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -175,12 +174,11 @@ public class ConversationMessagingService extends PostingService {
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         preparePostForBroadcast(createdMessage);
-        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE);
         createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(postDTO, course.getId(), null);
+                broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), null);
             }
             log.debug("      broadcastForPost DONE");
 
@@ -200,7 +198,7 @@ public class ConversationMessagingService extends PostingService {
                 }
             }
 
-            broadcastForPost(postDTO, course.getId(), recipientSummaries);
+            broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), recipientSummaries);
 
             log.debug("      broadcastForPost DONE");
         }
@@ -294,8 +292,16 @@ public class ConversationMessagingService extends PostingService {
         List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
         conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId);
 
+        boolean requesterIsAtLeastTutor = authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        if (Boolean.TRUE.equals(postContextFilter.filterToUnverifiedIris()) && !requesterIsAtLeastTutor) {
+            throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
+        }
+
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
+
+        // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers
+        hidePendingIrisRepliesFromStudents(conversationPosts.getContent(), courseId);
 
         // This check is needed to avoid resetting the unread count when searching
         if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
@@ -361,7 +367,7 @@ public class ConversationMessagingService extends PostingService {
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
 
         return updatedPost;
     }
@@ -398,7 +404,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
+        broadcastForPost(post, MetisCrudAction.DELETE, course.getId(), null);
     }
 
     /**
@@ -432,7 +438,7 @@ public class ConversationMessagingService extends PostingService {
         message.getConversation().hideDetails();
         preparePostForBroadcast(message);
         preparePostForBroadcast(updatedMessage);
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(message, MetisCrudAction.UPDATE, course.getId(), null);
         return updatedMessage;
     }
 

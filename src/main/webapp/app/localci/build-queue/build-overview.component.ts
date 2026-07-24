@@ -11,14 +11,14 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonGroupComponent } from 'app/shared-ui/tum-ui/button-group/tum-ui-button-group.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/foundation/util/download.util';
@@ -55,7 +55,6 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        NgClass,
         FormsModule,
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
@@ -64,8 +63,12 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         RunningJobsTableComponent,
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
-        DialogModule,
-        ButtonModule,
+        FinishedBuildsFilterModalComponent,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiButtonGroupComponent,
+        TumUiInputDirective,
+        TumUiTagComponent,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -75,8 +78,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildOverviewService);
     private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
 
     /** Reference to the statistics component for real-time updates */
     statisticsComponent = viewChild<BuildJobStatisticsComponent>('statisticsComponent');
@@ -130,10 +131,10 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     ascending = false;
 
     /** Interval timer for updating running build job durations every second */
-    buildDurationInterval: ReturnType<typeof setInterval>;
+    buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
 
     /** Subscription for debounced search input handling */
-    searchSubscription: Subscription;
+    searchSubscription!: Subscription; // set in ngOnInit()
 
     /** Subject for triggering debounced search requests for finished build jobs */
     finishedJobsSearchTrigger = new Subject<void>();
@@ -149,6 +150,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
+
+    /** Number of applied finished-build-job filters, or 0 when the filter is unset. */
+    readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
 
     /**
      * Course ID from route params. When 0, operates in admin mode showing all courses.
@@ -170,6 +174,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Controls the visibility of the inline build logs dialog */
     buildLogsModalVisible = signal(false);
+
+    /** Controls the visibility of the finished-build-jobs filter dialog */
+    readonly filterModalVisible = signal(false);
 
     ngOnInit() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -557,25 +564,16 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     }
 
     openFilterModal() {
-        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
-            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
-            width: '60rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-            data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter(),
-                buildAgentFilterable: true,
-                finishedBuildJobs: this.finishedBuildJobs(),
-            },
-        });
-        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
-            if (result) {
-                this.finishedBuildJobFilter.set(result);
-                this.loadFinishedBuildJobs();
-            }
-        });
+        this.filterModalVisible.set(true);
+    }
+
+    /**
+     * Applies the filter edited in the filter modal and reloads the finished build jobs.
+     * @param result the edited filter returned by the modal
+     */
+    onFilterConfirmed(result: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilter.set(result);
+        this.loadFinishedBuildJobs();
     }
 
     /**
@@ -597,9 +595,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         if (!jobId) return;
         const courseId = this.courseId();
         if (courseId) {
-            this.router.navigate(['/course-management', courseId, 'build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/course-management', courseId, 'build-overview', jobId, 'job-details']);
         } else {
-            this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
         }
     }
 

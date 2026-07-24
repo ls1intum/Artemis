@@ -3,10 +3,6 @@ name: Build
 on:
   workflow_call:
     inputs:
-      branch_name:
-        description: 'Head branch/ref the build represents (used for the release-image checkout ref).'
-        required: true
-        type: string
       commit_sha:
         description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
         required: true
@@ -71,17 +67,24 @@ jobs:
           java-version: '${{ env.java }}'
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Build Angular Client
         # Build the Angular client separately so that Node.js/esbuild get full system
         # memory without competing with the Gradle JVM (which reserves up to 4g).
         # --optimization=false works around an esbuild crash during script optimization.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
-      - name: Build .war
-        # Skip the webapp Gradle task since the Angular client was already built above.
         #
+        # The result is moved to build/webapp-dist rather than left at the Angular config's
+        # default build/resources/main/static: Gradle deletes any declared task-output directory
+        # it does not already recognize from a previous build in this workspace (see the `webapp`
+        # task in gradle/profile_prod.gradle for the full explanation) — on a fresh checkout that
+        # is every directory, every time. Since build/resources/main/static is processResources'
+        # output directory, anything written there before Gradle even starts would be wiped again
+        # before the first task runs. build/webapp-dist is not declared as any task's output, so
+        # it survives; the `webapp` Gradle task picks it up from there.
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false && mv build/resources/main/static build/webapp-dist
+      - name: Build .war
         # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
         # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
         # (computed in ci.yml: release events + develop/main/release-branch pushes). PRs and
@@ -98,10 +101,36 @@ jobs:
         # resolution before the first compile task). If a build legitimately needs an uncached
         # artifact (e.g. a dependency was added or bumped), the offline run fails fast and we retry
         # once online to fetch it (and repopulate the cache on develop, the cache writer).
+        #
+        # No `-x webapp` here (unlike other CI jobs that don't need a client at all): the `webapp`
+        # task must run so it can materialize build/webapp-dist into build/resources/main/static.
+        # It does so with a plain directory copy rather than rebuilding, so this costs milliseconds.
         run: |
-          if ! ./gradlew -Pprod -Pwar bootWar -x webapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }}; then
+          if ! ./gradlew -Pprod -Pwar bootWar --offline ${{ inputs.is_release_build && '-Psbom' || '' }}; then
             echo "Offline build failed (likely an uncached dependency); retrying online to fetch it and repopulate the cache."
-            ./gradlew -Pprod -Pwar bootWar -x webapp ${{ inputs.is_release_build && '-Psbom' || '' }}
+            ./gradlew -Pprod -Pwar bootWar ${{ inputs.is_release_build && '-Psbom' || '' }}
+          fi
+      - name: Verify .war contains Angular client
+        run: |
+          set -Eeuo pipefail
+          shopt -s nullglob
+
+          wars=(build/libs/Artemis-*.war)
+          if [ "${#wars[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one Artemis WAR in build/libs, found ${#wars[@]}."
+            printf 'Found WAR candidates:\n'
+            printf '  %s\n' "${wars[@]:-<none>}"
+            exit 1
+          fi
+
+          war_entries="$(jar tf "${wars[0]}")"
+          if ! grep -qx 'WEB-INF/classes/static/index.html' <<< "$war_entries"; then
+            echo "::error::${wars[0]} does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."
+            exit 1
+          fi
+          if ! grep -Eq '^WEB-INF/classes/static/main-.*\.js$' <<< "$war_entries"; then
+            echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
+            exit 1
           fi
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
@@ -174,8 +203,13 @@ jobs:
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf  # v6.0.0
         with:
           images: ghcr.io/ls1intum/artemis
+          # `type=ref,event=pr` → `pr-<N>` (priority 600, stays `meta.outputs.version`, so the
+          # `docker-tag` artifact and e2e-setup are unaffected). The `sha-<commit>` tag is built from
+          # `inputs.commit_sha` (the PR head this build checked out, not the merge commit), so it equals
+          # the SHA a deploy resolves; `type=sha` is avoided because it reads github.sha = the merge commit.
           tags: |
             type=ref,event=pr
+            type=raw,value=sha-${{ inputs.commit_sha }}
       - name: Build and push (linux/amd64)
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf  # v7.2.0
         with:
@@ -216,16 +250,18 @@ jobs:
       packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
-      ref: ${{ inputs.branch_name }}
+      # Check out the exact commit the sha-<commit> tag names (not the mutable branch tip), so image
+      # content and the tag stay pinned to the same commit. The `type=ref` tags come from the event
+      # context, not this ref, so they are unaffected.
+      ref: ${{ inputs.commit_sha }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      # `type=ref,event=tag` is the release tag (e.g. "1.2.3"); `event=branch` covers
-      # `develop`/`main`/`release/*` pushes; `type=sha` guarantees at least one tag even
-      # on edge events so `image_tag` is never empty (downstream e2e-setup pulls by tag).
+      # `type=ref` gives the release tag or branch name; `sha-<commit>` is the immutable per-commit
+      # handle deployments pull by. The reusable turns the bare `sha-<sha>` line into `type=raw`.
       tags: |
         type=ref,event=tag
         type=ref,event=branch
-        type=sha,prefix=sha-
+        sha-${{ inputs.commit_sha }}
 
   # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
   # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced

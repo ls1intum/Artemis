@@ -7,6 +7,10 @@ springBoot {
     buildInfo()
 }
 
+bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 bootRun {
     args = []
     // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
@@ -20,10 +24,64 @@ tasks.register("webapp_test", PnpmTask) {
     args = ["run", "webapp:test"]
 }
 
-tasks.register("webapp", PnpmTask) {
-    dependsOn pnpmInstall
-    args = ["run", "webapp:prod"]
-    environment = [APP_VERSION: project.version]
+// CI (.github/workflows/ci-build.yml) builds the Angular client in a separate, isolated
+// `ng build` step so Node/esbuild get full system memory instead of competing with the Gradle
+// JVM, then leaves the result at build/webapp-dist instead of the final build/resources/main/static.
+//
+// That indirection matters because Gradle deletes any declared task-output directory it does
+// not already recognize from a previous build in this workspace *before* any task runs — on a
+// fresh checkout (every CI run) that registry is always empty, so this happens every time,
+// regardless of Gradle version. build/resources/main/static is processResources' declared
+// output directory, so anything placed there by a plain shell command before Gradle starts
+// (rather than by a task Gradle knows is part of the current run) is wiped again before the
+// first task body executes, silently leaving the WAR without a client. build/webapp-dist is
+// not declared as any task's output, so it survives that cleanup; below, the `webapp` task
+// picks it up from there and copies it into place as part of the tracked task graph.
+def prebuiltWebappDir = file("${projectDir}/build/webapp-dist")
+def webappBuildDir = file("${projectDir}/build/resources/main/static")
+if (prebuiltWebappDir.exists()) {
+    tasks.register("webapp") {
+        // Copy-only: no pnpm command runs here, so node_modules is not needed and this must
+        // not depend on pnpmInstall (that would just add avoidable time to the fast path this
+        // branch exists for).
+        inputs.dir(prebuiltWebappDir).withPropertyName("prebuilt-webapp-dir")
+        outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
+        doLast {
+            logger.lifecycle("Reusing prebuilt Angular client from ${prebuiltWebappDir} instead of rebuilding. " +
+                "Delete that directory first if you changed the frontend and are reproducing this build locally.")
+            delete(webappBuildDir)
+            copy {
+                from prebuiltWebappDir
+                into webappBuildDir
+            }
+        }
+    }
+} else {
+    tasks.register("webapp", PnpmTask) {
+        dependsOn pnpmInstall
+        // Mirrors profile_dev.gradle's inputs: without them this task has no way to tell a
+        // frontend source change from a no-op, so Gradle would mark it UP-TO-DATE on a second
+        // non-clean `-Pprod -Pwar bootWar` and silently ship the previous run's stale bundle.
+        inputs.property("appVersion", project.version)
+        inputs.files("pnpm-lock.yaml")
+            .withPropertyName("pnpm-lock")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("build.gradle")
+            .withPropertyName("build.gradle")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("angular.json")
+            .withPropertyName("angular.json")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("tsconfig.json", "tsconfig.app.json")
+            .withPropertyName("tsconfig")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir("src/main/webapp/")
+            .withPropertyName("webapp-source-dir")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
+        args = ["run", "webapp:prod"]
+        environment = [APP_VERSION: project.version]
+    }
 }
 
 processResources {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
@@ -20,8 +19,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ActivatedRoute, Params } from '@angular/router';
 
 describe('IrisSettingsUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;

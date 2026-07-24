@@ -111,8 +111,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
-    attachmentSub: Subscription;
-    attachmentVideoUnitSub: Subscription;
+    attachmentSub?: Subscription;
+    attachmentVideoUnitSub?: Subscription;
 
     FOREVER = dayjs('9999-12-31');
 
@@ -256,7 +256,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         blob.arrayBuffer()
             .then((arrayBuffer) => {
-                this.loadPdf(url, arrayBuffer, 'original', existingSlides);
+                void this.loadPdf(url, arrayBuffer, 'original', existingSlides);
             })
             .catch((error) => {
                 onError(this.alertService, error);
@@ -554,7 +554,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit()!));
 
-            this.getFinalPageOrder().then((finalPageOrder) => {
+            void this.getFinalPageOrder().then((finalPageOrder) => {
                 formData.append(
                     'pageOrder',
                     new Blob(
@@ -898,9 +898,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            void this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+            void this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

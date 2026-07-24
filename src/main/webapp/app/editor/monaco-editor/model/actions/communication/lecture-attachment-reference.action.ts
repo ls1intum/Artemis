@@ -44,7 +44,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
-        firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
+        void firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
                 this.lecturesWithDetails = lectures
@@ -52,7 +52,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                     .map((lecture) => {
                         const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
-                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false);
+                                attachment.link = this.fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version);
                                 attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
 
@@ -74,7 +74,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
      * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment video unit).
      * @param args The arguments to execute the action with.
      */
-    executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
+    override executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
         super.executeInCurrentEditor(args);
     }
 
@@ -120,7 +120,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         editor.focus();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.lecturesWithDetails = [];
     }
@@ -146,7 +146,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         const attachment = attachmentVideoUnit.attachment;
         if (attachment && attachment.link) {
             const link = attachment.studentVersion || this.fileService.createStudentLink(attachment.link);
-            const shortLink = link.split('attachments/')[1];
+            const versionedLink = this.fileService.addAttachmentVersionToUrl(link, attachment.version);
+            const shortLink = versionedLink.split('attachments/')[1];
             this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
         }
     }

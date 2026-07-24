@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 
 /**
  * REST controller for managing {@link IrisMessage}.
@@ -64,6 +66,8 @@ public class IrisMessageResource {
 
     private final IrisSessionService irisSessionService;
 
+    private final IrisChatSessionService irisChatSessionService;
+
     private final IrisMessageService irisMessageService;
 
     private final IrisMessageRepository irisMessageRepository;
@@ -72,10 +76,11 @@ public class IrisMessageResource {
 
     private final ObjectMapper objectMapper;
 
-    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, ObjectMapper objectMapper) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
+        this.irisChatSessionService = irisChatSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
@@ -104,7 +109,7 @@ public class IrisMessageResource {
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId  of the session
-     * @param requestDTO containing message content and optional uncommitted files
+     * @param requestDTO containing message content, optional uncommitted files and optional pending context
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
@@ -117,6 +122,14 @@ public class IrisMessageResource {
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
+
+        var pendingContext = requestDTO.pendingContext();
+        if (pendingContext != null) {
+            if (!(session instanceof IrisChatSession chatSession)) {
+                throw new BadRequestException("Pending context change is only supported for chat sessions");
+            }
+            irisChatSessionService.applyContextChange(chatSession, pendingContext.mode(), pendingContext.entityId(), user);
+        }
 
         IrisMessage message = new IrisMessage();
         var contentList = requestDTO.content() != null ? requestDTO.content() : List.<IrisMessageContentDTO>of();
@@ -208,6 +221,9 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only rate messages sent by Iris");
+        }
+        if (Boolean.TRUE.equals(message.getIntermediate())) {
+            throw new BadRequestException("Intermediate messages cannot be rated");
         }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);

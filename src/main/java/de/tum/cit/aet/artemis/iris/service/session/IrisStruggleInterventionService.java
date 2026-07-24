@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
@@ -304,7 +305,7 @@ public class IrisStruggleInterventionService {
                     }
                 }
                 if (saved != null) {
-                    irisChatWebsocketService.sendMessage(session, saved, statusUpdate.stages());
+                    irisChatWebsocketService.sendMessage(session, saved, terminalRunStateOf(statusUpdate), statusUpdate.error());
                 }
                 // Always emit the active control event - with messageId on success, null on permanent failure.
                 // The event always carries the hint text so the client can render a runtime fallback bubble (spec §5/§12).
@@ -395,7 +396,7 @@ public class IrisStruggleInterventionService {
             Long messageId = null;
             if (persisted != null) {
                 // (1b) Broadcast the row live so the webview receives it through the single chat-ws transport.
-                irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), statusUpdate.stages());
+                irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), terminalRunStateOf(statusUpdate), statusUpdate.error());
                 messageId = persisted.saved().getId();
                 // (2) Write outcome LAST: prevents the resolved=true close from gating away its own row.
                 writeEpisodeOutcome(episodeId, IrisProactiveOutcome.RECOVERED, user.getId());
@@ -577,6 +578,14 @@ public class IrisStruggleInterventionService {
      */
     private @Nullable IrisChatSession resolveProactiveSession(User user, long exerciseId) {
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
+        // Every session is born a COURSE_CHAT and only points at an exercise after an explicit context switch
+        // (which also writes the CTXSWAP marker into the history), so asking for an exercise chat that does not
+        // exist yet yields the course session. Switch it here, mirroring what the build-failed proactive event
+        // does; without this a student with no exercise session yet would get the proactive hint into their
+        // course chat, where the client's exercise-scoped reveal cannot find it.
+        if (session.getMode() == IrisChatMode.COURSE_CHAT) {
+            irisChatSessionService.applyContextChange(session, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
+        }
         if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(session.getEntityId(), exerciseId)) {
             log.info("Dropping stale struggle intervention: resolved session for exercise {} is not exercise-bound", exerciseId);
             return null;
@@ -711,5 +720,16 @@ public class IrisStruggleInterventionService {
 
     /** Outcome surfaced to the REST layer: accepted (with job token) or rejected, course-off carried for the 202. */
     public record StruggleTriggerOutcome(boolean accepted, boolean courseDisabled, @Nullable String jobToken) {
+    }
+
+    /**
+     * Run state to broadcast alongside a persisted proactive message. Both call sites run on the terminal frame
+     * (a decision or a confirmed close), so a frame that omits the run state is still a completed run.
+     *
+     * @param statusUpdate the Pyris status update that produced the message
+     * @return the frame's run state, or {@link PyrisRunState#FINISHED} when it carries none
+     */
+    private static PyrisRunState terminalRunStateOf(PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        return statusUpdate.runState() != null ? statusUpdate.runState() : PyrisRunState.FINISHED;
     }
 }

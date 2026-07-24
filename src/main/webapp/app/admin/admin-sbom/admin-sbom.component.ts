@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -14,19 +14,26 @@ import {
     faSearch,
     faServer,
     faShieldAlt,
-    faSort,
     faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiButtonGroupComponent } from 'app/shared-ui/tum-ui/button-group/tum-ui-button-group.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiIconFieldComponent } from 'app/shared-ui/tum-ui/icon-field/tum-ui-icon-field.component';
 
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
@@ -40,7 +47,7 @@ type SbomSource = 'all' | 'server' | 'client';
 @Component({
     selector: 'jhi-admin-sbom',
     templateUrl: './admin-sbom.component.html',
-    styleUrls: ['./admin-sbom.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FormsModule,
@@ -48,9 +55,16 @@ type SbomSource = 'all' | 'server' | 'client';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        SortDirective,
-        NgClass,
         HelpIconComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiButtonGroupComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiTagComponent,
+        TumUiMessageComponent,
+        TumUiInputDirective,
+        TumUiIconFieldComponent,
     ],
 })
 export class AdminSbomComponent implements OnInit {
@@ -58,7 +72,6 @@ export class AdminSbomComponent implements OnInit {
     private readonly alertService = inject(AlertService);
 
     // Icons
-    protected readonly faSort = faSort;
     protected readonly faSearch = faSearch;
     protected readonly faSpinner = faSpinner;
     protected readonly faServer = faServer;
@@ -368,21 +381,18 @@ export class AdminSbomComponent implements OnInit {
         return 'UNKNOWN';
     }
 
-    /**
-     * Get CSS class for severity badge.
-     */
-    getSeverityClass(severity: string): string {
+    getSeverityLevel(severity: string): TumUiTagSeverity {
         switch (severity) {
             case 'CRITICAL':
-                return 'bg-danger';
+                return 'danger';
             case 'HIGH':
-                return 'bg-warning text-dark';
+                return 'warn';
             case 'MEDIUM':
-                return 'bg-warning text-dark';
+                return 'warn';
             case 'LOW':
-                return 'bg-info';
+                return 'info';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 
@@ -401,22 +411,16 @@ export class AdminSbomComponent implements OnInit {
     }
 
     /**
-     * Updates the sort direction.
+     * Handles a table sort event. The table runs in controlled-sort mode and already resolves the
+     * toggled field/order, so the handler only mirrors that state onto the `sortField`/`sortAscending`
+     * signals that drive the client-side sort in `filteredComponents()`.
      */
-    updateSortAscending(ascending: boolean): void {
-        this.sortAscending.set(ascending);
-    }
-
-    /**
-     * Updates the sort field.
-     */
-    updateSortField(field: 'name' | 'group' | 'version' | 'type'): void {
-        if (this.sortField() === field) {
-            this.sortAscending.set(!this.sortAscending());
-        } else {
+    onTableSort(event: TumUiTableSortEvent): void {
+        const field = event.field;
+        if (field === 'name' || field === 'group' || field === 'version' || field === 'type') {
             this.sortField.set(field);
-            this.sortAscending.set(true);
         }
+        this.sortAscending.set(event.order === 1);
     }
 
     /**
@@ -435,12 +439,5 @@ export class AdminSbomComponent implements OnInit {
         a.download = `${source}-sbom.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }
-
-    /**
-     * Track function for ngFor.
-     */
-    trackByName(_index: number, component: SbomComponent): string {
-        return `${component.group ?? ''}:${component.name}:${component.version}`;
     }
 }

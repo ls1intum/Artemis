@@ -1,8 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
+import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
@@ -14,9 +15,13 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiInputGroupComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group.component';
+import { TumUiInputGroupAddonComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group-addon.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
  * Admin component for viewing system audit logs.
@@ -25,7 +30,22 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-audit',
     templateUrl: './audits.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, ItemCountComponent, PaginatorModule, ArtemisDatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        ItemCountComponent,
+        TumUiPaginatorComponent,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        TumUiMessageComponent,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
+        FormDateTimePickerComponent,
+    ],
 })
 export class AuditsComponent implements OnInit {
     private readonly auditsService = inject(AuditsService);
@@ -60,9 +80,16 @@ export class AuditsComponent implements OnInit {
     /** Whether data can be loaded (date range is valid) */
     readonly canLoad = computed(() => this.fromDate() !== '' && this.toDate() !== '');
 
+    /** From date exposed to the shared date picker as a native Date (the wrapper's value contract). */
+    readonly fromDateValue = computed(() => this.toPickerDate(this.fromDate()));
+
+    /** To date exposed to the shared date picker as a native Date (the wrapper's value contract). */
+    readonly toDateValue = computed(() => this.toPickerDate(this.toDate()));
+
     private readonly dateFormat = 'yyyy-MM-dd';
 
     protected readonly faSort = faSort;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     ngOnInit(): void {
         this.toDate.set(this.today());
@@ -72,7 +99,7 @@ export class AuditsComponent implements OnInit {
 
     transition(): void {
         if (this.canLoad()) {
-            this.router.navigate(['/admin/audits'], {
+            void this.router.navigate(['/admin/audits'], {
                 queryParams: {
                     page: this.page(),
                     sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
@@ -80,17 +107,49 @@ export class AuditsComponent implements OnInit {
                     to: this.toDate(),
                 },
             });
+        } else {
+            // Incomplete date range (e.g. a date was just deselected): drop the previously loaded results so the
+            // table and paginator don't linger with stale, un-clickable pages — the paginator's page change is a
+            // no-op while the range is incomplete, which otherwise stranded the user on a dead multi-page view.
+            this.audits.set([]);
+            this.totalItems.set(0);
         }
     }
 
-    /** Updates the from date filter */
-    updateFromDate(value: string): void {
-        this.fromDate.set(value);
+    /**
+     * Updates the from date filter from the shared date picker value.
+     * The picker emits a dayjs/Date (or null); the audits service consumes yyyy-MM-dd strings, so convert at the boundary.
+     */
+    updateFromDate(value: dayjs.Dayjs | Date | null | undefined): void {
+        this.fromDate.set(this.toDateString(value));
     }
 
-    /** Updates the to date filter */
-    updateToDate(value: string): void {
-        this.toDate.set(value);
+    /**
+     * Updates the to date filter from the shared date picker value.
+     * See {@link updateFromDate} for the conversion rationale.
+     */
+    updateToDate(value: dayjs.Dayjs | Date | null | undefined): void {
+        this.toDate.set(this.toDateString(value));
+    }
+
+    /** Converts a picker value (dayjs/Date) to the yyyy-MM-dd string the audits service expects. */
+    private toDateString(value: dayjs.Dayjs | Date | null | undefined): string {
+        if (value == undefined) {
+            return '';
+        }
+        const parsed = dayjs(value);
+        // dayjs format tokens differ from Angular's DatePipe (`this.dateFormat`): year/day are UPPERCASE
+        // (`YYYY`/`DD`); the lowercase `yyyy`/`dd` would render literally / as the weekday and break the URL value.
+        return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
+    }
+
+    /** Converts a stored yyyy-MM-dd string to the native Date the shared date picker binds to. */
+    private toPickerDate(value: string): Date | null {
+        if (!value) {
+            return null;
+        }
+        const parsed = dayjs(value);
+        return parsed.isValid() ? parsed.toDate() : null;
     }
 
     /** Updates the current page */
@@ -99,14 +158,14 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the
+     * Handles a paginator page change. The emitted page is 0-indexed, so it is converted to the
      * component's 1-indexed page. No-op while the date range is incomplete (mirrors the former disabled paginator).
      */
-    onPageChange(event: PaginatorState): void {
+    onPageChange(page: number): void {
         if (!this.canLoad()) {
             return;
         }
-        this.updatePage((event.page ?? 0) + 1);
+        this.updatePage(page + 1);
         this.transition();
     }
 

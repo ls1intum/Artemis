@@ -1,14 +1,16 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { GarbageCollector } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumUiProgressBarComponent } from 'app/shared-ui/tum-ui/progress-bar/tum-ui-progress-bar.component';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
 import { DecimalPipe } from '@angular/common';
 import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-garbagecollector',
     templateUrl: './metrics-garbagecollector.component.html',
-    imports: [TranslateDirective, ProgressBarModule, DecimalPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, TumUiProgressBarComponent, TumUiTableDirective, DecimalPipe],
 })
 export class MetricsGarbageCollectorComponent {
     /**

@@ -50,7 +50,6 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -84,7 +83,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
-        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -152,21 +150,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly baseResource = signal<string>(undefined!);
     readonly shortBaseResource = signal<string>(undefined!);
     readonly teamBaseResource = signal<string>(undefined!);
-    loadingTemplateParticipationResults = true;
-    loadingSolutionParticipationResults = true;
+    // Signal-backed so the child ProgrammingTestStatusDetailComponent re-renders when the participation
+    // results finish loading; a plain field mutated in the async pipe would not schedule change detection.
+    readonly loadingTemplateParticipationResults = signal(true);
+    readonly loadingSolutionParticipationResults = signal(true);
     diffReady = false;
     lineChangesLoading = false;
 
-    private diffDetailData: ProgrammingDiffReportDetail['data'] = {
-        repositoryDiffInformation: undefined,
-        templateFileContentByPath: new Map<string, string>(),
-        solutionFileContentByPath: new Map<string, string>(),
-        lineChangesLoading: false,
+    // Signal-backed so that late updates (the diff is computed asynchronously after the detail sections render)
+    // schedule change detection in the zoneless app. The child detail component reads these signals reactively.
+    private readonly diffDetailData = {
+        repositoryDiffInformation: signal<RepositoryDiffInformation | undefined>(undefined),
+        templateFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        solutionFileContentByPath: signal<Map<string, string>>(new Map<string, string>()),
+        lineChangesLoading: signal<boolean>(false),
     };
 
-    courseId: number;
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
-    formattedGradingInstructions: SafeHtml;
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
@@ -188,9 +190,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
-    private templateAndSolutionParticipationSubscription: Subscription;
-    private exerciseStatisticsSubscription: Subscription;
-    private sharingEnabledSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -281,8 +283,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // Only update the template and solution participations, preserving all other exercise properties
                     this.programmingExercise().templateParticipation = exerciseWithParticipations.body!.templateParticipation;
                     this.programmingExercise().solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
-                    this.loadingTemplateParticipationResults = false;
-                    this.loadingSolutionParticipationResults = false;
+                    this.loadingTemplateParticipationResults.set(false);
+                    this.loadingSolutionParticipationResults.set(false);
                 }),
                 tap(() => {
                     this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
@@ -353,10 +355,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.repositoryDiffInformation = undefined;
         this.lineChangesLoading = true;
 
-        this.diffDetailData.repositoryDiffInformation = undefined;
-        this.diffDetailData.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-        this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
+        this.diffDetailData.lineChangesLoading.set(true);
+        this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+        this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
 
         this.ensureExerciseDetailsInitialized();
 
@@ -390,7 +392,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.lineChangesLoading = false;
-                    this.diffDetailData.lineChangesLoading = false;
+                    this.diffDetailData.lineChangesLoading.set(false);
                 },
             });
     }
@@ -416,10 +418,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private getDiffReportDetail(): ProgrammingDiffReportDetail | undefined {
         const showDiffReport =
-            this.diffDetailData.lineChangesLoading ||
-            !!this.diffDetailData.repositoryDiffInformation ||
-            this.diffDetailData.templateFileContentByPath.size > 0 ||
-            this.diffDetailData.solutionFileContentByPath.size > 0;
+            this.diffDetailData.lineChangesLoading() ||
+            !!this.diffDetailData.repositoryDiffInformation() ||
+            this.diffDetailData.templateFileContentByPath().size > 0 ||
+            this.diffDetailData.solutionFileContentByPath().size > 0;
 
         if (!showDiffReport) {
             return undefined;
@@ -776,9 +778,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
 
                 if (!this.isExamExercise()) {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
                 } else {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -848,11 +850,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.templateFileContentByPath = new Map<string, string>();
                 this.solutionFileContentByPath = new Map<string, string>();
                 this.repositoryDiffInformation = undefined;
-                this.diffDetailData.templateFileContentByPath = new Map<string, string>();
-                this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
-                this.diffDetailData.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.solutionFileContentByPath.set(new Map<string, string>());
+                this.diffDetailData.repositoryDiffInformation.set(undefined);
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
             return;
         }
@@ -862,12 +864,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.diffReady = false;
         this.repositoryDiffInformation = undefined;
-        this.diffDetailData.repositoryDiffInformation = undefined;
+        this.diffDetailData.repositoryDiffInformation.set(undefined);
 
         this.lineChangesLoading = true;
-        this.diffDetailData.templateFileContentByPath = templateFiles;
-        this.diffDetailData.solutionFileContentByPath = solutionFiles;
-        this.diffDetailData.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath.set(templateFiles);
+        this.diffDetailData.solutionFileContentByPath.set(solutionFiles);
+        this.diffDetailData.lineChangesLoading.set(true);
 
         this.ensureExerciseDetailsInitialized();
 
@@ -881,7 +883,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (runId !== this.diffRunId) {
                 return;
             }
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
             this.diffReady = true;
         } catch (error) {
             if (runId !== this.diffRunId) {
@@ -896,11 +898,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     removedLineCount: 0,
                 },
             };
-            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+            this.diffDetailData.repositoryDiffInformation.set(this.repositoryDiffInformation);
         } finally {
             if (runId === this.diffRunId) {
                 this.lineChangesLoading = false;
-                this.diffDetailData.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading.set(false);
             }
         }
     }

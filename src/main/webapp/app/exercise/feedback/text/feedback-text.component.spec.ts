@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.component';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
@@ -9,11 +8,9 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('FeedbackTextComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackTextComponent>;
     let comp: FeedbackTextComponent;
 
@@ -21,8 +18,8 @@ describe('FeedbackTextComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
-            providers: [MockProvider(LongFeedbackTextService)],
+            imports: [],
+            providers: [MockProvider(LongFeedbackTextService), provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackTextComponent);

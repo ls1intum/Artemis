@@ -24,7 +24,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -55,7 +55,7 @@ export enum LectureDateFilter {
         SortByDirective,
         DeleteButtonDirective,
         ArtemisDatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
@@ -75,7 +75,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
     readonly filteredLectures = signal<Lecture[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -131,11 +131,12 @@ export class LectureComponent implements OnInit, OnDestroy {
                     .pipe(
                         filter((res: HttpResponse<Lecture>) => res.ok),
                         map((res: HttpResponse<Lecture>) => res.body),
+                        filter((body): body is Lecture => body != undefined),
                     )
                     .subscribe({
                         next: (res: Lecture) => {
                             this.lectures.set([...this.lectures(), res]);
-                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
+                            void this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
@@ -181,6 +182,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
+                filter((body): body is Lecture[] => body != undefined),
             )
             .subscribe({
                 next: (res: Lecture[]) => {
@@ -236,7 +238,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     navigateToLectureCreationPage(): void {
-        this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
+        void this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
             state: { existingLectures: this.lectures() },
         });
     }
@@ -305,7 +307,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 next: (createdLecture: Lecture) => {
                     this.isUploadingPdfs.set(false);
                     this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
+                    void this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
@@ -333,7 +335,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 complete: () => {
                     this.isUploadingPdfs.set(false);
                     this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit']);
+                    void this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit']);
                 },
             });
     }

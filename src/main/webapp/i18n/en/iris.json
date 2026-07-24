@@ -196,12 +196,7 @@
                 "title": "Iris Settings"
             },
             "error": {
-                "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
-                "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
-                "invalidTemplate": "The template is invalid. Error message is: {{ pyrisErrorMessage }}.",
-                "noVariantAvailable": "Variant {{ variant }} is not available to use. Please contact your administrator if this problem persists.",
-                "noResponse": "No response from Iris was received.",
-                "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
+                "internal": "An internal error occurred"
             },
             "chat": {
                 "helpOffer": "How can I help you today?",
@@ -249,20 +244,37 @@
                 "placeholder": "Select context...",
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
-                "exercisesGroup": "Exercises"
+                "exercisesGroup": "Exercises",
+                "chatTopicSet": "Chat topic set:",
+                "chatTopicCleared": "Chat topic cleared",
+                "chatTopicSwitched": "Chat topic switched:",
+                "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
             },
-            "stages": {
-                "thinking": "Thinking hard",
-                "analyzing": "Analyzing context",
-                "processing": "Processing your request",
-                "formulating": "Formulating a response",
-                "error": {
-                    "internal": "An internal error occurred"
-                }
+            "thinking": "Thinking…",
+            "activities": {
+                "liveLabel": "Current Iris activity",
+                "trailLabel": "Iris activity trail",
+                "trailSummary": "Tools used: {{ count }} · {{ duration }}s",
+                "lecture_content_retrieval": "Reading lecture",
+                "faq_content_retrieval": "Reading FAQs",
+                "get_course_details": "Looking up course info",
+                "get_exercise_list": "Looking up exercises",
+                "get_exercise_problem_statement": "Reading problem statement",
+                "get_student_exercise_metrics": "Checking your progress",
+                "get_competency_list": "Looking up competencies",
+                "get_submission_details": "Reading your submission",
+                "get_additional_exercise_details": "Looking up exercise info",
+                "get_build_logs_analysis_tool": "Checking build logs",
+                "get_feedbacks": "Reading feedback",
+                "repository_files": "Browsing your code",
+                "file_lookup": "Reading a file",
+                "memiris_search_for_memories": "Recalling memories",
+                "memiris_find_similar_memories": "Finding related memories",
+                "generate_mcq_questions": "Creating quiz questions"
             },
             "chatBubble": {
                 "seeFull": "See full message"
@@ -296,6 +308,7 @@
                 "title": "Chats",
                 "newChat": "New chat",
                 "openChatHistory": "Open chat history",
+                "searchChatHistory": "Search chat history",
                 "aboutIris": "About Iris",
                 "today": "Today",
                 "yesterday": "Yesterday",

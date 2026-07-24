@@ -9,7 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 
 /**
  * Result of a struggle-intervention run, posted back by Pyris (spec §5.4). Flat fields per the house style.
@@ -19,12 +20,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionStatusUpdateDTO(@Nullable String result, @Nullable String action, @Nullable Double confidence, @Nullable String rationale,
-        @NonNull List<PyrisStageDTO> stages, @NonNull List<LLMRequest> tokens, @JsonProperty("anchor_file") @Nullable String anchorFile,
+        @Nullable PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @NonNull List<LLMRequest> tokens, @JsonProperty("anchor_file") @Nullable String anchorFile,
         @JsonProperty("anchor_line") @Nullable Integer anchorLine, @JsonProperty("inline_hint") @Nullable String inlineHint, @Nullable Boolean resolved,
         @JsonProperty("closing_sentence") @Nullable String closingSentence, @JsonProperty("episode_label") @Nullable String episodeLabel) {
 
     public PyrisStruggleInterventionStatusUpdateDTO {
-        stages = stages != null ? stages : List.of();
         tokens = tokens != null ? tokens : List.of();
     }
 }

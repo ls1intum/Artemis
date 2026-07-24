@@ -1,36 +1,32 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/admin/organization-management/organization.model';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
+import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 
-export interface OrganizationSelectorDialogData {
-    organizations?: Organization[];
-}
-
 @Component({
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
-    imports: [TranslateDirective, TableViewComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, TumUiTableComponent, TumUiButtonDirective],
 })
 export class OrganizationSelectorComponent {
-    readonly selectorTableOptions: TableViewOptions = {
-        pageSize: 10,
-        hidePageSizeOptions: true,
-        emptyMessageTranslation: 'artemisApp.organizationManagement.modalSelector.noOrganizations',
-        striped: true,
-    };
-
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly config = inject(DynamicDialogConfig<OrganizationSelectorDialogData>);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly alertService = inject(AlertService);
+
+    /** Organizations already assigned to the user, used to disable their select button. */
+    readonly assignedOrganizations = input<Organization[]>([]);
+
+    /** Emitted with the chosen organization when the user selects one. */
+    readonly selected = output<Organization>();
+    /** Emitted when the user cancels the selection. */
+    readonly cancelled = output<void>();
 
     readonly organizations = signal<Organization[]>([]);
     readonly totalCount = signal(0);
@@ -40,8 +36,8 @@ export class OrganizationSelectorComponent {
 
     private readonly logoTemplate = viewChild<CellTemplateRef<Organization>>('logoCell');
 
-    protected readonly assignedOrgIds = new Set<number>(
-        (this.config.data?.organizations ?? []).map((o: Organization) => o.id).filter((id: number | undefined): id is number => id !== undefined),
+    protected readonly assignedOrgIds = computed(
+        () => new Set<number>((this.assignedOrganizations() ?? []).map((o: Organization) => o.id).filter((id: number | undefined): id is number => id !== undefined)),
     );
 
     readonly columns = computed<ColumnDef<Organization>[]>(() => [
@@ -51,12 +47,12 @@ export class OrganizationSelectorComponent {
         { field: 'emailPattern', headerKey: 'artemisApp.organizationManagement.emailPattern', sort: true },
     ]);
 
-    isAlreadyAssigned = computed(() => (org: Organization) => org.id !== undefined && this.assignedOrgIds.has(org.id));
+    isAlreadyAssigned = computed(() => (org: Organization) => org.id !== undefined && this.assignedOrgIds().has(org.id));
 
-    loadOrganizations(event: TableLazyLoadEvent): void {
+    loadOrganizations(event: TumUiTableQueryEvent): void {
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
-        const query = buildDbQueryFromLazyEvent(event);
+        const query = buildDbQueryFromTableEvent(event);
         this.organizationService.getOrganizations(query).subscribe({
             next: (response) => {
                 if (requestId !== this.loadRequestId) return;
@@ -75,10 +71,10 @@ export class OrganizationSelectorComponent {
     }
 
     selectOrganization(organization: Organization): void {
-        this.dialogRef.close(organization);
+        this.selected.emit(organization);
     }
 
-    closeModal(organization: Organization | undefined): void {
-        this.dialogRef.close(organization);
+    cancel(): void {
+        this.cancelled.emit();
     }
 }

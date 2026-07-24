@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -16,8 +15,6 @@ import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorStudentContainerComponent;
     let fixture: ComponentFixture<CodeEditorStudentContainerComponent>;
 
@@ -66,7 +63,7 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     it.each([undefined, { active: false } as SubmissionPolicy])(
         'should not calculate the number of submissions for no or inactive submission policy',
-        (submissionPolicy: SubmissionPolicy) => {
+        (submissionPolicy: SubmissionPolicy | undefined) => {
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
             vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
             const getParticipationSubmissionCountSpy = vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');

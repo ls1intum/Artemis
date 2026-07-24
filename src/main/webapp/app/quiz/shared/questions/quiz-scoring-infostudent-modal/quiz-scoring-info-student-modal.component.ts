@@ -41,31 +41,31 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     multipleChoiceSubmittedResult = input<Result>();
     quizQuestions = input<QuizQuestion[] | undefined>();
 
-    /* Multiple Choice Counting Variables*/
-    multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
-    multipleChoiceWrongAnswerChosen: number; // Amount of wrong options chosen by the student
-    correctMultipleChoiceAnswers: number; // Amount of correct options for the question
-    forgottenMultipleChoiceRightAnswers: number; // Amount of wrong options for the question
-    multipleChoiceAnswerOptions: number; // Amount of all possible options for the question
-    inTotalSelectedRightOptions: number; // Amount of correct and wrong options assigned correctly
-    inTotalSelectedWrongOptions: number; // Amount of correct and wrong options assigned wrongly
-    differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
+    /* Multiple Choice Counting Variables (all populated in ngAfterViewInit() -> countMultipleChoice() before the template reads them) */
+    multipleChoiceCorrectAnswerCorrectlyChosen!: number; // Amount of right options chosen by the student
+    multipleChoiceWrongAnswerChosen!: number; // Amount of wrong options chosen by the student
+    correctMultipleChoiceAnswers!: number; // Amount of correct options for the question
+    forgottenMultipleChoiceRightAnswers!: number; // Amount of wrong options for the question
+    multipleChoiceAnswerOptions!: number; // Amount of all possible options for the question
+    inTotalSelectedRightOptions!: number; // Amount of correct and wrong options assigned correctly
+    inTotalSelectedWrongOptions!: number; // Amount of correct and wrong options assigned wrongly
+    differenceMultipleChoice!: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
     checkForCorrectAnswers = new Array<AnswerOption>();
     checkForWrongAnswers = new Array<AnswerOption>();
     readonly isSingleChoice = signal<boolean>(undefined!);
 
-    /* Drag and Drop Counting Variables*/
-    differenceDragAndDrop: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
+    /* Drag and Drop Counting Variables (populated in ngAfterViewInit() -> countDragAndDrop() before the template reads it) */
+    differenceDragAndDrop!: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
-    /* Short Answer Counting Variables*/
-    shortAnswerSpots: number; // Amount of short answer spots
-    shortAnswerCorrectAnswers: number; // A mount of correctly filled out spots
-    shortAnswerWrongAnswers: number; // A mount of wrongly filled out spots
-    differenceShortAnswer: number; // Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
+    /* Short Answer Counting Variables (all populated in ngAfterViewInit() -> countShortAnswer() before the template reads them) */
+    shortAnswerSpots!: number; // Amount of short answer spots
+    shortAnswerCorrectAnswers!: number; // A mount of correctly filled out spots
+    shortAnswerWrongAnswers!: number; // A mount of wrongly filled out spots
+    differenceShortAnswer!: number; // Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
 
-    /* Plural Variables*/
-    questionPoint: string;
-    scorePoint: string;
+    /* Plural Variables (populated in ngAfterViewInit() -> checkForSingleOrPluralPoints() before the template reads them) */
+    questionPoint!: string;
+    scorePoint!: string;
     readonly wrongOption = signal<string>(undefined!);
     readonly rightOption = signal<string>(undefined!);
     readonly rightMap = signal<string>(undefined!);

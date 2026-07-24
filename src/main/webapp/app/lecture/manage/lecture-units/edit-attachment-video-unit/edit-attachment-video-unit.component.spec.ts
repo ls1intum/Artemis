@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -24,8 +23,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let router: Router;
@@ -53,9 +50,10 @@ describe('EditAttachmentVideoUnitComponent', () => {
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
-                                    case 'attachmentUnitId':
+                                    case 'attachmentVideoUnitId':
                                         return 1;
                                 }
+                                return null;
                             },
                         }),
                         parent: {
@@ -66,6 +64,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                             },

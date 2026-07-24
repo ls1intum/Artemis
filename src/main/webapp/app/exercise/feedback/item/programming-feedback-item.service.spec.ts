@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -11,8 +10,6 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 

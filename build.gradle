@@ -9,15 +9,38 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.3"
         }
     }
+    // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
+    // is only needed when regenerating the Angular client locally via `./gradlew openApiGenerate`. The
+    // generated client is committed, so CI never regenerates it and must not try to resolve this
+    // artifact. The generator + Maven Local are therefore added to the buildscript classpath solely for
+    // that task (so the org.openapi.generator plugin discovers it via ServiceLoader during regeneration).
+    //
+    // The generator is published to Maven Central (no authentication needed). To regenerate the client
+    // it is resolved from either:
+    //   1. Maven Central — the released artifact, resolved with no credentials. OR
+    //   2. Maven Local — clone the generator repo and run `./gradlew publishToMavenLocal` there; this
+    //      build-from-source path needs no registry and works before a version reaches Central.
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("openapigenerate") }) {
+        repositories {
+            // Build-from-source fallback — checked first so a locally-built generator is picked up
+            // without network access (and works before a release is on Maven Central).
+            mavenLocal()
+            // Released generator artifact, published to Maven Central and resolved without authentication.
+            mavenCentral()
+        }
+        dependencies {
+            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+        }
+    }
     dependencies {
-        // Force the entire Jackson 2.x family to 2.22.0 on the build-script / plugin classpath too.
-        // The org.openapi.generator and springdoc plugins otherwise drag in older jackson-databind
-        // (2.19.x requested, resolved to 2.21.3), which the GitHub dependency graph reports and
-        // Dependabot flags even though the shipped WAR only ever contains 2.22.0. enforcedPlatform
-        // applies the jackson-bom's authoritative per-module versions (e.g. jackson-annotations 2.22),
-        // so no version is invented. Build-time only, not shipped. Keep in sync with the project-level
-        // jackson-bom import below. (Jackson 3, group tools.jackson.*, is intentionally not touched.)
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.0")
+        // Force the entire Jackson 2.x family onto the same patched release on the build-script / plugin
+        // classpath too. The org.openapi.generator and springdoc plugins otherwise drag in an older
+        // jackson-databind, which the GitHub dependency graph reports and Dependabot flags even though the
+        // shipped WAR only ever contains the patched version. enforcedPlatform applies the jackson-bom's
+        // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
+        // this version in sync with the project-level jackson-bom import below. (Jackson 3, group
+        // tools.jackson.*, is intentionally not touched.)
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.1")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -37,7 +60,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.54.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.3"
-    id "com.gorylenko.gradle-git-properties" version "2.5.7"
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.2.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -57,7 +80,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.6"
+version = "9.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -67,7 +90,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.5.0"
+    gradleVersion = "9.6.1"
 }
 
 node {
@@ -126,25 +149,24 @@ gitProperties {
     }
 }
 
-// Override Spring Boot BOM versions to patched releases addressing known CVEs
-// thymeleaf 3.1.5.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
-// tomcat 11.0.22: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
-//                 GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
+// Override Spring Boot BOM versions to patched releases addressing known CVEs:
+// thymeleaf: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
+// tomcat: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
+//         GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
 ext["tomcat.version"] = "11.0.22"
 
-// Pin the entire Jackson 2.x family to 2.22.0, a release outside every known jackson-databind vulnerable range.
-// Spring Boot 4.1 / Spring AI manage an older 2.21.4 jackson-bom as a dependency-management constraint, which beats
-// transitive requests, so a plain dependency bump is not enough. Re-importing jackson-bom here overrides that managed
-// version while applying the BOM's authoritative per-module versions (e.g. jackson-annotations is 2.22, not 2.22.0).
+// Pin the entire Jackson 2.x family to a release outside every known jackson-databind vulnerable range.
+// Spring Boot / Spring AI manage an older jackson-bom as a dependency-management constraint, which beats
+// transitive requests, so a plain dependency bump is not enough. Re-importing jackson-bom here overrides that
+// managed version while applying the BOM's authoritative per-module versions, so no version is invented.
 // This is done via the dependencyManagement DSL rather than ext["jackson-bom.version"], because overriding an
-// imported-BOM version property breaks io.spring.dependency-management 1.1.7 on Spring Boot 4.1 (it nulls the versions
-// of other managed sub-BOMs such as micrometer / spring-security). The Jackson 3 line (group tools.jackson.*, pinned
-// to 3.1.4 below) is intentionally untouched.
-// Fixes the jackson-databind advisories CVE-2026-54512 / 54513 / 54514 / 54515 / 54516 / 54517 / 54518.
+// imported-BOM version property breaks io.spring.dependency-management on Spring Boot (it nulls the versions of
+// other managed sub-BOMs such as micrometer / spring-security). The Jackson 3 line (group tools.jackson.*, pinned
+// below) is intentionally untouched. Bump to the latest patched release when new advisories land.
 dependencyManagement {
     imports {
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.0"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
     }
 }
 
@@ -243,7 +265,7 @@ dependencies {
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud.
-    // Pinned to 5.5.1: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
+    // Pinned below the vulnerable range: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
     // The CVE affects the SCRAM-SHA-256 authentication scheme that was first introduced in 5.6; that code path does not
     // exist in 5.5.x, and Artemis does not use SCRAM-SHA-256 anywhere. A transitive request for httpclient5:5.6 from
     // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
@@ -272,8 +294,8 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
-    // Align all Spring AI modules to the same version
-    // 2.0.0-M6+ fixes GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
+    // Align all Spring AI modules to the same version, pinned to a release addressing
+    // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
     implementation platform("org.springframework.ai:spring-ai-bom:2.0.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
@@ -281,10 +303,11 @@ dependencies {
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
-    // Override transitive Jackson 3 versions (requested at 3.0.x–3.1.3 by webauthn4j/spring-ai)
-    // jackson-bom 3.1.1+ fixes GHSA-2m67-wjpj-xhg9 (document length constraint bypass)
-    implementation "tools.jackson.core:jackson-core:3.1.4"
-    implementation "tools.jackson.core:jackson-databind:3.1.4"
+    // Override transitively-requested Jackson 3 with a patched release (webauthn4j/spring-ai request an
+    // older one). Kept on the 3.1.x line to stay within the range those consumers expect (avoid jumping a
+    // minor); bump to the latest patch within it when new advisories land.
+    implementation "tools.jackson.core:jackson-core:3.1.5"
+    implementation "tools.jackson.core:jackson-databind:3.1.5"
     // Note: the former io.modelcontextprotocol.sdk:mcp-core constraint (GHSA-hv2w-8mjj-jw22) was
     // dropped — spring-ai no longer pulls the MCP SDK onto any configuration (since 2.0.0-M6).
 
@@ -366,17 +389,15 @@ dependencies {
     // only a direct dependency reliably wins the version conflict.
     implementation "com.google.protobuf:protobuf-java:4.35.1"
 
-    // Jackson 2 core modules — versions supplied by the jackson-bom 2.22.0 override (dependencyManagement block above)
+    // Jackson 2 core modules — versions supplied by the jackson-bom override (dependencyManagement block above)
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-databind"
     // Java Time (JSR310) support for Jackson
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
-    // Use hibernate7 variant for Hibernate 7.x compatibility.
-    // NOTE: version pinned because jackson-bom does not include the hibernate7 variant (separate project).
-    // Must be kept in sync with the Jackson 2.x version (jackson-bom 2.22.0 import above).
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.22.0"
+    // Use hibernate7 variant for Hibernate 7.x compatibility. Version is managed by the jackson-bom import above.
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
     // Support YML serialization and deserialization
@@ -501,7 +522,7 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
-    // required by sshd-git; 1.84 fixes GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
+    // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
     implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
     implementation "org.bouncycastle:bcprov-jdk18on:1.84"
     // pulled transitively by sshd-git; pin to patched version
@@ -628,9 +649,9 @@ dependencyManagement {
 }
 
 // Force every Netty module pulled in transitively (via Spring Boot, Spring AI, reactor-netty,
-// azure-core-http-netty, …) to the patched netty_version release. This addresses several
-// high/medium-severity advisories in 4.2.x <= 4.2.12 (HTTP smuggling, decompression bombs,
-// DNS codec input-validation bypass, epoll RST DoS, HTTP/3 QPACK unbounded allocation, etc.).
+// azure-core-http-netty, …) to the patched netty_version release. Older releases carry several
+// high/medium-severity advisories (HTTP smuggling, decompression bombs, DNS codec input-validation
+// bypass, epoll RST DoS, HTTP/3 QPACK unbounded allocation, etc.).
 // mockitoAgent is excluded because it is the Mockito inline-mock instrumentation jar, resolved
 // very early during configuration; mutating its resolutionStrategy after that point fails the build.
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {

@@ -1,5 +1,8 @@
 <div class="frame">
     <div class="header">
+        @if (isSidebarCollapsed()) {
+            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+        }
         <h1 id="page-title">{{ tutorialGroup().title }}</h1>
         <div class="spacer"></div>
         @if (currentTutorialLectureId) {
@@ -303,5 +306,5 @@
         </table>
     }
 </div>
-<p-confirmDialog />
+<p-confirmdialog />
 <jhi-tutorial-session-create-or-edit-modal (onUpdate)="updateTutorialGroupSession($event)" (onCreate)="createTutorialGroupSession($event)" #sessionModal />

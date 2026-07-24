@@ -210,7 +210,6 @@
                 "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
                 "cannotShowExampleSolution": "Example solution could not be found",
                 "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
@@ -532,6 +531,7 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
+            "textTooLong": "This text is too long. Please use at most {{ max }} characters.",
             "assessmentDashboard": "Assessment",
             "studentExams": "Student Exams",
             "students": "Students",
@@ -671,7 +671,9 @@
                     "register": "Register",
                     "close": "Close",
                     "errorRegisterStudent": "Failed to register student to exam",
-                    "errorSearchStudents": "Failed to search students."
+                    "errorSearchStudents": "Failed to search students.",
+                    "notFoundStudents": "The following users could not be registered because they were not found: {{ logins }}",
+                    "rejectedStaffUsers": "The following users could not be registered because they are staff members in the course: {{ logins }}"
                 },
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",

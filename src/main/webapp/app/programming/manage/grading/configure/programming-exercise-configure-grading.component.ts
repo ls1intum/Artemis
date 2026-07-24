@@ -139,9 +139,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     private commitProgrammingExercise(): void {
         this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
     }
-    testCaseSubscription: Subscription;
-    testCaseChangedSubscription: Subscription;
-    paramSub: Subscription;
+    testCaseSubscription?: Subscription;
+    testCaseChangedSubscription?: Subscription;
+    paramSub?: Subscription;
 
     readonly testCasesValue = signal<ProgrammingExerciseTestCase[]>([]);
     readonly changedTestCaseIds = signal<number[]>([]);
@@ -167,7 +167,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     backupStaticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
     readonly changedCategoryIds = signal<number[]>([]);
 
-    buildAfterDueDateActive: boolean;
+    buildAfterDueDateActive = false;
     readonly isReleasedAndHasResults = signal<boolean>(undefined!);
     showInactiveValue = false;
     readonly isSaving = signal(false);
@@ -363,8 +363,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.programmingExercise.id!)
             .pipe(
-                tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.testCases = testCases;
+                tap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                    this.testCases = testCases ?? [];
                 }),
                 tap(() => this.loadStatistics(this.programmingExercise.id!)),
             )
@@ -464,7 +464,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const categoriesToUpdate = _intersectionWith(
             this.backupStaticCodeAnalysisCategories,
             this.changedCategoryIds(),
-            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
+            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number | StaticCodeAnalysisCategory) => codeAnalysisCategory.id === id,
         );
         const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
 

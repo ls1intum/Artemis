@@ -95,7 +95,7 @@ public class AutonomousTutorForwardingService {
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
         pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null,
-                null, stages -> {
+                null, (runId, runState, error) -> {
                 });
     }
 
@@ -157,7 +157,7 @@ public class AutonomousTutorForwardingService {
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
         pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null,
-                null, null, stages -> {
+                null, null, (runId, runState, error) -> {
                 });
     }
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -30,8 +29,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 describe('CourseManagementCardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseManagementCardComponent>;
     let component: CourseManagementCardComponent;
     let componentRef: ComponentRef<CourseManagementCardComponent>;

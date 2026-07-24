@@ -14,12 +14,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
- * Execution payload for the Pyris struggle-intervention pipeline (spec §5.3). {@code settings} and
- * {@code initialStages} are top-level (Pyris hoists them as siblings). Field names map 1:1 to Plan 1's
- * pydantic {@code StruggleInterventionPipelineExecutionDTO}. {@code chatHistory} is empty when no exercise
+ * Execution payload for the Pyris struggle-intervention pipeline (spec §5.3). {@code settings} is
+ * top-level (Pyris hoists it as a sibling). Field names map 1:1 to Plan 1's pydantic
+ * {@code StruggleInterventionPipelineExecutionDTO}. {@code chatHistory} is empty when no exercise
  * session exists yet (deferred materialization, §11).
  * <p>
  * {@code intent} carries the slot action ({@code decide} | {@code confirm_close}).
@@ -34,6 +33,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionPipelineExecutionDTO(PyrisStruggleSignalDTO struggleSignal, @Nullable PyrisProgrammingExerciseDTO programmingExercise,
         @Nullable PyrisSubmissionDTO programmingExerciseSubmission, List<PyrisMessageDTO> chatHistory, @Nullable PyrisCourseDTO course, @Nullable PyrisUserDTO user,
-        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, @Nullable String intent, @Nullable StruggleEpisodeDTO episode,
+        PyrisPipelineExecutionSettingsDTO settings, @Nullable String intent, @Nullable StruggleEpisodeDTO episode,
         @JsonProperty("proactivity_mode") @Nullable String proactivityMode) {
 }

@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 /**
- * Unit test verifying that the {@code errorCode} from a terminal
+ * Unit test verifying that the {@code error.code} from a terminal
  * {@link PyrisLectureIngestionStatusUpdateDTO} is forwarded to
  * {@link ProcessingStateCallbackApi#handleIngestionComplete}.
  */
@@ -47,10 +47,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         // jobId, courseId, lectureId, lectureUnitId
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
-        // Build a terminal stage list with an ERROR stage carrying errorCode "YOUTUBE_PRIVATE"
-        // name, weight, state, message, internal, chatMessage
-        var errorStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.ERROR, "video is private", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(errorStage), 7L, "YOUTUBE_PRIVATE", null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, PyrisRunState.FAILED, new PyrisStatusErrorDTO("video is private", "YOUTUBE_PRIVATE"), 7L, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
@@ -62,8 +59,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     void nullErrorCodeIsForwardedOnTerminalSuccessCallback() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
-        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(doneStage), 7L, null, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, PyrisRunState.FINISHED, null, 7L, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
@@ -74,8 +70,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     void displayPageNumbersAreReadOnlyFromDedicatedField() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
-        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"displayPageNumbers\":[9,9,9]}", List.of(doneStage), 7L, null, List.of(1, 2, -1));
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"displayPageNumbers\":[9,9,9]}", PyrisRunState.FINISHED, null, 7L, List.of(1, 2, -1));
 
         service.handleStatusUpdate(job, statusUpdate);
 
@@ -87,8 +82,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     void missingDisplayPageNumbersRemainNullableOnSuccess() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
-        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("done", List.of(doneStage), 7L, null, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("done", PyrisRunState.FINISHED, null, 7L, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 

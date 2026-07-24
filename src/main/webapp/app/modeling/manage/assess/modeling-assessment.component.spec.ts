@@ -75,7 +75,6 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -146,8 +145,6 @@ function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): 
 }
 
 describe('ModelingAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
@@ -349,11 +346,12 @@ describe('ModelingAssessmentComponent', () => {
         ];
 
         // Mock translatePipe to return a meaningful value so assessmentNote gets set
-        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string, params?: any) => {
-            if (key === 'artemisApp.modelingAssessment.impactWarning' && params?.affectedSubmissionsCount) {
-                return `Warning: ${params.affectedSubmissionsCount} other submissions`;
+        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string | undefined | null, params?: object) => {
+            const affectedSubmissionsCount = (params as { affectedSubmissionsCount?: number } | undefined)?.affectedSubmissionsCount;
+            if (key === 'artemisApp.modelingAssessment.impactWarning' && affectedSubmissionsCount) {
+                return `Warning: ${affectedSubmissionsCount} other submissions`;
             }
-            return key;
+            return key ?? '';
         });
 
         fixture.componentRef.setInput('umlModel', mockModel);

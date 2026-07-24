@@ -6,12 +6,9 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 let artemisServerDateService: ArtemisServerDateService;
 
 describe('ExamUtils', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: ArtemisServerDateService, useClass: MockArtemisServerDateService }],

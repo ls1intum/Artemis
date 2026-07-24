@@ -18,7 +18,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     private injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
 
     // The currently displayed alert
-    private alert: Alert;
+    private alert?: Alert;
     // Indicates whether we ever saw an outdated state since last reload
     private hasSeenOutdatedInThisSession = false;
 
@@ -78,7 +78,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         const update = this.updates.isEnabled ? this.updates.checkForUpdate() : Promise.resolve(hasUpdate);
 
         // first update the service worker
-        update.then((updateAvailable: boolean) => {
+        void update.then((updateAvailable: boolean) => {
             if (this.hasSeenOutdatedInThisSession || updateAvailable) {
                 this.hasSeenOutdatedInThisSession = true;
 

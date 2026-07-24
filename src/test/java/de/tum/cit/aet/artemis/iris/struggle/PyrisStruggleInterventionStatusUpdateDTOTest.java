@@ -16,7 +16,7 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
     void deserializesFlatPyrisCallback() throws Exception {
         String json = """
                 {"result":"Have you checked the empty-list case?","action":"active","confidence":0.81,
-                 "rationale":"FM boundary, feedback-viewing dominant","stages":[],"tokens":[]}""";
+                 "rationale":"FM boundary, feedback-viewing dominant","runState":"FINISHED","tokens":[]}""";
         var dto = mapper.readValue(json, PyrisStruggleInterventionStatusUpdateDTO.class);
         assertThat(dto.action()).isEqualTo("active");
         assertThat(dto.confidence()).isEqualTo(0.81);
@@ -24,14 +24,14 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
     }
 
     @Test
-    void silentCallbackShapeAndNullStagesTokensDefaultToEmptyLists() {
+    void silentCallbackShapeAndNullTokensDefaultToEmptyList() {
         // Real silent-decision callback shape: result == null, action == "silent" — the record header is
-        // (result, action, confidence, rationale, stages, tokens), so the "silent" literal MUST sit in the
+        // (result, action, confidence, rationale, runState, error, tokens), so the "silent" literal MUST sit in the
         // action position. This is the exact shape Task 11's handleDecision keys on (action != null && result == null).
-        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null, null, null, null);
+        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null, null, null, null, null);
         assertThat(dto.action()).isEqualTo("silent");
         assertThat(dto.result()).isNull();
-        assertThat(dto.stages()).isEmpty();
+        assertThat(dto.runState()).isNull();
         assertThat(dto.tokens()).isEmpty();
     }
 
@@ -39,7 +39,7 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
     void deserializesNewModeFields() throws Exception {
         String json = """
                 {"resolved":true,"closing_sentence":"Nice","episode_label":"Wrong index",
-                 "stages":[],"tokens":[]}""";
+                 "runState":"FINISHED","tokens":[]}""";
         var dto = mapper.readValue(json, PyrisStruggleInterventionStatusUpdateDTO.class);
         assertThat(dto.resolved()).isTrue();
         assertThat(dto.closingSentence()).isEqualTo("Nice");
@@ -52,7 +52,7 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
         // otherwise the inline surface silently arrives null and never activates.
         String json = """
                 {"result":"Look at the loop bound.","action":"ambient","confidence":0.7,"rationale":"FM",
-                 "stages":[],"tokens":[],"anchor_file":"Sort.java","anchor_line":42,"inline_hint":"off-by-one?"}""";
+                 "runState":"FINISHED","tokens":[],"anchor_file":"Sort.java","anchor_line":42,"inline_hint":"off-by-one?"}""";
         var dto = mapper.readValue(json, PyrisStruggleInterventionStatusUpdateDTO.class);
         assertThat(dto.anchorFile()).isEqualTo("Sort.java");
         assertThat(dto.anchorLine()).isEqualTo(42);

@@ -28,12 +28,12 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<IrisMessage> findAllBySessionIdOrderBySentAtAscIdAsc(long sessionId);
 
     /**
-     * Counts the number of LLM responses the user got within the given timeframe.
+     * Counts the number of final LLM responses the user got within the given timeframe.
      *
      * @param userId the id of the user
      * @param start  the start of the timeframe
      * @param end    the end of the timeframe
-     * @return the number of chat messages sent by the user within the given timeframe
+     * @return the number of final LLM responses within the given timeframe
      */
     @Query("""
             SELECT COUNT(DISTINCT m)
@@ -42,9 +42,10 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             WHERE s.userId = :userId
                 AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM
                 AND (m.origin IS NULL OR m.origin <> de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin.PROACTIVE_STRUGGLE)
+                AND (m.intermediate IS NULL OR m.intermediate = FALSE)
                 AND m.sentAt BETWEEN :start AND :end
             """)
-    int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
+    int countFinalLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
      * Stable write-target finder for {@code writeEpisodeOutcome}, SCOPED to the requesting user's own sessions.

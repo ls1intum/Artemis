@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -6,18 +6,28 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { TooltipModule } from 'primeng/tooltip';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import {
+    TumUiAutoCompleteCompleteEvent,
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSelectEvent,
+    TumUiAutoCompleteUnselectEvent,
+} from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
+import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AutoComplete, AutoCompleteCompleteEvent, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
@@ -33,16 +43,23 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
-    styleUrls: ['./user-management-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        TooltipModule,
+        TumUiTooltipDirective,
         HelpIconComponent,
-        AutoComplete,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiSelectComponent,
+        TumUiAutoCompleteComponent,
+        TumUiChipComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+        OrganizationSelectorComponent,
         FaIconComponent,
-        FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
@@ -53,8 +70,6 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -62,9 +77,12 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     protected readonly faBan = faBan;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
     protected readonly faSave = faSave;
+
+    /** Controls visibility of the declarative organization-selector dialog. */
+    readonly orgSelectorVisible = signal(false);
+
+    private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -80,6 +98,12 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Available languages for selection */
     readonly languages = signal<string[]>(undefined!);
+
+    /** Language options ({ label, value }) derived for the PrimeNG select. */
+    readonly languageOptions = computed(() => (this.languages() ?? []).map((language) => ({ label: this.findLanguageFromKeyPipe.transform(language), value: language })));
+
+    /** Whether a random password should be generated (new users) or the old password kept (existing users). */
+    readonly useRandomPassword = signal(true);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -107,7 +131,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /** All available groups for autocomplete */
     allGroups: string[] = [];
 
-    /** Suggestions shown in the group autocomplete dropdown, recomputed on each keystroke via {@link onGroupComplete}. */
     readonly groupSuggestions = signal<string[]>([]);
 
     /** Authority to translation key mapping */
@@ -121,13 +144,13 @@ export class UserManagementUpdateComponent implements OnInit {
     };
 
     /** The reactive form for editing user properties */
-    editForm: FormGroup;
+    editForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Original login for detecting changes */
     private oldLogin?: string;
 
     /** Whether Jenkins profile is active */
-    private isJenkins: boolean;
+    private isJenkins = false;
 
     /**
      * Initializes the component by loading user data, authorities, languages, and groups.
@@ -154,6 +177,7 @@ export class UserManagementUpdateComponent implements OnInit {
                     }
                 });
             }
+            this.groupSuggestions.set(this.availableGroups());
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
@@ -220,7 +244,8 @@ export class UserManagementUpdateComponent implements OnInit {
         }
     }
 
-    shouldRandomizePassword(useRandomPassword: Event | boolean) {
+    shouldRandomizePassword(useRandomPassword: boolean) {
+        this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
     }
 
@@ -228,22 +253,16 @@ export class UserManagementUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
-            width: '80vw',
-            modal: true,
-            closable: true,
-            dismissableMask: true,
-            data: {
-                organizations: this.user().organizations,
-            },
-        });
-        dialogRef?.onClose.subscribe((organization) => {
-            if (organization !== undefined) {
-                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
-                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
-            }
-        });
+        this.orgSelectorVisible.set(true);
+    }
+
+    /**
+     * Adds the organization chosen in the selector dialog to the user.
+     * @param organization the organization selected in the dialog
+     */
+    onOrgSelected(organization: Organization) {
+        // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
+        this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -255,59 +274,47 @@ export class UserManagementUpdateComponent implements OnInit {
         this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
     }
 
-    /**
-     * Recomputes the autocomplete suggestions for the typed query, excluding groups already assigned to the user.
-     * @param event the p-autoComplete complete event carrying the current query
-     */
-    onGroupComplete(event: AutoCompleteCompleteEvent): void {
-        const query = event.query;
-        const candidates = query ? this.filter(query) : (this.allGroups ?? []).slice();
-        const assigned = this.user().groups ?? [];
-        this.groupSuggestions.set(candidates.filter((group) => !assigned.includes(group)));
+    /** Filters the group suggestions shown in the autocomplete dropdown based on the typed query. */
+    filterGroups(event: TumUiAutoCompleteCompleteEvent): void {
+        const query = (event.query ?? '').trim();
+        this.groupSuggestions.set(query ? this.filter(query) : this.availableGroups());
     }
 
-    /**
-     * Adds a group to the user from the typed free-text value (Enter key). The group is only added if it is a known
-     * group; {@link addGroup} performs that validation. Clears the input afterwards.
-     * @param user to add the group to
-     * @param event the keyboard event coming from the input
-     */
-    onGroupAdd(user: User, event: Event) {
-        // Cancel the Enter key before reading the input so it does not also submit the surrounding
-        // (ngSubmit)="save()" user edit form (which would save and navigate away while adding a group).
-        event.preventDefault();
-        event.stopPropagation();
-        const input = event.target as HTMLInputElement;
-        const groupString = (input.value || '').trim();
-        this.addGroup(user, groupString);
-        input.value = '';
-    }
-
-    /**
-     * Removes a group from the user
-     * @param user to remove the group from
-     * @param group to remove
-     */
-    onGroupRemove(user: User, group: string) {
-        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
-        this.commitUser(user);
-    }
-
-    /**
-     * Adds the selected group from the autocomplete dropdown to the user.
-     * @param event the p-autoComplete select event carrying the chosen group label
-     */
-    onGroupSelect(event: AutoCompleteSelectEvent): void {
-        const groupString = (event.value || '').trim();
+    onGroupSelect(event: TumUiAutoCompleteSelectEvent): void {
+        // The group autocomplete operates over string suggestions, so the selected value is a string.
+        const groupString = (typeof event.value === 'string' ? event.value : '').trim();
         this.addGroup(this.user(), groupString);
     }
 
     /**
-     * Removes the group whose chip token was removed via the built-in p-autoComplete remove icon.
-     * @param event the p-autoComplete unselect event carrying the removed group label
+     * Adds the group typed into the autocomplete when the user presses Enter. Cancels the key first so it does not
+     * ALSO submit the surrounding `(ngSubmit)="save()"` edit form (which would save and navigate away mid-edit).
      */
-    onGroupUnselect(event: AutoCompleteUnselectEvent): void {
-        this.onGroupRemove(this.user(), event.value);
+    onGroupAdd(user: User, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const input = event.target as HTMLInputElement;
+        this.addGroup(user, (input.value || '').trim());
+        // Reset the autocomplete through its own input handler (state-aware), not just the raw value, so its query
+        // signal and suggestion panel clear too — otherwise the typed text and stale panel linger after Enter.
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    onGroupUnselect(event: TumUiAutoCompleteUnselectEvent): void {
+        // The group autocomplete operates over string suggestions, so the removed value is a string.
+        const group = typeof event.value === 'string' ? event.value : '';
+        this.removeGroup(this.user(), group);
+    }
+
+    removeGroup(user: User, group: string) {
+        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
+        this.commitUser(user);
+    }
+
+    private availableGroups(): string[] {
+        const assigned = this.user()?.groups ?? [];
+        return (this.allGroups ?? []).filter((group) => group != undefined && !assigned.includes(group));
     }
 
     private initializeForm() {
@@ -367,8 +374,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private addGroup(user: User, groupString: string) {
         if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            // Assign a NEW array (rather than mutating in place) so the one-way `[ngModel]="user().groups"` sees a
-            // changed reference and PrimeNG's AutoComplete re-renders the chip for the freshly added group.
+            // Replace the array (not push) so the shallow `commitUser` spread yields a NEW `groups` reference: the
+            // one-way `[ngModel]` on the autocomplete only calls writeValue (→ renders the chip) when the reference
+            // changes. An in-place push kept the same reference, so an Enter-added group never showed a chip.
             user.groups = [...(user.groups ?? []), groupString];
             this.commitUser(user);
         }

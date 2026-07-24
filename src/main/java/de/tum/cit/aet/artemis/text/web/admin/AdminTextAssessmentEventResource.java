@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventDTO;
 
 /**
  * REST controller for administrating TextAssessmentEventResource.
@@ -38,16 +39,16 @@ public class AdminTextAssessmentEventResource {
      *
      * @param courseIdQuery the id of the course to filter by (provided as a query parameter; preferred)
      * @param courseIdPath  the id of the course to filter by (provided as a legacy path variable; deprecated)
-     * @return returns a List of TextAssessmentEvent's
+     * @return returns a List of TextAssessmentEventDTO's
      */
     @GetMapping({ "event-insights/text-assessment/events", "event-insights/text-assessment/events/{courseId}" })
-    public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@RequestParam(name = "courseId", required = false) Long courseIdQuery,
+    public ResponseEntity<List<TextAssessmentEventDTO>> getEventsByCourseId(@RequestParam(name = "courseId", required = false) Long courseIdQuery,
             @PathVariable(name = "courseId", required = false) Long courseIdPath) {
         Long courseId = courseIdQuery != null ? courseIdQuery : courseIdPath;
         if (courseId == null) {
             throw new BadRequestAlertException("A courseId must be provided", "textAssessmentEvent", "courseIdMissing");
         }
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
-        return ResponseEntity.ok().body(events);
+        return ResponseEntity.ok().body(events.stream().map(TextAssessmentEventDTO::of).toList());
     }
 }

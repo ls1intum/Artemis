@@ -41,8 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -174,9 +173,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED);
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
 
-        var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Have you checked the empty-list case?", "active", 0.85, "FM", List.of(terminalStage), List.of(), null, null,
-                null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Have you checked the empty-list case?", "active", 0.85, "FM", PyrisRunState.FINISHED, null, List.of(), null,
+                null, null, null, null, null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
         // The active path lazily CREATED the exercise session and persisted a proactive-tagged LLM message into it.
@@ -213,9 +211,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED);
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
 
-        var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", List.of(terminalStage), List.of(), null, null, null,
-                null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", PyrisRunState.FINISHED, null, List.of(), null, null,
+                null, null, null, null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
         // The ambient event is pushed to the per-user topic.

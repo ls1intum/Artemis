@@ -225,7 +225,9 @@ export class ExerciseSplitPanelComponent {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                const exerciseId = exercise.id;
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.openChat(mode, exerciseId));
             }
         });
         effect(() => {
@@ -245,7 +247,7 @@ export class ExerciseSplitPanelComponent {
                     const targetSegment = mode === 'practice' ? 'practice' : 'live';
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
                     if (currentSegment !== targetSegment) {
-                        this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                        void this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
                     }
                     return;
                 }
@@ -253,13 +255,13 @@ export class ExerciseSplitPanelComponent {
                 const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
                 if (currentParticipationId === String(participation.id)) return;
                 if (type === ExerciseType.TEXT) {
-                    this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                    void this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
-                    this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                    void this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
                 } else if (type === ExerciseType.MODELING) {
-                    this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                    void this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 } else if (type === ExerciseType.FILE_UPLOAD) {
-                    this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                    void this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 }
             });
         });
@@ -306,7 +308,7 @@ export class ExerciseSplitPanelComponent {
             } else if (component instanceof ModelingSubmissionComponent) {
                 component.submit();
             } else if (component instanceof FileUploadSubmissionComponent) {
-                component.submitExercise();
+                void component.submitExercise();
             } else if (component instanceof QuizParticipationComponent) {
                 component.onSubmit();
             }

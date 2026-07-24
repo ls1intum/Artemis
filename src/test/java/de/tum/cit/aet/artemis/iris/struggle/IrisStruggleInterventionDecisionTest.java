@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -134,10 +135,11 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(555L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.8, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
         service.handleDecision(job, update);
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
-        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         // Objects.equals: sessionId is a @Nullable Long, so a regression to null fails as a clean assertion mismatch
         // rather than throwing NPE inside argThat. confidence is forwarded for the eval log (§12).
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
@@ -146,7 +148,8 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void active_belowThreshold_downgradesToSilent_noSessionCreated_emitsSilentNoop() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.4, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.4, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
         service.handleDecision(job, update);
         verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
@@ -159,14 +162,14 @@ class IrisStruggleInterventionDecisionTest {
         // A9 pull model: ambient does NOT persist. Session is resolved to supply sessionId on the event.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, List.of(), List.of(), "Sort.java", 42, "off-by-one?", null, null,
-                null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), "Sort.java", 42,
+                "off-by-one?", null, null, null);
 
         service.handleDecision(job, update);
 
         // ambient never saves a message row (pull model)
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         // event carries kind="decide", action="ambient", the hint text, and the resolved sessionId (no messageId)
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
@@ -180,13 +183,13 @@ class IrisStruggleInterventionDecisionTest {
         // No message row is persisted, no chat message is sent, and the emitted event carries action="ambient".
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "active", 0.8, "FM", List.of(), List.of(), "Sort.java", 42, "off-by-one?", null, null,
-                null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), "Sort.java", 42,
+                "off-by-one?", null, null, null);
 
         service.handleDecision(pullJob, update);
 
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action())
                 && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L) && e.messageId() == null));
         // the downgrade is total: NO separate action="active" event frame is ever emitted in Pull
@@ -197,7 +200,8 @@ class IrisStruggleInterventionDecisionTest {
     void active_resolvedSessionNotExerciseBound_isDropped() {
         var session = exerciseSession(999L);   // defensive: resolved session not bound to job.exerciseId()
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         // Fix (finding 2): the not-bound drop now emits a silent completion frame so the client's in-flight clears.
@@ -212,12 +216,12 @@ class IrisStruggleInterventionDecisionTest {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
 
         service.handleDecision(job, update);
 
         // No row was saved, so sendMessage must not be called.
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         // The active control event is still emitted with messageId=null and the hint text (client fallback).
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "decide".equals(e.kind()) && "active".equals(e.action()) && e.messageId() == null && "Hint text.".equals(e.message())));
@@ -226,7 +230,7 @@ class IrisStruggleInterventionDecisionTest {
     @Test
     void nullResult_emitsSilentDecideEvent_noPersistedMessage() {
         // Empty/null result: a completion noop is always emitted so the client's in-flight decide clears (Critical fix).
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
@@ -234,7 +238,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void emptyResult_emitsSilentDecideEvent_noPersistedMessage() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
@@ -251,7 +255,7 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(777L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(jobWithEpisode, update);
         // The persisted message must have proactiveEpisodeId set.
         verify(irisMessageService).saveMessage(argThat(m -> "ep-123".equals(m.getProactiveEpisodeId())), eq(session), eq(IrisMessageSender.LLM));
@@ -264,7 +268,7 @@ class IrisStruggleInterventionDecisionTest {
     void active_withTerminalEpisode_emitsSilentEvent_noPersistedMessage() {
         // A9: if the episode is already terminal (DISMISSED), a late escalation is skipped and a silent noop emitted.
         when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(jobWithEpisode, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
@@ -280,10 +284,11 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(556L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Try the empty-list case.", "active", 0.3, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Try the empty-list case.", "active", 0.3, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
         service.handleDecision(helpRequestPullJob, update);
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
-        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action()) && Objects.equals(e.messageId(), 556L)));
     }
 
@@ -296,7 +301,8 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(557L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("One notch further.", "ambient", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("One notch further.", "ambient", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
         service.handleDecision(helpRequestPullJob, update);
         verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action())));
@@ -304,7 +310,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void helpRequest_silentFromPyris_staysSilent() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "silent", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "silent", 0.9, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         service.handleDecision(helpRequestPullJob, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));

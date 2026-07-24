@@ -39,7 +39,6 @@
             "noCourseIcon": "Kein Kurs Icon verfügbar",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
-            "manage": "Verwalten",
             "general": {
                 "noDataFound": "Keine Einträge gefunden.",
                 "noElementFoundWithAppliedFilter": "Keine Einträge für die angewendeten Filtereinstellungen gefunden."
@@ -108,7 +107,6 @@
                 "lectures": "Vorlesungen",
                 "competencies": "Kompetenzen",
                 "learningPath": "Lernpfad",
-                "dashboard": "Übersichtsseite",
                 "iris": "Iris",
                 "tutorialGroups": "Tutorien",
                 "more": "Mehr",

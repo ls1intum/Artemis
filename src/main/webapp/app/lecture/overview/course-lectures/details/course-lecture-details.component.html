@@ -9,7 +9,10 @@
     <div>
         <div class="px-3 pb-3 pt-2 scrollable-content">
             <!-- HEADER INFORMATION START -->
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                }
                 <h5 class="my-2">
                     <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
                     {{ lecture.title }}
@@ -39,7 +42,7 @@
                             </div>
                         </div>
                         <div class="row mb-2 markdown-preview">
-                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                            <div class="col-12 col-md-12 markdown-preview" [jhiMarkdown]="lecture.description"></div>
                         </div>
                     }
                     <!-- LECTURE UNITS START-->
@@ -112,7 +115,7 @@
                                     <li class="mb-3">
                                         <h5 class="mb-1">
                                             @if (!isDownloadingLink()) {
-                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name)">
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name, attachment.version)">
                                                     {{ attachment.name }}
                                                 </a>
                                             }

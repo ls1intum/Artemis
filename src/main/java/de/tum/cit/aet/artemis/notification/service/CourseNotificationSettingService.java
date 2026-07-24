@@ -262,7 +262,9 @@ public class CourseNotificationSettingService {
                     case WEBAPP -> UserCourseNotificationSettingSpecification::isWebapp;
                     case PUSH -> UserCourseNotificationSettingSpecification::isPush;
                     case EMAIL -> UserCourseNotificationSettingSpecification::isEmail;
-                }).orElse(false);
+                    // Custom presets created before a notification type was introduced have no specification row for it.
+                    // Fall back to the default preset value instead of silently disabling delivery for those users.
+                }).orElseGet(() -> this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor));
             }
             else {
                 return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);

@@ -1,19 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MockProvider } from 'ng-mocks';
+import { TumUiAutoCompleteCompleteEvent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('FinishedBuildsFilterModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FinishedBuildsFilterModalComponent;
     let fixture: ComponentFixture<FinishedBuildsFilterModalComponent>;
 
@@ -58,7 +54,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FinishedBuildsFilterModalComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DynamicDialogRef), { provide: DynamicDialogConfig, useValue: { data: {} } }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FinishedBuildsFilterModalComponent);
@@ -72,8 +68,19 @@ describe('FinishedBuildsFilterModalComponent', () => {
     });
 
     it('should return correct build agent addresses', () => {
-        component.finishedBuildJobs = mockFinishedJobs;
+        fixture.componentRef.setInput('finishedBuildJobsInput', mockFinishedJobs);
         expect(component.buildAgentAddresses).toEqual(['agent5', 'agent6']);
+    });
+
+    it('should suggest all addresses on an empty query and filter on a term', () => {
+        fixture.componentRef.setInput('finishedBuildJobsInput', mockFinishedJobs);
+
+        // Empty query must surface all agent addresses.
+        component.searchBuildAgentAddresses({ query: '' } as TumUiAutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5', 'agent6']);
+
+        component.searchBuildAgentAddresses({ query: 'agent5' } as TumUiAutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5']);
     });
 
     it('should return correct number of filters applied', () => {
@@ -124,24 +131,17 @@ describe('FinishedBuildsFilterModalComponent', () => {
         expect(component.finishedBuildJobFilter.appliedFilters.size).toBe(0);
     });
 
-    it('should clone the incoming filter so edits stay isolated until confirmed', async () => {
+    it('should clone the incoming filter so edits stay isolated until confirmed', () => {
         const source = new FinishedBuildJobFilter('agent5');
         source.status = 'SUCCESSFUL';
         source.appliedFilters.set('someKey', true);
         source.numberOfAppliedFilters = 1;
 
-        TestBed.resetTestingModule();
-        await TestBed.configureTestingModule({
-            imports: [FinishedBuildsFilterModalComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(DynamicDialogRef),
-                { provide: DynamicDialogConfig, useValue: { data: { finishedBuildJobFilter: source } } },
-            ],
-        }).compileComponents();
-
         const localFixture = TestBed.createComponent(FinishedBuildsFilterModalComponent);
         const localComponent = localFixture.componentInstance;
+        // Opening the dialog with an incoming filter clones it into the local working copy.
+        localFixture.componentRef.setInput('finishedBuildJobFilterInput', source);
+        localFixture.componentRef.setInput('visible', true);
         localFixture.detectChanges();
 
         // The component must work on a clone, not the parent's instance
@@ -156,6 +156,29 @@ describe('FinishedBuildsFilterModalComponent', () => {
         localComponent.finishedBuildJobFilter.appliedFilters.set('anotherKey', true);
         expect(source.status).toBe('SUCCESSFUL');
         expect(source.appliedFilters.has('anotherKey')).toBeFalsy();
+    });
+
+    it('should emit the edited filter and hide when confirmed', () => {
+        const emitted: FinishedBuildJobFilter[] = [];
+        component.confirmed.subscribe((filter) => emitted.push(filter));
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter('agent9');
+
+        component.confirm();
+
+        expect(emitted).toHaveLength(1);
+        expect(emitted[0].buildAgentAddress).toBe('agent9');
+        expect(component.visible()).toBeFalsy();
+    });
+
+    it('should hide without emitting when cancelled', () => {
+        const emitted: FinishedBuildJobFilter[] = [];
+        component.confirmed.subscribe((filter) => emitted.push(filter));
+        component.visible.set(true);
+
+        component.cancel();
+
+        expect(emitted).toHaveLength(0);
+        expect(component.visible()).toBeFalsy();
     });
 
     it('should validate correctly', () => {

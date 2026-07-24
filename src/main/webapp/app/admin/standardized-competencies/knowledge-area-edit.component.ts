@@ -1,15 +1,19 @@
-import { Component, effect, inject, input, model, output } from '@angular/core';
-import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
+import { faBan, faPencil, faPlus, faSave, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /**
  * Form structure for knowledge area editing.
@@ -28,7 +32,22 @@ interface KnowledgeAreaForm {
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
-    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, FormsModule, ReactiveFormsModule, MarkdownEditorMonacoComponent, HtmlForMarkdownPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        DeleteButtonDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        MarkdownEditorMonacoComponent,
+        MarkdownDirective,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiMessageComponent,
+    ],
 })
 export class KnowledgeAreaEditComponent {
     private readonly formBuilder = inject(FormBuilder);
@@ -61,7 +80,7 @@ export class KnowledgeAreaEditComponent {
     readonly onClose = output<void>();
 
     /** The reactive form for editing knowledge area properties */
-    form: FormGroup<KnowledgeAreaForm>;
+    form!: FormGroup<KnowledgeAreaForm>; // initialized by the constructor effect() from the required knowledgeArea input
 
     /** Icons */
     protected readonly faPencil = faPencil;
@@ -69,10 +88,9 @@ export class KnowledgeAreaEditComponent {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faPlus = faPlus;
+    protected readonly faXmark = faXmark;
 
     /** Constants */
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
     protected readonly validators = KnowledgeAreaValidators;
 
     constructor() {
@@ -195,12 +213,12 @@ export class KnowledgeAreaEditComponent {
      * (I.e. the new parent of a knowledge area must not be itself or one of its current descendants)
      * @param knowledgeArea - The knowledge area being validated
      */
-    private createNoCircularDependencyValidator(knowledgeArea: KnowledgeAreaDTO) {
+    private createNoCircularDependencyValidator(knowledgeArea: KnowledgeAreaDTO): ValidatorFn {
         // If the knowledgeArea is new, no validator is needed
         if (knowledgeArea.id === undefined) {
-            return (_parentIdControl: FormControl<number | undefined>) => null;
+            return (_parentIdControl: AbstractControl): ValidationErrors | null => null;
         }
-        return (parentIdControl: FormControl<number | undefined>) => {
+        return (parentIdControl: AbstractControl): ValidationErrors | null => {
             if (parentIdControl.value === undefined) {
                 return null;
             }

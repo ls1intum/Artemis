@@ -47,7 +47,7 @@
                                     <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                 }
                                 <td class="text-center">
-                                    {{ studentExamWithGrade()?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
+                                    {{ achievedPointsForExercise(exercise.id!) }}
                                 </td>
                                 <td class="text-center">
                                     @if (exercise.maxPoints !== undefined) {
@@ -87,7 +87,7 @@
                             </th>
                             <th class="text-center">
                                 @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
-                                    <span [class]="hasPassed() ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
+                                    <span [class]="overallScoreTextColorClass()"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
                                 } @else {
                                     <jhi-no-data />
                                 }

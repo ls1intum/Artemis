@@ -6,7 +6,6 @@ vi.mock('@sentry/angular', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@sentry/angular')>()),
     captureException: vi.fn(),
 }));
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/editor/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -24,8 +23,6 @@ import * as monaco from 'monaco-editor';
 const originalResizeObserver = globalThis.ResizeObserver;
 
 describe('MonacoEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
@@ -291,7 +288,7 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         const updateOptionsSpy = vi.spyOn((comp as any)._editor, 'updateOptions');
         const originalGetOption = (comp as any)._editor.getOption.bind((comp as any)._editor);
-        const getOptionSpy = vi.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: monaco.editor.EditorOption) => {
+        const getOptionSpy = vi.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: unknown) => {
             if (option === monaco.editor.EditorOption.folding) {
                 return false;
             }

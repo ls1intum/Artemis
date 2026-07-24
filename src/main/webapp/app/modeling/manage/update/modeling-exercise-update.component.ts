@@ -108,7 +108,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     set modelingExercise(value: ModelingExercise) {
         this._modelingExercise.set(value);
     }
-    backupExercise: ModelingExercise;
+    backupExercise!: ModelingExercise; // set in ngOnInit() from route data before save()
     readonly exampleSolution = signal<UMLModel>(undefined!);
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
@@ -159,7 +159,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
         }
 
-        this.calculateFormSectionStatus().then();
+        void this.calculateFormSectionStatus();
     }
 
     /**
@@ -281,7 +281,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
-        this.calculateFormSectionStatus();
+        void this.calculateFormSectionStatus();
     }
 
     onMarkdownEditorKeydown(event: KeyboardEvent): void {

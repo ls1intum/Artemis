@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
@@ -68,7 +67,6 @@ const preparedFeedback: FeedbackComponentPreparedParams = {
     exercise: mockExercise,
     participation: mockParticipation,
     result: mockResult,
-    exerciseType: ExerciseType.PROGRAMMING,
     showScoreChart: true,
     messageKey: 'artemisApp.result.notLatestSubmission',
     latestDueDate: dayjs().subtract(1, 'hours'),
@@ -79,7 +77,6 @@ const participationServiceMock = {
 };
 
 describe('ResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let dialogService: DialogService;
@@ -197,10 +194,10 @@ describe('ResultComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({
+                    focusOnShow: false,
+                    inputValues: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,
-                        exerciseType: preparedFeedback.exerciseType,
                         showScoreChart: preparedFeedback.showScoreChart,
                         messageKey: preparedFeedback.messageKey,
                         latestDueDate: preparedFeedback.latestDueDate,

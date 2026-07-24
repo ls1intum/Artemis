@@ -9,9 +9,8 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -47,8 +46,8 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             this.course();
             untracked(() => {
                 if (this.initialized && this.irisEnabled()) {
-                    if (post) {
-                        this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                    if (post?.id) {
+                        this.chatService.openTutorSuggestionChat(post.id);
                         this.messagesSubscription?.unsubscribe();
                         this.subscribeToIrisActivation();
                     }
@@ -76,13 +75,12 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
 
     readonly irisIsActive = signal(false);
 
-    messagesSubscription: Subscription;
-    irisSettingsSubscription: Subscription;
-    tutorSuggestionSubscription: Subscription;
-    stagesSubscription: Subscription;
-    errorSubscription: Subscription;
-    irisActivationSubscription: Subscription;
-    featureToggleSubscription: Subscription;
+    messagesSubscription?: Subscription;
+    irisSettingsSubscription?: Subscription;
+    tutorSuggestionSubscription?: Subscription;
+    errorSubscription?: Subscription;
+    irisActivationSubscription?: Subscription;
+    featureToggleSubscription?: Subscription;
 
     readonly messages = signal<IrisMessage[] | undefined>(undefined);
     readonly suggestion = signal<IrisMessage | undefined>(undefined);
@@ -91,7 +89,6 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
     readonly upDisabled = signal(true);
     readonly downDisabled = signal(true);
 
-    stages?: IrisStageDTO[] = [];
     readonly error = signal<IrisErrorMessageKey | undefined>(undefined);
 
     readonly irisEnabled = signal(false);
@@ -112,11 +109,12 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 if (!this.isAtLeastTutor || post?.resolved) {
                     return;
                 }
-                if (course?.id && post) {
+                if (course?.id && post?.id) {
+                    const postId = post.id;
                     this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
                         this.irisEnabled.set(!!response?.settings?.enabled);
                         if (this.irisEnabled()) {
-                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                            this.chatService.openTutorSuggestionChat(postId);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
@@ -133,7 +131,6 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
         this.messagesSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
         this.tutorSuggestionSubscription?.unsubscribe();
-        this.stagesSubscription?.unsubscribe();
         this.errorSubscription?.unsubscribe();
         this.irisActivationSubscription?.unsubscribe();
         this.featureToggleSubscription?.unsubscribe();
@@ -204,7 +201,6 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
      */
     private fetchMessages(): void {
         this.messagesSubscription?.unsubscribe();
-        this.stagesSubscription?.unsubscribe();
         this.errorSubscription?.unsubscribe();
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages()?.length) {
@@ -216,9 +212,6 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 }
             }
             this.messages.set(messages);
-        });
-        this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
-            this.stages = stages;
         });
         this.errorSubscription = this.chatService.currentError().subscribe((error) => this.error.set(error));
     }
