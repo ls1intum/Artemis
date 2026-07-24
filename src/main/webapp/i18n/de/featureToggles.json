@@ -153,11 +153,6 @@
                     "description": "Ermöglicht Lehrenden den Import von Kompetenzen aus standardisierten Rahmenwerken (z.B. Lehrpläne, Qualifikationsprofile) und deren Verknüpfung mit Kurskompetenzen für eine bessere Ausrichtung an Bildungsstandards.",
                     "disableWarning": "Lehrende können keine standardisierten Kompetenzen importieren oder mit ihren Kursen verknüpfen."
                 },
-                "StudentCourseAnalyticsDashboard": {
-                    "name": "Analyse-Dashboard",
-                    "description": "Bietet Studierenden ein persönliches Dashboard mit Lernfortschritt, Leistungsmetriken, Aufgabenstatistiken und Kompetenz-Beherrschung - wenn von Kurslehrenden aktiviert.",
-                    "disableWarning": "Studierende haben keinen Zugriff auf ihr persönliches Analyse-Dashboard, selbst wenn Lehrende es für ihren Kurs aktivieren."
-                },
                 "TutorSuggestions": {
                     "name": "KI-Tutor-Vorschläge",
                     "description": "Nutzt Iris, um Tutor:innen Antwortvorschläge zu machen, wenn sie im Kommunikationsmodul auf Studierendenfragen antworten.",

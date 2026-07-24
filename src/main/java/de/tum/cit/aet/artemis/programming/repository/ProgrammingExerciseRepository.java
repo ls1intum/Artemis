@@ -157,17 +157,51 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Finds a ProgrammingExercise with minimal data necessary for exercise versioning.
+     * Finds a ProgrammingExercise with all data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or participation data.
-     * This includes: testCases, tasks, auxiliaryRepositories, staticCodeAnalysisCategories, buildConfig
+     * <p>
+     * The required data spans several independent {@code @OneToMany} collections (testCases, tasks with their
+     * test cases, staticCodeAnalysisCategories, auxiliaryRepositories, competencyLinks, categories, gradingCriteria).
+     * Fetching the large ones with a single {@code @EntityGraph} produces a Cartesian product: the number of rows the
+     * database has to materialize is the product of the collection sizes (e.g. 76 test cases * 62 task-test-case
+     * links * 11 SCA categories = 51,832 rows for a single exercise in production), which Hibernate then de-duplicates
+     * in memory. That was the dominant application slow query in production.
+     * <p>
+     * Instead, the large independent collections (testCases, tasks with their test cases, staticCodeAnalysisCategories)
+     * are each loaded with their own query and merged into the base exercise in Java. This avoids the Cartesian product
+     * entirely and is portable across MySQL and PostgreSQL as it only uses standard JPA {@code @EntityGraph} fetches.
      *
      * @param exerciseId the id of the exercise to be found
      * @return the programming exercise
      */
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "tasks.testCases",
-            "staticCodeAnalysisCategories", "submissionPolicy", "buildConfig", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "plagiarismDetectionConfig" })
-    Optional<ProgrammingExercise> findForVersioningById(long exerciseId);
+    default Optional<ProgrammingExercise> findForVersioningById(long exerciseId) {
+        // Base query loads the exercise, all to-one associations and the small collections whose mutual product stays
+        // small (aux repositories, competency links, categories, grading criteria).
+        Optional<ProgrammingExercise> exerciseOptional = findForVersioningBaseById(exerciseId);
+        if (exerciseOptional.isEmpty()) {
+            return exerciseOptional;
+        }
+        ProgrammingExercise exercise = exerciseOptional.get();
+        // Load each large independent collection with a separate query and merge it into the base exercise. Merging in
+        // Java keeps every query free of a Cartesian product between independent collections.
+        findForVersioningTestCasesById(exerciseId).ifPresent(fetched -> exercise.setTestCases(fetched.getTestCases()));
+        findForVersioningTasksById(exerciseId).ifPresent(fetched -> exercise.setTasks(fetched.getTasks()));
+        findForVersioningStaticCodeAnalysisCategoriesById(exerciseId).ifPresent(fetched -> exercise.setStaticCodeAnalysisCategories(fetched.getStaticCodeAnalysisCategories()));
+        return Optional.of(exercise);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "buildConfig", "teamAssignmentConfig",
+            "plagiarismDetectionConfig", "auxiliaryRepositories", "competencyLinks", "categories", "gradingCriteria" })
+    Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "testCases")
+    Optional<ProgrammingExercise> findForVersioningTestCasesById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "tasks", "tasks.testCases" })
+    Optional<ProgrammingExercise> findForVersioningTasksById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "staticCodeAnalysisCategories")
+    Optional<ProgrammingExercise> findForVersioningStaticCodeAnalysisCategoriesById(long exerciseId);
 
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.

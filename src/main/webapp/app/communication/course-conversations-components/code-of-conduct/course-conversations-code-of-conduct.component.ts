@@ -5,13 +5,13 @@ import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 @Component({
     selector: 'jhi-course-conversations-code-of-conduct',
     templateUrl: './course-conversations-code-of-conduct.component.html',
-    imports: [TranslateDirective, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, MarkdownDirective],
 })
 export class CourseConversationsCodeOfConductComponent implements OnInit {
     private alertService = inject(AlertService);

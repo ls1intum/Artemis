@@ -9,11 +9,11 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { MessageModule } from 'primeng/message';
+import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -75,14 +75,14 @@ type ModuleFeatureInfo = {
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TooltipModule,
-        TagModule,
-        ButtonModule,
-        ToggleSwitchModule,
-        MessageModule,
+        TumUiToggleSwitchComponent,
+        TumUiMessageComponent,
         FormsModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class AdminFeatureToggleComponent implements OnInit {
@@ -137,7 +137,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',

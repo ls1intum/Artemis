@@ -45,9 +45,11 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
+/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme.
+   `.tum-ui-btn` is excluded alongside `.btn`: anchor-form tum-ui buttons (`<a tumUiButton>`) are buttons, not links, so the
+   link-blue hover color must not override their own token text color (it made solid buttons render blue-on-blue). */
 a,
-a:not(.btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
+a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
     color: $link-color;
 
     /* make sure browsers use the pointer cursor for anchors, even with no href */
@@ -67,7 +69,7 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tab-link):hover {
+a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -755,6 +757,19 @@ code.password:hover {
     margin: 10px;
     width: calc(100% - 20px);
     height: calc(100% - 20px);
+}
+
+// tum-aet-ui kit: structural styles for CDK overlay backdrops (popover, and later menu/select).
+// Artemis intentionally does not import the CDK overlay-prebuilt stylesheet, and the minimal
+// .cdk-overlay-container override above provides none of the backdrop rules. Without a full-viewport,
+// pointer-capturing backdrop the transparent click-catcher collapses to zero size, so clicks pass
+// through to the page and OverlayRef.backdropClick() never fires (the popover stays open). `fixed` +
+// `inset: 0` covers the viewport regardless of the (statically positioned) container; the overlay pane
+// is a later sibling and therefore stacks above this backdrop, so in-panel clicks keep working.
+.tum-ui-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    pointer-events: auto;
 }
 
 .not-allowed {

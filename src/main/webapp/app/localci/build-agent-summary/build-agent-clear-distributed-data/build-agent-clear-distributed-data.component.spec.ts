@@ -2,35 +2,31 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentClearDistributedDataComponent', () => {
     let component: BuildAgentClearDistributedDataComponent;
     let fixture: ComponentFixture<BuildAgentClearDistributedDataComponent>;
-    const dialogRef = {
-        close: vi.fn(),
-    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildAgentClearDistributedDataComponent],
-            providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentClearDistributedDataComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
     });
 
-    it('should close without a result on cancel', () => {
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+    it('should hide without confirming on cancel', () => {
+        const confirmedSpy = vi.fn();
+        component.confirmed.subscribe(confirmedSpy);
         component.cancel();
-        expect(closeSpy).toHaveBeenCalledWith();
+        expect(component.visible()).toBeFalsy();
+        expect(confirmedSpy).not.toHaveBeenCalled();
     });
 
     it('should have button enabled when confirmation text is correct', () => {
@@ -41,9 +37,11 @@ describe('BuildAgentClearDistributedDataComponent', () => {
         expect(component.buttonEnabled()).toBeTruthy();
     });
 
-    it('should close with true on confirm', () => {
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+    it('should emit confirmed and hide on confirm', () => {
+        const confirmedSpy = vi.fn();
+        component.confirmed.subscribe(confirmedSpy);
         component.confirm();
-        expect(closeSpy).toHaveBeenCalledWith(true);
+        expect(confirmedSpy).toHaveBeenCalledOnce();
+        expect(component.visible()).toBeFalsy();
     });
 });
