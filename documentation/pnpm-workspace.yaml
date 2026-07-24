@@ -14,31 +14,27 @@ autoInstallPeers: true
 overrides:
     '@babel/core': '7.29.7'
     '@babel/plugin-transform-modules-systemjs': '7.29.4'
-    # CVE-2026-12590 (GHSA-v422-hmwv-36x6): DoS when an invalid limit disables size enforcement.
     # Kept on the 1.x line (docs' express 4 stack requires ^1).
     body-parser: '1.20.6'
-    # CVE-2026-13676 / CVE-2026-16221: fast-uri host confusion (kept on the 3.x line).
+    # Kept on the 3.x line (consumers require ^3).
     fast-uri: '3.1.4'
     follow-redirects: '1.16.0'
     http-proxy-middleware: '3.0.7'
     joi: '17.13.4'
-    # CVE-2026-59869 (GHSA-52cp-r559-cp3m): quadratic CPU via YAML merge-key chains (kept on 4.x).
+    # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
     js-yaml: '4.3.0'
     launch-editor: '2.14.1'
     minimatch: '10.2.5'
     qs: '6.15.2'
     serialize-javascript: '7.0.5'
-    # CVE-2026-13311 (GHSA-395f-4hp3-45gv): quadratic-complexity DoS in shell-quote parse().
     shell-quote: '1.10.0'
-    # GHSA-2p49-hgcm-8545: SVGO removeScripts plugin leaves some executable scripts intact (kept on 3.x).
+    # Kept on the 3.x line (docs' SVG toolchain requires ^3).
     svgo: '3.3.4'
     undici: '7.28.0'
     uuid: '14.0.0'
     webpack: '5.106.2'
-    # CVE-2026-14620/14631: webpack-dev-server CSRF + DoS (kept on the 5.x line).
+    # Kept on the 5.x line (docs' webpack tooling requires ^5; 6.x is an API break).
     webpack-dev-server: '5.2.6'
-    # CVE-2026-54466/54490 (GHSA-xv26-6w52-cph6 / GHSA-mp7j-qc5w-4988): message corruption /
-    # resource-limit bypass via protocol length headers and compression.
     websocket-driver: '0.7.5'
     'ws@>=7.0.0 <7.5.11': '7.5.11'
     'ws@>=8.0.0 <8.21.0': '8.21.0'
