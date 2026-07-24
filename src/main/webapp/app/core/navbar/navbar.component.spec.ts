@@ -215,6 +215,7 @@ describe('NavbarComponent', () => {
         const course = {
             id: 123,
             title: 'Course1',
+            isAtLeastTutor: true,
             isAtLeastEditor: true,
             isAtLeastInstructor: true,
             tutorialGroupsConfiguration: {},
@@ -223,6 +224,30 @@ describe('NavbarComponent', () => {
         beforeEach(() => {
             currentCourseContextService.setCourse(course);
         });
+
+        it.each([
+            { hasAtLeastTutorRole: false, hasAtLeastAdminRole: false, url: '/', isAtLeastTutorInCurrentCourse: false, expected: false },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: false, url: '/', isAtLeastTutorInCurrentCourse: false, expected: true },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: false, url: '/courses', isAtLeastTutorInCurrentCourse: false, expected: true },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: false, url: '/course-management', isAtLeastTutorInCurrentCourse: false, expected: true },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: false, url: '/courses/123', isAtLeastTutorInCurrentCourse: false, expected: false },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: false, url: '/courses/123', isAtLeastTutorInCurrentCourse: true, expected: true },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: true, url: '/courses', isAtLeastTutorInCurrentCourse: false, expected: true },
+            { hasAtLeastTutorRole: true, hasAtLeastAdminRole: true, url: '/courses/123', isAtLeastTutorInCurrentCourse: false, expected: true },
+        ])(
+            'should render the perspective switch when tutor role is $hasAtLeastTutorRole, admin role is $hasAtLeastAdminRole, URL is $url, and course tutor status is $isAtLeastTutorInCurrentCourse',
+            ({ hasAtLeastTutorRole, hasAtLeastAdminRole, url, isAtLeastTutorInCurrentCourse, expected }) => {
+                const accountService = TestBed.inject(AccountService);
+                vi.spyOn(accountService, 'isAtLeastTutor').mockReturnValue(hasAtLeastTutorRole);
+                vi.spyOn(accountService, 'isAdmin').mockReturnValue(hasAtLeastAdminRole);
+                router.setUrl(url);
+                currentCourseContextService.setCourse({ id: 123, isAtLeastTutor: isAtLeastTutorInCurrentCourse } as Course);
+
+                fixture.detectChanges();
+
+                expect(fixture.nativeElement.querySelector('.perspective-switch') !== null).toBe(expected);
+            },
+        );
 
         it.each([
             ['/course-management/123/exams/1/edit', ['/courses', '123', 'exams']],
