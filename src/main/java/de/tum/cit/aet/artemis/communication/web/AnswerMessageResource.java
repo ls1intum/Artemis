@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -138,7 +141,7 @@ public class AnswerMessageResource {
             throw new BadRequestAlertException("Invalid answer post ID found", answerMessageService.getEntityName(), "invalidAnswerPostId");
         }
 
-        List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
+        List<AnswerPost> answerPosts = answerMessageService.findVisibleByIdIn(courseId, answerPostIds);
 
         if (answerPosts.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -157,5 +160,32 @@ public class AnswerMessageResource {
         log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
         List<AnswerPostResponseDTO> body = answerPosts.stream().map(AnswerPostResponseDTO::from).toList();
         return ResponseEntity.ok().body(body);
+    }
+
+    /**
+     * PATCH /courses/{courseId}/answer-messages/{answerMessageId}/verify : Approve an Iris-generated answer message
+     * (optionally with edited content) so it becomes visible to students.
+     * <p>
+     * Uses {@code @EnforceAtLeastStudent} as the coarse gate (any authenticated user) and performs the real
+     * tutor-in-course authorization inside {@code AnswerMessageService#verifyAnswerMessage} via
+     * {@code checkHasAtLeastRoleInCourseElseThrow(TEACHING_ASSISTANT, ...)} plus a channel-membership check.
+     * This mirrors the reject (delete) endpoint: relying on {@code @EnforceAtLeastTutorInCourse} instead would
+     * additionally require the global {@code ROLE_TA} authority, which course tutors do not necessarily carry
+     * (it is only assigned by {@code AuthorityService} on auth sync), causing a spurious 403 for legitimate tutors.
+     *
+     * @param courseId        id of the course the answer message belongs to
+     * @param answerMessageId id of the answer message to approve
+     * @param verifyDto       optional updated content; if content is null/blank, the existing content is kept
+     * @return ResponseEntity with status 200 (OK) containing the verified answer message
+     */
+    @PatchMapping("courses/{courseId}/answer-messages/{answerMessageId}/verify")
+    @EnforceAtLeastStudent
+    public ResponseEntity<AnswerMessageDTO> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
+            @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
+        log.debug("PATCH verifyAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
+        long start = System.nanoTime();
+        AnswerPost verifiedAnswer = answerMessageService.verifyAnswerMessage(courseId, answerMessageId, verifyDto);
+        log.debug("verifyAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(new AnswerMessageDTO(verifiedAnswer));
     }
 }
