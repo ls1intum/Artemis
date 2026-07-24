@@ -1,0 +1,6 @@
+// Aura `tabpanel` padding around the active panel's content. Background/color are inherited from the
+// surrounding surface (transparent) so the panel blends with its container in both light and dark themes.
+:host {
+    display: block;
+    padding: 0.875rem 1.125rem 1.125rem; // tabpanel.padding
+}
