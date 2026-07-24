@@ -902,8 +902,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
-        if (!hasValidDecimalPrecision(getMaxPoints())) {
-            throw new BadRequestAlertException("The max points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "maxScoreInvalid");
+        int maxDecimalPlaces = getMaxPointsDecimalPlaces();
+        if (!hasValidDecimalPrecision(getMaxPoints(), maxDecimalPlaces)) {
+            throw new BadRequestAlertException("The max points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "maxScoreInvalid");
         }
 
         if (getBonusPoints() == null || getBonusPoints() < 0) {
@@ -915,19 +916,46 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
 
-        if (!hasValidDecimalPrecision(getBonusPoints())) {
-            throw new BadRequestAlertException("The bonus points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "bonusPointsInvalid");
+        if (!hasValidDecimalPrecision(getBonusPoints(), maxDecimalPlaces)) {
+            throw new BadRequestAlertException("The bonus points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "bonusPointsInvalid");
         }
     }
 
     /**
-     * Checks that a points value (if present) does not exceed {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES} decimal places.
+     * Determines the maximum number of decimal places allowed for this exercise's max points and bonus points.
+     * <p>
+     * Programming exercises use the course's {@link Course#getAccuracyOfScores()} (the "decimal places for score
+     * calculations" course setting) whenever the course can already be resolved at validation time. This is
+     * intentionally checked at write-time only: lowering a course's accuracy afterwards never retroactively
+     * invalidates already-persisted exercises, it only takes effect the next time an exercise is created/imported/saved.
+     * All other cases (other exercise types, or a course/exam that cannot yet be resolved, e.g. a transient exercise
+     * during creation before the course is attached) fall back to {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES}.
      *
-     * @param points the points value to check, may be {@code null}
+     * @return the maximum number of decimal places allowed for this exercise
+     */
+    private int getMaxPointsDecimalPlaces() {
+        if (this instanceof ProgrammingExercise) {
+            Course course = getCourseViaExerciseGroupOrCourseMember();
+            if (course != null && course.getAccuracyOfScores() != null) {
+                return course.getAccuracyOfScores();
+            }
+        }
+        return MAX_POINTS_DECIMAL_PLACES;
+    }
+
+    /**
+     * Checks that a points value (if present) does not exceed the given number of decimal places.
+     * <p>
+     * Trailing zeros are stripped before checking the scale: {@code BigDecimal.valueOf(100.0)} has a scale of 1 (not
+     * 0), since {@code Double#toString} always renders at least one fractional digit, which would otherwise reject
+     * whole numbers whenever {@code maxDecimalPlaces} is 0 (a valid {@link Course#getAccuracyOfScores()} value).
+     *
+     * @param points           the points value to check, may be {@code null}
+     * @param maxDecimalPlaces the maximum number of decimal places allowed
      * @return true if the value is null or has a valid decimal precision, false otherwise
      */
-    private static boolean hasValidDecimalPrecision(Double points) {
-        return points == null || BigDecimal.valueOf(points).scale() <= MAX_POINTS_DECIMAL_PLACES;
+    private static boolean hasValidDecimalPrecision(Double points, int maxDecimalPlaces) {
+        return points == null || BigDecimal.valueOf(points).stripTrailingZeros().scale() <= maxDecimalPlaces;
     }
 
     public void validateGeneralSettings() {

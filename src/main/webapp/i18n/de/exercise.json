@@ -159,9 +159,9 @@
             "feedbackSuggestionsEnabled": "Aktiviere Feedback-Vorschläge von Athena",
             "feedbackSuggestionsEnabledTooltip": "Wenn diese Option aktiviert ist, werden Tutor:innen Feedback-Vorschläge von Athena angezeigt.",
             "points": "Punktzahl",
-            "pointsError": "Muss eine Zahl zwischen 1 und 9999 mit höchstens 2 Nachkommastellen sein.",
+            "pointsError": "Muss eine Zahl zwischen 1 und 9999 mit höchstens {{max}} Nachkommastellen sein.",
             "bonusPoints": "Bonuspunkte",
-            "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 mit höchstens 2 Nachkommastellen sein.",
+            "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 mit höchstens {{max}} Nachkommastellen sein.",
             "includedInOverallScoreCourseLabel": "Diese Aufgabe bei der Berechnung des Kursergebnisses einbeziehen",
             "includedInOverallScoreExamLabel": "Diese Aufgabe bei der Berechnung des Klausurergebnisses einbeziehen",
             "includedInOverallScore": "Miteinbezogen in Ergebnis",
@@ -361,13 +361,13 @@
                     "undefined": "Du musst die Punkte angeben.",
                     "customMin": "Die Punkte müssen mindestens 1 betragen!",
                     "customMax": "Die Punkte dürfen höchstens 9999 betragen!",
-                    "pattern": "Die Punkte dürfen höchstens 2 Nachkommastellen haben!"
+                    "pattern": "Die Punkte dürfen höchstens {{max}} Nachkommastellen haben!"
                 },
                 "bonusPoints": {
                     "undefined": "Du musst die Bonuspunkte angeben.",
                     "customMin": "Die Bonuspunkte müssen mindestens 0 betragen!",
                     "customMax": "Die Bonuspunkte dürfen höchstens 9999 betragen!",
-                    "pattern": "Die Bonuspunkte dürfen höchstens 2 Nachkommastellen haben!"
+                    "pattern": "Die Bonuspunkte dürfen höchstens {{max}} Nachkommastellen haben!"
                 },
                 "minTeamSize": {
                     "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",

@@ -116,8 +116,10 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    // Maximum number of decimal places allowed for exercise points and bonus points.
-    // NOTE: keep this value in sync with input.constants.ts.
+    // Fallback maximum number of decimal places allowed for exercise points and bonus points, used whenever no
+    // course-specific accuracy is available (see Course#getAccuracyOfScores, which programming exercises use instead
+    // once their course can be resolved; see Exercise#getMaxPointsDecimalPlaces).
+    // NOTE: keep this value in sync with DEFAULT_MAX_POINTS_DECIMAL_PLACES in input.constants.ts.
     public static final int MAX_POINTS_DECIMAL_PLACES = 2;
 
     // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks

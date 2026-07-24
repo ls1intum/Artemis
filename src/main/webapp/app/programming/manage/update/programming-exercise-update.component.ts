@@ -11,13 +11,14 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
+    DEFAULT_MAX_POINTS_DECIMAL_PLACES,
     EXERCISE_TITLE_NAME_PATTERN,
     EXERCISE_TITLE_NAME_REGEX,
     INVALID_DIRECTORY_NAME_PATTERN,
@@ -29,9 +30,9 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
-    POINTS_PATTERN,
     PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
+    buildPointsPattern,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -122,7 +123,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly packageNameRegexForDart = RegExp(PACKAGE_NAME_PATTERN_FOR_DART);
     protected readonly documentationType: DocumentationType = 'Programming';
     protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
-    private readonly pointsPattern = POINTS_PATTERN;
     protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
     protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
     protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
@@ -1407,6 +1407,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    private get maxDecimalPlaces(): number {
+        return getCourseFromExercise(this.programmingExercise)?.accuracyOfScores ?? DEFAULT_MAX_POINTS_DECIMAL_PLACES;
+    }
+
+    private get pointsPattern(): string {
+        return buildPointsPattern(this.maxDecimalPlaces);
+    }
+
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
             if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
@@ -1425,7 +1433,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             } else if (!this.programmingExercise.maxPoints.toString().match(this.pointsPattern)) {
                 validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.points.pattern',
-                    translateValues: {},
+                    translateValues: { max: this.maxDecimalPlaces },
                 });
             }
             return;
@@ -1449,7 +1457,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else if (!this.programmingExercise.maxPoints.toString().match(this.pointsPattern)) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.pattern',
-                translateValues: {},
+                translateValues: { max: this.maxDecimalPlaces },
             });
         }
     }
@@ -1473,7 +1481,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else if (!this.programmingExercise.bonusPoints.toString().match(this.pointsPattern)) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
-                translateValues: {},
+                translateValues: { max: this.maxDecimalPlaces },
             });
         }
     }

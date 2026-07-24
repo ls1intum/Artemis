@@ -1317,7 +1317,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.maxPoints = 1.111;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.points.pattern',
-                translateValues: {},
+                translateValues: { max: 2 },
             });
         });
 
@@ -1327,6 +1327,38 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.points.pattern',
                 translateValues: {},
             });
+        });
+
+        it('should restrict points to the course accuracyOfScores instead of the static default', () => {
+            comp.programmingExercise.course = { ...course, accuracyOfScores: 1 } as Course;
+
+            comp.programmingExercise.maxPoints = 1.5;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.pattern',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.maxPoints = 1.55;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.pattern',
+                translateValues: { max: 1 },
+            });
+        });
+
+        it('should reject an existing exercise whose points exceed a newly-lowered course accuracyOfScores', () => {
+            // Simulates opening an exercise that was created while the course allowed 2 decimal places (1.25 was
+            // valid at the time), after an instructor has since tightened the course's accuracyOfScores to 1.
+            // The persisted value is never silently changed; opening/saving the exercise now surfaces the pattern
+            // error until the user adjusts the points to match the new, stricter setting.
+            comp.programmingExercise.maxPoints = 1.25;
+            comp.programmingExercise.course = { ...course, accuracyOfScores: 1 } as Course;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.pattern',
+                translateValues: { max: 1 },
+            });
+            // the value itself is left untouched, not silently rounded or reset
+            expect(comp.programmingExercise.maxPoints).toBe(1.25);
         });
 
         it('should not require points when exercise is not included in the course score', () => {
@@ -1361,12 +1393,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.bonusPoints = 1.111;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
-                translateValues: {},
+                translateValues: { max: 2 },
             });
         });
 
         it('should accept bonus points with at most 2 decimal places', () => {
             comp.programmingExercise.bonusPoints = 1.11;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('should restrict bonus points to the course accuracyOfScores instead of the static default', () => {
+            comp.programmingExercise.course = { ...course, accuracyOfScores: 3 } as Course;
+            comp.programmingExercise.bonusPoints = 1.111;
+
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
                 translateValues: {},
