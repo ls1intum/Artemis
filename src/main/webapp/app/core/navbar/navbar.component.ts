@@ -103,6 +103,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faUserShield = faUserShield;
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);
     readonly testServer = signal<boolean>(undefined!);
@@ -136,7 +137,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
-    readonly showPerspectiveSwitch = computed(() => this.computeShowPerspectiveSwitch());
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
@@ -843,15 +843,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
     }
 
-    private computeShowPerspectiveSwitch(): boolean {
-        const hasAtLeastTutorRole = this.accountService.isAtLeastTutor();
-        const hasAtLeastAdminRole = this.accountService.isAdmin();
-        const isNotInSpecificCourseContext = !/^\/(?:courses|course-management)\/\d+/.test(this.currentRoute());
-        const isAtLeastTutorInCurrentCourse = !!this.currentCourse()?.isAtLeastTutor;
-
-        return hasAtLeastTutorRole && (isNotInSpecificCourseContext || isAtLeastTutorInCurrentCourse || hasAtLeastAdminRole);
-    }
-
     private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
         const courseId = course?.id?.toString();
 
@@ -880,9 +871,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
         const courseId = course?.id?.toString();
-        const isAtLeastEditor = !!course?.isAtLeastEditor;
-        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
+        const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
+        const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
+        const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
         const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
+
+        if (!isAtLeastTutorInCourse) return ['/course-management'];
 
         const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
         const routeMappings = [
@@ -905,10 +899,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
-        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
-        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
-        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
-        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
+        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructorInCourse && !courseHasTutorialGroupConfiguration;
 
         if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
             return baseManagementPath;
