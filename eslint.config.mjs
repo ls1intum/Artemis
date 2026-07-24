@@ -106,9 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            // Static assets (translations, images, vendored/minified scripts), not lintable source.
-            // The minified pdf.worker bundle in particular is a single ~1MB line that OOMs ESLint.
-            'src/main/webapp/content/**',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
