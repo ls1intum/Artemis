@@ -148,6 +148,7 @@ overrides:
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
   'eslint@10.7.0': 'patches/eslint+10.7.0.patch'
+  y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings

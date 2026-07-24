@@ -54,7 +54,7 @@
         "katex": "0.18.1",
         "lodash-es": "4.18.1",
         "markdown-it": "14.3.0",
-        "monaco-editor": "0.55.1",
+        "monaco-editor": "0.56.0",
         "papaparse": "5.5.4",
         "primeicons": "7.0.0",
         "primeng": "21.1.9",
