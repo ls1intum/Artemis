@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -335,9 +336,9 @@ public class LocalCIResultProcessingService {
     /**
      * Processes the result of one container of a multi-container build. The container's feedback is appended to the
      * submission's aggregated result, this container's build job is linked to that result, and the result is finalized
-     * once every container has finished. The method is synchronized because the containers of one submission may be
-     * processed by several result-processing threads on this node in parallel; serializing them lets the containers
-     * aggregate into the same result and count completion without racing.
+     * once every container has finished. The containers of one submission are serialized by a distributed lock on their
+     * grouping key (participation and commit hash), so they aggregate into the same result and count completion without
+     * racing, even when they are processed by several result-processing threads across several core nodes in parallel.
      *
      * @param participation  the participation that was built
      * @param buildJob       the finished build job of the container
@@ -346,31 +347,41 @@ public class LocalCIResultProcessingService {
      * @param testsExpected  whether tests were expected for this container
      * @return the aggregated result (finalized once every container finished), or null if it could not be processed
      */
-    private synchronized Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult,
-            Throwable buildException, boolean testsExpected) {
-        // Append, link and finalize run in one programmatic transaction that commits before the monitor is released, so
-        // the next container of the same submission (processed by another thread on this node) sees the appended feedback
-        // and the linked build job as one atomic step. NOTE: the monitor only serializes threads within this node; across
-        // several core nodes the get-or-create of the aggregated result can still race. Closing that gap needs a
-        // per-submission database or Hazelcast lock and is tracked as hardening.
-        return transactionTemplate.execute(status -> {
-            int expectedContainerCount = determineExpectedContainerCount(participation);
-            Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount);
-            if (aggregatedResult == null) {
-                return null;
-            }
+    private Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult, Throwable buildException,
+            boolean testsExpected) {
+        // The containers of one submission are grouped by participation and commit hash, so a lock on that key serializes
+        // them. It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several
+        // core nodes that process results in parallel, not only across the threads of one node. Without it, two nodes
+        // could each create a separate aggregated result for the same submission and neither would ever reach the
+        // expected container count.
+        String lockKey = participation.getId() + "-" + buildResult.assignmentRepoCommitHash();
+        DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
+        aggregationLocks.lock(lockKey);
+        try {
+            // Append, link and finalize run in one programmatic transaction that commits before the lock is released, so
+            // the next container of the same submission sees the appended feedback and the linked build job atomically.
+            return transactionTemplate.execute(status -> {
+                int expectedContainerCount = determineExpectedContainerCount(participation);
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount);
+                if (aggregatedResult == null) {
+                    return null;
+                }
 
-            BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
-            // Link this container's build job to the shared result so finished containers can be counted below.
-            saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
+                BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
+                // Link this container's build job to the shared result so finished containers can be counted below.
+                saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
 
-            long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
-            if (completedContainers >= expectedContainerCount) {
-                boolean allContainersSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
-                return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, buildResult.buildRunDate());
-            }
-            return aggregatedResult;
-        });
+                long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
+                if (completedContainers >= expectedContainerCount) {
+                    boolean allContainersSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
+                    return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, buildResult.buildRunDate());
+                }
+                return aggregatedResult;
+            });
+        }
+        finally {
+            aggregationLocks.unlock(lockKey);
+        }
     }
 
     /**

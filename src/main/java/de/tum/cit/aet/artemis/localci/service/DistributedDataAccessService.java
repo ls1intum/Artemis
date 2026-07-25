@@ -61,6 +61,8 @@ public class DistributedDataAccessService {
 
     private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
+    private DistributedMap<String, Boolean> resultAggregationLocks;
+
     private DistributedTopic<String> canceledBuildJobsTopic;
 
     private DistributedTopic<String> pauseBuildAgentTopic;
@@ -404,6 +406,21 @@ public class DistributedDataAccessService {
             this.dockerImageCleanupInfo = this.distributedDataProvider.getMap("dockerImageCleanupInfo");
         }
         return this.dockerImageCleanupInfo;
+    }
+
+    /**
+     * Returns the distributed map used only to serialize the aggregation of a submission's multi-container result across
+     * nodes. Only its per-key {@link DistributedMap#lock(Object)} / {@link DistributedMap#unlock(Object)} are used; the
+     * stored values are irrelevant. The key identifies the submission (participation and commit) whose containers must
+     * not aggregate their results concurrently. The map is initialized lazily the first time this method is called.
+     *
+     * @return the distributed map backing the result-aggregation locks
+     */
+    public DistributedMap<String, Boolean> getResultAggregationLockMap() {
+        if (this.resultAggregationLocks == null) {
+            this.resultAggregationLocks = this.distributedDataProvider.getMap("resultAggregationLocks");
+        }
+        return this.resultAggregationLocks;
     }
 
     /**
