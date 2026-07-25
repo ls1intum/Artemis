@@ -1,0 +1,43 @@
+/**
+ * Adjust the CSS styles to make the 'Significant similarity response period' field fully visible.
+ */
+
+/* Add a new CSS class to style the field */
+.field-responsive {
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Style the field label */
+.field-label {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Style the field input */
+.field-input {
+  width: 100%;
+  height: 40px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Style the field unit */
+.field-unit {
+  font-size: 14px;
+  color: #666;
+  margin-left: 10px;
+}
+
+/* Add media query to handle different screen sizes */
+@media (max-width: 768px) {
+  .field-responsive {
+    width: 90%;
+  }
+}
