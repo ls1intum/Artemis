@@ -508,9 +508,24 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
         assertThat(firstGenerated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
 
+        var studentExam = studentExamRepository.findByExamIdAndUserId(testExamWithSimulation.getId(), student1.getId()).orElseThrow();
+        var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipations.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        Long participationId = studentExamWithParticipations.getStudentParticipations().get(0).getId();
+        Optional<Boolean> submitted = studentExamRepository.isSubmitted(participationId);
+        assertThat(submitted).isPresent();
+
         // Start exercises for the simulation exam a second time, this should reuse participations
         int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
         assertThat(secondGenerated).isZero();
+
+        // Verify that the participations were not lost
+        var studentExamWithParticipationsAfterSecondRun = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+        assertThat(studentExamWithParticipationsAfterSecondRun.getStudentParticipations()).hasSize(testExamWithSimulation.getExerciseGroups().size());
+
+        Optional<Boolean> submittedAfterSecondRun = studentExamRepository.isSubmitted(participationId);
+        assertThat(submittedAfterSecondRun).isPresent();
     }
 
     @Test

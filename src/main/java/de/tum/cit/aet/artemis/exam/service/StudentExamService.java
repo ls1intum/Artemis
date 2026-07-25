@@ -617,8 +617,10 @@ public class StudentExamService {
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         // Since students can participate in the test exam multiple times, we need to associate their exercise participations with a specific student exam
         if (!generatedParticipations.isEmpty()) {
-            studentExam.setStudentParticipations(generatedParticipations);
-            this.studentExamRepository.save(studentExam);
+            var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+            freshStudentExam.getStudentParticipations().addAll(generatedParticipations);
+            this.studentExamRepository.save(freshStudentExam);
+            studentExam.setStudentParticipations(freshStudentExam.getStudentParticipations());
         }
         studentParticipationRepository.saveAll(generatedParticipations);
     }
@@ -722,8 +724,9 @@ public class StudentExamService {
                 List<StudentParticipation> localParticipations = new ArrayList<>();
                 setUpExerciseParticipationsAndSubmissions(studentExam, localParticipations, true);
                 if (!studentExam.getExamMode().isReal() && !localParticipations.isEmpty()) {
-                    studentExam.setStudentParticipations(localParticipations);
-                    studentExamRepository.save(studentExam);
+                    var freshStudentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+                    freshStudentExam.getStudentParticipations().addAll(localParticipations);
+                    studentExamRepository.save(freshStudentExam);
                 }
                 generatedParticipations.addAll(localParticipations);
             }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
