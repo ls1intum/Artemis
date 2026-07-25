@@ -652,14 +652,14 @@ public class GenerationOrchestrationService {
             }
             if (lastMechanicallyVerifiedCandidate != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint ({})", exercise.getId(),
-                        e.getClass().getSimpleName());
+                        e.getClass().getSimpleName(), e);
                 return new GenerationOutcome(lastMechanicallyVerifiedCandidate.loopResult(), lastMechanicallyVerifiedCandidate.verification(), sessionId, this, sandbox,
                         lastMechanicallyVerifiedCandidate.producedFiles(), lastMechanicallyVerifiedCandidate.problemStatement(), lastMechanicallyVerifiedCandidate.reviewReport(),
                         workspaceSeed.repositoryHeads(), lastMechanicallyVerifiedCandidate.specDocument(), lastMechanicallyVerifiedCandidate.testPlanJson());
             }
             if (lastExtractedCandidate != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
-                        e.getClass().getSimpleName());
+                        e.getClass().getSimpleName(), e);
                 AgentLoopResult stopped = new AgentLoopResult(AgentLoopResult.Status.ERROR, lastExtractedCandidate.loopResult().turns(),
                         "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, lastExtractedCandidate.producedFiles(), lastExtractedCandidate.problemStatement(),
@@ -669,12 +669,12 @@ public class GenerationOrchestrationService {
             GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
             if (diagnosticError != null) {
-                log.warn("Exercise generation failed after producing diagnostic artifacts for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+                log.warn("Exercise generation failed after producing diagnostic artifacts for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName(), e);
                 return diagnosticError;
             }
             // No usable outcome exists for the caller to close.
             destroyQuietly(sandbox, sessionId);
-            log.error("Exercise generation failed for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+            log.error("Exercise generation failed for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName(), e);
             throw e;
         }
         finally {
