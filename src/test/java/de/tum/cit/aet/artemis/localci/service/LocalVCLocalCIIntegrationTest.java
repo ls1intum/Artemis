@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -514,6 +515,50 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testMultipleContainersScheduleOneBuildJobEach() throws Exception {
+            // A build plan with two containers, each with its own Docker image and build phase.
+            BuildPhaseDTO phaseA = new BuildPhaseDTO("phase_a", "echo container-a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"));
+            BuildPhaseDTO phaseB = new BuildPhaseDTO("phase_b", "echo container-b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"));
+            BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1", List.of(phaseA));
+            BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2", List.of(phaseB));
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            assertThat(jobs).extracting(BuildJobQueueItem::containerName).containsExactlyInAnyOrder("container_a", "container_b");
+            assertThat(jobs).extracting(BuildJobQueueItem::id).doesNotHaveDuplicates();
+
+            BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.containerName())).findFirst().orElseThrow();
+            // each container keeps its own image and its own build script
+            assertThat(jobA.buildConfig().dockerImage()).isEqualTo("image-a:1");
+            assertThat(jobB.buildConfig().dockerImage()).isEqualTo("image-b:2");
+            assertThat(jobA.buildConfig().buildScript()).isNotEqualTo(jobB.buildConfig().buildScript());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSingleContainerBuildPlanSchedulesOneJobWithoutContainerName() {
+            // The default build plan has at most one container, so it is scheduled as a single build job that builds the
+            // whole submission on its own (its container name stays null).
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().anyMatch(job -> job.participationId() == studentParticipation.getId()));
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            assertThat(jobs).hasSize(1);
+            assertThat(jobs.getFirst().containerName()).isNull();
         }
 
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {
