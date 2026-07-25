@@ -887,20 +887,6 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs one pristine build for a single assignment ({@code solution} or {@code template}) without a paired differential, for callers that only need "did it build, and which
-     * tests failed" before authoring the next stage — currently {@link StageCheckService}'s per-stage compile gates. Re-seeds the pristine verify script first (idempotent), the
-     * same as the two-build {@link #runDifferential}, so this is also the reseed point for a fresh session's very first build (see {@link #ensurePristineVerifyScript}).
-     * <p>
-     * Reuses the same build-and-parse machinery ({@link #runPristineBuildWithExecution}) that {@link #runDifferential} calls twice, so a single-assignment caller and the full
-     * differential can never observe a different build for the same assignment.
-     *
-     * @param sandbox    the open sandbox session the pristine build runs in
-     * @param sessionId  the sandbox session id
-     * @param exercise   the exercise being built (drives the per-language build recipe)
-     * @param assignment {@code solution} or {@code template}
-     * @return the bounded, caller-facing projection of the build
-     */
-    /**
      * Runs candidate contract witnesses against the reference solution and returns the ones that demonstrably ran and passed.
      * <p>
      * Costs one pristine solution build regardless of how many witnesses are offered. The witnesses are carried by a single throwaway probe class written beside the graded suite;
@@ -967,6 +953,20 @@ public class DifferentialVerificationService {
         }
     }
 
+    /**
+     * Runs one pristine build for a single assignment ({@code solution} or {@code template}) without a paired differential, for callers that only need "did it build, and which
+     * tests failed" before authoring the next stage — currently {@link StageCheckService}'s per-stage compile gates. Re-seeds the pristine verify script first (idempotent), the
+     * same as the two-build {@link #runDifferential}, so this is also the reseed point for a fresh session's very first build (see {@link #ensurePristineVerifyScript}).
+     * <p>
+     * Reuses the same build-and-parse machinery ({@link #runPristineBuildWithExecution}) that {@link #runDifferential} calls twice, so a single-assignment caller and the full
+     * differential can never observe a different build for the same assignment.
+     *
+     * @param sandbox    the open sandbox session the pristine build runs in
+     * @param sessionId  the sandbox session id
+     * @param exercise   the exercise being built (drives the per-language build recipe)
+     * @param assignment {@code solution} or {@code template}
+     * @return the bounded, caller-facing projection of the build
+     */
     public SingleBuildResult singleBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String assignment) {
         ensurePristineVerifyScript(sandbox, sessionId, exercise);
         String buildCommand = "solution".equals(assignment) ? sandboxBuildCommandService.pristineSolutionBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
