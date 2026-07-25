@@ -1,5 +1,5 @@
 import { UPLOAD_EXERCISE_BASE } from '../../../constants';
-import { setMonacoEditorContent } from '../../../utils';
+import { fillDateTimePicker, setMonacoEditorContent } from '../../../utils';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 import { Dayjs } from 'dayjs';
 
@@ -51,7 +51,6 @@ export class FileUploadExerciseCreationPage extends AbstractExerciseCreationPage
     private async setTimelineDate(label: string, date: Dayjs) {
         const dateInput = this.page.getByLabel(label, { exact: true });
         await dateInput.waitFor({ state: 'visible' });
-        await dateInput.fill(date.format(TIMELINE_DATE_FORMAT));
-        await dateInput.press('Tab');
+        await fillDateTimePicker(dateInput, date, TIMELINE_DATE_FORMAT);
     }
 }

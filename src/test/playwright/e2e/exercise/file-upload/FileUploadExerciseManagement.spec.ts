@@ -19,11 +19,15 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
 
         // Fill out file upload exercise form
         const exerciseTitle = 'file upload exercise' + generateUUID();
+        const releaseDate = dayjs().second(0).millisecond(0);
+        const startDate = releaseDate.add(1, 'hour');
+        const dueDate = releaseDate.add(1, 'day');
+        const assessmentDueDate = releaseDate.add(2, 'days');
         await fileUploadExerciseCreation.setTitle(exerciseTitle);
-        await fileUploadExerciseCreation.setReleaseDate(dayjs());
-        await fileUploadExerciseCreation.setStartDate(dayjs().add(1, 'hour'));
-        await fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-        await fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+        await fileUploadExerciseCreation.setReleaseDate(releaseDate);
+        await fileUploadExerciseCreation.setStartDate(startDate);
+        await fileUploadExerciseCreation.setDueDate(dueDate);
+        await fileUploadExerciseCreation.setAssessmentDueDate(assessmentDueDate);
         await fileUploadExerciseCreation.typeMaxPoints(10);
         const problemStatement = 'This is a problem statement';
         const exampleSolution = 'E = mc^2';
@@ -44,6 +48,10 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const fetched: FileUploadExercise = await fetchResponse.json();
         expect(fetched.title).toBe(exerciseTitle);
         expect(fetched.exampleSolution).toBe(exampleSolution);
+        expect(dayjs(fetched.releaseDate).isSame(releaseDate)).toBeTruthy();
+        expect(dayjs(fetched.startDate).isSame(startDate)).toBeTruthy();
+        expect(dayjs(fetched.dueDate).isSame(dueDate)).toBeTruthy();
+        expect(dayjs(fetched.assessmentDueDate).isSame(assessmentDueDate)).toBeTruthy();
     });
 
     test.describe('File upload exercise deletion', () => {
