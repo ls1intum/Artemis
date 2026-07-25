@@ -6,20 +6,20 @@
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
                 <jhi-help-icon [text]="isTestExam() ? 'artemisApp.examManagement.testExam.workingTimeTooltip' : 'artemisApp.examManagement.workingTimeTooltip'" />
             </div>
-            <input
-                tumUiInput
-                type="number"
-                id="workingTimeInMinutes"
+            <p-input-number
+                inputId="workingTimeInMinutes"
                 (ngModelChange)="workingTime.set($event * 60)"
                 [ngModel]="(workingTime() ?? 0) / 60"
                 [disabled]="!isTestExam()"
-                min="0"
+                [showButtons]="true"
+                [useGrouping]="false"
+                [min]="0"
                 [max]="maxWorkingTimeInMinutes()"
-                step="any"
-                [tumUiInputInvalid]="!isWorkingTimeValid()"
+                [maxFractionDigits]="3"
+                [invalid]="!isWorkingTimeValid()"
             />
             @if (!isWorkingTimeValid()) {
-                <tum-ui-message severity="error">
+                <tum-ui-message severity="error" size="small">
                     <span jhiTranslate="artemisApp.examManagement.workingTimeInvalid"></span>
                 </tum-ui-message>
             }
@@ -29,7 +29,16 @@
                 <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                 <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
             </div>
-            <input tumUiInput type="number" id="gracePeriod" [(ngModel)]="gracePeriod" min="0" [max]="max_grace_period_in_seconds" [tumUiInputInvalid]="!isGracePeriodValid()" />
+            <p-input-number
+                inputId="gracePeriod"
+                [(ngModel)]="gracePeriod"
+                [showButtons]="true"
+                [useGrouping]="false"
+                [min]="0"
+                [max]="max_grace_period_in_seconds"
+                [maxFractionDigits]="0"
+                [invalid]="!isGracePeriodValid()"
+            />
             @if (!isGracePeriodValid()) {
                 <tum-ui-message severity="error">
                     <span jhiTranslate="artemisApp.examManagement.gracePeriodInvalid"></span>
