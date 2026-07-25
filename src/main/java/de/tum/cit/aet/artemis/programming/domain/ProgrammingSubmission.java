@@ -41,6 +41,12 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
+    // The number of containers whose build jobs are expected to contribute to this submission's result. Null for a
+    // submission built by a single container (the common case). It is set when the first container's result arrives and
+    // lets the result processing know how many container results to aggregate before the result is finalized.
+    @Column(name = "expected_container_count")
+    private Integer expectedContainerCount;
+
     /**
      * Only present if buildFailed == true.
      * <p>
@@ -99,6 +105,14 @@ public class ProgrammingSubmission extends Submission {
         this.buildFailed = buildFailed;
     }
 
+    public Integer getExpectedContainerCount() {
+        return expectedContainerCount;
+    }
+
+    public void setExpectedContainerCount(Integer expectedContainerCount) {
+        this.expectedContainerCount = expectedContainerCount;
+    }
+
     public Set<BuildLogEntry> getBuildLogEntries() {
         return buildLogEntries;
     }
@@ -118,7 +132,8 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", type=" + getType() + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", expectedContainerCount=" + expectedContainerCount + ", type="
+                + getType() + '}';
     }
 
     @Override

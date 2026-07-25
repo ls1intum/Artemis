@@ -44,6 +44,26 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
+     * Counts the build jobs that already contributed to the given result. When a submission is built by several
+     * containers, each container's build job is linked to the shared result, so this count is the number of containers
+     * that have finished for that result.
+     *
+     * @param resultId the id of the aggregated result
+     * @return the number of build jobs linked to the result
+     */
+    long countByResultId(long resultId);
+
+    /**
+     * Checks whether any build job linked to the given result did not finish successfully. Used to decide whether an
+     * aggregated multi-container result should be marked successful once all containers have finished.
+     *
+     * @param resultId    the id of the aggregated result
+     * @param buildStatus the status that counts as successful
+     * @return true if at least one linked build job has a different status
+     */
+    boolean existsByResultIdAndBuildStatusNot(long resultId, BuildStatus buildStatus);
+
+    /**
      * Retrieves all build job ids that were submitted before the given date.
      *
      * @param date the date before which build jobs should be deleted

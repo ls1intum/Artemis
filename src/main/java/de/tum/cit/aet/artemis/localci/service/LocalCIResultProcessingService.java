@@ -26,6 +26,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatist
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -86,6 +90,8 @@ public class LocalCIResultProcessingService {
 
     private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
 
+    private final TransactionTemplate transactionTemplate;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -101,7 +107,8 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
+            TransactionTemplate transactionTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -113,6 +120,7 @@ public class LocalCIResultProcessingService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
+        this.transactionTemplate = transactionTemplate;
     }
 
     /**
@@ -226,8 +234,11 @@ public class LocalCIResultProcessingService {
         if (buildResult == null) {
             return;
         }
-        BuildJob savedBuildJob;
+        BuildJob savedBuildJob = null;
         Result result = null;
+        // A container of a multi-container build persists its own build job (linked to the shared result) inside the
+        // synchronized aggregation below, so the fallback save in the finally block is skipped for it.
+        boolean buildJobPersisted = false;
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
@@ -242,8 +253,14 @@ public class LocalCIResultProcessingService {
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
-                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
-
+                if (buildJob.containerName() != null) {
+                    // One container of a multi-container build: aggregate its feedback into the submission's shared result.
+                    result = processContainerResult(participation, buildJob, buildResult, buildException, testsExpected);
+                    buildJobPersisted = result != null;
+                }
+                else {
+                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
+                }
             }
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
@@ -258,24 +275,19 @@ public class LocalCIResultProcessingService {
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
 
-            // save build job to database
-            if (buildException != null) {
-                if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
-                }
-                else if (buildException.getCause() instanceof TimeoutException) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
-                }
-                else {
-                    log.error("Error while processing build job: {}", buildJob, buildException);
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
-                }
+            // save build job to database (the multi-container path already persisted it linked to the aggregated result)
+            if (buildJobPersisted) {
+                savedBuildJob = buildJobRepository.findByBuildJobId(buildJob.id()).orElse(null);
             }
             else {
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-                if (programmingExerciseParticipation != null) {
-                    updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
+                BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
+                if (buildStatus == BuildStatus.FAILED) {
+                    log.error("Error while processing build job: {}", buildJob, buildException);
                 }
+                savedBuildJob = saveFinishedBuildJob(buildJob, buildStatus, result);
+            }
+            if (buildException == null && programmingExerciseParticipation != null) {
+                updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
             }
 
             if (programmingExerciseParticipation != null) {
@@ -318,6 +330,90 @@ public class LocalCIResultProcessingService {
                 log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
             }
         }
+    }
+
+    /**
+     * Processes the result of one container of a multi-container build. The container's feedback is appended to the
+     * submission's aggregated result, this container's build job is linked to that result, and the result is finalized
+     * once every container has finished. The method is synchronized because the containers of one submission may be
+     * processed by several result-processing threads on this node in parallel; serializing them lets the containers
+     * aggregate into the same result and count completion without racing.
+     *
+     * @param participation  the participation that was built
+     * @param buildJob       the finished build job of the container
+     * @param buildResult    the build result of the container
+     * @param buildException the exception that occurred during the build, if any
+     * @param testsExpected  whether tests were expected for this container
+     * @return the aggregated result (finalized once every container finished), or null if it could not be processed
+     */
+    private synchronized Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult,
+            Throwable buildException, boolean testsExpected) {
+        // Append, link and finalize run in one programmatic transaction that commits before the monitor is released, so
+        // the next container of the same submission (processed by another thread on this node) sees the appended feedback
+        // and the linked build job as one atomic step. NOTE: the monitor only serializes threads within this node; across
+        // several core nodes the get-or-create of the aggregated result can still race. Closing that gap needs a
+        // per-submission database or Hazelcast lock and is tracked as hardening.
+        return transactionTemplate.execute(status -> {
+            int expectedContainerCount = determineExpectedContainerCount(participation);
+            Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount);
+            if (aggregatedResult == null) {
+                return null;
+            }
+
+            BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
+            // Link this container's build job to the shared result so finished containers can be counted below.
+            saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
+
+            long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
+            if (completedContainers >= expectedContainerCount) {
+                boolean allContainersSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
+                return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, buildResult.buildRunDate());
+            }
+            return aggregatedResult;
+        });
+    }
+
+    /**
+     * Determines how many containers are expected to contribute to the submission's result, from the current build plan
+     * of the exercise. It matches the number of build jobs the trigger scheduled for the commit unless the build plan
+     * was edited in between.
+     *
+     * @param participation the participation that was built
+     * @return the expected number of containers, at least one
+     */
+    private int determineExpectedContainerCount(ProgrammingExerciseParticipation participation) {
+        var buildConfig = participation.getProgrammingExercise().getBuildConfig();
+        if (buildConfig == null) {
+            return 1;
+        }
+        try {
+            return Math.max(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).effectiveContainers().size(), 1);
+        }
+        catch (JsonProcessingException e) {
+            log.warn("Could not determine the expected container count for participation {}, assuming a single container", participation.getId(), e);
+            return 1;
+        }
+    }
+
+    /**
+     * Maps the outcome of a build job to its status, preserving the cancellation and timeout handling of the single
+     * result path.
+     *
+     * @param buildJob       the finished build job
+     * @param buildException the exception that occurred during the build, if any
+     * @return the build status
+     */
+    private BuildStatus determineBuildStatus(BuildJobQueueItem buildJob, Throwable buildException) {
+        if (buildException == null) {
+            return BuildStatus.SUCCESSFUL;
+        }
+        if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+            return BuildStatus.CANCELLED;
+        }
+        if (buildException.getCause() instanceof TimeoutException) {
+            return BuildStatus.TIMEOUT;
+        }
+        return BuildStatus.FAILED;
     }
 
     /**

@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -235,6 +236,118 @@ public class ProgrammingExerciseGradingService {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * Appends the build result of one container of a multi-container build plan to the aggregated result shared by all
+     * containers of the same submission. Instead of creating a standalone result per container, every container's
+     * feedback is collected into a single in-progress result (its completion date stays null until every container has
+     * finished, see {@link #finalizeContainerResult}). The score is recomputed from the feedback gathered so far, so the
+     * result grows as containers finish. All containers of one commit map to the same submission via participation and
+     * commit hash, so no explicit grouping identity is needed.
+     *
+     * @param participation          the participation that was built
+     * @param requestBody            the raw build result of the container
+     * @param testsExpected          whether tests were expected for this container
+     * @param expectedContainerCount the number of containers whose results are aggregated into the submission's result
+     * @return the aggregated result with this container's feedback appended, or null if it could not be created
+     */
+    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, int expectedContainerCount) {
+        try {
+            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+            var buildResult = ciResultService.convertBuildResult(requestBody);
+
+            checkCorrectBranchElseThrow(participation, buildResult);
+            checkHasCommitHashElseThrow(buildResult);
+
+            ProgrammingExercise exercise = participation.getProgrammingExercise();
+            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
+            }
+
+            // The feedback produced by this container, extracted via a throwaway result.
+            Result containerResult = ciResultService.createResultFromBuildResult(buildResult, participation);
+
+            // The submission is shared by all containers of the same commit; it may already have been created by the push flow.
+            var submission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+            if (submission.getExpectedContainerCount() == null) {
+                submission.setExpectedContainerCount(expectedContainerCount);
+            }
+
+            // The submission counts as failed as soon as any of its containers failed to build.
+            final boolean noTestFeedbacks = containerResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            final Integer exitCode = buildResult.buildScriptExitCode();
+            final boolean scriptFailed = exitCode != null && exitCode != 0;
+            if (testsExpected ? noTestFeedbacks : scriptFailed) {
+                submission.setBuildFailed(true);
+            }
+
+            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise);
+            if (!containerResult.getFeedbacks().isEmpty()) {
+                // Only append the feedback here; the score is not recomputed until every container has finished
+                // (see finalizeContainerResult), because scoring a partial result would mark the tests of containers
+                // that have not finished yet as "not executed".
+                aggregatedResult = resultService.addFeedbackToResult(aggregatedResult, new ArrayList<>(containerResult.getFeedbacks()), false);
+            }
+            aggregatedResult.setSubmission(submission);
+            aggregatedResult.setExerciseId(exercise.getId());
+            aggregatedResult = resultRepository.save(aggregatedResult);
+            programmingSubmissionRepository.save(submission);
+            return aggregatedResult;
+        }
+        catch (ContinuousIntegrationException ex) {
+            log.error("Container result for participation {} could not be appended", participation.getId(), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Returns the in-progress result the containers of a submission aggregate their feedback into, creating it on the
+     * first container. An in-progress result is recognized by a null completion date, so a finished result of an earlier
+     * build attempt is never reused.
+     *
+     * @param submission the submission shared by all containers
+     * @param exercise   the programming exercise
+     * @return the aggregated result to append feedback to
+     */
+    private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise) {
+        Result latestResult = submission.getLatestResult();
+        if (latestResult != null && latestResult.getCompletionDate() == null) {
+            // reload with the feedback appended by the earlier containers, so the next append does not drop it
+            return resultRepository.findByIdWithEagerFeedbacksElseThrow(latestResult.getId());
+        }
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        // stays null until every container has finished, which marks the result as still in progress
+        result.setCompletionDate(null);
+        result.setExerciseId(exercise.getId());
+        result.setSubmission(submission);
+        result.setRatedIfNotAfterDueDate();
+        result = resultRepository.save(result);
+        result.setSubmission(submission);
+        submission.addResult(result);
+        return result;
+    }
+
+    /**
+     * Finalizes the aggregated result of a multi-container build once every container has finished. It recomputes the
+     * score over the feedback of all containers, marks the result successful only if every container succeeded, and sets
+     * the completion date so the result is shown as complete.
+     *
+     * @param result                 the aggregated result to finalize
+     * @param participation          the participation that was built
+     * @param allContainersSucceeded whether every container of the submission finished successfully
+     * @param completionDate         the completion date to set on the finalized result
+     * @return the finalized result
+     */
+    public Result finalizeContainerResult(Result result, ProgrammingExerciseParticipation participation, boolean allContainersSucceeded, ZonedDateTime completionDate) {
+        Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
+        boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
+                && !(participation instanceof TemplateProgrammingExerciseParticipation);
+        calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
+        aggregatedResult.setSuccessful(allContainersSucceeded);
+        aggregatedResult.setCompletionDate(completionDate);
+        return resultRepository.save(aggregatedResult);
     }
 
     /**

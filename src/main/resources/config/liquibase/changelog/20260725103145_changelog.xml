@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add the number of containers whose build jobs contribute to a programming submission's result. It is null for a
+         submission built by a single container (the common case) and only set once several containers build the same
+         submission, so the result processing knows how many container results to aggregate before finalizing. -->
+    <changeSet id="20260725-01-add-expected-container-count-to-submission" author="greinwald">
+        <addColumn tableName="submission">
+            <column name="expected_container_count" type="integer"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
