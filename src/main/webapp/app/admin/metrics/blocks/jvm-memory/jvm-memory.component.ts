@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { JvmMetrics } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumUiProgressBarComponent } from 'app/shared-ui/tum-ui/progress-bar/tum-ui-progress-bar.component';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 
@@ -10,7 +10,7 @@ import { toPercentage } from 'app/admin/metrics/filterNaN-util';
     selector: 'jhi-jvm-memory',
     templateUrl: './jvm-memory.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, ProgressBarModule, DecimalPipe, KeyValuePipe],
+    imports: [TranslateDirective, TumUiProgressBarComponent, DecimalPipe, KeyValuePipe],
 })
 export class JvmMemoryComponent {
     /**
