@@ -7,7 +7,7 @@ import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { CheckboxModule } from 'primeng/checkbox';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
 import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
@@ -87,7 +87,7 @@ interface ExerciseRow {
         TumUiTableDirective,
         TumUiTableSortableColumnComponent,
         TumUiSelectComponent,
-        CheckboxModule,
+        TumUiCheckboxComponent,
         TumUiTagComponent,
         TumUiTooltipDirective,
         CdkDropList,

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Payload emitted by {@link TumUiCheckboxComponent.onChange}. Mirrors PrimeNG's `CheckboxChangeEvent`
@@ -28,6 +28,9 @@ export interface TumUiCheckboxChangeEvent {
  *   displayed state, and the `(onChange)` handler updates the source of truth, which flows back in.
  * - `(onChange)` — emitted on every user toggle with `{ originalEvent, checked }`, so it fires even when
  *   `[ngModel]` is bound one-way and supports both `handler()` and `handler($event.checked)`.
+ * - `[indeterminate]` — drop-in for `p-checkbox [indeterminate]`: shows a filled box with a dash instead of
+ *   the tick (e.g. a select-all header when only some rows are selected). Presentation only — it never
+ *   changes `checked`, the model, or what `(onChange)` emits.
  *
  * Non-binary (value-collection) `p-checkbox` mode is intentionally not supported: no Artemis admin screen
  * uses it. `binary` is accepted only for template parity and the component is always boolean.
@@ -45,6 +48,11 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
     /** Present for `p-checkbox` template parity; the kit checkbox is always binary (boolean). */
     readonly binary = input(true);
     readonly disabled = input(false);
+    /**
+     * Renders the partial-selection dash instead of the tick (drop-in for `p-checkbox [indeterminate]`). Purely
+     * visual: it fills the box and swaps the glyph but never touches `checked`, the model, or `onChange`.
+     */
+    readonly indeterminate = input(false);
     /** Forwarded to the native input's `id`, so an external `<label for=…>` associates correctly. */
     readonly inputId = input<string>();
     /** Forwarded to the native input's `name`. */
@@ -59,6 +67,12 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
     readonly onChange = output<TumUiCheckboxChangeEvent>();
 
     protected readonly faCheck = faCheck;
+    protected readonly faMinus = faMinus;
+
+    // Indeterminate takes visual precedence over checked (as a native `<input indeterminate>` does): the dash
+    // shows whenever indeterminate is set, the tick only when checked and NOT indeterminate.
+    protected readonly showDash = computed(() => this.indeterminate());
+    protected readonly showTick = computed(() => this.checked() && !this.indeterminate());
 
     // `disabled` can arrive either as an input or from a reactive form (setDisabledState); either disables it.
     private readonly cvaDisabled = signal(false);
@@ -70,7 +84,8 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
         if (this.isDisabled()) {
             return 'bg-surface-200 border-surface-300 dark:bg-surface-700 dark:border-surface-600';
         }
-        if (this.checked()) {
+        // Both the checked tick and the indeterminate dash sit on a brand-filled box, matching Aura.
+        if (this.checked() || this.indeterminate()) {
             return 'bg-primary border-primary';
         }
         return 'bg-surface-0 border-surface-300 dark:bg-surface-950 dark:border-surface-600';

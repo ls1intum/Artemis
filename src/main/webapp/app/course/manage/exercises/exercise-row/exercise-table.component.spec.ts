@@ -329,6 +329,28 @@ describe('ExerciseTableComponent', () => {
             return fixture.nativeElement as HTMLElement;
         }
 
+        it('drives the select-all header checkbox: dash on partial selection, tick on all', async () => {
+            const a = { id: 1, title: 'a', type: ExerciseType.TEXT } as Exercise;
+            const b = { id: 2, title: 'b', type: ExerciseType.TEXT } as Exercise;
+            fixture.componentRef.setInput('showCheckbox', true);
+            fixture.componentRef.setInput('selectedIds', new Set([1]));
+            const element = renderRows([a, b]);
+            // ngModel writes through a resolved promise, so the rendered checkbox state settles after a flush.
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            const headerCheckbox = element.querySelector('thead tum-ui-checkbox input') as HTMLInputElement;
+            expect(headerCheckbox.indeterminate).toBe(true);
+            expect(element.querySelector('thead tum-ui-checkbox svg[data-icon="minus"]')).not.toBeNull();
+
+            fixture.componentRef.setInput('selectedIds', new Set([1, 2]));
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(headerCheckbox.indeterminate).toBe(false);
+            expect(headerCheckbox.checked).toBe(true);
+            expect(element.querySelector('thead tum-ui-checkbox svg[data-icon="check"]')).not.toBeNull();
+        });
+
         it('renders a row per exercise with its title link, points and difficulty badge', () => {
             const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
             const element = renderRows([text]);

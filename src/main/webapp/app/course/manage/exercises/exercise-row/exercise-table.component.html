@@ -14,7 +14,7 @@
                 <tr>
                     @if (showCheckbox()) {
                         <th class="col-icon">
-                            <p-checkbox [binary]="true" [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
+                            <tum-ui-checkbox [binary]="true" [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
                         </th>
                     }
                     @if (showDragHandle()) {
@@ -44,7 +44,7 @@
                         </div>
                         @if (showCheckbox()) {
                             <td>
-                                <p-checkbox
+                                <tum-ui-checkbox
                                     [binary]="true"
                                     [ngModel]="row.exercise.id !== undefined && selectedIds().has(row.exercise.id)"
                                     (ngModelChange)="row.exercise.id !== undefined && selectionToggle.emit(row.exercise.id)"
