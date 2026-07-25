@@ -226,6 +226,14 @@ public class StageCheckService {
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
         }
+        // A design in which EVERY type is student-created makes an empty starter repository inevitable: the student clones a project with no sources, and the differential
+        // oracle's "the template must fail" becomes vacuous (nothing compiles, so everything fails) — the degenerate candidate then scores like a well-scaffolded one.
+        // The template is a teaching scaffold, so the contract must hand the student at least one supplied or stubbed type to read and build from.
+        if (designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
+            return StageCheckResult.failed("Every '## Design' row is marked 'student-creates', so the template repository would ship empty and students would start from a "
+                    + "blank project. Give the exercise a starting point: mark at least one type 'given' (supplied complete) or 'stubbed' (signatures with TODO bodies) — "
+                    + "typically the collaborator, context, or data type the student's own work plugs into — and keep the genuinely design-bearing types 'student-creates'.");
+        }
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             List<String> impossibleGivenDependencies = givenTypesDependingOnStudentCreatedTypes(spec, designRows);
             if (!impossibleGivenDependencies.isEmpty()) {
@@ -516,6 +524,16 @@ public class StageCheckService {
             observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
                     + createdTypes + ".";
         }
+        // The dual of the leak check above: the approved contract's supplied and stubbed types are the student's starting scaffold, so they must be PRESENT here. An empty
+        // template still "compiles" (no sources, exit 0) and still "fails every test" (nothing to run), so neither the compile gate nor the differential can notice that the
+        // scaffold is gone. Fail only when NOT ONE declared scaffold type is found: a per-type probe would fail closed whenever the declaration grep simply cannot see a
+        // language's syntax, whereas a wholly missing scaffold is unambiguous.
+        List<String> scaffoldTypes = enforcedScaffoldTypes(sandbox, sessionId);
+        if (!scaffoldTypes.isEmpty() && scaffoldTypes.stream().allMatch(type -> findTypeDeclarations(sandbox, sessionId, "template", type).isBlank())) {
+            return StageCheckResult.failed("The template repository contains none of the types the approved '## Design' table supplies as the student's starting point: "
+                    + scaffoldTypes + ". Students would clone an empty project. Restore every 'given' type complete and every 'stubbed' type as signatures with TODO bodies; "
+                    + "only 'student-creates' types may be absent.");
+        }
         String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
         Map<String, String> templateFiles = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
                 ? DifferentialVerificationService.readRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE)
@@ -640,6 +658,17 @@ public class StageCheckService {
     private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
         String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
         return specStudentCreatedTypes(specification);
+    }
+
+    /** The {@code given} and {@code stubbed} types from the frozen specification — the scaffold the template must ship to the student. Only enforceable bare names count. */
+    private List<String> enforcedScaffoldTypes(InteractiveSandbox sandbox, String sessionId) {
+        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        return specScaffoldTypes(specification);
+    }
+
+    static List<String> specScaffoldTypes(String spec) {
+        return designTableRows(spec).stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
+                .filter(StageCheckService::isEnforceableTypeName).toList();
     }
 
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {

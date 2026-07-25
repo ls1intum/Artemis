@@ -46,10 +46,23 @@ class StageCheckServiceTest {
 
         private String problemStatement = "# Title\n\nDo the thing.";
 
-        /** Output of the created-type file probe (find), keyed by whether the probed repo path contains "solution" or "template". */
+        /**
+         * Output of the type-declaration probe (find/grep), keyed by whether the probed repo path contains "solution" or "template". The probe is TYPE-AWARE: it answers only
+         * for the type actually being probed, because the template gate now asks two opposite questions of the same helper — "is this student-created type absent?" and "is
+         * this supplied/stubbed scaffold type present?". A payload that answered every probe identically would make one of the two questions meaningless.
+         */
         private String solutionFindOutput = "";
 
         private String templateFindOutput = "";
+
+        /** Whether the template ships the specification's supplied/stubbed scaffold. False models the empty starter repository the scaffold gate must reject. */
+        private boolean templateShipsScaffold = true;
+
+        /**
+         * The specification the workspace was actually built against. Files on disk do not change when the live SPEC.md is edited after approval, so the probe must model the
+         * approved snapshot — otherwise a downgraded live copy would appear to move a declaration between repositories.
+         */
+        private java.util.function.Supplier<String> builtAgainstSpec = () -> spec;
 
         /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
         private String templateTodoOutput = "TODO S1:";
@@ -62,6 +75,43 @@ class StageCheckServiceTest {
         @Override
         public String createSession(SandboxSessionSpec spec) {
             return "s";
+        }
+
+        /**
+         * Answers a single type-declaration probe. The explicitly configured payload wins when it names the probed type (how a test models a leaked or present declaration);
+         * otherwise a healthy repository is modelled: the template ships the specification's supplied/stubbed scaffold, and the solution ships everything.
+         */
+        private String declarationProbe(String[] command, boolean solutionRepo) {
+            String type = probedType(command);
+            String payload = solutionRepo ? solutionFindOutput : templateFindOutput;
+            if (type == null) {
+                return payload;
+            }
+            if (payload.contains(type)) {
+                return payload;
+            }
+            if (solutionRepo) {
+                return "";
+            }
+            String effective = builtAgainstSpec.get();
+            boolean scaffoldType = StageCheckService.specScaffoldTypes(effective == null ? "" : effective).contains(type);
+            return templateShipsScaffold && scaffoldType ? "/workspace/template/src/" + type + ".java" : "";
+        }
+
+        /** The bare type name a {@code find -name Type.*} or declaration {@code grep} is asking about. */
+        private static String probedType(String[] command) {
+            for (int index = 0; index < command.length - 1; index++) {
+                if ("-name".equals(command[index]) && command[index + 1].endsWith(".*")) {
+                    return command[index + 1].substring(0, command[index + 1].length() - 2);
+                }
+            }
+            for (String argument : command) {
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\|record\\|trait\\|struct\\|protocol\\)\\[\\[:space:]]\\+(\\w+)").matcher(argument);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
+            }
+            return null;
         }
 
         @Override
@@ -82,14 +132,14 @@ class StageCheckServiceTest {
                 return new SandboxExecResult(diffExitCode, "", "", false);
             }
             if (command.length >= 2 && "find".equals(command[0])) {
-                return new SandboxExecResult(0, command[1].contains("solution") ? solutionFindOutput : templateFindOutput, "", false);
+                return new SandboxExecResult(0, declarationProbe(command, command[1].contains("solution")), "", false);
             }
             if (command.length >= 2 && "grep".equals(command[0])) {
                 if (java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("TODO"))) {
                     return new SandboxExecResult(0, templateTodoOutput, "", false);
                 }
                 boolean solutionRepo = java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("/solution"));
-                return new SandboxExecResult(0, solutionRepo ? solutionFindOutput : templateFindOutput, "", false);
+                return new SandboxExecResult(0, declarationProbe(command, solutionRepo), "", false);
             }
             return new SandboxExecResult(0, "", "", false);
         }
@@ -171,6 +221,7 @@ class StageCheckServiceTest {
         approvedSpecs = new ApprovedSpecRegistry();
         service = new StageCheckService(verifier, approvedSpecs);
         sandbox = new FakeSandbox();
+        sandbox.builtAgainstSpec = () -> approvedSpecs.approved("s").orElseGet(() -> sandbox.spec);
         exercise = new ProgrammingExercise();
     }
 
@@ -268,7 +319,7 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheSpecDeclaresAStudentCreatedTypeTheSolutionNeverImplements() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n");
+            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
 
             StageCheckResult result = check(GenerationStage.SOLUTION);
 
@@ -279,7 +330,7 @@ class StageCheckServiceTest {
         @Test
         void passes_andConfirmsPresence_whenTheStudentCreatedTypeExistsInTheSolution() {
             when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n");
+            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
             sandbox.solutionFindOutput = "/workspace/solution/src/de/tum/RewardStrategy.java";
 
             StageCheckResult result = check(GenerationStage.SOLUTION);
@@ -385,6 +436,20 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java").contains("changing SPEC.md now cannot");
+        }
+
+        @Test
+        void fails_whenTheTemplateShipsNoneOfTheSuppliedScaffoldTypes() {
+            // Observed live: a generated exercise marked every type student-created, shipped an EMPTY template, and still scored the pipeline's best grade — an empty template
+            // compiles (no sources, exit 0) and "fails every test" (nothing runs), so the differential is satisfied by the degenerate candidate it should reject.
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
+            sandbox.templateShipsScaffold = false;
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("contains none of the types").contains("LoyaltyAccount").contains("Students would clone an empty project");
         }
 
         @Test
@@ -995,6 +1060,19 @@ class StageCheckServiceTest {
                 """;
 
         @Test
+        void fails_whenEveryDesignRowIsStudentCreated_becauseTheTemplateWouldShipEmpty() {
+            // The root cause of the empty-template defect: with no supplied or stubbed row the starter repository is empty by construction, whatever the builder does later.
+            // Catching it at the contract keeps the agent from authoring a whole exercise around a design that cannot produce a teaching scaffold.
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = specWithDesign("| BaseShape | abstract base | student-creates |\n| Rectangle | concrete shape | student-creates |\n");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("would ship empty").contains("at least one type 'given'").contains("'stubbed'");
+        }
+
+        @Test
         void passes_withRulesAndABranchingWorkedExamplesTable_andEchoesTheParsedTemplatePlan() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = VALID_SPEC;
@@ -1009,7 +1087,8 @@ class StageCheckServiceTest {
         @Test
         void normalizesTypographicHyphensInTemplateStatusTokens() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-            sandbox.spec = VALID_SPEC.replace("stubbed", "student‑creates");
+            // A second, supplied row keeps the specification valid under the scaffold rule; the token under test is still the only student-created one.
+            sandbox.spec = specWithDesign("| Calculator | computes the result | student‑creates |\n| Support | supplied helper | given |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
 
@@ -1021,7 +1100,7 @@ class StageCheckServiceTest {
         @Test
         void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | **student‑creates** |");
+            sandbox.spec = specWithDesign("| Calculator | computes the result | **student‑creates** |\n| Support | supplied helper | given |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
 
