@@ -50,6 +50,12 @@ public record SpecFidelityReport(List<Finding> findings) {
          * template API instead of keeping the template as the point-of-use reference.
          */
         TEMPLATE_QUALITY_GAP,
+        /**
+         * An executable test for a rule of the approved specification, authored by an independent pass and already proven to pass against the reference solution. Advisory: a
+         * validated witness shows the test is legal and rule-derived, NOT that the graded suite is missing that coverage — establishing absence would need the witness to be run
+         * against an implementation the suite accepts. Adopting it therefore either strengthens grading or is redundant, and never blocks a candidate that is otherwise sound.
+         */
+        CONTRACT_WITNESS_AVAILABLE,
         /** The automated full-artifact quality review could not produce a complete verdict. */
         QUALITY_REVIEW_UNAVAILABLE
     }
@@ -69,7 +75,7 @@ public record SpecFidelityReport(List<Finding> findings) {
                         CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
                     true;
                 case INVENTED_REQUIREMENT -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE -> false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, CONTRACT_WITNESS_AVAILABLE -> false;
             };
         }
     }

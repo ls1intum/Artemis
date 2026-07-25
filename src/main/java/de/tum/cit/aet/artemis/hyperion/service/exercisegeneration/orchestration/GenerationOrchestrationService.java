@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChangeEmittingAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
@@ -170,7 +171,9 @@ public class GenerationOrchestrationService {
 
         private static @Nullable RepairSurface surfaceFor(SpecFidelityReport.Kind kind) {
             return switch (kind) {
-                case UNCOVERED_REQUIREMENT, WEAK_TEST_ORACLE -> RepairSurface.ORACLE;
+                // A validated witness is a test to adopt, so it belongs to the oracle surface. Being advisory it never triggers a repair by itself (the loop stops when nothing
+                // blocks); it rides along with an oracle repair that is already happening, and otherwise reaches the instructor as a review comment.
+                case UNCOVERED_REQUIREMENT, WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE -> RepairSurface.ORACLE;
                 case TEMPLATE_QUALITY_GAP -> RepairSurface.SCAFFOLD;
                 case MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT ->
                     RepairSurface.CONTRACT;
@@ -560,6 +563,10 @@ public class GenerationOrchestrationService {
                     specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType, adaptationChanges,
                             repairDelta, effectiveUsageSink, cancelled, progress, previousReview, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot),
                             testPlanSnapshot);
+                    // Runs only once the mechanical gate has passed, so the graded suite is already known deterministic: a suite that could fail by coincidence would make a
+                    // witness result meaningless.
+                    specFidelityReport = appendValidatedContractWitnesses(specFidelityReport, sandbox, sessionId, exercise, producedFilesByType, specDocumentSnapshot,
+                            effectiveUsageSink, cancelled, progress);
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
                     if (cancelled.getAsBoolean()) {
@@ -862,6 +869,48 @@ public class GenerationOrchestrationService {
      * @param previousReport    the immediately preceding attempt's report, threaded in for reviewer continuity; {@code null} on the first attempt
      * @return the report (possibly empty); never {@code null}
      */
+    /**
+     * Adds any contract witness the reference solution actually satisfied to the report, as advisory findings the agent can adopt.
+     * <p>
+     * This is the executable counterpart to the oracle review, which reasons about wrong implementations but never runs one: its {@code killed} flag is the reviewing model's own
+     * claim. A witness costs one solution build for the whole batch and is only offered once it has passed against the reference solution, so a mistaken one never reaches the
+     * agent. Any failure — no approved specification, an unavailable critic, a probe that could not run — leaves the report exactly as it was.
+     */
+    private SpecFidelityReport appendValidatedContractWitnesses(SpecFidelityReport report, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
+            Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String specDocumentSnapshot, Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
+            Consumer<String> progress) {
+        Map<String, String> testsFiles = producedArtifacts.getOrDefault(RepositoryType.TESTS, Map.of());
+        if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
+            return report;
+        }
+        try {
+            List<ContractWitness> candidates = specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles),
+                    renderArtifactSources(producedArtifacts.getOrDefault(RepositoryType.SOLUTION, Map.of())), usageSink, cancelled);
+            List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates);
+            if (validated.isEmpty()) {
+                return report;
+            }
+            List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+            validated.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
+                    "Rule " + witness.ruleId() + " has an executable witness the reference solution already passes",
+                    "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
+                            + " of the approved specification by a reviewer independent of the authoring loop, and it has been run against the reference solution, which passes it:\n"
+                            + witness.code())));
+            emit(progress, "Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
+            return new SpecFidelityReport(List.copyOf(combined));
+        }
+        catch (RuntimeException e) {
+            log.warn("Contract witnesses could not be produced for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+            return report;
+        }
+    }
+
+    /** Concatenates a repository's sources into one reviewable document, each preceded by its path. */
+    private static String renderArtifactSources(Map<String, String> files) {
+        return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue())
+                .collect(java.util.stream.Collectors.joining("\n\n"));
+    }
+
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, @Nullable String repairDelta, Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled, Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot, @Nullable String testPlanSnapshot) {

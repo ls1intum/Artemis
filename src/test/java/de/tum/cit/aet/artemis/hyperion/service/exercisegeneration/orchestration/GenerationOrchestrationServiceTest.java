@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -1160,5 +1161,61 @@ class GenerationOrchestrationServiceTest {
         InOrder resetThenMaterialize = inOrder(sandbox, workspace);
         resetThenMaterialize.verify(sandbox).resetSession(SESSION_ID);
         resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    // --- Contract witnesses ---
+
+    private static final ContractWitness WITNESS = new ContractWitness("R1", "testWitnessNegativeSalary",
+            "@Test\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\"a|b|-5\"), \"negative is invalid\"); }");
+
+    /** An accepted candidate whose workspace holds a SPEC and one graded test, the state the witness pass needs to run at all. */
+    private void acceptedCandidateWithSpecAndTests() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/RosterParserTest.java", "package p;\nclass RosterParserTest { }"), false));
+        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(3);
+            return path.endsWith("/SPEC.md") ? new SandboxExecResult(0, "## Rules\n| R1 | negative salary invalid |", "", false) : new SandboxExecResult(1, "", "not found", false);
+        });
+    }
+
+    @Test
+    void validatedContractWitness_reachesTheReportWithoutFlippingTheVerdict() {
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).as("an advisory witness never unseats an accepted candidate").isTrue();
+            assertThat(outcome.specFidelityReport().findings()).anySatisfy(finding -> {
+                assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+                assertThat(finding.isBlocking()).as("a validated witness shows the test is legal, not that coverage is missing").isFalse();
+                assertThat(finding.detail()).contains("testWitnessNegativeSalary");
+            });
+        }
+    }
+
+    @Test
+    void contractWitnessThatTheReferenceSolutionDoesNotSatisfy_neverReachesTheReport() {
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        }
+    }
+
+    @Test
+    void aFailingContractWitnessPassCostsTheExerciseNothing() {
+        // The pass is advisory scaffolding on an already-accepted candidate; a provider or probe failure must not disturb the verdict.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenThrow(new IllegalStateException("provider down"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+            assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        }
     }
 }

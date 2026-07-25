@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
@@ -899,6 +900,73 @@ public class DifferentialVerificationService {
      * @param assignment {@code solution} or {@code template}
      * @return the bounded, caller-facing projection of the build
      */
+    /**
+     * Runs candidate contract witnesses against the reference solution and returns the ones that demonstrably ran and passed.
+     * <p>
+     * Costs one pristine solution build regardless of how many witnesses are offered. The witnesses are carried by a single throwaway probe class written beside the graded suite;
+     * it is removed again immediately, and because it never replaces an existing file, a crash before the removal leaves the graded suite itself untouched.
+     * <p>
+     * Every failure path returns no witnesses rather than propagating: this is an advisory signal layered on top of an already-passing candidate, so a broken probe must cost the
+     * exercise nothing.
+     *
+     * @param sandbox            the open sandbox session
+     * @param sessionId          the sandbox session id
+     * @param exercise           the exercise being built (drives the build recipe)
+     * @param producedTestsFiles the tests repository as produced, providing both the collision check and the source of the probe's package and imports
+     * @param candidates         the unvalidated witnesses
+     * @return the witnesses the reference solution actually satisfied
+     */
+    public List<ContractWitness> validateContractWitnesses(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
+            List<ContractWitness> candidates) {
+        if (candidates.isEmpty() || producedTestsFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return List.of();
+        }
+        Optional<Map.Entry<String, String>> host = producedTestsFiles.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java")
+                && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null && entry.getValue().contains("package ")).min(Map.Entry.comparingByKey());
+        if (host.isEmpty()) {
+            return List.of();
+        }
+        String probePath = ContractWitnessProbe.probePath(host.get().getKey(), producedTestsFiles.keySet());
+        String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), candidates);
+        if (probePath == null || probeSource.isBlank()) {
+            return List.of();
+        }
+        String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
+        try {
+            sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
+            seedPristineVerifyScript(sandbox, sessionId, exercise);
+            BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                    GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+            List<ContractWitness> validated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), candidates);
+            log.info("Contract-witness probe for exercise {}: {} of {} candidate witnesses were satisfied by the reference solution", exercise.getId(), validated.size(),
+                    candidates.size());
+            return validated;
+        }
+        catch (RuntimeException e) {
+            log.warn("The contract-witness probe could not run for exercise {}: {}", exercise.getId(), e.getMessage());
+            return List.of();
+        }
+        finally {
+            removeContractWitnessProbe(sandbox, sessionId, workspacePath);
+        }
+    }
+
+    /**
+     * Deletes the throwaway probe. The graded suite is never at risk here: the path was rejected earlier if any produced file already used it, so this can only remove the file
+     * this probe wrote.
+     */
+    private void removeContractWitnessProbe(InteractiveSandbox sandbox, String sessionId, String workspacePath) {
+        try {
+            SandboxExecResult removal = sandbox.exec(sessionId, READ_TIMEOUT, "rm", "-f", GenerationWorkspaceService.WORKSPACE + "/" + workspacePath);
+            if (!removal.isSuccess()) {
+                log.warn("The contract-witness probe {} could not be removed; the read-back residue strip is the remaining guard", workspacePath);
+            }
+        }
+        catch (RuntimeException e) {
+            log.warn("The contract-witness probe {} could not be removed: {}", workspacePath, e.getMessage());
+        }
+    }
+
     public SingleBuildResult singleBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String assignment) {
         ensurePristineVerifyScript(sandbox, sessionId, exercise);
         String buildCommand = "solution".equals(assignment) ? sandboxBuildCommandService.pristineSolutionBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
