@@ -67,14 +67,12 @@
                 </div>
             }
             @if (confirmDateChangeVisible()) {
-                <p-dialog
+                <tum-ui-dialog
                     [(visible)]="confirmDateChangeVisible"
                     [modal]="true"
                     [closable]="true"
                     [closeOnEscape]="true"
                     [dismissableMask]="false"
-                    [draggable]="false"
-                    [appendTo]="'body'"
                     [style]="{ width: '40rem' }"
                     [header]="'artemisApp.examManagement.dateChange.title' | artemisTranslate"
                     (onHide)="cancelDateChange()"
@@ -99,7 +97,7 @@
                         <button type="button" class="btn btn-outline-secondary" (click)="cancelDateChange()" jhiTranslate="global.form.cancel"></button>
                         <button type="button" class="btn btn-danger" (click)="confirmDateChange()" [disabled]="confirmDisabled()" jhiTranslate="global.form.confirm"></button>
                     </ng-template>
-                </p-dialog>
+                </tum-ui-dialog>
             }
             <jhi-exam-conduction
                 [(visibleFrom)]="exam.visibleDate"

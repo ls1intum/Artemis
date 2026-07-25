@@ -6,22 +6,22 @@
                 <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
                 <jhi-help-icon [text]="isTestExam() ? 'artemisApp.examManagement.testExam.workingTimeTooltip' : 'artemisApp.examManagement.workingTimeTooltip'" />
             </div>
-            <p-input-number
-                inputId="workingTimeInMinutes"
+            <input
+                tumUiInput
+                type="number"
+                id="workingTimeInMinutes"
                 (ngModelChange)="workingTime.set($event * 60)"
                 [ngModel]="(workingTime() ?? 0) / 60"
                 [disabled]="!isTestExam()"
-                [showButtons]="true"
-                [useGrouping]="false"
-                [min]="0"
+                min="0"
                 [max]="maxWorkingTimeInMinutes()"
-                [maxFractionDigits]="3"
-                [invalid]="!isWorkingTimeValid()"
+                step="any"
+                [tumUiInputInvalid]="!isWorkingTimeValid()"
             />
             @if (!isWorkingTimeValid()) {
-                <p-message severity="error" size="small" variant="simple">
+                <tum-ui-message severity="error">
                     <span jhiTranslate="artemisApp.examManagement.workingTimeInvalid"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
         <div class="d-flex flex-column gap-2">
@@ -29,26 +29,17 @@
                 <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
                 <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
             </div>
-            <p-input-number
-                inputId="gracePeriod"
-                [(ngModel)]="gracePeriod"
-                [showButtons]="true"
-                [useGrouping]="false"
-                [min]="0"
-                [max]="max_grace_period_in_seconds"
-                [maxFractionDigits]="0"
-                [invalid]="!isGracePeriodValid()"
-            />
+            <input tumUiInput type="number" id="gracePeriod" [(ngModel)]="gracePeriod" min="0" [max]="max_grace_period_in_seconds" [tumUiInputInvalid]="!isGracePeriodValid()" />
             @if (!isGracePeriodValid()) {
-                <p-message severity="error" size="small" variant="simple">
+                <tum-ui-message severity="error">
                     <span jhiTranslate="artemisApp.examManagement.gracePeriodInvalid"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
     </div>
 </div>
 @if (showVisibleFromWarning()) {
-    <p-message class="mt-3" icon="pi pi-exclamation-triangle" size="small" severity="warn">
+    <tum-ui-message class="mt-3 block" [icon]="faExclamationTriangle" severity="warn">
         <span jhiTranslate="entity.visibleDateWarningError"></span>
-    </p-message>
+    </tum-ui-message>
 }

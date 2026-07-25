@@ -1,21 +1,24 @@
 import { Component, computed, effect, model, output, signal } from '@angular/core';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
-import { InputNumber } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-exam-conduction',
-    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message],
+    imports: [ExerciseTimelineComponent, TumUiInputDirective, FormsModule, HelpIconComponent, TranslateDirective, TumUiMessageComponent],
     templateUrl: './exam-conduction.component.html',
 })
 export class ExamConductionComponent {
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+
     readonly max_working_time_in_minutes = 43200 as const;
     readonly max_grace_period_in_seconds = 3600 as const;
 
