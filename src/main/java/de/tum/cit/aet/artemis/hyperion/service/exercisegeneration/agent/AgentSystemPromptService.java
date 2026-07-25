@@ -315,7 +315,9 @@ public class AgentSystemPromptService {
             forwarded inputs and returned value; testing only the known concrete implementations lets a context that duplicates their formulas pass without using the taught
             abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
             invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
-            compile. Assert exception types, never message strings, unless the statement fixes the exact message. Then write `/workspace/test-plan.json` implementing
+            compile. Assert exception types, never assert ON message strings, unless the statement fixes the exact message — but DO give each assertion its own failure message
+            naming the behaviour that broke (`assertEquals(expected, actual, "brew must delegate to the injected strategy")`), because that message is all a failing student
+            sees. Then write `/workspace/test-plan.json` implementing
             the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID and
             exact tier. Include every agent-authored behavioral test, not build gates or server-seeded structural checks; Artemis manages seeded structural checks as visible,
             zero-weight feedback. Each seam needs an ALWAYS behavioral test; hidden `yes` adds a fresh AFTER_DUE_DATE behavioral witness, while `no` forbids one.

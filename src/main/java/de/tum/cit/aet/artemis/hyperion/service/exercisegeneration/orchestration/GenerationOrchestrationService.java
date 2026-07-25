@@ -158,6 +158,10 @@ public class GenerationOrchestrationService {
                 List<SpecFidelityReport.Finding> findings = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                         .filter(finding -> surfaceFor(finding.kind()) == surface).toList();
                 if (!findings.isEmpty()) {
+                    // One coherent surface per attempt, deliberately: an earlier fix scoped repairs causally so a single repair could not rewrite every artifact at once.
+                    // Surfaces are tried in declaration order and the budget is MAX_SEMANTIC_REPAIRS, so a lower-priority surface can in principle be starved — but that is a
+                    // hypothesis until the repair telemetry below shows it happening on a real run, and trading away causal scoping to pre-empt it would undo a fix that was
+                    // made for observed damage.
                     return Optional.of(new SemanticRepairBatch(surface, new SpecFidelityReport(findings), writableRootsFor(surface)));
                 }
             }
@@ -595,6 +599,13 @@ public class GenerationOrchestrationService {
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
                     semanticRepairsStarted++;
                     pendingSemanticRepair = repairBatch.get();
+                    // Which quality findings the critic raised, and which of them this attempt was actually given to repair. Without this the repair loop is unobservable after
+                    // the fact: a weakness that was found but never scheduled is indistinguishable in the logs from one that was never found at all.
+                    log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,
+                            pendingSemanticRepair.surface(),
+                            specFidelityReport.findings().stream()
+                                    .collect(java.util.stream.Collectors.groupingBy(SpecFidelityReport.Finding::kind, java.util.stream.Collectors.counting())),
+                            pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
                     emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
                     currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
