@@ -61,6 +61,78 @@ type GeneratedExerciseAssessment = ReturnType<typeof assessGeneratedExercise>;
 
 const scenarios: Scenario[] = [
     {
+        id: 'diverse-recursion',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches recursion. Students implement several recursive methods over numbers and strings. Clearly describe each method and how it should behave.',
+    },
+    {
+        id: 'diverse-streams',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches the Java Streams API and lambdas. Students filter, transform, and aggregate a small collection of records. Clearly describe the operations.',
+    },
+    {
+        id: 'diverse-encapsulation',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches encapsulation and exceptions with a small stateful class such as a bank account. Students implement deposit, withdraw, and balance with validation. Clearly describe the rules.',
+    },
+    {
+        id: 'diverse-inheritance',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches inheritance and polymorphism with an abstract base class and several subclasses, for example geometric shapes with an area method. Clearly describe each type.',
+    },
+    {
+        id: 'diverse-generics',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches generics by implementing a simple generic data structure such as a stack. Clearly describe the operations and their behavior on edge cases.',
+    },
+    {
+        id: 'diverse-enum-dispatch',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches enums that carry behaviour. Students implement an enum whose constants each compute something different. Clearly describe each constant.',
+    },
+    {
+        id: 'diverse-string-parsing',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise about parsing and formatting structured text. Students implement methods that read a small text format and produce a formatted summary. Clearly describe the format and the edge cases.',
+    },
+    {
+        id: 'diverse-collections',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise about collections. Students group and aggregate items into maps and lists. Clearly describe the grouping rules and the ordering.',
+    },
+    {
+        id: 'diverse-interface-default',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise that teaches interfaces with default methods. Students implement an interface and override some default behaviour. Clearly describe each method.',
+    },
+    {
         id: 'bicycle-share-summary',
         complexity: 'introductory',
         runWholeExercise: true,
@@ -882,8 +954,10 @@ function assertGeneratedExerciseQuality(assessment: GeneratedExerciseAssessment)
     expect(assessment.visibleStatementMentionsRawTestNamesOutsideTaskBindings).toBe(false);
 }
 
+// Removes the two places a statement is SUPPOSED to name a test: the [task] bindings and the PlantUML testsColor(...) links. Whatever survives is a genuine prose leak. Without
+// the testsColor exclusion this reported a leak for every exercise whose diagram carries the interactive links the generator is required to emit — four of ten runs, all false.
 function stripTaskBindings(statement: string) {
-    return statement.replace(/\[task]\[[^\]]+\]\(.*\)\s*$/gm, '');
+    return statement.replace(/\[task]\[[^\]]+\]\(.*\)\s*$/gm, '').replace(/testsColor\([^)]*\)/g, '');
 }
 
 function liveReportMetadata() {
