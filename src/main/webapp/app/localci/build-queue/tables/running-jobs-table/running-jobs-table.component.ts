@@ -9,9 +9,9 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 /**
  * Component that displays a table of running build jobs.
@@ -33,9 +33,9 @@ import { TooltipModule } from 'primeng/tooltip';
         ArtemisDurationFromSecondsPipe,
         ArtemisTranslatePipe,
         SlicePipe,
-        TableModule,
-        ButtonModule,
-        TooltipModule,
+        TumUiTableDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class RunningJobsTableComponent {
