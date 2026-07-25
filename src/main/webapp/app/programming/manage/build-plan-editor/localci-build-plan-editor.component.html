@@ -26,17 +26,17 @@
                 </div>
             </div>
         }
-        <p-button
+        <tum-ui-button
             id="submit_button"
             severity="success"
             class="ms-auto"
+            [icon]="farPlayCircle"
             [disabled]="isSaving() || !canSubmit()"
-            (onClick)="submit()"
-            [pTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+            (clicked)="submit()"
+            [tumUiTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
         >
-            <fa-icon [icon]="farPlayCircle" />
             <span jhiTranslate="artemisApp.editor.submit"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
     <jhi-programming-exercise-build-configuration
         [programmingExercise]="programmingExercise()!"

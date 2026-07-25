@@ -1,9 +1,8 @@
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -29,9 +28,8 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
-        ButtonModule,
-        TooltipModule,
-        FaIconComponent,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
         HelpIconComponent,
         UpdatingResultComponent,
         ProgrammingExerciseBuildConfigurationComponent,
