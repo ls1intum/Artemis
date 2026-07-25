@@ -37,9 +37,10 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Popover, PopoverModule } from 'primeng/popover';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -117,7 +118,8 @@ function widthOf(element: HTMLElement): number {
         NgTemplateOutlet,
         FaIconComponent,
         TumUiButtonDirective,
-        PopoverModule,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
         TumUiTooltipDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
@@ -164,7 +166,7 @@ export class ExerciseActionsComponent {
      */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
-    private readonly menu = viewChild<Popover>('menu');
+    private readonly menu = viewChild<TumUiPopoverComponent>('menu');
     /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
     private readonly actionsRow = viewChild<ElementRef<HTMLElement>>('actionsRow');
     /** The always-visible quiz lifecycle buttons; their width is reserved up front. */
@@ -538,18 +540,14 @@ export class ExerciseActionsComponent {
         }
     }
 
-    protected toggleMenu(event: Event): void {
-        this.menu()?.toggle(event);
-    }
-
     protected runAction(item: ActionItem): void {
         item.onClick?.();
-        this.menu()?.hide();
+        this.menu()?.close();
     }
 
     protected closeMenuIfOpen(inMenu: boolean): void {
         if (inMenu) {
-            this.menu()?.hide();
+            this.menu()?.close();
         }
     }
 

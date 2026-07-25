@@ -34,9 +34,9 @@ export class CourseManagementExercisesPage {
             await inlineAction.click();
             return;
         }
-        // The action collapsed into the row's ellipsis overflow menu, which PrimeNG renders in a body-level popover.
+        // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
         await row.locator('.action-more').click();
-        await this.page.locator('.p-popover').getByTestId(`exercise-action-${actionId}`).click();
+        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
     }
 
     /**

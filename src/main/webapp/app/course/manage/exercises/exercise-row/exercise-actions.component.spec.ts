@@ -5,7 +5,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PopoverModule } from 'primeng/popover';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -80,7 +81,8 @@ describe('ExerciseActionsComponent', () => {
                         NgTemplateOutlet,
                         FaIconComponent,
                         TumUiButtonDirective,
-                        PopoverModule,
+                        TumUiPopoverComponent,
+                        TumUiPopoverTriggerDirective,
                         TumUiTooltipDirective,
                         ArtemisTranslatePipe,
                         DeleteButtonDirective,
@@ -346,8 +348,9 @@ describe('ExerciseActionsComponent', () => {
     });
 
     describe('menu interactions', () => {
-        it('toggleMenu, runAction and closeMenuIfOpen do not throw when the popover is not rendered', () => {
-            expect(() => component['toggleMenu']({} as Event)).not.toThrow();
+        it('runAction and closeMenuIfOpen do not throw when the popover is closed', () => {
+            // The popover renders but is never opened here (no width is measured, so hasOverflow() is false), so
+            // close() is a guarded no-op.
             const action = component.mainActions()[0];
             expect(() => component['runAction'](action)).not.toThrow();
             expect(() => component['closeMenuIfOpen'](true)).not.toThrow();

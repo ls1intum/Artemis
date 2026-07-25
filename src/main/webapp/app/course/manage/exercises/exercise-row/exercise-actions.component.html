@@ -24,19 +24,19 @@
         size="small"
         class="action-more"
         [class.d-none]="!hasOverflow()"
-        (click)="toggleMenu($event)"
+        [tumUiPopoverTrigger]="menu"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>
-    <p-popover #menu appendTo="body">
+    <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
         <div class="action-menu d-flex flex-column gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
         </div>
-    </p-popover>
+    </tum-ui-popover>
 </div>
 
 <ng-template #actionTpl let-action let-inMenu="inMenu">
