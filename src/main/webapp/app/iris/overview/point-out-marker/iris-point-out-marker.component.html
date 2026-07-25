@@ -1,15 +1,8 @@
 @for (marker of markers(); track $index) {
-    <div class="flex justify-start my-1">
-        <tum-ui-button
-            severity="secondary"
-            variant="outlined"
-            size="small"
-            [rounded]="true"
-            [icon]="faLocationArrow"
-            [tumUiTooltip]="openTooltip()"
-            (clicked)="onMarkerClick(marker.data)"
-        >
-            {{ marker.label }}
-        </tum-ui-button>
+    <div class="marker-row">
+        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" [tumUiTooltip]="openTooltip()" (click)="onMarkerClick(marker.data)">
+            <fa-icon [icon]="faLocationArrow" />
+            <span>{{ marker.label }}</span>
+        </button>
     </div>
 }

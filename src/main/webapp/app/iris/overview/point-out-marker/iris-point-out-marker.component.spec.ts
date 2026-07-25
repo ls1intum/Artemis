@@ -103,8 +103,7 @@ describe('IrisPointOutMarkerComponent', () => {
     it('should render one kit button per marker and navigate with forceOpen on click', async () => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3, timestamp: 150 }));
 
-        // The kit button keeps the real <button> internal, so drive the native element it renders.
-        const buttons = fixture.nativeElement.querySelectorAll('tum-ui-button button');
+        const buttons = fixture.nativeElement.querySelectorAll('button[tumUiButton]');
         expect(buttons).toHaveLength(1);
         expect(buttons[0].textContent).toContain('Navigated to page 3 and timestamp 2:30');
 
@@ -117,7 +116,7 @@ describe('IrisPointOutMarkerComponent', () => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3 }));
 
         // The visible label is the accessible name; the hint is a tooltip, so no aria-label may shadow it.
-        const button = fixture.nativeElement.querySelector('tum-ui-button button');
+        const button = fixture.nativeElement.querySelector('button[tumUiButton]');
         expect(button.getAttribute('aria-label')).toBeNull();
 
         const tooltip = fixture.debugElement.query(By.directive(TumUiTooltipDirective));

@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faLocationArrow } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { getPointOut } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
@@ -25,7 +26,8 @@ interface PointOutMarker {
 @Component({
     selector: 'jhi-iris-point-out-marker',
     templateUrl: './iris-point-out-marker.component.html',
-    imports: [TumUiButtonComponent, TumUiTooltipDirective],
+    styleUrl: './iris-point-out-marker.component.scss',
+    imports: [TumUiButtonDirective, TumUiTooltipDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisPointOutMarkerComponent {
