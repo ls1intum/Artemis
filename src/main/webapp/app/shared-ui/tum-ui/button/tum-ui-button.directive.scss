@@ -14,6 +14,23 @@
     text-decoration: none;
 }
 
+// Disabled state for ANCHOR buttons. `tumUiButtonClasses()` fades a disabled button with `disabled:opacity-60`,
+// but that Tailwind variant compiles to the `:disabled` pseudo-class, which only matches real form controls — an
+// `<a>` can never be `:disabled`, so a disabled `<a tumUiButton>` kept full opacity and stopped looking disabled.
+// Consumers mark such an anchor with the `.disabled` class (anchors have no `disabled` attribute), so re-apply the
+// button's disabled fade here. Keyed on `:host(.disabled)` so it rides the button's OWN encapsulation (`_nghost`),
+// independent of the consumer's view — a plain descendant selector in the consumer would depend on the anchor
+// carrying the consumer's `_ngcontent`, which is unreliable for a component host nested in an ngTemplateOutlet.
+// `<button tumUiButton [disabled]>` is unaffected (it fades via the real `:disabled`); this only adds the anchor case.
+// `cursor: default` matches the disabled `<button>` (`:host:disabled` below) so the two are consistent. It is needed
+// because Artemis' global unguarded `a:hover { cursor: pointer }` otherwise wins over `a.disabled { cursor: default }`
+// (same specificity, later in source), leaving a disabled anchor showing the clickable pointer on hover. The
+// `:host(.disabled)` selector (0,2,0) outspecifies `a:hover` (0,1,1), so it wins even while hovered.
+:host(.disabled) {
+    opacity: 0.6;
+    cursor: default;
+}
+
 // Anchor buttons: Artemis' global UNLAYERED `a { color: var(--link-color) }` (Bootstrap) beats the Tailwind
 // `text-*` utility on the host (a layered utility always loses to an unlayered rule), so a solid `<a tumUiButton>`
 // label renders link-blue-on-blue and outlined info/warn action anchors render link-blue instead of their state

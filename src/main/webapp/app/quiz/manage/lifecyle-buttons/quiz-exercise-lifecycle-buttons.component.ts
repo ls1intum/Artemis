@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -10,10 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { Popover, PopoverModule } from 'primeng/popover';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 
 @Component({
@@ -24,7 +25,17 @@ import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.
     // is tight — they are a related action group, and the exercise-management table measures their inline width to size
     // the actions column (a wrap would mis-measure it).
     host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe, ButtonModule, TagModule, TooltipModule, PopoverModule],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
+    ],
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
@@ -56,8 +67,6 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     protected readonly isInVariantGroup = computed(() => !!this.quizExercise().exerciseVariantGroup);
 
-    private readonly batchMenu = viewChild<Popover>('batchMenu');
-
     readonly showBatchMenu = computed<boolean>(() => {
         const quiz = this.quizExercise();
         return quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
@@ -81,10 +90,6 @@ export class QuizExerciseLifecycleButtonsComponent {
         const quiz = this.quizExercise();
         return quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
     });
-
-    protected toggleBatchMenu(event: MouseEvent): void {
-        this.batchMenu()?.toggle(event);
-    }
 
     /**
      * Start the given quiz-exercise immediately
