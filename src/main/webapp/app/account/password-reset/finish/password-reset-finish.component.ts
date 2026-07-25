@@ -19,7 +19,7 @@ interface PasswordResetForm {
 
 /**
  * Component for completing the password reset process.
- * Users arrive here from the password reset email link containing a unique key.
+ * Users arrive here from the password reset email link containing a unique key id and the key secret.
  * They enter and confirm their new password to complete the reset.
  */
 @Component({
@@ -49,8 +49,10 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly error = signal(false);
     /** Indicates the password was successfully reset */
     readonly success = signal(false);
-    /** The reset key extracted from the URL query parameters */
-    readonly resetKey = signal('');
+    /** The reset key id extracted from the URL query parameters */
+    readonly resetKeyId = signal('');
+    /** The reset key secret extracted from the URL query parameters */
+    readonly resetKeySecret = signal('');
 
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
@@ -69,8 +71,11 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
      */
     ngOnInit() {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            if (params['key']) {
-                this.resetKey.set(params['key']);
+            if (params['keyId']) {
+                this.resetKeyId.set(params['keyId']);
+            }
+            if (params['keySecret']) {
+                this.resetKeySecret.set(params['keySecret']);
             }
             this.initialized.set(true);
         });
@@ -98,7 +103,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
         } else {
-            this.passwordResetFinishService.completePasswordReset(this.resetKey(), newPassword.value).subscribe({
+            this.passwordResetFinishService.completePasswordReset(this.resetKeyId(), this.resetKeySecret(), newPassword.value).subscribe({
                 next: () => this.success.set(true),
                 error: () => this.error.set(true),
             });

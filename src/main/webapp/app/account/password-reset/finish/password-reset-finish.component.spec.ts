@@ -30,7 +30,7 @@ describe('Component Tests', () => {
                     FormBuilder,
                     {
                         provide: ActivatedRoute,
-                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
+                        useValue: new MockActivatedRoute({ keyId: 'XYZPDQ', keySecret: 'XYZSecret' }),
                     },
                     LocalStorageService,
                     SessionStorageService,
@@ -51,7 +51,8 @@ describe('Component Tests', () => {
 
         it('should define its initial state', () => {
             expect(comp.initialized()).toBe(true);
-            expect(comp.resetKey()).toBe('XYZPDQ');
+            expect(comp.resetKeyId()).toBe('XYZPDQ');
+            expect(comp.resetKeySecret()).toBe('XYZSecret');
         });
 
         it('sets focus after the view has been initialized', () => {
@@ -86,7 +87,7 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password');
             expect(comp.success()).toBe(true);
         });
 
@@ -99,7 +100,7 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password');
             expect(comp.success()).toBe(false);
             expect(comp.error()).toBe(true);
         });
