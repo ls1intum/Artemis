@@ -138,6 +138,38 @@ final class ProblemStatementBindingChecker {
         return List.copyOf(bareTasks);
     }
 
+    /**
+     * Every substantial prose line that appears more than once verbatim outside code and diagram blocks — the instruction-body analogue of {@link #duplicateHeadings}. Observed
+     * live: a single task repeated its whole instruction sentence three times. Structural lines (headings, task bindings, table rows, list markers) are excluded because other
+     * checks own them, and the 60-character floor keeps legitimately repeated short lines (separators, one-word bullets, closing fences) out of the match.
+     */
+    static List<String> duplicateInstructionLines(String problemStatement) {
+        List<String> prose = new ArrayList<>();
+        boolean insideBlock = false;
+        for (String rawLine : problemStatement.lines().toList()) {
+            String line = rawLine.strip();
+            if (line.startsWith("```")) {
+                insideBlock = !insideBlock;
+                continue;
+            }
+            if (line.startsWith("@startuml")) {
+                insideBlock = true;
+                continue;
+            }
+            if (line.startsWith("@enduml")) {
+                insideBlock = false;
+                continue;
+            }
+            if (insideBlock || line.length() < 60 || line.startsWith("#") || line.startsWith("|") || line.startsWith("-") || line.startsWith("*")
+                    || TASK_LIKE_BINDING.matcher(line).find()) {
+                continue;
+            }
+            prose.add(line);
+        }
+        return prose.stream().collect(Collectors.groupingBy(line -> line)).entrySet().stream().filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey)
+                .sorted().toList();
+    }
+
     /** Every markdown heading line that appears more than once verbatim. */
     static List<String> duplicateHeadings(String problemStatement) {
         return problemStatement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(java.util.stream.Collectors.groupingBy(line -> line)).entrySet().stream()

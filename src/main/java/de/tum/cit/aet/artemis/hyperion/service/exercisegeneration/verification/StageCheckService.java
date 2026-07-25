@@ -823,6 +823,13 @@ public class StageCheckService {
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
+        // Same class of mechanical defect as the duplicate headings above, one level down: a task whose instruction sentence is pasted several times (observed live: three
+        // times under one [task]) reads to a student as if it were three different requirements.
+        List<String> duplicateInstructions = ProblemStatementBindingChecker.duplicateInstructionLines(statement);
+        if (!duplicateInstructions.isEmpty()) {
+            return StageCheckResult.failed(
+                    "The statement repeats these instruction lines verbatim: " + duplicateInstructions + ". Keep one statement of each requirement and delete the repeats.");
+        }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(statement);
         if (!bareTasks.isEmpty()) {
             return StageCheckResult.failed("These [task] bindings have no student-facing instruction before the next task or heading: " + bareTasks

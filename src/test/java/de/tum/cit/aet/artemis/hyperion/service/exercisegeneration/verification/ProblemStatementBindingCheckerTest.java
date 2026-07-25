@@ -190,6 +190,46 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
+    void duplicateInstructionLines_reportsATaskBodyPastedTwice() {
+        // Verbatim from a live run: one [task] repeated its whole instruction sentence, which reads as several distinct requirements.
+        String statement = """
+                [task][Implement arithmetic operations](testAdd,testSubtract)
+                Implement the `apply` method for each enum constant so that it returns the correct result for addition, subtraction, multiplication and division.
+                Implement the `apply` method for each enum constant so that it returns the correct result for addition, subtraction, multiplication and division.
+                """;
+
+        assertThat(ProblemStatementBindingChecker.duplicateInstructionLines(statement)).containsExactly(
+                "Implement the `apply` method for each enum constant so that it returns the correct result for addition, subtraction, multiplication and division.");
+    }
+
+    @Test
+    void duplicateInstructionLines_emptyForTheCanonicalArtemisStatement() throws IOException {
+        String statement = new ClassPathResource("templates/java/maven_maven/readme").getContentAsString(StandardCharsets.UTF_8);
+        assertThat(ProblemStatementBindingChecker.duplicateInstructionLines(statement)).isEmpty();
+    }
+
+    @Test
+    void duplicateInstructionLines_ignoresRepeatsInsideCodeAndDiagramBlocks() {
+        // A signature legitimately shown in two code samples, and a diagram edge repeated per class, are not prose defects.
+        String statement = """
+                [task][Implement the aggregation](testAggregate)
+                Implement the aggregate method so that the grouping and the totals map describe the same set of salespeople.
+                ```java
+                public AggregationResult aggregate(java.util.List<Transaction> transactions) { ... }
+                ```
+                ```java
+                public AggregationResult aggregate(java.util.List<Transaction> transactions) { ... }
+                ```
+                @startuml
+                Transaction "*" --> "*" AggregationResult : <color:testsColor(testAggregate)>grouped</color>
+                Transaction "*" --> "*" AggregationResult : <color:testsColor(testAggregate)>grouped</color>
+                @enduml
+                """;
+
+        assertThat(ProblemStatementBindingChecker.duplicateInstructionLines(statement)).isEmpty();
+    }
+
+    @Test
     void normalizeTestName_trimsOnlyToMatchProductionTaskExtraction() {
         assertThat(ProblemStatementBindingChecker.normalizeTestName("  testFoo()  ")).isEqualTo("testFoo()");
         assertThat(ProblemStatementBindingChecker.normalizeTestName("testFoo")).isEqualTo("testFoo");
