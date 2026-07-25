@@ -13,7 +13,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKey) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKeyId) {
+
+    public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
+        this(email, langKey, login, firstName, lastName, null, null);
+    }
 
     /**
      * Returns the user's full name in the format used by the mail templates.
@@ -25,7 +29,16 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
         return firstName;
     }
 
+    public static MailRecipientDTO forUnnamed(String email, String langKey, String login) {
+        return new MailRecipientDTO(email, langKey, login, null, null, null, null);
+    }
+
+    public static MailRecipientDTO forAdministrator(String email, String login) {
+        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null);
+    }
+
     public static MailRecipientDTO from(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getActivationKey(), user.getResetKey());
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(),
+            user.getLastName(), user.getActivationKey(), user.getResetKeyId());
     }
 }
