@@ -52,6 +52,9 @@ public final class ExerciseIntegrityGate {
     /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
 
+    /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is deliberately absent. */
+    private static final List<String> NONDETERMINISM_SOURCES = List.of("Collections.shuffle", "Math.random()", "new Random()", "ThreadLocalRandom", "UUID.randomUUID()");
+
     private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
 
     private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
@@ -978,6 +981,38 @@ public final class ExerciseIntegrityGate {
      * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
      * @return a single reason listing the leaked paths, or empty when no leak
      */
+    /**
+     * Unseeded randomness in a graded test source. Each construct below exists only to make a run differ from the last one, so in a test that decides a grade it makes the score
+     * irreproducible: the same submission scores differently on re-run, and neither the student nor the instructor can tell a regression from a dice roll.
+     * <p>
+     * The differential oracle is structurally blind to this — it builds solution and template once each, and a test that passes probabilistically looks exactly like one that
+     * passes. Observed live: a suite shuffled its input list "to ensure order-independence", and an implementation that never sorted at all passed 5 of 20 identical runs.
+     * <p>
+     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are deliberately NOT matched: constructing a value object with the current timestamp is
+     * legitimate and common in a test that never asserts on it, so matching them would reject correct suites.
+     *
+     * @param producedTestsFiles the exact tests repository that would be saved
+     * @return one actionable rejection per offending file, or an empty list when every graded test is deterministic
+     */
+    static List<String> nondeterministicGradedTestReasons(Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<String> reasons = new ArrayList<>();
+        for (Map.Entry<String, String> file : producedTestsFiles.entrySet()) {
+            if (isHarnessFile(file.getKey()) || file.getValue() == null) {
+                continue;
+            }
+            List<String> found = NONDETERMINISM_SOURCES.stream().filter(source -> file.getValue().contains(source)).toList();
+            if (!found.isEmpty()) {
+                reasons.add("the graded test file '" + file.getKey() + "' draws on unseeded randomness (" + String.join(", ", found)
+                        + "), so the same student submission can score differently on re-run. Replace it with fixed data: to prove the implementation does not depend on input "
+                        + "order, pass a list that is already deliberately out of order; if a test genuinely needs a random generator, seed it (new Random(42)).");
+            }
+        }
+        return List.copyOf(reasons);
+    }
+
     static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
             return List.of();

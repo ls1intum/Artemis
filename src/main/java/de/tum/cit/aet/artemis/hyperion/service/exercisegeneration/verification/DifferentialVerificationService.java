@@ -241,6 +241,9 @@ public class DifferentialVerificationService {
         harnessTamperingReasons.addAll(ExerciseIntegrityGate.harnessTamperingReasons("solution", request.seedSolutionFiles(), request.producedSolutionFiles(), false));
         boolean harnessIntact = harnessTamperingReasons.isEmpty();
         reasons.addAll(harnessTamperingReasons);
+        List<String> nondeterministicTestReasons = ExerciseIntegrityGate.nondeterministicGradedTestReasons(request.producedTestsFiles());
+        boolean gradedTestsDeterministic = nondeterministicTestReasons.isEmpty();
+        reasons.addAll(nondeterministicTestReasons);
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
@@ -294,14 +297,15 @@ public class DifferentialVerificationService {
 
         boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
                 && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold && extractionSound
-                && statementTasksHaveInstructions && noAdaptWipe;
+                && statementTasksHaveInstructions && noAdaptWipe && gradedTestsDeterministic;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
                             + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, statementTraceabilityHolds={}, "
-                            + "statementTasksHaveInstructions={}, templateTodoSeamsHold={}, extractionSound={}, noAdaptWipe={}",
+                            + "statementTasksHaveInstructions={}, templateTodoSeamsHold={}, extractionSound={}, noAdaptWipe={}, gradedTestsDeterministic={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, approvedSpecificationHolds,
-                    approvedTestPlanHolds, statementTraceabilityHolds, statementTasksHaveInstructions, templateTodoSeamsHold, extractionSound, noAdaptWipe);
+                    approvedTestPlanHolds, statementTraceabilityHolds, statementTasksHaveInstructions, templateTodoSeamsHold, extractionSound, noAdaptWipe,
+                    gradedTestsDeterministic);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }

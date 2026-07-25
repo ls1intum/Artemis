@@ -1038,6 +1038,65 @@ class ExerciseIntegrityGateTest {
                 .asString().contains("server-seeded structural", "Remove them", "behavioral witness");
     }
 
+    // --- Nondeterministic graded test gate ---
+
+    @Test
+    void nondeterminism_rejectsAGradedTestThatShufflesItsInput() {
+        // Verbatim shape from a live run. The suite shuffled its input "to ensure order-independence"; an implementation that never sorted at all passed 5 of 20 identical runs,
+        // so the same submission scored differently on re-run.
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/BookAggregatorTest.java", """
+                class BookAggregatorTest {
+                    @Test
+                    void testGroupBooksByGenreSorted() {
+                        List<Book> books = new ArrayList<>(SAMPLE);
+                        java.util.Collections.shuffle(books);
+                        assertEquals("A Game of Thrones", BookAggregator.groupBooksByGenreSorted(books).get("Fantasy").get(0).getTitle(), "sorted by title");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.nondeterministicGradedTestReasons(tests)).singleElement().asString().contains("BookAggregatorTest.java", "Collections.shuffle",
+                "score differently on re-run", "already deliberately out of order");
+    }
+
+    @Test
+    void nondeterminism_acceptsAFixedOutOfOrderInputAndASeededGenerator() {
+        // The two forms the rejection message points at: deliberately unsorted fixed data, and an explicitly seeded generator.
+        Map<String, String> tests = map("test/OrderTest.java", """
+                class OrderTest {
+                    @Test
+                    void testSorts() {
+                        List<Book> books = List.of(new Book("Fantasy", "The Hobbit", 310), new Book("Fantasy", "A Game of Thrones", 694));
+                        Random random = new Random(42);
+                        assertEquals("A Game of Thrones", Aggregator.sorted(books).get(0).getTitle(), "sorted by title");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.nondeterministicGradedTestReasons(tests)).isEmpty();
+    }
+
+    @Test
+    void nondeterminism_acceptsATimestampUsedToConstructAValue() {
+        // Instant.now() is not randomness: a test that builds a value object with the current time and never asserts on it stays reproducible. Matching it would reject correct
+        // suites — one generated exercise does exactly this.
+        Map<String, String> tests = map("test/SalesAggregatorTest.java", """
+                class SalesAggregatorTest {
+                    private static Transaction tx(String id, double amount) {
+                        return new Transaction(id, amount, Instant.now());
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.nondeterministicGradedTestReasons(tests)).isEmpty();
+    }
+
+    @Test
+    void nondeterminism_ignoresTheSeededBuildHarness() {
+        // Harness files are graded verbatim and owned by the tampering gate; a build script is not a graded test.
+        assertThat(ExerciseIntegrityGate.nondeterministicGradedTestReasons(map("pom.xml", "<!-- Math.random() -->"))).isEmpty();
+    }
+
     // --- Solution-leak gate ---
 
     @Test
