@@ -23,9 +23,11 @@ class AgentSystemPromptServiceTest {
      * Leaves headroom over the largest representative Java prompt (incl. the template-scaffold/diff-discipline, PlantUML/testsColor, student-created-type, and anti-grading-context
      * rules, plus the GENERATE-mode staged workflow: SPEC.md schema, solution-example-replay, template-derived-from-solution, per-test differential verify, and
      * statement-written-last) while preventing another unbounded failure-diary prompt. Bumped from 13_500 for the staged workflow, then to 16_000 for the qualitative-review fixes
-     * (canonical source roots, TODO honesty, boundary-claim coverage, duplicate-heading rule).
+     * (canonical source roots, TODO honesty, boundary-claim coverage, duplicate-heading rule), then to 16_100 for two measured test-quality defects: assertion failure messages
+     * were bimodal because the prompt's only mention of them was a prohibition, and a controlled comparison against a stronger model showed test suites were thin because
+     * nothing ever told the agent that failing on an unconditionally-throwing template proves nothing.
      */
-    private static final int MAX_SYSTEM_PROMPT_CHARS = 16_000;
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 16_100;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = newPromptService();
