@@ -51,16 +51,20 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             Optional<BuildPhasesTemplateService> buildPhasesTemplateService, ProfileService profileService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseValidationService programmingExerciseValidationService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
     }
 
     /**
@@ -168,6 +172,7 @@ public class ProgrammingExerciseBuildPlanService {
     public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration)
             throws JsonProcessingException {
         validateBuildPhaseNames(buildPlanConfiguration.buildPlan().phases());
+        validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
 
         var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
@@ -176,6 +181,11 @@ public class ProgrammingExerciseBuildPlanService {
         buildConfig.setBuildScript(null);
         buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
         buildConfig.setDockerFlags(buildPlanConfiguration.dockerFlags());
+
+        // Validate the Docker flags with the same rules the full programming exercise update applies (malformed JSON,
+        // disallowed networks, invalid resource limits), so the build plan editor cannot persist a configuration the
+        // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
+        programmingExerciseValidationService.validateDockerFlags(programmingExercise);
 
         updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
 
@@ -193,6 +203,21 @@ public class ProgrammingExerciseBuildPlanService {
      *
      * @param phases the build phases to validate
      */
+    /**
+     * Validates the Docker image submitted by the build plan editor. A null image is allowed and means that the default
+     * image of the exercise is used (see how {@code BuildPlanPhasesDTO#dockerImage()} is consumed when scheduling a
+     * build); a blank image, on the other hand, would be persisted verbatim and leave the exercise with an unusable
+     * image, so it is rejected. This is validated on the endpoint only, so the default-image semantics of the shared
+     * {@code BuildPlanPhasesDTO} are unchanged for its other consumers.
+     *
+     * @param dockerImage the submitted Docker image, or null to use the exercise default
+     */
+    private void validateDockerImage(@Nullable String dockerImage) {
+        if (dockerImage != null && dockerImage.isBlank()) {
+            throw new BadRequestAlertException("The Docker image must not be blank", "buildConfig", "blankDockerImage");
+        }
+    }
+
     private void validateBuildPhaseNames(List<BuildPhaseDTO> phases) {
         if (phases == null || phases.isEmpty()) {
             throw new BadRequestAlertException("A build plan must contain at least one build phase", "buildConfig", "emptyBuildPlan");

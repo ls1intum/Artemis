@@ -27,7 +27,9 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     private static final String DOCKER_IMAGE = "ghcr.io/ls1intum/artemis-maven-template:latest";
 
-    private static final String DOCKER_FLAGS = "{\"network\":\"none\",\"cpuCount\":2}";
+    // A valid Docker flags payload: allowed network, and resource limits within the accepted bounds. It has to pass the
+    // same validation the full programming exercise update applies, which the build config editor now also enforces.
+    private static final String DOCKER_FLAGS = "{\"network\":\"none\",\"cpuCount\":2,\"memory\":1024,\"memorySwap\":0}";
 
     private ProgrammingExercise programmingExercise;
 
@@ -125,6 +127,69 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsEmptyPhases() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsMalformedDockerFlags() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsDisallowedDockerNetwork() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"host\",\"cpuCount\":2,\"memory\":1024}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsInvalidDockerMemory() throws Exception {
+        assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"none\",\"cpuCount\":2,\"memory\":1}");
+    }
+
+    /**
+     * Sends a build config update with the given (invalid) Docker flags and asserts that it is rejected with 400 and
+     * that neither the Docker flags nor the build plan configuration of the stored build config were changed.
+     */
+    private void assertDockerFlagsRejectedAndConfigUnchanged(String invalidDockerFlags) throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalDockerFlags = before.getDockerFlags();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), DOCKER_IMAGE), 60, invalidDockerFlags);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getDockerFlags()).isEqualTo(originalDockerFlags);
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBlankDockerImage() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a blank image is not null, so it would be persisted verbatim and leave the exercise with an unusable image
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), "   "), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAcceptsNullDockerImageAsDefault() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+
+        // a null image means the exercise default image is used, so the editor must accept it
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(phase("compile")), null), 120, DOCKER_FLAGS);
+        var response = request.putWithResponseBody(buildConfigEndpoint(), dto, UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
+
+        assertThat(response.timeoutSeconds()).isEqualTo(120);
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(persisted.getBuildPlanConfiguration()).contains("compile");
     }
 
     @Test
