@@ -12,6 +12,7 @@ export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
     ARTIFACT = 'ARTIFACT',
+    CTXSWAP = 'CTXSWAP',
     COMMAND = 'COMMAND',
 }
 
@@ -47,6 +48,15 @@ export interface IrisArtifactMessage extends BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
+export class IrisContextSwitchMessage implements BaseEntity {
+    id?: number;
+    content!: IrisMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender!: IrisSender.CTXSWAP;
+    accessedMemories?: never;
+    createdMemories?: never;
+}
+
 /**
  * A system-generated marker recording an action Iris performed on the client, such as pointing the
  * student to a slide page / video timestamp in the combined view. Its content is JSON describing the
@@ -61,4 +71,4 @@ export class IrisCommandMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisCommandMessage;
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisContextSwitchMessage | IrisCommandMessage;

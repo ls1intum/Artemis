@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,11 +14,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
@@ -31,8 +30,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
     let component: SystemNotificationManagementUpdateComponent;
     let adminService: AdminSystemNotificationService;
@@ -73,11 +70,11 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                         FaIconComponent,
                         MockPipe(ArtemisTranslatePipe),
                         MockComponent(FormDateTimePickerComponent),
-                        SelectModule,
-                        CheckboxModule,
-                        InputTextModule,
-                        ButtonModule,
-                        MessageModule,
+                        TumUiSelectComponent,
+                        TumUiCheckboxComponent,
+                        TumUiInputDirective,
+                        TumUiButtonDirective,
+                        TumUiMessageComponent,
                     ],
                 },
             })

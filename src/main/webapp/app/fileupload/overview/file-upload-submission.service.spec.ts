@@ -6,19 +6,32 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockService } from 'ng-mocks';
 
 import { FileUploadSubmissionService } from './file-upload-submission.service';
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadExerciseContextDTO, FileUploadParticipation, FileUploadSubmission, FileUploadSubmissionDTO } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { User } from 'app/account/user/user.model';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 describe('FileUploadSubmissionService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FileUploadSubmissionService;
     let httpMock: HttpTestingController;
     let submissionService: SubmissionService;
+    let accountService: AccountService;
 
     const createSubmission = (id?: number): FileUploadSubmission => {
         const submission = new FileUploadSubmission();
@@ -45,25 +58,24 @@ describe('FileUploadSubmissionService', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 FileUploadSubmissionService,
-                {
-                    provide: SubmissionService,
-                    useValue: {
-                        convert: vi.fn((s: FileUploadSubmission) => Object.assign(new FileUploadSubmission(), s)),
-                        convertArrayResponse: vi.fn((res) => res),
-                        convertSubmissionFromServer: vi.fn((s) => s),
-                        convertSubmissionResponseFromServer: vi.fn((res) => res),
-                    },
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                SessionStorageService,
+                { provide: WebsocketService, useValue: MockService(WebsocketService) },
+                { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
             ],
         });
 
         service = TestBed.inject(FileUploadSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);
         submissionService = TestBed.inject(SubmissionService);
+        accountService = TestBed.inject(AccountService);
+        vi.spyOn(submissionService, 'convertSubmissionFromServer');
+        vi.spyOn(submissionService, 'convertSubmissionResponseFromServer');
     });
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('update', () => {
@@ -110,16 +122,23 @@ describe('FileUploadSubmissionService', () => {
             req.flush({});
         });
 
-        it('should call submission service convert', async () => {
+        it('should serialize only the submission input DTO', async () => {
             const submission = createSubmission();
+            submission.filePath = '/api/files/should-not-be-sent.pdf';
+            submission.participation = createParticipation();
             const file = createFile();
 
             service.update(submission, 123, file).subscribe();
 
             const req = httpMock.expectOne({ method: 'POST' });
+            const formData = req.request.body as FormData;
+            const submissionBlob = formData.get('submission') as Blob;
+            const requestBody = JSON.parse(await submissionBlob.text());
             req.flush({});
 
-            expect(submissionService.convert).toHaveBeenCalledWith(submission);
+            expect(requestBody).toEqual({ id: submission.id, submitted: true, exerciseId: 123 });
+            expect(requestBody.filePath).toBeUndefined();
+            expect(requestBody.participation).toBeUndefined();
         });
 
         it('should set filePathUrl from response', async () => {
@@ -327,6 +346,53 @@ describe('FileUploadSubmissionService', () => {
 
             const result = await resultPromise;
             expect(result).toBeDefined();
+        });
+
+        it('should preserve non-admin instructor access through the real submission conversion', async () => {
+            const instructorGroupName = 'file-upload-instructors';
+            accountService.userIdentity.set({ id: 10, groups: [instructorGroupName], authorities: [Authority.STUDENT] } as User);
+            const exercise: FileUploadExerciseContextDTO = {
+                type: ExerciseType.FILE_UPLOAD,
+                exerciseGroup: {
+                    id: 100,
+                    exam: {
+                        id: 200,
+                        course: {
+                            teachingAssistantGroupName: 'file-upload-tutors',
+                            editorGroupName: 'file-upload-editors',
+                            instructorGroupName,
+                        },
+                    },
+                },
+            };
+            const dto: FileUploadSubmissionDTO = {
+                id: 1,
+                participation: {
+                    id: 42,
+                    type: ParticipationType.STUDENT,
+                    exercise,
+                },
+            };
+
+            const resultPromise = new Promise<FileUploadSubmission>((resolve) => {
+                service.getDataForFileUploadEditor(42).subscribe((resp) => resolve(resp));
+            });
+
+            const req = httpMock.expectOne({
+                method: 'GET',
+                url: 'api/fileupload/participations/42/file-upload-editor',
+            });
+            req.flush(dto);
+
+            const result = await resultPromise;
+            expect(result.participation).toBeInstanceOf(FileUploadParticipation);
+            expect(result.participation?.exercise).toBeInstanceOf(FileUploadExercise);
+            expect(result.participation?.exercise?.exerciseGroup).toBeInstanceOf(ExerciseGroup);
+            expect(result.participation?.exercise?.exerciseGroup?.exam).toBeInstanceOf(Exam);
+            expect(result.participation?.exercise?.exerciseGroup?.exam?.course).toBeInstanceOf(Course);
+            expect(result.participation?.exercise?.isAtLeastInstructor).toBe(true);
+            expect((result.participation as StudentParticipation).student).toBeUndefined();
+            expect((result.participation as StudentParticipation).team).toBeUndefined();
         });
 
         it('should call convertSubmissionFromServer', async () => {

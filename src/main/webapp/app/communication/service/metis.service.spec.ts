@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -56,8 +55,6 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('Metis Service', () => {
-    setupTestBed({ zoneless: true });
-
     let metisService: MetisService;
     let metisServiceUserStub: ReturnType<typeof vi.spyOn>;
     let metisServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;
@@ -324,7 +321,7 @@ describe('Metis Service', () => {
             answerPost = { ...answerPost, post };
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
 
-            metisService.deleteAnswerPost(answerPost);
+            metisService.deleteAnswerPost(answerPost).subscribe();
             const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
@@ -465,6 +462,15 @@ describe('Metis Service', () => {
         expect(lectureRouterLink).toBe(`/courses/${metisCourse.id}/lectures/1`);
         expect(examRouterLink).toBe(`/courses/${metisCourse.id}/exams/1`);
         expect(generalRouterLink).toBeUndefined();
+    });
+
+    it('should link a general channel without a subtype reference to the Iris page', () => {
+        metisService.setCourse(course);
+        const channelDTO = new ChannelDTO();
+        channelDTO.subType = ChannelSubType.GENERAL;
+
+        expect(metisService.getLinkForChannelSubType(channelDTO)).toBe(`/courses/${metisCourse.id}/iris`);
+        expect(metisService.getLinkForGeneral()).toBe(`/courses/${metisCourse.id}/iris`);
     });
 
     it('should determine the query param for a reference to a post in a conversation', () => {

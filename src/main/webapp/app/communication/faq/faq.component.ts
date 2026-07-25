@@ -24,7 +24,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 @Component({
@@ -35,7 +35,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
         NgbDropdownModule,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
         DeleteButtonDirective,

@@ -4,11 +4,11 @@
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <div *adminTitleBarActions class="flex items-center justify-end gap-2">
-        <a pButton size="small" severity="secondary" [outlined]="true" [routerLink]="['/admin', 'standardized-competencies', 'import']" data-testid="import-button">
+        <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="['/admin', 'standardized-competencies', 'import']" data-testid="import-button">
             <fa-icon [icon]="faFileImport" />
             <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
         </a>
-        <button pButton size="small" severity="secondary" [outlined]="true" (click)="exportStandardizedCompetencyCatalog()" data-testid="export-button">
+        <button tumUiButton size="small" severity="secondary" variant="outlined" (click)="exportStandardizedCompetencyCatalog()" data-testid="export-button">
             <fa-icon [icon]="faFileExport" />
             <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
         </button>
@@ -22,36 +22,36 @@
     />
     <div class="mt-3 mb-2 flex flex-wrap items-center gap-2">
         <h3 class="me-1 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
-        <p-button
+        <tum-ui-button
             size="small"
             severity="secondary"
-            [outlined]="true"
-            (onClick)="openNewKnowledgeArea(undefined)"
-            [pTooltip]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
+            variant="outlined"
+            (clicked)="openNewKnowledgeArea(undefined)"
+            [tumUiTooltip]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
             [attr.aria-label]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faPlus" />
-        </p-button>
-        <p-button
+        </tum-ui-button>
+        <tum-ui-button
             size="small"
             severity="secondary"
-            [outlined]="true"
-            (onClick)="knowledgeAreaTreeComponent?.collapseAll()"
-            [pTooltip]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
+            variant="outlined"
+            (clicked)="knowledgeAreaTreeComponent?.collapseAll()"
+            [tumUiTooltip]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
             [attr.aria-label]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faMinimize" />
-        </p-button>
-        <p-button
+        </tum-ui-button>
+        <tum-ui-button
             size="small"
             severity="secondary"
-            [outlined]="true"
-            (onClick)="knowledgeAreaTreeComponent?.expandAll()"
-            [pTooltip]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
+            variant="outlined"
+            (clicked)="knowledgeAreaTreeComponent?.expandAll()"
+            [tumUiTooltip]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
             [attr.aria-label]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faMaximize" />
-        </p-button>
+        </tum-ui-button>
     </div>
     @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
         <div class="flex items-start">
@@ -82,7 +82,7 @@
         </div>
     } @else if (isLoading()) {
         <div class="flex justify-center" role="status">
-            <p-progressSpinner [ariaLabel]="'loading' | artemisTranslate" data-testid="loading-spinner" />
+            <tum-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" data-testid="loading-spinner" />
         </div>
     } @else {
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.empty"></span>
@@ -104,7 +104,7 @@
                     (keydown.enter)="selectKnowledgeArea(knowledgeArea)"
                     (keydown.space)="selectKnowledgeArea(knowledgeArea)"
                     [attr.aria-label]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
-                    [pTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
+                    [tumUiTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
                 />
             </div>
         </ng-template>
@@ -120,7 +120,7 @@
                 <fa-icon
                     class="me-2"
                     [icon]="getIcon(competency.taxonomy)"
-                    [pTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                    [tumUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                     [fixedWidth]="true"
                 />
                 <h6 class="mb-0">{{ competency.title }}</h6>
@@ -162,7 +162,7 @@
     }
 </ng-template>
 
-<p-dialog
+<tum-ui-dialog
     [(visible)]="confirmDialogVisible"
     [modal]="true"
     [closable]="true"
@@ -175,7 +175,11 @@
 >
     <div [jhiTranslate]="confirmDialogTextKey()" [translateValues]="confirmDialogTextParams()"></div>
     <ng-template #footer>
-        <p-button severity="secondary" size="small" (onClick)="onConfirmDialogCancel()" [label]="'global.form.cancel' | artemisTranslate" data-testid="confirm-cancel" />
-        <p-button severity="danger" size="small" (onClick)="onConfirmDialogConfirm()" [label]="'global.form.confirm' | artemisTranslate" data-testid="confirm-confirm" />
+        <tum-ui-button severity="secondary" size="small" (clicked)="onConfirmDialogCancel()" data-testid="confirm-cancel">{{
+            'global.form.cancel' | artemisTranslate
+        }}</tum-ui-button>
+        <tum-ui-button severity="danger" size="small" (clicked)="onConfirmDialogConfirm()" data-testid="confirm-confirm">{{
+            'global.form.confirm' | artemisTranslate
+        }}</tum-ui-button>
     </ng-template>
-</p-dialog>
+</tum-ui-dialog>

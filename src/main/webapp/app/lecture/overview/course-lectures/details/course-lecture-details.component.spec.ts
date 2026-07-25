@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { DebugElement, ElementRef, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -26,7 +26,6 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
@@ -54,8 +53,6 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CourseLectureDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -117,7 +114,7 @@ describe('CourseLectureDetailsComponent', () => {
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -288,10 +285,10 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
-        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name, attachment.version);
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
-        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name, attachment.version);
         expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
     });
 
@@ -309,20 +306,25 @@ describe('CourseLectureDetailsComponent', () => {
         expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
     });
 
-    it('should set lecture unit as completed', async () => {
+    it('should set lecture unit as completed and publish a new unit reference so the card reacts', async () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit');
+        // Emulate a successful completion request by invoking the success callback synchronously.
+        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementation((_lecture, _event, onSuccess) => onSuccess?.());
 
+        lectureUnit3.completed = false;
         courseLecturesDetailsComponent.lecture.set(lecture);
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
+        courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
 
-        expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
+
+        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true }, expect.any(Function));
+        const updatedUnit = courseLecturesDetailsComponent.lectureUnits().find((unit) => unit.id === lectureUnit3.id);
+        expect(updatedUnit?.completed).toBe(true);
+        // A fresh object reference (not the original) is what makes the card's signal input update in a zoneless app.
+        expect(updatedUnit).not.toBe(lectureUnit3);
     });
 
     describe('ensureValidDeepLinkTargets', () => {

@@ -1,4 +1,4 @@
-<p-dialog
+<tum-ui-dialog
     [(visible)]="visible"
     [modal]="true"
     [closable]="true"
@@ -9,6 +9,9 @@
     [style]="{ width: '50dvw' }"
     [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
 >
+    @if (dialogError(); as error) {
+        <tum-ui-message severity="error" [text]="error" styleClass="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
+    }
     @if (operation().name === 'deleteOrphans') {
         <p
             [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
@@ -49,13 +52,21 @@
     </div>
     <ng-template #footer>
         <div class="flex justify-end gap-2">
-            <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="close()" data-testid="close-button">
+            <button tumUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="close()" data-testid="close-button">
                 <span jhiTranslate="cleanupService.button.close"></span>
             </button>
-            <button pButton type="button" severity="danger" size="small" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" data-testid="execute-button">
+            <button
+                tumUiButton
+                type="button"
+                severity="danger"
+                size="small"
+                [disabled]="operationExecuting() || !hasEntriesToDelete()"
+                (click)="executeCleanupOperation()"
+                data-testid="execute-button"
+            >
                 <fa-icon [icon]="faTrash" />
                 <span jhiTranslate="cleanupService.button.execute"></span>
             </button>
         </div>
     </ng-template>
-</p-dialog>
+</tum-ui-dialog>

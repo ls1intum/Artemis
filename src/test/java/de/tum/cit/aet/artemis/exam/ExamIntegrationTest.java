@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -95,12 +96,15 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -612,6 +616,34 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithStartTextTooLong() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examStartTextTest");
+        exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithConfirmationEndTextTooLong() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examConfirmationTextTest");
+        exam.setConfirmationEndText("a".repeat(10001)); // Max allowed is 10000 characters
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_succeedsWithTextAtMaxLength() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMaxTextTest");
+        exam.setStartText("a".repeat(10000)); // Exactly the maximum allowed
+        exam.setConfirmationEndText("b".repeat(10000));
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
         exam1.setExamMaxPoints(10000); // Max allowed is 9999
 
@@ -693,6 +725,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsWithTitleTooLong() throws Exception {
         exam1.setTitle("a".repeat(256)); // Max allowed is 255 characters
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithTextTooLong() throws Exception {
+        exam1.setEndText("a".repeat(10001)); // Max allowed is 10000 characters
 
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.BAD_REQUEST);
     }
@@ -1954,6 +1994,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAllExamsOnPage_asEditor_failsWithForbidden() throws Exception {
+        // Creating and importing exams is instructor-only, and this import-source endpoint is scoped to instructor
+        // courses, so editors must not be able to call it (otherwise they would always get an empty result).
+        final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
+        request.getSearchResult("/api/exam/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
     void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
@@ -2000,6 +2049,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testImportExamWithExercises_failsWithTitleTooLong() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("a".repeat(256)); // Max allowed is 255 characters
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam, course1.getId()), HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_failsWithTextTooLong() throws Exception {
+        final Exam exam = ExamFactory.generateExam(course1);
+        exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
@@ -2096,6 +2153,45 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             var exerciseGroup = exerciseGroups.get(i);
             assertThat(exerciseGroup.getTitle()).isEqualTo("Group " + i);
             assertThat(exerciseGroup.getIsMandatory()).isTrue();
+        }
+
+        // Verify that content fields from the source exercises are preserved during import (not silently dropped)
+        for (ExerciseGroup group : exerciseGroups) {
+            for (Exercise importedExercise : group.getExercises()) {
+                // Base fields that should be copied from the template exercise
+                assertThat(importedExercise.getDifficulty()).as("difficulty must be preserved for " + importedExercise.getTitle()).isEqualTo(DifficultyLevel.MEDIUM);
+                // Quiz maxPoints is overridden by QuizExerciseService.save() to equal the sum of question points
+                if (!(importedExercise instanceof QuizExercise)) {
+                    assertThat(importedExercise.getMaxPoints()).as("maxPoints must be preserved").isEqualTo(5.0);
+                }
+
+                switch (importedExercise) {
+                    case ModelingExercise modeling -> {
+                        assertThat(modeling.getProblemStatement()).as("problemStatement must be preserved").isEqualTo("Exam Problem Statement");
+                        assertThat(modeling.getDiagramType()).as("diagramType must be preserved").isEqualTo(DiagramType.ClassDiagram);
+                        assertThat(modeling.getExampleSolutionModel()).as("exampleSolutionModel must be preserved").isEqualTo("This is my example solution model");
+                        assertThat(modeling.getExampleSolutionExplanation()).as("exampleSolutionExplanation must be preserved").isEqualTo("This is my example solution model");
+                    }
+                    case TextExercise text -> {
+                        assertThat(text.getProblemStatement()).as("problemStatement must be preserved").isEqualTo("Exam Problem Statement");
+                        assertThat(text.getExampleSolution()).as("exampleSolution must be preserved").isEqualTo("This is my example solution");
+                    }
+                    case FileUploadExercise fileUpload -> {
+                        assertThat(fileUpload.getProblemStatement()).as("problemStatement must be preserved").isEqualTo("Exam Problem Statement");
+                        assertThat(fileUpload.getFilePattern()).as("filePattern must be preserved").isEqualTo("png");
+                    }
+                    case QuizExercise quiz -> {
+                        assertThat(quiz.isRandomizeQuestionOrder()).as("randomizeQuestionOrder must be preserved").isTrue();
+                        assertThat(quiz.getAllowedNumberOfAttempts()).as("allowedNumberOfAttempts must be preserved").isEqualTo(1);
+                        assertThat(quiz.getDuration()).as("duration must be preserved").isEqualTo(10);
+                        // Quiz batches should NOT be imported for exam exercises (exam controls timing)
+                        assertThat(quiz.getQuizBatches()).as("quiz batches must not be imported for exam exercises").isNullOrEmpty();
+                    }
+                    default -> {
+                        // no additional assertions for other types
+                    }
+                }
+            }
         }
     }
 

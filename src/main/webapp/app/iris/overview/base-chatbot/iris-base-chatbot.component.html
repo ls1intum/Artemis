@@ -1,4 +1,4 @@
-<p-confirmDialog />
+<p-confirmdialog />
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
@@ -249,7 +249,9 @@
                                                 @if (content.type === IrisMessageContentType.TEXT) {
                                                     <span
                                                         class="bubble-content"
-                                                        [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
+                                                        [jhiMarkdown]="(content | as: IrisTextMessageContent).textContent!"
+                                                        [markdownLineBreaks]="true"
+                                                        (markdownRendered)="onMessageMarkdownRendered()"
                                                     ></span>
                                                 }
                                             }
@@ -263,6 +265,9 @@
                                             }
                                         </div>
                                     </div>
+                                }
+                                @if (message.sender === IrisSender.CTXSWAP) {
+                                    <jhi-iris-context-switch-divider [message]="message" />
                                 }
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">

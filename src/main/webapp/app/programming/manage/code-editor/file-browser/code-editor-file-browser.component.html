@@ -82,7 +82,7 @@
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->
     @if (repositoryFiles()?.[item.value] === FileType.PROBLEM_STATEMENT) {
-        <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="fileBadges()?.[item.value] ?? []" (onNodeSelect)="handleNodeSelected(item)" />
+        <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="getFileBadges(item)" (onNodeSelect)="handleNodeSelected(item)" />
     }
     <!--folder-->
     @if (repositoryFiles()?.[item.value] === FileType.FOLDER) {
@@ -108,7 +108,7 @@
         <jhi-code-editor-file-browser-file
             [item]="item"
             [hasChanges]="repositoryFilesWithInformationAboutChange()?.[item.value] ?? false"
-            [badges]="fileBadges()?.[item.value] ?? []"
+            [badges]="getFileBadges(item)"
             [isBeingRenamed]="!!renamingFile() && renamingFile()![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"

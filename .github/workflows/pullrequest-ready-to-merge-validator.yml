@@ -4,6 +4,9 @@ on:
   pull_request_target:
     types: [labeled]
 
+permissions:
+  contents: read
+
 jobs:
   validate-ready-to-merge:
     if: github.event.label.name == 'ready to merge'

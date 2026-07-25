@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MemirisMemoriesListComponent } from './memiris-memories-list.component';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
@@ -13,8 +12,6 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 
 describe('MemirisMemoriesListComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MemirisMemoriesListComponent>;
     let component: MemirisMemoriesListComponent;
     let http: { getUserMemoryData: ReturnType<typeof vi.fn>; getUserMemory: ReturnType<typeof vi.fn>; deleteUserMemory: ReturnType<typeof vi.fn> };

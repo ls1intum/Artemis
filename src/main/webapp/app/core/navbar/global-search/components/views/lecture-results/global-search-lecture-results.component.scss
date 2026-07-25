@@ -72,8 +72,7 @@
 
 .lecture-card-title {
     font-size: 0.875rem;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .lecture-skeleton-card {

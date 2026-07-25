@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -50,8 +49,6 @@ class MockResizeObserver {
 global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 describe('AttachmentVideoUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let scienceService: ScienceService;
     let fileService: FileService;
     let httpMock: HttpTestingController;
@@ -154,7 +151,32 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(createStudentLinkSpy).toHaveBeenCalledTimes(1);
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledWith(expect.any(String), attachmentVideoUnit.attachment!.name, attachmentVideoUnit.attachment!.version);
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should preserve regenerated student-version paths when downloading', () => {
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFile');
+        const downloadFileByAttachmentNameSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
+        const firstStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_first.pdf';
+        const secondStudentVersion = 'attachments/attachment-unit/1/student/StudentVersionSlides_second.pdf';
+
+        fixture.componentRef.setInput('lectureUnit', {
+            ...attachmentVideoUnit,
+            attachment: { ...attachmentVideoUnit.attachment, studentVersion: firstStudentVersion },
+        });
+        component.handleDownload();
+        fixture.componentRef.setInput('lectureUnit', {
+            ...attachmentVideoUnit,
+            attachment: { ...attachmentVideoUnit.attachment, studentVersion: secondStudentVersion },
+        });
+        component.handleDownload();
+
+        expect(downloadFileSpy).toHaveBeenCalledTimes(2);
+        expect(downloadFileSpy.mock.calls[0][0]).toContain(firstStudentVersion);
+        expect(downloadFileSpy.mock.calls[1][0]).toContain(secondStudentVersion);
+        expect(downloadFileSpy.mock.calls[0][0]).not.toBe(downloadFileSpy.mock.calls[1][0]);
+        expect(downloadFileByAttachmentNameSpy).not.toHaveBeenCalled();
     });
 
     it('should handle original version', () => {
@@ -164,6 +186,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.handleOriginalVersion();
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledWith(expect.any(String), attachmentVideoUnit.attachment!.name, attachmentVideoUnit.attachment!.version);
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -562,15 +585,15 @@ describe('AttachmentVideoUnitComponent', () => {
 
             // PDF is loaded directly via URL, no HTTP request for blob
             expect(component.isPdfLoading()).toBe(true);
-            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf?version=1');
 
             // Simulate PDF load error to trigger blob fallback
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf?version=1' });
 
             // Blob fallback should trigger only one request even if the direct-load error fires twice
-            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf?version=1' });
             expect(getBlobFromUrlSpy).toHaveBeenCalledTimes(1);
-            expect(getBlobFromUrlSpy).toHaveBeenCalledWith('api/core/files//path/to/file/test.pdf');
+            expect(getBlobFromUrlSpy).toHaveBeenCalledWith('api/core/files//path/to/file/test.pdf?version=1');
 
             expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe(mockBlobUrl);
@@ -654,7 +677,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(component.playlistUrl()).toBe(playlist);
             // PDF is now loaded directly via URL (no blob)
-            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf?version=1');
         });
 
         it('ngOnDestroy: cleanup', async () => {

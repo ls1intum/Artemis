@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
@@ -34,8 +33,6 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import dayjs from 'dayjs/esm';
 
 describe('RequestFeedbackButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RequestFeedbackButtonComponent;
     let fixture: ComponentFixture<RequestFeedbackButtonComponent>;
     let debugElement: DebugElement;

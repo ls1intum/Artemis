@@ -1,7 +1,7 @@
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { test } from '../../../support/fixtures';
 import { admin } from '../../../support/users';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -46,7 +46,7 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             await textExerciseCreation.typeProblemStatement(problemStatement);
             await textExerciseCreation.typeExampleSolution(exampleSolution);
             const exerciseCreateResponse = await textExerciseCreation.create();
-            const exercise: TextExercise = await exerciseCreateResponse.json();
+            const exercise: TextExercise = await readResponseJson(exerciseCreateResponse);
             createdExerciseId = exercise.id;
 
             // Create an example submission
@@ -59,7 +59,7 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             await textExerciseExampleSubmissionCreation.typeExampleSubmission(submission);
 
             const submissionCreationResponse = await textExerciseExampleSubmissionCreation.clickCreateNewExampleSubmission();
-            const exampleSubmission: ExampleSubmission = await submissionCreationResponse.json();
+            const exampleSubmission: ExampleSubmission = await readResponseJson(submissionCreationResponse);
             const textSubmission: TextSubmission = exampleSubmission.submission!;
             expect(submissionCreationResponse.status()).toBe(200);
             expect(textSubmission.text).toBe(submission);

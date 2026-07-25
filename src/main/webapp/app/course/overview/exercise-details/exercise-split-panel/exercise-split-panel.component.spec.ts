@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ChildrenOutletContexts, Router } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,8 +21,6 @@ class ResizeObserverMock {
 }
 
 describe('ExerciseSplitPanelComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseSplitPanelComponent>;
     let component: ExerciseSplitPanelComponent;
     let accountService: MockAccountService;
@@ -34,7 +31,7 @@ describe('ExerciseSplitPanelComponent', () => {
             imports: [ExerciseSplitPanelComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: IrisChatService, useValue: { switchTo: vi.fn() } },
+                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: ActivatedRoute, useValue: { parent: {}, firstChild: undefined } },
                 { provide: TranslateService, useClass: MockTranslateService },

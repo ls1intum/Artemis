@@ -1,16 +1,19 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { MessageModule } from 'primeng/message';
+import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -71,20 +74,21 @@ type ModuleFeatureInfo = {
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TooltipModule,
-        TagModule,
-        ButtonModule,
-        ToggleSwitchModule,
-        MessageModule,
+        TumUiToggleSwitchComponent,
+        TumUiMessageComponent,
         FormsModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
 
     /** Available feature toggles with their current state */
     readonly featureToggles = signal<FeatureToggleInfo[]>([]);
@@ -131,7 +135,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
@@ -174,14 +177,17 @@ export class AdminFeatureToggleComponent implements OnInit {
         this.featureToggleService
             .getFeatureToggles()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((activeToggles) => {
-                this.featureToggles.set(
-                    Object.values(FeatureToggle).map((feature) => ({
-                        feature,
-                        isActive: activeToggles.includes(feature),
-                        documentationLink: this.documentationLinks[feature],
-                    })),
-                );
+            .subscribe({
+                next: (activeToggles) => {
+                    this.featureToggles.set(
+                        Object.values(FeatureToggle).map((feature) => ({
+                            feature,
+                            isActive: activeToggles.includes(feature),
+                            documentationLink: this.documentationLinks[feature],
+                        })),
+                    );
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
         // Load profile-based features
@@ -203,14 +209,52 @@ export class AdminFeatureToggleComponent implements OnInit {
         );
     }
 
+    /** Features with an in-flight update; their switch is disabled so updates are serialized per feature. */
+    readonly pendingFeatures = signal<ReadonlySet<FeatureToggle>>(new Set());
+
     onFeatureToggle(featureInfo: FeatureToggleInfo): void {
+        const feature = featureInfo.feature;
+        // Serialize updates per feature: while a request is in flight the switch is disabled, and any stray change
+        // is ignored here. Sending only one request at a time keeps the server writes in click order (last click
+        // wins) — otherwise two successful writes could reach the server out of order and leave it on the older
+        // value, and a late failure could race the optimistic UI.
+        if (this.pendingFeatures().has(feature)) {
+            return;
+        }
         const newState = !featureInfo.isActive;
+        // Optimistically reflect the new state so the signal, the [ngModel]-bound switch, and the server request agree.
+        this.setToggleState(feature, newState);
+        this.setPending(feature, true);
         this.featureToggleService
-            .setFeatureToggleState(featureInfo.feature, newState)
+            .setFeatureToggleState(feature, newState)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === featureInfo.feature ? { ...toggle, isActive: newState } : toggle)));
+            .subscribe({
+                next: () => this.setPending(feature, false),
+                error: (error: HttpErrorResponse) => {
+                    // No newer request for this feature can exist (it was disabled while pending), so reverting the
+                    // optimistic change safely restores the true server state and flips the switch back; surface the
+                    // error instead of leaving the switch silently flipped.
+                    this.setToggleState(feature, !newState);
+                    this.setPending(feature, false);
+                    onError(this.alertService, error);
+                },
             });
+    }
+
+    private setToggleState(feature: FeatureToggle, isActive: boolean): void {
+        this.featureToggles.update((toggles) => toggles.map((toggle) => (toggle.feature === feature ? { ...toggle, isActive } : toggle)));
+    }
+
+    private setPending(feature: FeatureToggle, pending: boolean): void {
+        this.pendingFeatures.update((features) => {
+            const next = new Set(features);
+            if (pending) {
+                next.add(feature);
+            } else {
+                next.delete(feature);
+            }
+            return next;
+        });
     }
 
     /**

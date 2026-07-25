@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
@@ -8,8 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 
 describe('AdditionalFeedbackComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AdditionalFeedbackComponent>;
     let comp: AdditionalFeedbackComponent;
 
