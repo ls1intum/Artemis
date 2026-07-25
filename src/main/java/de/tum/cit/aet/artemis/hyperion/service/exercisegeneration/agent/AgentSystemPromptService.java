@@ -306,7 +306,7 @@ public class AgentSystemPromptService {
 
             Add tests in seam/partition batches. Each behavioral test must pass on the solution and fail on the template for its intended reason (a structural check may already
             pass). A stubbed template throws everywhere, so failing on it proves nothing: what counts is whether a complete but WRONG implementation fails. Every `## Rules`
-            row needs such a test, including its stated negative direction. Use the seeded BubbleSort reference only for Artemis/Ares and `ReflectionTestUtils` form; never copy its topic, API, or requirements. Call `verify` after the
+            row a caller can observe needs such a test, with its negative direction; never assert state students cannot reach. Use the seeded BubbleSort reference only for Artemis/Ares and `ReflectionTestUtils` form; never copy its topic, API, or requirements. Call `verify` after the
             first end-to-end walking slice and after meaningful accumulated increments. An incomplete candidate may still report the unbuilt seams: use that evidence to finish
             the owning increment, not to retreat into repository-by-repository work.
             Before referencing a `student-creates` type, follow `reference/style/tests.md`: load an omitted interface by name and create a dynamic proxy. Never restore the declaration to make a test compile; the write
