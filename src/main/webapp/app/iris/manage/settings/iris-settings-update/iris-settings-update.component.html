@@ -220,18 +220,17 @@
                             </div>
 
                             <!-- Proactive struggle detection (A/B condition, spec §13) -->
-                            <div class="mb-3 form-check">
-                                <input
-                                    id="proactiveStruggleEnabled"
-                                    type="checkbox"
-                                    class="form-check-input"
+                            <div class="mb-3 flex items-start gap-2">
+                                <p-toggleswitch
+                                    inputId="proactiveStruggleEnabled"
                                     [ngModel]="settingsValue.proactiveStruggleEnabled"
                                     (ngModelChange)="updateProactiveStruggleEnabled($event)"
+                                    [ariaLabel]="'artemisApp.iris.settings.proactiveStruggle' | artemisTranslate"
                                 />
-                                <label class="form-check-label" for="proactiveStruggleEnabled">
+                                <label for="proactiveStruggleEnabled">
                                     <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
+                                    <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
                                 </label>
-                                <p class="form-text" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></p>
                             </div>
 
                             <!-- Rate Limit Overrides -->
