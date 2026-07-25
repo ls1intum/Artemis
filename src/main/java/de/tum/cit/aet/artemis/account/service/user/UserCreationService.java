@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.service.user;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -142,8 +141,6 @@ public class UserCreationService {
         String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
         String passwordHash = passwordService.hashPassword(password);
         user.setPassword(passwordHash);
-        user.setResetKey(RandomUtil.generateResetKey());
-        user.setResetDate(Instant.now());
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
