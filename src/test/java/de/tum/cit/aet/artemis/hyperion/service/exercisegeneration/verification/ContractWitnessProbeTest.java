@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -74,34 +75,50 @@ class ContractWitnessProbeTest {
     }
 
     @Test
-    void validated_keepsOnlyTheWitnessesThatPassedOnTheReferenceSolution() {
-        List<ContractWitness> validated = ContractWitnessProbe.validated(true, List.of("testWitnessBlankLineIgnored"), List.of(NEGATIVE_SALARY, BLANK_LINE));
+    void validated_keepsOnlyTheWitnessesThatRanAndPassedOnTheReferenceSolution() {
+        List<ContractWitness> validated = ContractWitnessProbe.validated(List.of("testWitnessNegativeSalaryIgnored", "testWitnessBlankLineIgnored"),
+                List.of("testWitnessBlankLineIgnored"), List.of(NEGATIVE_SALARY, BLANK_LINE));
 
         assertThat(validated).containsExactly(NEGATIVE_SALARY);
     }
 
     @Test
-    void validated_attributesAFailureReportedInAnyOfTheUsualFormsToItsWitness() {
-        // Report forms differ per framework; a witness must not be treated as passing merely because the runner spelled its failure differently.
-        assertThat(ContractWitnessProbe.validated(true, List.of("testWitnessNegativeSalaryIgnored()"), List.of(NEGATIVE_SALARY))).isEmpty();
-        assertThat(ContractWitnessProbe.validated(true, List.of("HyperionContractWitnessProbeTest.testWitnessNegativeSalaryIgnored"), List.of(NEGATIVE_SALARY))).isEmpty();
+    void validated_attributesAResultReportedInAnyOfTheUsualFormsToItsWitness() {
+        // Report forms differ per framework; attribution must survive all of them, in both directions.
+        assertThat(ContractWitnessProbe.validated(List.of("testWitnessNegativeSalaryIgnored()"), List.of("testWitnessNegativeSalaryIgnored()"), List.of(NEGATIVE_SALARY)))
+                .isEmpty();
+        assertThat(ContractWitnessProbe.validated(List.of("HyperionContractWitnessProbeTest.testWitnessNegativeSalaryIgnored"), List.of(), List.of(NEGATIVE_SALARY)))
+                .containsExactly(NEGATIVE_SALARY);
     }
 
     @Test
-    void validated_provesNothingWhenTheSuiteNeverRan() {
-        // A compile failure, a timeout and a crashed runner all report zero failures. Reading that as "the witness passed" would manufacture evidence from a broken build — the
-        // precise mistake this mechanism exists to prevent.
-        assertThat(ContractWitnessProbe.validated(false, List.of(), List.of(NEGATIVE_SALARY, BLANK_LINE))).isEmpty();
+    void validated_rejectsAWitnessTheBuildNeverRan() {
+        // The decisive case: absence from the failure list is ALSO satisfied by a witness that never executed — undiscovered by the runner, missing its annotation, disabled, or
+        // in a probe class that failed to compile while the ordinary graded tests still ran and made the build look healthy. Silence is not evidence of passing.
+        assertThat(ContractWitnessProbe.validated(List.of("testValidInput"), List.of(), List.of(NEGATIVE_SALARY, BLANK_LINE))).isEmpty();
+    }
+
+    @Test
+    void validated_provesNothingWhenTheBuildReportedNoTestsAtAll() {
+        assertThat(ContractWitnessProbe.validated(List.of(), List.of(), List.of(NEGATIVE_SALARY))).isEmpty();
     }
 
     @Test
     void probePath_sitsBesideTheSuiteItBorrowedItsPackageFrom() {
-        assertThat(ContractWitnessProbe.probePath("test/de/tum/cit/aet/nodraft/RosterParserTest.java"))
+        assertThat(ContractWitnessProbe.probePath("test/de/tum/cit/aet/nodraft/RosterParserTest.java", Set.of("test/de/tum/cit/aet/nodraft/RosterParserTest.java")))
                 .isEqualTo("test/de/tum/cit/aet/nodraft/" + ContractWitnessProbe.PROBE_CLASS_NAME + ".java");
     }
 
     @Test
+    void probePath_refusesToOverwriteAGeneratedTestOfTheSameName() {
+        // The name is distinctive, not reserved. Overwriting graded work would destroy it, and removing the probe afterwards would delete it.
+        String taken = "test/de/tum/cit/aet/nodraft/" + ContractWitnessProbe.PROBE_CLASS_NAME + ".java";
+
+        assertThat(ContractWitnessProbe.probePath("test/de/tum/cit/aet/nodraft/RosterParserTest.java", Set.of(taken))).isNull();
+    }
+
+    @Test
     void probePath_undefinedForAPathWithNoDirectory() {
-        assertThat(ContractWitnessProbe.probePath("RosterParserTest.java")).isNull();
+        assertThat(ContractWitnessProbe.probePath("RosterParserTest.java", Set.of())).isNull();
     }
 }

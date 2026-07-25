@@ -84,6 +84,9 @@ public class SpecFidelityCriticService {
 
     private static final int CONTRACT_WITNESS_MAX_OUTPUT_TOKENS = 8_192;
 
+    /** Assertion calls a witness may use; a witness without one passes against every implementation and therefore pins nothing. */
+    private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");
+
     /** Each witness costs a validating build (~35s measured), so the pass stays small enough to sit inside a generation without dominating it. */
     private static final int MAX_CONTRACT_WITNESSES = 3;
 
@@ -898,6 +901,8 @@ public class SpecFidelityCriticService {
             BooleanSupplier cancelled) {
         requireReviewTextSafe("contract-witness/specification", specificationContract);
         requireReviewTextSafe("contract-witness/tests", testSources);
+        // The reference solution goes to the provider like every other artifact, so it passes the same secret-material policy; an adapted exercise can carry a hard-coded key.
+        requireReviewTextSafe("contract-witness/solution", solutionSources);
         if (cancelled.getAsBoolean() || chatClient == null || specificationContract.isBlank() || testSources.isBlank()) {
             return List.of();
         }
@@ -905,7 +910,7 @@ public class SpecFidelityCriticService {
                 + "witness may call):\n" + boundedEvidence(solutionSources) + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
         try {
             String response = callReviewerText(CONTRACT_WITNESS_SYSTEM_PROMPT, userPrompt, usageSink, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
-            return parseContractWitnesses(response);
+            return parseContractWitnesses(response, specificationContract);
         }
         catch (RuntimeException e) {
             // Advisory by construction: the caller proceeds with the suite it already has.
@@ -919,7 +924,7 @@ public class SpecFidelityCriticService {
         return stripped.length() <= MAX_ARTIFACT_EVIDENCE_CHARS ? stripped : stripped.substring(0, MAX_ARTIFACT_EVIDENCE_CHARS);
     }
 
-    private List<ContractWitness> parseContractWitnesses(@Nullable String text) {
+    private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract) {
         if (text == null || text.isBlank()) {
             return List.of();
         }
@@ -941,17 +946,34 @@ public class SpecFidelityCriticService {
                 continue;
             }
             String testName = item.testName().strip();
-            // The name is how a build result is attributed back to a witness, so one that does not appear in its own body is unusable, and a duplicate would make two
-            // witnesses indistinguishable in the report.
-            if (!item.code().contains(testName) || !seenNames.add(testName)) {
+            String code = item.code().strip();
+            String ruleId = item.rule().strip();
+            // Each check below removes a witness that would otherwise be validated on no evidence. The name must be the method the code DECLARES, or a build result could never
+            // be attributed to it (a name mentioned in a comment or string would pass a substring test); a witness with no assertion passes against every implementation and so
+            // pins nothing; and a rule the approved specification does not contain is an invented requirement, which is exactly what this pass must never manufacture.
+            if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId) || !seenNames.add(testName)) {
                 continue;
             }
-            witnesses.add(new ContractWitness(item.rule().strip(), testName, item.code().strip()));
+            witnesses.add(new ContractWitness(ruleId, testName, code));
             if (witnesses.size() == MAX_CONTRACT_WITNESSES) {
                 break;
             }
         }
         return List.copyOf(witnesses);
+    }
+
+    private static boolean declaresMethod(String code, String testName) {
+        return Pattern.compile("\\b" + Pattern.quote(testName) + "\\s*\\(").matcher(code).find()
+                && Pattern.compile("\\bvoid\\s+" + Pattern.quote(testName) + "\\s*\\(").matcher(code).find();
+    }
+
+    private static boolean containsAssertion(String code) {
+        return ASSERTION_CALL.matcher(code).find();
+    }
+
+    /** Whether the approved specification actually declares this rule ID, so a witness can never pin a requirement the contract does not state. */
+    private static boolean specificationDeclaresRule(String specificationContract, String ruleId) {
+        return Pattern.compile("(?<![\\w])" + Pattern.quote(ruleId) + "(?![\\w])").matcher(specificationContract).find();
     }
 
     private static boolean isBlank(@Nullable String value) {

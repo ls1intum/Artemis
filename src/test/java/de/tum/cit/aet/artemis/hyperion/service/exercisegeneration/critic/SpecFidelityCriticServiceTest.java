@@ -2262,10 +2262,35 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_dropsAWitnessWhoseNameIsNotTheMethodItDeclares() {
-        // The name is how a build failure is attributed back to a witness. One that does not appear in its own body could never be attributed, so it would silently count as
+        // The name is how a build result is attributed back to a witness. One that does not appear in its own body could never be attributed, so it would silently count as
         // validated no matter what the build reported.
         assertThat(witnessesFrom("""
-                {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { fail(); }"}]}
+                {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { assertTrue(true, \\"x\\"); }"}]}
+                """)).isEmpty();
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAWitnessWhoseNameOnlyAppearsInACommentOrString() {
+        // A substring check would accept this: the build would report `actual`, nothing would be attributed to `testClaimedName`, and it would be validated on no evidence.
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testClaimedName",
+                 "code":"@Test\\nvoid actual() { assertEquals(1, 1, \\"see testClaimedName\\"); } // testClaimedName"}]}
+                """)).isEmpty();
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAWitnessThatAssertsNothing() {
+        // A witness with no assertion passes against every implementation, correct or not, so it pins no rule.
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testWitnessEmpty","code":"@Test\\nvoid testWitnessEmpty() { new RosterParser().formatRoster(\\"a\\"); }"}]}
+                """)).isEmpty();
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAWitnessForARuleTheSpecificationNeverStates() {
+        // Inventing a requirement is the one thing this pass must never do: the witness would become grading material for a rule no student was told about.
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R999","testName":"testWitnessInvented","code":"@Test\\nvoid testWitnessInvented() { assertEquals(1, 1, \\"invented\\"); }"}]}
                 """)).isEmpty();
     }
 
@@ -2273,10 +2298,10 @@ class SpecFidelityCriticServiceTest {
     void authorContractWitnesses_dropsDuplicateAndIncompleteEntries() {
         List<ContractWitness> witnesses = witnessesFrom("""
                 {"witnesses":[
-                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { }"},
-                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { }"},
-                 {"rule":"R2","testName":"","code":"@Test\\nvoid testWitnessB() { }"},
-                 {"rule":null,"testName":"testWitnessC","code":"@Test\\nvoid testWitnessC() { }"}]}
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }"},
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }"},
+                 {"rule":"R1","testName":"","code":"@Test\\nvoid testWitnessB() { assertEquals(1, 1, \\"b\\"); }"},
+                 {"rule":null,"testName":"testWitnessC","code":"@Test\\nvoid testWitnessC() { assertEquals(1, 1, \\"c\\"); }"}]}
                 """);
 
         assertThat(witnesses).extracting(ContractWitness::testName).containsExactly("testWitnessA");
@@ -2284,8 +2309,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_capsTheBudgetBecauseEachWitnessCostsAValidatingBuild() {
-        String entries = java.util.stream.IntStream.range(0, 6)
-                .mapToObj(index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness" + index + "() { }\"}")
+        String entries = java.util.stream.IntStream.range(0, 6).mapToObj(
+                index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness" + index + "() { assertEquals(1, 1, \\\"w\\\"); }\"}")
                 .collect(java.util.stream.Collectors.joining(","));
 
         assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(3);
@@ -2300,7 +2325,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_authorsNothingWhenCancelled() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"void testW() { }\"}]}"));
+        SpecFidelityCriticService critic = criticReturning(
+                rawResponse("{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"@Test void testW() { assertEquals(1, 1, \\\"w\\\"); }\"}]}"));
 
         assertThat(critic.authorContractWitnesses(SPEC_WITH_RULES, "class T { }", "class S { }", null, () -> true)).isEmpty();
     }

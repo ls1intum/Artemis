@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.Contrac
  * The pieces here are pure so they are unit-testable without Docker: building the probe source, and deciding what a build outcome is allowed to prove. The sandbox half (write the
  * probe, build the solution, remove the probe) belongs to the caller that already owns a session.
  * <p>
- * <b>Why the classification is deliberately timid.</b> "The suite reported no failure" is only meaningful when the suite actually ran. A compile failure, a timeout, a crashed
- * runner or an infrastructure error all produce zero results, and reading any of them as "the witness passed" would manufacture evidence out of a broken build — the exact
- * mistake this whole mechanism exists to stop. So every outcome except "the tests ran and reported results" discards all witnesses and claims nothing.
+ * <b>Why validation demands positive evidence.</b> "The build did not report this as failing" is not evidence that it passed — it is equally satisfied by a witness that never
+ * ran. A witness is therefore validated only when the build reports it among the tests it RAN. Reading silence as success would manufacture evidence out of a build that never
+ * exercised the witness, which is the exact mistake this whole mechanism exists to stop.
  */
 public final class ContractWitnessProbe {
 
@@ -70,21 +70,23 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Decides which witnesses the build actually validated.
+     * Decides which witnesses the build actually validated: a witness must appear among the tests the build REPORTED RUNNING, and must not appear among its failures.
+     * <p>
+     * Requiring positive evidence of execution is the whole point. "Absent from the failure list" is satisfied by a witness that never ran at all — one the runner did not
+     * discover, one whose annotation the model omitted, one disabled or aborted by an assumption, or a whole probe class that failed to compile while the ordinary graded tests
+     * still ran and made the build look healthy. Each of those would otherwise be recorded as a passing witness on no evidence whatsoever.
      *
-     * @param testsRan        whether the build ran the test suite and reported results at all; when false nothing is validated, whatever else is reported
-     * @param failedTestNames the names the build reported as failing
-     * @param witnesses       the candidates that were written into the probe
-     * @return the witnesses that ran and passed against the reference solution
+     * @param executedTestNames the names the build reported running (from the same parsed report production grading uses)
+     * @param failedTestNames   the names the build reported as failing
+     * @param witnesses         the candidates that were written into the probe
+     * @return the witnesses that demonstrably ran and passed against the reference solution
      */
-    public static List<ContractWitness> validated(boolean testsRan, List<String> failedTestNames, List<ContractWitness> witnesses) {
-        if (!testsRan) {
-            return List.of();
-        }
-        Set<String> failed = new LinkedHashSet<>(failedTestNames == null ? List.of() : failedTestNames);
+    public static List<ContractWitness> validated(List<String> executedTestNames, List<String> failedTestNames, List<ContractWitness> witnesses) {
+        Set<String> executed = bareNames(executedTestNames);
+        Set<String> failed = bareNames(failedTestNames);
         List<ContractWitness> validated = new ArrayList<>();
         for (ContractWitness witness : witnesses) {
-            if (!failedByName(failed, witness.testName())) {
+            if (executed.contains(witness.testName()) && !failed.contains(witness.testName())) {
                 validated.add(witness);
             }
         }
@@ -92,38 +94,46 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Whether a reported failure belongs to this witness. Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so the match is on
-     * the bare method name rather than on an exact string, and a failure that cannot be attributed leaves the witness unvalidated rather than silently accepted.
+     * Reduces reported test names to bare method names. Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the
+     * bare name keeps attribution stable across them.
      */
-    private static boolean failedByName(Set<String> failedTestNames, String witnessName) {
-        for (String failed : failedTestNames) {
-            String bare = failed;
-            int parenthesis = bare.indexOf('(');
-            if (parenthesis >= 0) {
-                bare = bare.substring(0, parenthesis);
-            }
-            int lastDot = bare.lastIndexOf('.');
-            if (lastDot >= 0) {
-                bare = bare.substring(lastDot + 1);
-            }
-            if (bare.strip().equals(witnessName)) {
-                return true;
-            }
+    private static Set<String> bareNames(@Nullable List<String> reportedNames) {
+        Set<String> bare = new LinkedHashSet<>();
+        if (reportedNames == null) {
+            return bare;
         }
-        return false;
+        for (String reported : reportedNames) {
+            if (reported == null) {
+                continue;
+            }
+            String name = reported;
+            int parenthesis = name.indexOf('(');
+            if (parenthesis >= 0) {
+                name = name.substring(0, parenthesis);
+            }
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot >= 0) {
+                name = name.substring(lastDot + 1);
+            }
+            bare.add(name.strip());
+        }
+        return bare;
     }
 
     /**
      * The workspace-relative path the probe is written to: alongside the graded test it borrowed its package from, so the build discovers it by the same convention.
      *
-     * @param existingTestPath the workspace-relative path of that graded test
-     * @return the probe's workspace-relative path, or empty when the path has no directory to sit in
+     * @param existingTestPath  the workspace-relative path of that graded test
+     * @param existingFilePaths every path already present in the tests repository
+     * @return the probe's workspace-relative path, or {@code null} when the path has no directory or that name is already taken
      */
-    public static @Nullable String probePath(String existingTestPath) {
+    public static @Nullable String probePath(String existingTestPath, Set<String> existingFilePaths) {
         int lastSlash = existingTestPath.lastIndexOf('/');
         if (lastSlash < 0) {
             return null;
         }
-        return existingTestPath.substring(0, lastSlash + 1) + PROBE_CLASS_NAME + ".java";
+        String path = existingTestPath.substring(0, lastSlash + 1) + PROBE_CLASS_NAME + ".java";
+        // The name is distinctive, not reserved. Writing over a generated test of the same name would destroy graded work, and removing the probe afterwards would delete it.
+        return existingFilePaths.contains(path) ? null : path;
     }
 }
