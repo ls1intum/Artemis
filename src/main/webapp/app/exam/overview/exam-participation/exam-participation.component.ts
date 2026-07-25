@@ -60,8 +60,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { Message } from 'primeng/message';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -89,7 +89,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
-        Message,
+        TumUiMessageComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

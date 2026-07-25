@@ -8,7 +8,7 @@
             [class.disabled]="disableInput()"
             (click)="setExamMode(ExamMode.REAL)"
             jhiTranslate="artemisApp.examManagement.testExam.realExam"
-            [pTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
+            [tumUiTooltip]="'artemisApp.examManagement.testExam.realExamTooltip' | artemisTranslate"
         ></div>
         <div
             id="test-mode"
@@ -18,7 +18,7 @@
             [class.disabled]="disableInput()"
             (click)="setExamMode(ExamMode.TEST)"
             jhiTranslate="artemisApp.examManagement.testExam.testExam"
-            [pTooltip]="'artemisApp.examManagement.testExam.testExamTooltip' | artemisTranslate"
+            [tumUiTooltip]="'artemisApp.examManagement.testExam.testExamTooltip' | artemisTranslate"
         ></div>
         <div
             id="test-simulation-mode"
@@ -28,7 +28,7 @@
             [class.disabled]="disableInput()"
             (click)="setExamMode(ExamMode.TEST_WITH_SIMULATION)"
             jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"
-            [pTooltip]="'artemisApp.examManagement.testExam.testExamWithSimulationTooltip' | artemisTranslate"
+            [tumUiTooltip]="'artemisApp.examManagement.testExam.testExamWithSimulationTooltip' | artemisTranslate"
         ></div>
     </div>
 </div>
