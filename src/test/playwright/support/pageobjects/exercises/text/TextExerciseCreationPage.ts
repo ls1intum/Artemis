@@ -1,8 +1,7 @@
 import { TEXT_EXERCISE_BASE } from '../../../constants';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 import { Dayjs } from 'dayjs';
-
-const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
+import { fillDateTimePicker } from '../../../utils';
 
 export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly PROBLEM_STATEMENT_SELECTOR = '#problemStatement';
@@ -79,7 +78,6 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     private async setTimelineDate(label: string, date: Dayjs) {
         const dateInput = this.page.getByLabel(label, { exact: true });
         await dateInput.waitFor({ state: 'visible' });
-        await dateInput.fill(date.format(TIMELINE_DATE_FORMAT));
-        await dateInput.press('Tab');
+        await fillDateTimePicker(dateInput, date);
     }
 }

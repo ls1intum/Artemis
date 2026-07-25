@@ -36,11 +36,15 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
 
             // Fill out text exercise form
             const exerciseTitle = 'text exercise' + generateUUID();
+            const releaseDate = dayjs().startOf('minute');
+            const startDate = releaseDate.add(1, 'hour');
+            const dueDate = releaseDate.add(1, 'day');
+            const assessmentDueDate = releaseDate.add(2, 'days');
             await textExerciseCreation.setTitle(exerciseTitle);
-            await textExerciseCreation.setReleaseDate(dayjs());
-            await textExerciseCreation.setStartDate(dayjs().add(1, 'hour'));
-            await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-            await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+            await textExerciseCreation.setReleaseDate(releaseDate);
+            await textExerciseCreation.setStartDate(startDate);
+            await textExerciseCreation.setDueDate(dueDate);
+            await textExerciseCreation.setAssessmentDueDate(assessmentDueDate);
             await textExerciseCreation.typeMaxPoints(10);
             const problemStatement = 'This is a problem statement';
             const exampleSolution = 'E = mc^2';
@@ -49,6 +53,10 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             const exerciseCreateResponse = await textExerciseCreation.create();
             const exercise: TextExercise = await readResponseJson(exerciseCreateResponse);
             createdExerciseId = exercise.id;
+            expect(dayjs(exercise.releaseDate).isSame(releaseDate)).toBe(true);
+            expect(dayjs(exercise.startDate).isSame(startDate)).toBe(true);
+            expect(dayjs(exercise.dueDate).isSame(dueDate)).toBe(true);
+            expect(dayjs(exercise.assessmentDueDate).isSame(assessmentDueDate)).toBe(true);
 
             // Create an example submission
             await courseManagementExercises.clickExampleSubmissionsButton();
