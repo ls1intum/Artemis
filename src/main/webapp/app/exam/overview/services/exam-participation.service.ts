@@ -55,6 +55,18 @@ export class ExamParticipationService {
         });
     }
 
+    // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
+    // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
+    // detection those in-place mutations are invisible to signal-based bindings. UI that reflects the sync state
+    // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
+    private readonly submissionSyncVersionSignal = signal(0);
+    readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+
+    /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
+    notifySubmissionSyncStateChanged(): void {
+        this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
     }

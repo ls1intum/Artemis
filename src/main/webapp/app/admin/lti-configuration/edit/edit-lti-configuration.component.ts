@@ -9,9 +9,10 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -21,7 +22,18 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, InputTextModule, ButtonModule, MessageModule, AdminTitleBarTitleDirective],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        TumUiInputDirective,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class EditLtiConfigurationComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
