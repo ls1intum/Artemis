@@ -16,38 +16,44 @@ export class PresentationAssessmentService {
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<PresentationAssessment[]>(`api/courses/${courseId}/presentation-assessments`, { observe: 'response' })
+            .get<PresentationAssessment[]>(`api/presentation/courses/${courseId}/presentation-assessments`, { observe: 'response' })
             .pipe(map((res) => this.convertDateArrayFromServer(res)));
     }
 
     create(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(presentationAssessment);
         return this.http
-            .post<PresentationAssessment>(`api/courses/${courseId}/presentation-assessments`, copy, { observe: 'response' })
+            .post<PresentationAssessment>(`api/presentation/courses/${courseId}/presentation-assessments`, copy, { observe: 'response' })
             .pipe(map((res) => this.convertDateResponseFromServer(res)));
     }
 
     update(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(presentationAssessment);
         return this.http
-            .put<PresentationAssessment>(`api/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, copy, { observe: 'response' })
+            .put<PresentationAssessment>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, copy, { observe: 'response' })
             .pipe(map((res) => this.convertDateResponseFromServer(res)));
     }
 
     delete(courseId: number, presentationAssessmentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/courses/${courseId}/presentation-assessments/${presentationAssessmentId}`, { observe: 'response' });
+        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}`, { observe: 'response' });
     }
 
     findStudents(courseId: number, presentationAssessmentId: number): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`api/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students`, { observe: 'response' });
+        return this.http.get<User[]>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students`, { observe: 'response' });
     }
 
     addStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`api/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`, {}, { observe: 'response' });
+        return this.http.post<void>(
+            `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`,
+            {},
+            { observe: 'response' },
+        );
     }
 
     removeStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`, { observe: 'response' });
+        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`, {
+            observe: 'response',
+        });
     }
 
     private convertDateFromClient(presentationAssessment: PresentationAssessment): PresentationAssessmentRest {
@@ -58,6 +64,7 @@ export class PresentationAssessmentService {
             maxPoints: presentationAssessment.maxPoints,
             resultPoints: presentationAssessment.resultPoints,
             courseId: presentationAssessment.courseId,
+            studentLogins: presentationAssessment.studentLogins,
         };
         copy.presentationDate = convertDateFromClient(presentationAssessment.presentationDate);
         return copy;

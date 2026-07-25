@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/presentation/")
 public class PresentationAssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(PresentationAssessmentResource.class);
@@ -58,7 +58,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * GET /courses/{courseId}/presentation-assessments : get all presentation assessments for a course.
+     * GET /api/presentation/courses/{courseId}/presentation-assessments : get all presentation assessments for a course.
      *
      * @param courseId the course id
      * @return the ResponseEntity with status 200 (OK) and the presentation assessments
@@ -74,7 +74,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * GET /courses/{courseId}/presentation-assessments/{assessmentId} : get a presentation assessment.
+     * GET /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : get a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -90,7 +90,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * POST /courses/{courseId}/presentation-assessments : create a presentation assessment.
+     * POST /api/presentation/courses/{courseId}/presentation-assessments : create a presentation assessment.
      *
      * @param courseId the course id
      * @param dto      the presentation assessment data
@@ -106,11 +106,11 @@ public class PresentationAssessmentResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         PresentationAssessment presentationAssessment = presentationAssessmentService.create(course, dto);
         PresentationAssessmentDTO result = PresentationAssessmentDTO.of(presentationAssessment);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/presentation-assessments/" + result.id())).body(result);
+        return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + result.id())).body(result);
     }
 
     /**
-     * PUT /courses/{courseId}/presentation-assessments/{assessmentId} : update a presentation assessment.
+     * PUT /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : update a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -124,11 +124,11 @@ public class PresentationAssessmentResource {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(courseId, assessmentId, dto)));
+        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(course, assessmentId, dto)));
     }
 
     /**
-     * DELETE /courses/{courseId}/presentation-assessments/{assessmentId} : delete a presentation assessment.
+     * DELETE /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : delete a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -145,7 +145,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * GET /courses/{courseId}/presentation-assessments/{assessmentId}/students : get students assigned to a presentation assessment.
+     * GET /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students : get students assigned to a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -161,7 +161,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * POST /courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : add a student to a presentation assessment.
+     * POST /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : add a student to a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -179,7 +179,7 @@ public class PresentationAssessmentResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : remove a student from a presentation assessment.
+     * DELETE /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : remove a student from a presentation assessment.
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id

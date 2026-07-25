@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.presentation.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -70,7 +72,9 @@ public class PresentationAssessmentService {
         }
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
+        Set<User> students = findCourseStudentsByLogins(course, dto.studentLogins());
         applyDto(presentationAssessment, dto);
+        presentationAssessment.setStudents(students);
         return presentationAssessmentRepository.save(presentationAssessment);
     }
 
@@ -82,15 +86,19 @@ public class PresentationAssessmentService {
      * @param dto          the updated presentation assessment data
      * @return the persisted presentation assessment
      */
-    public PresentationAssessment update(long courseId, long assessmentId, PresentationAssessmentDTO dto) {
+    public PresentationAssessment update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
         }
         if (!dto.id().equals(assessmentId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
-        PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        Set<User> students = dto.studentLogins() != null ? findCourseStudentsByLogins(course, dto.studentLogins()) : null;
+        PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
         applyDto(presentationAssessment, dto);
+        if (students != null) {
+            presentationAssessment.setStudents(students);
+        }
         return presentationAssessmentRepository.save(presentationAssessment);
     }
 
@@ -161,5 +169,25 @@ public class PresentationAssessmentService {
         presentationAssessment.setMaxPoints(dto.maxPoints());
         presentationAssessment.setResultPoints(dto.resultPoints());
         presentationAssessment.setPresentationDate(dto.presentationDate());
+    }
+
+    private Set<User> findCourseStudentsByLogins(Course course, List<String> studentLogins) {
+        if (studentLogins == null || studentLogins.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        Set<String> uniqueLogins = new HashSet<>();
+        for (String login : studentLogins) {
+            if (login == null || login.isBlank()) {
+                throw new BadRequestAlertException("A student login must not be empty", PresentationAssessment.ENTITY_NAME, "studentLoginInvalid");
+            }
+            uniqueLogins.add(login.trim());
+        }
+        Set<User> students = new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), uniqueLogins));
+        Set<String> foundLogins = students.stream().map(User::getLogin).collect(Collectors.toSet());
+        if (!foundLogins.containsAll(uniqueLogins)) {
+            throw new BadRequestAlertException("At least one user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");
+        }
+        return students;
     }
 }

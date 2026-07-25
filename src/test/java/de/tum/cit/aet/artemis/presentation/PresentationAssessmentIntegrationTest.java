@@ -25,7 +25,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     private static final String TEST_PREFIX = "presentationassessment";
 
-    private static final String BASE_URL = "/api/courses/";
+    private static final String BASE_URL = "/api/presentation/courses/";
 
     @Autowired
     private PresentationAssessmentRepository presentationAssessmentRepository;
@@ -62,7 +62,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_shouldCreatePresentationAssessment() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 28.0,
-                ZonedDateTime.now().plusDays(14), null);
+                ZonedDateTime.now().plusDays(14), null, List.of(TEST_PREFIX + "student1"));
 
         PresentationAssessmentDTO result = request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.CREATED);
 
@@ -72,14 +72,15 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result.maxPoints()).isEqualTo(dto.maxPoints());
         assertThat(result.resultPoints()).isEqualTo(dto.resultPoints());
         assertThat(result.courseId()).isEqualTo(course.getId());
-        assertThat(presentationAssessmentRepository.findById(result.id())).isPresent();
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(result.id(), course.getId()).orElseThrow();
+        assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createPresentationAssessment_asStudent_shouldReturnForbidden() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 28.0,
-                ZonedDateTime.now().plusDays(14), null);
+                ZonedDateTime.now().plusDays(14), null, null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
     }
@@ -87,7 +88,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withInvalidTitle_shouldReturnBadRequest() throws Exception {
-        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, null, ZonedDateTime.now().plusDays(14), null);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, " ", "Course-level presentation assessment", 30.0, null, ZonedDateTime.now().plusDays(14), null, null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -96,7 +97,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withInvalidMaxPoints_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 0.0, null,
-                ZonedDateTime.now().plusDays(14), null);
+                ZonedDateTime.now().plusDays(14), null, null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -105,9 +106,21 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createPresentationAssessment_withResultPointsExceedingMaxPoints_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Final presentation", "Course-level presentation assessment", 30.0, 31.0,
-                ZonedDateTime.now().plusDays(14), null);
+                ZonedDateTime.now().plusDays(14), null, null);
 
         request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createPresentationAssessment_withUserNotInStudentGroup_shouldReturnBadRequestWithoutCreatingAssessment() throws Exception {
+        long assessmentsBeforeRequest = presentationAssessmentRepository.count();
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Invalid student presentation", "Course-level presentation assessment", 30.0, 28.0,
+                ZonedDateTime.now().plusDays(14), null, List.of(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1"));
+
+        request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentRepository.count()).isEqualTo(assessmentsBeforeRequest);
     }
 
     @Test
@@ -144,7 +157,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_shouldUpdatePresentationAssessment() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, 22.0,
-                ZonedDateTime.now().plusDays(21), course.getId());
+                ZonedDateTime.now().plusDays(21), course.getId(), List.of(TEST_PREFIX + "student1"));
 
         PresentationAssessmentDTO result = request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.OK);
 
@@ -156,22 +169,40 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(updatedAssessment.getTitle()).isEqualTo(dto.title());
         assertThat(updatedAssessment.getMaxPoints()).isEqualTo(dto.maxPoints());
         assertThat(updatedAssessment.getResultPoints()).isEqualTo(dto.resultPoints());
+        PresentationAssessment updatedAssessmentWithStudents = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId())
+                .orElseThrow();
+        assertThat(updatedAssessmentWithStudents.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_withMismatchedId_shouldReturnBadRequest() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId() + 1, "Updated presentation", "Updated description", 25.0, null,
-                ZonedDateTime.now().plusDays(21), course.getId());
+                ZonedDateTime.now().plusDays(21), course.getId(), null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessment_withUserNotInStudentGroup_shouldReturnBadRequestWithoutUpdatingAssessment() throws Exception {
+        presentationAssessment.getStudents().add(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Invalid student presentation", "Updated description", 25.0, 22.0,
+                ZonedDateTime.now().plusDays(21), course.getId(), List.of(TEST_PREFIX + "tutor1"));
+
+        request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(presentationAssessment.getId(), course.getId()).orElseThrow();
+        assertThat(storedAssessment.getTitle()).isEqualTo("Initial presentation");
+        assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updatePresentationAssessment_asStudent_shouldReturnForbidden() throws Exception {
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, null,
-                ZonedDateTime.now().plusDays(21), course.getId());
+                ZonedDateTime.now().plusDays(21), course.getId(), null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.FORBIDDEN);
     }

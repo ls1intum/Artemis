@@ -12,7 +12,7 @@ describe('PresentationAssessmentService', () => {
     let httpMock: HttpTestingController;
 
     const courseId = 1;
-    const resourceUrl = `api/courses/${courseId}/presentation-assessments`;
+    const resourceUrl = `api/presentation/courses/${courseId}/presentation-assessments`;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,6 +52,7 @@ describe('PresentationAssessmentService', () => {
             maxPoints: 30,
             resultPoints: 28,
             presentationDate: dayjs('2026-07-20T10:00:00+02:00'),
+            studentLogins: ['student1'],
         };
 
         service.create(courseId, presentationAssessment).subscribe((response) => {
@@ -62,6 +63,7 @@ describe('PresentationAssessmentService', () => {
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
         expect(typeof req.request.body.presentationDate).toBe('string');
         expect(req.request.body.resultPoints).toBe(28);
+        expect(req.request.body.studentLogins).toEqual(['student1']);
         req.flush({
             id: 1,
             title: 'Final presentation',

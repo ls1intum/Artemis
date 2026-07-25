@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, forkJoin, of } from 'rxjs';
-import { finalize, switchMap, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -128,50 +128,21 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private save(result: PresentationAssessmentFormDialogResult): void {
         this.isSaving.set(true);
-        const presentationAssessment = result.presentationAssessment;
+        const presentationAssessment = {
+            ...result.presentationAssessment,
+            studentLogins: [...new Set(result.assignedStudents.map((student) => student.login).filter((login): login is string => !!login))],
+        };
         const isUpdate = Boolean(presentationAssessment.id);
         const request = isUpdate
             ? this.presentationAssessmentService.update(this.courseId(), presentationAssessment)
             : this.presentationAssessmentService.create(this.courseId(), presentationAssessment);
-        let savedAssessment: PresentationAssessment | null = null;
 
-        request
-            .pipe(
-                tap((response: HttpResponse<PresentationAssessment>) => (savedAssessment = response.body)),
-                switchMap((response: HttpResponse<PresentationAssessment>) =>
-                    this.persistAssignedStudents(response.body, result.assignedStudents, result.originalAssignedStudents),
-                ),
-                finalize(() => this.isSaving.set(false)),
-            )
-            .subscribe({
-                next: () => {
-                    this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
-                    this.loadAll();
-                },
-                error: (res: HttpErrorResponse) => {
-                    if (savedAssessment) {
-                        this.loadAll();
-                    }
-                    onError(this.alertService, res);
-                },
-            });
-    }
-
-    private persistAssignedStudents(savedAssessment: PresentationAssessment | null, assignedStudents: User[], originalAssignedStudents: User[]) {
-        if (!savedAssessment?.id) {
-            return of([]);
-        }
-
-        const originalLogins = new Set(originalAssignedStudents.map((student) => student.login).filter((login): login is string => !!login));
-        const assignedLogins = new Set(assignedStudents.map((student) => student.login).filter((login): login is string => !!login));
-        const addRequests = [...assignedLogins]
-            .filter((login) => !originalLogins.has(login))
-            .map((login) => this.presentationAssessmentService.addStudent(this.courseId(), savedAssessment.id!, login));
-        const removeRequests = [...originalLogins]
-            .filter((login) => !assignedLogins.has(login))
-            .map((login) => this.presentationAssessmentService.removeStudent(this.courseId(), savedAssessment.id!, login));
-        const requests = [...addRequests, ...removeRequests];
-
-        return requests.length ? forkJoin(requests) : of([]);
+        request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
+            next: () => {
+                this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
+                this.loadAll();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 }

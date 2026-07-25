@@ -24,8 +24,6 @@ describe('PresentationAssessmentManagementComponent', () => {
         update: ReturnType<typeof vi.fn>;
         delete: ReturnType<typeof vi.fn>;
         findStudents: ReturnType<typeof vi.fn>;
-        addStudent: ReturnType<typeof vi.fn>;
-        removeStudent: ReturnType<typeof vi.fn>;
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let dialogCloseSubject: Subject<PresentationAssessmentFormDialogResult | undefined>;
@@ -54,8 +52,6 @@ describe('PresentationAssessmentManagementComponent', () => {
             update: vi.fn(),
             delete: vi.fn(),
             findStudents: vi.fn().mockReturnValue(of(new HttpResponse({ body: [student] }))),
-            addStudent: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
-            removeStudent: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
         dialogService = { open: vi.fn().mockReturnValue({ onClose: dialogCloseSubject.asObservable() }) };
@@ -102,7 +98,6 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(dialogService.open).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.create).not.toHaveBeenCalled();
-        expect(presentationAssessmentService.addStudent).not.toHaveBeenCalled();
     });
 
     it('should open the edit dialog with assigned students', () => {
@@ -122,7 +117,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         );
     });
 
-    it('should create presentation and persist selected students after dialog save', () => {
+    it('should create presentation with selected students after dialog save', () => {
         const savedAssessment: PresentationAssessment = { ...presentationAssessment, id: 43, title: 'New presentation' };
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
         component.startCreate();
@@ -142,15 +137,14 @@ describe('PresentationAssessmentManagementComponent', () => {
                 resultPoints: 22,
                 presentationDate,
                 courseId,
+                studentLogins: ['student1'],
             }),
         );
-        expect(presentationAssessmentService.addStudent).toHaveBeenCalledOnce();
-        expect(presentationAssessmentService.addStudent).toHaveBeenCalledWith(courseId, savedAssessment.id, 'student1');
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
     });
 
-    it('should update presentation and synchronize student assignment diff after dialog save', () => {
+    it('should update presentation with the selected students after dialog save', () => {
         presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: presentationAssessment })));
         component.startEdit(presentationAssessment);
 
@@ -165,17 +159,14 @@ describe('PresentationAssessmentManagementComponent', () => {
             expect.objectContaining({
                 id: presentationAssessment.id,
                 title: 'Updated presentation',
+                studentLogins: ['student2'],
             }),
         );
-        expect(presentationAssessmentService.addStudent).toHaveBeenCalledWith(courseId, presentationAssessment.id, 'student2');
-        expect(presentationAssessmentService.removeStudent).toHaveBeenCalledWith(courseId, presentationAssessment.id, 'student1');
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.updated');
     });
 
-    it('should reload presentations when student assignment sync fails after successful create', () => {
-        const savedAssessment: PresentationAssessment = { ...presentationAssessment, id: 43, title: 'New presentation' };
-        presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
-        presentationAssessmentService.addStudent.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    it('should not reload presentations when create fails', () => {
+        presentationAssessmentService.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreate();
 
         dialogCloseSubject.next({
@@ -185,8 +176,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         });
 
         expect(presentationAssessmentService.create).toHaveBeenCalledOnce();
-        expect(presentationAssessmentService.addStudent).toHaveBeenCalledWith(courseId, savedAssessment.id, 'student1');
-        expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
+        expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
         expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
     });
 

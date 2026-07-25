@@ -8,4 +8,5 @@ export interface PresentationAssessment {
     resultPoints?: number;
     presentationDate?: dayjs.Dayjs;
     courseId?: number;
+    studentLogins?: string[];
 }
