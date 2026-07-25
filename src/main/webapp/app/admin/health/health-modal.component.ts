@@ -3,9 +3,9 @@ import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 
 /**
  * Represents a formatted build agent for display in the health modal.
@@ -57,7 +57,7 @@ type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule],
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, TumUiDialogComponent, TumUiTagComponent, TumUiButtonComponent],
 })
 export class HealthModalComponent {
     readonly visible = model<boolean>(false);

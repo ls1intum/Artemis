@@ -25,7 +25,7 @@ import {
     faUser,
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,7 +51,7 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiTooltipDirective, RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })

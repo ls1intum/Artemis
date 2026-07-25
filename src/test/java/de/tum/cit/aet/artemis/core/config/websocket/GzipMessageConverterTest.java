@@ -41,7 +41,7 @@ class GzipMessageConverterTest {
     @Test
     void testConvertFromInternalWithCompressedPayload() throws Exception {
         // Arrange
-        var author = new AuthorDTO(1L, "Test", "Test");
+        var author = new AuthorDTO(1L, "Test", "Test", false);
         String payload = objectMapper.writeValueAsString(author);
         byte[] compressedPayload = compressAndEncode(payload.getBytes()).getBytes();
 
@@ -64,7 +64,7 @@ class GzipMessageConverterTest {
     @Test
     void testConvertFromInternalWithoutCompressedPayload() throws Exception {
         // Arrange
-        var author = new AuthorDTO(1L, "Test", "Test");
+        var author = new AuthorDTO(1L, "Test", "Test", false);
         String payload = objectMapper.writeValueAsString(author);
         Message<String> message = mock(Message.class);
         MessageHeaders headers = mock(MessageHeaders.class);
@@ -83,7 +83,7 @@ class GzipMessageConverterTest {
     @Test
     void testConvertToInternalWithCompressionEnabled() throws Exception {
         // Arrange
-        var author = new AuthorDTO(1L, "Test", "Test");
+        var author = new AuthorDTO(1L, "Test", "Test", false);
         String payload = objectMapper.writeValueAsString(author);
         byte[] payloadBytes = payload.getBytes();
 
@@ -103,7 +103,7 @@ class GzipMessageConverterTest {
     @Test
     void testConvertToInternalWithoutCompression() throws Exception {
         // Arrange
-        var author = new AuthorDTO(1L, "Test", "Test");
+        var author = new AuthorDTO(1L, "Test", "Test", false);
         String payload = objectMapper.writeValueAsString(author);
         byte[] payloadBytes = payload.getBytes();
 
