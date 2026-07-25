@@ -257,6 +257,20 @@ public final class ExerciseIntegrityGate {
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
                     + "approval cannot turn the required design work into prebuilt stubs.");
         }
+        // The template is the student's starting scaffold. A contract that supplies nothing produces an empty starter repository, and an empty template defeats the differential
+        // itself: it "compiles" (no sources) and "fails every test" (none run), so the degenerate candidate satisfies the very checks meant to reject it. The stage gate refuses
+        // such a design at approval time, but acceptance is decided here — and repair attempts do not re-run the staged gates.
+        if (StageCheckService.designTableRows(approvedSpec).stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
+            reasons.add("the approved specification marks every type 'student-creates', so the template ships no starting scaffold and students would clone an empty project. "
+                    + "Supply at least one type as 'given' or 'stubbed' so the exercise has a teaching scaffold the differential can actually discriminate.");
+        }
+        List<String> missingStubbedTypes = StageCheckService.designTableRows(approvedSpec).stream().filter(row -> "stubbed".equals(row.status()))
+                .map(StageCheckService.DesignRow::type).filter(type -> !repositoryDeclaresType(producedTemplateFiles, type)).toList();
+        if (!missingStubbedTypes.isEmpty()) {
+            reasons.add("the approved specification marks these types 'stubbed', but the template does not declare them: " + missingStubbedTypes
+                    + ". A stubbed type ships in the template as the real signatures with TODO bodies, so the student has something to complete and the graded tests can name "
+                    + "it; restore them instead of deleting the tests that need them.");
+        }
         List<String> divergentGivenTypes = StageCheckService.designTableRows(approvedSpec).stream().filter(row -> "given".equals(row.status()))
                 .map(StageCheckService.DesignRow::type).filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
         if (!divergentGivenTypes.isEmpty()) {

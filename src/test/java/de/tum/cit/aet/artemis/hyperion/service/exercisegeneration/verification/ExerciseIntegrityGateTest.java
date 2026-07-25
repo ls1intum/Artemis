@@ -657,6 +657,52 @@ class ExerciseIntegrityGateTest {
     // --- Approved specification contract ---
 
     @Test
+    void approvedSpecification_rejectsAContractThatSuppliesNoScaffoldAtAll() {
+        // Observed live: every type was marked student-creates, the template shipped EMPTY, and the run was accepted as SUCCESS. An empty template compiles (no sources) and
+        // fails every test (none run), so the differential cannot discriminate it — acceptance is decided here, and repair attempts never re-run the staged gates.
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `BaseShape` | abstract base | student-creates |
+                | `Rectangle` | concrete shape | student-creates |
+                """;
+        Map<String, String> solution = map("src/BaseShape.java", "public abstract class BaseShape {}", "src/Rectangle.java", "public class Rectangle {}");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("every type 'student-creates'", "clone an empty project", "'given' or 'stubbed'"));
+    }
+
+    @Test
+    void approvedSpecification_rejectsAStubbedTypeMissingFromTheTemplate() {
+        // A stubbed type is the student's starting point; without it the graded tests cannot name it and the starter teaches nothing.
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Player` | context students complete | stubbed |
+                """;
+        Map<String, String> solution = map("src/Player.java", "public class Player { int score() { return 1; } }");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of("src/Other.java", "class Other {}"), solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("'stubbed'", "does not declare them", "Player"));
+    }
+
+    @Test
+    void approvedSpecification_acceptsAStubbedTypePresentInTheTemplate() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Player` | context students complete | stubbed |
+                """;
+        Map<String, String> solution = map("src/Player.java", "public class Player { int score() { return 1; } }");
+        Map<String, String> template = map("src/Player.java", "public class Player { int score() { throw new UnsupportedOperationException(); } }");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+    }
+
+    @Test
     void approvedSpecification_rejectsStudentCreatedTypesThatLeakIntoTheTemplate() {
         String spec = """
                 ## Design
@@ -681,12 +727,14 @@ class ExerciseIntegrityGateTest {
                 ## Design
                 | Type | Role | Template status |
                 |---|---|---|
+                | `Track` | supplied data type | given |
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 | `Player` | context students wire | student-creates |
                 """;
-        Map<String, String> solution = map("src/ExerciseTypes.java", "interface PlaybackStrategy {}\nclass Player {}");
+        String track = "public record Track(String title) {}";
+        Map<String, String> solution = map("src/ExerciseTypes.java", "interface PlaybackStrategy {}\nclass Player {}", "src/Track.java", track);
 
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).isEmpty();
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Track.java", track), solution)).isEmpty();
     }
 
     @Test
@@ -695,23 +743,27 @@ class ExerciseIntegrityGateTest {
                 ## Design
                 | Type | Role | Template status |
                 |---|---|---|
+                | `Track` | supplied data type | given |
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 """;
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}");
-        Map<String, String> template = map("src/Player.java", "public class Player { // TODO: create interface PlaybackStrategy\n}");
+        String track = "public record Track(String title) {}";
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Track.java", track);
+        Map<String, String> template = map("src/Player.java", "public class Player { // TODO: create interface PlaybackStrategy\n}", "src/Track.java", track);
 
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
     }
 
     @Test
     void approvedSpecification_rejectsANamedTypeArtifactAndASameLineNestedDeclaration() {
-        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `PlaybackStrategy` | students create it | student-creates |\n";
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}");
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `Track` | supplied data type | given |\n"
+                + "| `PlaybackStrategy` | students create it | student-creates |\n";
+        String track = "public record Track(String title) {}";
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Track.java", track);
 
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/PlaybackStrategy.java", ""), solution)).singleElement()
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/PlaybackStrategy.java", "", "src/Track.java", track), solution)).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Player.java", "class Player { interface PlaybackStrategy {} }"), solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Player.java", "class Player { interface PlaybackStrategy {} }", "src/Track.java", track),
+                solution)).singleElement().satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
     }
 
     @Test
@@ -720,10 +772,13 @@ class ExerciseIntegrityGateTest {
                 ## Design
                 | Type | Role | Template status |
                 |---|---|---|
+                | `Track` | supplied data type | given |
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 """;
+        String track = "public record Track(String title) {}";
+        Map<String, String> supplied = map("src/Track.java", track);
 
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), Map.of())).singleElement()
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, supplied, supplied)).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("reference solution does not declare", "PlaybackStrategy"));
     }
 
