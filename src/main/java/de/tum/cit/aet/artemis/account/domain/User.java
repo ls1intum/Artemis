@@ -121,9 +121,14 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String activationKey;
 
     @Size(max = 20)
-    @Column(name = "reset_key", length = 20)
+    @Column(name = "reset_key_id", length = 20)
     @JsonIgnore
-    private String resetKey;
+    private String resetKeyId;
+
+    @JsonIgnore
+    @Column(name = "reset_key_hash", length = 255)
+    private String resetKeyHash;
+
 
     @Column(name = "reset_date")
     private Instant resetDate = null;
@@ -319,12 +324,20 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.activationKey = activationKey;
     }
 
-    public String getResetKey() {
-        return resetKey;
+    public String getResetKeyId() {
+        return resetKeyId;
     }
 
-    public void setResetKey(String resetKey) {
-        this.resetKey = resetKey;
+    public void setResetKeyId(String resetKeyId) {
+        this.resetKeyId = resetKeyId;
+    }
+
+    public String getResetKeyHash() {
+        return resetKeyHash;
+    }
+
+    public void setResetKeyHash(String resetKeyHash) {
+        this.resetKeyHash = resetKeyHash;
     }
 
     public Instant getResetDate() {

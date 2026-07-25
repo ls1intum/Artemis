@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
-import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyIdKeySecretAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -258,9 +258,8 @@ public class PublicAccountResource {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
-            if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
-            }
+            userService.prepareUserForPasswordReset(internalUser)
+                .ifPresent(s -> mailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom(s, internalUser)));
         }
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
@@ -281,14 +280,18 @@ public class PublicAccountResource {
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
-    public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
+    public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyIdKeySecretAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.getKeyId())
+            || StringUtils.isEmpty(keyAndPassword.getKeySecret())
+            || keyAndPassword.getKeyId().length() < 10
+            || keyAndPassword.getKeySecret().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(),
+            keyAndPassword.getKeyId(), keyAndPassword.getKeySecret());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");

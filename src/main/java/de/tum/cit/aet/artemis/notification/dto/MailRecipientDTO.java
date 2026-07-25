@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto;
 
+import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -13,10 +15,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, String resetKeyId) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName,
+                               String activationKey, String resetKeyId, @Nullable @JsonIgnore String resetKeySecret) {
 
     public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
-        this(email, langKey, login, firstName, lastName, null, null);
+        this(email, langKey, login, firstName, lastName, null, null, null);
     }
 
     /**
@@ -30,15 +33,20 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     }
 
     public static MailRecipientDTO forUnnamed(String email, String langKey, String login) {
-        return new MailRecipientDTO(email, langKey, login, null, null, null, null);
+        return new MailRecipientDTO(email, langKey, login, null, null, null, null, null);
     }
 
     public static MailRecipientDTO forAdministrator(String email, String login) {
-        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null);
+        return new MailRecipientDTO(email, "en", login, "Administrator", null, null, null, null);
     }
 
     public static MailRecipientDTO from(User user) {
         return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(),
-            user.getLastName(), user.getActivationKey(), user.getResetKeyId());
+            user.getLastName(), user.getActivationKey(), user.getResetKeyId(), null);
+    }
+
+    public static MailRecipientDTO withResetSecretFrom(String resetKeySecret, User user) {
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(),
+            user.getLastName(), user.getActivationKey(), user.getResetKeyId(), resetKeySecret);
     }
 }

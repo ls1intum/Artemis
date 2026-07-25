@@ -83,7 +83,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
 
-    Optional<User> findOneByResetKey(String resetKey);
+    Optional<User> findOneByResetKeyId(String resetKeyId);
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 

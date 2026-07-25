@@ -15,6 +15,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,6 +77,8 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    private static final Duration MAX_RESET_KEY_LIFETIME = Duration.ofSeconds(86400L);
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -238,18 +241,23 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword new password string
-     * @param key         reset key
+     * @param keyId         reset key id
+     * @param keySecret         reset key secret (not the hashed version)
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key) {
-        log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordService.hashPassword(newPassword));
-            user.setResetKey(null);
-            user.setResetDate(null);
-            saveUser(user);
-            return user;
-        });
+    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret) {
+        log.debug("Reset user password for reset key with id {}", keyId);
+        return userRepository.findOneByResetKeyId(keyId)
+            .filter(user -> user.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME)))
+            .filter(user -> user.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, user.getResetKeyHash()))
+            .map(user -> {
+                user.setPassword(passwordService.hashPassword(newPassword));
+                user.setResetKeyId(null);
+                user.setResetKeyHash(null);
+                user.setResetDate(null);
+                saveUser(user);
+                return user;
+            });
     }
 
     /**
@@ -267,16 +275,19 @@ public class UserService {
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
-     * @return true if the user is eligible
+     * @return The newly created secret for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public boolean prepareUserForPasswordReset(User user) {
+    public Optional<String> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            user.setResetKey(RandomUtil.generateResetKey());
+            user.setResetKeyId(RandomUtil.generateResetKeyId());
+            String resetKeySecret = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
+            user.setResetKeyHash(resetKeyHash);
             user.setResetDate(Instant.now());
             saveUser(user);
-            return true;
+            return Optional.of(resetKeySecret);
         }
-        return false;
+        return Optional.empty();
     }
 
     /**
