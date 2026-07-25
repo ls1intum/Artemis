@@ -81,7 +81,7 @@ public class PresentationAssessmentService {
     /**
      * Update a presentation assessment.
      *
-     * @param courseId     the course id
+     * @param course       the owning course
      * @param assessmentId the presentation assessment id
      * @param dto          the updated presentation assessment data
      * @return the persisted presentation assessment
