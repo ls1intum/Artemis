@@ -57,8 +57,7 @@ import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lectu
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
-import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
+import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -67,12 +66,6 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
-
-/**
- * A queued point-out target. When it originates from a server command (rather than a marker click),
- * {@link correlationId} carries the ack to send back once the navigation has actually been applied.
- */
-type PendingPointOut = IrisPointOutNavigation & { correlationId?: string };
 
 /** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
 const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
@@ -171,7 +164,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     // A point-out navigation target waiting to be applied once the combined view is open and the
     // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
-    private readonly pendingPointOut = signal<PendingPointOut | undefined>(undefined);
+    private readonly pendingPointOut = signal<IrisPointOut | undefined>(undefined);
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -313,33 +306,38 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         });
 
-        // Iris points the student to a position in the combined view: navigate when the request
-        // targets this unit (auto-navigation only acts if the view is already open; a marker click
-        // forces it open — see applyPointOut).
-        this.chatService.pointOutNavigation$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((navigation) => this.applyPointOut(navigation));
-
-        // Iris requests a point-out mid-pipeline and waits for the result: navigate if this unit's combined view is
-        // open and acknowledge the outcome, so Iris only claims to have shown something when it actually did.
-        this.chatService.commandRequest$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((request) => this.handleCommandRequest(request));
+        // Iris points the student to a position in the combined view, either pushed by the server while the
+        // pipeline waits or raised by a marker click in the chat history.
+        this.chatService.pointOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pointOut) => this.handlePointOut(pointOut));
 
         // Apply a pending point-out target once the combined view is open and the viewer it needs has
         // rendered. Reading the viewChild signals here re-runs this effect as they become available.
         effect(() => {
-            const navigation = this.pendingPointOut();
-            if (!navigation || !this.isFullscreen()) {
+            const pointOut = this.pendingPointOut();
+            if (!pointOut || !this.isFullscreen()) {
                 return;
             }
-            const pdfReady = navigation.page == undefined || this.pdfViewer() !== undefined;
-            const videoReady = navigation.timestamp == undefined || this.videoPlayer() !== undefined || this.youtubePlayer() !== undefined;
+            const pdfReady = pointOut.page == undefined || this.pdfViewer() !== undefined;
+            const videoReady = pointOut.timestamp == undefined || this.videoPlayer() !== undefined || this.youtubePlayer() !== undefined;
             if (!pdfReady || !videoReady) {
                 return;
             }
             untracked(() => {
-                this.navigateWithinCombinedView(navigation);
-                // Acknowledge a server command only now — once the view has really moved — so Iris learns
+                if (pointOut.page != undefined) {
+                    this.pdfViewer()?.goToPage(pointOut.page);
+                }
+                if (pointOut.timestamp != undefined) {
+                    const videoPlayer = this.videoPlayer();
+                    if (videoPlayer) {
+                        videoPlayer.seekTo(pointOut.timestamp, false);
+                    } else {
+                        this.youtubePlayer()?.seekTo(pointOut.timestamp, false);
+                    }
+                }
+                // Acknowledge a waiting pipeline only now — once the view has really moved — so Iris learns
                 // "applied" for the actual navigation, not merely because the combined view was open.
-                if (navigation.correlationId) {
-                    this.chatService.sendCommandAck(navigation.correlationId, true);
+                if (pointOut.correlationId) {
+                    this.chatService.sendCommandAck(pointOut.correlationId, true);
                 }
                 this.pendingPointOut.set(undefined);
             });
@@ -347,63 +345,27 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
-     * Handles an Iris point-out navigation request. Ignores requests for other units. If the combined
-     * view is closed, auto-navigation (forceOpen = false) does nothing, while a marker click
-     * (forceOpen = true) opens it first. The actual page jump / video seek is deferred to the
-     * pendingPointOut effect, which waits until the relevant viewer has rendered.
-     * @param navigation the requested navigation target
+     * Handles a point-out targeting this unit; requests for other units are ignored (the matching unit, or the
+     * server-side timeout, handles them). If the combined view is closed, a marker click (forceOpen) opens it
+     * first, while a server-pushed point-out is acknowledged straight away as not applied. The actual page jump
+     * / video seek is deferred to the pendingPointOut effect, which waits until the relevant viewer has rendered
+     * and only then acknowledges success.
+     * @param pointOut the requested navigation target
      */
-    private applyPointOut(navigation: IrisPointOutNavigation): void {
-        if (navigation.lectureUnitId !== this.lectureUnit()?.id) {
+    private handlePointOut(pointOut: IrisPointOut): void {
+        if (pointOut.type !== 'pointOut' || pointOut.lectureUnitId !== this.lectureUnit()?.id) {
             return;
         }
         if (!this.isFullscreen()) {
-            if (!navigation.forceOpen) {
+            if (!pointOut.forceOpen) {
+                if (pointOut.correlationId) {
+                    this.chatService.sendCommandAck(pointOut.correlationId, false);
+                }
                 return;
             }
             this.openFullscreen();
         }
-        this.pendingPointOut.set(navigation);
-    }
-
-    /**
-     * Handles a server command request for this unit. For a point-out: if this unit's combined view is open, queue the
-     * navigation (via {@link pendingPointOut}); the success ack is sent from the pendingPointOut effect once the view has
-     * actually moved, so Iris is only told "applied" when the student really saw the jump. If the view is closed,
-     * acknowledge immediately that nothing was shown. Requests for other units are ignored — the matching unit (or the
-     * server-side timeout) handles them.
-     * @param request the command request to carry out
-     */
-    private handleCommandRequest(request: IrisCommandRequestDTO): void {
-        if (request.type !== 'pointOut' || request.lectureUnitId !== this.lectureUnit()?.id) {
-            return;
-        }
-        if (!this.isFullscreen()) {
-            this.chatService.sendCommandAck(request.correlationId, false);
-            return;
-        }
-        this.pendingPointOut.set({
-            lectureUnitId: request.lectureUnitId,
-            page: request.page,
-            timestamp: request.timestamp,
-            forceOpen: false,
-            correlationId: request.correlationId,
-        });
-    }
-
-    /** Jumps the slides to the requested page and/or seeks the video to the requested timestamp. */
-    private navigateWithinCombinedView(navigation: IrisPointOutNavigation): void {
-        if (navigation.page != undefined) {
-            this.pdfViewer()?.goToPage(navigation.page);
-        }
-        if (navigation.timestamp != undefined) {
-            const videoPlayer = this.videoPlayer();
-            if (videoPlayer) {
-                videoPlayer.seekTo(navigation.timestamp, false);
-            } else {
-                this.youtubePlayer()?.seekTo(navigation.timestamp, false);
-            }
-        }
+        this.pendingPointOut.set(pointOut);
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {

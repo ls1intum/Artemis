@@ -38,7 +38,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
+import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -97,7 +97,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
-                MockProvider(IrisChatService, { pointOutNavigation$: of(), commandRequest$: of() }),
+                MockProvider(IrisChatService, { pointOut$: of() }),
             ],
         })
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
@@ -1083,8 +1083,8 @@ describe('AttachmentVideoUnitComponent', () => {
         let chatService: IrisChatService;
         let ackSpy: ReturnType<typeof vi.spyOn>;
 
-        function pointOutRequest(overrides: Partial<IrisCommandRequestDTO>): IrisCommandRequestDTO {
-            return { correlationId: 'corr', type: 'pointOut', lectureUnitId: 1, ...overrides } as IrisCommandRequestDTO;
+        function pointOutRequest(overrides: Partial<IrisPointOut>): IrisPointOut {
+            return { correlationId: 'corr', type: 'pointOut', lectureUnitId: 1, ...overrides } as IrisPointOut;
         }
 
         beforeEach(() => {
@@ -1096,7 +1096,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('acknowledges immediately as not applied when the combined view is closed', () => {
             component['fullscreenState'].set(false);
 
-            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c1', page: 3 }));
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c1', page: 3 }));
 
             expect(ackSpy).toHaveBeenCalledWith('c1', false);
         });
@@ -1104,7 +1104,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('ignores command requests targeting a different lecture unit', () => {
             component['fullscreenState'].set(true);
 
-            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c2', lectureUnitId: 999, page: 3 }));
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c2', lectureUnitId: 999, page: 3 }));
 
             expect(ackSpy).not.toHaveBeenCalled();
         });
@@ -1118,7 +1118,7 @@ describe('AttachmentVideoUnitComponent', () => {
             });
             component['fullscreenState'].set(true);
 
-            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c3', page: 3 }));
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c3', page: 3 }));
 
             // The ack must not be sent synchronously — it waits for the navigation effect to run.
             expect(ackSpy).not.toHaveBeenCalled();

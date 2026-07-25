@@ -605,7 +605,7 @@ describe('IrisChatService', () => {
         } as unknown as IrisChatWebsocketDTO;
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
         const navigationSpy = vi.fn();
-        service.pointOutNavigation$.subscribe(navigationSpy);
+        service.pointOut$.subscribe(navigationSpy);
 
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
@@ -617,9 +617,9 @@ describe('IrisChatService', () => {
     });
 
     it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {
-        const navPromise = firstValueFrom(service.pointOutNavigation$);
-        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
+        const navPromise = firstValueFrom(service.pointOut$);
+        service.navigateToPointOut({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
+        await expect(navPromise).resolves.toEqual({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {

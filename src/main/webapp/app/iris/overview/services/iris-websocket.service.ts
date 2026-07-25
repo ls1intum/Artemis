@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
+import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command-ack-dto.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
@@ -22,18 +22,13 @@ export class IrisWebsocketService implements OnDestroy {
 
     private subscribedChannels: Map<number, SubscribedChannel<IrisChatWebsocketDTO>> = new Map();
 
-    private commandChannels: Map<number, SubscribedChannel<IrisCommandRequestDTO>> = new Map();
+    private commandChannels: Map<number, SubscribedChannel<IrisPointOut>> = new Map();
 
     /**
      * Cleans up resources before the service is destroyed.
      */
     ngOnDestroy(): void {
-        this.subscribedChannels.forEach((subscription, _sessionId) => {
-            subscription.wsSubscription.unsubscribe();
-        });
-        this.commandChannels.forEach((subscription, _sessionId) => {
-            subscription.wsSubscription.unsubscribe();
-        });
+        [...this.subscribedChannels.values(), ...this.commandChannels.values()].forEach((channel) => channel.wsSubscription.unsubscribe());
     }
 
     /**
@@ -41,20 +36,7 @@ export class IrisWebsocketService implements OnDestroy {
      * @param sessionId The session ID to subscribe to.
      */
     public subscribeToSession(sessionId: number): Observable<IrisChatWebsocketDTO> {
-        if (!sessionId) {
-            throw new Error('Session ID is required');
-        }
-
-        const subscribedChannel = this.subscribedChannels.computeIfAbsent(sessionId, () => {
-            const channel = this.getChannelFromSessionId(sessionId);
-            const subject = new Subject<IrisChatWebsocketDTO>();
-            const wsSubscription = this.websocketService.subscribe<IrisChatWebsocketDTO>(channel).subscribe((response: IrisChatWebsocketDTO) => {
-                subject.next(response);
-            });
-            return { wsSubscription, subject };
-        });
-
-        return subscribedChannel.subject.asObservable();
+        return this.subscribeToChannel(this.subscribedChannels, sessionId, '');
     }
 
     /**
@@ -62,25 +44,12 @@ export class IrisWebsocketService implements OnDestroy {
      * the pipeline is still running, expecting the client to carry them out and acknowledge via {@link sendCommandAck}.
      * @param sessionId The session ID to subscribe to.
      */
-    public subscribeToSessionCommands(sessionId: number): Observable<IrisCommandRequestDTO> {
-        if (!sessionId) {
-            throw new Error('Session ID is required');
-        }
-
-        const subscribedChannel = this.commandChannels.computeIfAbsent(sessionId, () => {
-            const channel = this.getChannelFromSessionId(sessionId) + COMMAND_TOPIC_SUFFIX;
-            const subject = new Subject<IrisCommandRequestDTO>();
-            const wsSubscription = this.websocketService.subscribe<IrisCommandRequestDTO>(channel).subscribe((response: IrisCommandRequestDTO) => {
-                subject.next(response);
-            });
-            return { wsSubscription, subject };
-        });
-
-        return subscribedChannel.subject.asObservable();
+    public subscribeToSessionCommands(sessionId: number): Observable<IrisPointOut> {
+        return this.subscribeToChannel(this.commandChannels, sessionId, COMMAND_TOPIC_SUFFIX);
     }
 
     /**
-     * Publishes a command acknowledgement back to the server, unblocking the pipeline waiting on it.
+     * Publishes a command acknowledgement back to the server, unblocking the Iris pipeline that is waiting on it.
      * @param ack the acknowledgement carrying the correlation id and whether the command was carried out
      */
     public sendCommandAck(ack: IrisCommandAckDTO): void {
@@ -107,7 +76,21 @@ export class IrisWebsocketService implements OnDestroy {
         return false;
     }
 
-    private getChannelFromSessionId(sessionId: number) {
-        return '/user/topic/iris/' + sessionId;
+    /**
+     * Subscribes to one of a session's topics, reusing the existing subscription if there already is one.
+     * @param channels    the per-session bookkeeping map for this topic
+     * @param sessionId   the session ID to subscribe to
+     * @param topicSuffix suffix appended to the session topic ('' for the main message channel)
+     */
+    private subscribeToChannel<T>(channels: Map<number, SubscribedChannel<T>>, sessionId: number, topicSuffix: string): Observable<T> {
+        if (!sessionId) {
+            throw new Error('Session ID is required');
+        }
+        const channel = channels.computeIfAbsent(sessionId, () => {
+            const subject = new Subject<T>();
+            const wsSubscription = this.websocketService.subscribe<T>('/user/topic/iris/' + sessionId + topicSuffix).subscribe((response: T) => subject.next(response));
+            return { wsSubscription, subject };
+        });
+        return channel.subject.asObservable();
     }
 }

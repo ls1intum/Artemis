@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -75,9 +74,6 @@ class IrisCommandServiceTest {
     @Mock
     private IrisSession session;
 
-    @Mock
-    private PlatformTransactionManager transactionManager;
-
     private IrisCommandService commandService;
 
     private ChatJob job;
@@ -85,7 +81,7 @@ class IrisCommandServiceTest {
     @BeforeEach
     void setUp() {
         commandService = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository, userRepository,
-                new ObjectMapper(), Optional.of(lectureUnitRepositoryApi), transactionManager);
+                new ObjectMapper(), Optional.of(lectureUnitRepositoryApi));
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
     }
 
@@ -104,7 +100,7 @@ class IrisCommandServiceTest {
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null)).join();
+        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isTrue();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -117,7 +113,7 @@ class IrisCommandServiceTest {
         stubSessionAndUser();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null)).join();
+        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -130,7 +126,7 @@ class IrisCommandServiceTest {
         stubSessionAndUser();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.failedFuture(new TimeoutException("no ack")));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null)).join();
+        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
@@ -138,7 +134,7 @@ class IrisCommandServiceTest {
 
     @Test
     void executeCommand_missingLectureUnitIdShortCircuitsWithoutContactingClient() {
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(null, 3, null)).join();
+        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(null, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(coordinationService, never()).register(anyString(), anyString());
@@ -147,7 +143,7 @@ class IrisCommandServiceTest {
 
     @Test
     void executeCommand_missingPageAndTimestampShortCircuitsWithoutContactingClient() {
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, null, null)).join();
+        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, null, null));
 
         assertThat(result.applied()).isFalse();
         verify(coordinationService, never()).register(anyString(), anyString());

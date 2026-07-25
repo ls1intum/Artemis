@@ -2,16 +2,14 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -67,11 +66,9 @@ public class IrisCommandService {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    private final TransactionTemplate transactionTemplate;
-
     public IrisCommandService(IrisCommandCoordinationService coordinationService, IrisWebsocketService irisWebsocketService, IrisChatWebsocketService irisChatWebsocketService,
             IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository, ObjectMapper objectMapper,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, PlatformTransactionManager transactionManager) {
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.coordinationService = coordinationService;
         this.irisWebsocketService = irisWebsocketService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -80,25 +77,24 @@ public class IrisCommandService {
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
-     * Executes a command for the given chat job. Dispatches by command type; the returned future completes once the client has (or has not) carried the command out.
+     * Executes a command for the given chat job, blocking until the client has (or has not) carried it out.
      *
      * @param job     the chat job the command belongs to
      * @param command the command to execute
-     * @return a future with the result reported back to Pyris
+     * @return the result reported back to Pyris
      */
-    public CompletableFuture<PyrisCommandResultDTO> executeCommand(ChatJob job, PyrisCommandDTO command) {
+    public PyrisCommandResultDTO executeCommand(ChatJob job, PyrisCommandDTO command) {
         return switch (command) {
             case PyrisPointOutCommandDTO pointOut -> executePointOut(job, pointOut);
         };
     }
 
-    private CompletableFuture<PyrisCommandResultDTO> executePointOut(ChatJob job, PyrisPointOutCommandDTO pointOut) {
+    private PyrisCommandResultDTO executePointOut(ChatJob job, PyrisPointOutCommandDTO pointOut) {
         if (pointOut.lectureUnitId() == null || (pointOut.page() == null && pointOut.timestamp() == null)) {
-            return CompletableFuture.completedFuture(PyrisCommandResultDTO.notApplied());
+            return PyrisCommandResultDTO.notApplied();
         }
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
         var userLogin = userRepository.findByIdElseThrow(session.getUserId()).getLogin();
@@ -107,40 +103,37 @@ public class IrisCommandService {
 
         var request = new IrisCommandRequestWebsocketDTO(correlationId, pointOut.type(), pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp());
         irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
-        long sentAt = System.currentTimeMillis();
         log.debug("Point-out command {} sent to user {} (session {}), awaiting client ack", correlationId, userLogin, session.getId());
 
-        return ackFuture.orTimeout(ACK_TIMEOUT_SECONDS, TimeUnit.SECONDS).handleAsync((ack, throwable) -> {
-            long waited = System.currentTimeMillis() - sentAt;
-            if (throwable != null) {
-                log.debug("Point-out command {} timed out after {}ms with no client ack", correlationId, waited);
-                return PyrisCommandResultDTO.notApplied();
-            }
-            if (ack == null || !ack.applied()) {
-                log.debug("Point-out command {} not applied by client after {}ms", correlationId, waited);
-                return PyrisCommandResultDTO.notApplied();
-            }
-            log.debug("Point-out command {} applied by client after {}ms, persisting marker and returning success", correlationId, waited);
-            // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
-            // history marker is best-effort: it runs in its own transaction (this continuation is off the request
-            // thread, so lazy content needs an open session) and a failure here must not turn into a 500 for Pyris.
-            try {
-                var markerContent = buildPointOutContent(pointOut);
-                transactionTemplate.executeWithoutResult(status -> persistAndPushMarker(job.sessionId(), markerContent));
-            }
-            catch (Exception e) {
-                log.error("Point-out command {} was applied on the client but persisting its marker failed", correlationId, e);
-            }
-            return PyrisCommandResultDTO.success();
-        });
+        // orTimeout completes the pending future exceptionally, which also unregisters it in the coordination service.
+        boolean applied;
+        try {
+            applied = ackFuture.orTimeout(ACK_TIMEOUT_SECONDS, TimeUnit.SECONDS).join().applied();
+        }
+        catch (Exception e) {
+            log.debug("Point-out command {} received no client ack within {}s", correlationId, ACK_TIMEOUT_SECONDS);
+            return PyrisCommandResultDTO.notApplied();
+        }
+        if (!applied) {
+            log.debug("Point-out command {} was not applied by the client", correlationId);
+            return PyrisCommandResultDTO.notApplied();
+        }
+
+        // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
+        // history marker is best-effort: a failure here must not turn into a 500 for Pyris.
+        try {
+            persistAndPushMarker(session, buildPointOutContent(pointOut));
+        }
+        catch (Exception e) {
+            log.error("Point-out command {} was applied on the client but persisting its marker failed", correlationId, e);
+        }
+        return PyrisCommandResultDTO.success();
     }
 
     /**
-     * Persists the point-out as a COMMAND marker in the chat history and pushes it to the client. The session is reloaded here because this runs on a different thread than the
-     * originating request.
+     * Persists the point-out as a COMMAND marker in the chat history and pushes it to the client.
      */
-    private void persistAndPushMarker(long sessionId, ObjectNode markerContent) {
-        var session = irisSessionRepository.findByIdElseThrow(sessionId);
+    private void persistAndPushMarker(IrisSession session, ObjectNode markerContent) {
         var message = new IrisMessage();
         message.addContent(new IrisJsonMessageContent(markerContent));
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.COMMAND);
@@ -165,17 +158,15 @@ public class IrisCommandService {
     }
 
     /**
-     * Resolves the lecture unit's display name for the marker from the database, or {@code null} if it cannot be resolved.
+     * Resolves the lecture unit's display name for the marker, or {@code null} if it cannot be resolved. The name is only a label, so a lookup failure must not cost us the marker.
      */
-    private String resolveLectureUnitName(long lectureUnitId) {
-        return lectureUnitRepositoryApi.flatMap(api -> {
-            try {
-                return Optional.ofNullable(api.findByIdElseThrow(lectureUnitId).getName());
-            }
-            catch (Exception e) {
-                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", lectureUnitId);
-                return Optional.<String>empty();
-            }
-        }).orElse(null);
+    private @Nullable String resolveLectureUnitName(long lectureUnitId) {
+        try {
+            return lectureUnitRepositoryApi.map(api -> api.findByIdElseThrow(lectureUnitId).getName()).orElse(null);
+        }
+        catch (Exception e) {
+            log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", lectureUnitId);
+            return null;
+        }
     }
 }

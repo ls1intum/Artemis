@@ -20,8 +20,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
-import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
+import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -140,15 +139,11 @@ export class IrisChatService implements OnDestroy {
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
-    // Emits when Iris points the student to a position in the combined view (when a COMMAND marker is
-    // clicked in the chat history). The lecture combined view subscribes to navigate.
-    private pointOutNavigationSubject = new Subject<IrisPointOutNavigation>();
-    public pointOutNavigation$ = this.pointOutNavigationSubject.asObservable();
-
-    // Emits when the server requests a client command mid-pipeline (e.g. a point-out). The lecture combined
-    // view subscribes, tries to carry it out, and acknowledges the outcome via sendCommandAck.
-    private commandRequestSubject = new Subject<IrisCommandRequestDTO>();
-    public commandRequest$ = this.commandRequestSubject.asObservable();
+    // Emits when Iris points the student to a position in the combined view, either pushed by the server
+    // mid-pipeline (then it carries a correlationId to acknowledge) or raised by a marker click in the chat
+    // history. The lecture combined view subscribes and navigates.
+    private pointOutSubject = new Subject<IrisPointOut>();
+    public pointOut$ = this.pointOutSubject.asObservable();
 
     // Emits when the floating Iris chat widget (exercise/lecture chatbot button popup) should close,
     // e.g. when the lecture combined view opens in fullscreen and would otherwise overlay it.
@@ -589,7 +584,7 @@ export class IrisChatService implements OnDestroy {
                 this.websocketCommandSubscription?.unsubscribe();
                 this.websocketCommandSubscription = this.irisWebsocketService
                     .subscribeToSessionCommands(this.sessionId)
-                    .subscribe((request) => this.commandRequestSubject.next(request));
+                    .subscribe((pointOut) => this.pointOutSubject.next(pointOut));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
@@ -1106,10 +1101,10 @@ export class IrisChatService implements OnDestroy {
     /**
      * Triggers navigation to a point-out marker's position, (re)opening the combined view if needed.
      * Used when the student clicks a COMMAND marker in the chat history.
-     * @param navigation the navigation target (the caller should set forceOpen to reopen a closed view)
+     * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
-    public navigateToPointOut(navigation: IrisPointOutNavigation): void {
-        this.pointOutNavigationSubject.next(navigation);
+    public navigateToPointOut(pointOut: IrisPointOut): void {
+        this.pointOutSubject.next(pointOut);
     }
 
     /**

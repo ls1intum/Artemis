@@ -1,3 +1,5 @@
+import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+
 export enum IrisMessageContentType {
     TEXT = 'text',
     JSON = 'json',
@@ -128,41 +130,27 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
     return undefined;
 }
 
-/** Structured data describing a navigation marker that points the student to a position in the lecture combined view. */
-export interface PointOutData {
-    type: 'pointOut';
-    lectureUnitId: number;
-    page?: number;
-    timestamp?: number;
-    lectureUnitName?: string;
-}
-
 /**
- * Type guard that checks whether the given message content is a point-out navigation marker.
- * @param content the message content to check
- * @returns true if the content is JSON content carrying a valid PointOutData payload
+ * Extracts the point-out recorded on a COMMAND marker's JSON content, if it is a valid one
+ * (it must name a lecture unit and at least one of page / timestamp).
+ * @param content the message content to extract from
+ * @returns the point-out if valid, undefined otherwise
  */
-export function isPointOutContent(content: IrisMessageContent): content is IrisJsonMessageContent & { attributes: PointOutData } {
+export function getPointOut(content: IrisMessageContent): IrisPointOut | undefined {
     if (!isJsonContent(content)) {
-        return false;
+        return undefined;
     }
     const attrs = content.attributes;
     if (attrs?.['type'] !== 'pointOut' || typeof attrs['lectureUnitId'] !== 'number') {
-        return false;
+        return undefined;
     }
-    return typeof attrs['page'] === 'number' || typeof attrs['timestamp'] === 'number';
-}
-
-/**
- * Extracts typed PointOutData from a message content if it represents a valid navigation marker.
- * @param content the message content to extract from
- * @returns the PointOutData if valid, undefined otherwise
- */
-export function getPointOutData(content: IrisMessageContent): PointOutData | undefined {
-    if (isPointOutContent(content)) {
-        return content.attributes;
+    const page = typeof attrs['page'] === 'number' ? attrs['page'] : undefined;
+    const timestamp = typeof attrs['timestamp'] === 'number' ? attrs['timestamp'] : undefined;
+    if (page === undefined && timestamp === undefined) {
+        return undefined;
     }
-    return undefined;
+    const lectureUnitName = typeof attrs['lectureUnitName'] === 'string' ? attrs['lectureUnitName'] : undefined;
+    return { type: 'pointOut', lectureUnitId: attrs['lectureUnitId'], page, timestamp, lectureUnitName };
 }
 
 /**
