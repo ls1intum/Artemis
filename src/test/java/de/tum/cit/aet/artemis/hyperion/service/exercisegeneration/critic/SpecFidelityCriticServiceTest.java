@@ -2238,4 +2238,71 @@ class SpecFidelityCriticServiceTest {
         assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/Helpers.java", helper))).isEmpty();
     }
 
+    // --- Contract witnesses ---
+
+    private static final String SPEC_WITH_RULES = "## Rules\n| ID | Rule |\n| R1 | A negative salary makes the record invalid. |\n";
+
+    private List<ContractWitness> witnessesFrom(String body) {
+        return criticReturning(rawResponse(body)).authorContractWitnesses(SPEC_WITH_RULES, "class RosterParserTest { }", "class RosterParser { }", null, () -> false);
+    }
+
+    @Test
+    void authorContractWitnesses_parsesTheRuleNameAndMethod() {
+        List<ContractWitness> witnesses = witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
+                 "code":"@Test\\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\\"a|b|-5\\"), \\"negative is invalid\\"); }"}]}
+                """);
+
+        assertThat(witnesses).singleElement().satisfies(witness -> {
+            assertThat(witness.ruleId()).isEqualTo("R1");
+            assertThat(witness.testName()).isEqualTo("testWitnessNegativeSalary");
+            assertThat(witness.code()).contains("void testWitnessNegativeSalary()");
+        });
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAWitnessWhoseNameIsNotTheMethodItDeclares() {
+        // The name is how a build failure is attributed back to a witness. One that does not appear in its own body could never be attributed, so it would silently count as
+        // validated no matter what the build reported.
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { fail(); }"}]}
+                """)).isEmpty();
+    }
+
+    @Test
+    void authorContractWitnesses_dropsDuplicateAndIncompleteEntries() {
+        List<ContractWitness> witnesses = witnessesFrom("""
+                {"witnesses":[
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { }"},
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { }"},
+                 {"rule":"R2","testName":"","code":"@Test\\nvoid testWitnessB() { }"},
+                 {"rule":null,"testName":"testWitnessC","code":"@Test\\nvoid testWitnessC() { }"}]}
+                """);
+
+        assertThat(witnesses).extracting(ContractWitness::testName).containsExactly("testWitnessA");
+    }
+
+    @Test
+    void authorContractWitnesses_capsTheBudgetBecauseEachWitnessCostsAValidatingBuild() {
+        String entries = java.util.stream.IntStream.range(0, 6)
+                .mapToObj(index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness" + index + "() { }\"}")
+                .collect(java.util.stream.Collectors.joining(","));
+
+        assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(3);
+    }
+
+    @Test
+    void authorContractWitnesses_authorsNothingWhenTheResponseIsNotUsableJson() {
+        // A critic that fails must never cost the exercise anything: the caller keeps the suite it already has.
+        assertThat(witnessesFrom("I could not find any uncovered rules.")).isEmpty();
+        assertThat(witnessesFrom("{\"witnesses\": null}")).isEmpty();
+    }
+
+    @Test
+    void authorContractWitnesses_authorsNothingWhenCancelled() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"void testW() { }\"}]}"));
+
+        assertThat(critic.authorContractWitnesses(SPEC_WITH_RULES, "class T { }", "class S { }", null, () -> true)).isEmpty();
+    }
+
 }
