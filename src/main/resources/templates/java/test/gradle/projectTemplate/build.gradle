@@ -2,9 +2,9 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.1.0'
+    id 'com.github.spotbugs' version '6.3.0'
     // %static-code-analysis-stop%
-    id 'com.teamscale' version '34.2.1'
+    id 'com.teamscale' version '35.2.1'
     id 'java'
 }
 
@@ -24,6 +24,10 @@ repositories {
 
 dependencies {
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
+    // Pinned to the version pre-installed in the build agent image (ls1tum/artemis-maven-template).
+    // Without this, assertj-core resolves byte-buddy transitively to a version that is not part of
+    // the image's offline cache and cannot be downloaded inside the build container.
+    testImplementation 'net.bytebuddy:byte-buddy:1.17.6'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
     // testImplementation(':${exerciseNamePomXml}')
