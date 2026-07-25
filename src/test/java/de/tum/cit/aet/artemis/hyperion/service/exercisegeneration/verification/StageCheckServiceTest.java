@@ -449,7 +449,24 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.TEMPLATE);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("contains none of the types").contains("LoyaltyAccount").contains("Students would clone an empty project");
+            assertThat(result.observation()).contains("missing type(s)").contains("LoyaltyAccount").contains("only");
+        }
+
+        @Test
+        void fails_andNamesTheType_whenOnlyPartOfTheJavaScaffoldIsMissing() {
+            // Observed live: a generics exercise declared two policy types 'given', shipped a template without them, and burned its whole repair budget on "cannot find symbol"
+            // while the tests compiled against the template — nothing ever named the absent type. Java declares each type in a file named after it, so the probe can be exact.
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
+            sandbox.spec = specWithDesign("| Stack | student work | student-creates |\n| OverflowPolicy | supplied policy | given |\n| Support | supplied helper | given |\n");
+            // The template ships Support but not OverflowPolicy: a partial scaffold the wholly-missing check would wave through.
+            sandbox.templateFindOutput = "/workspace/template/src/Support.java";
+            sandbox.templateShipsScaffold = false;
+
+            StageCheckResult result = check(GenerationStage.TEMPLATE);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("OverflowPolicy").doesNotContain("Support");
         }
 
         @Test
@@ -1058,6 +1075,30 @@ class StageCheckServiceTest {
                 ## Diagram
                 no — single-class exercise
                 """;
+
+        @Test
+        void namesTheReflectionConsequenceOfStudentCreatedOwnershipWhenTheContractIsFrozen() {
+            // Shift-left feedback at the decision boundary. A run that learned this only from downstream "cannot find symbol" errors cycled its entire repair budget between
+            // re-adding the type to the template and having the ownership gate reject it, without anything naming the actual constraint.
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = specWithDesign("| Stack | student work | student-creates |\n| OverflowPolicy | supplied policy | given |\n");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).contains("compile against the template too").contains("Stack").contains("Class.forName").contains("ownership gate will always reject");
+        }
+
+        @Test
+        void omitsTheReflectionConsequenceWhenNoTypeIsStudentCreated() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isTrue();
+            assertThat(result.observation()).doesNotContain("Class.forName");
+        }
 
         @Test
         void fails_whenEveryDesignRowIsStudentCreated_becauseTheTemplateWouldShipEmpty() {

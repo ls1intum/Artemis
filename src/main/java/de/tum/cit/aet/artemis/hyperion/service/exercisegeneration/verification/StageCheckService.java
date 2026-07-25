@@ -314,8 +314,17 @@ public class StageCheckService {
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
                 .collect(java.util.stream.Collectors.joining(", "));
+        // The ownership decision is frozen here, so state its testing consequence here too. The graded tests are compiled against the TEMPLATE as well as the solution, so a
+        // student-created type simply does not exist at test-compile time. Discovering that later costs whole repair budgets: one observed run spent every attempt cycling
+        // "cannot find symbol" -> re-add the type to the template -> ownership gate rejects it -> remove it -> "cannot find symbol", never naming the real constraint.
+        List<String> createdTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).toList();
+        String reflectionConsequence = createdTypes.isEmpty() ? ""
+                : " The graded tests compile against the template too, so nothing may import or name " + createdTypes + " directly: reach them through Class.forName and the "
+                        + "seeded reflection utilities (a dynamic proxy when supplied code must receive a student-created interface). Adding them to the template to make the "
+                        + "tests compile is the one repair the ownership gate will always reject; choose 'stubbed' instead at specification time if the tests need to name a "
+                        + "type directly.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
-                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO.");
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence);
     }
 
     /** One parsed data row of SPEC.md's '## Design' table: the type name (first cell, backticks stripped) and its template-status token ({@code null} when the row has none). */
@@ -526,13 +535,20 @@ public class StageCheckService {
         }
         // The dual of the leak check above: the approved contract's supplied and stubbed types are the student's starting scaffold, so they must be PRESENT here. An empty
         // template still "compiles" (no sources, exit 0) and still "fails every test" (nothing to run), so neither the compile gate nor the differential can notice that the
-        // scaffold is gone. Fail only when NOT ONE declared scaffold type is found: a per-type probe would fail closed whenever the declaration grep simply cannot see a
-        // language's syntax, whereas a wholly missing scaffold is unambiguous.
+        // scaffold is gone.
         List<String> scaffoldTypes = enforcedScaffoldTypes(sandbox, sessionId);
-        if (!scaffoldTypes.isEmpty() && scaffoldTypes.stream().allMatch(type -> findTypeDeclarations(sandbox, sessionId, "template", type).isBlank())) {
-            return StageCheckResult.failed("The template repository contains none of the types the approved '## Design' table supplies as the student's starting point: "
-                    + scaffoldTypes + ". Students would clone an empty project. Restore every 'given' type complete and every 'stubbed' type as signatures with TODO bodies; "
-                    + "only 'student-creates' types may be absent.");
+        List<String> missingScaffold = scaffoldTypes.stream().filter(type -> findTypeDeclarations(sandbox, sessionId, "template", type).isBlank()).toList();
+        // Java declares every type in a file named after it, so the probe is exact and each missing scaffold type can be named. Elsewhere a declaration may be invisible to the
+        // probe (a type need not own a file, and syntax varies), so only a WHOLLY missing scaffold is unambiguous enough to report — anything narrower would fail closed on a
+        // healthy repository.
+        boolean exactProbe = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+        boolean scaffoldGone = exactProbe ? !missingScaffold.isEmpty() : !scaffoldTypes.isEmpty() && missingScaffold.size() == scaffoldTypes.size();
+        if (scaffoldGone) {
+            // Naming the individual types matters: a partially missing scaffold surfaces downstream only as "cannot find symbol" while the tests compile against the template,
+            // which cost one observed run its whole repair budget without ever identifying the absent type.
+            return StageCheckResult.failed("The template repository is missing type(s) the approved '## Design' table supplies as the student's starting point: " + missingScaffold
+                    + ". Every 'given' type must ship complete and every 'stubbed' type as signatures with TODO bodies, in the template as well as the solution; only "
+                    + "'student-creates' types may be absent. Restore them rather than deleting the tests or references that need them.");
         }
         String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
         Map<String, String> templateFiles = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
