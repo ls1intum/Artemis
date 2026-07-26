@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
@@ -28,10 +28,10 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         TranslateDirective,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
-        TooltipModule,
-        ButtonModule,
+        TumUiTooltipDirective,
+        TumUiButtonDirective,
         FormsModule,
-        SelectButtonModule,
+        TumUiSelectButtonComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         UnsavedChangesWarningComponent,
