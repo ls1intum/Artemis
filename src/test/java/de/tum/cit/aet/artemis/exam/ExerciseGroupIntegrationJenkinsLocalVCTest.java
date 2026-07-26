@@ -406,11 +406,14 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         List<Long> idsWithDuplicate = Arrays.asList(exerciseGroup2.getId(), exerciseGroup2.getId(), exerciseGroup1.getId());
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithDuplicate, HttpStatus.BAD_REQUEST);
 
-        // A fresh reload proves the rejected requests changed nothing: all three groups and all six exercises intact,
-        // still in the last successfully saved order.
+        // A fresh reload proves the rejected requests changed nothing: all three groups intact, still in the last
+        // successfully saved order, and every exercise still in its original group.
         Exam reloadedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        assertThat(reloadedExam.getExerciseGroups()).extracting(ExerciseGroup::getId).containsExactly(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId());
-        assertThat(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList()).hasSize(6);
+        List<ExerciseGroup> reloadedGroups = reloadedExam.getExerciseGroups();
+        assertThat(reloadedGroups).extracting(ExerciseGroup::getId).containsExactly(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId());
+        assertThat(reloadedGroups.getFirst().getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise2_1.getId());
+        assertThat(reloadedGroups.get(1).getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise3_1.getId(), exercise3_2.getId(), exercise3_3.getId());
+        assertThat(reloadedGroups.get(2).getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise1_1.getId(), exercise1_2.getId());
     }
 
     @Test
