@@ -2238,6 +2238,61 @@ class SpecFidelityCriticServiceTest {
         assertThat(detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/Helpers.java", helper))).isEmpty();
     }
 
+    // --- Unenforceable technique rules ---
+
+    private SpecFidelityCriticService detectorOnly() {
+        return new SpecFidelityCriticService(null, objectMapper);
+    }
+
+    @Test
+    void techniqueRules_flagARecursionMandateNoAssertionCanObserve() {
+        // Verbatim from a generated exercise whose brief was "teach recursion". Rewriting both methods iteratively passed all nine graded tests.
+        String spec = "## Rules\n| R1 | `factorial(int n)` returns n!. The implementation **must be recursive** (direct or indirect self-call). |\n";
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+            assertThat(finding.isBlocking()).as("nothing downstream can repair it, so scheduling it would burn repair rounds on impossible work").isFalse();
+            assertThat(finding.requirement()).containsIgnoringCase("must be recursive");
+        });
+    }
+
+    @Test
+    void techniqueRules_flagAStreamPipelineMandate() {
+        // From the exercise whose brief was "teach the Java Streams API"; a plain for-loop scored full marks against its graded suite.
+        String spec = "## Rules\nR3: The implementation must use a Stream pipeline with a filter lambda and a mapToDouble step.\n";
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement()
+                .satisfies(finding -> assertThat(finding.requirement()).containsIgnoringCase("must use a Stream"));
+    }
+
+    @Test
+    void techniqueRules_staySilentOnRulesThatAreObservable() {
+        // The precision requirement. Delegation IS observable through a recording fake, ordering and validation through ordinary assertions — none may be flagged, or the
+        // finding becomes noise attached to every exercise.
+        String spec = """
+                ## Rules
+                R1: `aggregate` must delegate to the injected PricingPolicy and return its result unchanged.
+                R2: Each group must be ordered by amount descending; ties keep encounter order.
+                R3: A line with fewer than three fields must be treated as invalid and ignored.
+                R4: The method must return an empty map for an empty input list.
+                """;
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).isEmpty();
+    }
+
+    @Test
+    void techniqueRules_reportEachDistinctMandateOnce() {
+        String spec = "## Rules\nR1: must be recursive\nR2: must be recursive\nR3: must not use loops\n";
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).hasSize(2);
+    }
+
+    @Test
+    void techniqueRules_emptyWithoutASpecification() {
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(null)).isEmpty();
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules("   ")).isEmpty();
+    }
+
     // --- Contract witnesses ---
 
     private static final String SPEC_WITH_RULES = "## Rules\n| ID | Rule |\n| R1 | A negative salary makes the record invalid. |\n";

@@ -230,7 +230,9 @@ public class GenerationOrchestrationService {
                 case TEMPLATE_QUALITY_GAP -> RepairSurface.SCAFFOLD;
                 case MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT ->
                     RepairSurface.CONTRACT;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE -> null;
+                // A technique mandate is advisory precisely because no repair surface can fix it: no assertion distinguishes a recursive implementation from an
+                // iterative one with the same results, so scheduling it would burn rounds on work that cannot succeed.
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> null;
             };
         }
 
@@ -1050,6 +1052,13 @@ public class GenerationOrchestrationService {
             if (!messageless.isEmpty()) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
                 combined.addAll(messageless);
+                report = new SpecFidelityReport(combined);
+            }
+            // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
+            List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshot);
+            if (!techniqueRules.isEmpty()) {
+                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+                combined.addAll(techniqueRules);
                 report = new SpecFidelityReport(combined);
             }
             if (report.hasFindings()) {

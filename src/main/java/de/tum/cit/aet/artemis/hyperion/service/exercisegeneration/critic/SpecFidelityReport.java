@@ -51,6 +51,13 @@ public record SpecFidelityReport(List<Finding> findings) {
          */
         TEMPLATE_QUALITY_GAP,
         /**
+         * The specification states a rule mandating an implementation technique — that a method be recursive, use a stream pipeline, avoid loops — which behavioural tests
+         * cannot observe through the public API. Advisory and, unusually, not repairable: no assertion can distinguish a recursive implementation from an iterative one that
+         * returns the same values, so the finding exists to stop the exercise silently claiming to grade its own learning objective. Observed live: an exercise whose brief
+         * was "teach the Java Streams API" awarded full marks to a plain for-loop, and one whose brief was "teach recursion" awarded full marks to two iterative methods.
+         */
+        UNENFORCEABLE_TECHNIQUE_RULE,
+        /**
          * An executable test for a rule of the approved specification, authored by an independent pass and already proven to pass against the reference solution. Advisory: a
          * validated witness shows the test is legal and rule-derived, NOT that the graded suite is missing that coverage — establishing absence would need the witness to be run
          * against an implementation the suite accepts. Adopting it therefore either strengthens grading or is redundant, and never blocks a candidate that is otherwise sound.
@@ -75,7 +82,7 @@ public record SpecFidelityReport(List<Finding> findings) {
                         CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
                     true;
                 case INVENTED_REQUIREMENT -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, CONTRACT_WITNESS_AVAILABLE -> false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, CONTRACT_WITNESS_AVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> false;
             };
         }
     }

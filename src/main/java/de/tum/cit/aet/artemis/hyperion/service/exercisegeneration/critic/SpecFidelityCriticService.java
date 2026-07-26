@@ -90,6 +90,14 @@ public class SpecFidelityCriticService {
     /** Each witness costs a validating build (~35s measured), so the pass stays small enough to sit inside a generation without dominating it. */
     private static final int MAX_CONTRACT_WITNESSES = 3;
 
+    /** Implementation-technique mandates: control flow or an API the tests cannot see the use of. Kept narrow so observable mandates ("must delegate to ...") never match. */
+    private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
+            "must\\s+(?:be\\s+(?:implemented\\s+)?(?:recursive(?:ly)?|iterative(?:ly)?)|(?:not\\s+)?use\\s+(?:a\\s+|any\\s+)?(?:recursion|stream|streams|lambda|lambdas|loop|loops|"
+                    + "looping\\s+construct[s]?|iteration)|be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline))[^.|\\n]{0,60}",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final int MAX_TECHNIQUE_RULE_FINDINGS = 4;
+
     private static final int MIN_CRITIC_OUTPUT_TOKENS = 4_096;
 
     private static final int CRITIC_CONTEXT_SAFETY_TOKENS = 1_024;
@@ -2203,6 +2211,41 @@ public class SpecFidelityCriticService {
      * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
      * @return one finding per wholly-message-less test file, capped at {@link #MAX_REVIEW_FINDINGS}; empty for non-JVM languages or when every test file already messages
      */
+    /**
+     * Flags rules that mandate an implementation technique, which behavioural tests cannot observe.
+     * <p>
+     * A rule such as "the implementation must be recursive" or "must use a Stream pipeline" reads like a graded requirement and is not one: no assertion over the public API can
+     * tell a recursive implementation from an iterative one that returns the same values. Measured on real generated exercises — an exercise generated from "teach the Java
+     * Streams API" awarded full marks to a plain for-loop, and one generated from "teach recursion" awarded full marks to two iterative methods. Both stated the technique as a
+     * numbered rule.
+     * <p>
+     * Deterministic and deliberately narrow: only mandates naming a control-flow or API technique match. Across every specification generated so far this fires on exactly the
+     * three whose brief asked for a technique and on nothing else, and it must stay that tight — a rule like "must delegate to the injected collaborator" IS observable through a
+     * recording fake and must not be flagged.
+     *
+     * @param specificationContract the approved specification
+     * @return one advisory finding per distinct technique mandate, or empty when the contract states none
+     */
+    public List<SpecFidelityReport.Finding> detectUnenforceableTechniqueRules(@Nullable String specificationContract) {
+        if (specificationContract == null || specificationContract.isBlank()) {
+            return List.of();
+        }
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        Matcher matcher = TECHNIQUE_MANDATE.matcher(specificationContract);
+        while (matcher.find() && findings.size() < MAX_TECHNIQUE_RULE_FINDINGS) {
+            String mandate = matcher.group().strip().replaceAll("\\s+", " ");
+            if (!seen.add(mandate.toLowerCase(java.util.Locale.ROOT))) {
+                continue;
+            }
+            findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, mandate,
+                    "The specification requires this technique, but the graded tests observe behaviour through the public API and cannot see how a result was produced: a "
+                            + "student who ignores it and returns the same values scores full marks. Nothing downstream can repair that. Either accept it and review the "
+                            + "technique by hand, or design the task so the objective shows up in the observable result."));
+        }
+        return List.copyOf(findings);
+    }
+
     public List<SpecFidelityReport.Finding> detectMessagelessAssertions(@Nullable ProgrammingLanguage language, @Nullable Map<String, String> producedTestsFiles) {
         if (language == null || !MESSAGE_SENSITIVE_LANGUAGES.contains(language) || producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();
