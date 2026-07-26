@@ -282,6 +282,18 @@ public class StageCheckService {
         // two of four contract-breaking implementations, and another collapsing four rules rejected one of five. Six of twenty-six generated specifications took this shape
         // despite the authoring prompt forbidding it, which is the signal to enforce it here rather than ask again. The floor is deliberately low — a genuinely single-seam
         // exercise with up to three rules passes untouched — because the aim is to catch collapse, not to impose a decomposition the exercise does not need.
+        // A rule the tests cannot observe is a promise the exercise cannot keep, and it does more than sit inert: told that every rule needs a discriminating test, the agent
+        // goes looking for a way to grade it. One live run answered "must be recursive" with a test that read the student's source file and failed anyone whose correct
+        // solution still carried a TODO comment. The technique belongs in the statement as guidance to the student, never in the graded contract.
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(spec);
+        if (!techniqueMandates.isEmpty()) {
+            return StageCheckResult.failed("These '## Rules' entries require an implementation technique rather than an observable outcome: " + techniqueMandates
+                    + ". No assertion through the public API can tell a recursive implementation from an iterative one that returns the same values, so a rule like this cannot "
+                    + "be graded and inviting the tests to try produces tests that inspect source text and fail correct submissions. Keep the technique — say it in the "
+                    + "student-facing problem statement as how you want the exercise solved — and state as rules only the input-to-outcome behaviour the tests can actually "
+                    + "check. Choose observable consequences of the technique where they exist (a recursive contract that must handle deeply nested input, a pipeline whose "
+                    + "required output ordering follows from the transformation) rather than the construct itself.");
+        }
         int ruleCount = specRuleCount(spec);
         if (seamIds.size() == 1 && ruleCount >= MIN_RULES_REQUIRING_SEVERAL_SEAMS) {
             return StageCheckResult.failed("The '## Rules' section states " + ruleCount + " rules but the '## Testing Strategy' declares a single seam, so every rule is graded "

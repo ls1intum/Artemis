@@ -12,6 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 
 /**
@@ -1061,6 +1063,17 @@ public final class ExerciseIntegrityGate {
     /** Grading-context introspection a produced assignment source must never contain: a stub that senses its caller can fake "fails on the template" per test. */
     private static final Pattern GRADING_CONTEXT_SNIFFING = Pattern.compile("Thread\\s*\\.\\s*currentThread\\s*\\(\\s*\\)\\s*\\.\\s*getStackTrace|StackWalker");
 
+    /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
+    private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
+            // "must be recursive", "must use a stream", "must implement ... using pure recursion", "must be expressed as a pipeline", and the prohibition form
+            // "iterative constructs ... are not allowed". Each names a construct rather than an outcome; the tolerated distance keeps the match on one clause.
+            "must\\s+(?:be\\s+(?:implemented\\s+)?(?:recursive(?:ly)?|iterative(?:ly)?)"
+                    + "|(?:not\\s+)?(?:use|using)\\s+(?:a\\s+|any\\s+|pure\\s+)?(?:recursion|stream|streams|lambda|lambdas|loop|loops|looping\\s+construct[s]?|iteration)"
+                    + "|[^.|\\n]{0,60}?\\b(?:use|using)\\s+(?:a\\s+|any\\s+|pure\\s+)?(?:recursion|stream\\s+pipeline|lambda|lambdas)"
+                    + "|be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline))[^.|\\n]{0,60}"
+                    + "|(?:explicit\\s+)?(?:iterative\\s+constructs?|loops?|recursion)[^.|\\n]{0,60}?\\b(?:are|is)\\s+not\\s+allowed",
+            Pattern.CASE_INSENSITIVE);
+
     /** File-reading entry points a behavioural test has no reason to call. */
     private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
 
@@ -1090,6 +1103,50 @@ public final class ExerciseIntegrityGate {
      * @param producedTestsFiles the tests repository as it would be saved
      * @return one actionable rejection per offending file, or empty when no graded test reads the source tree
      */
+    /**
+     * Implementation-technique mandates stated in a specification's {@code ## Rules} section — that a method be recursive, use a stream pipeline, avoid loops.
+     * <p>
+     * Behavioural tests cannot observe these: no assertion over the public API separates a recursive implementation from an iterative one returning identical values. Stating
+     * one as a numbered rule is therefore a promise the exercise cannot keep, and it does active harm rather than merely being inert. Both outcomes were measured. An exercise
+     * generated from "teach recursion" that stated the mandate awarded full marks to two iterative methods; another that stated it produced a graded test which read the
+     * student's source file and failed anyone whose correct solution still carried a TODO comment — the agent trying to honour a rule it had no legitimate way to grade.
+     * <p>
+     * Deliberately narrow: only control-flow and API-use mandates match, and only inside {@code ## Rules}. A technique named as guidance in the student-facing statement is
+     * fine and often desirable; what must not happen is a graded rule the tests are then obliged to cover.
+     *
+     * @param spec the specification document
+     * @return the distinct mandates stated as rules, in encounter order
+     */
+    public static List<String> techniqueMandatesInRules(@Nullable String spec) {
+        if (spec == null || spec.isBlank()) {
+            return List.of();
+        }
+        String rules = markdownSectionBody(spec, "## Rules");
+        if (rules.isBlank()) {
+            return List.of();
+        }
+        List<String> mandates = new ArrayList<>();
+        Matcher matcher = TECHNIQUE_MANDATE.matcher(rules);
+        while (matcher.find()) {
+            String mandate = matcher.group().strip().replaceAll("\\s+", " ");
+            if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {
+                mandates.add(mandate);
+            }
+        }
+        return List.copyOf(mandates);
+    }
+
+    /** The body of one markdown section, up to the next top-level heading. */
+    static String markdownSectionBody(String document, String heading) {
+        int start = document.indexOf(heading);
+        if (start < 0) {
+            return "";
+        }
+        int bodyStart = start + heading.length();
+        int next = document.indexOf("\n## ", bodyStart);
+        return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
+    }
+
     static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();

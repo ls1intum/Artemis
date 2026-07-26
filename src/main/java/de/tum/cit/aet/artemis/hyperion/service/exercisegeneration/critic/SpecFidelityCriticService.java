@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -2229,10 +2230,9 @@ public class SpecFidelityCriticService {
         }
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        Matcher matcher = TECHNIQUE_MANDATE.matcher(specificationContract);
-        while (matcher.find() && findings.size() < MAX_TECHNIQUE_RULE_FINDINGS) {
-            String mandate = matcher.group().strip().replaceAll("\\s+", " ");
-            if (!seen.add(mandate.toLowerCase(java.util.Locale.ROOT))) {
+        // One definition, shared with the specification gate that rejects these outright: this pass is the backstop for a mandate that reaches a later stage anyway.
+        for (String mandate : ExerciseIntegrityGate.techniqueMandatesInRules(specificationContract)) {
+            if (findings.size() >= MAX_TECHNIQUE_RULE_FINDINGS || !seen.add(mandate.toLowerCase(java.util.Locale.ROOT))) {
                 continue;
             }
             findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, mandate,
