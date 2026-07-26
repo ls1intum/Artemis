@@ -2202,16 +2202,6 @@ public class SpecFidelityCriticService {
     private static final Pattern JVM_ASSERTION_WITH_STRING = Pattern.compile("\\b(?:assert\\w*|fail)\\s*\\([^;{}]*\"");
 
     /**
-     * Deterministic, model-free advisory check: flags a graded JVM test file whose assertions carry no human-readable failure message, so a failing student sees only the raw value
-     * mismatch with no hint at which behaviour broke. File-level by design — it flags only a wholly message-less file, which sidesteps per-assertion argument parsing and keeps
-     * false
-     * positives near zero (a mixed file, or any framework that self-describes, is left alone). Advisory only; it never affects acceptance.
-     *
-     * @param language           the exercise programming language
-     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
-     * @return one finding per wholly-message-less test file, capped at {@link #MAX_REVIEW_FINDINGS}; empty for non-JVM languages or when every test file already messages
-     */
-    /**
      * Flags rules that mandate an implementation technique, which behavioural tests cannot observe.
      * <p>
      * A rule such as "the implementation must be recursive" or "must use a Stream pipeline" reads like a graded requirement and is not one: no assertion over the public API can
@@ -2246,6 +2236,16 @@ public class SpecFidelityCriticService {
         return List.copyOf(findings);
     }
 
+    /**
+     * Deterministic, model-free advisory check: flags a graded JVM test file whose assertions carry no human-readable failure message, so a failing student sees only the raw value
+     * mismatch with no hint at which behaviour broke. File-level by design — it flags only a wholly message-less file, which sidesteps per-assertion argument parsing and keeps
+     * false
+     * positives near zero (a mixed file, or any framework that self-describes, is left alone). Advisory only; it never affects acceptance.
+     *
+     * @param language           the exercise programming language
+     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
+     * @return one finding per wholly-message-less test file, capped at {@link #MAX_REVIEW_FINDINGS}; empty for non-JVM languages or when every test file already messages
+     */
     public List<SpecFidelityReport.Finding> detectMessagelessAssertions(@Nullable ProgrammingLanguage language, @Nullable Map<String, String> producedTestsFiles) {
         if (language == null || !MESSAGE_SENSITIVE_LANGUAGES.contains(language) || producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();
