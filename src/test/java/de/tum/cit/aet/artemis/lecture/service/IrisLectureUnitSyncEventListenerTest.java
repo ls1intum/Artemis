@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -21,9 +22,13 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
@@ -53,13 +58,17 @@ class IrisLectureUnitSyncEventListenerTest {
     @Mock
     private IrisLectureUnitSyncService syncService;
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
     private IrisLectureUnitSyncEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
+        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService, transactionManager);
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA))).thenReturn("metadata-token");
-        lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(_ -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID));
+        lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(invocation -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID));
     }
 
     @Test
@@ -132,6 +141,25 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
         assertThat(state.getNextRetryAt().toInstant()).isEqualTo(nextRetryAt.toInstant());
+    }
+
+    @Test
+    void eventDatabasePhasesUseRequiresNewTransactions() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setMetadataHash("metadata-hash");
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        var transactionDefinitionCaptor = ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager, times(3)).getTransaction(transactionDefinitionCaptor.capture());
+        assertThat(transactionDefinitionCaptor.getAllValues())
+                .allSatisfy(transactionDefinition -> assertThat(transactionDefinition.getPropagationBehavior()).isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW));
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA);
     }
 
     @Test

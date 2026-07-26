@@ -75,13 +75,16 @@ public class AttachmentVideoUnitService {
 
     private final Optional<LectureContentProcessingService> contentProcessingService;
 
+    private final TransactionAfterCommitExecutor transactionAfterCommitExecutor;
+
     private final TransactionTemplate transactionTemplate;
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
             LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
-            SlideVisibilityUpdateService slideVisibilityUpdateService, PlatformTransactionManager transactionManager) {
+            SlideVisibilityUpdateService slideVisibilityUpdateService, TransactionAfterCommitExecutor transactionAfterCommitExecutor,
+            PlatformTransactionManager transactionManager) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -95,6 +98,7 @@ public class AttachmentVideoUnitService {
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
+        this.transactionAfterCommitExecutor = transactionAfterCommitExecutor;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -115,9 +119,9 @@ public class AttachmentVideoUnitService {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
-        // Trigger automated content processing (transcription and ingestion)
-        contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
+        // Trigger automated content processing (transcription and ingestion)
+        transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit)));
 
         return savedAttachmentVideoUnit;
     }
@@ -170,14 +174,16 @@ public class AttachmentVideoUnitService {
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
+        transactionAfterCommitExecutor.execute(() -> competencyProgressApi
+                .ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit)));
 
         // Process attachment if provided
         if (updateAttachment != null) {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                    transactionAfterCommitExecutor
+                            .execute(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
                     projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
             }
@@ -209,10 +215,12 @@ public class AttachmentVideoUnitService {
                         // Split PDF into slides, respecting custom page order if provided
                         if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                             if (pageOrder == null) {
-                                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                                transactionAfterCommitExecutor.execute(
+                                        () -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
                             }
                             else {
-                                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
+                                transactionAfterCommitExecutor.execute(() -> slideSplitterService
+                                        .splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder)));
                                 projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
                             }
                         }
@@ -236,16 +244,16 @@ public class AttachmentVideoUnitService {
             return;
         }
 
-        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
-            contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
-        }
-
         if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
             irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
             irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(afterSnapshot);
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
+            transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit)));
         }
     }
 

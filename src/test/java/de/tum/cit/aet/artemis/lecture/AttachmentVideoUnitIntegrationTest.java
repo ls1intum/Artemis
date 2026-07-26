@@ -835,6 +835,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(reloadedSelectedSlide.getHidden()).isNotNull();
         assertThat(reloadedSelectedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
         assertThat(listRootAttachmentFiles(persistedAttachmentVideoUnit.getId())).containsExactlyElementsOf(originalRootAttachmentFiles);
+        await().untilAsserted(() -> {
+            IrisLectureUnitSyncState syncState = irisLectureUnitSyncStateRepository.findByLectureUnitId(persistedAttachmentVideoUnit.getId()).orElseThrow();
+            assertThat(syncState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
+            assertThat(syncState.getLastSyncedVisibilityHash()).isEqualTo(syncState.getVisibilityHash());
+        });
     }
 
     @Test
