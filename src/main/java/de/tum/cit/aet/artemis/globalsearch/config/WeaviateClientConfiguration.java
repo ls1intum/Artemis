@@ -36,8 +36,8 @@ public class WeaviateClientConfiguration {
      * Creates and configures a Weaviate client bean.
      * Configuration validation is handled by {@link de.tum.cit.aet.artemis.core.config.ConfigurationValidator#validateWeaviateConfiguration()}.
      * <p>
-     * When using the text2vec-openai vectorizer, the GPU API key is passed as a request header
-     * so that Weaviate can forward it to the OpenAI-compatible API (e.g. Ollama).
+     * When using the text2vec-openai vectorizer, the GPU API key and OpenAI base URL are passed as request headers
+     * so that Weaviate can forward them to the OpenAI-compatible API (e.g. Ollama).
      * <p>
      * When {@code api-key} is configured, the client authenticates against the Weaviate
      * server using API key authentication (see <a href="https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication">Weaviate docs</a>).
@@ -51,12 +51,13 @@ public class WeaviateClientConfiguration {
         try {
             boolean usesOpenAiVectorizer = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(weaviateProperties.vectorizerModule());
             boolean hasGpuApiKey = StringUtils.hasText(weaviateProperties.gpuApiKey());
+            boolean hasOpenAiBaseUrl = StringUtils.hasText(weaviateProperties.openAiBaseUrl());
             boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
 
-            WeaviateClient client = weaviateProperties.secure() ? createSecureClient(hasApiKey, hasGpuApiKey, usesOpenAiVectorizer)
-                    : createLocalClient(hasApiKey, hasGpuApiKey, usesOpenAiVectorizer);
+            WeaviateClient client = weaviateProperties.secure() ? createSecureClient(hasApiKey, hasGpuApiKey, hasOpenAiBaseUrl, usesOpenAiVectorizer)
+                    : createLocalClient(hasApiKey, hasGpuApiKey, hasOpenAiBaseUrl, usesOpenAiVectorizer);
 
-            logClientConfiguration(hasApiKey, hasGpuApiKey);
+            logClientConfiguration(hasApiKey, hasGpuApiKey, hasOpenAiBaseUrl);
             verifyReadiness(client);
             return client;
         }
@@ -79,7 +80,7 @@ public class WeaviateClientConfiguration {
      * (443 for https, 80 for http). {@code httpPort()} and {@code grpcPort()} are called
      * after to override with the configured values.
      */
-    private WeaviateClient createSecureClient(boolean hasApiKey, boolean hasGpuApiKey, boolean usesOpenAiVectorizer) {
+    private WeaviateClient createSecureClient(boolean hasApiKey, boolean hasGpuApiKey, boolean hasOpenAiBaseUrl, boolean usesOpenAiVectorizer) {
         return WeaviateClient.connectToCustom(config -> {
             config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost()).httpPort(weaviateProperties.httpPort()).grpcHost(weaviateProperties.httpHost())
                     .grpcPort(weaviateProperties.grpcPort());
@@ -89,6 +90,9 @@ public class WeaviateClientConfiguration {
             if (hasGpuApiKey && usesOpenAiVectorizer) {
                 config.setHeader("X-OpenAI-Api-Key", weaviateProperties.gpuApiKey());
             }
+            if (hasOpenAiBaseUrl && usesOpenAiVectorizer) {
+                config.setHeader("X-OpenAI-Baseurl", weaviateProperties.openAiBaseUrl());
+            }
             return config;
         });
     }
@@ -96,7 +100,7 @@ public class WeaviateClientConfiguration {
     /**
      * Creates a Weaviate client using a local (non-secure) connection.
      */
-    private WeaviateClient createLocalClient(boolean hasApiKey, boolean hasGpuApiKey, boolean usesOpenAiVectorizer) {
+    private WeaviateClient createLocalClient(boolean hasApiKey, boolean hasGpuApiKey, boolean hasOpenAiBaseUrl, boolean usesOpenAiVectorizer) {
         return WeaviateClient.connectToLocal(config -> {
             config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort());
             if (hasApiKey) {
@@ -105,16 +109,22 @@ public class WeaviateClientConfiguration {
             if (hasGpuApiKey && usesOpenAiVectorizer) {
                 config.setHeader("X-OpenAI-Api-Key", weaviateProperties.gpuApiKey());
             }
+            if (hasOpenAiBaseUrl && usesOpenAiVectorizer) {
+                config.setHeader("X-OpenAI-Baseurl", weaviateProperties.openAiBaseUrl());
+            }
             return config;
         });
     }
 
-    private void logClientConfiguration(boolean hasApiKey, boolean hasGpuApiKey) {
+    private void logClientConfiguration(boolean hasApiKey, boolean hasGpuApiKey, boolean hasOpenAiBaseUrl) {
         if (hasApiKey) {
             log.debug("Configured Weaviate client with API key authentication");
         }
         if (hasGpuApiKey) {
             log.debug("Configured Weaviate client with X-OpenAI-Api-Key header for OpenAI-compatible vectorizer");
+        }
+        if (hasOpenAiBaseUrl) {
+            log.debug("Configured Weaviate client with X-OpenAI-Baseurl header for OpenAI-compatible vectorizer");
         }
     }
 
