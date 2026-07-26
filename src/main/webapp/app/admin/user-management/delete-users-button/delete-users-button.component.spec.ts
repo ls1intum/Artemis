@@ -15,8 +15,7 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as globalUtils from 'app/foundation/util/global.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('DeleteUsersButtonComponent', () => {
     let component: DeleteUsersButtonComponent;
@@ -33,12 +32,7 @@ describe('DeleteUsersButtonComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [DeleteUsersButtonComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DeleteDialogService), provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(DeleteUsersButtonComponent, '')
             .compileComponents();
@@ -55,16 +49,11 @@ describe('DeleteUsersButtonComponent', () => {
     });
 
     describe('rendering', () => {
-        it('should render a PrimeNG delete button that triggers loadUserList on click', async () => {
+        it('should render a delete button that triggers loadUserList on click', async () => {
             TestBed.resetTestingModule();
             await TestBed.configureTestingModule({
                 imports: [DeleteUsersButtonComponent],
-                providers: [
-                    { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: DialogService, useClass: MockDialogService },
-                    provideHttpClient(),
-                    provideHttpClientTesting(),
-                ],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DeleteDialogService), provideHttpClient(), provideHttpClientTesting()],
             }).compileComponents();
 
             const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
