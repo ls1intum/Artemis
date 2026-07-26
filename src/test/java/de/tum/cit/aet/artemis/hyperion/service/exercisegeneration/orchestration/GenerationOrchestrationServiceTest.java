@@ -1209,6 +1209,19 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
+    void witnessesAreNotAuthoredWhileSomethingStillBlocks() {
+        // A repair round is coming that rewrites the artifacts the witnesses were derived from, and a witness is validated against the solution as it stands. Observed live
+        // authoring the same three witnesses three times, each costing a provider call and a full solution build.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives"))));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            verify(specFidelityCritic, never()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
+        }
+    }
+
+    @Test
     void aValidatedWitnessBuysExactlyOneAdoptionRound() {
         // Without it the loop stops on the accepted candidate and the agent never reads the witness — observed live, with ready-to-adopt tests sitting in the report while the
         // suite still missed the rules they pin. The round is granted once, so witnesses can never drive repeated rewrites of a finished exercise.

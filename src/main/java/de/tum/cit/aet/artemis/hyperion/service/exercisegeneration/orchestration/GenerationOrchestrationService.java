@@ -577,9 +577,13 @@ public class GenerationOrchestrationService {
                             repairDelta, effectiveUsageSink, cancelled, progress, previousReview, effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot),
                             testPlanSnapshot);
                     // Runs only once the mechanical gate has passed, so the graded suite is already known deterministic: a suite that could fail by coincidence would make a
-                    // witness result meaningless.
-                    specFidelityReport = appendValidatedContractWitnesses(specFidelityReport, sandbox, sessionId, exercise, producedFilesByType, specDocumentSnapshot,
-                            effectiveUsageSink, cancelled, progress);
+                    // witness result meaningless. Skipped while anything still blocks, for two reasons: a repair round is coming that will rewrite the artifacts these
+                    // witnesses were derived from, and a witness is validated against the solution as it stands, so one authored now could stop passing before it is offered.
+                    // Observed live authoring the same three witnesses three times over, each costing a provider call and a full solution build.
+                    if (!specFidelityReport.hasBlockingFindings()) {
+                        specFidelityReport = appendValidatedContractWitnesses(specFidelityReport, sandbox, sessionId, exercise, producedFilesByType, specDocumentSnapshot,
+                                effectiveUsageSink, cancelled, progress);
+                    }
                     lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                             specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
                     if (cancelled.getAsBoolean()) {
