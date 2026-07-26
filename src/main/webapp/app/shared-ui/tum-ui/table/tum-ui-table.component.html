@@ -133,6 +133,8 @@
     [page]="currentPage()"
     [pageSize]="effectivePageSize()"
     [pageSizeOptions]="pageSizeOptions()"
+    [showRowsPerPage]="showRowsPerPage()"
+    [showCurrentPageReport]="showCurrentPageReport()"
     [disabled]="loading()"
     (pageChange)="onPageChange($event)"
     (pageSizeChange)="onPageSizeChange($event)"
