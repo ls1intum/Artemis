@@ -40,6 +40,8 @@ public class RestTemplateConfiguration {
 
     private static final int SHORT_READ_TIMEOUT = 10 * 1000;
 
+    private static final int PYRIS_READ_TIMEOUT = 5 * 60 * 1000;
+
     private static final int VERY_SHORT_CONNECTION_TIMEOUT = 1000;
 
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
@@ -84,7 +86,8 @@ public class RestTemplateConfiguration {
     @Bean
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
+        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor,
+                new RestTemplate(getSimpleClientHttpRequestFactory(PYRIS_READ_TIMEOUT, SHORT_CONNECTION_TIMEOUT)));
     }
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because

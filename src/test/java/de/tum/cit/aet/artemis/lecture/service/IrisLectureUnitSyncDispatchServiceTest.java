@@ -40,6 +40,8 @@ class IrisLectureUnitSyncDispatchServiceTest {
     void setUp() {
         slideRepository = mock(SlideTestRepository.class);
         irisLectureUnitSyncApi = mock(IrisLectureUnitSyncApi.class);
+        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn("metadata-token");
+        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn("visibility-token");
 
         service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.of(irisLectureUnitSyncApi));
     }
@@ -94,6 +96,15 @@ class IrisLectureUnitSyncDispatchServiceTest {
         service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY);
 
         verify(slideRepository, never()).findAllByAttachmentVideoUnitId(any());
+    }
+
+    @Test
+    void triggerSyncForUpdateKindReportsSkippedPyrisDispatches() {
+        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn(null);
+        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn(null);
+
+        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.METADATA)).isNull();
+        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY)).isNull();
     }
 
     @Test

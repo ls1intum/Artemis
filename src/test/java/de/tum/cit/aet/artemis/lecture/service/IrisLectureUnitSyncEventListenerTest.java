@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -57,6 +58,7 @@ class IrisLectureUnitSyncEventListenerTest {
     @BeforeEach
     void setUp() {
         listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
+        lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA))).thenReturn("metadata-token");
     }
 
     @Test
@@ -139,6 +141,7 @@ class IrisLectureUnitSyncEventListenerTest {
         var state = syncState();
         state.setVisibilityHash("projected-visibility-hash");
         when(syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(any(), any())).thenReturn(List.of(state));
+        when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenReturn(Optional.of(state));
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
         when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY)).thenReturn("persisted-slide-hash");
@@ -149,6 +152,30 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getVisibilityHash()).isEqualTo("projected-visibility-hash");
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
         assertThat(state.getNextRetryAt()).isNotNull();
+    }
+
+    @Test
+    void skippedDispatchRemainsDirtyForRetryAfterIrisIsEnabledAgain() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setMetadataHash("metadata-hash");
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA)).thenReturn(null, "metadata-token");
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        assertThat(state.getLastSyncedMetadataHash()).isNull();
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+        assertThat(state.getLastErrorKey()).isEqualTo("DispatchSkipped");
+        assertThat(state.getNextRetryAt()).isNotNull();
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
     }
 
     @Test

@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -61,12 +63,14 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
@@ -88,6 +92,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -142,6 +149,33 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         competency = competencyUtilService.createCompetency(lecture1.getCourse());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryClaimAllowsOnlyOneConcurrentOwner() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        IrisLectureUnitSyncState state = new IrisLectureUnitSyncState();
+        state.setLectureUnitId(unit.getId());
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        ZonedDateTime claimTime = ZonedDateTime.now();
+        state.setNextRetryAt(claimTime.minusMinutes(1));
+        irisLectureUnitSyncStateRepository.saveAndFlush(state);
+
+        CountDownLatch start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> {
+                start.await();
+                return irisLectureUnitSyncStateRepository.claimRetry(unit.getId(), claimTime, claimTime.plusMinutes(10));
+            });
+            var second = executor.submit(() -> {
+                start.await();
+                return irisLectureUnitSyncStateRepository.claimRetry(unit.getId(), claimTime, claimTime.plusMinutes(10));
+            });
+            start.countDown();
+
+            assertThat(List.of(first.get(), second.get())).filteredOn(Optional::isPresent).hasSize(1);
+        }
     }
 
     @AfterEach

@@ -112,7 +112,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
@@ -144,7 +144,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)

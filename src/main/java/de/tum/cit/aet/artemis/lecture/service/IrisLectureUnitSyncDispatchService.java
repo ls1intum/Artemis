@@ -49,10 +49,7 @@ public class IrisLectureUnitSyncDispatchService {
             case NONE -> {
                 yield null;
             }
-            case METADATA -> {
-                irisLectureUnitSyncApi.ifPresent(api -> api.updateLectureUnitMetadataInPyris(attachmentVideoUnit));
-                yield null;
-            }
+            case METADATA -> irisLectureUnitSyncApi.map(api -> api.updateLectureUnitMetadataInPyris(attachmentVideoUnit)).orElse(null);
             case VISIBILITY -> dispatchVisibility(attachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
             case CONTENT, DELETE -> throw new IllegalArgumentException("Only metadata and visibility updates are supported by the retryable sync dispatcher");
         };
@@ -62,7 +59,10 @@ public class IrisLectureUnitSyncDispatchService {
         return irisLectureUnitSyncApi.map(api -> {
             List<Slide> slides = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber).map(IrisLectureUnitSyncDispatchService::toSlides)
                     .orElseGet(() -> slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
-            api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit, slides);
+            String dispatchToken = api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit, slides);
+            if (dispatchToken == null) {
+                return null;
+            }
             var snapshot = new LectureContentUpdateSnapshot(attachmentVideoUnit.getId(), null, null, null, null, null, null, null, attachmentVideoUnit.resolveReleaseDate(),
                     SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slides));
             return IrisLectureUnitSyncService.visibilityHash(snapshot);

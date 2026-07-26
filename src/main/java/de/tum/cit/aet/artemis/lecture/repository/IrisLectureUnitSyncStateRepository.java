@@ -35,6 +35,24 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
     List<IrisLectureUnitSyncState> findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List<String> statuses, ZonedDateTime now);
 
     /**
+     * Claims a due retry by moving its next retry time to a lease deadline while holding the owning lecture-unit lock.
+     *
+     * @param lectureUnitId the attachment video unit id
+     * @param now           the current time
+     * @param leaseUntil    the deadline after which another worker may reclaim an unfinished retry
+     * @return the claimed state, or empty if another worker already claimed it
+     */
+    @Transactional
+    default Optional<IrisLectureUnitSyncState> claimRetry(long lectureUnitId, ZonedDateTime now, ZonedDateTime leaseUntil) {
+        return findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId))
+                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()))
+                .filter(state -> state.getNextRetryAt() != null && !state.getNextRetryAt().isAfter(now)).map(state -> {
+                    state.setNextRetryAt(leaseUntil);
+                    return saveAndFlush(state);
+                });
+    }
+
+    /**
      * Applies a synchronization-state transition while holding the owning lecture-unit lock. Reloading the current state after acquiring the lock preserves dirty hashes
      * written while a Pyris request was in flight.
      *

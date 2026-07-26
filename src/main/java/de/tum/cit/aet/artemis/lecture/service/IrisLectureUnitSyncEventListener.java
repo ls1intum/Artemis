@@ -33,6 +33,8 @@ public class IrisLectureUnitSyncEventListener {
 
     private static final int MAX_RETRY_DELAY_MINUTES = 60;
 
+    private static final int RETRY_LEASE_MINUTES = 10;
+
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final IrisLectureUnitSyncStateRepository syncStateRepository;
@@ -68,7 +70,10 @@ public class IrisLectureUnitSyncEventListener {
     @Scheduled(fixedRate = 300000)
     public void retryDirtyStates() {
         syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List.of(IrisLectureUnitSyncState.STATUS_DIRTY), ZonedDateTime.now())
-                .forEach(this::synchronizeDirtyState);
+                .forEach(candidate -> {
+                    ZonedDateTime claimTime = ZonedDateTime.now();
+                    syncStateRepository.claimRetry(candidate.getLectureUnitId(), claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)).ifPresent(this::synchronizeDirtyState);
+                });
     }
 
     /**
@@ -124,11 +129,12 @@ public class IrisLectureUnitSyncEventListener {
                 return;
             }
 
-            String dispatchedVisibilityHash = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber)
+            String dispatchResult = Optional.ofNullable(projectedSlideHiddenUntilBySlideNumber)
                     .map(projectedVisibility -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind, projectedVisibility))
                     .orElseGet(() -> syncDispatchService.triggerSyncForUpdateKind(unit, updateKind));
-            String dispatchedHash = getDispatchedHash(state, updateKind, dispatchedVisibilityHash);
-            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> markSynced(currentState, updateKind, dispatchedHash));
+            String dispatchedHash = getDispatchedHash(state, updateKind, dispatchResult);
+            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(),
+                    currentState -> Optional.ofNullable(dispatchedHash).ifPresentOrElse(hash -> markSynced(currentState, updateKind, hash), () -> markSkipped(currentState)));
         }
         catch (Exception e) {
             try {
@@ -141,10 +147,13 @@ public class IrisLectureUnitSyncEventListener {
         }
     }
 
-    private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedVisibilityHash) {
+    private static String getDispatchedHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchResult) {
+        if (dispatchResult == null) {
+            return null;
+        }
         Map<LectureContentUpdateKind, String> dispatchedHashes = new EnumMap<>(LectureContentUpdateKind.class);
         dispatchedHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
-        dispatchedHashes.put(LectureContentUpdateKind.VISIBILITY, dispatchedVisibilityHash);
+        dispatchedHashes.put(LectureContentUpdateKind.VISIBILITY, dispatchResult);
         return dispatchedHashes.get(updateKind);
     }
 
@@ -181,6 +190,12 @@ public class IrisLectureUnitSyncEventListener {
 
     private static boolean isClean(IrisLectureUnitSyncState state) {
         return Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash()) && Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash());
+    }
+
+    private static void markSkipped(IrisLectureUnitSyncState state) {
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        state.setNextRetryAt(ZonedDateTime.now().plusMinutes(RETRY_LEASE_MINUTES));
+        state.setLastErrorKey("DispatchSkipped");
     }
 
     private static void markRetry(IrisLectureUnitSyncState state, Exception exception) {
