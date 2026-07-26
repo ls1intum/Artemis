@@ -10,9 +10,9 @@ import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-ico
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -21,7 +21,7 @@ import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule, MessageModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, TumUiDialogComponent, TumUiButtonDirective, TumUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {

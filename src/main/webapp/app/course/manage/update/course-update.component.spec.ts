@@ -1294,11 +1294,12 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        const mockDialogRef = {
-            onClose: of(new Organization()),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
+        expect(comp.orgSelectorVisible()).toBe(true);
+    });
+
+    it('should add the selected organization to the course', () => {
+        comp.onOrgSelected(new Organization());
         expect(comp.courseOrganizations()).toHaveLength(1);
     });
 
