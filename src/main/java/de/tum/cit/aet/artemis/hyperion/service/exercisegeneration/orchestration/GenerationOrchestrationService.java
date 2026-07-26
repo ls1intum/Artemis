@@ -93,9 +93,15 @@ public class GenerationOrchestrationService {
     /** Initial candidate plus at most three mechanical repairs. */
     private static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
-    // Once a candidate passes mechanical verification, the full-artifact review may need one repair on each coherent surface (contract, oracle, scaffold). These are scoped
-    // repairs, not additional open-ended initial-authoring attempts.
-    private static final int MAX_GENERATION_ATTEMPTS = MAX_MECHANICAL_ATTEMPTS + 3;
+    /**
+     * The attempt ceiling: the mechanical repairs plus one attempt per semantic repair the budget allows. These are scoped repairs, not additional open-ended initial-authoring
+     * attempts, and the wall-clock guard remains the real bound.
+     * <p>
+     * Derived rather than fixed because it was fixed at {@code + 3} while the semantic budget became six, which made the configured budget arithmetically unreachable: a repair
+     * that breaks the build costs two attempts, so runs terminated on the attempt cap with rounds still unspent. Measured across twelve live runs, the semantic budget was never
+     * exhausted — the cap or the clock always bound first.
+     */
+    private final int maxGenerationAttempts;
 
     /**
      * The semantic repair budget. Sized originally as one round per coherent surface (contract, oracle, scaffold), but the scheduler never allocated it that way: it picks the
@@ -285,6 +291,7 @@ public class GenerationOrchestrationService {
         this.stagedGenerationRunner = stagedGenerationRunner;
         this.stagedGenerationEnabled = stagedGenerationEnabled;
         this.maxSemanticRepairs = maxSemanticRepairs > 0 ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
+        this.maxGenerationAttempts = MAX_MECHANICAL_ATTEMPTS + this.maxSemanticRepairs;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
         this.approvedSpecs = approvedSpecs;
@@ -434,7 +441,7 @@ public class GenerationOrchestrationService {
             SemanticRepairBatch pendingSemanticRepair = null;
             @Nullable
             SemanticRepairBatch lastSemanticRepair = null;
-            for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+            for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
                 if (attempt > 1 && Duration.between(runStartedAt, Instant.now()).compareTo(TOTAL_WALL_CLOCK_BUDGET) > 0) {
                     emit(progress, "The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
                     break;
@@ -522,7 +529,7 @@ public class GenerationOrchestrationService {
                             cancelledResult(loopResult));
                 }
 
-                emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
+                emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + maxGenerationAttempts + ")");
                 workspace.cleanTransientBuildOutputs(sandbox, sessionId);
                 // Read the produced repos back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across template/solution). The
                 // extraction-failed flag lets the verifier fail closed on a read-back error, distinct from an empty repo.
@@ -651,13 +658,13 @@ public class GenerationOrchestrationService {
                 // did, leaving ready-to-adopt tests in the report while the suite still missed the rules they pin. One adoption round is granted instead, once per generation
                 // and only when the candidate is otherwise finished, so the cost is bounded and a witness cannot drive repeated rewrites.
                 boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !witnessAdoptionAttempted
-                        && attempt < MAX_GENERATION_ATTEMPTS && semanticRepairsStarted < semanticRepairLimit
+                        && attempt < maxGenerationAttempts && semanticRepairsStarted < semanticRepairLimit
                         // An adaptation gets a single semantic round; spending it on optional tests rather than on a defect would be a poor trade.
                         && mode == GenerationMode.GENERATE && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
                 if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                     break;
                 }
-                if (attempt == MAX_GENERATION_ATTEMPTS) {
+                if (attempt == maxGenerationAttempts) {
                     break;
                 }
                 if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++initialMechanicalAttempts >= MAX_MECHANICAL_ATTEMPTS) {
@@ -849,10 +856,10 @@ public class GenerationOrchestrationService {
         return approved;
     }
 
-    private static String attemptFraming(int attempt) {
+    private String attemptFraming(int attempt) {
         int repairAttempt = attempt;   // the prompt built after attempt N drives attempt N+1
-        boolean finalAttempt = repairAttempt + 1 >= MAX_GENERATION_ATTEMPTS;
-        return "Repair attempt " + (repairAttempt + 1) + " of " + MAX_GENERATION_ATTEMPTS
+        boolean finalAttempt = repairAttempt + 1 >= maxGenerationAttempts;
+        return "Repair attempt " + (repairAttempt + 1) + " of " + maxGenerationAttempts
                 + (finalAttempt ? " — this is the FINAL attempt; prioritise the blocking findings (especially any repeated from earlier reviews) over cosmetic ones. " : ". ");
     }
 
