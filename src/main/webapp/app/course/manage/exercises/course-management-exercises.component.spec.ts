@@ -3,8 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -14,10 +13,6 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
-import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
-import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
-import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
@@ -31,7 +26,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -39,10 +33,7 @@ describe('Course Management Exercises Component', () => {
     let variantGroupService: ExerciseVariantGroupService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
-    let dialogService: DialogService;
     let deleteDialogService: DeleteDialogService;
-    let modalService: NgbModal;
-    let dialogOnClose: Subject<unknown>;
 
     const buildExercises = (): Exercise[] => [
         { id: 1, title: 'Intro Programming', type: ExerciseType.PROGRAMMING } as Exercise,
@@ -60,7 +51,6 @@ describe('Course Management Exercises Component', () => {
         exercises = buildExercises();
         course = { id: 1, title: 'Introduction to Programming in Java', shortName: 'INTRO_JAVA', exercises, isAtLeastEditor: true, isAtLeastInstructor: true } as Course;
         (parentRoute as any).data = of({ course });
-        dialogOnClose = new Subject<unknown>();
 
         await TestBed.configureTestingModule({
             imports: [CourseManagementExercisesComponent],
@@ -68,8 +58,6 @@ describe('Course Management Exercises Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
-                MockProvider(DialogService),
-                MockProvider(NgbModal),
                 MockProvider(DeleteDialogService),
                 MockProvider(CourseManagementService, {
                     findWithExercises: () => of(new HttpResponse({ body: course })),
@@ -95,10 +83,7 @@ describe('Course Management Exercises Component', () => {
         variantGroupService = TestBed.inject(ExerciseVariantGroupService);
         courseManagementService = TestBed.inject(CourseManagementService);
         alertService = TestBed.inject(AlertService);
-        dialogService = TestBed.inject(DialogService);
         deleteDialogService = TestBed.inject(DeleteDialogService);
-        modalService = TestBed.inject(NgbModal);
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: dialogOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef);
     });
 
     afterEach(() => {
@@ -379,38 +364,34 @@ describe('Course Management Exercises Component', () => {
     describe('bulk actions on programming exercises', () => {
         beforeEach(() => comp.ngOnInit());
 
-        it('opens the edit-selected modal and reloads on close', () => {
+        it('shows the edit-selected modal and reloads when it saves', () => {
             const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
-            const closed = new Subject<void>();
-            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {}, closed } as any);
             comp.toggleSelection(1);
 
             comp.editSelectedExercises();
 
-            expect(openSpy).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, expect.objectContaining({ size: 'xl' }));
-            closed.next();
+            expect(comp.showEditSelected()).toBe(true);
+            expect(comp.editSelectedData()).toEqual(comp.selectedProgrammingExercises());
+            comp['onEditSelectedSaved']();
             expect(reloadSpy).toHaveBeenCalled();
         });
 
-        it('does not open the edit-selected modal when a variant-group member is selected', () => {
+        it('does not show the edit-selected modal when a variant-group member is selected', () => {
             comp.exercises.set([{ id: 1, title: 'Grouped', type: ExerciseType.PROGRAMMING, exerciseVariantGroup: { id: 9 } } as Exercise]);
-            const openSpy = vi.spyOn(modalService, 'open');
             comp.toggleSelection(1);
 
             comp.editSelectedExercises();
 
-            expect(openSpy).not.toHaveBeenCalled();
+            expect(comp.showEditSelected()).toBe(false);
         });
 
-        it('opens the consistency check dialog with the selected programming exercises', () => {
+        it('shows the consistency check dialog with the selected programming exercises', () => {
             comp.toggleSelection(1);
 
             comp.consistencyCheckSelected();
 
-            expect(dialogService.open).toHaveBeenCalledWith(
-                ConsistencyCheckComponent,
-                expect.objectContaining({ data: { exercisesToCheck: comp.selectedProgrammingExercises() } }),
-            );
+            expect(comp.showConsistencyCheck()).toBe(true);
+            expect(comp.consistencyExercises()).toEqual(comp.selectedProgrammingExercises());
         });
     });
 
@@ -429,36 +410,36 @@ describe('Course Management Exercises Component', () => {
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('opens the quiz export dialog and returns to the add modal on back', () => {
+        it('shows the quiz export dialog and returns to the add modal on back', () => {
             comp.openQuizExportDialog();
-            expect(dialogService.open).toHaveBeenCalledWith(QuizExerciseExportComponent, expect.objectContaining({ data: expect.objectContaining({ courseId: 1 }) }));
+            expect(comp.showQuizExport()).toBe(true);
 
-            dialogOnClose.next(QUIZ_EXPORT_BACK);
+            comp['onQuizExportBack']();
             expect(comp.addModalMode()).toBe('create');
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('does not reopen the add modal when the export dialog closes normally', () => {
+        it('does not reopen the add modal when the export dialog closes without back', () => {
             comp.openQuizExportDialog();
-            dialogOnClose.next(undefined);
             expect(comp.addModalVisible()).toBe(false);
         });
 
-        it('does not open the export dialog without a course id', () => {
+        it('does not show the export dialog without a course id', () => {
             comp.course.set(undefined);
             comp.openQuizExportDialog();
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(comp.showQuizExport()).toBe(false);
         });
     });
 
     describe('group create / edit / delete', () => {
         beforeEach(() => comp.ngOnInit());
 
-        it('switches to the group view and opens a blank group-edit dialog on group create', () => {
+        it('switches to the group view and shows a blank group-edit dialog on group create', () => {
             comp.onAddModalGroupCreate();
 
             expect(comp.view()).toBe('group');
-            expect(dialogService.open).toHaveBeenCalledWith(ExerciseGroupEditModalComponent, expect.objectContaining({ inputValues: { group: { exercises: [] } } }));
+            expect(comp.showGroupEdit()).toBe(true);
+            expect(comp.groupEditGroup()).toEqual({ exercises: [] });
         });
 
         it('persists a newly created group and adds it to the view', () => {
@@ -466,19 +447,20 @@ describe('Course Management Exercises Component', () => {
             const createSpy = vi.spyOn(variantGroupService, 'createGroup').mockReturnValue(of(dto));
 
             comp.onAddModalGroupCreate();
-            dialogOnClose.next({ title: 'New group', exercises: [] });
+            comp['onGroupEditSaved']({ title: 'New group', exercises: [] });
 
             expect(createSpy).toHaveBeenCalledWith(1, expect.objectContaining({ title: 'New group' }));
             expect(comp.groups().map((g) => g.id)).toContain(10);
         });
 
-        it('opens the edit dialog for an existing group by id and updates it on save', () => {
+        it('shows the edit dialog for an existing group by id and updates it on save', () => {
             comp.groups.set([{ id: 10, title: 'Old', exercises: [] }]);
             const dto: ExerciseVariantGroupDTO = { id: 10, title: 'Renamed', exerciseIds: [] };
             const updateSpy = vi.spyOn(variantGroupService, 'updateGroup').mockReturnValue(of(dto));
 
             comp.openGroupEditModal(10);
-            dialogOnClose.next({ id: 10, title: 'Renamed', exercises: [] });
+            expect(comp.showGroupEdit()).toBe(true);
+            comp['onGroupEditSaved']({ id: 10, title: 'Renamed', exercises: [] });
 
             expect(updateSpy).toHaveBeenCalledWith(1, expect.objectContaining({ id: 10, title: 'Renamed' }));
             expect(comp.groups()[0].title).toBe('Renamed');
@@ -487,7 +469,7 @@ describe('Course Management Exercises Component', () => {
         it('does nothing when editing an unknown group id', () => {
             comp.groups.set([]);
             comp.openGroupEditModal(999);
-            expect(dialogService.open).not.toHaveBeenCalled();
+            expect(comp.showGroupEdit()).toBe(false);
         });
 
         it('re-syncs member exercise timelines after a group update', () => {

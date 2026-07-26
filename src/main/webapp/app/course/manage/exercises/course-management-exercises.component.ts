@@ -4,9 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, catchError, forkJoin, map, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
+import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
 import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
@@ -61,7 +59,6 @@ import { ExerciseGroupSyncService } from 'app/course/manage/exercises/exercise-g
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/course/manage/exercises/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
-import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -93,6 +90,10 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
+        ExerciseGroupEditModalComponent,
+        ConsistencyCheckComponent,
+        QuizExerciseExportComponent,
+        ProgrammingExerciseEditSelectedComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         ExerciseScoresExportButtonComponent,
         DeleteButtonDirective,
@@ -141,6 +142,18 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly addModalVisible = signal(false);
     readonly addModalMode = signal<AddModalMode>('create');
 
+    // Declarative-modal state (rendered in the template, admin pattern): a `show*` visibility flag plus, where the
+    // modal's input is required, the data signal that gates its `@if`.
+    readonly showGroupEdit = signal(false);
+    readonly groupEditGroup = signal<CourseExerciseGroup | undefined>(undefined);
+    /** Whether the group-edit modal is creating (vs. updating) — chooses the persistence path on save. */
+    private readonly groupEditIsNew = signal(false);
+    readonly showConsistencyCheck = signal(false);
+    readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
+    readonly showQuizExport = signal(false);
+    readonly showEditSelected = signal(false);
+    readonly editSelectedData = signal<ProgrammingExercise[]>([]);
+
     readonly isGroup = computed(() => this.view() === 'group');
     /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
     readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
@@ -186,8 +199,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly dialogService = inject(DialogService);
-    private readonly modalService = inject(NgbModal);
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly groupSync = inject(ExerciseGroupSyncService);
@@ -376,25 +387,22 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (this.selectionHasGroupMember()) {
             return;
         }
-        const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises();
-        modalRef.closed.subscribe(() => {
-            const courseId = this.course()?.id;
-            if (courseId !== undefined) {
-                this.loadCourseExercises(courseId);
-            }
-        });
+        this.editSelectedData.set(this.selectedProgrammingExercises());
+        this.showEditSelected.set(true);
+    }
+
+    /** After the "edit selected" modal saved, reload so the updated dates show in the table and cards. */
+    protected onEditSelectedSaved(): void {
+        const courseId = this.course()?.id;
+        if (courseId !== undefined) {
+            this.loadCourseExercises(courseId);
+        }
     }
 
     /** Runs a consistency check over the selected programming exercises and shows the results in a dialog. */
     consistencyCheckSelected(): void {
-        this.dialogService.open(ConsistencyCheckComponent, {
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            header: this.translateService.instant('artemisApp.consistencyCheck.title'),
-            data: { exercisesToCheck: this.selectedProgrammingExercises() },
-        });
+        this.consistencyExercises.set(this.selectedProgrammingExercises());
+        this.showConsistencyCheck.set(true);
     }
 
     openCreateModal(): void {
@@ -408,34 +416,17 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     openQuizExportDialog(): void {
-        // Quiz exercises are the only exportable type. The develop quiz export page is shown as a modal component
-        // (no dedicated route).
-        const id = this.courseId();
-        if (id === undefined) {
+        // Quiz exercises are the only exportable type.
+        if (this.courseId() === undefined) {
             return;
         }
-        const dialogRef = this.dialogService.open(QuizExerciseExportComponent, {
-            // Reactive title (re-translates on a language switch) instead of the static `header` string, which PrimeNG
-            // resolves only once when the dialog opens.
-            templates: { header: DialogTranslateHeaderComponent },
-            width: '60rem',
-            height: '40rem',
-            // Let the component own its internal layout (scrollable table + pinned footer); the dialog content must not
-            // scroll itself. Drop the content's bottom padding so the footer bar sits flush with the modal bottom.
-            contentStyle: { overflow: 'hidden', display: 'flex', 'flex-direction': 'column', 'padding-bottom': '0' },
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            draggable: false,
-            data: { courseId: id, headerKey: 'artemisApp.exercise.exportAction' },
-        });
-        dialogRef?.onClose.subscribe((result: string | undefined) => {
-            // "Back" in the export dialog returns to the manage-exercises modal (its default Create view).
-            if (result === QUIZ_EXPORT_BACK) {
-                this.addModalMode.set('create');
-                this.addModalVisible.set(true);
-            }
-        });
+        this.showQuizExport.set(true);
+    }
+
+    /** "Back" in the export dialog returns to the manage-exercises modal (its default Create view). */
+    protected onQuizExportBack(): void {
+        this.addModalMode.set('create');
+        this.addModalVisible.set(true);
     }
 
     onAddModalGroupCreate(): void {
@@ -513,26 +504,19 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     /**
-     * Opens the group-edit dialog via PrimeNG's {@link DialogService} (the declarative {@code <p-dialog>} mis-layered its
-     * overlay on the first open). The dialog closes with the edited {@link CourseExerciseGroup} on save, or {@code undefined}
-     * on cancel/dismiss; {@code isNew} selects the create vs. update persistence path in {@link onGroupEditModalSave}.
+     * Opens the declarative group-edit modal (rendered in the template with {@code [(visible)]="showGroupEdit"}).
+     * {@code isNew} selects the create vs. update persistence path in {@link onGroupEditModalSave}, applied when the
+     * modal emits {@code (saved)}.
      */
     private openGroupEditDialog(group: CourseExerciseGroup, isNew: boolean): void {
-        const dialogRef = this.dialogService.open(ExerciseGroupEditModalComponent, {
-            inputValues: { group },
-            width: '780px',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            data: { headerKey: 'artemisApp.exerciseManagement.groupEdit.header' },
-            templates: { header: DialogTranslateHeaderComponent },
-        });
-        dialogRef?.onClose.subscribe((updated?: CourseExerciseGroup) => {
-            if (updated) {
-                this.onGroupEditModalSave(updated, isNew);
-            }
-        });
+        this.groupEditGroup.set(group);
+        this.groupEditIsNew.set(isNew);
+        this.showGroupEdit.set(true);
+    }
+
+    /** Applies the group-edit modal's result, choosing the create vs. update path via the remembered {@code isNew} flag. */
+    protected onGroupEditSaved(updated: CourseExerciseGroup): void {
+        this.onGroupEditModalSave(updated, this.groupEditIsNew());
     }
 
     /** Opens the shared delete-confirmation dialog for a group; the actual deletion runs on confirm. */

@@ -2,11 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
-import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
@@ -19,8 +17,6 @@ describe('ExerciseGroupTimelineLockComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupTimelineLockComponent>;
     let component: ExerciseGroupTimelineLockComponent;
     let service: ExerciseVariantGroupService;
-    let dialogService: DialogService;
-    let onCloseSubject: Subject<CourseExerciseGroup | undefined>;
 
     const buildExercise = (groupId?: number): TextExercise => {
         const course = { id: 42 } as Course;
@@ -33,55 +29,48 @@ describe('ExerciseGroupTimelineLockComponent', () => {
     };
 
     beforeEach(async () => {
-        onCloseSubject = new Subject<CourseExerciseGroup | undefined>();
         await TestBed.configureTestingModule({
             imports: [ExerciseGroupTimelineLockComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(TranslateService), MockProvider(DialogService)],
-        }).compileComponents();
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(TranslateService)],
+        })
+            // Render nothing: these are logic tests, and the real declarative modal pulls in heavy deps.
+            .overrideTemplate(ExerciseGroupTimelineLockComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExerciseGroupTimelineLockComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(ExerciseVariantGroupService);
-        dialogService = TestBed.inject(DialogService);
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
     });
 
     it('is locked only when the exercise belongs to a variant group', () => {
         fixture.componentRef.setInput('exercise', buildExercise(undefined));
-        fixture.detectChanges();
         expect(component.locked()).toBe(false);
 
         fixture.componentRef.setInput('exercise', buildExercise(3));
-        fixture.detectChanges();
         expect(component.locked()).toBe(true);
     });
 
-    it('opens the group-edit dialog only when locked', () => {
+    it('shows the group-edit modal only when locked', () => {
         fixture.componentRef.setInput('exercise', buildExercise(undefined));
-        fixture.detectChanges();
         component.openModal();
-        expect(dialogService.open).not.toHaveBeenCalled();
+        expect(component.showModal()).toBe(false);
 
         fixture.componentRef.setInput('exercise', buildExercise(3));
-        fixture.detectChanges();
         component.openModal();
-        expect(dialogService.open).toHaveBeenCalledOnce();
-        expect(dialogService.open).toHaveBeenCalledWith(ExerciseGroupEditModalComponent, expect.objectContaining({ inputValues: { group: component.group() }, modal: true }));
+        expect(component.showModal()).toBe(true);
     });
 
     it('derives the modal group from the embedded reference', () => {
         fixture.componentRef.setInput('exercise', buildExercise(3));
-        fixture.detectChanges();
         const group = component.group();
         expect(group.id).toBe(3);
         expect(group.title).toBe('Group A');
         expect(group.exercises).toEqual([]);
     });
 
-    it('persists the group and emits the exercise with the group timeline applied when the dialog closes with a result', () => {
+    it('persists the group and emits the exercise with the group timeline applied on save', () => {
         const exercise = buildExercise(3);
         fixture.componentRef.setInput('exercise', exercise);
-        fixture.detectChanges();
 
         const dto: ExerciseVariantGroupDTO = {
             id: 3,
@@ -93,9 +82,9 @@ describe('ExerciseGroupTimelineLockComponent', () => {
         const emitted: TextExercise[] = [];
         component.exerciseChange.subscribe((value) => emitted.push(value as TextExercise));
 
-        component.openModal();
+        // The modal's (saved) output calls onSave with the edited group.
         const edited: CourseExerciseGroup = { id: 3, title: 'Group A', releaseDate: dto.releaseDate, dueDate: dto.dueDate, exercises: [] };
-        onCloseSubject.next(edited);
+        component.onSave(edited);
 
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy.mock.calls[0][0]).toBe(42);
@@ -107,22 +96,10 @@ describe('ExerciseGroupTimelineLockComponent', () => {
         expect(result.exerciseVariantGroup?.id).toBe(3);
     });
 
-    it('does nothing when the dialog is cancelled (closed without a result)', () => {
-        fixture.componentRef.setInput('exercise', buildExercise(3));
-        fixture.detectChanges();
-        const updateSpy = vi.spyOn(service, 'updateGroup');
-
-        component.openModal();
-        onCloseSubject.next(undefined);
-
-        expect(updateSpy).not.toHaveBeenCalled();
-    });
-
     it('does not persist when the course id cannot be resolved', () => {
         const exercise = buildExercise(3);
         exercise.course = undefined;
         fixture.componentRef.setInput('exercise', exercise);
-        fixture.detectChanges();
 
         const updateSpy = vi.spyOn(service, 'updateGroup');
         component.onSave({ id: 3, title: 'Group A', exercises: [] });
@@ -132,7 +109,6 @@ describe('ExerciseGroupTimelineLockComponent', () => {
     it('surfaces an error alert when the update fails', () => {
         const exercise = buildExercise(3);
         fixture.componentRef.setInput('exercise', exercise);
-        fixture.detectChanges();
 
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addErrorAlert').mockImplementation(() => undefined);

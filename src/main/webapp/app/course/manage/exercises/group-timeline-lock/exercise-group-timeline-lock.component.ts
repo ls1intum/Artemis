@@ -1,11 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
-import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
@@ -15,7 +13,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
-    template: '',
+    template: `@if (locked()) {
+        <jhi-exercise-group-edit-modal [(visible)]="showModal" [group]="group()" (saved)="onSave($event)" />
+    }`,
+    imports: [ExerciseGroupEditModalComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupTimelineLockComponent {
@@ -27,7 +28,9 @@ export class ExerciseGroupTimelineLockComponent {
 
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
+
+    /** Visibility of the declarative group-edit modal rendered in this component's template. */
+    readonly showModal = signal(false);
 
     /** True when the exercise belongs to a (persisted) variant group, i.e. its timeline is group-governed. */
     readonly locked = computed(() => this.exercise()?.exerciseVariantGroup?.id !== undefined);
@@ -43,23 +46,7 @@ export class ExerciseGroupTimelineLockComponent {
         if (!this.locked()) {
             return;
         }
-        const dialogRef = this.dialogService.open(ExerciseGroupEditModalComponent, {
-            inputValues: { group: this.group() },
-            width: '780px',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            // Reactive title that re-translates on a language switch (a plain `header` string would not); see DialogTranslateHeaderComponent.
-            data: { headerKey: 'artemisApp.exerciseManagement.groupEdit.header' },
-            templates: { header: DialogTranslateHeaderComponent },
-        });
-        // The modal closes with the updated group on save, or `undefined` on cancel/dismiss.
-        dialogRef?.onClose.subscribe((updated?: CourseExerciseGroup) => {
-            if (updated) {
-                this.onSave(updated);
-            }
-        });
+        this.showModal.set(true);
     }
 
     onSave(updated: CourseExerciseGroup): void {

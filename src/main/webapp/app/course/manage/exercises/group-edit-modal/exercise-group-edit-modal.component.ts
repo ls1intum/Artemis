@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
@@ -15,16 +15,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
- * Content of the group-edit dialog, opened via PrimeNG's {@code DialogService} (see
- * {@code ExerciseGroupTimelineLockComponent.openModal} and {@code CourseManagementExercisesComponent.openGroupEditDialog}).
- * The edited group is passed in through the dialog's {@code inputValues.group}; saving closes the dialog with the updated
- * {@link CourseExerciseGroup} as result, cancelling closes it with {@code undefined}.
+ * Declarative group-edit dialog (rendered from {@code ExerciseGroupTimelineLockComponent} and
+ * {@code CourseManagementExercisesComponent}). The edited group is passed via the {@link group} input and shown while
+ * {@link visible} is true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling
+ * just closes (no event).
  */
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [
         FormsModule,
+        TumUiDialogComponent,
         TumUiInputDirective,
         InputNumberModule,
         TumUiButtonComponent,
@@ -43,10 +44,12 @@ export class ExerciseGroupEditModalComponent {
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
 
-    /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
+    /** Two-way visibility, driven by the parent. */
+    readonly visible = model<boolean>(false);
+    /** The group being edited, supplied by the parent. */
     readonly group = input.required<CourseExerciseGroup>();
-
-    private readonly dialogRef = inject(DynamicDialogRef);
+    /** Emits the edited group on save (only when something actually changed); cancel/close emit nothing. */
+    readonly saved = output<CourseExerciseGroup>();
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
@@ -112,12 +115,15 @@ export class ExerciseGroupEditModalComponent {
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
         };
-        // Nothing edited: close with no result so the openers treat it as a cancel and skip the persistence call.
-        this.dialogRef.close(this.isUnchanged(updated) ? undefined : updated);
+        // Nothing edited: close without a `saved` event so the openers skip the persistence call, same as a cancel.
+        if (!this.isUnchanged(updated)) {
+            this.saved.emit(updated);
+        }
+        this.visible.set(false);
     }
 
     onCancel(): void {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 
     /** True when the drafted values match the original group (dates compared as dayjs, accounting for the string inputs). */
