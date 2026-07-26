@@ -453,6 +453,19 @@ public class StagedGenerationRunner {
                                 // Fail open on the subjective axis. A qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
                                 // already passed the deterministic mechanical gate. Freeze the checked contract and let downstream mechanical verification (compile, tests,
                                 // differential oracle — all still fail-closed), the post-generation artifact critic, and instructor review carry quality forward.
+                                // The same non-monotonic refinement the restore below exists for: if the LAST review broke, the current draft is unmeasured, and a strictly
+                                // better measured one may already be in hand. Restoring it here costs nothing and keeps the fail-open path from freezing the worse draft.
+                                if (bestSpecSnapshot != null && !bestSpecSnapshot.equals(specSnapshot)) {
+                                    String restoreAfterIncompleteReview = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
+                                    if (restoreAfterIncompleteReview != null && !restoreAfterIncompleteReview.startsWith("ERROR")) {
+                                        log.info("Specification review was inconclusive for exercise {}; restoring the best measured draft ({} findings)", exercise.getId(),
+                                                bestSpecFindingCount);
+                                        specSnapshot = bestSpecSnapshot;
+                                    }
+                                    else {
+                                        log.warn("Could not restore the best measured specification for exercise {}: {}", exercise.getId(), restoreAfterIncompleteReview);
+                                    }
+                                }
                                 String reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification. Any remaining "
                                         + "qualitative concerns are left for instructor review.";
                                 log.warn("Specification review was inconclusive for exercise {}; freezing the mechanically-valid specification and continuing", exercise.getId());
@@ -541,6 +554,9 @@ public class StagedGenerationRunner {
                                                 bestSpecFindingCount, review.findings().size());
                                         specSnapshot = bestSpecSnapshot;
                                         emit(progress, "Keeping the strongest reviewed specification this concept produced.");
+                                    }
+                                    else {
+                                        log.warn("Could not restore the best reviewed specification for exercise {}: {}", exercise.getId(), restore);
                                     }
                                 }
                                 emit(progress, "Continuing with the reviewed specification; remaining concerns are attached for instructor review.");

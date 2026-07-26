@@ -651,7 +651,9 @@ public class GenerationOrchestrationService {
                 // did, leaving ready-to-adopt tests in the report while the suite still missed the rules they pin. One adoption round is granted instead, once per generation
                 // and only when the candidate is otherwise finished, so the cost is bounded and a witness cannot drive repeated rewrites.
                 boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !witnessAdoptionAttempted
-                        && attempt < MAX_GENERATION_ATTEMPTS && semanticRepairsStarted < semanticRepairLimit && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
+                        && attempt < MAX_GENERATION_ATTEMPTS && semanticRepairsStarted < semanticRepairLimit
+                        // An adaptation gets a single semantic round; spending it on optional tests rather than on a defect would be a poor trade.
+                        && mode == GenerationMode.GENERATE && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
                 if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                     break;
                 }
@@ -710,9 +712,13 @@ public class GenerationOrchestrationService {
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
                     semanticRepairsStarted++;
                     pendingSemanticRepair = repairBatch.get();
-                    consecutiveRoundsOnSurface = pendingSemanticRepair.surface() == currentRepairSurface ? consecutiveRoundsOnSurface + 1 : 1;
-                    currentRepairSurface = pendingSemanticRepair.surface();
-                    servedRepairSurfaces.add(currentRepairSurface);
+                    if (!adoptWitnesses) {
+                        // Fairness bookkeeping tracks which surfaces have had REPAIR. An adoption round only offers optional tests, so recording it as an oracle round would
+                        // make the scheduler believe that surface had already had its turn and deny it the unserved-surface preference when a genuine weak oracle appears.
+                        consecutiveRoundsOnSurface = pendingSemanticRepair.surface() == currentRepairSurface ? consecutiveRoundsOnSurface + 1 : 1;
+                        currentRepairSurface = pendingSemanticRepair.surface();
+                        servedRepairSurfaces.add(currentRepairSurface);
+                    }
                     // Which quality findings the critic raised, and which of them this attempt was actually given to repair. Without this the repair loop is unobservable after
                     // the fact: a weakness that was found but never scheduled is indistinguishable in the logs from one that was never found at all.
                     log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,

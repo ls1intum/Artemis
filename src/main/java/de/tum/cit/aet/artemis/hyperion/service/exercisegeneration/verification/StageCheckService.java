@@ -61,8 +61,12 @@ public class StageCheckService {
     /** Below this many rules a single seam is credible; at or above it, one seam means the plan was never decomposed. */
     private static final int MIN_RULES_REQUIRING_SEVERAL_SEAMS = 4;
 
-    /** Rule rows in the three shapes generated specifications actually use: a markdown table row, a numbered list item, or a bare {@code R1:} line. */
-    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s*\\**R\\d+|R\\d+\\s*[:.])", Pattern.MULTILINE);
+    /**
+     * Rule rows in the shapes generated specifications actually use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted {@code R1}, or a
+     * bare {@code R1:} line. An earlier revision required the R-id and therefore counted a plainly numbered rules list as ZERO rules, leaving the decomposition check inert on
+     * one of the commonest shapes.
+     */
+    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+\\**R\\d+|R\\d+\\s*[:.])", Pattern.MULTILINE);
 
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;
@@ -863,14 +867,19 @@ public class StageCheckService {
         return section.isBlank() ? 0 : (int) SPEC_RULE_ROW.matcher(section).results().count();
     }
 
-    /** The body of one markdown section, up to the next top-level heading. */
+    /**
+     * The body of one markdown section, up to the next heading at any level. Stopping at a nested subsection matters: a {@code ### Worked examples} table inside {@code ## Rules}
+     * would otherwise have its rows counted as rules, and an inflated count can only ever cause a false rejection.
+     */
     private static String sectionBody(String document, String heading) {
         int start = document.indexOf(heading);
         if (start < 0) {
             return "";
         }
         int bodyStart = start + heading.length();
-        int next = document.indexOf("\n## ", bodyStart);
+        int nextSection = document.indexOf("\n## ", bodyStart);
+        int nextSubsection = document.indexOf("\n### ", bodyStart);
+        int next = nextSection < 0 ? nextSubsection : nextSubsection < 0 ? nextSection : Math.min(nextSection, nextSubsection);
         return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
     }
 

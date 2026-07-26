@@ -91,12 +91,6 @@ public class SpecFidelityCriticService {
     /** Each witness costs a validating build (~35s measured), so the pass stays small enough to sit inside a generation without dominating it. */
     private static final int MAX_CONTRACT_WITNESSES = 3;
 
-    /** Implementation-technique mandates: control flow or an API the tests cannot see the use of. Kept narrow so observable mandates ("must delegate to ...") never match. */
-    private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
-            "must\\s+(?:be\\s+(?:implemented\\s+)?(?:recursive(?:ly)?|iterative(?:ly)?)|(?:not\\s+)?use\\s+(?:a\\s+|any\\s+)?(?:recursion|stream|streams|lambda|lambdas|loop|loops|"
-                    + "looping\\s+construct[s]?|iteration)|be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline))[^.|\\n]{0,60}",
-            Pattern.CASE_INSENSITIVE);
-
     private static final int MAX_TECHNIQUE_RULE_FINDINGS = 4;
 
     private static final int MIN_CRITIC_OUTPUT_TOKENS = 4_096;
