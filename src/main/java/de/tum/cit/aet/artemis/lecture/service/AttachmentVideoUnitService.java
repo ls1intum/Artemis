@@ -102,6 +102,7 @@ public class AttachmentVideoUnitService {
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+        irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }

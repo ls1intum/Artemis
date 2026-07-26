@@ -22,12 +22,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class IrisLectureUnitSyncEventListenerTest {
@@ -43,11 +46,37 @@ class IrisLectureUnitSyncEventListenerTest {
     @Mock
     private IrisLectureUnitSyncDispatchService syncDispatchService;
 
+    @Mock
+    private SlideTestRepository slideRepository;
+
+    @Mock
+    private IrisLectureUnitSyncService syncService;
+
     private IrisLectureUnitSyncEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService);
+        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
+    }
+
+    @Test
+    void backfillInitializesVisibilityForActiveLegacyUnits() {
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        unit.setReleaseDate(ZonedDateTime.parse("2026-07-03T10:15:30Z"));
+        var slide = new Slide();
+        slide.setSlideNumber(2);
+        slide.setHidden(ZonedDateTime.parse("2026-07-04T10:15:30Z"));
+        when(attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(any(), any(Pageable.class))).thenReturn(List.of(unit));
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide));
+
+        listener.backfillMissingSyncStates();
+
+        var snapshotCaptor = org.mockito.ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(syncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+        assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(2, slide.getHidden());
     }
 
     private void enableStateTransitions() {

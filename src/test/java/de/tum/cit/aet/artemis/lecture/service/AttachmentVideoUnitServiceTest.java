@@ -102,6 +102,19 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void saveAttachmentVideoUnitMarksInitialVisibilityDirtyForRetryableSync() {
+        var unit = attachmentVideoUnit("New unit", null);
+
+        service.saveAttachmentVideoUnit(unit, null, null, false);
+
+        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        assertThat(snapshotCaptor.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+        assertThat(snapshotCaptor.getValue().releaseDate().toInstant()).isEqualTo(unit.getReleaseDate().toInstant());
+        verify(contentProcessingService).triggerProcessing(unit);
+    }
+
+    @Test
     void updateAttachmentVideoUnitSplitsSlidesForByteIdenticalPdfUpload() {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);

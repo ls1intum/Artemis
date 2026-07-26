@@ -106,4 +106,36 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             ORDER BY avu.id
             """)
     List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Finds active attachment video units for which no Iris synchronization state exists yet.
+     * This supports a bounded rollout backfill for units created before retryable synchronization
+     * was introduced.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return attachment video units without an Iris synchronization state
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            WHERE NOT EXISTS (
+                SELECT syncState.id
+                FROM IrisLectureUnitSyncState syncState
+                WHERE syncState.lectureUnitId = avu.id
+                    AND syncState.visibilityHash IS NOT NULL
+            )
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                )
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 }

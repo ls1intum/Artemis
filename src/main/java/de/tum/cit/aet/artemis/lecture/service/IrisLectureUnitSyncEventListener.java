@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureWithIrisEnabled.class)
 @Lazy
@@ -37,11 +39,17 @@ public class IrisLectureUnitSyncEventListener {
 
     private final IrisLectureUnitSyncDispatchService syncDispatchService;
 
+    private final SlideRepository slideRepository;
+
+    private final IrisLectureUnitSyncService syncService;
+
     public IrisLectureUnitSyncEventListener(AttachmentVideoUnitRepository attachmentVideoUnitRepository, IrisLectureUnitSyncStateRepository syncStateRepository,
-            IrisLectureUnitSyncDispatchService syncDispatchService) {
+            IrisLectureUnitSyncDispatchService syncDispatchService, SlideRepository slideRepository, IrisLectureUnitSyncService syncService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.syncStateRepository = syncStateRepository;
         this.syncDispatchService = syncDispatchService;
+        this.slideRepository = slideRepository;
+        this.syncService = syncService;
     }
 
     @EventListener
@@ -61,6 +69,24 @@ public class IrisLectureUnitSyncEventListener {
     public void retryDirtyStates() {
         syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List.of(IrisLectureUnitSyncState.STATUS_DIRTY), ZonedDateTime.now())
                 .forEach(this::synchronizeDirtyState);
+    }
+
+    /**
+     * Creates visibility synchronization state for active legacy units in bounded batches.
+     * The resulting dirty event is handled by the same durable retry path as ordinary updates.
+     */
+    @Scheduled(fixedRate = 300000)
+    public void backfillMissingSyncStates() {
+        attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50)).forEach(unit -> {
+            try {
+                var snapshot = new LectureContentUpdateSnapshot(unit.getId(), null, null, null, null, null, null, null, unit.resolveReleaseDate(),
+                        SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unit.getId())));
+                syncService.markVisibilityDirtyAfterCommit(snapshot);
+            }
+            catch (Exception e) {
+                log.warn("Could not initialize Iris lecture unit sync state {}", unit.getId(), e);
+            }
+        });
     }
 
     private void synchronizeDirtyState(IrisLectureUnitSyncState state) {
