@@ -531,14 +531,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 await this.updateAttachment(instructorPdfFile!);
             } else if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
-                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
-
-                if (studentBytes && hiddenPages.length > 0) {
-                    const studentPdfFile = this.bytesToFile(studentBytes, pdfName, true);
-                    await this.updateStudentVersion(studentPdfFile);
-                } else {
-                    this.finishSaving();
-                }
+                const studentPdfFile = studentBytes && hiddenPages.length > 0 ? this.bytesToFile(studentBytes, pdfName, true) : undefined;
+                await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages, studentPdfFile);
+                this.finishSaving();
             }
         } catch (error) {
             this.isSaving.set(false);
@@ -607,7 +602,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Updates an attachment video unit
      */
-    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[]): Promise<void> {
+    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[], studentPdfFile?: File): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const attachmentVideoUnitToUpdate = this.attachmentVideoUnit();
             if (
@@ -636,6 +631,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const submitUpdate = (finalPageOrder?: OrderedPage[]) => {
                 if (instructorPdfFile) {
                     formData.append('file', instructorPdfFile);
+                }
+                if (studentPdfFile) {
+                    formData.append('studentVersion', studentPdfFile);
                 }
                 if (finalPageOrder) {
                     formData.append(
@@ -676,28 +674,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     private hasCompletePersistedSlideSet(): boolean {
         return this.pageOrder().length === this.totalPages() && this.pageOrder().every((page) => !page.slideId.startsWith('temp_'));
-    }
-
-    /**
-     * Updates only the student version of the attachment video unit
-     */
-    private updateStudentVersion(studentPdfFile: File): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            const formData = new FormData();
-            formData.append('studentVersion', studentPdfFile);
-
-            this.attachmentVideoUnitService.updateStudentVersion(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
-                next: () => {
-                    this.finishSaving();
-                    resolve();
-                },
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: error.message });
-                    reject(error);
-                },
-            });
-        });
     }
 
     /**

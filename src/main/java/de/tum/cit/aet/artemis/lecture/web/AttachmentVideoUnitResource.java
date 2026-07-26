@@ -145,6 +145,7 @@ public class AttachmentVideoUnitResource {
      * @param attachmentVideoUnitDTO the attachment video unit DTO with updated content
      * @param attachment             the attachment with updated content
      * @param file                   the optional file to upload
+     * @param studentVersion         the optional student PDF matching the updated file and visibility
      * @param hiddenPages            the pages to be hidden in the attachment video unit
      * @param pageOrder              the new order of the edited attachment video unit
      * @param keepFilename           specifies if the original filename should be kept or not
@@ -155,9 +156,9 @@ public class AttachmentVideoUnitResource {
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
-            @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages,
-            @RequestPart(required = false) List<SlideOrderDTO> pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) MultipartFile studentVersion,
+            @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,
+            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnitDTO);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
@@ -181,7 +182,7 @@ public class AttachmentVideoUnitResource {
         // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
         Attachment attachmentUpdate = toTransientAttachment(attachment);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
-                file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+                file, studentVersion, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (notificationText != null && attachment != null) {
             Attachment changedAttachment = savedAttachmentVideoUnit.getAttachment();

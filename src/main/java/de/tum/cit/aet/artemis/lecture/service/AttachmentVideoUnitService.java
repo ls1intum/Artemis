@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -125,14 +126,17 @@ public class AttachmentVideoUnitService {
      * @param updateUnitDTO               The DTO with the new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
+     * @param studentVersionFile          The optional student PDF matching the updated file and visibility.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
      * @param originalCompetencyIds       The competency IDs before the update (for progress tracking)
      * @return The updated attachment video unit.
      */
+    @Transactional
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+            MultipartFile updateFile, MultipartFile studentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            Set<Long> originalCompetencyIds) {
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
@@ -176,6 +180,7 @@ public class AttachmentVideoUnitService {
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
+                handleStudentVersionFile(studentVersionFile, savedAttachment, savedAttachmentVideoUnit.getId());
 
                 if (isFileNeutralSlideMetadataUpdate) {
                     slideVisibilityUpdateService.updateVisibilityAndStudentVersion(savedAttachmentVideoUnit, hiddenPages);

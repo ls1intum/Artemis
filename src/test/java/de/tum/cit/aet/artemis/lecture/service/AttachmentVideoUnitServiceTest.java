@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -14,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,7 +103,7 @@ class AttachmentVideoUnitServiceTest {
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), unit.getVideoSource());
 
-        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, null, null, null, false, null, null, Set.of());
 
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
@@ -131,7 +133,7 @@ class AttachmentVideoUnitServiceTest {
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
 
-        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, null, null, Set.of());
 
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(contentProcessingService, never()).triggerProcessing(any());
@@ -165,7 +167,7 @@ class AttachmentVideoUnitServiceTest {
             return null;
         }).when(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
 
-        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, hiddenPages, List.of(new SlideOrderDTO("21", 1)), Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, hiddenPages, List.of(new SlideOrderDTO("21", 1)), Set.of());
 
         verify(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
@@ -191,7 +193,7 @@ class AttachmentVideoUnitServiceTest {
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(existingSlide)).thenReturn(List.of(slide(21L, 1, hiddenUntil)));
 
-        service.updateAttachmentVideoUnit(unit, dto, attachment, null, false, hiddenPages, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, attachment, null, null, false, hiddenPages, null, Set.of());
 
         verify(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
         verify(contentProcessingService, never()).triggerProcessing(any());
@@ -203,7 +205,7 @@ class AttachmentVideoUnitServiceTest {
         var unit = attachmentVideoUnit("Unit", null);
         var dto = attachmentVideoUnitDTO(unit, unit.getName(), unit.getReleaseDate(), "https://video.example/updated");
 
-        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, null, null, null, false, null, null, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
@@ -218,7 +220,7 @@ class AttachmentVideoUnitServiceTest {
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 
-        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, null, null, null, false, null, null, Set.of());
 
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
     }
@@ -229,7 +231,7 @@ class AttachmentVideoUnitServiceTest {
         var updatedReleaseDate = unit.getReleaseDate().plusDays(1);
         var dto = attachmentVideoUnitDTO(unit, "New name", updatedReleaseDate, unit.getVideoSource());
 
-        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, null, null, null, false, null, null, Set.of());
 
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
@@ -237,27 +239,50 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
-    void updateAttachmentVideoUnitProjectsRequestedSlideVisibilityForByteChangedPdfUpload() {
+    void updateAttachmentVideoUnitPersistsMatchingStudentVersionForByteChangedPdfUpload() throws Exception {
         var attachment = attachment();
         attachment.setStudentVersion("attachments/student-unit.pdf");
         var unit = attachmentVideoUnit("Unit", attachment);
         var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
         var uploadedFile = new MockMultipartFile("file", "unit.pdf", "application/pdf", "different content".getBytes(StandardCharsets.UTF_8));
+        var studentVersionFile = new MockMultipartFile("studentVersion", "unit_student.pdf", "application/pdf", "filtered content".getBytes(StandardCharsets.UTF_8));
         var hiddenUntil = ZonedDateTime.parse("2026-07-04T12:00:00Z");
         var hiddenPages = List.of(new HiddenPageInfoDTO("slide-a", hiddenUntil, null));
         var pageOrder = List.of(new SlideOrderDTO("slide-b", 1), new SlideOrderDTO("slide-a", 2));
         String newHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", newHash));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        doAnswer(invocation -> {
+            ((Attachment) invocation.getArgument(1)).setStudentVersion("attachments/student-unit-updated.pdf");
+            return null;
+        }).when(attachmentService).replaceUploadedStudentVersionFile(any(), any(), any(), any());
 
-        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, hiddenPages, pageOrder, Set.of());
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, hiddenPages, pageOrder, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit, hiddenPages, pageOrder);
-        assertThat(attachment.getStudentVersion()).isNull();
+        verify(attachmentService).replaceUploadedStudentVersionFile(any(), eq(attachment), eq(LECTURE_UNIT_ID), eq(studentVersionFile.getOriginalFilename()));
+        assertThat(attachment.getStudentVersion()).isEqualTo("attachments/student-unit-updated.pdf");
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(1, null).containsEntry(2, hiddenUntil).hasSize(2);
+    }
+
+    @Test
+    void updateAttachmentVideoUnitDoesNotFailRequestWhenAsyncSlideSplitFails() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = new MockMultipartFile("file", "unit.pdf", "application/pdf", "different content".getBytes(StandardCharsets.UTF_8));
+        String newHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", newHash));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(unit)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("split failed")));
+
+        assertThat(service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, null, null, Set.of())).isSameAs(unit);
+
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit);
+        verify(contentProcessingService).triggerProcessing(unit);
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit(String name, Attachment attachment) {

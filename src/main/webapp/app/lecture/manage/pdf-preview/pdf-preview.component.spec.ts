@@ -692,18 +692,18 @@ describe('PdfPreviewComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should surface an error when the student version update fails', async () => {
+        it('should upload the matching student version in the attachment update request', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.hidePages({ slideId: component.pageOrder()[0].slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
             component.isFileChanged.set(true);
-            attachmentVideoUnitService.updateStudentVersion.mockReturnValueOnce(throwError(() => new Error('student failed')));
 
             await component.updateAttachmentWithFile();
 
-            expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: 'student failed' });
-            expect(component.isSaving()).toBe(false);
+            const formData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+            expect(formData.get('studentVersion')).toBeInstanceOf(File);
+            expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+            expect(alertService.success).toHaveBeenCalled();
         });
 
         it('should send the final page order (with slideId/order) to the video unit update endpoint', async () => {
