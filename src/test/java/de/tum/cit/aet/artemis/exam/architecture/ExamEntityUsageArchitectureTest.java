@@ -16,8 +16,6 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     }
 
     // TODO: Reduce this to 0 by returning DTOs instead of entities
-    // Reduced from 24 to 22: getStudentExamForConduction + getTestRunForConduction now return StudentExamForConductionDTO.
-    // Reduced from 22 to 21: getStudentExamForSummary now returns StudentExamForSummaryDTO.
     @Override
     protected int getExpectedEntityReturnViolations() {
         return 7;
@@ -33,7 +31,6 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // The exam-import endpoints return ExamImportResultDTO/ExerciseGroupImportResultDTO, which wrap the imported
     // Exam/ExerciseGroup entity alongside the skipped/incomplete exercise titles. This trades two raw-entity returns
     // (the more severe anti-pattern) for two DTO-wrapped-entity fields; both should be reduced to 0 eventually.
-    // Reduced from 3 to 2: StudentExamWithGradeDTO.studentExam is now a StudentExamForDetailDTO projection, not the entity.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
         return 2;

@@ -76,8 +76,6 @@ import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
@@ -112,8 +110,6 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamService examService;
@@ -137,9 +133,8 @@ public class StudentExamResource {
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
-            ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
-            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository,
-            StudentExamLiveEventService studentExamLiveEventService) {
+            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -150,7 +145,6 @@ public class StudentExamResource {
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.examRepository = examRepository;
-        this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
@@ -628,18 +622,7 @@ public class StudentExamResource {
 
         Exam exam = examRepository.findByIdElseThrow(examId);
         List<Long> exerciseIds = testRunConfiguration.exerciseIds() != null ? testRunConfiguration.exerciseIds() : List.of();
-        // preserve the exact order of exerciseIds: StudentExam.exercises is an @OrderColumn list
-        List<Exercise> exercises = exerciseIds.stream().map(exerciseRepository::findByIdElseThrow).toList();
-        // findByIdElseThrow resolves any exercise id, so without this check a test run could pull in an exercise from
-        // another exam or course; a test run may only contain exercises of the exam it belongs to
-        for (Exercise exercise : exercises) {
-            Exam exerciseExam = exercise.getExam();
-            if (exerciseExam == null || !exerciseExam.getId().equals(examId)) {
-                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
-            }
-        }
-
-        StudentExam testRun = studentExamService.createTestRun(exam, exercises, testRunConfiguration.workingTime());
+        StudentExam testRun = studentExamService.createTestRun(exam, exerciseIds, testRunConfiguration.workingTime());
         return ResponseEntity.ok(StudentExamDTO.withUser(testRun));
     }
 
@@ -802,12 +785,6 @@ public class StudentExamResource {
 
         // Fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
-        for (var exercise : studentExam.getExercises()) {
-            for (var participation : exercise.getStudentParticipations()) {
-                // remove inner exercise from participation
-                participation.setExercise(null);
-            }
-        }
 
         // Create new exam session
         createNewExamSession(request, studentExam);

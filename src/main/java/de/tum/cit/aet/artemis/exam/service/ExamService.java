@@ -752,8 +752,8 @@ public class ExamService {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                // filter quiz solutions unless they may be revealed: see StudentExam#shouldRevealQuizSolutions
+                if (!studentExam.shouldRevealQuizSolutions()) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);

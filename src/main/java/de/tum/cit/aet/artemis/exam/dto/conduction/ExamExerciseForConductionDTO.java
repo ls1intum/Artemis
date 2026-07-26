@@ -22,29 +22,15 @@ public record ExamExerciseForConductionDTO(@JsonUnwrapped ExamExerciseBaseForCon
         @Nullable @JsonUnwrapped FileUploadExerciseForConductionDTO fileUploadExercise) {
 
     /**
-     * Converts an Exercise into an ExamExerciseForConductionDTO with the solution-hidden quiz projection (conduction /
-     * pre-publish summary).
-     *
-     * @param exercise the exercise to convert
-     * @return the converted DTO, or null if the exercise is null
-     */
-    public static ExamExerciseForConductionDTO of(Exercise exercise) {
-        return of(exercise, false);
-    }
-
-    /**
      * Converts an Exercise into an ExamExerciseForConductionDTO, dispatching on the concrete exercise type for the
      * per-type fields.
      *
-     * @param exercise             the exercise to convert
+     * @param exercise             the exercise to convert (never null; callers filter null elements before mapping)
      * @param includeQuizSolutions whether a quiz exercise's questions should carry their full solutions ({@code true}
      *                                 only once the student exam's results are published, decided by the summary caller)
-     * @return the converted DTO, or null if the exercise is null
+     * @return the converted DTO
      */
     public static ExamExerciseForConductionDTO of(Exercise exercise, boolean includeQuizSolutions) {
-        if (exercise == null) {
-            return null;
-        }
         QuizExerciseForConductionDTO quizExercise = null;
         ProgrammingExerciseForConductionDTO programmingExercise = null;
         ModelingExerciseForConductionDTO modelingExercise = null;

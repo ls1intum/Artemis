@@ -9,6 +9,12 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { Language } from 'app/course/shared/entities/course.model';
+import { DragAndDropSubmittedAnswerFromLiveClient, DragAndDropSubmittedAnswerFromLiveClientTypeEnum } from 'app/openapi/model/drag-and-drop-submitted-answer-from-live-client';
+import {
+    MultipleChoiceSubmittedAnswerFromLiveClient,
+    MultipleChoiceSubmittedAnswerFromLiveClientTypeEnum,
+} from 'app/openapi/model/multiple-choice-submitted-answer-from-live-client';
+import { ShortAnswerSubmittedAnswerFromLiveClient, ShortAnswerSubmittedAnswerFromLiveClientTypeEnum } from 'app/openapi/model/short-answer-submitted-answer-from-live-client';
 
 /**
  * Wire shape of the exam hand-in request body ({@code POST .../student-exams/submit}).
@@ -32,10 +38,6 @@ export interface SubmitExamExerciseDTO {
 export interface SubmitExamParticipationDTO {
     id?: number;
     submissions: SubmitExamSubmissionDTO[];
-}
-
-interface EntityIdRef {
-    id?: number;
 }
 
 /**
@@ -79,28 +81,11 @@ export interface InertSubmissionDTO extends BaseSubmissionDTO {
 export type SubmitExamSubmissionDTO = TextSubmissionDTO | ModelingSubmissionDTO | QuizSubmissionDTO | InertSubmissionDTO;
 
 /**
- * Discriminated union of the quiz submitted-answer variants, keyed by {@code type} (matching the server's
- * {@code QuizQuestionType} discriminator).
+ * Discriminated union of the generated quiz submitted-answer models, keyed by {@code type} (matching the server's
+ * {@code QuizQuestionType} discriminator). The per-variant generated interfaces are used instead of the flattened
+ * generated {@code SubmittedAnswerFromLiveClient} so the compiler can narrow field access after a {@code type} check.
  */
-export interface MultipleChoiceSubmittedAnswerDTO {
-    type: QuizQuestionType.MULTIPLE_CHOICE;
-    quizQuestion?: EntityIdRef;
-    selectedOptions?: EntityIdRef[];
-}
-
-export interface DragAndDropSubmittedAnswerDTO {
-    type: QuizQuestionType.DRAG_AND_DROP;
-    quizQuestion?: EntityIdRef;
-    mappings?: { dragItem?: EntityIdRef; dropLocation?: EntityIdRef }[];
-}
-
-export interface ShortAnswerSubmittedAnswerDTO {
-    type: QuizQuestionType.SHORT_ANSWER;
-    quizQuestion?: EntityIdRef;
-    submittedTexts?: { text?: string; spot?: EntityIdRef }[];
-}
-
-export type SubmittedAnswerFromLiveClientDTO = MultipleChoiceSubmittedAnswerDTO | DragAndDropSubmittedAnswerDTO | ShortAnswerSubmittedAnswerDTO;
+export type SubmittedAnswerFromLiveClientDTO = MultipleChoiceSubmittedAnswerFromLiveClient | DragAndDropSubmittedAnswerFromLiveClient | ShortAnswerSubmittedAnswerFromLiveClient;
 
 /**
  * Builds the slim submit request body from the live in-memory {@link StudentExam}.
@@ -168,13 +153,13 @@ function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveC
     switch (answer.type) {
         case QuizQuestionType.MULTIPLE_CHOICE:
             return {
-                type: QuizQuestionType.MULTIPLE_CHOICE,
+                type: MultipleChoiceSubmittedAnswerFromLiveClientTypeEnum.MultipleChoice,
                 quizQuestion: { id: answer.quizQuestion?.id },
                 selectedOptions: ((answer as MultipleChoiceSubmittedAnswer).selectedOptions ?? []).map((option) => ({ id: option.id })),
             };
         case QuizQuestionType.DRAG_AND_DROP:
             return {
-                type: QuizQuestionType.DRAG_AND_DROP,
+                type: DragAndDropSubmittedAnswerFromLiveClientTypeEnum.DragAndDrop,
                 quizQuestion: { id: answer.quizQuestion?.id },
                 mappings: ((answer as DragAndDropSubmittedAnswer).mappings ?? []).map((mapping) => ({
                     dragItem: { id: mapping.dragItem?.id },
@@ -183,7 +168,7 @@ function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveC
             };
         case QuizQuestionType.SHORT_ANSWER:
             return {
-                type: QuizQuestionType.SHORT_ANSWER,
+                type: ShortAnswerSubmittedAnswerFromLiveClientTypeEnum.ShortAnswer,
                 quizQuestion: { id: answer.quizQuestion?.id },
                 submittedTexts: ((answer as ShortAnswerSubmittedAnswer).submittedTexts ?? []).map((submittedText) => ({
                     text: submittedText.text,

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -105,10 +104,7 @@ public class StudentExamSubmitMapper {
      * @param currentUser          the authenticated user, used as the participant of every reconstructed participation
      */
     public void attachSubmissions(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
-        Map<Long, SubmitExamExerciseDTO> exerciseDtosById = indexById(submitStudentExamDTO.exercises(), SubmitExamExerciseDTO::id);
-        // One question-loaded quiz exercise per distinct quiz id per request; the exact-one participation/submission
-        // rules already bound this to a single load per quiz, but memoizing keeps that guarantee explicit and cheap.
-        Map<Long, QuizExercise> quizExerciseCache = new HashMap<>();
+        Map<Long, SubmitExamExerciseDTO> exerciseDtosById = indexById(submitStudentExamDTO.exercises());
         boolean testRun = existingStudentExam.isTestRun();
         for (Exercise exercise : existingStudentExam.getExercises()) {
             if (exercise == null) {
@@ -116,7 +112,7 @@ public class StudentExamSubmitMapper {
             }
             try {
                 SubmitExamExerciseDTO exerciseDTO = exerciseDtosById.get(exercise.getId());
-                exercise.setStudentParticipations(buildParticipations(exercise, exerciseDTO, currentUser, quizExerciseCache, testRun));
+                exercise.setStudentParticipations(buildParticipations(exercise, exerciseDTO, currentUser, testRun));
             }
             catch (Exception e) {
                 // Mirror the legacy per-exercise swallow: never let one broken exercise abort the hand-in or lose
@@ -128,8 +124,7 @@ public class StudentExamSubmitMapper {
         }
     }
 
-    private Set<StudentParticipation> buildParticipations(Exercise exercise, @Nullable SubmitExamExerciseDTO exerciseDTO, User currentUser,
-            Map<Long, QuizExercise> quizExerciseCache, boolean testRun) {
+    private Set<StudentParticipation> buildParticipations(Exercise exercise, @Nullable SubmitExamExerciseDTO exerciseDTO, User currentUser, boolean testRun) {
         Set<StudentParticipation> participations = new HashSet<>();
         // Enforce the exact-one-participation semantics on the wire List (see class javadoc): anything other than a
         // single participation attaches nothing, matching the server's studentParticipations.size() != 1 -> skip.
@@ -160,18 +155,18 @@ public class StudentExamSubmitMapper {
         // is INITIALIZED while it is being worked on).
         participation.setTestRun(testRun);
         participation.setInitializationState(InitializationState.INITIALIZED);
-        participation.setSubmissions(buildSubmissions(exercise, participationDTO.submissions().getFirst(), quizExerciseCache));
+        participation.setSubmissions(buildSubmissions(exercise, participationDTO.submissions().getFirst()));
         participations.add(participation);
         return participations;
     }
 
-    private Set<Submission> buildSubmissions(Exercise exercise, @Nullable SubmitExamSubmissionDTO submissionDTO, Map<Long, QuizExercise> quizExerciseCache) {
+    private Set<Submission> buildSubmissions(Exercise exercise, @Nullable SubmitExamSubmissionDTO submissionDTO) {
         Set<Submission> submissions = new HashSet<>();
         // null-tolerate an individual null element in the client array (skip it) rather than throwing.
         if (submissionDTO == null) {
             return submissions;
         }
-        Submission submission = buildSubmission(exercise, submissionDTO, quizExerciseCache);
+        Submission submission = buildSubmission(exercise, submissionDTO);
         if (submission != null) {
             submissions.add(submission);
         }
@@ -179,7 +174,7 @@ public class StudentExamSubmitMapper {
     }
 
     @Nullable
-    private Submission buildSubmission(Exercise exercise, SubmitExamSubmissionDTO submissionDTO, Map<Long, QuizExercise> quizExerciseCache) {
+    private Submission buildSubmission(Exercise exercise, SubmitExamSubmissionDTO submissionDTO) {
         return switch (submissionDTO) {
             case TextExamSubmissionDTO textDTO -> {
                 if (!(exercise instanceof TextExercise)) {
@@ -208,14 +203,14 @@ public class StudentExamSubmitMapper {
                 modelingSubmission.setExplanationText(modelingDTO.explanationText());
                 yield modelingSubmission;
             }
-            case QuizExamSubmissionDTO quizDTO -> buildQuizSubmission(exercise, quizDTO, quizExerciseCache);
+            case QuizExamSubmissionDTO quizDTO -> buildQuizSubmission(exercise, quizDTO);
             // programming and file-upload submissions are never saved via the exam hand-in; accepted and ignored.
             default -> null;
         };
     }
 
     @Nullable
-    private Submission buildQuizSubmission(Exercise exercise, QuizExamSubmissionDTO quizDTO, Map<Long, QuizExercise> quizExerciseCache) {
+    private Submission buildQuizSubmission(Exercise exercise, QuizExamSubmissionDTO quizDTO) {
         if (!(exercise instanceof QuizExercise)) {
             // matches the legacy ClassCastException-swallow: a quiz submission for a non-quiz exercise is dropped.
             log.warn("Ignoring quiz submission {} for non-quiz exercise {}", quizDTO.id(), exercise.getId());
@@ -232,19 +227,19 @@ public class StudentExamSubmitMapper {
         }
         // The quiz exercise must be loaded WITH its questions (and their nested options/items/spots) so
         // buildSubmissionFromLiveClientDTO can re-resolve the client-supplied answer ids; without it every answer is
-        // dropped. This mirrors the quiz live/exam auto-save path (#12832). Memoized so at most one load happens per
-        // distinct quiz exercise per request.
-        QuizExercise quizExerciseWithQuestions = quizExerciseCache.computeIfAbsent(exercise.getId(), quizExerciseRepository::findByIdWithQuestionsElseThrow);
+        // dropped. This mirrors the quiz live/exam auto-save path (#12832). The loop over distinct exercises plus the
+        // exactly-one-participation/submission rule bounds this to one load per quiz exercise per request.
+        QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
         return quizSubmissionService.buildSubmissionFromLiveClientDTO(new QuizSubmissionFromLiveClientDTO(quizDTO.id(), quizDTO.submittedAnswers()), quizExerciseWithQuestions);
     }
 
-    private static <T> Map<Long, T> indexById(@Nullable List<T> items, Function<T, Long> idExtractor) {
-        if (items == null) {
+    private static Map<Long, SubmitExamExerciseDTO> indexById(@Nullable List<SubmitExamExerciseDTO> exercises) {
+        if (exercises == null) {
             return Map.of();
         }
         // The single documented duplicate-resolution rule (see class javadoc): on the client-invalid case of duplicate
         // ids, keep the last entry rather than throwing. Null elements and null ids are skipped.
-        return items.stream().filter(item -> item != null && idExtractor.apply(item) != null)
-                .collect(Collectors.toMap(idExtractor, Function.identity(), (first, second) -> second));
+        return exercises.stream().filter(exerciseDTO -> exerciseDTO != null && exerciseDTO.id() != null)
+                .collect(Collectors.toMap(SubmitExamExerciseDTO::id, Function.identity(), (first, second) -> second));
     }
 }

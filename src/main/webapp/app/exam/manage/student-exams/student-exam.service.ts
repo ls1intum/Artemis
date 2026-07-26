@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 type EntityResponseType = HttpResponse<StudentExamDTO>;
-type EntityArrayResponseType = HttpResponse<StudentExamDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class StudentExamService {
@@ -25,20 +24,6 @@ export class StudentExamService {
         return this.http
             .get<StudentExamWithGradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
             .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam)));
-    }
-
-    /**
-     * Find all student exams for the given exam.
-     *
-     * Note: this method currently has no production caller (dead code, kept for potential future use / its own
-     * spec). The server response no longer includes `exam`, `user`, or `examSessions`.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     */
-    findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<StudentExamDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processStudentExams(res)));
     }
 
     /**
@@ -75,15 +60,6 @@ export class StudentExamService {
         if (studentExam?.exam?.course) {
             this.accountService.setAccessRightsForCourse(studentExam.exam.course);
         }
-    }
-
-    private processStudentExams(studentExamsResponse: EntityArrayResponseType) {
-        studentExamsResponse.body!.forEach((studentExam) => {
-            if (studentExam.exam?.course) {
-                this.accountService.setAccessRightsForCourse(studentExam.exam.course);
-            }
-        });
-        return studentExamsResponse;
     }
 
     /**

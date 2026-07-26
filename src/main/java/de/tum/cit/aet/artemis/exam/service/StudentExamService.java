@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -125,6 +127,8 @@ public class StudentExamService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final ExamRepository examRepository;
 
     private final CacheManager cacheManager;
@@ -147,8 +151,8 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi,
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
-            ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
+            ExerciseRepository exerciseRepository, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -164,6 +168,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingTriggerService = programmingTriggerService;
+        this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
@@ -589,17 +594,44 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
+     * Resolves the exercise ids, then calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
      * @param exam        the exam the test run belongs to
-     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param exerciseIds the ids of the exercises to include in the test run, in the exact order they should be persisted
      * @param workingTime the working time of the test run in seconds
      * @return the created testRun studentExam
      */
-    public StudentExam createTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
+    public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
+        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
         StudentExam testRun = generateTestRun(exam, exercises, workingTime);
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
+    }
+
+    /**
+     * Loads the given exercises with a single query and returns them in the order of the given ids
+     * (StudentExam.exercises is an @OrderColumn list, so the order must be preserved).
+     * A test run may only contain exercises of the exam it belongs to; any other exercise id is rejected.
+     *
+     * @param exam        the exam the exercises must belong to
+     * @param exerciseIds the ordered ids of the exercises to load
+     * @return the exercises in the order of the given ids
+     */
+    private List<Exercise> resolveExamExercises(Exam exam, List<Long> exerciseIds) {
+        Map<Long, Exercise> exercisesById = exerciseRepository.findAllById(exerciseIds).stream().collect(Collectors.toMap(Exercise::getId, Function.identity()));
+        List<Exercise> exercises = new ArrayList<>(exerciseIds.size());
+        for (Long exerciseId : exerciseIds) {
+            Exercise exercise = exercisesById.get(exerciseId);
+            if (exercise == null) {
+                throw new EntityNotFoundException("Exercise", exerciseId);
+            }
+            Exam exerciseExam = exercise.getExam();
+            if (exerciseExam == null || !exerciseExam.getId().equals(exam.getId())) {
+                throw new ConflictException("The exercise does not belong to the exam", "Exercise", "exerciseExamConflict");
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
     }
 
     /**

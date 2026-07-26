@@ -29,16 +29,6 @@ public record QuizExerciseForConductionDTO(Integer allowedNumberOfAttempts, Inte
         Boolean randomizeQuestionOrder, List<QuizQuestionForExamDTO> quizQuestions) {
 
     /**
-     * Extracts the quiz-specific fields with the solution-hidden question projection (conduction / pre-publish summary).
-     *
-     * @param quizExercise the quiz exercise to convert
-     * @return the quiz-specific fields
-     */
-    public static QuizExerciseForConductionDTO of(QuizExercise quizExercise) {
-        return of(quizExercise, false);
-    }
-
-    /**
      * Extracts the quiz-specific fields, guarding against uninitialized lazy quiz-question collections.
      *
      * @param quizExercise     the quiz exercise to convert

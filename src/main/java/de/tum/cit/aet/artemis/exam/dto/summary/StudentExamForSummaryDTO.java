@@ -53,12 +53,8 @@ public record StudentExamForSummaryDTO(long id, Integer workingTime, Boolean sta
         var entitySessions = studentExam.getExamSessions();
         List<ExamSessionForConductionDTO> examSessions = (entitySessions == null || !Hibernate.isInitialized(entitySessions)) ? null
                 : entitySessions.stream().map(ExamSessionForConductionDTO::of).toList();
-        // Once results are published, the summary must serve the full quiz questions (isCorrect, explanation, correct
-        // drag-and-drop / short-answer mappings) so the post-publish quiz summary UI can show right/wrong; before publish
-        // (the summary is reachable after submission but before the publish date) the questions stay solution-hidden.
-        // Test runs are exempt from quiz masking altogether (the server never strips their quiz solutions and the client
-        // treats test-run results as immediately published), so their summary always carries the solutions.
-        boolean includeQuizSolutions = studentExam.isTestRun() || studentExam.areResultsPublishedYet();
+        // Single publish gate for quiz solutions: see StudentExam#shouldRevealQuizSolutions.
+        boolean includeQuizSolutions = studentExam.shouldRevealQuizSolutions();
         var entityExercises = studentExam.getExercises();
         List<ExamExerciseForConductionDTO> exercises = (entityExercises == null || !Hibernate.isInitialized(entityExercises)) ? null
                 : entityExercises.stream().filter(Objects::nonNull).map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
