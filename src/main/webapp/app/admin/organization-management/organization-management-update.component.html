@@ -5,7 +5,7 @@
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
                     <label for="name" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.name"></label>
-                    <input id="name" type="text" pInputText name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
+                    <input id="name" type="text" tumUiInput name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
                     @if (nameInput.dirty && nameInput.invalid) {
                         <div>
                             @if (nameInput.errors?.['required']) {
@@ -25,7 +25,7 @@
                     <input
                         id="shortName"
                         type="text"
-                        pInputText
+                        tumUiInput
                         name="shortName"
                         #shortNameInput="ngModel"
                         [(ngModel)]="organization().shortName"
@@ -50,24 +50,24 @@
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="url" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.url"></label>
-                    <input id="url" type="text" pInputText name="url" #urlInput="ngModel" [(ngModel)]="organization().url" />
+                    <input id="url" type="text" tumUiInput name="url" #urlInput="ngModel" [(ngModel)]="organization().url" />
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="description" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.description"></label>
-                    <input id="description" type="text" pInputText name="description" #descriptionInput="ngModel" [(ngModel)]="organization().description" />
+                    <input id="description" type="text" tumUiInput name="description" #descriptionInput="ngModel" [(ngModel)]="organization().description" />
                 </div>
                 <div class="flex flex-col gap-2">
                     <label for="logoUrl" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.logoUrl"></label>
-                    <input id="logoUrl" type="text" pInputText name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization().logoUrl" />
+                    <input id="logoUrl" type="text" tumUiInput name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization().logoUrl" />
                 </div>
                 <div class="flex flex-col gap-2">
-                    <p-message severity="warn">
+                    <tum-ui-message severity="warn">
                         <span jhiTranslate="artemisApp.organizationManagement.patternChangeWarning"
                             >Changing the email pattern will trigger a re-assignment of all users to this organization</span
                         >
-                    </p-message>
+                    </tum-ui-message>
                     <label for="emailPattern" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.emailPattern"></label>
-                    <input id="emailPattern" type="text" required pInputText name="emailPattern" validPattern #emailPattern="ngModel" [(ngModel)]="organization().emailPattern" />
+                    <input id="emailPattern" type="text" required tumUiInput name="emailPattern" validPattern #emailPattern="ngModel" [(ngModel)]="organization().emailPattern" />
                     @if (emailPattern?.dirty && emailPattern?.invalid) {
                         <div>
                             @if (emailPattern.errors?.['validPattern']) {
@@ -78,11 +78,11 @@
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 mt-4">
-                <button id="cancelButton" type="button" pButton size="small" severity="secondary" (click)="previousState()" data-testid="cancel-btn">
+                <button id="cancelButton" type="button" tumUiButton size="small" severity="secondary" (click)="previousState()" data-testid="cancel-btn">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="saveButton" type="submit" pButton size="small" [disabled]="editForm.form.invalid || isSaving()" data-testid="save-btn">
+                <button id="saveButton" type="submit" tumUiButton size="small" [disabled]="editForm.form.invalid || isSaving()" data-testid="save-btn">
                     <fa-icon [icon]="faSave" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
