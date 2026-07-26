@@ -4,11 +4,12 @@ import { faClock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/f
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
+import { ButtonDirective } from 'primeng/button';
+import { Tooltip } from 'primeng/tooltip';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -30,7 +31,6 @@ export enum DateTimePickerType {
     imports: [
         FaStackComponent,
         TumUiTooltipDirective,
-        TumUiButtonDirective,
         FaIconComponent,
         FaStackItemSizeDirective,
         FormsModule,
@@ -38,6 +38,8 @@ export enum DateTimePickerType {
         TranslateDirective,
         ArtemisTranslatePipe,
         TimeZoneWarningComponent,
+        ButtonDirective,
+        Tooltip,
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {

@@ -48,7 +48,7 @@
              explicit confirm button that also commits the currently shown time, so applying it is one click. -->
         <ng-template #buttonbar>
             <div class="flex justify-end w-full">
-                <button tumUiButton type="button" size="small" (click)="applyAndClose(datePicker)" jhiTranslate="entity.action.done"></button>
+                <button pButton type="button" size="small" (click)="applyAndClose(datePicker)" jhiTranslate="entity.action.done"></button>
             </div>
         </ng-template>
     </p-datepicker>
@@ -68,6 +68,6 @@
 @if (warning()) {
     <div class="text-sm mt-1 block">
         <fa-icon class="text-state-warning" [icon]="faTriangleExclamation" />
-        <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" [tumUiTooltip]="'entity.visibleDateWarningToolTip' | artemisTranslate"></span>
+        <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" pTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
     </div>
 }
