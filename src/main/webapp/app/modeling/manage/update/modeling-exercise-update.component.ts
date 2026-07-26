@@ -32,6 +32,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CustomScientificNotationValidatorDirective } from 'app/foundation/validators/custom-scientific-notation-validator.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -70,6 +71,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        CustomScientificNotationValidatorDirective,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

@@ -34,6 +34,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CustomScientificNotationValidatorDirective } from 'app/foundation/validators/custom-scientific-notation-validator.directive';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
@@ -74,6 +75,7 @@ import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/tex
         FeatureOverlayComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
         TextExerciseTimelineComponent,
+        CustomScientificNotationValidatorDirective,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {

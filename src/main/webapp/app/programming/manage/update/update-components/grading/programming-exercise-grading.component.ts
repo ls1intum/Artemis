@@ -21,6 +21,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import { CustomScientificNotationValidatorDirective } from 'app/foundation/validators/custom-scientific-notation-validator.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -39,6 +40,7 @@ import { Message } from 'primeng/message';
         KeyValuePipe,
         ArtemisTranslatePipe,
         Message,
+        CustomScientificNotationValidatorDirective,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {

@@ -121,6 +121,7 @@
                             name="points"
                             #points="ngModel"
                             id="field_points"
+                            noScientificNotation
                             [(ngModel)]="textExercise.maxPoints"
                         />
                         @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
@@ -137,6 +138,7 @@
                             max="9999"
                             name="bonusPoints"
                             id="field_bonusPoints"
+                            noScientificNotation
                             [(ngModel)]="textExercise.bonusPoints"
                             #bonusPoints="ngModel"
                         />

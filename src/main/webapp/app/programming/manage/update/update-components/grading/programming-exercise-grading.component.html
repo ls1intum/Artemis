@@ -26,6 +26,7 @@
                         max="9999"
                         name="points"
                         id="field_points"
+                        noScientificNotation
                         [(ngModel)]="programmingExercise().maxPoints"
                         #maxScore="ngModel"
                     />
@@ -47,6 +48,7 @@
                         max="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
+                        noScientificNotation
                         [(ngModel)]="programmingExercise().bonusPoints"
                         #bonusPoints="ngModel"
                     />

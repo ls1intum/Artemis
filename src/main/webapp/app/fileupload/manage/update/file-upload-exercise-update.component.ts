@@ -35,6 +35,7 @@ import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CustomScientificNotationValidatorDirective } from 'app/foundation/validators/custom-scientific-notation-validator.directive';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -69,6 +70,7 @@ import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-
         FormFooterComponent,
         ArtemisTranslatePipe,
         FileUploadExerciseTimelineComponent,
+        CustomScientificNotationValidatorDirective,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {
