@@ -298,6 +298,9 @@ public class ExamResource {
 
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
+        // Separate from the generic conflict checks because it needs the pre-update duration: a duration change rescales
+        // the individual working time extensions further down, so the invariant has to hold for the PROJECTED state.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(originalExam, originalExamDuration);
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
@@ -388,15 +391,13 @@ public class ExamResource {
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
-        ZonedDateTime newEndDate = exam.getEndDate().plusSeconds(workingTimeChange);
-        // The submission overview must never become visible while the exam is still running. Reject an extension that would move the end date to or past the configured
-        // examSummaryPublicationDate (the same invariant enforced on create/update). The instructor has to move the publication date first in that case.
-        if (exam.getExamSummaryPublicationDate() != null && !newEndDate.isBefore(exam.getExamSummaryPublicationDate())) {
-            throw new BadRequestAlertException("The working time cannot be extended to or past the submission overview publication date. Move that date first.", ENTITY_NAME,
-                    "examSummaryPublicationDateConflict");
-        }
-        exam.setEndDate(newEndDate);
+        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        // The submission overview must never become visible while a student is still writing, so validate against the
+        // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
+        // change, so checking only the new nominal end date would miss an extended student crossing the publication
+        // date. Safe to validate after mutating: the exam is detached here, and throwing skips the save below.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam, originalExamDuration);
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
@@ -487,7 +488,6 @@ public class ExamResource {
         checkExamTitleLengthElseThrow(exam);
         checkExamTextLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
-        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
@@ -612,17 +612,20 @@ public class ExamResource {
     /**
      * Checks that the submission overview would not become visible while a student with an individual working time extension is still writing.
      * <p>
-     * {@link #checkExamForDatesConflictsElseThrow} only compares against the nominal end date, but individual extensions can push a student exam past it. Skipped for exams
-     * that do not exist yet (creation, so no student exams) and for exams without a configured publication date.
+     * {@link #checkExamForDatesConflictsElseThrow} only compares against the nominal end date, but individual extensions can push a student exam past it. When the update also
+     * changes the exam duration, {@link ExamService#updateStudentExamsAndRescheduleExercises} rescales those extensions proportionally AFTER this validation runs, so the check
+     * has to look at the PROJECTED working times: an extension that is still below the publication date today can cross it once recalculated. Skipped for exams that do not
+     * exist yet (creation, so no student exams) and for exams without a configured publication date.
      *
-     * @param exam the exam to be checked
+     * @param exam                 the exam to be checked, already carrying the new dates
+     * @param originalExamDuration the exam duration in seconds before this update
      */
-    private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam) {
+    private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
         if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
             return;
         }
-        ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
-        if (latestIndividualExamEndDate != null && !exam.getExamSummaryPublicationDate().isAfter(latestIndividualExamEndDate)) {
+        ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);
+        if (!exam.getExamSummaryPublicationDate().isAfter(latestIndividualExamEndDate)) {
             throw new BadRequestAlertException("The exam summary must be published after the individual end date of every student, including working time extensions.", ENTITY_NAME,
                     "examSummaryPublicationDateBeforeIndividualEnd");
         }

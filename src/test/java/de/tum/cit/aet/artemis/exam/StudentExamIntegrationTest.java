@@ -864,6 +864,37 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamDuration_failsWhenRescaledIndividualExtensionCrossesSummaryPublicationDate() throws Exception {
+        // NOTE: unlike the working-time PATCH tests above, this one goes through the full exam update, which validates
+        // the date ordering. The "active exam" fixture starts an hour in the past but keeps a visible date near now, so
+        // the visible date has to be pulled in front of the start date for any update of it to be accepted at all.
+        exam1.setVisibleDate(exam1.getStartDate().minusMinutes(30));
+        exam1.setPublishResultsDate(null);
+        exam1 = examRepository.save(exam1);
+        int examDuration = exam1.getDuration();
+
+        // Give the student a modest individual extension (+10% of the exam duration) and set the publication date just
+        // after that individual end, so the invariant holds for the current state.
+        int extendedWorkingTime = examDuration + examDuration / 10;
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                extendedWorkingTime, StudentExam.class, HttpStatus.OK);
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        ZonedDateTime individualEnd = examWithExtension.getStartDate().plusSeconds(extendedWorkingTime);
+        examWithExtension.setExamSummaryPublicationDate(individualEnd.plusMinutes(5));
+        Exam savedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), Exam.class, HttpStatus.OK);
+
+        // Now stretch the exam end date. The nominal end stays before the publication date, but updateStudentExamsAndRescheduleExercises
+        // rescales the individual extension proportionally, which pushes this student past it — so the update has to be rejected.
+        savedExam.setEndDate(savedExam.getExamSummaryPublicationDate().minusMinutes(1));
+        assertThat(savedExam.getEndDate()).isBefore(savedExam.getExamSummaryPublicationDate());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(savedExam), HttpStatus.BAD_REQUEST);
+
+        // the rejected update must not have touched the stored working time
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(extendedWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTimeLate() throws Exception {
         int newWorkingTime = 180 * 60;
         int oldWorkingTime = studentExam1.getWorkingTime();
