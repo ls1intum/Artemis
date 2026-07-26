@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -193,10 +194,12 @@ public class FeatureToggleService {
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
         getFeatures().ifPresent(features -> {
-            getFeaturesMap().putAll(updatedFeatures);
-            if (Boolean.TRUE.equals(updatedFeatures.get(Feature.Gocast)) && !isGocastConfigured()) {
-                getFeaturesMap().put(Feature.Gocast, false);
+            Map<Feature, Boolean> sanitizedFeatures = new EnumMap<>(Feature.class);
+            sanitizedFeatures.putAll(updatedFeatures);
+            if (Boolean.TRUE.equals(sanitizedFeatures.get(Feature.Gocast)) && !isGocastConfigured()) {
+                sanitizedFeatures.put(Feature.Gocast, false);
             }
+            getFeaturesMap().putAll(sanitizedFeatures);
             sendUpdate();
         });
     }

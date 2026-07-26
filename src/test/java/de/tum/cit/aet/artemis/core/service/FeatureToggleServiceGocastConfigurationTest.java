@@ -25,6 +25,8 @@ class FeatureToggleServiceGocastConfigurationTest {
 
     private FeatureToggleService featureToggleService;
 
+    private Map<Feature, Boolean> lastBulkUpdate;
+
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
@@ -32,6 +34,7 @@ class FeatureToggleServiceGocastConfigurationTest {
         LifecycleService lifecycleService = mock(LifecycleService.class);
         IMap<Feature, Boolean> featureMap = mock(IMap.class);
         Map<Feature, Boolean> values = new EnumMap<>(Feature.class);
+        lastBulkUpdate = new EnumMap<>(Feature.class);
         when(hazelcastInstance.getLifecycleService()).thenReturn(lifecycleService);
         when(lifecycleService.isRunning()).thenReturn(true);
         when(hazelcastInstance.<Feature, Boolean>getMap("features")).thenReturn(featureMap);
@@ -40,7 +43,10 @@ class FeatureToggleServiceGocastConfigurationTest {
         when(featureMap.entrySet()).thenAnswer(invocation -> values.entrySet());
         doAnswer(invocation -> values.put(invocation.getArgument(0), invocation.getArgument(1))).when(featureMap).put(any(), any());
         doAnswer(invocation -> {
-            values.putAll(invocation.getArgument(0));
+            Map<Feature, Boolean> update = invocation.getArgument(0);
+            lastBulkUpdate.clear();
+            lastBulkUpdate.putAll(update);
+            values.putAll(update);
             return null;
         }).when(featureMap).putAll(any());
 
@@ -63,5 +69,6 @@ class FeatureToggleServiceGocastConfigurationTest {
 
         assertThat(featureToggleService.isFeatureEnabled(Feature.Gocast)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
+        assertThat(lastBulkUpdate).containsEntry(Feature.Gocast, false).containsEntry(Feature.ProgrammingExercises, true);
     }
 }
