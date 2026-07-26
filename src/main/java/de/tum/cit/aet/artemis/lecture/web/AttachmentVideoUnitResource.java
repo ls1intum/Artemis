@@ -232,7 +232,7 @@ public class AttachmentVideoUnitResource {
         if (!isFileChange) {
             return;
         }
-        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? !hiddenPages.isEmpty()
+        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? hiddenPages.stream().anyMatch(page -> page.date() != null || page.hasExercise())
                 : existingAttachmentVideoUnit.getSlides().stream().anyMatch(slide -> slide.getHidden() != null);
         if (hasHiddenSlidesAfterUpdate && (studentVersion == null || studentVersion.isEmpty())) {
             throw new BadRequestAlertException("A matching student PDF is required when an updated PDF contains hidden slides", ENTITY_NAME,
