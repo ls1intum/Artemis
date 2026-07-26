@@ -1065,11 +1065,11 @@ public final class ExerciseIntegrityGate {
 
     /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
     private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
-            // "must be recursive", "must use a stream", "must implement ... using pure recursion", "must be expressed as a pipeline", and the prohibition form
-            // "iterative constructs ... are not allowed". Each names a construct rather than an outcome; the tolerated distance keeps the match on one clause.
-            "must\\s+(?:be\\s+(?:implemented\\s+)?(?:recursive(?:ly)?|iterative(?:ly)?)"
-                    + "|(?:not\\s+)?(?:use|using)\\s+(?:a\\s+|any\\s+|pure\\s+)?(?:recursion|stream|streams|lambda|lambdas|loop|loops|looping\\s+construct[s]?|iteration)"
-                    + "|[^.|\\n]{0,60}?\\b(?:use|using)\\s+(?:a\\s+|any\\s+|pure\\s+)?(?:recursion|stream\\s+pipeline|lambda|lambdas)"
+            // "must be recursive", "must use a Java **Stream** pipeline", "must be implemented *recursively*", "must not use any looping construct", and the prohibition form
+            // "iterative constructs ... are not allowed". Real specifications put markdown emphasis around the construct and words between the verb and it, so both are
+            // tolerated; the noun list stays narrow, which is what keeps an observable mandate such as "must use the injected collaborator" out of the match.
+            "must\\s+(?:be\\s+(?:implemented\\s+)?\\**(?:recursive(?:ly)?|iterative(?:ly)?)"
+                    + "|(?:not\\s+)?(?:use|using)\\s+(?:[\\w*]+\\s+){0,3}\\**(?:recursion|streams?|lambdas?|loops?|looping\\s+construct[s]?|iteration)\\**"
                     + "|be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline))[^.|\\n]{0,60}"
                     + "|(?:explicit\\s+)?(?:iterative\\s+constructs?|loops?|recursion)[^.|\\n]{0,60}?\\b(?:are|is)\\s+not\\s+allowed",
             Pattern.CASE_INSENSITIVE);
