@@ -207,9 +207,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private MockMultipartFile createAttachmentVideoUnitPart(AttachmentVideoUnitDTO attachmentVideoUnitDTO, AttachmentUpdateIntent intent) throws IOException {
-        ObjectNode attachmentVideoUnitJson = mapper.valueToTree(attachmentVideoUnitDTO);
-        attachmentVideoUnitJson.put("attachmentUpdateIntent", intent.name());
-        return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(attachmentVideoUnitJson));
+        ObjectNode requestBody = mapper.valueToTree(attachmentVideoUnitDTO);
+        requestBody.put("attachmentUpdateIntent", intent.name());
+        return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(requestBody));
     }
 
     private MockMultipartHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment)

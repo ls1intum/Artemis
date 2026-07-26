@@ -16,6 +16,12 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
         return Set.of(
                 "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.course.domain.Course, boolean)",
                 // dispatchPendingJobs needs @Transactional because it uses FOR UPDATE SKIP LOCKED and its callers have no transaction context.
-                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()");
+                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()",
+                // Slide splitting holds a pessimistic unit lock while coordinating database rows with file-system rollback and after-commit actions.
+                "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit)",
+                "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.util.List, java.util.List)",
+                "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.updateSlideVisibility(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.util.List)",
+                "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(org.apache.pdfbox.pdmodel.PDDocument, de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.lang.String)",
+                "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(org.apache.pdfbox.pdmodel.PDDocument, de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.lang.String, java.util.List, java.util.List)");
     }
 }

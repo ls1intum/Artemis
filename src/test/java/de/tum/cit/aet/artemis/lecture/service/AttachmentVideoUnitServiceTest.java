@@ -92,8 +92,7 @@ class AttachmentVideoUnitServiceTest {
     @Test
     void updateAttachmentVideoUnitMarksMetadataOnlyChangeDirtyForRetryableSync() {
         var unit = attachmentVideoUnit("Old name", null);
-        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), null,
-                AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), unit.getVideoSource());
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
@@ -207,8 +206,7 @@ class AttachmentVideoUnitServiceTest {
     @Test
     void updateAttachmentVideoUnitTriggersAsyncContentProcessingForVideoSourceChange() {
         var unit = attachmentVideoUnit("Unit", null);
-        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, unit.getName(), unit.getReleaseDate(), unit.getDescription(), "https://video.example/updated", null,
-                AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var dto = attachmentVideoUnitDTO(unit, unit.getName(), unit.getReleaseDate(), "https://video.example/updated");
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
@@ -222,8 +220,7 @@ class AttachmentVideoUnitServiceTest {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
                 Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService);
         var unit = attachmentVideoUnit("Old name", null);
-        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", unit.getReleaseDate(), unit.getDescription(), "https://video.example/updated", null,
-                AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
@@ -234,8 +231,7 @@ class AttachmentVideoUnitServiceTest {
     void updateAttachmentVideoUnitMarksMetadataAndVisibilityDirtyWhenBothChange() {
         var unit = attachmentVideoUnit("Old name", null);
         var updatedReleaseDate = unit.getReleaseDate().plusDays(1);
-        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", updatedReleaseDate, unit.getDescription(), unit.getVideoSource(), null,
-                AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var dto = attachmentVideoUnitDTO(unit, "New name", updatedReleaseDate, unit.getVideoSource());
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
@@ -267,6 +263,12 @@ class AttachmentVideoUnitServiceTest {
             unit.setAttachment(attachment);
         }
         return unit;
+    }
+
+    private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource) {
+        var current = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        return new AttachmentVideoUnitDTO(current.id(), name, releaseDate, current.description(), videoSource, current.competencyLinks(), current.attachment(), current.slides(),
+                current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), current.type());
     }
 
     private static Attachment attachment() {
