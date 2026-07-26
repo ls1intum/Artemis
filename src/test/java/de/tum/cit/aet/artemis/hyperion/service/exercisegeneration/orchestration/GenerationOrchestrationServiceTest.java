@@ -1166,6 +1166,40 @@ class GenerationOrchestrationServiceTest {
         resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
+    // --- Review availability ---
+
+    @Test
+    void aReviewThatCouldNotCompleteIsRetriedInsteadOfEndingTheRepairPhase() {
+        // Two consecutive live runs saved after one repair round and none respectively, reporting "1 blocking quality gap" that was really "we could not review this". The
+        // verdict must still fail open, but the WORK must not: a reviewer having a bad turn is not a reason to stop improving the exercise.
+        acceptedCandidateWithSpecAndTests();
+        SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
+        SpecFidelityReport actionable = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "add a discriminating assertion")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(unavailable, actionable, actionable);
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+        // The failed review, the retry, and the reviews after each repair the retry unlocked. The decisive assertion is that repair happened at all: before this change the
+        // run ended at the failed review with its whole budget unspent.
+        verify(specFidelityCritic, atLeast(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void aSecondFailedReviewEndsTheRepairPhaseWithoutLoopingForever() {
+        acceptedCandidateWithSpecAndTests();
+        SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(unavailable);
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).as("an unreviewable candidate that passed every mechanical gate still stands").isTrue();
+        }
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
     // --- Repair-surface scheduling ---
 
     private static SpecFidelityReport oracleAndScaffoldFindings() {

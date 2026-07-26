@@ -419,6 +419,8 @@ public class GenerationOrchestrationService {
             int initialMechanicalAttempts = 0;
             // At most one witness-adoption round per generation, so offering ready-to-adopt tests can never turn into repeated rewrites of a finished candidate.
             boolean witnessAdoptionAttempted = false;
+            // One re-review per generation when the reviewer fails to return a verdict; see the retry below.
+            boolean reviewRetried = false;
             // Repair-surface fairness state: which surfaces have been repaired, and how long the current one has held (see SemanticRepairBatch#next).
             java.util.Set<RepairSurface> servedRepairSurfaces = java.util.EnumSet.noneOf(RepairSurface.class);
             RepairSurface currentRepairSurface = null;
@@ -671,7 +673,28 @@ public class GenerationOrchestrationService {
                         witnessAdoptionAttempted = true;
                     }
                     if (reviewUnavailable && repairBatch.isEmpty()) {
-                        break;
+                        // "The review could not complete" is not a statement about the exercise, so it must not end the effort to improve it. Failing open on the VERDICT is
+                        // right — a broken reviewer may never reject a mechanically sound candidate — but the loop was also failing open on the WORK, stopping with repair
+                        // rounds unspent because the reviewer, not the exercise, had a bad turn. Two consecutive live runs saved after one round and none respectively,
+                        // reporting "1 blocking quality gap" to the instructor that was really "we could not review this". One re-review is attempted before giving up.
+                        if (!reviewRetried) {
+                            reviewRetried = true;
+                            log.info("Exercise {}: the quality review did not complete; re-reviewing once before ending the repair phase", exercise.getId());
+                            emit(progress, "The quality review did not complete; reviewing the exercise once more.");
+                            String retryAdaptationChanges = mode == GenerationMode.ADAPT
+                                    ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
+                                    : null;
+                            // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
+                            specFidelityReport = runSpecFidelityCritic(reviewBrief, producedProblemStatement, exercise.getProgrammingLanguage(), producedFilesByType,
+                                    retryAdaptationChanges, null, effectiveUsageSink, cancelled, progress, null,
+                                    effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), testPlanSnapshot);
+                            lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
+                                    specFidelityReport, specDocumentSnapshot, testPlanSnapshot);
+                            repairBatch = SemanticRepairBatch.next(specFidelityReport, servedRepairSurfaces, currentRepairSurface, consecutiveRoundsOnSurface);
+                        }
+                        if (repairBatch.isEmpty()) {
+                            break;
+                        }
                     }
                     if (repairBatch.isEmpty()) {
                         // The counterpart of the scheduling telemetry below. A blocking finding that maps to no repair surface ends the loop with budget still unspent, and
