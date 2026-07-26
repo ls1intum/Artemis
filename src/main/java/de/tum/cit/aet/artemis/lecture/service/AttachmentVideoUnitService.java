@@ -81,7 +81,7 @@ public class AttachmentVideoUnitService {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
 
-        if (attachment != null && file != null) {
+        if (attachment != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 

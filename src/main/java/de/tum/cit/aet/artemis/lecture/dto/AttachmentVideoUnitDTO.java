@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
  * DTO for the {@link AttachmentVideoUnit} REST boundary.
  * <p>
  * It is used both as the request part on create/update (the client only populates {@code name}, {@code releaseDate},
- * {@code description}, {@code videoSource} and {@code competencyLinks}) and as the response body (additionally carrying
+ * {@code description}, {@code videoSource}, {@code competencyLinks}, and {@code attachmentUpdateIntent}) and as the response body (additionally carrying
  * the mapped {@link AttachmentDTO} and {@link SlideDTO}s). Lazy associations are mapped defensively so the DTO can also
  * be created right after persisting, before all associations are initialized.
  */
