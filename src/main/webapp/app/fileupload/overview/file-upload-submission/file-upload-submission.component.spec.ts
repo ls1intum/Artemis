@@ -17,14 +17,18 @@ import 'app/foundation/util/array.extension';
 
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { FileUploadSubmissionService } from '../file-upload-submission.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { User } from 'app/account/user/user.model';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -44,9 +48,11 @@ describe('FileUploadSubmissionComponent', () => {
     let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
     let alertService: AlertService;
     let participationWebsocketService: ParticipationWebsocketService;
     let fileService: FileService;
+    let accountService: AccountService;
 
     let routeParams$: BehaviorSubject<Params>;
 
@@ -182,9 +188,11 @@ describe('FileUploadSubmissionComponent', () => {
         component = fixture.componentInstance;
 
         fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
         alertService = TestBed.inject(AlertService);
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         fileService = TestBed.inject(FileService);
+        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -227,6 +235,117 @@ describe('FileUploadSubmissionComponent', () => {
             await fixture.whenStable();
 
             expect(component.participation()).toEqual(submission.participation);
+        });
+
+        it.each([
+            [true, true],
+            [false, false],
+        ])('should use explicit DTO ownership %s', async (isOwner, expected) => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            submission.participation = Object.assign(new FileUploadParticipation(), submission.participation, { isOwner });
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isOwnerOfParticipation()).toBe(expected);
+            expect(accountService.isOwnerOfParticipation).not.toHaveBeenCalled();
+        });
+
+        it('should fall back to legacy participation ownership', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            const participation = getParticipation(submission);
+            participation.student = { login: 'student3' } as User;
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isOwnerOfParticipation()).toBe(true);
+            expect(accountService.isOwnerOfParticipation).toHaveBeenCalledWith(participation);
+        });
+
+        it('should default to non-owner without explicit or legacy ownership data', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            submission.participation = Object.assign(new FileUploadParticipation(), submission.participation);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isOwnerOfParticipation()).toBe(false);
+            expect(accountService.isOwnerOfParticipation).not.toHaveBeenCalled();
+        });
+
+        it('should load the completed assessment result for a submitted DTO', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            const initialResult = createResult(submission);
+            const assessmentResult = createResult(submission);
+            assessmentResult.id = 1000;
+            submission.results = [initialResult];
+            submission.participation = Object.assign(new FileUploadParticipation(), submission.participation, { isOwner: true });
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            const getAssessmentSpy = vi.spyOn(fileUploadAssessmentService, 'getAssessment').mockReturnValue(of(assessmentResult));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(getAssessmentSpy).toHaveBeenCalledWith(submission.id);
+            expect(component.result()).toBe(assessmentResult);
+            expect(component.submissionFile()).toBeUndefined();
+        });
+
+        it('should ignore a submission without participation', async () => {
+            const submission = createSubmission();
+            submission.participation = undefined;
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.participation()).toBeUndefined();
+        });
+
+        it('should ignore a non-student participation', async () => {
+            const submission = createSubmission();
+            getParticipation(submission).type = ParticipationType.PROGRAMMING;
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.participation()).toBeUndefined();
+        });
+
+        it('should ignore a participation without an exercise', async () => {
+            const submission = createSubmission();
+            getParticipation(submission).exercise = undefined;
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.fileUploadExercise()).toBeUndefined();
+        });
+
+        it('should ignore a participation with a non-file-upload exercise', async () => {
+            const exercise = createExercise();
+            exercise.type = ExerciseType.TEXT;
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.fileUploadExercise()).toBeUndefined();
         });
 
         it('should handle error when loading submission fails', async () => {
