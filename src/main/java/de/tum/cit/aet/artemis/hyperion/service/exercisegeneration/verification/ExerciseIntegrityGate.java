@@ -1074,6 +1074,9 @@ public final class ExerciseIntegrityGate {
                     + "|(?:iterative|looping|loop)\\s+constructs?[^.|\\n]{0,40}?\\b(?:are|is)\\s+not\\s+allowed",
             Pattern.CASE_INSENSITIVE);
 
+    /** How far apart a read call and a directory literal may sit and still plausibly be one operation; wide enough for a candidate array, narrow enough to mean something. */
+    private static final int SOURCE_TREE_READ_PROXIMITY_CHARS = 400;
+
     /** File-reading entry points a behavioural test has no reason to call. */
     private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
 
@@ -1147,6 +1150,25 @@ public final class ExerciseIntegrityGate {
         return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
     }
 
+    /**
+     * Whether a file-reading call and a repository-directory literal appear close enough together to be the same operation.
+     * <p>
+     * Requiring both anywhere in the file would reject a test that happens to read an unrelated fixture and separately mention a directory name — a false rejection of a valid
+     * exercise, which this gate can never afford. Proximity approximates "same statement" without parsing Java, and the defect this exists for has them within a few characters
+     * of each other.
+     */
+    private static boolean readsAnAssignmentDirectory(String content) {
+        Matcher literal = ASSIGNMENT_DIRECTORY_LITERAL.matcher(content);
+        while (literal.find()) {
+            int from = Math.max(0, literal.start() - SOURCE_TREE_READ_PROXIMITY_CHARS);
+            int to = Math.min(content.length(), literal.end() + SOURCE_TREE_READ_PROXIMITY_CHARS);
+            if (FILE_READING_API.matcher(content.substring(from, to)).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();
@@ -1157,7 +1179,7 @@ public final class ExerciseIntegrityGate {
             if (content == null || isHarnessFile(file.getKey())) {
                 continue;
             }
-            if (FILE_READING_API.matcher(content).find() && ASSIGNMENT_DIRECTORY_LITERAL.matcher(content).find()) {
+            if (readsAnAssignmentDirectory(content)) {
                 reasons.add("the graded test file '" + file.getKey() + "' reads the exercise's own source tree (it names the solution/template/assignment directories and opens "
                         + "files). Production checks the student's repository out as 'assignment', so such a test grades the student's SOURCE TEXT rather than their behaviour "
                         + "and can fail correct work — an implementation that still carries a TODO comment, for instance. It also lets the test discover which assignment it is "
