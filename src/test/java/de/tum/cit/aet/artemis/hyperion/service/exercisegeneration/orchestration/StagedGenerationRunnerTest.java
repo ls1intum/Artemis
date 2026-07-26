@@ -447,4 +447,63 @@ class StagedGenerationRunnerTest {
         assertThatThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), "sideways"))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("CONTINUOUS or FRESH");
     }
+
+    @Test
+    void anExhaustedSpecificationRefinementFreezesTheBestDraftNotTheLatest() {
+        // Refinement is not monotonic. A live run scored its worked-example replay 1/2, then 2/2, then 0/2, then 0/2, and froze the last draft; the exercise built on that
+        // contract shipped a suite whose alignment test asserted nothing. The loop must keep the best draft this concept reached.
+        String draftA = VALID_SPEC_DOCUMENT + "\n<!-- draft A -->\n";
+        String draftB = VALID_SPEC_DOCUMENT + "\n<!-- draft B -->\n";
+        String draftC = VALID_SPEC_DOCUMENT + "\n<!-- draft C -->\n";
+        String draftD = VALID_SPEC_DOCUMENT + "\n<!-- draft D -->\n";
+        sandbox.specMarkdown = draftA;
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
+            String current = sandbox.specMarkdown;
+            if (current.equals(draftA)) {
+                sandbox.specMarkdown = draftB;
+                return new SpecFidelityCriticService.SpecificationReview(true, List.of("omission one", "omission two"));
+            }
+            if (current.equals(draftB)) {
+                sandbox.specMarkdown = draftC;
+                return new SpecFidelityCriticService.SpecificationReview(true, List.of("one remaining nit"));
+            }
+            sandbox.specMarkdown = draftD;
+            return new SpecFidelityCriticService.SpecificationReview(true, List.of("regressed one", "regressed two", "regressed three"));
+        });
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "spec"), completed(1, "spec"),
+                completed(1, "spec"), completed(3, "build"), completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).as("the frozen contract is the best draft this concept reached, not the last one written").contains(draftB);
+    }
+
+    @Test
+    void aBetterFinalDraftIsKeptWithoutRestoringAnything() {
+        // The ratchet must not fire when refinement actually improved the contract, which is the normal case.
+        String draftA = VALID_SPEC_DOCUMENT + "\n<!-- draft A -->\n";
+        String draftB = VALID_SPEC_DOCUMENT + "\n<!-- draft B -->\n";
+        sandbox.specMarkdown = draftA;
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
+            if (sandbox.specMarkdown.equals(draftA)) {
+                sandbox.specMarkdown = draftB;
+                return new SpecFidelityCriticService.SpecificationReview(true, List.of("omission one"));
+            }
+            return new SpecFidelityCriticService.SpecificationReview(true, List.of());
+        });
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "spec"), completed(3, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(draftB);
+    }
 }

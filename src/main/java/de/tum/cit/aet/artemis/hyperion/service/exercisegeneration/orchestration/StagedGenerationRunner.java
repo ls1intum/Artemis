@@ -287,6 +287,11 @@ public class StagedGenerationRunner {
         List<Message> archivedConversation = new ArrayList<>();
         int reentriesRemaining = MAX_TOTAL_REENTRIES;
         int semanticSpecRefinementsUsed = 0;
+        // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic — an observed run scored its worked-example replay
+        // 1/2, then 2/2, then 0/2, then 0/2, and froze the last one — so the loop keeps the best rather than trusting the most recent. Reset whenever the concept is
+        // replaced: a specification written for a rejected concept must never come back.
+        String bestSpecSnapshot = null;
+        int bestSpecFindingCount = Integer.MAX_VALUE;
         String semanticSpecFeedback = null;
         String previousRejectedLearningFitDirection = null;
         boolean freshSemanticSpecAttempt = false;
@@ -440,6 +445,10 @@ public class StagedGenerationRunner {
                             if (cancelled.getAsBoolean()) {
                                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
                             }
+                            if (review.complete() && review.findings().size() < bestSpecFindingCount) {
+                                bestSpecFindingCount = review.findings().size();
+                                bestSpecSnapshot = specSnapshot;
+                            }
                             if (!review.complete()) {
                                 // Fail open on the subjective axis. A qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
                                 // already passed the deterministic mechanical gate. Freeze the checked contract and let downstream mechanical verification (compile, tests,
@@ -504,6 +513,9 @@ public class StagedGenerationRunner {
                                         selectedConcept = replacement.selectedConcept();
                                     }
                                     previousRejectedLearningFitDirection = null;
+                                    // The concept is being replaced, so every specification measured so far described a concept the reviewer rejected.
+                                    bestSpecSnapshot = null;
+                                    bestSpecFindingCount = Integer.MAX_VALUE;
                                     // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts. The independent reviewer
                                     // will assess the replacement from scratch against the raw brief.
                                     gateFeedback = null;
@@ -520,6 +532,17 @@ public class StagedGenerationRunner {
                                 // fail-closed.
                                 log.info("Specification review still had findings for exercise {} after exhausting the refinement budget; freezing with advisory: {}",
                                         exercise.getId(), review.feedback());
+                                if (bestSpecSnapshot != null && bestSpecFindingCount < review.findings().size() && !bestSpecSnapshot.equals(specSnapshot)) {
+                                    // A later refinement left the contract worse than one this concept already reached. Freezing the most recent draft would hand every
+                                    // downstream stage the weaker contract for no reason, so restore the best one before it becomes read-only.
+                                    String restore = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
+                                    if (restore != null && !restore.startsWith("ERROR")) {
+                                        log.info("Restored the best reviewed specification for exercise {} ({} findings) over the final refinement ({} findings)", exercise.getId(),
+                                                bestSpecFindingCount, review.findings().size());
+                                        specSnapshot = bestSpecSnapshot;
+                                        emit(progress, "Keeping the strongest reviewed specification this concept produced.");
+                                    }
+                                }
                                 emit(progress, "Continuing with the reviewed specification; remaining concerns are attached for instructor review.");
                             }
                         }
