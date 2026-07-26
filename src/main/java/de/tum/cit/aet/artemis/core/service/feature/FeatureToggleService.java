@@ -37,17 +37,13 @@ public class FeatureToggleService {
     @Value("${artemis.iris.lecture-content-processing.enabled:false}")
     private boolean lectureContentProcessingEnabledOnStart;
 
-    @Value("${artemis.tum-live.api-base-url:}")
-    private String gocastApiBaseUrl;
+    private final String gocastApiBaseUrl;
 
-    @Value("${artemis.tum-live.service-account-token:}")
-    private String gocastServiceAccountToken;
+    private final String gocastServiceAccountToken;
 
-    @Value("${artemis.tum-live.web-base-url:}")
-    private String gocastWebBaseUrl;
+    private final String gocastWebBaseUrl;
 
-    @Value("${artemis.tum-live.service-account-user-id:}")
-    private String gocastServiceAccountUserId;
+    private final String gocastServiceAccountUserId;
 
     private final boolean globalSearchEnabledOnStart;
 
@@ -63,12 +59,18 @@ public class FeatureToggleService {
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService,
-            @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
+            @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart, @Value("${artemis.tum-live.api-base-url:}") String gocastApiBaseUrl,
+            @Value("${artemis.tum-live.service-account-token:}") String gocastServiceAccountToken, @Value("${artemis.tum-live.web-base-url:}") String gocastWebBaseUrl,
+            @Value("${artemis.tum-live.service-account-user-id:}") String gocastServiceAccountUserId) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
+        this.gocastApiBaseUrl = gocastApiBaseUrl;
+        this.gocastServiceAccountToken = gocastServiceAccountToken;
+        this.gocastWebBaseUrl = gocastWebBaseUrl;
+        this.gocastServiceAccountUserId = gocastServiceAccountUserId;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
@@ -143,9 +145,13 @@ public class FeatureToggleService {
         }
 
         // Gocast (TUM Live) integration: enabled only when all service-account integration properties are configured.
-        if (!features.containsKey(Feature.Gocast)) {
-            features.put(Feature.Gocast, StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken) && StringUtils.hasText(gocastWebBaseUrl)
-                    && StringUtils.hasText(gocastServiceAccountUserId));
+        boolean gocastConfigured = StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken) && StringUtils.hasText(gocastWebBaseUrl)
+                && StringUtils.hasText(gocastServiceAccountUserId);
+        if (!gocastConfigured) {
+            features.put(Feature.Gocast, false);
+        }
+        else if (!features.containsKey(Feature.Gocast)) {
+            features.put(Feature.Gocast, true);
         }
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
         if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {

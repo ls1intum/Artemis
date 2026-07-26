@@ -1092,8 +1092,6 @@ describe('AttachmentVideoUnitComponent', () => {
 });
 
 describe('AttachmentVideoUnitComponent — Gocast EP2 wiring', () => {
-    setupTestBed({ zoneless: true });
-
     // Controllable feature-toggle subject so we can render the component with Gocast enabled or disabled.
     // Set its value BEFORE createComponent(), because the component subscribes (via toSignal) during construction.
     let featureSubject: BehaviorSubject<ActiveFeatureToggles>;
@@ -1191,8 +1189,6 @@ describe('AttachmentVideoUnitComponent — Gocast EP2 wiring', () => {
 });
 
 describe('AttachmentVideoUnitComponent — template wiring: gocastIdentity reaches jhi-video-player', () => {
-    setupTestBed({ zoneless: true });
-
     let featureSubject: BehaviorSubject<ActiveFeatureToggles>;
 
     class ControllableFeatureToggleService {
