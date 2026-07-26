@@ -2316,7 +2316,7 @@ describe('IrisBaseChatbotComponent', () => {
             emitFrame({ type: IrisChatWebsocketPayloadType.STATUS, runId: 'run-zero', runState: IrisRunState.RUNNING });
             fixture.detectChanges();
             expect(component.shouldShowThinkingBubble()).toBe(true);
-            expect(fixture.nativeElement.querySelector('.iris-activity-feed')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('.iris-activity-stepper')).toBeFalsy();
 
             emitFrame({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-zero', partialResult: 'draft', partialSeq: 1 });
             fixture.detectChanges();
