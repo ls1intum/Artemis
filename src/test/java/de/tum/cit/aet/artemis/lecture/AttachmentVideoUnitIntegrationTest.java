@@ -677,6 +677,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
         assertThat(persistedAttachment.getStudentVersion()).isNotBlank();
 
+        persistedAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         var changedFile = createAttachmentVideoUnitPdf("new lecture content without hidden pages metadata");
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, changedFile);
         Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
@@ -794,8 +795,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void allHiddenMetadataUpdateIsRejectedBeforeMutatingUnitAttachmentOrCompetencies() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
-        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        var persistedAttachmentVideoUnitDTO = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        var persistedAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(persistedAttachmentVideoUnitDTO.id());
+        var persistedAttachment = attachmentRepository.findById(persistedAttachmentVideoUnitDTO.attachment().id()).orElseThrow();
 
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
