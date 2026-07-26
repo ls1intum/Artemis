@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -56,6 +57,12 @@ public class StageCheckService {
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
+
+    /** Below this many rules a single seam is credible; at or above it, one seam means the plan was never decomposed. */
+    private static final int MIN_RULES_REQUIRING_SEVERAL_SEAMS = 4;
+
+    /** Rule rows in the three shapes generated specifications actually use: a markdown table row, a numbered list item, or a bare {@code R1:} line. */
+    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s*\\**R\\d+|R\\d+\\s*[:.])", Pattern.MULTILINE);
 
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;
@@ -270,6 +277,17 @@ public class StageCheckService {
         if (!duplicateSeamIds.isEmpty()) {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
+        }
+        // A single seam covering many rules is the shape the two weakest measured exercises had: one that collapsed four rules into one seam shipped a suite rejecting only
+        // two of four contract-breaking implementations, and another collapsing four rules rejected one of five. Six of twenty-six generated specifications took this shape
+        // despite the authoring prompt forbidding it, which is the signal to enforce it here rather than ask again. The floor is deliberately low — a genuinely single-seam
+        // exercise with up to three rules passes untouched — because the aim is to catch collapse, not to impose a decomposition the exercise does not need.
+        int ruleCount = specRuleCount(spec);
+        if (seamIds.size() == 1 && ruleCount >= MIN_RULES_REQUIRING_SEVERAL_SEAMS) {
+            return StageCheckResult.failed("The '## Rules' section states " + ruleCount + " rules but the '## Testing Strategy' declares a single seam, so every rule is graded "
+                    + "as one indivisible unit of student work. Split it into the independently actionable units a student really implements — one seam per behaviour a student "
+                    + "could get right or wrong on its own — and give each its own row, owner type, observable responsibility, and weight. Merge only rules that genuinely "
+                    + "cannot be completed separately.");
         }
         List<String> malformedOwners = testingRows.stream().filter(row -> !isEnforceableTypeName(row.ownerType())).map(TestingStrategyRow::seamId).toList();
         if (!malformedOwners.isEmpty()) {
@@ -839,6 +857,23 @@ public class StageCheckService {
     }
 
     /** Seam IDs from the frozen specification, with the live workspace used only for legacy/unapproved flows. */
+    /** Counts the rules a specification states, tolerating the table, numbered-list, and bare-prefix shapes generated specifications use. */
+    private static int specRuleCount(String spec) {
+        String section = sectionBody(spec, "## Rules");
+        return section.isBlank() ? 0 : (int) SPEC_RULE_ROW.matcher(section).results().count();
+    }
+
+    /** The body of one markdown section, up to the next top-level heading. */
+    private static String sectionBody(String document, String heading) {
+        int start = document.indexOf(heading);
+        if (start < 0) {
+            return "";
+        }
+        int bodyStart = start + heading.length();
+        int next = document.indexOf("\n## ", bodyStart);
+        return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
+    }
+
     private List<String> enforcedTestingSeamIds(InteractiveSandbox sandbox, String sessionId) {
         return enforcedTestingStrategyRows(sandbox, sessionId).stream().map(TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
     }

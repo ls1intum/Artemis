@@ -1089,6 +1089,75 @@ class StageCheckServiceTest {
             assertThat(result.observation()).contains("compile against the template too").contains("Stack").contains("Class.forName").contains("ownership gate will always reject");
         }
 
+        /** A specification whose Testing Strategy carries exactly the seam rows given, with a rules table of the requested size. */
+        private static String specWithRulesAndSeams(int rules, int seams) {
+            StringBuilder ruleRows = new StringBuilder();
+            for (int rule = 1; rule <= rules; rule++) {
+                ruleRows.append("| R").append(rule).append(" | the calculator handles case ").append(rule).append(". |\n");
+            }
+            StringBuilder seamRows = new StringBuilder();
+            for (int seam = 1; seam <= seams; seam++) {
+                seamRows.append("| S").append(seam).append(" | Calculator | behaviour ").append(seam).append(" | 3 | no |\n");
+            }
+            return """
+                    # Exercise
+
+                    ## Rules
+                    | ID | Rule |
+                    |----|------|
+                    """ + ruleRows + """
+
+                    ## Worked Examples
+                    | Rules | Input | Expected |
+                    |-------|-------|----------|
+                    | R1 | 2 | 4 |
+                    | R1 | 3 | 9 |
+
+                    ## Design
+                    | Type | Role | Template status |
+                    |------|------|-----------------|
+                    | Calculator | computes | stubbed |
+
+                    ## Public API
+                    `Calculator`: `int calculate(int input)`
+
+                    ## Testing Strategy
+                    | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                    |------|------------|------------|--------|----------------|
+                    """ + seamRows + """
+
+                    ## Diagram
+                    no — single-class exercise
+                    """;
+        }
+
+        @Test
+        void rejectsASingleSeamThatSwallowsEveryRule() {
+            // The shape the two weakest measured exercises had. One collapsed four rules into a single seam and shipped a suite rejecting two of four contract-breaking
+            // implementations; six of twenty-six generated specifications took this shape despite the authoring prompt forbidding it.
+            sandbox.spec = specWithRulesAndSeams(4, 1);
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("states 4 rules").contains("single seam").contains("independently actionable");
+        }
+
+        @Test
+        void acceptsASingleSeamWhenTheExerciseGenuinelyHasFewRules() {
+            // The floor is deliberately low: collapse is the target, not a decomposition the exercise does not need.
+            sandbox.spec = specWithRulesAndSeams(3, 1);
+
+            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+        }
+
+        @Test
+        void acceptsManyRulesOnceTheyAreSplitAcrossSeams() {
+            sandbox.spec = specWithRulesAndSeams(7, 3);
+
+            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+        }
+
         @Test
         void omitsTheReflectionConsequenceWhenNoTypeIsStudentCreated() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
