@@ -26,6 +26,10 @@ const PREWARM_ROUTES = [
     `/courses`,
     `/courses/${SEED_COURSES.general.id}`,
     '/admin/user-management',
+    // The code editor is the only page tests open in a FRESH context mid-run, so its lazy route chunk is still cold when they do. On the dev server that chunk compiles on first
+    // request, and a test that loads it while a generation and its Docker sandbox are running has timed out waiting for the page. The ids need not resolve: the point is to
+    // compile the chunk, and the loop below already tolerates a route that fails to render.
+    '/course-management/1/programming-exercises/1/code-editor/TEMPLATE/1',
 ];
 
 const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
