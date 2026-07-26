@@ -176,11 +176,16 @@ public class AttachmentVideoUnitService {
                 if (hasUploadedFile) {
                     fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                 }
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hasUploadedFile && fileUpdateResult.fileBytesChanged());
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
-                handleStudentVersionFile(studentVersionFile, savedAttachment, savedAttachmentVideoUnit.getId());
+                if (studentVersionFile != null && !studentVersionFile.isEmpty()) {
+                    handleStudentVersionFile(studentVersionFile, savedAttachment, savedAttachmentVideoUnit.getId());
+                }
+                else if (fileUpdateResult.fileBytesChanged()) {
+                    attachmentService.removeStudentVersionFile(savedAttachment);
+                }
 
                 if (isFileNeutralSlideMetadataUpdate) {
                     slideVisibilityUpdateService.updateVisibilityAndStudentVersion(savedAttachmentVideoUnit, hiddenPages);
@@ -212,8 +217,6 @@ public class AttachmentVideoUnitService {
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
         triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
-        prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
-
         return savedAttachmentVideoUnit;
     }
 
@@ -328,17 +331,13 @@ public class AttachmentVideoUnitService {
      * @param existingAttachment  the existing attachment
      * @param updateAttachment    the new attachment containing updated information
      * @param attachmentVideoUnit the attachment video unit to update
-     * @param clearStudentVersion whether to clear the persisted student version
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, boolean clearStudentVersion) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (clearStudentVersion && existingAttachment.getStudentVersion() != null) {
-            existingAttachment.setStudentVersion(null);
-        }
     }
 
     /**

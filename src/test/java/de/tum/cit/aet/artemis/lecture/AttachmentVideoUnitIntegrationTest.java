@@ -676,6 +676,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 AttachmentVideoUnit.class);
         persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
         assertThat(persistedAttachment.getStudentVersion()).isNotBlank();
+        Path oldStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(persistedAttachment.getStudentVersion()), FilePathType.STUDENT_VERSION_SLIDES);
+        assertThat(oldStudentVersionPath).exists();
 
         persistedAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         var changedFile = createAttachmentVideoUnitPdf("new lecture content without hidden pages metadata");
@@ -686,6 +688,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).isNull();
         assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
         assertThat(reloadedAttachment.getStudentVersion()).isNull();
+        await().untilAsserted(() -> assertThat(oldStudentVersionPath).doesNotExist());
     }
 
     @Test
@@ -733,10 +736,20 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
         var pageOrderPart = new MockMultipartFile("pageOrder", "", MediaType.APPLICATION_JSON_VALUE, pageOrderJson.getBytes());
 
-        var builder = MockMvcRequestBuilders
+        var missingStudentVersionBuilder = MockMvcRequestBuilders
                 .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
                 .file(attachmentPart).file(reSerializedFile).file(hiddenPagesPart).file(pageOrderPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
                 .param("keepFilename", "true");
+        request.performMvcRequest(missingStudentVersionBuilder).andExpect(status().isBadRequest());
+        assertThat(attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getVersion()).isEqualTo(originalVersion);
+
+        var changedInstructorFile = createAttachmentVideoUnitPdf();
+        var studentPdfSource = createAttachmentVideoUnitPdf("student-visible lecture body");
+        var studentVersionPart = new MockMultipartFile("studentVersion", "student_version.pdf", MediaType.APPLICATION_PDF_VALUE, studentPdfSource.getBytes());
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(changedInstructorFile).file(studentVersionPart).file(hiddenPagesPart).file(pageOrderPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         request.performMvcRequest(builder).andExpect(status().isOk());
 
         // The hidden-slide metadata must still be applied while the byte-different upload bumps the attachment version.
@@ -746,6 +759,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
         assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
         assertThat(reloadedAttachment.getSha256Hash()).hasSize(64);
+        assertThat(reloadedAttachment.getStudentVersion()).isNotBlank();
     }
 
     @Test

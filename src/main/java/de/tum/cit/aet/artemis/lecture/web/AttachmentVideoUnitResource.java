@@ -171,6 +171,7 @@ public class AttachmentVideoUnitResource {
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
         validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, existingAttachmentVideoUnit, attachment);
+        validateStudentVersionForHiddenSlides(updateIntent, hiddenPages, studentVersion, existingAttachmentVideoUnit);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -222,6 +223,20 @@ public class AttachmentVideoUnitResource {
         }
         if (isFileChange && !hasFile) {
             throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
+        }
+    }
+
+    private void validateStudentVersionForHiddenSlides(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, MultipartFile studentVersion,
+            AttachmentVideoUnit existingAttachmentVideoUnit) {
+        boolean isFileChange = updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
+        if (!isFileChange) {
+            return;
+        }
+        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? !hiddenPages.isEmpty()
+                : existingAttachmentVideoUnit.getSlides().stream().anyMatch(slide -> slide.getHidden() != null);
+        if (hasHiddenSlidesAfterUpdate && (studentVersion == null || studentVersion.isEmpty())) {
+            throw new BadRequestAlertException("A matching student PDF is required when an updated PDF contains hidden slides", ENTITY_NAME,
+                    "studentVersionRequiredForHiddenSlides");
         }
     }
 

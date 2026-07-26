@@ -265,7 +265,30 @@ class AttachmentVideoUnitServiceTest {
         assertThat(attachment.getStudentVersion()).isEqualTo("attachments/student-unit-updated.pdf");
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
-        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(1, null).containsEntry(2, hiddenUntil).hasSize(2);
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(1, null).hasSize(2);
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(2).toInstant()).isEqualTo(hiddenUntil.toInstant());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitRemovesOldStudentVersionForUnhiddenByteChangedPdfUpload() throws Exception {
+        var attachment = attachment();
+        attachment.setStudentVersion("attachments/student-unit.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = new MockMultipartFile("file", "unit.pdf", "application/pdf", "different content".getBytes(StandardCharsets.UTF_8));
+        String newHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", newHash));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        doAnswer(invocation -> {
+            ((Attachment) invocation.getArgument(0)).setStudentVersion(null);
+            return null;
+        }).when(attachmentService).removeStudentVersionFile(attachment);
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, List.of(), null, Set.of());
+
+        verify(attachmentService).removeStudentVersionFile(attachment);
+        verify(attachmentService, never()).replaceUploadedStudentVersionFile(any(), any(), any(), any());
+        assertThat(attachment.getStudentVersion()).isNull();
     }
 
     @Test

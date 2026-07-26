@@ -111,18 +111,7 @@ public class AttachmentService {
 
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
-            if (attachment.getStudentVersion() != null) {
-                String oldStudentVersion = attachment.getStudentVersion();
-                attachment.setStudentVersion(null);
-                try {
-                    attachmentRepository.saveAndFlush(attachment);
-                }
-                catch (RuntimeException exception) {
-                    attachment.setStudentVersion(oldStudentVersion);
-                    throw exception;
-                }
-                deleteStudentVersionFileAfterCommit(oldStudentVersion);
-            }
+            removeStudentVersionFile(attachment);
             return;
         }
 
@@ -137,6 +126,28 @@ public class AttachmentService {
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
         }
+    }
+
+    /**
+     * Clears the persisted student-version reference and deletes the old file after
+     * the surrounding transaction commits.
+     *
+     * @param attachment the attachment whose student version should be removed
+     */
+    public void removeStudentVersionFile(Attachment attachment) {
+        if (attachment.getStudentVersion() == null) {
+            return;
+        }
+        String oldStudentVersion = attachment.getStudentVersion();
+        attachment.setStudentVersion(null);
+        try {
+            attachmentRepository.saveAndFlush(attachment);
+        }
+        catch (RuntimeException exception) {
+            attachment.setStudentVersion(oldStudentVersion);
+            throw exception;
+        }
+        deleteStudentVersionFileAfterCommit(oldStudentVersion);
     }
 
     /**
