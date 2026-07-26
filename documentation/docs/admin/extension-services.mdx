@@ -142,7 +142,7 @@ artemis:
 
 #### Configure API Endpoints
 
-The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. Add its endpoint to the same active deployment-specific override used above:
 
 ```yaml
 artemis:
