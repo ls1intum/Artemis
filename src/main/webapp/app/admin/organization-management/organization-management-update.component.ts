@@ -4,9 +4,9 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { MessageModule } from 'primeng/message';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/foundation/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,16 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ButtonModule, InputTextModule, MessageModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent, AdminTitleBarTitleDirective],
+    imports: [
+        FormsModule,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiMessageComponent,
+        TranslateDirective,
+        CustomPatternValidatorDirective,
+        FaIconComponent,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

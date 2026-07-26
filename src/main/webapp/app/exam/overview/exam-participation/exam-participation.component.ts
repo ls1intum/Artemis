@@ -967,6 +967,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // it only makes sense to set "isSynced" to false for quiz, text and modeling
                 if (activeExerciseType !== ExerciseType.PROGRAMMING && activeExerciseType !== ExerciseType.FILE_UPLOAD) {
                     activeSubmission.isSynced = false;
+                    // isSynced was mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
+                    this.examParticipationService.notifySubmissionSyncStateChanged();
                 }
             }
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
@@ -1035,6 +1037,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private onSaveSubmissionSuccess(submission: Submission) {
         submission.isSynced = true;
         submission.submitted = true;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
         // Only clear the failed-save flag once every syncable answer (quiz/text/modeling) is actually synced. Clearing it
         // after a single successful save while another exercise's answer is still unsynced would wrongly suppress the
         // restore-on-reload path for that not-yet-saved answer (a partial re-send must keep the exam marked save-failed).
@@ -1063,6 +1067,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
         this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
+        // The submission stays isSynced=false after a failed save; notify sync-state-dependent UI to re-evaluate
+        // (e.g. keep the save button enabled) since the flag was mutated in place.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
 
         if (error.status === 401) {
             // Unauthorized means the user needs to log in to resume

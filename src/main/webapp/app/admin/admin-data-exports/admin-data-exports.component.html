@@ -1,10 +1,10 @@
 <div>
     <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
     <div *adminTitleBarActions>
-        <p-button size="small" (onClick)="openCreateModal()" data-testid="create-export-btn">
+        <tum-ui-button size="small" (clicked)="openCreateModal()" data-testid="create-export-btn">
             <fa-icon [icon]="faPlus" class="me-1" />
             <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 
     @if (loading()) {
@@ -12,8 +12,8 @@
             <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
         </div>
     } @else {
-        <p-table [value]="dataExports()" data-testid="data-exports-table">
-            <ng-template #header>
+        <table tumUiTable data-testid="data-exports-table">
+            <thead>
                 <tr>
                     <th scope="col"><span jhiTranslate="global.field.id"></span></th>
                     <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.user"></span></th>
@@ -23,64 +23,73 @@
                     <th scope="col"><span jhiTranslate="artemisApp.dataExport.admin.status"></span></th>
                     <th scope="col"><span jhiTranslate="entity.actions"></span></th>
                 </tr>
-            </ng-template>
-            <ng-template #body let-dataExport>
-                <tr>
-                    <td>{{ dataExport.id }}</td>
-                    <td>{{ dataExport.userName ?? '-' }}</td>
-                    <td>{{ dataExport.userLogin ?? '-' }}</td>
-                    <td>{{ dataExport.createdDate | artemisDate }}</td>
-                    <td>{{ dataExport.creationFinishedDate ? (dataExport.creationFinishedDate | artemisDate) : '-' }}</td>
-                    <td>
-                        <p-tag [severity]="getStateSeverity(dataExport.dataExportState)" [rounded]="true" data-testid="state-tag">
-                            <fa-icon [icon]="getStateIcon(dataExport.dataExportState)" class="me-1" />
-                            {{ 'artemisApp.dataExport.admin.state.' + dataExport.dataExportState | artemisTranslate }}
-                        </p-tag>
-                    </td>
-                    <td>
-                        <div class="flex items-center justify-end gap-2">
-                            @if (dataExport.downloadable) {
-                                <p-button
-                                    severity="success"
-                                    size="small"
-                                    (onClick)="downloadExport(dataExport)"
-                                    data-testid="download-btn"
-                                    styleClass="w-30 min-w-30 whitespace-nowrap"
-                                >
-                                    <fa-icon [icon]="faDownload" class="me-1" />
-                                    <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
-                                </p-button>
-                            }
-                            @if (canCancel(dataExport)) {
-                                <button
-                                    pButton
-                                    severity="danger"
-                                    size="small"
-                                    [renderButtonStyle]="false"
-                                    jhiDeleteButton
-                                    [entityTitle]="dataExport.userLogin ?? ''"
-                                    [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
-                                    (delete)="cancelExport(dataExport)"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
-                            }
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-            <ng-template #emptymessage>
-                <tr>
-                    <td colspan="7" class="text-center">
-                        <span jhiTranslate="artemisApp.dataExport.admin.noExports"></span>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+            </thead>
+            <tbody>
+                @for (dataExport of dataExports(); track dataExport.id) {
+                    <tr>
+                        <td>{{ dataExport.id }}</td>
+                        <td>{{ dataExport.userName ?? '-' }}</td>
+                        <td>{{ dataExport.userLogin ?? '-' }}</td>
+                        <td>{{ dataExport.createdDate | artemisDate }}</td>
+                        <td>{{ dataExport.creationFinishedDate ? (dataExport.creationFinishedDate | artemisDate) : '-' }}</td>
+                        <td>
+                            <tum-ui-tag [severity]="getStateSeverity(dataExport.dataExportState)" [rounded]="true" data-testid="state-tag">
+                                <fa-icon [icon]="getStateIcon(dataExport.dataExportState)" class="me-1" />
+                                {{ 'artemisApp.dataExport.admin.state.' + dataExport.dataExportState | artemisTranslate }}
+                            </tum-ui-tag>
+                        </td>
+                        <td>
+                            <div class="flex items-center justify-end gap-2">
+                                @if (dataExport.downloadable) {
+                                    <tum-ui-button
+                                        severity="success"
+                                        size="small"
+                                        (clicked)="downloadExport(dataExport)"
+                                        data-testid="download-btn"
+                                        class="w-30 min-w-30 whitespace-nowrap"
+                                    >
+                                        <fa-icon [icon]="faDownload" class="me-1" />
+                                        <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
+                                    </tum-ui-button>
+                                }
+                                @if (canCancel(dataExport)) {
+                                    <button
+                                        tumUiButton
+                                        severity="danger"
+                                        size="small"
+                                        [renderButtonStyle]="false"
+                                        jhiDeleteButton
+                                        [entityTitle]="dataExport.userLogin ?? ''"
+                                        [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"
+                                        (delete)="cancelExport(dataExport)"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <span jhiTranslate="artemisApp.dataExport.admin.noExports"></span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
 
         @if (totalRecords() > 0) {
             <div class="flex justify-center mt-3">
-                <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" [rowsPerPageOptions]="[10, 20, 50]" (onPageChange)="onPageChange($event)" />
+                <tum-ui-paginator
+                    [page]="first() / rows()"
+                    [pageSize]="rows()"
+                    [totalRecords]="totalRecords()"
+                    [pageSizeOptions]="[10, 20, 50]"
+                    [showCurrentPageReport]="false"
+                    (pageChange)="onPageChange($event)"
+                    (pageSizeChange)="onPageSizeChange($event)"
+                />
             </div>
         }
     }
