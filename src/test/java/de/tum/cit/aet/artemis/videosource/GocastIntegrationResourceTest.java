@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
@@ -50,22 +52,36 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private GocastCourseBindingRepository bindingRepository;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Course course;
 
     @BeforeEach
     void setUp() {
+        featureToggleService.enableFeature(Feature.Gocast);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
     }
 
     @AfterEach
     void tearDown() {
+        featureToggleService.enableFeature(Feature.Gocast);
         if (course != null) {
             bindingRepository.findByCourseId(course.getId()).ifPresent(bindingRepository::delete);
         }
     }
 
     // ── Authorization matrix — instructor-only endpoints ─────────────────────
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listAdministeredCoursesWhenFeatureDisabledReturnsForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.Gocast);
+
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses", HttpStatus.FORBIDDEN, String.class);
+        verify(gocastConnectorService, never()).listAdministeredCourses(anyString(), anyInt(), anyString());
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

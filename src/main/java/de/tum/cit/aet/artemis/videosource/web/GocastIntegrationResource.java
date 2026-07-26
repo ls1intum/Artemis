@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 @RestController
 @RequestMapping("api/videosource/")
 @Conditional(GocastEnabled.class)
+@FeatureToggle(Feature.Gocast)
 public class GocastIntegrationResource {
 
     private static final Logger log = LoggerFactory.getLogger(GocastIntegrationResource.class);
