@@ -55,6 +55,17 @@
 .answer-post {
     border-radius: 7px;
 
+    &.unverified-iris {
+        background-color: color-mix(in srgb, var(--warning) 8%, transparent);
+        border-left: 3px solid var(--warning);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--warning) 14%, transparent);
+        }
+    }
+
     &.highlight-reply {
         animation: highlight-fade 2s ease-in-out;
     }
