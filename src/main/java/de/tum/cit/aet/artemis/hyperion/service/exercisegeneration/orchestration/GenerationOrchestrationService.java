@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
@@ -1033,6 +1034,32 @@ public class GenerationOrchestrationService {
                 .collect(java.util.stream.Collectors.joining("\n\n"));
     }
 
+    /**
+     * Downgrades a repairable finding that in fact demands an ungradeable implementation technique.
+     * <p>
+     * {@code WEAK_TEST_ORACLE} and {@code UNCOVERED_REQUIREMENT} map to the oracle repair surface, so the loop schedules them and asks the agent to write a discriminating test.
+     * When the "requirement" is that the implementation be recursive or use a stream pipeline, no such test exists, and the agent's attempts to invent one are actively harmful:
+     * measured across live runs, they produced a test reading the student's source tree, an assertion on the presence of a type name in that source, and repeated rounds whose
+     * finding set came back byte-identical. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
+     */
+    private static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report) {
+        if (report.findings().stream().noneMatch(GenerationOrchestrationService::demandsUngradeableTechnique)) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> reclassified = report.findings().stream()
+                .map(finding -> demandsUngradeableTechnique(finding)
+                        ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
+                                "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail())
+                        : finding)
+                .toList();
+        return new SpecFidelityReport(reclassified);
+    }
+
+    private static boolean demandsUngradeableTechnique(SpecFidelityReport.Finding finding) {
+        return (finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
+                && !ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + finding.requirement()).isEmpty();
+    }
+
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
             Map<RepositoryType, Map<String, String>> producedArtifacts, @Nullable String adaptationChanges, @Nullable String repairDelta, Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled, Consumer<String> progress, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshot, @Nullable String testPlanSnapshot) {
@@ -1054,6 +1081,11 @@ public class GenerationOrchestrationService {
                 combined.addAll(messageless);
                 report = new SpecFidelityReport(combined);
             }
+            // A finding that asks the tests to grade a technique is reclassified rather than scheduled. The critic reports these as WEAK_TEST_ORACLE, which is a repairable
+            // surface, so the loop hands the agent an impossible task: one live run answered it by writing a test that reads the student's source file and fails anyone whose
+            // correct solution still carries a TODO comment, then spent two further attempts being rejected for it. Reclassifying costs a round nothing and removes the
+            // incentive at its source; the finding survives as the advisory the instructor sees.
+            report = reclassifyUngradeableTechniqueFindings(report);
             // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
             List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshot);
             if (!techniqueRules.isEmpty()) {

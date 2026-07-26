@@ -2266,6 +2266,36 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void techniqueRules_doNotFireOnOrdinaryRulesThatMerelyMentionStreamsOrLoops() {
+        // Every one of these was falsely rejected by an earlier revision. "stream" and "loop" are ordinary domain nouns — an input stream, a self-loop in a graph, a retry
+        // loop — and an iteratively refined algorithm is not a mandate to write a loop. A false positive here downgrades a real blocking finding to advisory, so the pattern
+        // has to earn every match.
+        String spec = """
+                ## Rules
+                | R1 | The parser must use the provided input stream and close it. |
+                | R2 | Self-loops are not allowed in the dependency graph. |
+                | R3 | Retry loops in the client are not allowed; fail fast instead. |
+                | R4 | Nested loops in the generated report are not allowed. |
+                | R5 | Recursion is not allowed in the grammar of the input language. |
+                | R6 | The result must be iteratively refined until it converges. |
+                """;
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).isEmpty();
+    }
+
+    @Test
+    void techniqueRules_catchTheMandateShapesSpecificationsActuallyUse() {
+        // All six taken verbatim from generated specifications, including markdown emphasis and words between the verb and the construct.
+        for (String rule : List.of("The implementation **must be recursive** (direct or indirect self-call).",
+                "Students must implement each method using **pure recursion**; explicit iterative constructs such as `for`, `while` are not allowed.",
+                "The total must use a Java **Stream** pipeline (filter, map, reduce).",
+                "Each method must be implemented *recursively*; the code may not contain any loop construct.",
+                "The implementation must use lambda expressions for the predicate and mapper.", "The method must be recursive and must not use any looping construct.")) {
+            assertThat(detectorOnly().detectUnenforceableTechniqueRules("## Rules\n" + rule)).as("should flag: %s", rule).isNotEmpty();
+        }
+    }
+
+    @Test
     void techniqueRules_staySilentOnRulesThatAreObservable() {
         // The precision requirement. Delegation IS observable through a recording fake, ordering and validation through ordinary assertions — none may be flagged, or the
         // finding becomes noise attached to every exercise.

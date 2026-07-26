@@ -1169,6 +1169,37 @@ class GenerationOrchestrationServiceTest {
     // --- Deterministic advisory findings ---
 
     @Test
+    void aWeakOracleFindingDemandingAnUngradeableTechniqueStopsHoldingRepairRounds() {
+        // The critic reports "the tests do not check that the implementation is recursive" as WEAK_TEST_ORACLE, which is a repairable surface, so the loop asks the agent for a
+        // discriminating test that cannot exist. One live run answered with a test that reads the student's source file and fails anyone whose correct solution still carries a
+        // TODO comment, then burned two further attempts being rejected for it. Reclassified, the finding still reaches the instructor and never holds a round.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "the implementation must be recursive", "no test checks for recursion"))));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.specFidelityReport().findings()).singleElement().satisfies(finding -> {
+                assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+                assertThat(finding.isBlocking()).isFalse();
+            });
+        }
+        // One agent session: the loop had nothing schedulable and did not spend a repair round on impossible work.
+        verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void aGenuineWeakOracleFindingIsStillScheduledForRepair() {
+        // The reclassification must not swallow ordinary oracle work: only a demand for an unobservable technique is downgraded.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a parser accepting the wrong field count passes", "add a discriminator"))));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        }
+    }
+
+    @Test
     void anUngradeableTechniqueRuleReachesTheReportWithoutBlockingTheCandidate() {
         // The detector itself is covered in the critic's own tests; what is covered here is the wiring, which nothing else exercises: the orchestrator must call it and merge
         // its findings into the report the instructor sees. Measured live, an exercise generated from "teach recursion" awards full marks to iterative implementations, so this

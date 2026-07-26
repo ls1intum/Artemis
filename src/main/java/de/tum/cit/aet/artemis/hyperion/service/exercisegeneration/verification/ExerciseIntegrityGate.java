@@ -1065,13 +1065,13 @@ public final class ExerciseIntegrityGate {
 
     /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
     private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
-            // "must be recursive", "must use a Java **Stream** pipeline", "must be implemented *recursively*", "must not use any looping construct", and the prohibition form
-            // "iterative constructs ... are not allowed". Real specifications put markdown emphasis around the construct and words between the verb and it, so both are
-            // tolerated; the noun list stays narrow, which is what keeps an observable mandate such as "must use the injected collaborator" out of the match.
-            "must\\s+(?:be\\s+(?:implemented\\s+)?\\**(?:recursive(?:ly)?|iterative(?:ly)?)"
-                    + "|(?:not\\s+)?(?:use|using)\\s+(?:[\\w*]+\\s+){0,3}\\**(?:recursion|streams?|lambdas?|loops?|looping\\s+construct[s]?|iteration)\\**"
-                    + "|be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline))[^.|\\n]{0,60}"
-                    + "|(?:explicit\\s+)?(?:iterative\\s+constructs?|loops?|recursion)[^.|\\n]{0,60}?\\b(?:are|is)\\s+not\\s+allowed",
+            // Bare "stream" and "loops" are ordinary domain nouns — an input stream, a self-loop in a graph, retry loops — so only construct-bearing forms match: a pipeline,
+            // the Stream API, a lambda, a looping construct, recursion. "Iteratively refined" is an algorithm's character, not a mandate to write a loop, so it is out too.
+            // Verified against eight legitimate rules that earlier revisions falsely rejected, and against the six generated specifications that genuinely mandate a technique.
+            "must\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|must\\s+(?:not\\s+)?(?:\\w+\\s+){0,3}?(?:use|using)\\s+(?:[\\w*]+\\s+){0,3}\\**"
+                    + "(?:recursion|pipeline|stream\\s+api|lambdas?|loops?|looping\\s+constructs?|loop\\s+constructs?|iteration)\\**"
+                    + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
+                    + "|(?:iterative|looping|loop)\\s+constructs?[^.|\\n]{0,40}?\\b(?:are|is)\\s+not\\s+allowed",
             Pattern.CASE_INSENSITIVE);
 
     /** File-reading entry points a behavioural test has no reason to call. */

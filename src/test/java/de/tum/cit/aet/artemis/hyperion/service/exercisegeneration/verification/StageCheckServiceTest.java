@@ -1166,37 +1166,6 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void rejectsARuleThatMandatesAnImplementationTechnique() {
-            // Measured twice on live runs. Stating "must be recursive" as a rule either leaves the objective silently ungraded — iterative implementations scored full marks —
-            // or drives the agent to invent a test that reads the student's source file and fails anyone whose correct solution still carried a TODO comment.
-            sandbox.spec = specWithRules("| R1 | `factorial(int n)` returns n!. The implementation must be recursive. |\n");
-
-            StageCheckResult result = check(GenerationStage.SPEC);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("must be recursive").contains("cannot be").contains("student-facing problem statement");
-        }
-
-        @Test
-        void rejectsAStreamPipelineMandateAsARule() {
-            sandbox.spec = specWithRules("| R1 | The total must use a Stream pipeline with a filter and a reduce. |\n");
-
-            assertThat(check(GenerationStage.SPEC).passed()).isFalse();
-        }
-
-        @Test
-        void acceptsRulesThatStateObservableOutcomes() {
-            // The precision requirement: delegation is observable through a recording fake, ordering and validation through ordinary assertions. None may be rejected.
-            sandbox.spec = specWithRules("""
-                    | R1 | `calculate` must delegate to the injected PricingPolicy and return its result unchanged. |
-                    | R2 | Results must be ordered by amount descending; ties keep encounter order. |
-                    | R3 | A negative input must be rejected with an IllegalArgumentException. |
-                    """);
-
-            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
-        }
-
-        @Test
         void rejectsASingleSeamThatSwallowsEveryRule() {
             // The shape the two weakest measured exercises had. One collapsed four rules into a single seam and shipped a suite rejecting two of four contract-breaking
             // implementations; six of twenty-six generated specifications took this shape despite the authoring prompt forbidding it.
