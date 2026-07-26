@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -55,11 +55,13 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     @EventListener
+    @Async
     public void handleMetadataDirty(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent event) {
         synchronize(event.lectureUnitId(), LectureContentUpdateKind.METADATA);
     }
 
     @EventListener
+    @Async
     public void handleVisibilityDirty(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent event) {
         synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY, event.slideHiddenUntilBySlideNumber());
     }
@@ -153,28 +155,26 @@ public class IrisLectureUnitSyncEventListener {
         if (dispatchResult == null) {
             return null;
         }
-        Map<LectureContentUpdateKind, String> dispatchedHashes = new EnumMap<>(LectureContentUpdateKind.class);
-        dispatchedHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
-        dispatchedHashes.put(LectureContentUpdateKind.VISIBILITY, dispatchResult);
-        return dispatchedHashes.get(updateKind);
+        return switch (updateKind) {
+            case METADATA -> state.getMetadataHash();
+            case VISIBILITY -> dispatchResult;
+            default -> throw new IllegalArgumentException("Unsupported Iris lecture unit sync update kind: " + updateKind);
+        };
     }
 
     private static boolean isDirtyForUpdateKind(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
-        Map<LectureContentUpdateKind, String> currentHashes = new EnumMap<>(LectureContentUpdateKind.class);
-        currentHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
-        currentHashes.put(LectureContentUpdateKind.VISIBILITY, state.getVisibilityHash());
-        Map<LectureContentUpdateKind, String> syncedHashes = new EnumMap<>(LectureContentUpdateKind.class);
-        syncedHashes.put(LectureContentUpdateKind.METADATA, state.getLastSyncedMetadataHash());
-        syncedHashes.put(LectureContentUpdateKind.VISIBILITY, state.getLastSyncedVisibilityHash());
-        return !Objects.equals(currentHashes.get(updateKind), syncedHashes.get(updateKind));
+        return switch (updateKind) {
+            case METADATA -> !Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash());
+            case VISIBILITY -> !Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash());
+            default -> throw new IllegalArgumentException("Unsupported Iris lecture unit sync update kind: " + updateKind);
+        };
     }
 
     private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedHash) {
-        if (updateKind == LectureContentUpdateKind.METADATA) {
-            state.setLastSyncedMetadataHash(dispatchedHash);
-        }
-        if (updateKind == LectureContentUpdateKind.VISIBILITY) {
-            state.setLastSyncedVisibilityHash(dispatchedHash);
+        switch (updateKind) {
+            case METADATA -> state.setLastSyncedMetadataHash(dispatchedHash);
+            case VISIBILITY -> state.setLastSyncedVisibilityHash(dispatchedHash);
+            default -> throw new IllegalArgumentException("Unsupported Iris lecture unit sync update kind: " + updateKind);
         }
         if (isClean(state)) {
             state.setRetryCount(0);
