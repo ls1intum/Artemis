@@ -62,17 +62,24 @@ class SlideServiceTest {
     }
 
     @Test
-    void updateSlidesHiddenDateDoesNotMarkVisibilityDirtyWhenDueDateIsNull() {
+    void updateSlidesHiddenDateClearsHiddenDateAndMarksVisibilityDirtyWhenDueDateIsNull() {
         var slideRepository = mock(SlideRepository.class);
         var slideUnhideService = mock(SlideUnhideService.class);
         var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
         var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService);
         var exercise = new TextExercise();
         exercise.setId(42L);
+        var slide = new Slide();
+        slide.setHidden(ZonedDateTime.parse("2026-07-03T12:00:00Z"));
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(slide));
 
         slideService.updateSlidesHiddenDate(exercise);
 
-        verifyNoInteractions(slideRepository, slideUnhideService, visibilitySyncService);
+        assertThat(slide.getHidden()).isNull();
+        var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService);
+        inOrder.verify(slideRepository).saveAll(List.of(slide));
+        inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
+        inOrder.verify(visibilitySyncService).markVisibilityDirtyForExercise(exercise);
     }
 
     private static TextExercise exerciseWithDueDate() {

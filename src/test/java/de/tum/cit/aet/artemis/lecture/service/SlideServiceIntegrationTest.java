@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,6 +114,30 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testHandleDueDateChange_withNullUpdatedDueDate() {
+        ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(7);
+        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), originalDueDate, ZonedDateTime.now().plusDays(8), testCourse);
+        originalExercise = exerciseRepository.save(originalExercise);
+        testSlide.setExercise(originalExercise);
+        testSlide.setHidden(originalDueDate);
+        Slide savedSlide = slideRepository.save(testSlide);
+
+        Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), null, originalExercise.getAssessmentDueDate(), testCourse);
+        updatedExercise.setId(originalExercise.getId());
+        updatedExercise.setTitle(originalExercise.getTitle());
+        updatedExercise = exerciseRepository.save(updatedExercise);
+
+        AtomicBoolean visibilityWebhookSeen = expectNullVisibilityWebhook();
+        slideService.handleDueDateChange(originalExercise, updatedExercise);
+
+        Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
+        assertThat(updatedSlide.getHidden()).isNull();
+        assertThat(visibilityWebhookSeen).isTrue();
+        irisRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testHandleDueDateChange_withUnchangedDueDate() {
         // Create original exercise
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
@@ -141,8 +166,28 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
             assertThat(dto.lectureUnitId()).isEqualTo(testAttachmentVideoUnit.getId());
             assertThat(dto.slides()).anySatisfy(slide -> {
                 assertThat(slide.slideNumber()).isEqualTo(testSlide.getSlideNumber());
-                assertThat(slide.hiddenUntil().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(expectedHiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+                if (expectedHiddenUntil == null) {
+                    assertThat(slide.hiddenUntil()).isNull();
+                }
+                else {
+                    assertThat(slide.hiddenUntil().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(expectedHiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+                }
             });
         }, ExpectedCount.once());
+    }
+
+    private AtomicBoolean expectNullVisibilityWebhook() {
+        AtomicBoolean visibilityWebhookSeen = new AtomicBoolean();
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+            if (!dto.lectureUnitId().equals(testAttachmentVideoUnit.getId())) {
+                return;
+            }
+            assertThat(dto.slides()).anySatisfy(slide -> {
+                assertThat(slide.slideNumber()).isEqualTo(testSlide.getSlideNumber());
+                assertThat(slide.hiddenUntil()).isNull();
+            });
+            visibilityWebhookSeen.set(true);
+        }, ExpectedCount.manyTimes());
+        return visibilityWebhookSeen;
     }
 }

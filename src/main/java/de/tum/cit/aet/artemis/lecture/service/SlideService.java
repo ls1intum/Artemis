@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class SlideService {
      */
     public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
         ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
-        boolean hasDueDateChanged = updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate));
+        boolean hasDueDateChanged = !Objects.equals(originalDueDate, updatedDueDate);
 
         // Check if the due date has changed
         if (hasDueDateChanged) {
@@ -70,10 +71,6 @@ public class SlideService {
      * @param exercise The exercise whose due date has changed
      */
     public void updateSlidesHiddenDate(Exercise exercise) {
-        if (exercise.getDueDate() == null) {
-            return;
-        }
-
         List<Slide> relatedSlides = slideRepository.findByExerciseId(exercise.getId());
         if (relatedSlides.isEmpty()) {
             return;
