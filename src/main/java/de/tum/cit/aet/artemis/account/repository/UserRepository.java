@@ -243,6 +243,44 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 
     /**
+     * Like {@link #findAllNotificationRecipientsInCourseForConversation} but restricted to course staff
+     * (teaching assistants, editors and instructors). Used for notifications that only concern tutors —
+     * e.g. unverified Iris replies awaiting review — so a large course's students are never fetched just
+     * to be filtered out afterwards. Every returned recipient is flagged as at least a tutor.
+     *
+     * @param conversationId             the id of the conversation
+     * @param teachingAssistantGroupName the course's teaching assistant group name
+     * @param editorGroupName            the course's editor group name
+     * @param instructorGroupName        the course's instructor group name
+     * @return the staff recipients of the conversation
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
+                user.id,
+                user.login,
+                user.firstName,
+                user.lastName,
+                user.langKey,
+                user.email,
+                CASE WHEN cp.isMuted = TRUE THEN TRUE ELSE FALSE END,
+                CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
+                TRUE
+            )
+            FROM User user
+                JOIN UserGroup ug ON ug.userId = user.id
+                LEFT JOIN ConversationParticipant cp ON cp.user = user AND cp.conversation.id = :conversationId
+            WHERE user.deleted = FALSE
+                AND (
+                    ug.group = :teachingAssistantGroupName
+                    OR ug.group = :editorGroupName
+                    OR ug.group = :instructorGroupName
+                )
+            """)
+    Set<ConversationNotificationRecipientSummary> findStaffNotificationRecipientsInCourseForConversation(@Param("conversationId") long conversationId,
+            @Param("teachingAssistantGroupName") String teachingAssistantGroupName, @Param("editorGroupName") String editorGroupName,
+            @Param("instructorGroupName") String instructorGroupName);
+
+    /**
      * Searches for users in a group by their login or full name.
      *
      * @param groupName   Name of group in which to search for users

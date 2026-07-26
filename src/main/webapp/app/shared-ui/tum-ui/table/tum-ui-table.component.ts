@@ -62,6 +62,11 @@ export class TumUiTableComponent<T> {
     readonly emptyMessage = input('artemisApp.dataTable.search.noResults');
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
+    /** Forwarded to the embedded paginator. Set false to hide the rows-per-page select (e.g. the legacy
+     *  table-view `hidePageSizeOptions`) so a fixed-page-size table shows no pointless single-option dropdown. */
+    readonly showRowsPerPage = input(true);
+    /** Forwarded to the embedded paginator's "Showing X to Y of Z" report. */
+    readonly showCurrentPageReport = input(true);
     readonly initialSortField = input<string | undefined>(undefined);
     readonly initialSortDirection = input<TumUiSortDirection>('asc');
 
