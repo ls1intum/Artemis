@@ -66,7 +66,7 @@ Artemis's keyword and semantic search feature (global search) uses Weaviate inde
 
 ## Athena Service
 
-Athena is an EduTelligence assessment service that Artemis uses for configured feedback-suggestion modules and related assessment workflows. To enable Athena, special configuration is required. The [AI Pipelines catalog](../developer/ai-pipelines#athena) describes the Artemis-side selection, forwarding, scheduling, and repository-export boundaries; the [Athena request lifecycle](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/request-lifecycle) documents the service contract.
+Athena is an EduTelligence assessment service that Artemis uses for configured feedback-suggestion modules and related assessment workflows. To enable Athena, special configuration is required. The [AI Pipelines catalog](../developer/ai-pipelines#athena) describes the Artemis-side selection, forwarding, scheduling, and repository-export boundaries; the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/) documents the service-owned module contract.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -97,7 +97,7 @@ artemis:
         restricted-modules: <comma-separated-module-names>
 ```
 
-Use a deployment-managed shared secret. For the service-side module contract and request lifecycle, refer to the [Athena request lifecycle](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/request-lifecycle).
+Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
 
 ---
 
@@ -145,8 +145,9 @@ artemis:
 The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
 
 ```yaml
-apollon:
-    conversion-service-url: http://localhost:8080
+artemis:
+    apollon:
+        conversion-service-url: http://localhost:8080
 ```
 
 ---
