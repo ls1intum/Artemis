@@ -69,8 +69,8 @@ public class IrisLectureUnitSyncEventListener {
      */
     @Scheduled(fixedRate = 300000)
     public void retryDirtyStates() {
-        syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List.of(IrisLectureUnitSyncState.STATUS_DIRTY), ZonedDateTime.now())
-                .forEach(candidate -> {
+        syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
+                List.of(IrisLectureUnitSyncState.STATUS_DIRTY, IrisLectureUnitSyncState.STATUS_IN_PROGRESS), ZonedDateTime.now()).forEach(candidate -> {
                     ZonedDateTime claimTime = ZonedDateTime.now();
                     syncStateRepository.claimRetry(candidate.getLectureUnitId(), claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES)).ifPresent(this::synchronizeDirtyState);
                 });
@@ -96,10 +96,10 @@ public class IrisLectureUnitSyncEventListener {
 
     private void synchronizeDirtyState(IrisLectureUnitSyncState state) {
         if (!Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash())) {
-            synchronize(state.getLectureUnitId(), LectureContentUpdateKind.METADATA);
+            synchronize(state, LectureContentUpdateKind.METADATA);
         }
         if (!Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash())) {
-            synchronize(state.getLectureUnitId(), LectureContentUpdateKind.VISIBILITY);
+            synchronize(state, LectureContentUpdateKind.VISIBILITY);
         }
     }
 
@@ -109,10 +109,12 @@ public class IrisLectureUnitSyncEventListener {
 
     private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         try {
-            syncStateRepository.findByLectureUnitId(lectureUnitId).ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
+            ZonedDateTime claimTime = ZonedDateTime.now();
+            syncStateRepository.claimRetry(lectureUnitId, claimTime, claimTime.plusMinutes(RETRY_LEASE_MINUTES))
+                    .ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
         }
         catch (Exception e) {
-            log.warn("Could not load Iris lecture unit sync state {}", lectureUnitId, e);
+            log.warn("Could not claim Iris lecture unit sync state {}", lectureUnitId, e);
         }
     }
 

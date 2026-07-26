@@ -19,6 +19,8 @@ public class IrisLectureUnitSyncState extends DomainObject {
 
     public static final String STATUS_DIRTY = "DIRTY";
 
+    public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
+
     @Column(name = "lecture_unit_id", nullable = false, unique = true)
     private Long lectureUnitId;
 

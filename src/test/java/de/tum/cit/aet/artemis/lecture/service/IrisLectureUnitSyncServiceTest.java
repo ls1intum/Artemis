@@ -142,6 +142,38 @@ class IrisLectureUnitSyncServiceTest {
     }
 
     @Test
+    void newDirtyUpdateBypassesFailureBackoff() {
+        var state = new IrisLectureUnitSyncState();
+        state.setLectureUnitId(LECTURE_UNIT_ID);
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        state.setNextRetryAt(ZonedDateTime.now().plusMinutes(60));
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        ZonedDateTime before = ZonedDateTime.now();
+
+        service.markMetadataDirtyAfterCommit(snapshot());
+
+        assertThat(state.getNextRetryAt().toInstant()).isBetween(before.toInstant(), ZonedDateTime.now().toInstant());
+    }
+
+    @Test
+    void newDirtyUpdatePreservesActiveDispatchLease() {
+        var state = new IrisLectureUnitSyncState();
+        state.setLectureUnitId(LECTURE_UNIT_ID);
+        state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        ZonedDateTime leaseUntil = ZonedDateTime.now().plusMinutes(10);
+        state.setNextRetryAt(leaseUntil);
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.markMetadataDirtyAfterCommit(snapshot());
+        service.markMetadataDirtyAfterCommit(snapshot());
+
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        assertThat(state.getNextRetryAt().toInstant()).isEqualTo(leaseUntil.toInstant());
+    }
+
+    @Test
     void metadataHashIsDeterministicForEquivalentInput() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

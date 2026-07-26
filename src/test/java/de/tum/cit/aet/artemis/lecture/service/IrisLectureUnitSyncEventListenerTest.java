@@ -59,6 +59,7 @@ class IrisLectureUnitSyncEventListenerTest {
     void setUp() {
         listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService, slideRepository, syncService);
         lenient().when(syncDispatchService.triggerSyncForUpdateKind(any(), eq(LectureContentUpdateKind.METADATA))).thenReturn("metadata-token");
+        lenient().when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(_ -> syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID));
     }
 
     @Test
@@ -148,6 +149,8 @@ class IrisLectureUnitSyncEventListenerTest {
 
         listener.retryDirtyStates();
 
+        verify(syncStateRepository).claimRetry(eq(LECTURE_UNIT_ID), any(), any());
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY);
         assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("persisted-slide-hash");
         assertThat(state.getVisibilityHash()).isEqualTo("projected-visibility-hash");
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);

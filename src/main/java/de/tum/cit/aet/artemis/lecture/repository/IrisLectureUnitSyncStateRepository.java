@@ -45,8 +45,9 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
     @Transactional
     default Optional<IrisLectureUnitSyncState> claimRetry(long lectureUnitId, ZonedDateTime now, ZonedDateTime leaseUntil) {
         return findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId))
-                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()))
+                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()))
                 .filter(state -> state.getNextRetryAt() != null && !state.getNextRetryAt().isAfter(now)).map(state -> {
+                    state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
                     state.setNextRetryAt(leaseUntil);
                     return saveAndFlush(state);
                 });
@@ -94,8 +95,21 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
         if (visibilityHash != null) {
             state.setVisibilityHash(visibilityHash);
         }
-        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
-        state.setNextRetryAt(nextRetryAt);
+        boolean hasActiveLease = IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()) && state.getNextRetryAt() != null
+                && state.getNextRetryAt().isAfter(nextRetryAt);
+        if (!hasActiveLease && java.util.Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash())
+                && java.util.Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash())) {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
+            state.setNextRetryAt(null);
+            return save(state);
+        }
+        if (hasActiveLease) {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        }
+        else {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+            state.setNextRetryAt(nextRetryAt);
+        }
         return save(state);
     }
 }
