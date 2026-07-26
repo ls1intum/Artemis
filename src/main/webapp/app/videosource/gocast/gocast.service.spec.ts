@@ -2,13 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GocastService } from './gocast.service';
 import { GocastBindingWithApproval, GocastCourse, GocastPlaybackToken, GocastStream } from './gocast.model';
 
 describe('GocastService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: GocastService;
     let httpMock: HttpTestingController;
 

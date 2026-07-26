@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -14,8 +13,6 @@ import { GocastService } from './gocast.service';
 import { GocastBindingWithApproval, GocastCourse } from './gocast.model';
 
 describe('GocastCourseBindingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<GocastCourseBindingComponent>;
     let component: GocastCourseBindingComponent;
     let gocastService: GocastService;

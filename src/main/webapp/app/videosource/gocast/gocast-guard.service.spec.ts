@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router, UrlTree } from '@angular/router';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
@@ -8,8 +7,6 @@ import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/f
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('GocastGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: GocastGuard;
     let router: Router;
     let featureSubject: BehaviorSubject<ActiveFeatureToggles>;

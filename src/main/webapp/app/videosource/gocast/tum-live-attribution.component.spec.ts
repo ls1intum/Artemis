@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TumLiveAttributionComponent } from './tum-live-attribution.component';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('TumLiveAttributionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TumLiveAttributionComponent>;
 
     beforeEach(async () => {
