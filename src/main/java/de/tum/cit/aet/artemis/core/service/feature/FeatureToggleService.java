@@ -145,9 +145,7 @@ public class FeatureToggleService {
         }
 
         // Gocast (TUM Live) integration: enabled only when all service-account integration properties are configured.
-        boolean gocastConfigured = StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken) && StringUtils.hasText(gocastWebBaseUrl)
-                && StringUtils.hasText(gocastServiceAccountUserId);
-        if (!gocastConfigured) {
+        if (!isGocastConfigured()) {
             features.put(Feature.Gocast, false);
         }
         else if (!features.containsKey(Feature.Gocast)) {
@@ -170,7 +168,7 @@ public class FeatureToggleService {
      */
     public void enableFeature(Feature feature) {
         getFeatures().ifPresent(features -> {
-            getFeaturesMap().put(feature, true);
+            getFeaturesMap().put(feature, feature != Feature.Gocast || isGocastConfigured());
             sendUpdate();
         });
     }
@@ -196,8 +194,16 @@ public class FeatureToggleService {
     public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
         getFeatures().ifPresent(features -> {
             getFeaturesMap().putAll(updatedFeatures);
+            if (Boolean.TRUE.equals(updatedFeatures.get(Feature.Gocast)) && !isGocastConfigured()) {
+                getFeaturesMap().put(Feature.Gocast, false);
+            }
             sendUpdate();
         });
+    }
+
+    private boolean isGocastConfigured() {
+        return StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken) && StringUtils.hasText(gocastWebBaseUrl)
+                && StringUtils.hasText(gocastServiceAccountUserId);
     }
 
     private void sendUpdate() {
