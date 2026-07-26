@@ -76,8 +76,8 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     private readonly cvaValue = signal<number | undefined>(undefined);
     private readonly cvaDisabled = signal(false);
     protected readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
-    // While the field is focused the user is typing, so the displayed text is owned by onInput (which preserves the
-    // caret); the sync effect must not overwrite it. Reformatting resumes on blur / external writes.
+    // Whether the inner input currently has focus. The sync effect still writes while focused (an external CVA
+    // write has to reach the DOM), but uses this to restore a sensible caret position afterwards.
     private readonly focused = signal(false);
 
     protected readonly faChevronUp = faChevronUp;
@@ -105,9 +105,21 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     private onModelChange: (value: number | undefined) => void = () => {};
     private onModelTouched: () => void = () => {};
 
+    /**
+     * True while the field holds text that is deliberately not (yet) representable as a number — currently the
+     * lone `-` of a negative number being typed. The sync effect leaves that text alone; every other path
+     * (a completed keystroke, step, blur, or an external write) clears the flag.
+     */
+    private readonly rawEditInProgress = signal(false);
+
     constructor() {
-        // Keep the field's displayed text in sync with the model whenever the value or a formatting input changes —
-        // but never while the user is typing (onInput owns the text then, to preserve the caret).
+        // Keep the field's displayed text in sync with the model whenever the value or a formatting input changes.
+        // This must also run while the field is focused: an external write (`reset()` / `patchValue()` / a value
+        // clamped by the host) would otherwise leave the old text on screen, and the next keystroke would parse
+        // that stale text straight back over the new model. Two guards keep it from fighting the user instead:
+        // the write is skipped when the text already matches the model (the normal typing path, where `onInput`
+        // has already set the text and caret), and while `rawEditInProgress` marks text that is deliberately not
+        // yet representable as a number (see `onInput`).
         effect(() => {
             const value = this.cvaValue();
             // establish reactive deps on the formatting inputs
@@ -115,9 +127,22 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             this.suffix();
             this.useGrouping();
             this.locale();
+            if (this.rawEditInProgress()) {
+                return;
+            }
             const el = this.inputRef()?.nativeElement;
-            if (el && !this.focused()) {
-                el.value = this.format(value);
+            if (!el) {
+                return;
+            }
+            const formatted = this.format(value);
+            if (el.value === formatted) {
+                return;
+            }
+            el.value = formatted;
+            if (this.focused()) {
+                // Park the caret after the last digit so a focused user can keep typing after an external write.
+                const caret = this.caretForDigits(formatted, (formatted.match(/\d/g) ?? []).length);
+                el.setSelectionRange(caret, caret);
             }
         });
     }
@@ -191,8 +216,10 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         // Mid-typing a negative number ("-" before any digit): leave the raw text so the minus is not erased on
         // this keystroke; the model stays `undefined` until a digit arrives, then formatting resumes normally.
         if (parsed === undefined && el.value.includes('-') && !/\d/.test(el.value)) {
+            this.rawEditInProgress.set(true);
             return;
         }
+        this.rawEditInProgress.set(false);
         // Reformat live (grouping + prefix / suffix) and restore the caret after the same number of digits.
         const formatted = this.format(parsed);
         el.value = formatted;
@@ -208,6 +235,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         // `min` rather than `min + step`, matching p-inputnumber (which spins from `value || 0`).
         const base = this.cvaValue() ?? 0;
         const next = this.clamp(base + delta);
+        this.rawEditInProgress.set(false);
         this.cvaValue.set(next);
         this.onModelChange(next);
         const el = this.inputRef()?.nativeElement;
@@ -228,6 +256,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
 
     protected onBlurHandler(event: FocusEvent): void {
         this.focused.set(false);
+        this.rawEditInProgress.set(false);
         const value = this.cvaValue();
         if (value !== undefined) {
             const clamped = this.clamp(value);
@@ -265,11 +294,10 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     }
 
     writeValue(value: number | undefined): void {
+        // An external write supersedes any in-progress raw text, and the sync effect owns pushing it to the DOM
+        // (including while the field is focused, so a focused reset / patchValue cannot leave stale text behind).
+        this.rawEditInProgress.set(false);
         this.cvaValue.set(value ?? undefined);
-        const el = this.inputRef()?.nativeElement;
-        if (el && !this.focused()) {
-            el.value = this.format(this.cvaValue());
-        }
     }
 
     registerOnChange(fn: (value: number | undefined) => void): void {

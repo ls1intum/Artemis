@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TumUiInputNumberComponent } from 'app/shared-ui/tum-ui/input-number/tum-ui-input-number.component';
 
@@ -210,5 +210,90 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
         // Once digits follow, it parses to the negative value.
         type('-5');
         expect(host.value).toBe(-5);
+    });
+
+    it('does not reformat the text the user is currently typing', () => {
+        // Guard against the sync effect fighting onInput: the caret must survive a mid-string edit.
+        type('1234');
+        expect(input().value).toBe('1,234');
+        // Insert a "5" after the "2" of "1,234". Assigning `.value` moves the caret to the end, so the selection
+        // has to be restored afterwards to model a real keystroke.
+        input().value = '1,2534';
+        input().setSelectionRange(4, 4);
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(host.value).toBe(12534);
+        expect(input().value).toBe('12,534');
+        // The caret stays after the digit just typed, i.e. after the 3rd digit of "12,534".
+        expect(input().selectionStart).toBe(4);
+    });
+});
+
+@Component({
+    template: `<tum-ui-input-number [formControl]="control" [min]="1" [max]="5000" [showButtons]="true" />`,
+    imports: [TumUiInputNumberComponent, ReactiveFormsModule, FontAwesomeTestingModule],
+})
+class ReactiveHostComponent {
+    readonly control = new FormControl<number | undefined>(undefined);
+}
+
+describe('TumUiInputNumberComponent (external CVA writes)', () => {
+    let fixture: ComponentFixture<ReactiveHostComponent>;
+    let host: ReactiveHostComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [ReactiveHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(ReactiveHostComponent);
+        host = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    function input(): HTMLInputElement {
+        return fixture.debugElement.query(By.css('input')).nativeElement;
+    }
+    function type(text: string): void {
+        input().value = text;
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    }
+    async function flush(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+    }
+
+    it('reflects setValue in the displayed text while the field is focused', async () => {
+        type('1234');
+        expect(input().value).toBe('1,234');
+        input().dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+
+        // A programmatic write has to reach the DOM even while focused, or the field keeps showing the old text
+        // and the next keystroke parses that stale text straight back over the new model.
+        host.control.setValue(42);
+        await flush();
+        expect(input().value).toBe('42');
+
+        // Typing on from the refreshed text builds on 42, not on the stale "1,234".
+        type('427');
+        expect(host.control.value).toBe(427);
+    });
+
+    it('clears the displayed text when the control is reset while the field is focused', async () => {
+        type('1234');
+        input().dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+
+        host.control.reset();
+        await flush();
+        expect(input().value).toBe('');
+        expect(host.control.value).toBeNull();
+    });
+
+    it('still reflects setValue while the field is not focused', async () => {
+        host.control.setValue(1234);
+        await flush();
+        expect(input().value).toBe('1,234');
     });
 });
