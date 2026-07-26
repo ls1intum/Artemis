@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ExerciseGroup, ExerciseGroupOrderDTO } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
@@ -516,11 +516,11 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @param exerciseGroups List of exercise groups.
      */
-    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroupOrderDTO[]>> {
-        // Only the group ids in the desired order are sent. The server persists the order and echoes back the same id list;
-        // the caller re-applies it to its already-loaded, fully-detailed groups so no exercise detail is lost.
-        const orderedGroupIds: ExerciseGroupOrderDTO[] = exerciseGroups.map((group) => ({ id: group.id }));
-        return this.http.put<ExerciseGroupOrderDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, orderedGroupIds, { observe: 'response' });
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<void>> {
+        // Only the group ids in the desired order are sent. The server persists the order and returns no body — the
+        // caller already holds the fully-detailed groups in exactly this order.
+        const orderedGroupIds = exerciseGroups.map((group) => group.id!);
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, orderedGroupIds, { observe: 'response' });
     }
 
     /**

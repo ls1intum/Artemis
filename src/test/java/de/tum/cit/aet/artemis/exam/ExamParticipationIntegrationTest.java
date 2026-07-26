@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -755,7 +756,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(lockedSubmissionDTO.participation().id()).isEqualTo(participation.getId());
         assertThat(lockedSubmissionDTO.participation().exercise()).isNotNull();
         assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
-        assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo("text");
+        assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
         assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
         assertThat(lockedSubmissionDTO.results()).hasSize(1);
         LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();

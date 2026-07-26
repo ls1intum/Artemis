@@ -111,7 +111,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupOrderDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
@@ -1287,18 +1286,21 @@ public class ExamResource {
     }
 
     /**
-     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
-     * exercise groups do not belong to the exam the operation is aborted.
+     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If a received
+     * exercise group id does not belong to the exam the operation is aborted.
+     * <p>
+     * The body is the ids of the exam's exercise groups in the desired order (mirroring
+     * {@code LectureUnitResource.updateLectureUnitsOrder}). The response carries no body: the caller already holds the
+     * fully-detailed groups in exactly this order, so there is nothing to echo.
      *
-     * @param courseId              the id of the course
-     * @param examId                the id of the exam
-     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
-     * @return the list of exercise groups
+     * @param courseId                the id of the course
+     * @param examId                  the id of the exam
+     * @param orderedExerciseGroupIds the ids of the exam's exercise groups in the desired order
+     * @return 200 (OK) with an empty body once the order is persisted
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups-order")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroupOrderDTO>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroupOrderDTO> orderedExerciseGroups) {
+    public ResponseEntity<Void> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<Long> orderedExerciseGroupIds) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
@@ -1306,7 +1308,7 @@ public class ExamResource {
         Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
 
         // Ensure that exactly as many exercise groups have been received as are currently related to the exam
-        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+        if (orderedExerciseGroupIds.size() != exam.getExerciseGroups().size()) {
             throw new BadRequestAlertException("The number of exercise groups changed", ENTITY_NAME, "numberExerciseGroupsChanged");
         }
 
@@ -1316,10 +1318,10 @@ public class ExamResource {
             managedGroupsById.put(managedGroup.getId(), managedGroup);
         }
 
-        // Ensure all received exercise groups exist in the exam and build the reordered list using managed entities
+        // Ensure all received ids belong to the exam and build the reordered list using managed entities
         var reorderedManagedGroups = new ArrayList<ExerciseGroup>();
-        for (ExerciseGroupOrderDTO orderEntry : orderedExerciseGroups) {
-            ExerciseGroup managedGroup = managedGroupsById.get(orderEntry.id());
+        for (Long exerciseGroupId : orderedExerciseGroupIds) {
+            ExerciseGroup managedGroup = managedGroupsById.get(exerciseGroupId);
             if (managedGroup == null) {
                 throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
             }
@@ -1332,12 +1334,7 @@ public class ExamResource {
         exam.getExerciseGroups().addAll(reorderedManagedGroups);
         examRepository.save(exam);
 
-        // Return only the persisted order as ids. The client keeps its already-loaded, fully-detailed exercise groups
-        // (quiz questions, template/solution participations, ...) and re-applies this order, so no exercise detail is
-        // lost. Reloading the groups from the database would drop exactly that detail, which is why the previous
-        // implementation echoed the entity request body verbatim.
-        List<ExerciseGroupOrderDTO> orderedResponse = reorderedManagedGroups.stream().map(group -> new ExerciseGroupOrderDTO(group.getId())).toList();
-        return ResponseEntity.ok(orderedResponse);
+        return ResponseEntity.ok().build();
     }
 
     /**

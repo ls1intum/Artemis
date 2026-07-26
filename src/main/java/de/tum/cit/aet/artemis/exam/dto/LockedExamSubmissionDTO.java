@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
@@ -44,11 +44,12 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
      * Slim exercise of a locked submission: the id/type/title the assessment-locks table renders and routes on.
      *
      * @param id    the id of the exercise
-     * @param type  the exercise-type discriminator ("programming", "text", ...) used for the icon and the assessment route
+     * @param type  the exercise type; serializes to the discriminator ("programming", "text", ...) via {@code @JsonValue},
+     *                  which the client uses for the icon and the assessment route
      * @param title the title of the exercise
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LockedSubmissionExerciseDTO(Long id, String type, String title) {
+    public record LockedSubmissionExerciseDTO(Long id, ExerciseType type, String title) {
     }
 
     /**
@@ -69,25 +70,17 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
      * @return the projected DTO
      */
     public static LockedExamSubmissionDTO of(Submission submission) {
+        // The locked-submissions query joins participation and exercise, so both are always present; projecting them
+        // without guards lets a future query change fail loudly instead of emitting a DTO the client cannot render.
         Participation participation = submission.getParticipation();
-        LockedSubmissionParticipationDTO participationDTO = null;
-        if (participation != null) {
-            LockedSubmissionExerciseDTO exerciseDTO = null;
-            var exercise = participation.getExercise();
-            if (exercise != null) {
-                exerciseDTO = new LockedSubmissionExerciseDTO(exercise.getId(), exercise.getExerciseType() != null ? exercise.getExerciseType().getValue() : null,
-                        exercise.getTitle());
-            }
-            participationDTO = new LockedSubmissionParticipationDTO(participation.getId(), exerciseDTO);
-        }
+        var exercise = participation.getExercise();
+        var exerciseDTO = new LockedSubmissionExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle());
+        var participationDTO = new LockedSubmissionParticipationDTO(participation.getId(), exerciseDTO);
 
-        List<LockedSubmissionResultDTO> resultDTOs = submission.getResults() == null ? List.of()
-                : submission.getResults().stream().filter(Objects::nonNull).map(LockedExamSubmissionDTO::toResultDTO).toList();
+        // results can contain null padding slots (correction rounds), so they are filtered defensively
+        List<LockedSubmissionResultDTO> resultDTOs = submission.getResults().stream().filter(Objects::nonNull)
+                .map(result -> new LockedSubmissionResultDTO(result.getId(), result.getScore(), result.getCompletionDate())).toList();
 
         return new LockedExamSubmissionDTO(submission.getId(), submission.getSubmissionDate(), submission.getSubmissionExerciseType(), participationDTO, resultDTOs);
-    }
-
-    private static LockedSubmissionResultDTO toResultDTO(Result result) {
-        return new LockedSubmissionResultDTO(result.getId(), result.getScore(), result.getCompletionDate());
     }
 }

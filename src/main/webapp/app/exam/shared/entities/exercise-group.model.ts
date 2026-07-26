@@ -9,12 +9,3 @@ export class ExerciseGroup implements BaseEntity {
     public exam?: Exam;
     public exercises?: Exercise[];
 }
-
-/**
- * Minimal reference used to persist the order of an exam's exercise groups. The client sends the group ids in the desired
- * order and receives the persisted order back as the same id list; it re-applies that order to its already-loaded,
- * fully-detailed groups so no exercise detail (quiz questions, template/solution participations) is lost.
- */
-export interface ExerciseGroupOrderDTO {
-    id?: number;
-}

@@ -19,12 +19,9 @@ public record ExamIdAndTitleDTO(Long id, String title) {
      * Creates a slim {@link ExamIdAndTitleDTO} from an exam.
      *
      * @param exam the exam to project
-     * @return the slim DTO, or {@code null} if the exam is {@code null}
+     * @return the slim DTO
      */
     public static ExamIdAndTitleDTO of(Exam exam) {
-        if (exam == null) {
-            return null;
-        }
         return new ExamIdAndTitleDTO(exam.getId(), exam.getTitle());
     }
 }

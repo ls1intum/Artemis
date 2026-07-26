@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupOrderDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
@@ -370,9 +369,9 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         TextExercise exercise3_2 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
         TextExercise exercise3_3 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
 
-        List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>(List.of(exerciseGroup2, exerciseGroup3, exerciseGroup1));
+        List<Long> orderedExerciseGroupIds = new ArrayList<>(List.of(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId()));
         // Should save new order
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
 
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow().getExerciseGroups();
@@ -390,17 +389,17 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(savedExerciseGroup3.getExercises()).containsExactlyInAnyOrder(exercise3_1, exercise3_2, exercise3_3);
 
         // Should fail with too many exercise groups
-        orderedExerciseGroups.add(exerciseGroup1);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        orderedExerciseGroupIds.add(exerciseGroup1.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.BAD_REQUEST);
 
         // Should fail with too few exercise groups
-        orderedExerciseGroups.remove(3);
-        orderedExerciseGroups.remove(2);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        orderedExerciseGroupIds.remove(3);
+        orderedExerciseGroupIds.remove(2);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.BAD_REQUEST);
 
-        // Should fail with different exercise group
-        orderedExerciseGroups = Arrays.asList(exerciseGroup2, exerciseGroup3, ExamFactory.generateExerciseGroup(true, exam));
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        // Should fail with an exercise group id that does not belong to the exam
+        List<Long> idsWithForeignGroup = Arrays.asList(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId() + 100_000L);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithForeignGroup, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -416,16 +415,11 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         TextExercise exerciseB1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroupB);
         TextExercise exerciseC1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroupC);
 
-        // This is the actual wire shape the client sends: only the exercise-group ids, in the desired order
-        // (ExerciseGroupOrderDTO), not full ExerciseGroup entities.
-        List<ExerciseGroupOrderDTO> requestBody = List.of(new ExerciseGroupOrderDTO(exerciseGroupC.getId()), new ExerciseGroupOrderDTO(exerciseGroupA.getId()),
-                new ExerciseGroupOrderDTO(exerciseGroupB.getId()));
+        // This is the actual wire shape the client sends: only the exercise-group ids, in the desired order,
+        // not full ExerciseGroup entities. The response carries no body.
+        List<Long> requestBody = List.of(exerciseGroupC.getId(), exerciseGroupA.getId(), exerciseGroupB.getId());
 
-        List<ExerciseGroupOrderDTO> response = request.putWithResponseBodyList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order",
-                requestBody, ExerciseGroupOrderDTO.class, HttpStatus.OK);
-
-        // The response ids exactly match the requested persisted order.
-        assertThat(response).extracting(ExerciseGroupOrderDTO::id).containsExactly(exerciseGroupC.getId(), exerciseGroupA.getId(), exerciseGroupB.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", requestBody, HttpStatus.OK);
 
         // Fresh repository read (a new query, not the JPA session used to build the request) confirms the persisted
         // order, that the @OrderColumn-backed list has no null slot, and that every group AND exercise id survived.

@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ExerciseGroup, ExerciseGroupOrderDTO } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -575,19 +575,18 @@ describe('Exam Management Service Tests', () => {
             { exam: mockExam, id: 2 },
             { exam: mockExam, id: 1 },
         ];
-        const expected: ExerciseGroupOrderDTO[] = [{ id: 2 }, { id: 1 }];
 
         // WHEN
-        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.body).toEqual(expected));
+        service.updateOrder(course.id!, mockExam.id!, mockExerciseGroups).subscribe((res) => expect(res.ok).toBe(true));
 
         // THEN
         const req = httpMock.expectOne({
             method: 'PUT',
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/exercise-groups-order`,
         });
-        // Only the ordered group ids are sent, not the full exercise groups.
-        expect(req.request.body).toEqual([{ id: 2 }, { id: 1 }]);
-        req.flush(expected);
+        // Only the ordered group ids are sent, not the full exercise groups; the response carries no body.
+        expect(req.request.body).toEqual([2, 1]);
+        req.flush(null);
         await Promise.resolve();
     });
 
