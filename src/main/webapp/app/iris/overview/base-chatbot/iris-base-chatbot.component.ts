@@ -466,10 +466,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         // With an empty, focused textarea the rotating placeholder freezes on a single
         // example phrase; offer that whole phrase as the ghost suggestion so Tab completes it.
+        const displayedPhrase = this.isFocused() && this.shouldUseRotatingPlaceholder() ? this.currentPlaceholder() : '';
         if (!input) {
-            return this.isFocused() && this.shouldUseRotatingPlaceholder() ? this.currentPlaceholder() : '';
+            return displayedPhrase;
         }
         const inputLower = input.toLowerCase();
+        // If the phrase currently shown as the suggestion still matches what the user typed,
+        // keep completing that exact phrase. Otherwise the suggestion would jump to a different
+        // label — several phrases can share the same starting word (e.g. multiple "W..." labels),
+        // and labels is shuffled, so find() could land on a phrase other than the visible one.
+        if (displayedPhrase && displayedPhrase.toLowerCase().startsWith(inputLower)) {
+            return displayedPhrase.slice(input.length);
+        }
         const match = labels.find((label) => label.toLowerCase().startsWith(inputLower));
         return match ? match.slice(input.length) : '';
     });

@@ -2851,6 +2851,31 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(component.newMessageTextContent()).toBe(placeholder);
             });
 
+            it('should keep completing the displayed placeholder after typing its first character', () => {
+                // Regression: with the field empty and focused, the displayed rotating placeholder is
+                // offered as the suggestion. Typing its first character(s) must keep completing that
+                // exact phrase, not jump to a different label sharing the same prefix (labels is
+                // shuffled and several phrases can start with the same word).
+                fixture.componentRef.setInput('layout', 'widget');
+                component.newMessageTextContent.set('');
+                component.isFocused.set(true);
+                fixture.detectChanges();
+                const displayedPhrase = component.currentPlaceholder();
+                expect(displayedPhrase).not.toBe('');
+
+                // Type a prefix that several labels share (the first word of the displayed phrase).
+                const firstWord = displayedPhrase.split(' ')[0];
+                // Guard the regression is meaningful: more than one label starts with this word.
+                const sharedPrefixLabels = component.interpolatedLabels().filter((label) => label.toLowerCase().startsWith(firstWord.toLowerCase()));
+                if (sharedPrefixLabels.length > 1) {
+                    const prefix = displayedPhrase.substring(0, firstWord.length);
+                    component.newMessageTextContent.set(prefix);
+                    fixture.detectChanges();
+                    // Completion still resolves to the displayed phrase, not another matching label.
+                    expect(prefix + component.ghostText()).toBe(displayedPhrase);
+                }
+            });
+
             it('should accept ghost text on Tab key', () => {
                 const label = component.interpolatedLabels()[0];
                 const prefix = label.substring(0, 10);
