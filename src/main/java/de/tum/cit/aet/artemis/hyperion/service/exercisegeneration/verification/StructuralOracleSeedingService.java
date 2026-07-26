@@ -318,21 +318,22 @@ public class StructuralOracleSeedingService {
             return StructuralAssetOwnership.UNMANAGED;
         }
         String prefix = testDirectory.isEmpty() ? "" : testDirectory + "/";
-        String oracle = testFiles.get(prefix + ORACLE_FILE);
-        if (oracle == null) {
+        // Ownership is decided by the marker, never by whether the set of assets is complete. An earlier revision also required every class the oracle names to still exist,
+        // which made the seeder disown its own output the moment anything removed part of it: observed live, the agent deleted the ClassTest and MethodTest this service had
+        // seeded on a previous attempt, the surviving oracle was then read as a foreign harness, and the whole generation was thrown away with nothing saved. Incomplete own
+        // output is not a foreign harness — it is exactly the state this service exists to repair, and it rewrites every required class anyway.
+        boolean anyUnmarkedClass = STRUCTURAL_CLASSES.stream().filter(className -> testFiles.containsKey(prefix + className))
+                .anyMatch(className -> !testFiles.get(prefix + className).contains(GENERATED_MARKER));
+        if (anyUnmarkedClass) {
+            // A structural class this service did not write. That is someone's hand-authored grading harness, and it must never be overwritten.
             return StructuralAssetOwnership.UNMANAGED;
         }
-        try {
-            List<String> requiredClasses = requiredStructuralClasses(oracle);
-            boolean hasManagedClass = STRUCTURAL_CLASSES.stream().anyMatch(className -> testFiles.getOrDefault(prefix + className, "").contains(GENERATED_MARKER));
-            boolean everyPresentClassIsManaged = STRUCTURAL_CLASSES.stream().filter(className -> testFiles.containsKey(prefix + className))
-                    .allMatch(className -> testFiles.get(prefix + className).contains(GENERATED_MARKER));
-            boolean everyRequiredClassExists = requiredClasses.stream().allMatch(className -> testFiles.containsKey(prefix + className));
-            return hasManagedClass && everyPresentClassIsManaged && everyRequiredClassExists ? StructuralAssetOwnership.HYPERION_MANAGED : StructuralAssetOwnership.UNMANAGED;
+        boolean anyMarkedClass = STRUCTURAL_CLASSES.stream().anyMatch(className -> testFiles.getOrDefault(prefix + className, "").contains(GENERATED_MARKER));
+        if (anyMarkedClass) {
+            return StructuralAssetOwnership.HYPERION_MANAGED;
         }
-        catch (IOException | RuntimeException e) {
-            return StructuralAssetOwnership.UNMANAGED;
-        }
+        // No structural class survives. A bare oracle file grades nothing on its own, so it is this service's leftover rather than a harness worth protecting.
+        return testFiles.containsKey(prefix + ORACLE_FILE) ? StructuralAssetOwnership.HYPERION_MANAGED : StructuralAssetOwnership.UNMANAGED;
     }
 
     private enum StructuralAssetOwnership {

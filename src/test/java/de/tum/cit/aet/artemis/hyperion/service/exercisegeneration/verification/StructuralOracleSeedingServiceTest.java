@@ -214,6 +214,44 @@ class StructuralOracleSeedingServiceTest {
     }
 
     @Test
+    void reseedsAfterTheAgentDeletedTheStructuralClassesThisServiceSeeded() {
+        // Verbatim from a live run. The seeder had written test.json, ClassTest and MethodTest on an earlier attempt; the agent then deleted both classes. An earlier revision
+        // read the surviving oracle as somebody else's grading harness and threw, which discarded the entire generation with nothing saved. Its own incomplete output is the
+        // state this service exists to repair.
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
+        Map<String, String> tests = Map.of("test/sorting/ScoreProcessorTest.java", "package sorting; class ScoreProcessorTest {}", "test/sorting/test.json",
+                "[{\"class\":{\"name\":\"ScoreProcessor\"}}]");
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| ScoreProcessor | processor | student-creates |");
+
+        Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        assertThat(seededNames).contains("testClass[ScoreProcessor]");
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
+    }
+
+    @Test
+    void reseedsWhenOnlySomeOfTheSeededStructuralClassesSurvive() {
+        // The partial case: one marked class left behind, the other deleted. Completeness is not what identifies ownership — the marker is.
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
+        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
+        Map<String, String> tests = Map.of("test/sorting/test.json", "[{\"class\":{\"name\":\"ScoreProcessor\"},\"methods\":[{\"name\":\"process\"}]}]",
+                "test/sorting/ClassTest.java", GENERATED_MARKER + "\nclass ClassTest {}");
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| ScoreProcessor | processor | student-creates |");
+
+        Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        assertThat(seededNames).contains("testClass[ScoreProcessor]");
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
+    }
+
+    @Test
     void refreshesACompleteManagedBundleWithOnlyApplicableProviders() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
