@@ -67,12 +67,15 @@ public class SlideSplitterService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
+
     public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
+        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
     }
 
     /**
@@ -167,6 +170,7 @@ public class SlideSplitterService {
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 slideRepository.save(slideEntity);
             }
+            runAfterCommit(() -> lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnit.getId()));
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
@@ -210,6 +214,7 @@ public class SlideSplitterService {
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(pageOrder, existingSlides);
+            runAfterCommit(() -> lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnit.getId()));
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);

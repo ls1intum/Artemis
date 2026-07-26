@@ -21,7 +21,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +49,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -72,6 +75,8 @@ import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
+import de.tum.cit.aet.artemis.lecture.service.IrisLectureUnitSyncService;
+import de.tum.cit.aet.artemis.lecture.service.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
@@ -379,6 +384,18 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentVideoUnit.id());
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id())).hasSize(SLIDE_COUNT));
+        List<Slide> committedSlides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id());
+        Map<Integer, ZonedDateTime> committedVisibility = new LinkedHashMap<>();
+        committedSlides.stream().sorted(Comparator.comparingInt(Slide::getSlideNumber)).forEach(slide -> committedVisibility.put(slide.getSlideNumber(), slide.getHidden()));
+        var committedSnapshot = new LectureContentUpdateSnapshot(persistedAttachmentVideoUnit.id(), null, null, null, null, null, null, null,
+                updatedAttachmentVideoUnit.resolveReleaseDate(), committedVisibility);
+        String expectedVisibilityHash = ReflectionTestUtils.invokeMethod(IrisLectureUnitSyncService.class, "visibilityHash", committedSnapshot);
+        await().untilAsserted(() -> {
+            IrisLectureUnitSyncState syncState = irisLectureUnitSyncStateRepository.findByLectureUnitId(persistedAttachmentVideoUnit.id()).orElseThrow();
+            assertThat(syncState.getVisibilityHash()).isEqualTo(expectedVisibilityHash);
+            assertThat(syncState.getLastSyncedVisibilityHash()).isEqualTo(expectedVisibilityHash);
+            assertThat(syncState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
+        });
         assertThat(updatedAttachmentVideoUnit.getAttachment().getId()).isEqualTo(persistedAttachment.id());
         assertThat(attachmentRepository.findById(persistedAttachment.id()).orElseThrow().getSha256Hash()).hasSize(64);
         assertThat(updatedAttachmentVideoUnit.getAttachment().getName()).isEqualTo("LoremIpsum");

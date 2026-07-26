@@ -8,6 +8,9 @@ import java.util.Map;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -16,6 +19,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureEnabled.class)
@@ -25,11 +29,29 @@ public class LectureUnitVisibilitySyncService {
 
     private final SlideRepository slideRepository;
 
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private final IrisLectureUnitSyncService irisLectureUnitSyncService;
 
-    public LectureUnitVisibilitySyncService(SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
+    private final TransactionTemplate requiresNewTransactionTemplate;
+
+    public LectureUnitVisibilitySyncService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
+            IrisLectureUnitSyncService irisLectureUnitSyncService, PlatformTransactionManager transactionManager) {
         this.slideRepository = slideRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureUnitSyncService = irisLectureUnitSyncService;
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    /**
+     * Marks an attachment video unit as visibility-dirty using its committed slide state.
+     *
+     * @param attachmentVideoUnitId the attachment video unit id
+     */
+    public void markVisibilityDirtyForAttachmentVideoUnit(long attachmentVideoUnitId) {
+        requiresNewTransactionTemplate.executeWithoutResult(status -> attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(attachmentVideoUnitId)
+                .map(this::buildSnapshot).ifPresent(irisLectureUnitSyncService::markVisibilityDirtyAfterCommit));
     }
 
     /**

@@ -121,17 +121,18 @@ class IrisLectureUnitSyncEventListenerTest {
     }
 
     @Test
-    void metadataDirtyEventKeepsRetryScheduledWhenVisibilityIsStillDirty() {
+    void metadataDirtyEventMakesRemainingVisibilityImmediatelyDue() {
         enableStateTransitions();
         var unit = new AttachmentVideoUnit();
         unit.setId(LECTURE_UNIT_ID);
-        var nextRetryAt = ZonedDateTime.now();
+        var leaseUntil = ZonedDateTime.now().plusMinutes(10);
         var state = syncState();
         state.setMetadataHash("metadata-hash");
         state.setVisibilityHash("visibility-hash");
-        state.setNextRetryAt(nextRetryAt);
+        state.setNextRetryAt(leaseUntil);
         when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        ZonedDateTime beforeDispatch = ZonedDateTime.now();
 
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
@@ -140,7 +141,41 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
-        assertThat(state.getNextRetryAt().toInstant()).isEqualTo(nextRetryAt.toInstant());
+        assertThat(state.getNextRetryAt().toInstant()).isBetween(beforeDispatch.toInstant(), ZonedDateTime.now().toInstant());
+    }
+
+    @Test
+    void combinedMetadataAndVisibilityEventsBothDispatchWithoutWaitingForLeaseExpiry() {
+        enableStateTransitions();
+        var unit = new AttachmentVideoUnit();
+        unit.setId(LECTURE_UNIT_ID);
+        var state = syncState();
+        state.setMetadataHash("metadata-hash");
+        state.setVisibilityHash("visibility-hash");
+        state.setNextRetryAt(ZonedDateTime.now().minusMinutes(1));
+        var projectedVisibility = Map.of(1, ZonedDateTime.parse("2026-07-03T10:15:30Z"));
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(syncStateRepository.claimRetry(eq(LECTURE_UNIT_ID), any(), any())).thenAnswer(invocation -> {
+            ZonedDateTime now = invocation.getArgument(1);
+            ZonedDateTime leaseUntil = invocation.getArgument(2);
+            if (state.getNextRetryAt() == null || state.getNextRetryAt().isAfter(now)) {
+                return Optional.empty();
+            }
+            state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+            state.setNextRetryAt(leaseUntil);
+            return Optional.of(state);
+        });
+        when(syncDispatchService.triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility)).thenReturn("visibility-hash");
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+        listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID, projectedVisibility));
+
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA);
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY, projectedVisibility);
+        assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
+        assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("visibility-hash");
+        assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
     }
 
     @Test

@@ -314,7 +314,7 @@ public class AttachmentVideoUnitResource {
         AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachmentToCreate,
                 file, keepFilename);
         // Split PDF into slides asynchronously (non-blocking for user request)
-        if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+        if (attachment != null && file != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(persistedUnit, null, null));
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);

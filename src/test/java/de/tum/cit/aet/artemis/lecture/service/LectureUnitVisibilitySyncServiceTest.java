@@ -16,12 +16,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -40,13 +44,36 @@ class LectureUnitVisibilitySyncServiceTest {
     private SlideTestRepository slideRepository;
 
     @Mock
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     private LectureUnitVisibilitySyncService service;
 
     @BeforeEach
     void setUp() {
-        service = new LectureUnitVisibilitySyncService(slideRepository, irisLectureUnitSyncService);
+        service = new LectureUnitVisibilitySyncService(slideRepository, attachmentVideoUnitRepository, irisLectureUnitSyncService, transactionManager);
+        org.mockito.Mockito.lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    }
+
+    @Test
+    void marksAttachmentVideoUnitDirtyFromCommittedRepositoryState() {
+        var unit = attachmentVideoUnit();
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(java.util.Optional.of(unit));
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL, unit)));
+
+        service.markVisibilityDirtyForAttachmentVideoUnit(LECTURE_UNIT_ID);
+
+        var transactionDefinitionCaptor = ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager).getTransaction(transactionDefinitionCaptor.capture());
+        assertThat(transactionDefinitionCaptor.getValue().getPropagationBehavior()).isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsExactly(java.util.Map.entry(1, HIDDEN_UNTIL));
     }
 
     @Test

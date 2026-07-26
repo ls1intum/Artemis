@@ -203,9 +203,7 @@ public class IrisLectureUnitSyncEventListener {
         }
         else {
             state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
-            if (state.getNextRetryAt() == null) {
-                state.setNextRetryAt(ZonedDateTime.now());
-            }
+            state.setNextRetryAt(ZonedDateTime.now());
         }
     }
 

@@ -119,7 +119,9 @@ public class AttachmentVideoUnitService {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
-        irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
+        if (!isPdfFile(file)) {
+            irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
+        }
         // Trigger automated content processing (transcription and ingestion)
         transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit)));
 
@@ -164,6 +166,7 @@ public class AttachmentVideoUnitService {
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
         AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
+        boolean visibilitySyncDeferredToSlideSplit = false;
         Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
         if (existingAttachment == null && updateAttachment != null) {
@@ -184,6 +187,7 @@ public class AttachmentVideoUnitService {
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                     transactionAfterCommitExecutor
                             .execute(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
+                    visibilitySyncDeferredToSlideSplit = true;
                     projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
             }
@@ -214,6 +218,7 @@ public class AttachmentVideoUnitService {
 
                         // Split PDF into slides, respecting custom page order if provided
                         if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                            visibilitySyncDeferredToSlideSplit = true;
                             if (pageOrder == null) {
                                 transactionAfterCommitExecutor.execute(
                                         () -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
@@ -234,12 +239,12 @@ public class AttachmentVideoUnitService {
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
-        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
         return savedAttachmentVideoUnit;
     }
 
     private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
-            Set<LectureContentUpdateKind> updateKinds) {
+            Set<LectureContentUpdateKind> updateKinds, boolean visibilitySyncDeferredToSlideSplit) {
         if (updateKinds.isEmpty()) {
             return;
         }
@@ -248,13 +253,17 @@ public class AttachmentVideoUnitService {
             irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
         }
 
-        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY) && !visibilitySyncDeferredToSlideSplit) {
             irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(afterSnapshot);
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
             transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit)));
         }
+    }
+
+    private static boolean isPdfFile(MultipartFile file) {
+        return file != null && !file.isEmpty() && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()));
     }
 
     private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
