@@ -94,6 +94,9 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         // non-default values throughout: a wire dump using defaults (null / accuracyOfScores == null) is exactly how these fields
         // were previously missed, so the test data must never coincide with a default.
         course.setAccuracyOfScores(2);
+        // above the client's 2000 fallback: a missing wire value would cap complaints at 2000, not at these limits
+        course.setMaxComplaintTextLimit(5000);
+        course.setMaxComplaintResponseTextLimit(4000);
         courseRepository.save(course);
 
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusMinutes(30));
@@ -170,6 +173,8 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         JsonNode courseNode = examNode.get("course");
         assertThat(courseNode).as("summary wire must carry the nested course").isNotNull();
         assertThat(courseNode.path("accuracyOfScores").asInt()).isEqualTo(2);
+        assertThat(courseNode.path("maxComplaintTextLimit").asInt()).isEqualTo(5000);
+        assertThat(courseNode.path("maxComplaintResponseTextLimit").asInt()).isEqualTo(4000);
     }
 
     /**
@@ -200,6 +205,8 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         JsonNode courseNode = examNode.get("course");
         assertThat(courseNode).as("instructor detail wire must carry the nested course").isNotNull();
         assertThat(courseNode.path("accuracyOfScores").asInt()).isEqualTo(2);
+        assertThat(courseNode.path("maxComplaintTextLimit").asInt()).isEqualTo(5000);
+        assertThat(courseNode.path("maxComplaintResponseTextLimit").asInt()).isEqualTo(4000);
     }
 
     /**
