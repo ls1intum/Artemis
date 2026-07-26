@@ -1166,6 +1166,28 @@ class GenerationOrchestrationServiceTest {
         resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
+    // --- Deterministic advisory findings ---
+
+    @Test
+    void anUngradeableTechniqueRuleReachesTheReportWithoutBlockingTheCandidate() {
+        // The detector itself is covered in the critic's own tests; what is covered here is the wiring, which nothing else exercises: the orchestrator must call it and merge
+        // its findings into the report the instructor sees. Measured live, an exercise generated from "teach recursion" awards full marks to iterative implementations, so this
+        // is the only channel that tells anyone.
+        acceptedCandidateWithSpecAndTests();
+        SpecFidelityReport.Finding techniqueRule = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "must be recursive",
+                "behavioural tests cannot see how a result was produced");
+        when(specFidelityCritic.detectUnenforceableTechniqueRules(any())).thenReturn(List.of(techniqueRule));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).as("an ungradeable technique rule is a disclosure, never a rejection").isTrue();
+            assertThat(outcome.specFidelityReport().findings()).anySatisfy(finding -> {
+                assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+                assertThat(finding.isBlocking()).isFalse();
+                assertThat(finding.requirement()).contains("must be recursive");
+            });
+        }
+    }
+
     // --- Review availability ---
 
     @Test
