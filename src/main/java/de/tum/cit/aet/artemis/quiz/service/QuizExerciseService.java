@@ -845,11 +845,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param quizExerciseId the id of the quiz exercise whose drag-and-drop images should be deleted
      */
     public void deleteDragAndDropImages(long quizExerciseId) {
+        FileUtil.deleteFiles(collectDragAndDropImagePaths(quizExerciseId));
+    }
+
+    /**
+     * Collects the file-system paths of all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise, without deleting anything.
+     * <p>
+     * The paths live inside the question's JSON {@code content}, so they are no longer readable once the exercise row is gone. Callers that delete the exercise must therefore
+     * collect the paths first and delete the files only after the database deletion succeeded — otherwise a failure in between leaves a quiz whose images are already gone.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop image paths should be collected
+     * @return the resolvable file-system paths of the exercise's drag-and-drop images
+     */
+    public List<Path> collectDragAndDropImagePaths(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         Map<FilePathType, Set<String>> imagePaths = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
-        List<Path> filesToDelete = imagePaths.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> resolveFileSystemPathForDeletion(path, entry.getKey())))
+        return imagePaths.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> resolveFileSystemPathForDeletion(path, entry.getKey())))
                 .filter(Objects::nonNull).toList();
-        FileUtil.deleteFiles(filesToDelete);
     }
 
     /**
