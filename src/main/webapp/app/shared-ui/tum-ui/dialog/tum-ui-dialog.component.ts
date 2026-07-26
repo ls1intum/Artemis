@@ -28,9 +28,11 @@ let nextDialogId = 0;
  * Owned Artemis modal dialog on Angular CDK overlay, part of the tum-aet-ui kit (future @tumaet/ui-angular).
  *
  * Declarative drop-in replacement for PrimeNG's `p-dialog`: same two-way `[(visible)]` control, header
- * string / projected `#header` template, projected `#footer` template, and modal mask. Pixel-matched to
- * the Aura `dialog` tokens (header/content/footer padding = 1.25rem, title 1.25rem/600, border-radius
- * `xl` = 12px, shadow = the Aura modal shadow ≙ `shadow-xl`). Rides the shared kit overlay backdrop
+ * string / projected `#header` template, projected `#footer` template, and modal mask. Matched to the Aura
+ * `dialog` tokens (title 1.25rem/600, border-radius `xl` = 12px, shadow = the Aura modal shadow ≙
+ * `shadow-xl`), with ONE deliberate house-style deviation: header/content/footer padding is 1rem instead of
+ * the Aura 1.25rem, because the Aura value reads too airy for short prompts (review feedback on #13303).
+ * Applies to every dialog, so the density stays consistent app-wide. Rides the shared kit overlay backdrop
  * (`.tum-ui-overlay-backdrop`) plus `cdkTrapFocus` and Escape-to-close, exactly like {@link TumUiPopoverComponent}.
  *
  * The panel is portaled into the CDK overlay container (equivalent to PrimeNG `appendTo="body"`), so its

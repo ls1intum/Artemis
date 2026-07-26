@@ -12,7 +12,7 @@
         [cdkTrapFocusAutoCapture]="true"
     >
         @if (showHeader()) {
-            <div class="tum-ui-dialog-header flex shrink-0 items-center justify-between gap-2 p-5">
+            <div class="tum-ui-dialog-header flex shrink-0 items-center justify-between gap-2 p-4">
                 <span [id]="titleId" class="tum-ui-dialog-title text-xl font-semibold">
                     @if (headerTemplate(); as headerTpl) {
                         <ng-container [ngTemplateOutlet]="headerTpl" />
@@ -34,12 +34,12 @@
             </div>
         }
 
-        <div class="tum-ui-dialog-content grow overflow-y-auto px-5 pb-5" [style]="contentStyle()">
+        <div class="tum-ui-dialog-content grow overflow-y-auto px-4 pb-4" [style]="contentStyle()">
             <ng-content />
         </div>
 
         @if (footerTemplate(); as footerTpl) {
-            <div class="tum-ui-dialog-footer flex shrink-0 justify-end gap-2 px-5 pb-5">
+            <div class="tum-ui-dialog-footer flex shrink-0 justify-end gap-2 px-4 pb-4">
                 <ng-container [ngTemplateOutlet]="footerTpl" />
             </div>
         }
