@@ -95,6 +95,10 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.maxPoints = 0;
             expect(component.generationDisabledReason()).toBe('artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints');
 
+            exercise.isAtLeastEditor = true;
+            exercise.course = undefined;
+            expect(component.canShowGenerationButton()).toBe(false);
+
             Object.defineProperty(component, 'hyperionEnabled', { value: false });
             expect(component.canShowGenerationButton()).toBe(false);
         });
@@ -182,6 +186,18 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(exercise.gradingCriteria).toBe(previousCriteria);
             expect(component.isGenerating()).toBe(false);
+        });
+
+        it('should stop generating and report an error when request setup fails synchronously', () => {
+            generationService.generate.mockImplementation(() => {
+                throw new Error('request setup failed');
+            });
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+
+            component.generateAssessmentCriteria();
+
+            expect(component.isGenerating()).toBe(false);
+            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'request setup failed' }));
         });
 
         it('should generate immediately when no structured criteria exist', () => {

@@ -3,7 +3,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { cloneDeep } from 'lodash-es';
-import { faPlus, faSpinner, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
@@ -27,13 +27,13 @@ import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-gra
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
-import { ButtonDirective } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
-import { TooltipModule } from 'primeng/tooltip';
+import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -48,9 +48,9 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
         NgbTooltip,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        ButtonDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
         ConfirmDialogModule,
-        TooltipModule,
     ],
     providers: [ConfirmationService],
 })
@@ -81,7 +81,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const exercise = this.exercise();
         const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
         const supportedExercise = exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
-        return this.hyperionEnabled && supportedExercise && this.editable() && !!(exercise.isAtLeastEditor || course?.isAtLeastEditor);
+        return this.hyperionEnabled && supportedExercise && this.editable() && course?.id !== undefined && !!(exercise.isAtLeastEditor || course.isAtLeastEditor);
     }
 
     generationDisabledReason(): string | undefined {
@@ -130,7 +130,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     // Icons
     faPlus = faPlus;
-    faSpinner = faSpinner;
     faTrash = faTrash;
     faUndo = faUndo;
     facArtemisIntelligence = facArtemisIntelligence;
@@ -578,8 +577,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
         this.isGenerating.set(true);
         const gradingInstructions = this.exercise().gradingInstructions;
-        this.generationService
-            .generate(this.exercise())
+        defer(() => this.generationService.generate(this.exercise()))
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isGenerating.set(false)),

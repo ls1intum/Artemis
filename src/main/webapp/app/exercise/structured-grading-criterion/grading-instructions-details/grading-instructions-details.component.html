@@ -3,42 +3,34 @@
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
-        <div class="flex w-full items-center justify-between gap-2 mb-1">
-            <div class="col-12 col-sm-auto d-flex me-1">
-                <button id="edit-mode" type="button" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }">
-                    <span jhiTranslate="entity.action.edit"></span>
-                </button>
-                <button
-                    id="edit-text-mode"
-                    type="button"
-                    class="btn btn-block"
-                    (click)="switchMode()"
-                    [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }"
-                >
-                    <span jhiTranslate="artemisApp.exercise.editText"></span>
-                </button>
-            </div>
-            @if (canShowGenerationButton()) {
-                <button
-                    pButton
+        <div class="col-12 col-sm-auto d-flex me-1 mb-1">
+            <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode(), 'btn-default': !showEditMode() }">
+                <span jhiTranslate="entity.action.edit"></span>
+            </button>
+            <button id="edit-text-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': !showEditMode(), 'btn-default': showEditMode() }">
+                <span jhiTranslate="artemisApp.exercise.editText"></span>
+            </button>
+        </div>
+        @if (canShowGenerationButton()) {
+            <div class="flex w-full justify-end mb-1">
+                <tum-ui-button
                     type="button"
                     severity="secondary"
                     data-testid="generate-assessment-criteria"
                     [disabled]="isGenerationDisabled()"
-                    [pTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
-                    [tooltipDisabled]="!isGenerationDisabled()"
-                    (click)="generateAssessmentCriteria()"
+                    [loading]="isGenerating()"
+                    [icon]="facArtemisIntelligence"
+                    [tumUiTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
+                    (clicked)="generateAssessmentCriteria()"
                 >
                     @if (isGenerating()) {
-                        <fa-icon [icon]="faSpinner" animation="spin" />
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
                     } @else {
-                        <fa-icon [icon]="facArtemisIntelligence" />
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                     }
-                </button>
-            }
-        </div>
+                </tum-ui-button>
+            </div>
+        }
         <div class="grading-instructions-update-border">
             <!--- Edit Mode --->
             @if (showEditMode()) {
@@ -204,24 +196,22 @@
     <div class="edit-sqi">
         @if (canShowGenerationButton()) {
             <div class="flex w-full justify-end mb-1">
-                <button
-                    pButton
+                <tum-ui-button
                     type="button"
                     severity="secondary"
                     data-testid="generate-assessment-criteria"
                     [disabled]="isGenerationDisabled()"
-                    [pTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
-                    [tooltipDisabled]="!isGenerationDisabled()"
-                    (click)="generateAssessmentCriteria()"
+                    [loading]="isGenerating()"
+                    [icon]="facArtemisIntelligence"
+                    [tumUiTooltip]="generationDisabledReason() ? (generationDisabledReason()! | artemisTranslate) : ''"
+                    (clicked)="generateAssessmentCriteria()"
                 >
                     @if (isGenerating()) {
-                        <fa-icon [icon]="faSpinner" animation="spin" />
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generating"></span>
                     } @else {
-                        <fa-icon [icon]="facArtemisIntelligence" />
                         <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                     }
-                </button>
+                </tum-ui-button>
             </div>
         }
         <div class="grading-instructions-update-border">
