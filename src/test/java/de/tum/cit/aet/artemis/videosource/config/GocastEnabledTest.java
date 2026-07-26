@@ -16,8 +16,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 /**
  * Unit tests for {@link GocastEnabled} and the regression guard for {@link TumLiveEnabled}.
  * <p>
- * {@link GocastEnabled} requires BOTH {@code artemis.tum-live.api-base-url} AND
- * {@code artemis.tum-live.service-account-token} to be non-blank.
+ * {@link GocastEnabled} requires all four service-account integration properties to be non-blank.
  * <p>
  * {@link TumLiveEnabled} (the existing public resolver) must NOT require the service-account token
  * — it must activate on {@code api-base-url} alone so that public TUM Live streams keep working
@@ -33,12 +32,12 @@ class GocastEnabledTest {
     private AnnotatedTypeMetadata metadata;
 
     // -----------------------------------------------------------------------
-    // GocastEnabled — AND condition: both api-base-url AND service-account-token
+    // GocastEnabled — all service-account integration properties are required
     // -----------------------------------------------------------------------
 
     @Test
-    void gocastEnabledBothNonBlankReturnsTrue() {
-        setupEnvironment("https://tum.live/api/v2", "my-secret-token", null);
+    void gocastEnabledAllPropertiesNonBlankReturnsTrue() {
+        setupEnvironment("https://tum.live/api/v2", "my-secret-token", "https://tum.live", "123");
 
         GocastEnabled condition = new GocastEnabled();
         assertThat(condition.matches(conditionContext, metadata)).isTrue();
@@ -100,6 +99,20 @@ class GocastEnabledTest {
         assertThat(condition.matches(conditionContext, metadata)).isFalse();
     }
 
+    @Test
+    void gocastEnabledWebUrlMissingReturnsFalse() {
+        setupEnvironment("https://tum.live/api/v2", "my-secret-token", null, "123");
+
+        assertThat(new GocastEnabled().matches(conditionContext, metadata)).isFalse();
+    }
+
+    @Test
+    void gocastEnabledServiceAccountUserIdMissingReturnsFalse() {
+        setupEnvironment("https://tum.live/api/v2", "my-secret-token", "https://tum.live", null);
+
+        assertThat(new GocastEnabled().matches(conditionContext, metadata)).isFalse();
+    }
+
     // -----------------------------------------------------------------------
     // TumLiveEnabled regression guard — must NOT require service-account-token
     // -----------------------------------------------------------------------
@@ -145,13 +158,16 @@ class GocastEnabledTest {
      * @param webBaseUrl          value for {@code artemis.tum-live.web-base-url} (may be {@code null})
      */
     private void setupEnvironment(String apiBaseUrl, String serviceAccountToken, String webBaseUrl) {
+        setupEnvironment(apiBaseUrl, serviceAccountToken, webBaseUrl, null);
+    }
+
+    private void setupEnvironment(String apiBaseUrl, String serviceAccountToken, String webBaseUrl, String serviceAccountUserId) {
         Environment env = mock(Environment.class);
         when(conditionContext.getEnvironment()).thenReturn(env);
         // Use lenient() for properties that may not be consumed by every Condition under test.
         lenient().when(env.getProperty("artemis.tum-live.api-base-url")).thenReturn(apiBaseUrl);
         lenient().when(env.getProperty("artemis.tum-live.service-account-token")).thenReturn(serviceAccountToken);
-        if (webBaseUrl != null) {
-            lenient().when(env.getProperty("artemis.tum-live.web-base-url")).thenReturn(webBaseUrl);
-        }
+        lenient().when(env.getProperty("artemis.tum-live.web-base-url")).thenReturn(webBaseUrl);
+        lenient().when(env.getProperty("artemis.tum-live.service-account-user-id")).thenReturn(serviceAccountUserId);
     }
 }

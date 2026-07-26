@@ -62,9 +62,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
-    void testGocastEnabledWhenBothPropertiesSet() {
-        // The test harness (AbstractSpringIntegrationIndependentTest) sets BOTH
-        // artemis.tum-live.api-base-url and artemis.tum-live.service-account-token, which matches the
+    void testGocastEnabledWhenAllPropertiesSet() {
+        // The test harness sets all four service-account integration properties, which matches the
         // GocastEnabled condition. FeatureToggleService must therefore enable Feature.Gocast on init.
         // The negative case (only one property set ⇒ disabled) cannot be exercised in this shared-context
         // integration test because the features map is a Hazelcast singleton and the properties are fixed

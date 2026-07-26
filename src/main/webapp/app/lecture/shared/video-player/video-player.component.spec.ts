@@ -784,6 +784,40 @@ describe('VideoPlayerComponent', () => {
             vi.useRealTimers();
         });
 
+        it('preserves playback position and state when refreshing native HLS', async () => {
+            vi.useFakeTimers();
+            const MockHlsClass = getMockHlsClass();
+            const originalIsSupported = MockHlsClass.isSupported;
+            MockHlsClass.isSupported = vi.fn(() => false);
+            const canPlayTypeSpy = vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('probably');
+
+            try {
+                mockGocastService.getPlaybackToken
+                    .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/native-first.m3u8', expiresIn: 60 }))
+                    .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/native-second.m3u8', expiresIn: 60 }));
+
+                setGocastIdentity();
+                await render();
+
+                videoElement.currentTime = 42;
+                Object.defineProperty(videoElement, 'paused', { configurable: true, value: false });
+                const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
+                vi.advanceTimersByTime(31000);
+                expect(videoElement.src).toBe('https://tum.live/hls/native-second.m3u8');
+
+                videoElement.currentTime = 0;
+                videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+                expect(videoElement.currentTime).toBe(42);
+                expect(playSpy).toHaveBeenCalled();
+            } finally {
+                MockHlsClass.isSupported = originalIsSupported;
+                canPlayTypeSpy.mockRestore();
+                vi.useRealTimers();
+            }
+        });
+
         it('switches to videoUrl via HLS when a token REFRESH fails and a fallback videoUrl is set', async () => {
             vi.useFakeTimers();
 

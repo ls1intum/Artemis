@@ -79,6 +79,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
+    private nativeHlsLoaded = false;
+
+    private nativeSourceRestoreHandler: (() => void) | undefined;
+
     /** Track the index of the currently active transcript segment */
     currentSegmentIndex = signal<number>(-1);
     private readonly currentSlideNumber = signal<number | undefined>(undefined);
@@ -232,6 +236,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                             this.hls?.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
                         };
                         this.hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                    } else if (this.nativeHlsLoaded) {
+                        this.refreshNativeHlsSource(url, videoElement);
                     } else {
                         // First load
                         this.initHls(url, videoElement);
@@ -258,6 +264,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                         this.tokenError.set(false);
                         if (this.hls) {
                             this.hls.loadSource(fallbackUrl);
+                        } else if (this.nativeHlsLoaded) {
+                            this.refreshNativeHlsSource(fallbackUrl, videoElement);
                         } else {
                             this.initHls(fallbackUrl, videoElement);
                         }
@@ -300,8 +308,30 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             });
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
             // Native HLS support (Safari)
+            this.nativeHlsLoaded = true;
             videoElement.src = src;
         }
+    }
+
+    private refreshNativeHlsSource(src: string, videoElement: HTMLVideoElement): void {
+        const currentTime = videoElement.currentTime;
+        const wasPlaying = !videoElement.paused;
+
+        if (this.nativeSourceRestoreHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.nativeSourceRestoreHandler);
+        }
+
+        this.nativeSourceRestoreHandler = () => {
+            videoElement.currentTime = currentTime;
+            if (wasPlaying) {
+                videoElement.play().catch(() => {
+                    // Autoplay may be blocked; ignore and let the user resume manually.
+                });
+            }
+            this.nativeSourceRestoreHandler = undefined;
+        };
+        videoElement.addEventListener('loadedmetadata', this.nativeSourceRestoreHandler, { once: true });
+        videoElement.src = src;
     }
 
     /**
@@ -537,6 +567,11 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
             this.loadedmetadataHandler = undefined;
             this.pendingInitialSeek = undefined; // Clear pending seek as well
+        }
+
+        if (videoElement && this.nativeSourceRestoreHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.nativeSourceRestoreHandler);
+            this.nativeSourceRestoreHandler = undefined;
         }
 
         // Destroy HLS instance
