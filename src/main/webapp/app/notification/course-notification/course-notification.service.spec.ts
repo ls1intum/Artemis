@@ -7,6 +7,7 @@ import { CourseNotification } from 'app/notification/shared/entities/course-noti
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationPage } from 'app/notification/shared/entities/course-notification/course-notification-page';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import dayjs from 'dayjs/esm';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
@@ -370,6 +371,23 @@ describe('CourseNotificationService', () => {
             const icon = service.getIconFromType('unknownType');
 
             expect(icon).toBe(faComments);
+        });
+
+        it('should register an icon for the Iris review notification type', () => {
+            expect(CourseNotificationService.NOTIFICATION_TYPE_ICON_MAP).toHaveProperty('irisResponseNeedsReviewNotification');
+            expect(service.getIconFromType('irisResponseNeedsReviewNotification')).toBe(faComments);
+        });
+    });
+
+    describe('DISABLE_NOTIFICATION_CHANNEL_TYPES', () => {
+        it('should disable the unsupported Email and Push channels for the Iris review notification', () => {
+            // The server only supports the WEBAPP channel for this notification, so Email and Push must be non-configurable.
+            const disabledChannels = CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES['irisResponseNeedsReviewNotification'];
+
+            expect(disabledChannels).toBeDefined();
+            expect(disabledChannels).toContain(CourseNotificationChannel.EMAIL);
+            expect(disabledChannels).toContain(CourseNotificationChannel.PUSH);
+            expect(disabledChannels).not.toContain(CourseNotificationChannel.WEBAPP);
         });
     });
 

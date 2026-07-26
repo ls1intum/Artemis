@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -62,11 +63,15 @@ public class SavedPostResource {
 
     private final UserRepository userRepository;
 
-    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository) {
+    private final AnswerMessageService answerMessageService;
+
+    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository,
+            AnswerMessageService answerMessageService) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
+        this.answerMessageService = answerMessageService;
     }
 
     /**
@@ -88,8 +93,10 @@ public class SavedPostResource {
 
         List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.POST).map(SavedPost::getPostId).toList())
                 .stream().filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
-        List<AnswerPost> answerPosts = answerPostRepository
-                .findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.ANSWER).map(SavedPost::getPostId).toList()).stream()
+        // findVisibleByIdIn drops unverified Iris replies for non-tutors, so a student cannot read pending Iris content
+        // by bookmarking a guessed answer id and re-reading it here.
+        List<AnswerPost> answerPosts = answerMessageService
+                .findVisibleByIdIn(courseId, savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.ANSWER).map(SavedPost::getPostId).toList()).stream()
                 .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
         List<PostingDTO> postingList = new ArrayList<>();
 
