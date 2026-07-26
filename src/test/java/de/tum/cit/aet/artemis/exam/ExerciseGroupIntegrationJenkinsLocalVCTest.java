@@ -400,6 +400,17 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         // Should fail with an exercise group id that does not belong to the exam
         List<Long> idsWithForeignGroup = Arrays.asList(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId() + 100_000L);
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithForeignGroup, HttpStatus.BAD_REQUEST);
+
+        // Should fail with duplicate ids: the rebuilt list would omit a group, and orphanRemoval on
+        // Exam.exerciseGroups would delete the omitted group and its exercises.
+        List<Long> idsWithDuplicate = Arrays.asList(exerciseGroup2.getId(), exerciseGroup2.getId(), exerciseGroup1.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithDuplicate, HttpStatus.BAD_REQUEST);
+
+        // A fresh reload proves the rejected requests changed nothing: all three groups and all six exercises intact,
+        // still in the last successfully saved order.
+        Exam reloadedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+        assertThat(reloadedExam.getExerciseGroups()).extracting(ExerciseGroup::getId).containsExactly(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId());
+        assertThat(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList()).hasSize(6);
     }
 
     @Test

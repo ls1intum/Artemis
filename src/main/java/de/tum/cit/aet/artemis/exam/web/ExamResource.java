@@ -1318,12 +1318,15 @@ public class ExamResource {
             managedGroupsById.put(managedGroup.getId(), managedGroup);
         }
 
-        // Ensure all received ids belong to the exam and build the reordered list using managed entities
+        // Ensure the received ids are exactly a permutation of the exam's group ids and build the reordered list using
+        // managed entities. remove() (not get()) also rejects duplicate ids: together with the size check above, a
+        // duplicate would mean another group is omitted from the rebuilt list — and with orphanRemoval on
+        // Exam.exerciseGroups, saving such a list would delete the omitted group and its exercises.
         var reorderedManagedGroups = new ArrayList<ExerciseGroup>();
         for (Long exerciseGroupId : orderedExerciseGroupIds) {
-            ExerciseGroup managedGroup = managedGroupsById.get(exerciseGroupId);
+            ExerciseGroup managedGroup = managedGroupsById.remove(exerciseGroupId);
             if (managedGroup == null) {
-                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
+                throw new BadRequestAlertException("The exercise group is not related to the exam or appears more than once", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
             }
             reorderedManagedGroups.add(managedGroup);
         }
