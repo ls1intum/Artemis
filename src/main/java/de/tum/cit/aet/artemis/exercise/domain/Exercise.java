@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -878,9 +879,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * The maximum number of decimal places allowed for maxPoints/bonusPoints, see {@link #hasValidPointsPrecision}.
+     */
+    private static final int MAX_POINTS_DECIMAL_PLACES = 4;
+
+    /**
      * Validates score settings
      * 1. The maxScore needs to be greater than 0, except for not included programming exercises
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
+     * 3. maxPoints and bonusPoints must be plain decimals with a reasonable number of decimal places
      */
     public void validateScoreSettings() {
         // Check IncludedInOverallScore
@@ -901,14 +908,32 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
+        if (!hasValidPointsPrecision(getMaxPoints())) {
+            throw new BadRequestAlertException("The max points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "maxScoreInvalid");
+        }
+
         if (getBonusPoints() == null || getBonusPoints() < 0) {
             // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
         }
 
+        if (!hasValidPointsPrecision(getBonusPoints())) {
+            throw new BadRequestAlertException("The bonus points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "bonusPointsInvalid");
+        }
+
         if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
+    }
+
+    /**
+     * Checks that a points value (maxPoints or bonusPoints) is a plain decimal with a reasonable number of decimal
+     * places. Rejects values such as {@code 1e-30}, which otherwise pass the plain range checks above because
+     * scientific notation still parses to a valid, in-range {@code Double} (see
+     * <a href="https://github.com/ls1intum/Artemis/issues/12451">issue #12451</a>).
+     */
+    private static boolean hasValidPointsPrecision(double points) {
+        return BigDecimal.valueOf(points).stripTrailingZeros().scale() <= MAX_POINTS_DECIMAL_PLACES;
     }
 
     public void validateGeneralSettings() {

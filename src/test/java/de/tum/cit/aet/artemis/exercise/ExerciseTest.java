@@ -215,4 +215,32 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
 
         assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
     }
+
+    @Test
+    void validateScoreSettings_maxPointsWithScientificNotationPrecision_throws() {
+        // 1e-30 parses to a valid, in-range Double, so only a decimal-precision check can catch it, see issue #12451
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(1e-30);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points must not have more than 4 decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_bonusPointsWithScientificNotationPrecision_throws() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(100.0);
+        exercise.setBonusPoints(1e-30);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The bonus points must not have more than 4 decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_pointsWithReasonablePrecision_doesNotThrow() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(100.5);
+        exercise.setBonusPoints(0.25);
+
+        assertThatNoException().isThrownBy(exercise::validateScoreSettings);
+    }
 }
