@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -824,6 +825,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // working time did not change
         studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTime_failsIfIndividualEndReachesSummaryPublicationDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        // the submission overview becomes visible one hour after the nominal end date
+        exam1.setPublishResultsDate(null);
+        exam1.setExamSummaryPublicationDate(exam1.getEndDate().plusHours(1));
+        exam1 = examRepository.save(exam1);
+        int originalWorkingTime = studentExam1.getWorkingTime();
+        long secondsUntilPublication = Duration.between(exam1.getStartDate(), exam1.getExamSummaryPublicationDate()).getSeconds();
+
+        // an individual extension that would push this student past the publication date must be rejected: otherwise the summary and conduction gates open for students who
+        // already submitted while this student is still writing
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication + 60, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension landing exactly on the publication date is rejected as well (the summary must not open at the very moment the student is still allowed to submit)
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension that keeps the individual end before the publication date is still allowed
+        int allowedWorkingTime = (int) secondsUntilPublication - 60;
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", allowedWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(allowedWorkingTime);
+
+        // with the individual extension in place, the instructor may no longer pull the publication date in front of that student's individual end date
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        examWithExtension.setExamSummaryPublicationDate(examWithExtension.getStartDate().plusSeconds(allowedWorkingTime));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -487,6 +487,7 @@ public class ExamResource {
         checkExamTitleLengthElseThrow(exam);
         checkExamTextLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
@@ -605,6 +606,25 @@ public class ExamResource {
             if (exam.getPublishResultsDate() != null && exam.getExamSummaryPublicationDate().isAfter(exam.getPublishResultsDate())) {
                 throw new BadRequestAlertException("The exam summary cannot be published after the results are published.", ENTITY_NAME, "examTimes");
             }
+        }
+    }
+
+    /**
+     * Checks that the submission overview would not become visible while a student with an individual working time extension is still writing.
+     * <p>
+     * {@link #checkExamForDatesConflictsElseThrow} only compares against the nominal end date, but individual extensions can push a student exam past it. Skipped for exams
+     * that do not exist yet (creation, so no student exams) and for exams without a configured publication date.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+            return;
+        }
+        ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+        if (latestIndividualExamEndDate != null && !exam.getExamSummaryPublicationDate().isAfter(latestIndividualExamEndDate)) {
+            throw new BadRequestAlertException("The exam summary must be published after the individual end date of every student, including working time extensions.", ENTITY_NAME,
+                    "examSummaryPublicationDateBeforeIndividualEnd");
         }
     }
 
