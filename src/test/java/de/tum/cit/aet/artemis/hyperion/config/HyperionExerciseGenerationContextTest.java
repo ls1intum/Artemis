@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.HyperionProviderFailureCooldownService;
@@ -47,6 +48,7 @@ class HyperionExerciseGenerationContextTest {
         });
     }
 
+    @Lazy
     @Configuration(proxyBeanMethods = false)
     @Import({ HyperionExerciseGenerationResource.class, GenerationOrchestrationService.class, GenerationPersistenceService.class, DifferentialVerificationService.class,
             HyperionAsyncConfiguration.class, HyperionProviderFailureCooldownService.class })

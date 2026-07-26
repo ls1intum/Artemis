@@ -63,6 +63,7 @@ class GenerationSandboxHostingContextTest {
         assertThat(context.getBeanFactory().containsSingleton(sandboxServiceBeanName)).isFalse();
     }
 
+    @Lazy
     @Configuration(proxyBeanMethods = false)
     @Import({ InteractiveSandboxRelayHandler.class, InteractiveSandboxReaperService.class })
     static class SandboxHostingConfiguration {

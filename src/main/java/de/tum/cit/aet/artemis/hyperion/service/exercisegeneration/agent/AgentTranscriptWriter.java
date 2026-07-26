@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class AgentTranscriptWriter {
             Files.createDirectories(directory);
             String safeLabel = label == null ? "session" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
             Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + safeLabel + ".md");
-            Files.writeString(file, render(label, conversation), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(file.toFile(), render(label, conversation), StandardCharsets.UTF_8);
             log.info("Wrote agent transcript for exercise {} to {}", exerciseId, file);
         }
         catch (IOException | RuntimeException e) {
@@ -89,7 +90,7 @@ public class AgentTranscriptWriter {
             Files.createDirectories(directory);
             String safeLabel = label == null ? "audit" : label.replaceAll("[^a-zA-Z0-9._-]", "-");
             Path file = directory.resolve(FILE_TIMESTAMP.format(Instant.now()) + "-" + safeLabel + ".md");
-            Files.writeString(file, "# Generation audit — " + safeLabel + "\n\n" + evidence.strip() + "\n", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(file.toFile(), "# Generation audit — " + safeLabel + "\n\n" + evidence.strip() + "\n", StandardCharsets.UTF_8);
             log.info("Wrote generation audit for exercise {} to {}", exerciseId, file);
         }
         catch (IOException | RuntimeException e) {

@@ -444,7 +444,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "CourseResourceArchitectureTest", "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest",
                 "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest",
                 "HyperionExerciseGenerationResourceTest", "LegacyCalendarResource" };
-        final var classes = classesExcept(allClasses, exceptions);
+        // Real-HTTP tests that assert a resource's own authorization and mutation behaviour necessarily reference it. Listed separately because several build their cases as
+        // anonymous inner classes, which have no simple name for the list above to match.
+        final var resourceBehaviourTests = new String[] { "ExerciseResourceMutationGuardTest", "HyperionExerciseGenerationContextTest",
+                "ProgrammingExerciseCreationResourceMutationGuardTest", "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
+                "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
+                "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest" };
+        final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 

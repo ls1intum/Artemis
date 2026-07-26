@@ -47,25 +47,54 @@ final class GenerationJobReplayStore {
 
     private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap;
 
+    private final HazelcastInstance hazelcastInstance;
+
     GenerationJobReplayStore(HazelcastInstance hazelcastInstance) {
-        jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
-        cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
-        fileChangeMap = hazelcastInstance.getMap(FILE_CHANGE_MAP_NAME);
+        // The maps are resolved on first use, never here: HazelcastInstance.getMap during bean construction forces the cluster to be ready before the context finishes starting,
+        // which inverts the intended startup ordering.
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    private IMap<String, GenerationJobService.JobInfo> jobMap() {
+        if (jobMap == null) {
+            jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
+        }
+        return jobMap;
+    }
+
+    private IMap<String, Boolean> cancellationMap() {
+        if (cancellationMap == null) {
+            cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
+        }
+        return cancellationMap;
+    }
+
+    private IMap<String, GenerationJobService.JobTranscript> transcriptMap() {
+        if (transcriptMap == null) {
+            transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
+        }
+        return transcriptMap;
+    }
+
+    private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
+        if (fileChangeMap == null) {
+            fileChangeMap = hazelcastInstance.getMap(FILE_CHANGE_MAP_NAME);
+        }
+        return fileChangeMap;
     }
 
     StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
-            GenerationJobService.JobTranscript previousTranscript = transcriptMap.get(key);
-            GenerationJobService.JobFileChangeIndex previousFileChanges = fileChangeMap.get(key);
+            GenerationJobService.JobTranscript previousTranscript = transcriptMap().get(key);
+            GenerationJobService.JobFileChangeIndex previousFileChanges = fileChangeMap().get(key);
             GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges);
             try {
-                transcriptMap.set(key, currentTranscript);
-                fileChangeMap.set(key, currentFileChanges);
+                transcriptMap().set(key, currentTranscript);
+                fileChangeMap().set(key, currentFileChanges);
             }
             catch (RuntimeException e) {
                 restoreReplayIfStillCurrent(key, replay);
@@ -74,18 +103,18 @@ final class GenerationJobReplayStore {
             return replay;
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
     void restoreUnpublishedStart(long exerciseId, StartedReplay replay) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
             restoreReplayIfStillCurrent(key, replay);
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
@@ -95,37 +124,37 @@ final class GenerationJobReplayStore {
     }
 
     private void restoreTranscriptIfStillCurrent(String key, GenerationJobService.JobTranscript current, GenerationJobService.@Nullable JobTranscript previous) {
-        if (!current.equals(transcriptMap.get(key))) {
+        if (!current.equals(transcriptMap().get(key))) {
             return;
         }
         if (previous == null) {
-            transcriptMap.remove(key, current);
+            transcriptMap().remove(key, current);
         }
         else {
-            transcriptMap.set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            transcriptMap().set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
         }
     }
 
     private void restoreFileChangesIfStillCurrent(String key, GenerationJobService.JobFileChangeIndex current, GenerationJobService.@Nullable JobFileChangeIndex previous) {
-        if (!current.equals(fileChangeMap.get(key))) {
+        if (!current.equals(fileChangeMap().get(key))) {
             return;
         }
         if (previous == null) {
-            fileChangeMap.remove(key, current);
+            fileChangeMap().remove(key, current);
         }
         else {
-            fileChangeMap.set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            fileChangeMap().set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
         }
     }
 
     boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
             if (!isActiveJob(key, jobId)) {
                 return false;
             }
-            GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
             if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
                 return false;
             }
@@ -134,12 +163,12 @@ final class GenerationJobReplayStore {
             while (events.size() > MAX_RETAINED_EVENTS) {
                 events.remove(1);
             }
-            transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events,
+            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events,
                     terminal || transcript.done(), transcript.specDocument()));
             return true;
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
@@ -149,30 +178,30 @@ final class GenerationJobReplayStore {
 
     boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
             if (!isActiveJob(key, jobId)) {
                 return false;
             }
-            GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
             if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
                 return false;
             }
-            transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(),
+            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(),
                     transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
             return true;
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
     boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
-            GenerationJobService.JobFileChangeIndex index = fileChangeMap.get(key);
-            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(key, jobId) || Boolean.TRUE.equals(cancellationMap.get(jobId))) {
+            GenerationJobService.JobFileChangeIndex index = fileChangeMap().get(key);
+            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(key, jobId) || Boolean.TRUE.equals(cancellationMap().get(jobId))) {
                 return false;
             }
             List<ExerciseGenerationFileChangeDTO> changes = new ArrayList<>(index.changes());
@@ -192,20 +221,20 @@ final class GenerationJobReplayStore {
                     changes.removeFirst();
                 }
             }
-            fileChangeMap.set(key, new GenerationJobService.JobFileChangeIndex(index.jobId(), index.userLogin(), changes));
+            fileChangeMap().set(key, new GenerationJobService.JobFileChangeIndex(index.jobId(), index.userLogin(), changes));
             return true;
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
     Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         String key = key(exercise.getId());
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
-            GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
-            GenerationJobService.JobInfo active = jobMap.get(key);
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
+            GenerationJobService.JobInfo active = jobMap().get(key);
             if (active != null && !GenerationJobService.isGenerationJob(active)) {
                 active = null;
             }
@@ -239,32 +268,32 @@ final class GenerationJobReplayStore {
                     false, null, null, true, false, transcript.specDocument()));
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
     void discardRetainedRun(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        jobMap().lock(key);
         try {
-            GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
             if (transcript != null && transcript.jobId().equals(jobId)) {
-                transcriptMap.remove(key, transcript);
+                transcriptMap().remove(key, transcript);
             }
-            GenerationJobService.JobFileChangeIndex index = fileChangeMap.get(key);
+            GenerationJobService.JobFileChangeIndex index = fileChangeMap().get(key);
             if (index != null && index.jobId().equals(jobId)) {
-                fileChangeMap.remove(key, index);
+                fileChangeMap().remove(key, index);
             }
         }
         finally {
-            jobMap.unlock(key);
+            jobMap().unlock(key);
         }
     }
 
     @Nullable
     CancellationReplayState cancellationReplayState(GenerationJobService.JobInfo job) {
         String key = key(job.exerciseId());
-        GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+        GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript == null || !transcript.jobId().equals(job.jobId())) {
             return null;
         }
@@ -274,7 +303,7 @@ final class GenerationJobReplayStore {
     @Nullable
     ExerciseGenerationEventDTO appendCancellation(GenerationJobService.JobInfo job, String message) {
         String key = key(job.exerciseId());
-        GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+        GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript == null || !transcript.jobId().equals(job.jobId()) || transcript.done()) {
             return null;
         }
@@ -284,26 +313,26 @@ final class GenerationJobReplayStore {
         while (events.size() > MAX_RETAINED_EVENTS) {
             events.remove(1);
         }
-        transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
+        transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
                 transcript.specDocument()));
         return cancellationEvent;
     }
 
     void retainAfterJobCleared(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+        GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript != null && transcript.jobId().equals(jobId)) {
             GenerationJobService.JobTranscript retainedTranscript = transcript.done() ? transcript
                     : new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true,
                             transcript.specDocument());
-            transcriptMap.set(key, retainedTranscript, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            transcriptMap().set(key, retainedTranscript, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
         }
         retainFileChangesForTerminalReplay(key, jobId);
     }
 
     void terminalizeStoppedJob(GenerationJobService.JobInfo job, String message) {
         String key = key(job.exerciseId());
-        GenerationJobService.JobTranscript transcript = transcriptMap.get(key);
+        GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript != null && transcript.jobId().equals(job.jobId()) && !transcript.done()) {
             List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
             ExerciseGenerationEventDTO terminalEvent = job.cancellable() ? ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message)
@@ -312,13 +341,13 @@ final class GenerationJobReplayStore {
             while (events.size() > MAX_RETAINED_EVENTS) {
                 events.remove(1);
             }
-            transcriptMap.set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
+            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
                     transcript.specDocument()));
         }
     }
 
     private boolean isActiveJob(String key, String jobId) {
-        GenerationJobService.JobInfo job = jobMap.get(key);
+        GenerationJobService.JobInfo job = jobMap().get(key);
         return job != null && job.jobId().equals(jobId);
     }
 
@@ -335,7 +364,7 @@ final class GenerationJobReplayStore {
     }
 
     private List<ExerciseGenerationFileChangeDTO> latestFileChangesFor(String key, String jobId) {
-        GenerationJobService.JobFileChangeIndex index = fileChangeMap.get(key);
+        GenerationJobService.JobFileChangeIndex index = fileChangeMap().get(key);
         if (index == null || !index.jobId().equals(jobId)) {
             return List.of();
         }
@@ -343,9 +372,9 @@ final class GenerationJobReplayStore {
     }
 
     private void retainFileChangesForTerminalReplay(String key, String jobId) {
-        GenerationJobService.JobFileChangeIndex fileChangeIndex = fileChangeMap.get(key);
+        GenerationJobService.JobFileChangeIndex fileChangeIndex = fileChangeMap().get(key);
         if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap.setTtl(key, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            fileChangeMap().setTtl(key, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
         }
     }
 

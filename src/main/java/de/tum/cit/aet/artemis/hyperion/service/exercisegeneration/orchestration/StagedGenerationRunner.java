@@ -784,7 +784,7 @@ public class StagedGenerationRunner {
             handoff.append("Bind tasks and testsColor links only to these visible tests, grouped by specification seam:\n");
             plan.visibleEntries().stream()
                     .collect(java.util.stream.Collectors.groupingBy(GeneratedTestPlan.Entry::seam, java.util.LinkedHashMap::new,
-                            java.util.stream.Collectors.mapping(GeneratedTestPlan.Entry::name, java.util.stream.Collectors.toList())))
+                            java.util.stream.Collectors.mapping(GeneratedTestPlan.Entry::name, java.util.stream.Collectors.toUnmodifiableList())))
                     .forEach((seam, names) -> handoff.append("- ").append(seam).append(": ").append(String.join(", ", names)).append("\n"));
             if (!plan.hiddenEntries().isEmpty()) {
                 handoff.append(plan.hiddenEntries().size())
