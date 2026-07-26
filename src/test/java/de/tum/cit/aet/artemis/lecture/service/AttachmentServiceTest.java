@@ -93,11 +93,14 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(Files.exists(actualFilePath)).isTrue();
 
         attachmentService.regenerateStudentVersion(testAttachment2);
+        String secondStudentVersionPath = testAttachment2.getStudentVersion();
+        Path secondActualFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(secondStudentVersionPath), FilePathType.STUDENT_VERSION_SLIDES);
 
-        org.awaitility.Awaitility.await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-            assertThat(testAttachment2.getStudentVersion()).isEqualTo(firstStudentVersionPath);
-            assertThat(actualFilePath).exists();
-            try (var studentVersion = Loader.loadPDF(actualFilePath.toFile())) {
+        assertThat(secondStudentVersionPath).isNotEqualTo(firstStudentVersionPath);
+        org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(actualFilePath).doesNotExist();
+            assertThat(secondActualFilePath).exists();
+            try (var studentVersion = Loader.loadPDF(secondActualFilePath.toFile())) {
                 assertThat(studentVersion.getNumberOfPages()).isEqualTo(expectedPageCount);
             }
         });

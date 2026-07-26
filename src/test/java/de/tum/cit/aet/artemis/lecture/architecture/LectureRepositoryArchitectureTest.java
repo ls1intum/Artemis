@@ -20,6 +20,7 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
                 // Slide splitting holds a pessimistic unit lock while coordinating database rows with file-system rollback and after-commit actions.
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitSlideSplitJob)",
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.updateSlideVisibility(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.util.List)",
+                "de.tum.cit.aet.artemis.lecture.service.SlideVisibilityUpdateService.updateVisibilityAndStudentVersion(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.util.List)",
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(org.apache.pdfbox.pdmodel.PDDocument, de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.lang.String)",
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(org.apache.pdfbox.pdmodel.PDDocument, de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.lang.String, java.util.List, java.util.List)");
     }

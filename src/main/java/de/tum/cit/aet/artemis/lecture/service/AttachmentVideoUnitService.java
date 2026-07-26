@@ -65,6 +65,8 @@ public class AttachmentVideoUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
+    private final SlideVisibilityUpdateService slideVisibilityUpdateService;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
@@ -74,7 +76,8 @@ public class AttachmentVideoUnitService {
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
-            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
+            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
+            SlideVisibilityUpdateService slideVisibilityUpdateService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -84,6 +87,7 @@ public class AttachmentVideoUnitService {
         this.slideRepository = slideRepository;
         this.irisLectureUnitSyncService = irisLectureUnitSyncService;
         this.slideSplitterService = slideSplitterService;
+        this.slideVisibilityUpdateService = slideVisibilityUpdateService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
@@ -174,8 +178,7 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
 
                 if (isFileNeutralSlideMetadataUpdate) {
-                    slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
-                    attachmentService.regenerateStudentVersion(savedAttachment);
+                    slideVisibilityUpdateService.updateVisibilityAndStudentVersion(savedAttachmentVideoUnit, hiddenPages);
                 }
                 else if (hasUploadedFile) {
                     if (fileUpdateResult.fileBytesChanged()) {
@@ -195,8 +198,7 @@ public class AttachmentVideoUnitService {
                         }
                     }
                     else if (hasHiddenPagesRequestPart) {
-                        slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
-                        attachmentService.regenerateStudentVersion(savedAttachment);
+                        slideVisibilityUpdateService.updateVisibilityAndStudentVersion(savedAttachmentVideoUnit, hiddenPages);
                     }
                 }
             }
@@ -360,17 +362,8 @@ public class AttachmentVideoUnitService {
      */
     public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentVideoUnitId) {
         if (studentVersionFile != null) {
-            String sanitizedFilename = FileUtil.checkAndSanitizeFilename(studentVersionFile.getOriginalFilename());
-            FileUtil.validateExtension(sanitizedFilename, false);
-            String generatedFilename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, true);
-            Path savePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student").resolve(generatedFilename);
-            Path oldStudentVersionPath = attachment.getStudentVersion() == null ? null
-                    : FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getStudentVersion()), FilePathType.STUDENT_VERSION_SLIDES);
-
             try {
-                attachmentService.replaceStudentVersionFile(studentVersionFile.getBytes(), savePath, oldStudentVersionPath);
-                attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
-                attachmentRepository.save(attachment);
+                attachmentService.replaceUploadedStudentVersionFile(studentVersionFile.getBytes(), attachment, attachmentVideoUnitId, studentVersionFile.getOriginalFilename());
             }
             catch (IOException e) {
                 throw new InternalServerErrorException("Could not create student version file");

@@ -116,22 +116,29 @@ public class TempFileUtilService {
      * Replaces a file through a temporary file in the target directory. The final move is atomic where the file system supports it, so readers never observe partially written
      * contents.
      *
-     * @param targetPath the file to create or replace
-     * @param fileData   the complete replacement contents
+     * @param trustedRoot the trusted root directory that must contain the target
+     * @param targetPath  the file to create or replace
+     * @param fileData    the complete replacement contents
      * @return the target path
      * @throws IOException if the replacement cannot be installed
      */
-    public Path replaceFileAtomically(Path targetPath, byte[] fileData) throws IOException {
-        Path temporaryPath = createTempFile(targetPath.getParent(), "." + targetPath.getFileName() + ".", ".tmp");
+    public Path replaceFileAtomically(Path trustedRoot, Path targetPath, byte[] fileData) throws IOException {
+        Path normalizedRoot = trustedRoot.toAbsolutePath().normalize();
+        Path normalizedTarget = targetPath.toAbsolutePath().normalize();
+        if (normalizedTarget.equals(normalizedRoot) || !normalizedTarget.startsWith(normalizedRoot)) {
+            throw new IOException("Atomic replacement target must be contained in the trusted root");
+        }
+
+        Path temporaryPath = createTempFile(normalizedTarget.getParent(), "." + normalizedTarget.getFileName() + ".", ".tmp");
         try {
             FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
             try {
-                temporaryPath.getFileSystem().provider().move(temporaryPath, targetPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                temporaryPath.getFileSystem().provider().move(temporaryPath, normalizedTarget, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (AtomicMoveNotSupportedException ignored) {
-                temporaryPath.getFileSystem().provider().move(temporaryPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                temporaryPath.getFileSystem().provider().move(temporaryPath, normalizedTarget, StandardCopyOption.REPLACE_EXISTING);
             }
-            return targetPath;
+            return normalizedTarget;
         }
         finally {
             Files.deleteIfExists(temporaryPath);

@@ -13,6 +13,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -110,9 +112,16 @@ public class AttachmentService {
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
             if (attachment.getStudentVersion() != null) {
-                deleteStudentVersionFile(attachment);
+                String oldStudentVersion = attachment.getStudentVersion();
                 attachment.setStudentVersion(null);
-                attachmentRepository.save(attachment);
+                try {
+                    attachmentRepository.saveAndFlush(attachment);
+                }
+                catch (RuntimeException exception) {
+                    attachment.setStudentVersion(oldStudentVersion);
+                    throw exception;
+                }
+                deleteStudentVersionFileAfterCommit(oldStudentVersion);
             }
             return;
         }
@@ -123,8 +132,7 @@ public class AttachmentService {
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
-            handleStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
-            attachmentRepository.save(attachment);
+            replaceStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
         }
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
@@ -136,10 +144,10 @@ public class AttachmentService {
      *
      * @param attachment The attachment whose student version should be deleted
      */
-    private void deleteStudentVersionFile(Attachment attachment) {
-        if (attachment.getStudentVersion() != null) {
+    private void deleteStudentVersionFile(String studentVersion) {
+        if (studentVersion != null) {
             try {
-                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                URI oldStudentVersionPath = URI.create(studentVersion);
                 fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
                 fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
@@ -176,35 +184,83 @@ public class AttachmentService {
      * @param attachmentVideoUnitId The id of the attachment video unit
      * @throws IOException If there's an error handling the file
      */
-    private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
-        Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student");
+    public void replaceStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
         String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
         String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedName + ".pdf", false);
-        Path savePath = basePath.resolve(filename);
-        Path oldStudentVersionPath = attachment.getStudentVersion() == null ? null
-                : FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getStudentVersion()), FilePathType.STUDENT_VERSION_SLIDES);
-
-        replaceStudentVersionFile(pdfData, savePath, oldStudentVersionPath);
-
-        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
+        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, filename);
     }
 
     /**
-     * Installs a student version through a temporary file in the destination directory. The move is atomic where supported, so readers never observe a partially written PDF.
-     * An old file is only queued for deletion after the replacement was installed, and never when it is the replacement path itself.
+     * Replaces a manually uploaded student version while preserving the uploaded filename semantics.
      *
-     * @param fileData              the complete student version contents
-     * @param savePath              the final path for the student version
-     * @param oldStudentVersionPath the previous student version path, or null if none exists
+     * @param pdfData               the uploaded PDF bytes
+     * @param attachment            the attachment to update
+     * @param attachmentVideoUnitId the attachment video unit id
+     * @param originalFilename      the client-provided filename
      * @throws IOException if the file cannot be installed
      */
-    void replaceStudentVersionFile(byte[] fileData, Path savePath, Path oldStudentVersionPath) throws IOException {
-        tempFileUtilService.replaceFileAtomically(savePath, fileData);
+    public void replaceUploadedStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId, String originalFilename) throws IOException {
+        String sanitizedFilename = FileUtil.checkAndSanitizeFilename(originalFilename);
+        FileUtil.validateExtension(sanitizedFilename, false);
+        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, true);
+        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, filename);
+    }
 
-        fileService.evictCacheForPath(savePath);
-        if (oldStudentVersionPath != null && !oldStudentVersionPath.toAbsolutePath().normalize().equals(savePath.toAbsolutePath().normalize())) {
-            fileService.schedulePathForDeletion(oldStudentVersionPath, 0);
-            fileService.evictCacheForPath(oldStudentVersionPath);
+    private void persistStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId, String filename) throws IOException {
+        Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student");
+        Path savePath = basePath.resolve(filename);
+        String oldStudentVersion = attachment.getStudentVersion();
+        String newStudentVersion = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString();
+
+        try {
+            tempFileUtilService.replaceFileAtomically(FilePathConverter.getAttachmentVideoUnitFileSystemPath(), savePath, pdfData);
+            fileService.evictCacheForPath(savePath);
+            attachment.setStudentVersion(newStudentVersion);
+            attachmentRepository.saveAndFlush(attachment);
+        }
+        catch (RuntimeException | IOException exception) {
+            attachment.setStudentVersion(oldStudentVersion);
+            fileService.schedulePathForDeletion(savePath, 0);
+            fileService.evictCacheForPath(savePath);
+            throw exception;
+        }
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+                @Override
+                public void afterCommit() {
+                    if (oldStudentVersion != null && !oldStudentVersion.equals(newStudentVersion)) {
+                        deleteStudentVersionFile(oldStudentVersion);
+                    }
+                }
+
+                @Override
+                public void afterCompletion(int status) {
+                    if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                        fileService.schedulePathForDeletion(savePath, 0);
+                        fileService.evictCacheForPath(savePath);
+                    }
+                }
+            });
+        }
+        else if (oldStudentVersion != null && !oldStudentVersion.equals(newStudentVersion)) {
+            deleteStudentVersionFile(oldStudentVersion);
+        }
+    }
+
+    private void deleteStudentVersionFileAfterCommit(String studentVersion) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+                @Override
+                public void afterCommit() {
+                    deleteStudentVersionFile(studentVersion);
+                }
+            });
+        }
+        else {
+            deleteStudentVersionFile(studentVersion);
         }
     }
 }

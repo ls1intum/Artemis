@@ -78,6 +78,9 @@ class AttachmentVideoUnitServiceTest {
     @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;
 
+    @Mock
+    private SlideVisibilityUpdateService slideVisibilityUpdateService;
+
     @TempDir
     private Path tempDir;
 
@@ -88,7 +91,7 @@ class AttachmentVideoUnitServiceTest {
         FilePathConverter.setFileUploadPath(tempDir);
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(),
-                slideRepository, irisLectureUnitSyncService);
+                slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService);
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
@@ -160,12 +163,11 @@ class AttachmentVideoUnitServiceTest {
         doAnswer(invocation -> {
             existingSlide.setHidden(hiddenUntil);
             return null;
-        }).when(slideSplitterService).updateSlideMetadata(unit, hiddenPages);
+        }).when(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, hiddenPages, List.of(new SlideOrderDTO("21", 1)), Set.of());
 
-        verify(slideSplitterService).updateSlideMetadata(unit, hiddenPages);
-        verify(attachmentService).regenerateStudentVersion(attachment);
+        verify(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
@@ -191,7 +193,7 @@ class AttachmentVideoUnitServiceTest {
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, null, false, hiddenPages, null, Set.of());
 
-        verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
+        verify(slideVisibilityUpdateService).updateVisibilityAndStudentVersion(unit, hiddenPages);
         verify(contentProcessingService, never()).triggerProcessing(any());
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
     }
@@ -211,7 +213,8 @@ class AttachmentVideoUnitServiceTest {
     @Test
     void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
-                Optional.empty(), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService);
+                Optional.empty(), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService,
+                slideVisibilityUpdateService);
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 

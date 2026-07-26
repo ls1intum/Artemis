@@ -231,7 +231,7 @@ public class AttachmentVideoUnitResource {
     }
 
     private static void validateAtLeastOneVisibleSlide(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, AttachmentVideoUnit existingAttachmentVideoUnit,
-            Attachment attachment) {
+            AttachmentDTO attachment) {
         if (updateIntent != AttachmentUpdateIntent.NO_FILE_CHANGE || hiddenPages == null || attachment == null || existingAttachmentVideoUnit.getAttachment() == null) {
             return;
         }

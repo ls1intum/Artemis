@@ -150,7 +150,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
     });
     private readonly hasPdfContentChanges = computed(() => {
-        return this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER') || this.isFileChanged();
+        return (
+            this.isFileChanged() ||
+            this.pageOrderChanged() ||
+            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
+        );
     });
 
     hasChanges = computed(() => {
@@ -489,7 +493,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         this.isSaving.set(true);
 
-        if (this.attachmentVideoUnit() && !this.hasPdfContentChanges()) {
+        if (this.attachmentVideoUnit() && this.hasCompletePersistedSlideSet() && !this.hasPdfContentChanges()) {
             if (this.hiddenPagesChanged()) {
                 const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
                 if (this.pageOrder().length > 0 && this.pageOrder().every((page) => hiddenSlideIds.has(page.slideId))) {
@@ -514,7 +518,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
             const { instructorBytes, studentBytes } = await this.applyOperations(true);
-            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges();
+            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges() || !this.hasCompletePersistedSlideSet();
             const instructorPdfFile = needsPdfContentUpdate ? this.bytesToFile(instructorBytes, pdfName) : undefined;
 
             if (instructorPdfFile && instructorPdfFile.size > MAX_FILE_SIZE) {
@@ -668,15 +672,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 submitUpdate();
             }
         });
-    }
-
-    private hasPdfContentChanges(): boolean {
-        return (
-            this.isFileChanged() ||
-            this.pageOrderChanged() ||
-            !this.hasCompletePersistedSlideSet() ||
-            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
-        );
     }
 
     private hasCompletePersistedSlideSet(): boolean {

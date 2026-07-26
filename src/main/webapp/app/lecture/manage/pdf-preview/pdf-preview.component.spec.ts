@@ -87,6 +87,11 @@ describe('PdfPreviewComponent', () => {
         await component.loadPdf('blob:original', new ArrayBuffer(8), 'original');
     }
 
+    /** Replaces temporary preview IDs with persisted slide entity IDs, as returned for an already-split attachment video unit. */
+    function usePersistedSlideIds(): void {
+        component.pageOrder.update((pages) => pages.map((page, index) => ({ ...page, slideId: String(100 + index) })));
+    }
+
     /** Makes the next `openDocumentBuffer` call resolve to a document with the given id and page count. */
     function mockNextOpen(id: string, pageCount: number): void {
         engineService.engine.openDocumentBuffer.mockReturnValueOnce({
@@ -222,13 +227,11 @@ describe('PdfPreviewComponent', () => {
         component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
         const hidden = component.pageOrder()[0];
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
-        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
         expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
         const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
-        expect(updateFormData.get('file')).toBeInstanceOf(File);
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
@@ -236,7 +239,7 @@ describe('PdfPreviewComponent', () => {
         expect(updateFormData.has('pageOrder')).toBe(false);
         expect(updateFormData.has('hiddenPages')).toBe(true);
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
-        expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
         expect(alertService.success).toHaveBeenCalled();
     });
 
@@ -246,6 +249,7 @@ describe('PdfPreviewComponent', () => {
         const hidden = component.pageOrder()[0];
         expect(hidden.slideId).toMatch(/^temp_/);
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
@@ -275,6 +279,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should save hidden-page-only attachment video unit changes without uploading PDF files', async () => {
         await loadOriginal(2);
+        usePersistedSlideIds();
         const attachmentVideoUnit = { id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any;
         component.attachmentVideoUnit.set(attachmentVideoUnit);
         const hidden = component.pageOrder()[0];
@@ -300,6 +305,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should reject hidden-page-only saves when every page is hidden', async () => {
         await loadOriginal(2);
+        usePersistedSlideIds();
         component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
         component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
         const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
@@ -317,6 +323,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should clear hidden pages without uploading PDF files', async () => {
         await loadOriginal(2);
+        usePersistedSlideIds();
         const hiddenDate = dayjs().add(1, 'day');
         component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
         component.initialHiddenPages.set({
@@ -342,6 +349,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should not save no-net hidden-page operation history', async () => {
         await loadOriginal(2);
+        usePersistedSlideIds();
         const hiddenDate = dayjs().add(1, 'day');
         const hiddenPages = {
             [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
