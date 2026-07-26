@@ -28,7 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.context.MessageSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -82,9 +82,9 @@ class IrisChatSessionServiceStatusUpdateTest {
 
     private PyrisJobService pyrisJobService;
 
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     private IrisChatSessionRepository irisChatSessionRepository;
 
@@ -98,8 +98,8 @@ class IrisChatSessionServiceStatusUpdateTest {
         irisChatWebsocketService = mock(IrisChatWebsocketService.class);
         llmTokenUsageService = mock(LLMTokenUsageService.class);
         pyrisJobService = mock(PyrisJobService.class);
-        userRepository = mock(UserRepository.class);
-        exerciseRepository = mock(ExerciseRepository.class);
+        userRepository = mock(UserTestRepository.class);
+        exerciseRepository = mock(ExerciseTestRepository.class);
         irisChatSessionRepository = mock(IrisChatSessionRepository.class);
 
         irisChatSessionService = new IrisChatSessionService(irisMessageService, irisMessageRepository, llmTokenUsageService, mock(IrisSettingsService.class),

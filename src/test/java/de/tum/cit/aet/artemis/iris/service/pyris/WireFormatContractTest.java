@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +32,12 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * </ul>
  */
 class WireFormatContractTest {
+
+    /** Release date of a unit that {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnit#isVisibleToStudents()} accepts, fixed so the fixture does not depend on the clock. */
+    private static final ZonedDateTime PAST_RELEASE_DATE = ZonedDateTime.of(2020, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+    /** Release date of a unit that is not yet visible to students. */
+    private static final ZonedDateTime FUTURE_RELEASE_DATE = ZonedDateTime.of(2040, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -76,8 +83,8 @@ class WireFormatContractTest {
 
     @Test
     void outboundCourseDTOListsLecturesWithReleasedUnitsOnly() {
-        var released = textUnit(40L, "Collisions", ZonedDateTime.now().minusDays(1));
-        var unreleased = textUnit(41L, "Open Addressing", ZonedDateTime.now().plusDays(1));
+        var released = textUnit(40L, "Collisions", PAST_RELEASE_DATE);
+        var unreleased = textUnit(41L, "Open Addressing", FUTURE_RELEASE_DATE);
         var course = courseWithLecture(lecture(4L, "Hashing", released, unreleased));
 
         var dto = PyrisCourseDTO.of(course);
@@ -93,7 +100,7 @@ class WireFormatContractTest {
     @Test
     void outboundCourseDTOKeepsLecturesWhoseUnitsAreAllUnreleased() {
         // The lecture remains a valid context switch target; only the unreleased unit names must stay hidden.
-        var unreleased = textUnit(40L, "Open Addressing", ZonedDateTime.now().plusDays(1));
+        var unreleased = textUnit(40L, "Open Addressing", FUTURE_RELEASE_DATE);
         var course = courseWithLecture(lecture(4L, "Hashing", unreleased));
 
         var dto = PyrisCourseDTO.of(course);

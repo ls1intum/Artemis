@@ -632,16 +632,15 @@ describe('IrisChatService', () => {
     });
 
     describe('automatic context switch adoption', () => {
-        const ctxswapMessage = (marker: object): IrisChatWebsocketDTO =>
-            ({
-                type: IrisChatWebsocketPayloadType.MESSAGE,
-                message: {
-                    sender: IrisSender.CTXSWAP,
-                    id: 77,
-                    content: [{ type: 'json', attributes: marker }],
-                    sentAt: '2024-01-01T10:00:00Z',
-                },
-            }) as IrisChatWebsocketDTO;
+        const ctxswapMessage = (marker: Record<string, unknown>): IrisChatWebsocketDTO => ({
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                sender: IrisSender.CTXSWAP,
+                id: 77,
+                content: [{ type: 'json', attributes: marker }],
+                sentAt: '2024-01-01T10:00:00Z',
+            },
+        });
 
         it('should commit the marker context and update the sidebar entry on an incoming CTXSWAP message', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
