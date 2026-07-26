@@ -1,7 +1,8 @@
 <button
     [type]="type()"
     [class]="buttonClasses()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
+    [attr.aria-busy]="loading() ? 'true' : null"
     [attr.aria-label]="ariaLabel()"
     [attr.aria-expanded]="ariaExpanded()"
     [attr.aria-pressed]="ariaPressed()"
@@ -9,7 +10,9 @@
     [attr.aria-describedby]="ariaDescribedBy()"
     (click)="onClick($event)"
 >
-    @if (icon(); as buttonIcon) {
+    @if (loading()) {
+        <fa-icon [icon]="faSpinner" class="animate-spin" />
+    } @else if (icon(); as buttonIcon) {
         <fa-icon [icon]="buttonIcon" />
     }
     <ng-content />
