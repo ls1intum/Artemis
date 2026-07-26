@@ -170,6 +170,10 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
+                if (!hasUploadedFile && hiddenPages != null) {
+                    slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
+                }
+
                 // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
                 // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
                 if (updateFile != null) {

@@ -184,6 +184,27 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void updateAttachmentVideoUnitPersistsVisibilityWithoutReprocessingContent() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var existingSlide = new Slide();
+        existingSlide.setId(21L);
+        existingSlide.setSlideNumber(1);
+        existingSlide.setHidden(null);
+        ZonedDateTime hiddenUntil = ZonedDateTime.parse("2026-07-10T12:00:00Z");
+        var hiddenPages = List.of(new HiddenPageInfoDTO("21", hiddenUntil, null));
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(existingSlide)).thenReturn(List.of(slide(21L, 1, hiddenUntil)));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, null, false, hiddenPages, null, Set.of());
+
+        verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
+        verify(contentProcessingService, never()).triggerProcessing(any());
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+    }
+
+    @Test
     void updateAttachmentVideoUnitTriggersAsyncContentProcessingForVideoSourceChange() {
         var unit = attachmentVideoUnit("Unit", null);
         var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, unit.getName(), unit.getReleaseDate(), unit.getDescription(), "https://video.example/updated", null,
@@ -256,5 +277,13 @@ class AttachmentVideoUnitServiceTest {
         attachment.setLink("attachments/attachment-unit/" + LECTURE_UNIT_ID + "/unit.pdf");
         attachment.setSha256Hash(HASH);
         return attachment;
+    }
+
+    private static Slide slide(long id, int slideNumber, ZonedDateTime hidden) {
+        var slide = new Slide();
+        slide.setId(id);
+        slide.setSlideNumber(slideNumber);
+        slide.setHidden(hidden);
+        return slide;
     }
 }
