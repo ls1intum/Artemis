@@ -9,6 +9,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -44,6 +45,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exerciseType = ExerciseType.MODELING;
 
     private artemisMarkdown = inject(ArtemisMarkdownService);
+    private examParticipationService = inject(ExamParticipationService);
 
     modelingEditor = viewChild.required(ModelingEditorComponent);
 
@@ -138,11 +140,15 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     modelChanged(_model: UMLModel) {
         this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
     }
 
     // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
         this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
         this.explanationText.set(explanation);
     }
 

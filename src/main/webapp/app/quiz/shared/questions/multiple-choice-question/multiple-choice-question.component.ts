@@ -1,4 +1,5 @@
 import { Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -85,6 +86,22 @@ export class MultipleChoiceQuestionComponent {
             return renderedAnswerOption;
         });
         this.renderedQuestion.set(renderedQuestion);
+    }
+
+    /**
+     * Rendered HTML for the answer option at the given index, with an empty fallback for the transient frame
+     * where the rendered sub-elements still lag behind the current question (e.g. right after the question changes).
+     */
+    renderedAnswerText(index: number): SafeHtml | string {
+        return this.renderedQuestion().renderedSubElements[index]?.text ?? '';
+    }
+
+    /**
+     * Rendered hint HTML for the answer option at the given index, with an empty fallback for the transient frame
+     * where the rendered sub-elements still lag behind the current question.
+     */
+    renderedAnswerHint(index: number): SafeHtml | string {
+        return this.renderedQuestion().renderedSubElements[index]?.hint ?? '';
     }
 
     /**
