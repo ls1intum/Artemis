@@ -23,6 +23,7 @@ export class RatingComponent {
 
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
+    readonly isOwnerOfParticipation = input<boolean>();
 
     constructor() {
         // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
@@ -43,7 +44,11 @@ export class RatingComponent {
 
     loadRating() {
         const result = this.result();
-        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const participation = this.participation();
+        if (!result?.id || !participation) {
+            return;
+        }
+        if (!(this.isOwnerOfParticipation() ?? this.accountService.isOwnerOfParticipation(participation))) {
             return;
         }
         this.ratingService.getRating(result.id).subscribe((rating) => {
