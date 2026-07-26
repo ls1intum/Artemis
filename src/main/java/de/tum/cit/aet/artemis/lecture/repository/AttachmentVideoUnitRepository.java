@@ -131,12 +131,8 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             SELECT avu FROM AttachmentVideoUnit avu
             JOIN avu.lecture l
             JOIN l.course c
-            WHERE NOT EXISTS (
-                SELECT syncState.id
-                FROM IrisLectureUnitSyncState syncState
-                WHERE syncState.lectureUnitId = avu.id
-                    AND syncState.visibilityHash IS NOT NULL
-            )
+            LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
+            WHERE syncState.id IS NULL
                 AND (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
