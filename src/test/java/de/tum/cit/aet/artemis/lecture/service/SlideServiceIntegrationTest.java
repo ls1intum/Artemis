@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -14,11 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -39,6 +45,12 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;
+
+    @Autowired
+    private AttachmentService attachmentService;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
 
     private Course testCourse;
 
@@ -121,6 +133,11 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         testSlide.setExercise(originalExercise);
         testSlide.setHidden(originalDueDate);
         Slide savedSlide = slideRepository.save(testSlide);
+        attachmentService.regenerateStudentVersion(testAttachmentVideoUnit.getAttachment());
+        String oldStudentVersion = testAttachmentVideoUnit.getAttachment().getStudentVersion();
+        assertThat(oldStudentVersion).isNotBlank();
+        Path oldStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldStudentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        assertThat(oldStudentVersionPath).exists();
 
         Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), null, originalExercise.getAssessmentDueDate(), testCourse);
         updatedExercise.setId(originalExercise.getId());
@@ -132,6 +149,8 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden()).isNull();
+        assertThat(attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion()).isNull();
+        await().untilAsserted(() -> assertThat(oldStudentVersionPath).doesNotExist());
         assertThat(visibilityWebhookSeen).isTrue();
         irisRequestMockProvider.verify();
     }

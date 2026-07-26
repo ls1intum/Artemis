@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
@@ -28,10 +29,14 @@ public class SlideService {
 
     private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
 
-    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
+    private final AttachmentService attachmentService;
+
+    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService,
+            AttachmentService attachmentService) {
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
         this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -83,6 +88,10 @@ public class SlideService {
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
         relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
+        if (newHiddenDate == null) {
+            relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).distinct().map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull)
+                    .forEach(attachmentService::regenerateStudentVersion);
+        }
         lectureUnitVisibilitySyncService.markVisibilityDirtyForExercise(exercise);
     }
 }
