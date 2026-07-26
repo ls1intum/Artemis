@@ -1065,23 +1065,46 @@ public final class ExerciseIntegrityGate {
 
     /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
     private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
-            // Bare "stream" and "loops" are ordinary domain nouns — an input stream, a self-loop in a graph, retry loops — so only construct-bearing forms match: a pipeline,
-            // the Stream API, a lambda, a looping construct, recursion. "Iteratively refined" is an algorithm's character, not a mandate to write a loop, so it is out too.
-            // Verified against eight legitimate rules that earlier revisions falsely rejected, and against the six generated specifications that genuinely mandate a technique.
-            "must\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|must\\s+(?:not\\s+)?(?:\\w+\\s+){0,3}?(?:use|using)\\s+(?:[\\w*]+\\s+){0,3}\\**"
-                    + "(?:recursion|pipeline|stream\\s+api|lambdas?|loops?|looping\\s+constructs?|loop\\s+constructs?|iteration)\\**"
-                    + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
-                    + "|(?:iterative|looping|loop)\\s+constructs?[^.|\\n]{0,40}?\\b(?:are|is)\\s+not\\s+allowed",
+            // The nouns split by polarity, because that is where the ambiguity lives. Forbidding a technique is unambiguous ("must not use loops"), so bare nouns match there.
+            // Requiring one is not: "must use the pipeline stages", "the loopback address", "the previous iteration's estimate" are all ordinary domain phrases, so the
+            // positive form matches only construct-bearing names — recursion, the Stream API, a looping construct, a lambda expression.
+            // The standalone prohibition ("Loops are not allowed") needs a third discriminator, because a domain rule can be lexically identical: "Recursion is not allowed in
+            // the grammar of the input language" is about the input, not the student's code. The mandate ends the clause or scopes itself to the implementation; the domain
+            // rule continues into what it constrains. The hyphen lookbehind separately keeps "Self-loops are not allowed" out.
+            // Validated on nineteen legitimate rules and eighteen genuine mandates, both taken from generated specifications.
+            "(?:must|should|shall)\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|implement\\w*\\s+[^.|\\n]{0,60}?\\brecursively\\b"
+                    + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**"
+                    + "(?:recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?)\\**\\b"
+                    + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**"
+                    + "(?<![-\\w])(?:recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?)\\**\\b"
+                    + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}(?<![-\\w])(?:recursion|loops?|iteration)\\b" + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
+                    + "|(?<![-\\w])(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed"
+                    + "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))",
             Pattern.CASE_INSENSITIVE);
 
-    /** How far apart a read call and a directory literal may sit and still plausibly be one operation; wide enough for a candidate array, narrow enough to mean something. */
-    private static final int SOURCE_TREE_READ_PROXIMITY_CHARS = 400;
+    /**
+     * Prose that describes <em>how</em> an implementation is written rather than what it does. Distinct from {@link #TECHNIQUE_MANDATE}, which reads a specification rule; this
+     * reads a critic finding, and findings are written in the critic's voice ("an iterative implementation using an explicit stack"), so they almost never contain "must".
+     * <p>
+     * Deliberately demands a technique <em>contrast</em> or a named implementation shape. Merely mentioning the topic is not enough: on a recursion exercise nearly every
+     * finding says "recursive" somewhere, and "the recursive helper's base case is untested" is an ordinary repairable gap that must keep its repair round.
+     */
+    private static final Pattern TECHNIQUE_CLAIM = Pattern
+            .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?)\\b"
+                    + "|\\b(?:iterativ\\w*|recursiv\\w*|non-recursive|loop-based|stack-based)\\s+(?:implementation|version|solution|approach|variant)"
+                    + "|(?:uses?|using|written\\s+with|replaces?\\s+\\w+\\s+with)\\s+(?:an?\\s+|the\\s+)?(?:for|while|do-while)\\s+loops?"
+                    + "|(?:is|be|being)\\s+(?:actually\\s+)?(?:implemented\\s+)?(?:recursiv\\w*|iterativ\\w*)\\b", Pattern.CASE_INSENSITIVE);
 
     /** File-reading entry points a behavioural test has no reason to call. */
     private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
 
-    /** A literal naming one of the repository directories production lays out; a graded test that knows these is grading layout, not behaviour. */
-    private static final Pattern ASSIGNMENT_DIRECTORY_LITERAL = Pattern.compile("\"(?:[^\"]*/)?(?:solution|template|assignment)/[^\"]*\"");
+    /**
+     * A literal naming a repository <em>source tree</em>: one of the directories production lays out, and then either a source root or a source file. A graded test that knows
+     * this path is grading layout, not behaviour. Naming the directory alone is not enough — "fixtures/template/simple.mustache" is an ordinary fixture in a template-rendering
+     * exercise, and rejecting it would discard valid work.
+     */
+    private static final Pattern ASSIGNMENT_DIRECTORY_LITERAL = Pattern.compile(
+            "\"(?:[^\"]*/)?(?:solution|template|assignment)/(?:[^\"]*/)?" + "(?:src/[^\"]*|[^\"/]*\\.(?:java|kt|py|ts|js|cpp|cc|c|h|hpp|rs|go|rb|cs|swift|hs|dart|scala|php|m))\"");
 
     /**
      * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
@@ -1139,7 +1162,20 @@ public final class ExerciseIntegrityGate {
         return List.copyOf(mandates);
     }
 
-    /** The body of one markdown section, up to the next top-level heading. */
+    /**
+     * Whether a critic finding is about implementation technique rather than observable behaviour, and so cannot be repaired by strengthening the tests.
+     * <p>
+     * Callers must first establish that the specification actually mandates a technique — this predicate alone is not sufficient evidence, because a finding may legitimately
+     * contrast two implementations while still describing a behavioural difference the tests can see.
+     *
+     * @param text the finding's requirement and detail, concatenated
+     * @return true when the text makes a technique claim
+     */
+    public static boolean describesTechniqueRatherThanBehaviour(@Nullable String text) {
+        return text != null && !text.isBlank() && TECHNIQUE_CLAIM.matcher(text).find();
+    }
+
+    /** The body of one markdown section, up to the next heading at any level. */
     static String markdownSectionBody(String document, String heading) {
         int start = document.indexOf(heading);
         if (start < 0) {
@@ -1147,26 +1183,11 @@ public final class ExerciseIntegrityGate {
         }
         int bodyStart = start + heading.length();
         int next = document.indexOf("\n## ", bodyStart);
-        return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
-    }
-
-    /**
-     * Whether a file-reading call and a repository-directory literal appear close enough together to be the same operation.
-     * <p>
-     * Requiring both anywhere in the file would reject a test that happens to read an unrelated fixture and separately mention a directory name — a false rejection of a valid
-     * exercise, which this gate can never afford. Proximity approximates "same statement" without parsing Java, and the defect this exists for has them within a few characters
-     * of each other.
-     */
-    private static boolean readsAnAssignmentDirectory(String content) {
-        Matcher literal = ASSIGNMENT_DIRECTORY_LITERAL.matcher(content);
-        while (literal.find()) {
-            int from = Math.max(0, literal.start() - SOURCE_TREE_READ_PROXIMITY_CHARS);
-            int to = Math.min(content.length(), literal.end() + SOURCE_TREE_READ_PROXIMITY_CHARS);
-            if (FILE_READING_API.matcher(content.substring(from, to)).find()) {
-                return true;
-            }
+        int nextSubsection = document.indexOf("\n### ", bodyStart);
+        if (nextSubsection >= 0 && (next < 0 || nextSubsection < next)) {
+            next = nextSubsection;
         }
-        return false;
+        return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
     }
 
     static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
@@ -1179,7 +1200,7 @@ public final class ExerciseIntegrityGate {
             if (content == null || isHarnessFile(file.getKey())) {
                 continue;
             }
-            if (readsAnAssignmentDirectory(content)) {
+            if (FILE_READING_API.matcher(content).find() && ASSIGNMENT_DIRECTORY_LITERAL.matcher(content).find()) {
                 reasons.add("the graded test file '" + file.getKey() + "' reads the exercise's own source tree (it names the solution/template/assignment directories and opens "
                         + "files). Production checks the student's repository out as 'assignment', so such a test grades the student's SOURCE TEXT rather than their behaviour "
                         + "and can fail correct work — an implementation that still carries a TODO comment, for instance. It also lets the test discover which assignment it is "

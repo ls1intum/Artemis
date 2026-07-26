@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Deterministic unit tests for the sandbox-free correctness gates: the harness-immutability check, the solution-leak check, and the orphan-residue strip. The fixtures mirror the
@@ -1092,6 +1094,88 @@ class ExerciseIntegrityGateTest {
                 """);
 
         assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
+    }
+
+    @Test
+    void sourceTreeReading_acceptsATestThatReadsAFixtureUnderADirectoryNamedLikeARepository() {
+        // A template-rendering exercise legitimately keeps fixtures under "template/". Naming the directory is not the defect; naming a source tree is. Rejecting this would
+        // discard a sound exercise, and the instructor never sees what was discarded.
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RendererTest.java", """
+                class RendererTest {
+                    @Test
+                    void testRendersTemplate() throws Exception {
+                        String tpl = Files.readString(Path.of("src/test/resources/fixtures/template/simple.mustache"), StandardCharsets.UTF_8);
+                        assertEquals("Hello Ada", Renderer.render(tpl, Map.of("name", "Ada")), "renders the name");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
+    }
+
+    @Test
+    void sourceTreeReading_rejectsATestThatHoistsTheSourceRootsAwayFromTheRead() {
+        // The same defect written the way a competent author would write it: candidate roots as a constant at the top, the read far below. A proximity rule missed this.
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsTest.java", """
+                class RecursionUtilsTest {
+                    private static final List<String> ROOTS = List.of("assignment/src/main/java/de/tum/cit/aet/nodraft/", "src/main/java/de/tum/cit/aet/nodraft/");
+
+                    @Test
+                    void testDigitalRoot() {
+                        assertEquals(3, RecursionUtils.digitalRoot(9876), "digital root of 9876 is 3");
+                    }
+
+                    @Test
+                    void testSumToN() {
+                        assertEquals(15, RecursionUtils.sumToN(5), "sum to five");
+                    }
+
+                    private String source() throws Exception {
+                        return Files.readString(Path.of(ROOTS.get(0) + "RecursionUtils.java"), StandardCharsets.UTF_8);
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).singleElement().asString().contains("RecursionUtilsTest.java");
+    }
+
+    // --- Technique-mandate detection ---
+
+    @ParameterizedTest
+    @ValueSource(strings = { "`refine()` must use the previous iteration's estimate as its starting point.",
+            "`step()` must use the simulation loop's current tick when stamping an event.", "The client must use the loopback address 127.0.0.1 when no host is configured.",
+            "`process` must use the pipeline stages in their declared order.", "The evaluator must use the lambda body's free variables to decide capture.",
+            "`retry` must use the loop counter supplied by the caller.", "The reducer must use an iteration limit of at most 100.",
+            "`render` must use the lambda passed to `forEach` exactly once per element.", "The parser must use the provided input stream and must not close it.",
+            "Self-loops are not allowed in the dependency graph.", "The result must be iteratively refined until it converges." })
+    void techniqueMandates_doNotFireOnRulesThatMerelyNameATechniqueWord(String rule) {
+        // Every one of these is observable through the public API, so every one must keep its repair round. All were false rejections in earlier revisions of the pattern.
+        assertThat(ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + rule)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "`sum` must be implemented **recursively**.", "The implementation must not use loops.", "The transformation must use the Stream API.",
+            "Loops are not allowed; solve this with recursion.", "Recursion is not allowed.", "Implement `sum` recursively without any loop.",
+            "Do not use loops or iteration in your implementation.", "The method should be implemented recursively.", "The implementation must avoid loops entirely.",
+            "Iterative constructs are not allowed.", "The solution must use recursion, not iteration." })
+    void techniqueMandates_fireOnRulesNoAssertionCanObserve(String rule) {
+        assertThat(ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + rule)).isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "an implementation that uses a for loop instead of recursion", "an iterative implementation using an explicit stack",
+            "a version that computes the result with a while loop rather than recursively", "the tests do not check that the implementation is recursive" })
+    void techniqueClaims_recogniseTheCriticsOwnPhrasing(String finding) {
+        // Findings are written in the critic's voice, not the specification's: a weak-oracle finding carries the surviving mutant's description and never says "must".
+        assertThat(ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "the recursive helper's base case is untested", "no test covers the empty list, so the recursion's terminating branch is unchecked",
+            "the recursion depth limit of 100 stated in R3 is not enforced by any test", "the lambda passed to forEach is invoked twice per element and no test detects it" })
+    void techniqueClaims_leaveRepairableGapsThatMerelyMentionTheTopic(String finding) {
+        // On a recursion exercise almost every finding says "recursive" somewhere. Mentioning the topic must not cost a finding its repair round.
+        assertThat(ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding)).isFalse();
     }
 
     // --- Nondeterministic graded test gate ---

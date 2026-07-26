@@ -1186,6 +1186,43 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void countsRulesWrittenAsAPlainBulletedList() {
+            // A rules section written as bullets is as common as a table. Requiring an explicit R-id counted it as zero rules, which left the decomposition check inert on
+            // exactly the specifications that most often collapse.
+            sandbox.spec = specWithRules("""
+                    - The calculator handles the empty input.
+                    - The calculator rejects a negative operand.
+                    - The calculator rounds half up.
+                    - The calculator reports overflow.
+                    """);
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("states 4 rules").contains("single seam");
+        }
+
+        @Test
+        void advisesOnATechniqueMandateWithoutRejectingTheSpecification() {
+            // Rejecting this was measured wrong six times in eight, and a false rejection here discards a sound contract with no recourse. Said as advice on a pass it still
+            // reaches the agent while the specification is editable, which is where it changes the outcome: the damage came from the seam the agent then wrote for the rule.
+            sandbox.spec = specWithRules("| R1 | `sum` must be implemented recursively. |\n| R2 | `sum` returns 0 for an empty list. |\n");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).as("advice, not a gate").isTrue();
+            assertThat(result.observation()).contains("state an implementation technique").contains("do NOT give it a Testing Strategy seam")
+                    .contains("read the student's source file");
+        }
+
+        @Test
+        void saysNothingAboutTechniqueWhenNoRuleMandatesOne() {
+            sandbox.spec = specWithRulesAndSeams(3, 1);
+
+            assertThat(check(GenerationStage.SPEC).observation()).doesNotContain("state an implementation technique");
+        }
+
+        @Test
         void acceptsManyRulesOnceTheyAreSplitAcrossSeams() {
             sandbox.spec = specWithRulesAndSeams(7, 3);
 

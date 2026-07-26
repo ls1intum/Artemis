@@ -1173,9 +1173,10 @@ class GenerationOrchestrationServiceTest {
         // The critic reports "the tests do not check that the implementation is recursive" as WEAK_TEST_ORACLE, which is a repairable surface, so the loop asks the agent for a
         // discriminating test that cannot exist. One live run answered with a test that reads the student's source file and fails anyone whose correct solution still carries a
         // TODO comment, then burned two further attempts being rejected for it. Reclassified, the finding still reaches the instructor and never holds a round.
-        acceptedCandidateWithSpecAndTests();
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "the implementation must be recursive", "no test checks for recursion"))));
+        acceptedCandidateWithSpecAndTests("| R1 | `sum` must be implemented recursively |");
+        // Phrased the way the critic actually phrases a weak-oracle finding: the requirement carries the surviving mutant's description, in the critic's voice, without "must".
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(List.of(
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "an iterative implementation using an explicit stack", "it survives every assertion"))));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.specFidelityReport().findings()).singleElement().satisfies(finding -> {
@@ -1185,6 +1186,33 @@ class GenerationOrchestrationServiceTest {
         }
         // One agent session: the loop had nothing schedulable and did not spend a repair round on impossible work.
         verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void aTechniqueShapedFindingIsStillScheduledWhenTheContractNeverMandatedATechnique() {
+        // Provenance is what makes the downgrade honest. The same prose, against a contract that mandates nothing, describes a real behavioural gap the tests can be made to
+        // see — so it keeps its repair round. Without this gate a misread finding would cost a round on every exercise, not only the ones carrying the defect.
+        acceptedCandidateWithSpecAndTests("| R1 | negative salary invalid |");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(List.of(
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "an iterative implementation using an explicit stack", "it survives every assertion"))));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.specFidelityReport().findings()).singleElement()
+                    .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
+        }
+        verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void aRepairableGapThatMerelyMentionsTheMandatedTechniqueKeepsItsRepairRound() {
+        // On a recursion exercise nearly every finding says "recursive" somewhere. An untested base case is ordinary oracle work and must not be swallowed by the downgrade.
+        acceptedCandidateWithSpecAndTests("| R1 | `sum` must be implemented recursively |");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "the recursive helper's base case is untested", "add a discriminator"))));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        }
     }
 
     @Test
@@ -1305,13 +1333,17 @@ class GenerationOrchestrationServiceTest {
 
     /** An accepted candidate whose workspace holds a SPEC and one graded test, the state the witness pass needs to run at all. */
     private void acceptedCandidateWithSpecAndTests() {
+        acceptedCandidateWithSpecAndTests("| R1 | negative salary invalid |");
+    }
+
+    private void acceptedCandidateWithSpecAndTests(String rulesBody) {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/RosterParserTest.java", "package p;\nclass RosterParserTest { }"), false));
         when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(3);
-            return path.endsWith("/SPEC.md") ? new SandboxExecResult(0, "## Rules\n| R1 | negative salary invalid |", "", false) : new SandboxExecResult(1, "", "not found", false);
+            return path.endsWith("/SPEC.md") ? new SandboxExecResult(0, "## Rules\n" + rulesBody, "", false) : new SandboxExecResult(1, "", "not found", false);
         });
     }
 

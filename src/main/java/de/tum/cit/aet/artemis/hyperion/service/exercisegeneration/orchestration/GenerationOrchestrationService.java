@@ -114,6 +114,9 @@ public class GenerationOrchestrationService {
      */
     private static final int DEFAULT_MAX_SEMANTIC_REPAIRS = 6;
 
+    /** Ceiling on the configured repair budget. The attempt cap is derived from it, so an unreviewed value in a properties file would otherwise set the loop's whole shape. */
+    private static final int MAX_CONFIGURABLE_SEMANTIC_REPAIRS = 12;
+
     /**
      * How many rounds in a row one surface may hold before a surface that has never been repaired takes precedence. Two, because a surface can legitimately need consecutive
      * rounds — the strongest observed run spent three straight rounds strengthening its oracle, and each round fixed a different real gap — while an unserved surface must not
@@ -290,8 +293,10 @@ public class GenerationOrchestrationService {
         this.testCaseRepository = testCaseRepository;
         this.stagedGenerationRunner = stagedGenerationRunner;
         this.stagedGenerationEnabled = stagedGenerationEnabled;
-        this.maxSemanticRepairs = maxSemanticRepairs > 0 ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
-        this.maxGenerationAttempts = MAX_MECHANICAL_ATTEMPTS + this.maxSemanticRepairs;
+        this.maxSemanticRepairs = maxSemanticRepairs > 0 && maxSemanticRepairs <= MAX_CONFIGURABLE_SEMANTIC_REPAIRS ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
+        // The extra attempt is the narrow mechanical correction the loop grants when a semantic repair breaks the build. It is a whole attempt that neither term above pays
+        // for, so without it the last configured repair round is unreachable on exactly the runs that needed it most.
+        this.maxGenerationAttempts = MAX_MECHANICAL_ATTEMPTS + this.maxSemanticRepairs + 1;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
         this.approvedSpecs = approvedSpecs;
@@ -1055,7 +1060,12 @@ public class GenerationOrchestrationService {
      * measured across live runs, they produced a test reading the student's source tree, an assertion on the presence of a type name in that source, and repeated rounds whose
      * finding set came back byte-identical. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
      */
-    private static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report) {
+    private static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report, @Nullable String specSnapshot) {
+        // Provenance first: unless the frozen contract actually mandates a technique, no finding is downgraded. This is what keeps the reclassification honest — it can only
+        // fire on exercises that carry the defect, so a misread finding on any other exercise costs nothing.
+        if (ExerciseIntegrityGate.techniqueMandatesInRules(specSnapshot).isEmpty()) {
+            return report;
+        }
         if (report.findings().stream().noneMatch(GenerationOrchestrationService::demandsUngradeableTechnique)) {
             return report;
         }
@@ -1068,9 +1078,13 @@ public class GenerationOrchestrationService {
         return new SpecFidelityReport(reclassified);
     }
 
+    /**
+     * Whether a finding asks the tests to grade how the code is written. Read the finding's own prose, not a specification rule: for a weak-oracle finding the requirement is
+     * the surviving mutant's description ("an iterative implementation using an explicit stack"), which is written in the critic's voice and does not contain "must".
+     */
     private static boolean demandsUngradeableTechnique(SpecFidelityReport.Finding finding) {
         return (finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
-                && !ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + finding.requirement()).isEmpty();
+                && ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding.requirement() + " " + finding.detail());
     }
 
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language,
@@ -1098,7 +1112,7 @@ public class GenerationOrchestrationService {
             // surface, so the loop hands the agent an impossible task: one live run answered it by writing a test that reads the student's source file and fails anyone whose
             // correct solution still carries a TODO comment, then spent two further attempts being rejected for it. Reclassifying costs a round nothing and removes the
             // incentive at its source; the finding survives as the advisory the instructor sees.
-            report = reclassifyUngradeableTechniqueFindings(report);
+            report = reclassifyUngradeableTechniqueFindings(report, specSnapshot);
             // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
             List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshot);
             if (!techniqueRules.isEmpty()) {

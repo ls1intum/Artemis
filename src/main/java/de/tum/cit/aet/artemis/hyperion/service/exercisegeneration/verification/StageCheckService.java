@@ -62,11 +62,11 @@ public class StageCheckService {
     private static final int MIN_RULES_REQUIRING_SEVERAL_SEAMS = 4;
 
     /**
-     * Rule rows in the shapes generated specifications actually use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted {@code R1}, or a
-     * bare {@code R1:} line. An earlier revision required the R-id and therefore counted a plainly numbered rules list as ZERO rules, leaving the decomposition check inert on
-     * one of the commonest shapes.
+     * Rule rows in the shapes generated specifications actually use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted item, or a
+     * bare {@code R1:} line. Earlier revisions required an explicit R-id on the list shapes and therefore counted a plainly numbered or bulleted rules list as ZERO rules,
+     * leaving the decomposition check inert on two of the commonest shapes. Undercounting is the safe direction here: it makes the check inert, never falsely rejecting.
      */
-    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+\\**R\\d+|R\\d+\\s*[:.])", Pattern.MULTILINE);
+    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+|R\\d+\\s*[:.])", Pattern.MULTILINE);
 
     /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
     private static final int MAX_ERROR_LINES = 15;
@@ -345,8 +345,18 @@ public class StageCheckService {
                         + "seeded reflection utilities (a dynamic proxy when supplied code must receive a student-created interface). Adding them to the template to make the "
                         + "tests compile is the one repair the ownership gate will always reject; choose 'stubbed' instead at specification time if the tests need to name a "
                         + "type directly.";
+        // Advice, not a gate. A rule mandating a technique used to be rejected here, but six of eight matches on real specifications were false, and a false rejection at this
+        // stage discards a sound contract with no recourse. Said as advice on a pass it still reaches the agent while the specification is editable, which is where it changes
+        // the outcome: what caused real damage was not the rule itself but the Testing Strategy seam the agent then felt obliged to write for it.
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(spec);
+        String techniqueAdvice = techniqueMandates.isEmpty() ? ""
+                : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
+                        + "implementation from an iterative one returning identical values, so keep this as guidance in the student-facing statement and do NOT give it a "
+                        + "Testing Strategy seam: a seam obliges you to write a test for it, and the only tests that appear to grade a technique read the student's source "
+                        + "file, which is rejected outright.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
-                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence);
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence
+                + techniqueAdvice);
     }
 
     /** One parsed data row of SPEC.md's '## Design' table: the type name (first cell, backticks stripped) and its template-status token ({@code null} when the row has none). */
