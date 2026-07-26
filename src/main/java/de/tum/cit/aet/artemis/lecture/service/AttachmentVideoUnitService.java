@@ -18,7 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -74,11 +75,13 @@ public class AttachmentVideoUnitService {
 
     private final Optional<LectureContentProcessingService> contentProcessingService;
 
+    private final TransactionTemplate transactionTemplate;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
             LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
-            SlideVisibilityUpdateService slideVisibilityUpdateService) {
+            SlideVisibilityUpdateService slideVisibilityUpdateService, PlatformTransactionManager transactionManager) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -92,6 +95,7 @@ public class AttachmentVideoUnitService {
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -133,10 +137,16 @@ public class AttachmentVideoUnitService {
      * @param originalCompetencyIds       The competency IDs before the update (for progress tracking)
      * @return The updated attachment video unit.
      */
-    @Transactional
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, MultipartFile studentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
             Set<Long> originalCompetencyIds) {
+        return transactionTemplate.execute(status -> updateAttachmentVideoUnitWithinTransaction(existingAttachmentVideoUnit, updateUnitDTO, updateAttachment, updateFile,
+                studentVersionFile, keepFilename, hiddenPages, pageOrder, originalCompetencyIds));
+    }
+
+    private AttachmentVideoUnit updateAttachmentVideoUnitWithinTransaction(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO,
+            Attachment updateAttachment, MultipartFile updateFile, MultipartFile studentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages,
+            List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
