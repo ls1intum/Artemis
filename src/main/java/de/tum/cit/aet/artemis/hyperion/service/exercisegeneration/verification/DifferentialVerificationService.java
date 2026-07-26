@@ -248,7 +248,10 @@ public class DifferentialVerificationService {
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
-        List<String> gradingContextSniffingReasons = ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
+        List<String> gradingContextSniffingReasons = new ArrayList<>(
+                ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles()));
+        // Same class of defect, seen from the tests side: a graded test that reads the solution/template/assignment tree grades source text rather than behaviour.
+        gradingContextSniffingReasons.addAll(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(request.producedTestsFiles()));
         boolean noGradingContextSniffing = gradingContextSniffingReasons.isEmpty();
         reasons.addAll(gradingContextSniffingReasons);
         List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA

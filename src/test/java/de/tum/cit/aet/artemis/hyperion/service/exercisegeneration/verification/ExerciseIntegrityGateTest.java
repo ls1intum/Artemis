@@ -1038,6 +1038,62 @@ class ExerciseIntegrityGateTest {
                 .asString().contains("server-seeded structural", "Remove them", "behavioral witness");
     }
 
+    // --- Graded tests reading the source tree ---
+
+    @Test
+    void sourceTreeReading_rejectsATestThatGradesTheStudentsSourceTextInsteadOfBehaviour() {
+        // Shape taken verbatim from a live run: a test named testNoLoopsInImplementation that never looks for a loop. It hunts for the implementation file across the
+        // repository directories, reads it, and asserts the source carries no TODO. Production checks the student's repository out as 'assignment', so a correct solution that
+        // still has a TODO comment fails a graded test.
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsLoopTest.java", """
+                class RecursionUtilsLoopTest {
+                    @Test
+                    void testNoLoopsInImplementation() throws Exception {
+                        String[] candidates = { "solution/src/de/tum/cit/aet/nodraft/RecursionUtils.java", "assignment/src/de/tum/cit/aet/nodraft/RecursionUtils.java" };
+                        Path source = null;
+                        for (String candidate : candidates) {
+                            if (Files.exists(Path.of(candidate))) { source = Path.of(candidate); break; }
+                        }
+                        String code = Files.readString(source, StandardCharsets.UTF_8);
+                        assertFalse(code.contains("TODO"), "Implementation must not contain TODO markers");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).singleElement().asString().contains("RecursionUtilsLoopTest.java")
+                .contains("reads the exercise's own source tree").contains("can fail correct work");
+    }
+
+    @Test
+    void sourceTreeReading_acceptsATestThatOnlyExercisesThePublicApi() {
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsTest.java", """
+                class RecursionUtilsTest {
+                    @Test
+                    void testDigitalRoot() {
+                        assertEquals(3, RecursionUtils.digitalRoot(9876), "digital root of 9876 is 3");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
+    }
+
+    @Test
+    void sourceTreeReading_acceptsATestThatReadsAFixtureWithoutNamingARepositoryDirectory() {
+        // Reading a file is not itself the defect — knowing the repository layout is. A fixture under the test's own resources must not be flagged.
+        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/ParserTest.java", """
+                class ParserTest {
+                    @Test
+                    void testParsesFixture() throws Exception {
+                        String csv = Files.readString(Path.of("fixtures/sample.csv"), StandardCharsets.UTF_8);
+                        assertEquals(3, Parser.count(csv), "three records");
+                    }
+                }
+                """);
+
+        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
+    }
+
     // --- Nondeterministic graded test gate ---
 
     @Test

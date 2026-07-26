@@ -1061,6 +1061,12 @@ public final class ExerciseIntegrityGate {
     /** Grading-context introspection a produced assignment source must never contain: a stub that senses its caller can fake "fails on the template" per test. */
     private static final Pattern GRADING_CONTEXT_SNIFFING = Pattern.compile("Thread\\s*\\.\\s*currentThread\\s*\\(\\s*\\)\\s*\\.\\s*getStackTrace|StackWalker");
 
+    /** File-reading entry points a behavioural test has no reason to call. */
+    private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
+
+    /** A literal naming one of the repository directories production lays out; a graded test that knows these is grading layout, not behaviour. */
+    private static final Pattern ASSIGNMENT_DIRECTORY_LITERAL = Pattern.compile("\"(?:[^\"]*/)?(?:solution|template|assignment)/[^\"]*\"");
+
     /**
      * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
      * fail exactly the bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
@@ -1069,6 +1075,42 @@ public final class ExerciseIntegrityGate {
      * @param solutionFiles the produced SOLUTION repository files (repository-relative)
      * @return one reason naming the offending files, or empty when clean
      */
+    /**
+     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API.
+     * <p>
+     * Observed live: a test named {@code testNoLoopsInImplementation} that never looks for a loop. It searches
+     * {@code solution/}, {@code template/} and {@code assignment/} for the implementation file, reads it, and asserts that the source does not contain the string
+     * {@code TODO}. In production the student's repository is checked out as {@code assignment/}, so a student whose otherwise-correct solution still carries a TODO comment
+     * fails a graded test for a reason that has nothing to do with their work — a false negative against correct work, which is the most damaging kind.
+     * <p>
+     * Reading those directories is also how a test learns which assignment it is grading, and a test that branches on that answer can pass on both the solution and the
+     * template, quietly subverting the differential that is supposed to prove it discriminates. Behaviour is observable through the public API; the repository layout is not
+     * the test's business.
+     *
+     * @param producedTestsFiles the tests repository as it would be saved
+     * @return one actionable rejection per offending file, or empty when no graded test reads the source tree
+     */
+    static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<String> reasons = new ArrayList<>();
+        for (Map.Entry<String, String> file : producedTestsFiles.entrySet()) {
+            String content = file.getValue();
+            if (content == null || isHarnessFile(file.getKey())) {
+                continue;
+            }
+            if (FILE_READING_API.matcher(content).find() && ASSIGNMENT_DIRECTORY_LITERAL.matcher(content).find()) {
+                reasons.add("the graded test file '" + file.getKey() + "' reads the exercise's own source tree (it names the solution/template/assignment directories and opens "
+                        + "files). Production checks the student's repository out as 'assignment', so such a test grades the student's SOURCE TEXT rather than their behaviour "
+                        + "and can fail correct work — an implementation that still carries a TODO comment, for instance. It also lets the test discover which assignment it is "
+                        + "running against, so it can pass on the template as well as the solution. Assert the behaviour through the public API instead, and drop the check "
+                        + "entirely if the property is not observable that way.");
+            }
+        }
+        return List.copyOf(reasons);
+    }
+
     static List<String> gradingContextSniffingReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         List<String> offendingPaths = new ArrayList<>();
         for (Map<String, String> files : List.of(templateFiles == null ? Map.<String, String>of() : templateFiles,
