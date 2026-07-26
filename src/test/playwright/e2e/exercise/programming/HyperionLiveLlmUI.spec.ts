@@ -133,6 +133,54 @@ const scenarios: Scenario[] = [
             'Create an intermediate Java exercise that teaches interfaces with default methods. Students implement an interface and override some default behaviour. Clearly describe each method.',
     },
     {
+        id: 'diverse-intro-conditionals',
+        complexity: 'introductory',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create a short introductory Java exercise about branching and comparison. Students classify a small set of numeric readings into categories with clearly stated boundaries. Describe every boundary explicitly, including what happens exactly on it.',
+    },
+    {
+        id: 'diverse-intro-formatting',
+        complexity: 'introductory',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create a short introductory Java exercise about formatting numbers as human-readable text. Students round amounts to a fixed number of decimals and render them with a unit. Describe the rounding rule, negative values, and zero.',
+    },
+    {
+        id: 'diverse-state-machine',
+        complexity: 'intermediate',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an intermediate Java exercise about a small state machine, for example an order that moves through a fixed set of states. Some transitions are legal and some are not. Describe every legal transition and what must happen when an illegal one is attempted.',
+    },
+    {
+        id: 'diverse-adv-graph-cycles',
+        complexity: 'advanced',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an advanced Java exercise about ordering tasks that depend on each other. Students produce a valid execution order for a dependency graph and detect when no such order exists. Describe the ordering rule, how ties are broken, and exactly what happens for a graph that cannot be ordered.',
+    },
+    {
+        id: 'diverse-adv-immutable-value',
+        complexity: 'advanced',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an advanced Java exercise about designing an immutable value type that holds a collection. Students implement construction, equality, and derived operations that return new instances. Describe what must remain unchanged when callers mutate the data they passed in or the data they receive back.',
+    },
+    {
+        id: 'diverse-adv-interval-merge',
+        complexity: 'advanced',
+        runWholeExercise: true,
+        noDraft: true,
+        requirements:
+            'Create an advanced Java exercise about combining overlapping ranges into a minimal set of non-overlapping ranges. Describe precisely how touching ranges, fully contained ranges, and empty input are treated, and whether range ends are inclusive or exclusive.',
+    },
+    {
         id: 'bicycle-share-summary',
         complexity: 'introductory',
         runWholeExercise: true,
