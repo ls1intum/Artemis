@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 // Number of page-number buttons shown at once (PrimeNG's default pageLinkSize).
 const PAGE_LINK_SIZE = 5;
@@ -19,7 +18,7 @@ const NAV_BUTTON_CLASSES =
 @Component({
     selector: 'tum-ui-paginator',
     templateUrl: './tum-ui-paginator.component.html',
-    imports: [FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPaginatorComponent {
@@ -28,6 +27,14 @@ export class TumUiPaginatorComponent {
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
     readonly disabled = input(false);
+    /**
+     * Show the "Showing X to Y of Z" report. Default true (the smart-table look). Set false when replacing a
+     * bare PrimeNG `p-paginator` that rendered navigation only — or where a separate `jhi-item-count` already
+     * shows the count — so the migrated view stays visually identical.
+     */
+    readonly showCurrentPageReport = input(true);
+    /** Show the rows-per-page `<select>`. Default true. Set false when the original `p-paginator` had no `rowsPerPageOptions`. */
+    readonly showRowsPerPage = input(true);
 
     readonly pageChange = output<number>();
     readonly pageSizeChange = output<number>();
