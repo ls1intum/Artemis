@@ -28,8 +28,9 @@ class ProgrammingEntityUsageArchitectureTest extends AbstractModuleEntityUsageAr
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
+    // Remaining: SharingSetupInfoDTO.exercise, which the export/import/sharing migration replaces.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 1;
     }
 }

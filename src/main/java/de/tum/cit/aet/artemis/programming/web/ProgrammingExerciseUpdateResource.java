@@ -395,7 +395,8 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
+        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 

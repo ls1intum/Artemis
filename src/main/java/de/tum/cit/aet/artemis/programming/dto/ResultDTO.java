@@ -71,4 +71,24 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
                 ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
                 result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
+
+    /**
+     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO.
+     * <p>
+     * Both {@code submission} and {@code participation} are left {@code null}: the entity wire suppresses them via
+     * {@code @JsonIgnoreProperties({"submission", "participation"})} on {@code Submission.results}, and re-emitting
+     * them would repeat the whole submission/participation/exercise/course subtree once per result. Unlike
+     * {@link #of(Result, Collection)} this never dereferences {@code result.getSubmission()}, so a result with a
+     * {@code null} submission maps without a {@link NullPointerException}.
+     *
+     * @param result           the result to convert
+     * @param filteredFeedback the feedback that should be sent to the client; {@code null} maps to no feedback list
+     * @return the converted DTO
+     */
+    public static ResultDTO ofNested(Result result, Collection<Feedback> filteredFeedback) {
+        List<FeedbackDTO> feedbackDTOs = filteredFeedback == null ? null : filteredFeedback.stream().map(FeedbackDTO::of).toList();
+        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), null, null, feedbackDTOs,
+                result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
+                result.getCodeIssueCount());
+    }
 }

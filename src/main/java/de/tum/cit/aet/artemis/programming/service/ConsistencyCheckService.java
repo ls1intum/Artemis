@@ -79,24 +79,25 @@ public class ConsistencyCheckService {
      */
     private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
+        var exerciseSummary = ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(programmingExercise);
 
         VersionControlService versionControl = versionControlService.orElseThrow();
         if (!versionControl.checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
-            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
+            result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
             if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri())) {
-                result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
+                result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
             }
             if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri())) {
-                result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
+                result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
             }
             if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri())) {
-                result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
+                result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
             }
             for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
                 if (!versionControl.repositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri())) {
-                    result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
+                    result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
                 }
             }
         }
@@ -112,13 +113,14 @@ public class ConsistencyCheckService {
      */
     private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
+        var exerciseSummary = ConsistencyErrorDTO.ProgrammingExerciseSummaryDTO.of(programmingExercise);
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
-            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
+            result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
         }
         if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())) {
-            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
+            result.add(new ConsistencyErrorDTO(exerciseSummary, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
         }
 
         return result;
