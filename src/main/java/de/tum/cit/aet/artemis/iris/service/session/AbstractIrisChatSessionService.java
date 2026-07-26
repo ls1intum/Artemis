@@ -181,16 +181,17 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
 
-        // Apply an automatic context switch before the assistant message is saved so the CTXSWAP
-        // marker lands between the user message and the answer, mirroring the manual switch order.
-        if (statusUpdate.suggestedContext() != null) {
-            handleSuggestedContextChange(session, statusUpdate.suggestedContext());
+        boolean finalResultUpdate = statusUpdate.result() != null && !Boolean.FALSE.equals(statusUpdate.finalResult());
+        if (statusUpdate.suggestedContext() != null && !finalResultUpdate) {
+            // Pyris attaches a suggested context to the final result callback only. Switching on a status-only
+            // or intermediate update would move the context for an answer that may never arrive, so drop it.
+            log.debug("Ignoring suggested context on a status update without a final result for Iris job {}", job.jobId());
         }
 
         TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
-            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
-                    : handleResultStatusUpdate(job, statusUpdate, session, sessionTitle);
+            updatedJob = finalResultUpdate ? handleResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+                    : handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle);
         }
         else {
             applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
@@ -227,6 +228,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             if (trackedJob.assistantMessageId() != null) {
                 applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle, true);
                 return trackedJob;
+            }
+
+            if (statusUpdate.suggestedContext() != null) {
+                handleSuggestedContextChange(session, statusUpdate.suggestedContext());
             }
 
             var message = new IrisMessage();
