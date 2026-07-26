@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
-import java.util.EnumSet;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -21,20 +23,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 public class LectureContentUpdateClassifierService {
 
     /**
-     * Classifies the highest-priority Pyris update dimension touched by a lecture unit change.
-     *
-     * @param before           the previous lecture unit snapshot
-     * @param after            the current lecture unit snapshot, or null if the unit was deleted
-     * @param fileUpdateResult the attachment file update result
-     * @return the highest-priority update kind, or {@link LectureContentUpdateKind#NONE}
-     */
-    public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
-        Set<LectureContentUpdateKind> updateKinds = classifyAll(before, after, fileUpdateResult);
-        return List.of(LectureContentUpdateKind.DELETE, LectureContentUpdateKind.CONTENT, LectureContentUpdateKind.VISIBILITY, LectureContentUpdateKind.METADATA).stream()
-                .filter(updateKinds::contains).findFirst().orElse(LectureContentUpdateKind.NONE);
-    }
-
-    /**
      * Classifies all Pyris update dimensions touched by a lecture unit snapshot change.
      *
      * @param before           the previous detached lecture unit snapshot
@@ -47,44 +35,32 @@ public class LectureContentUpdateClassifierService {
             return Set.of(LectureContentUpdateKind.DELETE);
         }
         Objects.requireNonNull(before, "before");
-        var updateKinds = EnumSet.noneOf(LectureContentUpdateKind.class);
-        if (isContentUpdate(before, after, fileUpdateResult)) {
-            updateKinds.add(LectureContentUpdateKind.CONTENT);
-        }
-        if (isVisibilityUpdate(before, after)) {
-            updateKinds.add(LectureContentUpdateKind.VISIBILITY);
-        }
-        if (isMetadataUpdate(before, after)) {
-            updateKinds.add(LectureContentUpdateKind.METADATA);
-        }
-        return updateKinds;
+        Map<LectureContentUpdateKind, Boolean> changes = new EnumMap<>(LectureContentUpdateKind.class);
+        changes.put(LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult));
+        changes.put(LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after));
+        changes.put(LectureContentUpdateKind.METADATA, isMetadataUpdate(before, after));
+        return changes.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
     private static boolean isContentUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
-        return hasAttachmentFileContentUpdate(fileUpdateResult) || !Objects.equals(before.attachmentVersion(), after.attachmentVersion())
-                || !Objects.equals(before.attachmentLink(), after.attachmentLink()) || !Objects.equals(before.videoSource(), after.videoSource());
-    }
-
-    private static boolean hasAttachmentFileContentUpdate(AttachmentFileUpdateResult fileUpdateResult) {
-        return Optional.ofNullable(fileUpdateResult).map(result -> List.of(result.fileBytesChanged(), result.attachmentAdded(), result.attachmentRemoved()).contains(true))
-                .orElse(false);
+        boolean hasAttachmentFileContentUpdate = Optional.ofNullable(fileUpdateResult)
+                .map(result -> List.of(result.fileBytesChanged(), result.attachmentAdded(), result.attachmentRemoved()).contains(true)).orElse(false);
+        return hasAttachmentFileContentUpdate || !Arrays.asList(before.attachmentVersion(), before.attachmentLink(), before.videoSource())
+                .equals(Arrays.asList(after.attachmentVersion(), after.attachmentLink(), after.videoSource()));
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
-        return !representSameInstant(before.releaseDate(), after.releaseDate())
-                || !containSameInstants(before.slideHiddenUntilBySlideNumber(), after.slideHiddenUntilBySlideNumber());
+        return !visibilitySignature(before).equals(visibilitySignature(after));
     }
 
-    private static boolean containSameInstants(Map<Integer, ZonedDateTime> before, Map<Integer, ZonedDateTime> after) {
-        return before.keySet().equals(after.keySet()) && before.keySet().stream().allMatch(slideNumber -> representSameInstant(before.get(slideNumber), after.get(slideNumber)));
-    }
-
-    private static boolean representSameInstant(ZonedDateTime before, ZonedDateTime after) {
-        return Objects.equals(Optional.ofNullable(before).map(ZonedDateTime::toInstant), Optional.ofNullable(after).map(ZonedDateTime::toInstant));
+    private static List<Object> visibilitySignature(LectureContentUpdateSnapshot snapshot) {
+        Map<Integer, Optional<java.time.Instant>> slideVisibility = snapshot.slideHiddenUntilBySlideNumber().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> Optional.ofNullable(entry.getValue()).map(ZonedDateTime::toInstant)));
+        return List.of(Optional.ofNullable(snapshot.releaseDate()).map(ZonedDateTime::toInstant), slideVisibility);
     }
 
     private static boolean isMetadataUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
-        return !Objects.equals(before.lectureUnitName(), after.lectureUnitName()) || !Objects.equals(before.lectureName(), after.lectureName())
-                || !Objects.equals(before.courseName(), after.courseName()) || !Objects.equals(before.courseDescription(), after.courseDescription());
+        return !Arrays.asList(before.lectureUnitName(), before.lectureName(), before.courseName(), before.courseDescription())
+                .equals(Arrays.asList(after.lectureUnitName(), after.lectureName(), after.courseName(), after.courseDescription()));
     }
 }

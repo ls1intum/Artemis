@@ -151,7 +151,8 @@ public class AttachmentVideoUnitService {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit).join();
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                    projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
             }
             else if (existingAttachment != null) {
@@ -175,7 +176,10 @@ public class AttachmentVideoUnitService {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit).join();
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                            if (fileUpdateResult.fileBytesChanged()) {
+                                projectedSlideHiddenUntilBySlideNumber = Map.of();
+                            }
                         }
                         else {
                             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);

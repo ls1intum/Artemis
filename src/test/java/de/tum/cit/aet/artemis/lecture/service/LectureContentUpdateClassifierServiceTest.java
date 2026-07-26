@@ -25,9 +25,9 @@ class LectureContentUpdateClassifierServiceTest {
         var before = snapshot(Map.of(1, HIDDEN_UNTIL));
         var after = snapshot(Map.of(1, HIDDEN_UNTIL.plusHours(2)));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.VISIBILITY);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.VISIBILITY);
     }
 
     @Test
@@ -36,9 +36,9 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE.plusDays(1),
                 Map.of(1, HIDDEN_UNTIL));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.VISIBILITY);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.VISIBILITY);
     }
 
     @Test
@@ -47,9 +47,9 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
                 RELEASE_DATE.withZoneSameInstant(ZoneId.of("Europe/Berlin")), Map.of(1, HIDDEN_UNTIL.withZoneSameInstant(ZoneId.of("Europe/Berlin"))));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.NONE);
+        assertThat(updateKinds).isEmpty();
     }
 
     @Test
@@ -57,36 +57,36 @@ class LectureContentUpdateClassifierServiceTest {
         var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description");
         var after = snapshot("Updated exercise slides", "Lecture 1", "Course", "Description");
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.METADATA);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.METADATA);
     }
 
     @Test
     void classifiesChangedFileBytesAsContentUpdate() {
         var snapshot = snapshot();
 
-        var updateKind = classifier.classify(snapshot, snapshot, AttachmentFileUpdateResult.changed(7, 8));
+        var updateKinds = classifier.classifyAll(snapshot, snapshot, AttachmentFileUpdateResult.changed(7, 8));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
     void classifiesAttachmentAddedAsContentUpdate() {
         var snapshot = snapshot();
 
-        var updateKind = classifier.classify(snapshot, snapshot, new AttachmentFileUpdateResult(false, true, false, null, 1));
+        var updateKinds = classifier.classifyAll(snapshot, snapshot, new AttachmentFileUpdateResult(false, true, false, null, 1));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
     void classifiesAttachmentRemovedAsContentUpdate() {
         var snapshot = snapshot();
 
-        var updateKind = classifier.classify(snapshot, snapshot, new AttachmentFileUpdateResult(false, false, true, 7, null));
+        var updateKinds = classifier.classifyAll(snapshot, snapshot, new AttachmentFileUpdateResult(false, false, true, 7, null));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
@@ -96,9 +96,9 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 8, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
@@ -107,9 +107,9 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit-v2.pdf", "https://video.example/source", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
@@ -118,25 +118,25 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/updated", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.CONTENT);
     }
 
     @Test
     void classifiesUnchangedSnapshotsAsNoUpdate() {
         var snapshot = snapshot();
 
-        var updateKind = classifier.classify(snapshot, snapshot, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(snapshot, snapshot, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.NONE);
+        assertThat(updateKinds).isEmpty();
     }
 
     @Test
     void classifiesMissingAfterSnapshotAsDeleteUpdate() {
-        var updateKind = classifier.classify(snapshot(), null, AttachmentFileUpdateResult.unchanged(7));
+        var updateKinds = classifier.classifyAll(snapshot(), null, AttachmentFileUpdateResult.unchanged(7));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.DELETE);
+        assertThat(updateKinds).containsExactly(LectureContentUpdateKind.DELETE);
     }
 
     @Test
@@ -146,9 +146,9 @@ class LectureContentUpdateClassifierServiceTest {
         var after = snapshot("Updated exercise slides", "Lecture 2", "Updated Course", "Updated description", 8, "attachments/unit-v2.pdf", "https://video.example/new",
                 RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL.plusHours(2)));
 
-        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.changed(7, 8));
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.changed(7, 8));
 
-        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+        assertThat(updateKinds).containsExactlyInAnyOrder(LectureContentUpdateKind.CONTENT, LectureContentUpdateKind.METADATA, LectureContentUpdateKind.VISIBILITY);
     }
 
     @Test

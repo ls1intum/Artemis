@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -134,6 +135,26 @@ class AttachmentVideoUnitServiceTest {
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitDoesNotFailWhenAsyncSlideSplittingFails() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = mock(MultipartFile.class);
+        when(uploadedFile.isEmpty()).thenReturn(false);
+        when(uploadedFile.getOriginalFilename()).thenReturn("lecture.pdf");
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class)))
+                .thenReturn(CompletableFuture.failedFuture(new IllegalStateException("split failed")));
+
+        assertThatCode(() -> service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of())).doesNotThrowAnyException();
+
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit);
+        verify(contentProcessingService, never()).triggerProcessing(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
     }
 
     @Test
