@@ -96,8 +96,23 @@ public class GenerationOrchestrationService {
     // repairs, not additional open-ended initial-authoring attempts.
     private static final int MAX_GENERATION_ATTEMPTS = MAX_MECHANICAL_ATTEMPTS + 3;
 
-    /** At most one bounded repair for each coherent semantic surface. */
-    private static final int MAX_SEMANTIC_REPAIRS = 3;
+    /**
+     * The semantic repair budget. Sized originally as one round per coherent surface (contract, oracle, scaffold), but the scheduler never allocated it that way: it picks the
+     * highest-priority surface with findings, so one surface can consume the whole budget. Live telemetry shows both halves of that mismatch — a run where the oracle surface
+     * took all three rounds while {@code TEMPLATE_QUALITY_GAP} findings sat unscheduled across two consecutive rounds and shipped unrepaired, and runs that reached the oracle
+     * surface late or never and ended with suites that accept contract-breaking implementations.
+     * <p>
+     * Three is also simply too few: every observed run reached its last round with blocking findings still open, so generation terminated on budget rather than on convergence.
+     * Configurable so the ceiling can be tuned per deployment against the wall-clock guard rather than recompiled.
+     */
+    private static final int DEFAULT_MAX_SEMANTIC_REPAIRS = 6;
+
+    /**
+     * How many rounds in a row one surface may hold before a surface that has never been repaired takes precedence. Two, because a surface can legitimately need consecutive
+     * rounds — the strongest observed run spent three straight rounds strengthening its oracle, and each round fixed a different real gap — while an unserved surface must not
+     * wait forever behind it.
+     */
+    private static final int MAX_CONSECUTIVE_ROUNDS_PER_SURFACE = 2;
 
     /**
      * Total wall-clock ceiling for one generation run across ALL attempts. The staged first attempt has its own 22-minute guard (see StagedGenerationRunner), but repair
@@ -144,15 +159,18 @@ public class GenerationOrchestrationService {
 
     private final boolean stagedGenerationEnabled;
 
+    private final int maxSemanticRepairs;
+
     // Wired into SandboxAgentTools so a staged session's verify/submit tools can dispatch to the current stage's mechanical check; unused by an unstaged (legacy) session, which
     // never calls SandboxAgentTools#enterStage.
     private final StageCheckService stageCheckService;
 
-    private enum RepairSurface {
+    /** Package-private so the scheduling contract can be tested directly; the traces that motivated it are whole-generation properties no other seam exposes. */
+    enum RepairSurface {
         CONTRACT, ORACLE, SCAFFOLD
     }
 
-    private record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set<String> writableRoots) {
+    record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set<String> writableRoots) {
 
         /**
          * The oracle batch that offers the agent every validated contract witness. Separate from {@link #next} because that one deliberately schedules only blocking findings,
@@ -165,15 +183,39 @@ public class GenerationOrchestrationService {
                     : Optional.of(new SemanticRepairBatch(RepairSurface.ORACLE, new SpecFidelityReport(witnesses), writableRootsFor(RepairSurface.ORACLE)));
         }
 
-        static Optional<SemanticRepairBatch> next(SpecFidelityReport report) {
+        /**
+         * The next repair batch: still exactly one coherent surface per attempt — an earlier fix scoped repairs causally so a single repair could not rewrite every artifact at
+         * once, and that is unchanged — but no longer chosen by priority alone.
+         * <p>
+         * Priority alone let one surface hold the entire budget. Telemetry from a live run: {@code findings {WEAK_TEST_ORACLE=2, TEMPLATE_QUALITY_GAP=2}; repairing
+         * [WEAK_TEST_ORACLE]} on two consecutive rounds, after which the run saved with those scaffold findings untouched. Yet consecutive rounds on one surface are also how
+         * the strongest observed run earned its oracle: three in a row, each fixing a different real gap. Both facts are honoured by letting a surface hold at most
+         * {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds while any surface still waits for its first.
+         *
+         * @param report            the current review findings
+         * @param servedSurfaces    surfaces already repaired at least once in this generation
+         * @param currentSurface    the surface the previous round repaired, or {@code null} for the first round
+         * @param consecutiveRounds how many rounds in a row {@code currentSurface} has held
+         */
+        static Optional<SemanticRepairBatch> next(SpecFidelityReport report, Set<RepairSurface> servedSurfaces, @Nullable RepairSurface currentSurface, int consecutiveRounds) {
+            boolean yieldToUnserved = currentSurface != null && consecutiveRounds >= MAX_CONSECUTIVE_ROUNDS_PER_SURFACE;
+            if (yieldToUnserved) {
+                Optional<SemanticRepairBatch> unserved = batchFor(report, surface -> !servedSurfaces.contains(surface));
+                if (unserved.isPresent()) {
+                    return unserved;
+                }
+            }
+            return batchFor(report, surface -> true);
+        }
+
+        private static Optional<SemanticRepairBatch> batchFor(SpecFidelityReport report, java.util.function.Predicate<RepairSurface> eligible) {
             for (RepairSurface surface : RepairSurface.values()) {
+                if (!eligible.test(surface)) {
+                    continue;
+                }
                 List<SpecFidelityReport.Finding> findings = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                         .filter(finding -> surfaceFor(finding.kind()) == surface).toList();
                 if (!findings.isEmpty()) {
-                    // One coherent surface per attempt, deliberately: an earlier fix scoped repairs causally so a single repair could not rewrite every artifact at once.
-                    // Surfaces are tried in declaration order and the budget is MAX_SEMANTIC_REPAIRS, so a lower-priority surface can in principle be starved — but that is a
-                    // hypothesis until the repair telemetry below shows it happening on a real run, and trading away causal scoping to pre-empt it would undo a fix that was
-                    // made for observed damage.
                     return Optional.of(new SemanticRepairBatch(surface, new SpecFidelityReport(findings), writableRootsFor(surface)));
                 }
             }
@@ -221,9 +263,9 @@ public class GenerationOrchestrationService {
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, StagedGenerationRunner stagedGenerationRunner,
-            @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled, StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter,
-            ApprovedSpecRegistry approvedSpecs) {
+            @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, @Value("${artemis.hyperion.exercise-generation.max-semantic-repairs:6}") int maxSemanticRepairs,
+            StagedGenerationRunner stagedGenerationRunner, @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled,
+            StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -239,6 +281,7 @@ public class GenerationOrchestrationService {
         this.testCaseRepository = testCaseRepository;
         this.stagedGenerationRunner = stagedGenerationRunner;
         this.stagedGenerationEnabled = stagedGenerationEnabled;
+        this.maxSemanticRepairs = maxSemanticRepairs > 0 ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
         this.stageCheckService = stageCheckService;
         this.transcriptWriter = transcriptWriter;
         this.approvedSpecs = approvedSpecs;
@@ -371,11 +414,15 @@ public class GenerationOrchestrationService {
             @Nullable
             VerificationRequest lastRejectedVerificationRequest = null;
             int semanticRepairsStarted = 0;
-            int semanticRepairLimit = mode == GenerationMode.GENERATE ? MAX_SEMANTIC_REPAIRS : 1;
+            int semanticRepairLimit = mode == GenerationMode.GENERATE ? maxSemanticRepairs : 1;
             int semanticMechanicalCorrectionsRemaining = 1;
             int initialMechanicalAttempts = 0;
             // At most one witness-adoption round per generation, so offering ready-to-adopt tests can never turn into repeated rewrites of a finished candidate.
             boolean witnessAdoptionAttempted = false;
+            // Repair-surface fairness state: which surfaces have been repaired, and how long the current one has held (see SemanticRepairBatch#next).
+            java.util.Set<RepairSurface> servedRepairSurfaces = java.util.EnumSet.noneOf(RepairSurface.class);
+            RepairSurface currentRepairSurface = null;
+            int consecutiveRoundsOnSurface = 0;
             @Nullable
             CandidateSnapshot preSemanticRepairCandidate = null;
             @Nullable
@@ -619,7 +666,7 @@ public class GenerationOrchestrationService {
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
                     Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? SemanticRepairBatch.witnessAdoption(specFidelityReport)
-                            : SemanticRepairBatch.next(specFidelityReport);
+                            : SemanticRepairBatch.next(specFidelityReport, servedRepairSurfaces, currentRepairSurface, consecutiveRoundsOnSurface);
                     if (adoptWitnesses) {
                         witnessAdoptionAttempted = true;
                     }
@@ -632,6 +679,9 @@ public class GenerationOrchestrationService {
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
                     semanticRepairsStarted++;
                     pendingSemanticRepair = repairBatch.get();
+                    consecutiveRoundsOnSurface = pendingSemanticRepair.surface() == currentRepairSurface ? consecutiveRoundsOnSurface + 1 : 1;
+                    currentRepairSurface = pendingSemanticRepair.surface();
+                    servedRepairSurfaces.add(currentRepairSurface);
                     // Which quality findings the critic raised, and which of them this attempt was actually given to repair. Without this the repair loop is unobservable after
                     // the fact: a weakness that was found but never scheduled is indistinguishable in the logs from one that was never found at all.
                     log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,

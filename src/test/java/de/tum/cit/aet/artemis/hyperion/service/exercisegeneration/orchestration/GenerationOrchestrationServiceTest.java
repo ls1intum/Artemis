@@ -53,6 +53,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOrchestrationService.RepairSurface;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOrchestrationService.SemanticRepairBatch;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -150,7 +152,7 @@ class GenerationOrchestrationServiceTest {
 
     private GenerationOrchestrationService newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
-                jobService, Optional.of(testCaseRepository), 100, stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""),
+                jobService, Optional.of(testCaseRepository), 100, 6, stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""),
                 new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry());
     }
 
@@ -1162,6 +1164,51 @@ class GenerationOrchestrationServiceTest {
         InOrder resetThenMaterialize = inOrder(sandbox, workspace);
         resetThenMaterialize.verify(sandbox).resetSession(SESSION_ID);
         resetThenMaterialize.verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    // --- Repair-surface scheduling ---
+
+    private static SpecFidelityReport oracleAndScaffoldFindings() {
+        // The exact mix a live run reported on two consecutive rounds: {WEAK_TEST_ORACLE=2, TEMPLATE_QUALITY_GAP=2}, repairing only the oracle both times.
+        return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "..."),
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter has no anchor", "...")));
+    }
+
+    @Test
+    void aSurfaceMayHoldConsecutiveRoundsBecauseTheStrongestRunNeededExactlyThat() {
+        // Three straight oracle rounds is how the best observed run earned a suite that rejects every contract-breaking implementation tried against it. Yielding after one
+        // round would have cost it the round that closed its last gap.
+        SpecFidelityReport report = oracleAndScaffoldFindings();
+
+        assertThat(SemanticRepairBatch.next(report, EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
+        assertThat(SemanticRepairBatch.next(report, EnumSet.of(RepairSurface.ORACLE), RepairSurface.ORACLE, 1).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
+    }
+
+    @Test
+    void aSurfaceThatHasHeldTooLongYieldsToOneNeverRepaired() {
+        // The observed defect: the scaffold findings above sat unscheduled across consecutive rounds and shipped unrepaired.
+        SpecFidelityReport report = oracleAndScaffoldFindings();
+
+        SemanticRepairBatch batch = SemanticRepairBatch.next(report, EnumSet.of(RepairSurface.ORACLE), RepairSurface.ORACLE, 2).orElseThrow();
+
+        assertThat(batch.surface()).isEqualTo(RepairSurface.SCAFFOLD);
+        assertThat(batch.report().findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP));
+    }
+
+    @Test
+    void aSurfaceKeepsWorkingWhenEveryOtherSurfaceIsAlreadyClean() {
+        // Yielding is only meaningful when something is waiting. With nothing else outstanding the leading surface continues rather than stalling the budget.
+        SpecFidelityReport oracleOnly = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "...")));
+
+        assertThat(SemanticRepairBatch.next(oracleOnly, EnumSet.of(RepairSurface.ORACLE), RepairSurface.ORACLE, 5).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
+    }
+
+    @Test
+    void repairSchedulingStillCarriesOnlyTheScheduledSurfacesFindings() {
+        // The causal scoping an earlier fix introduced, which this change must not undo: one repair is never handed every artifact's findings at once.
+        SemanticRepairBatch batch = SemanticRepairBatch.next(oracleAndScaffoldFindings(), EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow();
+
+        assertThat(batch.report().findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
     }
 
     // --- Contract witnesses ---
