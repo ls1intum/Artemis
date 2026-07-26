@@ -544,6 +544,13 @@ public class SpecFidelityCriticService {
             meaningful oracle should exercise at least one distinct representative input whose expected result follows from the same rule, without turning this into a
             mechanical demand for an arbitrary test count.
 
+            Judge the test DATA, not only the assertion. A test can assert exactly the right thing and still distinguish nothing, because its input already satisfies the
+            property under test: input that arrives in the required order cannot detect a missing sort, input where every element is valid cannot detect missing validation, and
+            a single-element collection cannot detect wrong ordering or aggregation at all. Whenever a rule states an ordering, a filter, a transformation, or a deduplication,
+            check that at least one input would produce a DIFFERENT result if the rule were dropped; if none would, that is a surviving mutant no matter how precise the
+            assertion looks. Measured live: a suite asserting an alphabetically sorted grouping accepted an implementation that never sorted, because the fixture was already
+            alphabetical.
+
             For an unbounded persistence promise such as "all subsequent calls", one representative repeated call after the transition is sufficient to kill a plausible
             revert-after-first-call mutant. Do not move the goalpost to a later call count merely because no finite suite can prove a universal statement.
 
