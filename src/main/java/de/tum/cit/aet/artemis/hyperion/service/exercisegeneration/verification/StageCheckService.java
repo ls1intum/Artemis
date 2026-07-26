@@ -349,11 +349,17 @@ public class StageCheckService {
         // stage discards a sound contract with no recourse. Said as advice on a pass it still reaches the agent while the specification is editable, which is where it changes
         // the outcome: what caused real damage was not the rule itself but the Testing Strategy seam the agent then felt obliged to write for it.
         List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(spec);
+        // The prohibition on instrumenting the API is not a detail: it is the loophole the previous wording left open. Told only that a technique needs no seam, one live run
+        // answered by adding getFactorialRecCalls() and three siblings to the exercise's own type, backed by mutable static counters, and asserting calls > 1. Four of its
+        // twelve graded tests then measured nothing — an iterative implementation that increments the same counter passes every one of them — while the student's contract
+        // carried four accessors the exercise did not need. An earlier run answered the same demand by reading the student's source file.
         String techniqueAdvice = techniqueMandates.isEmpty() ? ""
                 : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
                         + "implementation from an iterative one returning identical values, so keep this as guidance in the student-facing statement and do NOT give it a "
-                        + "Testing Strategy seam: a seam obliges you to write a test for it, and the only tests that appear to grade a technique read the student's source "
-                        + "file, which is rejected outright.";
+                        + "Testing Strategy seam. Do NOT try to make it observable either: adding call counters, invocation flags, depth trackers, or any other member that "
+                        + "exists so a test can watch how the work was done is worse than leaving it ungraded. It does not grade the technique — an iterative implementation "
+                        + "that updates the same counter passes — and it forces machinery into the student's contract that the exercise does not need. Reading the student's "
+                        + "source file is rejected outright. State the rule in terms of the result the student must produce, and put the technique in the prose.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
                 + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence
                 + techniqueAdvice);

@@ -1211,8 +1211,8 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).as("advice, not a gate").isTrue();
-            assertThat(result.observation()).contains("state an implementation technique").contains("do NOT give it a Testing Strategy seam")
-                    .contains("read the student's source file");
+            assertThat(result.observation()).contains("state an implementation technique").contains("do NOT give it a Testing Strategy seam").contains("call counters")
+                    .contains("passes").contains("Reading the student's source file is rejected outright");
         }
 
         @Test

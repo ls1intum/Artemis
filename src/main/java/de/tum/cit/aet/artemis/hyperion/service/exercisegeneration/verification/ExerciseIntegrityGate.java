@@ -1154,7 +1154,9 @@ public final class ExerciseIntegrityGate {
         List<String> mandates = new ArrayList<>();
         Matcher matcher = TECHNIQUE_MANDATE.matcher(rules);
         while (matcher.find()) {
-            String mandate = matcher.group().strip().replaceAll("\\s+", " ");
+            // Markdown emphasis is presentation, not content: a rule written once as "must be recursive" and once as "must be **recursive**" states one mandate, and reporting
+            // it twice reads to the instructor as two separate problems. Observed live.
+            String mandate = matcher.group().strip().replace("*", "").replaceAll("\\s+", " ").strip();
             if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {
                 mandates.add(mandate);
             }
