@@ -289,6 +289,9 @@ export class CourseOverviewService {
         return {
             title: group.title ?? '',
             id: group.id ?? '',
+            // Group and exercise ids come from independent sequences; a type-prefixed tracking key keeps `@for` keys
+            // unique when a group and an ungrouped exercise share a numeric id. The raw `id` above stays for routing.
+            trackId: 'group-' + group.id,
             targetComponentSubRoute: 'group',
             icon: faLayerGroup,
             subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),

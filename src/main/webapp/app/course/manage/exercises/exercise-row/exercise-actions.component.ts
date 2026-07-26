@@ -279,7 +279,9 @@ export class ExerciseActionsComponent {
                 });
             }
         }
-        if (ex.type === ExerciseType.MODELING || ex.type === ExerciseType.TEXT) {
+        // Example submissions require editor rights: both destination routes are IS_AT_LEAST_EDITOR, so tutors (who can
+        // reach this page) must not see an action that only leads to an access denial.
+        if (ex.isAtLeastEditor && (ex.type === ExerciseType.MODELING || ex.type === ExerciseType.TEXT)) {
             items.push({
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',

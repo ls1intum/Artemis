@@ -41,7 +41,11 @@
                                 </div>
                             }
                             <div>
-                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems'; let last = $last; track sidebarItem.id) {
+                                @for (
+                                    sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
+                                    let last = $last;
+                                    track sidebarItem.trackId ?? sidebarItem.id
+                                ) {
                                     <div [ngClass]="{ 'mb-2': !last }">
                                         <!-- Optional nested group: the header card and its exercises sit inside one container -->
                                         @if (sidebarItem.groupedItems?.length) {

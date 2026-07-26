@@ -136,12 +136,22 @@ describe('ExerciseActionsComponent', () => {
             expect(component.mainActions().map((a) => a.id)).not.toContain('re-evaluate');
         });
 
-        it('adds example submissions for modeling and text exercises', () => {
-            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.MODELING }));
+        it('adds example submissions for modeling and text exercises with editor rights', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.MODELING, isAtLeastEditor: true }));
             expect(component.mainActions().map((a) => a.id)).toContain('examples');
 
-            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING }));
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING, isAtLeastEditor: true }));
             expect(component.mainActions().map((a) => a.id)).not.toContain('examples');
+        });
+
+        it('hides example submissions from tutors but shows them to editors', () => {
+            for (const type of [ExerciseType.TEXT, ExerciseType.MODELING]) {
+                fixture.componentRef.setInput('exercise', textExercise({ type, isAtLeastEditor: false }));
+                expect(component.mainActions().map((a) => a.id)).not.toContain('examples');
+
+                fixture.componentRef.setInput('exercise', textExercise({ type, isAtLeastEditor: true }));
+                expect(component.mainActions().map((a) => a.id)).toContain('examples');
+            }
         });
 
         it('adds edit-in-editor only for programming exercises with editor rights', () => {
