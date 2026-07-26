@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -37,6 +39,9 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Autowired
     private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private Attachment testAttachment1;
 
@@ -105,6 +110,30 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             }
         });
         assertThat(testAttachment2.getVersion()).isEqualTo(originalAttachmentVersion);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testReplaceStudentVersionFileRestoresReferenceOnRollback() throws Exception {
+        String originalStudentVersion = testAttachment2.getStudentVersion();
+        Path sourceFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT);
+        String[] replacementStudentVersion = new String[1];
+
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            try {
+                attachmentService.replaceStudentVersionFile(Files.readAllBytes(sourceFilePath), testAttachment2, testAttachment2.getAttachmentVideoUnit().getId());
+            }
+            catch (Exception exception) {
+                throw new IllegalStateException(exception);
+            }
+            replacementStudentVersion[0] = testAttachment2.getStudentVersion();
+            status.setRollbackOnly();
+        });
+
+        assertThat(replacementStudentVersion[0]).isNotEqualTo(originalStudentVersion);
+        assertThat(testAttachment2.getStudentVersion()).isEqualTo(originalStudentVersion);
+        Path replacementPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(replacementStudentVersion[0]), FilePathType.STUDENT_VERSION_SLIDES);
+        org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> assertThat(replacementPath).doesNotExist());
     }
 
     @Test

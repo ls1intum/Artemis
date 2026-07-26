@@ -142,7 +142,7 @@ public class AttachmentService {
     /**
      * Deletes the student version file and cleans up associated resources.
      *
-     * @param attachment The attachment whose student version should be deleted
+     * @param studentVersion the external URI of the student version to delete
      */
     private void deleteStudentVersionFile(String studentVersion) {
         if (studentVersion != null) {
@@ -238,6 +238,7 @@ public class AttachmentService {
                 @Override
                 public void afterCompletion(int status) {
                     if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                        attachment.setStudentVersion(oldStudentVersion);
                         fileService.schedulePathForDeletion(savePath, 0);
                         fileService.evictCacheForPath(savePath);
                     }
