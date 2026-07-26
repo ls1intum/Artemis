@@ -154,6 +154,17 @@ public class GenerationOrchestrationService {
 
     private record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set<String> writableRoots) {
 
+        /**
+         * The oracle batch that offers the agent every validated contract witness. Separate from {@link #next} because that one deliberately schedules only blocking findings,
+         * and a witness is advisory: it is a test the agent may adopt, not a defect it must fix.
+         */
+        static Optional<SemanticRepairBatch> witnessAdoption(SpecFidelityReport report) {
+            List<SpecFidelityReport.Finding> witnesses = report.findings().stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE)
+                    .toList();
+            return witnesses.isEmpty() ? Optional.empty()
+                    : Optional.of(new SemanticRepairBatch(RepairSurface.ORACLE, new SpecFidelityReport(witnesses), writableRootsFor(RepairSurface.ORACLE)));
+        }
+
         static Optional<SemanticRepairBatch> next(SpecFidelityReport report) {
             for (RepairSurface surface : RepairSurface.values()) {
                 List<SpecFidelityReport.Finding> findings = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
@@ -363,6 +374,8 @@ public class GenerationOrchestrationService {
             int semanticRepairLimit = mode == GenerationMode.GENERATE ? MAX_SEMANTIC_REPAIRS : 1;
             int semanticMechanicalCorrectionsRemaining = 1;
             int initialMechanicalAttempts = 0;
+            // At most one witness-adoption round per generation, so offering ready-to-adopt tests can never turn into repeated rewrites of a finished candidate.
+            boolean witnessAdoptionAttempted = false;
             @Nullable
             CandidateSnapshot preSemanticRepairCandidate = null;
             @Nullable
@@ -578,7 +591,12 @@ public class GenerationOrchestrationService {
                     specFidelityReport = SpecFidelityReport.empty();
                 }
 
-                if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings()) {
+                // A validated witness is advisory, so nothing above blocks and the loop would stop here with the witness unread by the agent — which is what the first live run
+                // did, leaving ready-to-adopt tests in the report while the suite still missed the rules they pin. One adoption round is granted instead, once per generation
+                // and only when the candidate is otherwise finished, so the cost is bounded and a witness cannot drive repeated rewrites.
+                boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !witnessAdoptionAttempted
+                        && attempt < MAX_GENERATION_ATTEMPTS && semanticRepairsStarted < semanticRepairLimit && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
+                if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                     break;
                 }
                 if (attempt == MAX_GENERATION_ATTEMPTS) {
@@ -596,7 +614,11 @@ public class GenerationOrchestrationService {
                     boolean reviewUnavailable = specFidelityReport.findings().stream()
                             .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE
                                     || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
-                    Optional<SemanticRepairBatch> repairBatch = SemanticRepairBatch.next(specFidelityReport);
+                    Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? SemanticRepairBatch.witnessAdoption(specFidelityReport)
+                            : SemanticRepairBatch.next(specFidelityReport);
+                    if (adoptWitnesses) {
+                        witnessAdoptionAttempted = true;
+                    }
                     if (reviewUnavailable && repairBatch.isEmpty()) {
                         break;
                     }
@@ -613,17 +635,19 @@ public class GenerationOrchestrationService {
                             specFidelityReport.findings().stream()
                                     .collect(java.util.stream.Collectors.groupingBy(SpecFidelityReport.Finding::kind, java.util.stream.Collectors.counting())),
                             pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
-                    emit(progress, "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
+                    emit(progress, adoptWitnesses ? "The exercise is verified; offering the AI the contract tests an independent reviewer prepared for it."
+                            : "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
                     String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
-                    currentPrompt = attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
-                            + scopeGuidance
-                            + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
-                            + repairBatch.get().guidance()
-                            + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
-                            + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
-                            + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
-                            + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
-                            + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(repairBatch.get().report());
+                    currentPrompt = adoptWitnesses ? witnessAdoptionPrompt(attempt, authoringBrief, specSnapshot.get(), repairBatch.get())
+                            : attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
+                                    + scopeGuidance
+                                    + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
+                                    + repairBatch.get().guidance()
+                                    + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
+                                    + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
+                                    + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
+                                    + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
+                                    + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(repairBatch.get().report());
                     continue;
                 }
                 if (semanticRepairsStarted > 0 && semanticMechanicalCorrectionsRemaining == 0) {
@@ -869,6 +893,20 @@ public class GenerationOrchestrationService {
      * @param previousReport    the immediately preceding attempt's report, threaded in for reviewer continuity; {@code null} on the first attempt
      * @return the report (possibly empty); never {@code null}
      */
+    /**
+     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list on purpose: the candidate already passed every gate, the witnesses are known to
+     * pass against the reference solution, and adopting one can only add coverage. Declining is explicitly allowed so the agent is not pushed into restating a case its suite
+     * already makes — a redundant test is a cost, not a win, and a witness the exercise does not need should be dropped rather than padded in.
+     */
+    private String witnessAdoptionPrompt(int attempt, String authoringBrief, @Nullable String specSnapshot, SemanticRepairBatch batch) {
+        return attemptFraming(attempt) + "Your previous attempt is fully verified and accepted; nothing is broken. An independent reviewer derived the tests below from the "
+                + "approved specification and the server has already run each one against your reference solution, which passes them. Add each test to the graded suite unless an "
+                + "existing assertion already distinguishes exactly the same wrong implementation, in which case leave the suite as it is and say which test covers it. Change "
+                + "nothing else: the solution, template, statement and every existing test stay as they are. Then call the structured `verify` tool, and call submit when it "
+                + "reports MECHANICAL PRECHECK: PASS.\n\nThe instructor source requirements are:\n" + authoringBrief + specContractSection(specSnapshot)
+                + specFidelityCritic.renderForRetryPrompt(batch.report());
+    }
+
     /**
      * Adds any contract witness the reference solution actually satisfied to the report, as advisory findings the agent can adopt.
      * <p>

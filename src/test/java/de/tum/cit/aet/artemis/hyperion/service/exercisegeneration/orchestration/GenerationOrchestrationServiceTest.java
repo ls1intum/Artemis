@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -1204,6 +1205,51 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        }
+    }
+
+    @Test
+    void aValidatedWitnessBuysExactlyOneAdoptionRound() {
+        // Without it the loop stops on the accepted candidate and the agent never reads the witness — observed live, with ready-to-adopt tests sitting in the report while the
+        // suite still missed the rules they pin. The round is granted once, so witnesses can never drive repeated rewrites of a finished exercise.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void theWitnessAdoptionPromptOffersTheTestsInsteadOfReportingBlockers() {
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+            verify(agentLoopRunner, times(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+            assertThat(prompts.getAllValues().getLast()).contains("fully verified and accepted", "unless an existing assertion already distinguishes")
+                    .doesNotContain("review blockers");
+        }
+    }
+
+    @Test
+    void aWitnessNeverDisplacesABlockingRepair() {
+        // Blocking findings are defects; a witness is an offer. If both are present the defect must be scheduled first.
+        acceptedCandidateWithSpecAndTests();
+        SpecFidelityReport blocking = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(blocking);
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+            verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+            assertThat(prompts.getAllValues().get(1)).as("the first repair addresses the blocker, not the witness").contains("review blockers");
         }
     }
 
