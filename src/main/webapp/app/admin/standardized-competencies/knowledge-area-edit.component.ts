@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
-import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencil, faPlus, faSave, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -9,10 +9,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { MessageModule } from 'primeng/message';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /**
  * Form structure for knowledge area editing.
@@ -41,10 +42,11 @@ interface KnowledgeAreaForm {
         MarkdownEditorMonacoComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
-        ButtonModule,
-        InputTextModule,
-        SelectModule,
-        MessageModule,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiMessageComponent,
     ],
 })
 export class KnowledgeAreaEditComponent {
@@ -86,6 +88,7 @@ export class KnowledgeAreaEditComponent {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faPlus = faPlus;
+    protected readonly faXmark = faXmark;
 
     /** Constants */
     protected readonly validators = KnowledgeAreaValidators;
