@@ -674,6 +674,11 @@ public class GenerationOrchestrationService {
                         break;
                     }
                     if (repairBatch.isEmpty()) {
+                        // The counterpart of the scheduling telemetry below. A blocking finding that maps to no repair surface ends the loop with budget still unspent, and
+                        // until this line existed the run simply stopped: "1 blocking gap" reached the instructor with five unused rounds and nothing recording why.
+                        log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), semanticRepairsStarted,
+                                semanticRepairLimit, specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                                        .collect(java.util.stream.Collectors.groupingBy(SpecFidelityReport.Finding::kind, java.util.stream.Collectors.counting())));
                         break;
                     }
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
