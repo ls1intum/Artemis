@@ -171,7 +171,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         }
         let seen = 0;
         for (let i = 0; i < text.length; i++) {
-            if (/\d/.test(text[i])) {
+            if (text[i] >= '0' && text[i] <= '9') {
                 seen++;
                 if (seen === digitCount) {
                     return i + 1;
