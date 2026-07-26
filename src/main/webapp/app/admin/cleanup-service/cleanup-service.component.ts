@@ -16,8 +16,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
 
 /**
@@ -35,8 +35,8 @@ import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-u
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         CleanupOperationModalComponent,
-        TableModule,
-        ButtonModule,
+        TumUiTableDirective,
+        TumUiButtonDirective,
         TumUiDatePickerComponent,
         FaIconComponent,
     ],
