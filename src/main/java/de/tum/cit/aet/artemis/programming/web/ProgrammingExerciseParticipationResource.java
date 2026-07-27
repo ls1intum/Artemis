@@ -599,11 +599,17 @@ public class ProgrammingExerciseParticipationResource {
 
     /**
      * Checks if the results should be hidden for the given participation.
+     * Test-run participations are exempt: their conductor always sees the results.
      *
      * @param participation the participation to check
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
+        if (participation.isTestRun()) {
+            // A test run is conducted by an instructor on their own test-run student exam, which the lookup below
+            // excludes by design (testRun = FALSE). Results are never hidden from the conductor.
+            return false;
+        }
         if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));

@@ -262,6 +262,16 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResult_testRunParticipation_showsResultsBeforeExamResultsPublished() throws Exception {
+        var participation = setupExamExerciseWithTestRunParticipation();
+        addTestRunParticipationResult();
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -447,6 +457,25 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetLatestResultWithFeedbacksAsStudent_showsResultAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLatestResultWithFeedbacks_testRunParticipationWithoutResult_returnsOk() throws Exception {
+        var participation = setupExamExerciseWithTestRunParticipation();
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLatestResultWithFeedbacks_testRunParticipationWithResult_returnsResult() throws Exception {
+        var participation = setupExamExerciseWithTestRunParticipation();
+        addTestRunParticipationResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult).isNotNull();
@@ -1245,6 +1274,35 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 userLogin, workingTime);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
+    }
+
+    /**
+     * Sets up an exam programming exercise whose exam has ended but whose results are not yet published, together with a
+     * test-run participation owned by instructor1. In this window a regular student participation would have its results
+     * hidden; a test run must not.
+     *
+     * @return the test-run participation
+     */
+    private ProgrammingExerciseStudentParticipation setupExamExerciseWithTestRunParticipation() {
+        var now = ZonedDateTime.now();
+        var startDate = now.minusHours(4);
+        var endDate = startDate.plusHours(1);
+        var visibilityDate = startDate.minusHours(1);
+        var publishResultsDate = startDate.plusHours(10);
+        var workingTime = 120 * 60;
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
+                TEST_PREFIX + "student1", workingTime);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
+        participation.setTestRun(true);
+        return programmingExerciseStudentParticipationRepository.save(participation);
+    }
+
+    private Result addTestRunParticipationResult() {
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "instructor1");
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(30));
+
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
 }
