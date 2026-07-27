@@ -5,9 +5,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ButtonModule } from 'primeng/button';
-import { Popover, PopoverModule } from 'primeng/popover';
 import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
@@ -32,7 +33,15 @@ type TrayStatus = 'running' | 'success' | 'attention';
     styleUrl: './variant-generation-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [ConfirmationService],
-    imports: [FaIconComponent, PopoverModule, ButtonModule, ConfirmDialogModule, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
+    imports: [
+        FaIconComponent,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
+        TumUiButtonComponent,
+        ConfirmDialogModule,
+        ArtemisTranslatePipe,
+        ExerciseVariantAiModalWizardComponent,
+    ],
 })
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
@@ -48,7 +57,7 @@ export class VariantGenerationTrayComponent {
     readonly monitorJobId = signal<string | undefined>(undefined);
     readonly monitorVisible = signal(false);
 
-    private readonly trayPopover = viewChild<Popover>('trayPopover');
+    private readonly trayPopover = viewChild<TumUiPopoverComponent>('trayPopover');
 
     /**
      * Icon-only status of the tray button: spinner while any job runs, warning once all finished but at least
@@ -139,7 +148,7 @@ export class VariantGenerationTrayComponent {
         if (!job.jobId) {
             return;
         }
-        this.trayPopover()?.hide();
+        this.trayPopover()?.close();
         this.monitorJobId.set(job.jobId);
         this.monitorVisible.set(true);
     }

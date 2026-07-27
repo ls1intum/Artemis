@@ -26,13 +26,12 @@ import {
 import { Subscription } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
 import { TranslateService } from '@ngx-translate/core';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -85,13 +84,12 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
     providers: [ConfirmationService],
     imports: [
-        DialogModule,
-        ButtonModule,
-        RadioButtonModule,
-        InputTextModule,
-        TextareaModule,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiRadioButtonComponent,
+        TumUiInputDirective,
+        TumUiTooltipDirective,
         ConfirmDialogModule,
-        TooltipModule,
         FormsModule,
         FaIconComponent,
         ArtemisTranslatePipe,

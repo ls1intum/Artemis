@@ -1,12 +1,12 @@
-<p-dialog
+<tum-ui-dialog
     [header]="headerKey() | artemisTranslate"
     [visible]="visible()"
     (visibleChange)="onClose($event)"
     [modal]="true"
-    appendTo="body"
-    [baseZIndex]="2000"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
     [style]="{ width: '820px', maxWidth: '95vw' }"
-    [draggable]="false"
 >
     <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
     @if (!isMonitorMode()) {
@@ -123,7 +123,9 @@
         </div>
 
         <div class="d-flex justify-content-end">
-            <p-button severity="secondary" size="small" [disabled]="!anyCardSelected()" (onClick)="goToStep2()"> Next <fa-icon [icon]="faArrowRight" class="ms-1" /> </p-button>
+            <tum-ui-button severity="secondary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
+                Next <fa-icon [icon]="faArrowRight" class="ms-1" />
+            </tum-ui-button>
         </div>
     }
 
@@ -136,7 +138,7 @@
                     <div class="d-flex gap-3 flex-wrap">
                         @for (d of availableDifficulties(); track d.value) {
                             <div class="radio-item">
-                                <p-radiobutton
+                                <tum-ui-radio-button
                                     [inputId]="'wiz-diff-' + d.value"
                                     name="wiz-difficulty"
                                     [value]="d.value"
@@ -152,7 +154,7 @@
             @if (changeDomain()) {
                 <div class="field-group">
                     <p class="field-group__label">New domain</p>
-                    <input pInputText class="w-100" [ngModel]="domainText()" (ngModelChange)="domainText.set($event)" placeholder="e.g. space exploration, cooking, banking…" />
+                    <input tumUiInput class="w-100" [ngModel]="domainText()" (ngModelChange)="domainText.set($event)" placeholder="e.g. space exploration, cooking, banking…" />
                 </div>
             }
             @if (changeNarrative()) {
@@ -160,8 +162,8 @@
                     <p class="field-group__label">Narrative style</p>
                     <div class="d-flex gap-3 flex-wrap">
                         @for (style of narrativeStyles; track style.value) {
-                            <div class="radio-item" [pTooltip]="style.description" tooltipPosition="top" [attr.data-testid]="'variant-narrative-' + style.value">
-                                <p-radiobutton
+                            <div class="radio-item" [tumUiTooltip]="style.description" tumUiTooltipPlacement="top" [attr.data-testid]="'variant-narrative-' + style.value">
+                                <tum-ui-radio-button
                                     [inputId]="'wiz-narrative-' + style.value"
                                     name="wiz-narrative"
                                     [value]="style.value"
@@ -178,7 +180,7 @@
                 <div class="field-group">
                     <p class="field-group__label">Custom instructions</p>
                     <textarea
-                        pTextarea
+                        tumUiTextarea
                         rows="4"
                         class="w-100"
                         style="resize: vertical"
@@ -191,10 +193,10 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-            <p-button severity="secondary" [outlined]="true" size="small" (onClick)="goToStep1()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </p-button>
-            <p-button severity="secondary" size="small" [disabled]="!canProceedToPlacement()" (onClick)="goToPlacement()">
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </tum-ui-button>
+            <tum-ui-button severity="secondary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
                 Next <fa-icon [icon]="faArrowRight" class="ms-1" />
-            </p-button>
+            </tum-ui-button>
         </div>
     }
 
@@ -205,7 +207,7 @@
             <div class="placement-options">
                 @if (sourceGroup(); as group) {
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'existing-group'">
-                        <p-radiobutton
+                        <tum-ui-radio-button
                             inputId="wiz-place-existing"
                             name="wiz-placement"
                             value="existing-group"
@@ -222,7 +224,13 @@
                      and the "with original" promise would silently produce a group holding just the variant. -->
                 @if (canGroupSourceWithVariant()) {
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'new-group'" data-testid="variant-placement-new-group">
-                        <p-radiobutton inputId="wiz-place-new" name="wiz-placement" value="new-group" [ngModel]="placementChoice()" (ngModelChange)="placementChoice.set($event)" />
+                        <tum-ui-radio-button
+                            inputId="wiz-place-new"
+                            name="wiz-placement"
+                            value="new-group"
+                            [ngModel]="placementChoice()"
+                            (ngModelChange)="placementChoice.set($event)"
+                        />
                         <div class="placement-option__body">
                             <span class="placement-option__title">Create new group with original</span>
                             <span class="placement-option__hint">Groups the source exercise and this variant together</span>
@@ -287,7 +295,7 @@
                     </label>
                 }
                 <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'standalone'">
-                    <p-radiobutton
+                    <tum-ui-radio-button
                         inputId="wiz-place-standalone"
                         name="wiz-placement"
                         value="standalone"
@@ -303,7 +311,7 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-            <p-button severity="secondary" [outlined]="true" size="small" (onClick)="goToStep2()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </p-button>
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </tum-ui-button>
             <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
                 <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
                 Generate Variant
@@ -375,10 +383,10 @@
             </div>
             @if (isRunning()) {
                 <div class="d-flex justify-content-end gap-2 mt-3">
-                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
+                    <tum-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
                         <fa-icon [icon]="faBan" class="me-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
-                    </p-button>
+                    </tum-ui-button>
                     <button type="button" class="btn btn-sm btn-ai-generate" (click)="onClose(false)" data-testid="variant-wizard-run-in-background">
                         <fa-icon [icon]="faWandMagicSparkles" class="me-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' | artemisTranslate }}
@@ -427,9 +435,9 @@
             }
             <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="d-flex justify-content-end gap-2">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                }}</p-button>
+                }}</tum-ui-button>
                 @if (generatedVariant()) {
                     <button type="button" class="btn btn-sm btn-ai-generate" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
                         <fa-icon [icon]="faPenToSquare" class="me-1" />
@@ -443,9 +451,9 @@
                 <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
             </div>
             <div class="d-flex justify-content-end">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                }}</p-button>
+                }}</tum-ui-button>
             </div>
         } @else {
             <!-- Title/type live in the flow card above; this row only adds the variant's key facts. -->
@@ -479,9 +487,9 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                }}</p-button>
+                }}</tum-ui-button>
                 <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!generatedVariant()" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
                     <fa-icon [icon]="faPenToSquare" class="me-1" />
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
@@ -528,4 +536,4 @@
         }
     </ng-template>
     <p-confirmdialog />
-</p-dialog>
+</tum-ui-dialog>

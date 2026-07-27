@@ -5,7 +5,7 @@
             class="btn btn-link nav-link position-relative variant-tray-toggle"
             data-testid="variant-tray-button"
             [attr.aria-label]="'artemisApp.exerciseVariantGeneration.tray.ariaLabel' | artemisTranslate"
-            (click)="trayPopover.toggle($event)"
+            [tumUiPopoverTrigger]="trayPopover"
         >
             <fa-icon [icon]="faWandMagicSparkles" />
             <!-- Status badge: small solid circle with a white glyph, like a notification badge. -->
@@ -27,11 +27,9 @@
                 }
             }
         </button>
-        <!-- baseZIndex lifts the popover above the sticky navbar/breadcrumbs (z-index 1030; PrimeNG's
-             default overlay z-index of ~1000 rendered the list clipped behind the breadcrumb bar). -->
-        <!-- onShow re-sync: websocket events keep phases live but carry neither the planned variant title nor the
+        <!-- Open re-sync: websocket events keep phases live but carry neither the planned variant title nor the
              request, so entries opened mid-job would miss the "source → variant" line without a REST refresh. -->
-        <p-popover #trayPopover [baseZIndex]="2000" (onShow)="refreshJobs()">
+        <tum-ui-popover #trayPopover placement="bottom" [ariaLabel]="'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate" (openChange)="$event && refreshJobs()">
             <div class="variant-tray-list d-flex flex-column gap-2" data-testid="variant-tray-list">
                 <div class="variant-tray-list__title">
                     <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
@@ -50,16 +48,17 @@
                         <div class="d-flex align-items-center justify-content-between gap-2">
                             <span class="fw-semibold text-truncate">{{ job.sourceExerciseTitle }}</span>
                             @if (!isTerminalVariantPhase(job.phase)) {
-                                <p-button
+                                <tum-ui-button
                                     severity="danger"
-                                    [outlined]="true"
+                                    variant="outlined"
                                     [rounded]="true"
                                     size="small"
                                     styleClass="flex-shrink-0"
                                     data-testid="variant-tray-cancel"
-                                    [label]="'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate"
-                                    (onClick)="cancelJob(job, $event)"
-                                />
+                                    (clicked)="cancelJob(job, $event)"
+                                >
+                                    {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
+                                </tum-ui-button>
                             }
                         </div>
                         <!-- Source → variant flow on its own line, mirroring the modal's flow card (title known from PLANNING on). -->
@@ -112,7 +111,7 @@
                     </div>
                 }
             </div>
-        </p-popover>
+        </tum-ui-popover>
         <p-confirmdialog />
         <!-- Tray-hosted generation modal in monitor mode: no source exercise, initialized from the job-detail
              endpoint via monitorJobId. "Open in Editor" navigates like a finished entry. -->
