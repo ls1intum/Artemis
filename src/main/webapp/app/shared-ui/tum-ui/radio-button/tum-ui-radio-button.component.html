@@ -1,0 +1,14 @@
+<input
+    type="radio"
+    class="tum-ui-radio-button-input"
+    [id]="inputId()"
+    [attr.name]="name()"
+    [checked]="isChecked()"
+    [disabled]="isDisabled()"
+    [attr.aria-label]="ariaLabel()"
+    (click)="onInputClick($event)"
+    (blur)="onBlur()"
+/>
+<div class="tum-ui-radio-button-box" [class]="boxClasses()" aria-hidden="true">
+    <span class="tum-ui-radio-button-icon" [class]="iconClasses()"></span>
+</div>

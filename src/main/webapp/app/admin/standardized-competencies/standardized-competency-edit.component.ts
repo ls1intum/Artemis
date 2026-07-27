@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output } from '@angular/core';
-import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencil, faSave, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
@@ -11,10 +11,11 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { MessageModule } from 'primeng/message';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /** Option shown in the source select, with a precomputed display label. */
 interface SourceOption {
@@ -51,10 +52,11 @@ interface StandardizedCompetencyForm {
         TaxonomySelectComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
-        ButtonModule,
-        InputTextModule,
-        SelectModule,
-        MessageModule,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiMessageComponent,
     ],
 })
 export class StandardizedCompetencyEditComponent {
@@ -100,6 +102,7 @@ export class StandardizedCompetencyEditComponent {
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faXmark = faXmark;
 
     /** Constants */
     protected readonly validators = StandardizedCompetencyValidators;
