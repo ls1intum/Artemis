@@ -526,7 +526,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     void shouldPlaceVariantIntoNewVariantGroup() throws Exception {
         scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
         VariantPlacementDTO placement = new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null,
-                new CreateExerciseVariantGroupDTO("Cargo bay variants", 10.0, null, null, null, null, null, null));
+                new CreateExerciseVariantGroupDTO("Cargo bay variants", 10.0, null, null, null, null, null));
 
         String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(placement));
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
