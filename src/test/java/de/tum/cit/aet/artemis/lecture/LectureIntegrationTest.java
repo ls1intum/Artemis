@@ -714,7 +714,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
         var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.SimpleLectureDTO.class);
         assertThat(returnedLectures).hasSize(1);
