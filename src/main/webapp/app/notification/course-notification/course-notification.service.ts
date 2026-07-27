@@ -47,6 +47,7 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: faPersonChalkboard,
         deregisteredFromTutorialGroupNotification: faPersonChalkboard,
         tutorialGroupDeletedNotification: faPersonChalkboard,
+        irisResponseNeedsReviewNotification: faComments,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -75,6 +76,8 @@ export class CourseNotificationService implements OnDestroy {
         registeredToTutorialGroupNotification: [],
         deregisteredFromTutorialGroupNotification: [],
         tutorialGroupDeletedNotification: [],
+        // Server only supports the WEBAPP channel for this notification (see IrisResponseNeedsReviewNotification#getSupportedChannels).
+        irisResponseNeedsReviewNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.PUSH],
     };
 
     // Parameter keys that should be rendered as markdown

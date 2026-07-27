@@ -1,7 +1,9 @@
 <div class="flex flex-wrap items-center justify-center gap-1 border-t border-surface-200 pt-2 text-sm text-muted-color dark:border-surface-800" data-testid="tum-ui-paginator">
-    <span class="px-2" data-testid="paginator-report">
-        {{ 'global.item-count' | artemisTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
-    </span>
+    @if (showCurrentPageReport()) {
+        <span class="px-2" data-testid="paginator-report">
+            {{ 'global.item-count' | artemisTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
+        </span>
+    }
 
     <button
         type="button"
@@ -58,17 +60,19 @@
         <fa-icon [icon]="faAnglesRight" />
     </button>
 
-    <select
-        #sizeSelect
-        class="ml-1 cursor-pointer rounded-md border border-surface-300 bg-surface-0 px-2.5 py-1.5 text-sm text-surface-900 dark:border-surface-600 dark:bg-surface-950 dark:text-surface-0"
-        [disabled]="disabled()"
-        (change)="onPageSizeChange(sizeSelect.value)"
-        [attr.aria-label]="'global.paginator.rowsPerPage' | artemisTranslate"
-        data-testid="paginator-page-size"
-    >
-        @for (option of pageSizeOptions(); track option) {
-            <!-- [selected] (not [value] on the select) so the current size sticks even though options render after binding. -->
-            <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
-        }
-    </select>
+    @if (showRowsPerPage()) {
+        <select
+            #sizeSelect
+            class="ml-1 cursor-pointer rounded-md border border-surface-300 bg-surface-0 px-2.5 py-1.5 text-sm text-surface-900 dark:border-surface-600 dark:bg-surface-950 dark:text-surface-0"
+            [disabled]="disabled()"
+            (change)="onPageSizeChange(sizeSelect.value)"
+            [attr.aria-label]="'global.paginator.rowsPerPage' | artemisTranslate"
+            data-testid="paginator-page-size"
+        >
+            @for (option of pageSizeOptions(); track option) {
+                <!-- [selected] (not [value] on the select) so the current size sticks even though options render after binding. -->
+                <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
+            }
+        </select>
+    }
 </div>

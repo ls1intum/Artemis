@@ -20,7 +20,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,8 +28,8 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { MessageModule } from 'primeng/message';
-import { ButtonModule } from 'primeng/button';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { parseJson } from 'app/foundation/util/json.util';
 
 interface ImportCount {
@@ -47,15 +47,15 @@ interface ImportCount {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FontAwesomeModule,
-        TooltipModule,
+        TumUiTooltipDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         MarkdownDirective,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         AdminTitleBarTitleDirective,
-        MessageModule,
-        ButtonModule,
+        TumUiMessageComponent,
+        TumUiButtonComponent,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {

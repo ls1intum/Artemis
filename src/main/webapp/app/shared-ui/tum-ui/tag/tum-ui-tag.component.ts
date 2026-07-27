@@ -31,6 +31,10 @@ export class TumUiTagComponent {
     readonly severity = input<TumUiTagSeverity>('secondary');
     readonly value = input<string>();
     readonly rounded = input(false);
+    /** Extra classes forwarded onto the tag pill (drop-in for PrimeNG `styleClass`, e.g. `break`, `whitespace-nowrap`). */
+    readonly styleClass = input<string>('');
 
-    protected readonly tagClasses = computed(() => `${TAG_BASE} ${this.rounded() ? 'rounded-full' : 'rounded-md'} ${TAG_SEVERITY[this.severity()]}`);
+    protected readonly tagClasses = computed(() =>
+        `${TAG_BASE} ${this.rounded() ? 'rounded-full' : 'rounded-md'} ${TAG_SEVERITY[this.severity()]} ${this.styleClass()}`.replace(/\s+/g, ' ').trim(),
+    );
 }
