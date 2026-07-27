@@ -76,10 +76,9 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_java_searchesTheBuildDirDirectlyForJunitReports_noRedirect() {
-        // Maven Surefire's reportsDirectory parameter has no CLI-settable property binding (verified against the plugin descriptor for the version templates/java pins), so a
-        // -Dsurefire.reportsDirectory=... flag in MAVEN_OPTS is silently ignored by real Maven, which always writes to the plugin's default
-        // ${project.build.directory}/surefire-reports. The JUnit collection step therefore must search $BUILD_DIR with the same report globs as every other language (matching
-        // production's own resultPaths in templates/phases/java/*.yaml), not a dedicated redirect directory that real Maven never writes to.
+        // Maven Surefire's reportsDirectory parameter has no CLI-settable property binding, so a -Dsurefire.reportsDirectory=... flag is silently ignored and Surefire always
+        // writes to ${project.build.directory}/surefire-reports. The collection step must therefore search $BUILD_DIR with the same globs as every other language, not a
+        // redirect directory Maven never writes to.
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
@@ -182,8 +181,8 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_fallbackUsesTheGenericBuildDetector_forConfigurationsOutsideJavaMaven() {
-        // Generation only ever runs for Java/Maven exercises (LanguageGenerationProfile); a Java/Gradle exercise is unreachable in production. If the fallback is ever hit for
-        // such a configuration, it gets a generic best-effort build detection rather than Gradle-specific commands.
+        // LanguageGenerationProfile admits only Java/Maven, so a Java/Gradle exercise cannot reach the fallback in production; if one ever does, it gets generic best-effort
+        // build detection rather than Gradle-specific commands.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
@@ -206,7 +205,7 @@ class SandboxBuildCommandServiceTest {
     @Test
     void pristineBuildCommands_targetTheVerifierOwnedScript() {
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
-        // The verifier runs the PRISTINE copy outside /workspace (unreachable by the agent's tools).
+        // The verifier runs the pristine copy outside /workspace, which the agent's tools cannot reach.
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
         assertThat(factory.buildEnvironmentPreflightCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
@@ -356,8 +355,8 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void collectsMavenReportsFromTheDefaultSurefireLocation_forJavaExercises(@TempDir Path tempDir) throws Exception {
-            // Real Maven Surefire always writes to its default ${project.build.directory}/surefire-reports regardless of any -D flag (the reportsDirectory parameter has no
-            // CLI-settable property binding), so the live collect snippet must find the report there, directly under $BUILD_DIR, exactly like every other language.
+            // Surefire always writes to its default ${project.build.directory}/surefire-reports regardless of any -D flag, so the collect snippet must find the report there,
+            // directly under $BUILD_DIR, exactly like every other language.
             ProgrammingExercise java = new ProgrammingExercise();
             java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), java, tempDir, "java-maven", Map.of("target/surefire-reports/TEST-StackTest.xml", SUREFIRE));

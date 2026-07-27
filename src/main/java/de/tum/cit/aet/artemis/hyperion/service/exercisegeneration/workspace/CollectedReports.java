@@ -40,7 +40,7 @@ public final class CollectedReports {
         long total = 0;
         TarArchiveEntry entry;
         while ((entry = tar.getNextEntry()) != null) {
-            // commons-compress's isFile() returns true for FIFO/character/block devices — their link flags are not the recognised non-file ones — so they are rejected explicitly.
+            // commons-compress's isFile() returns true for FIFO, character, and block devices, whose link flags are not the recognised non-file ones, so reject them explicitly.
             if (entry.isSymbolicLink() || entry.isLink()) {
                 throw new RejectedReportException("Refusing to read a linked report entry from the verifier reports archive: " + entry.getName());
             }

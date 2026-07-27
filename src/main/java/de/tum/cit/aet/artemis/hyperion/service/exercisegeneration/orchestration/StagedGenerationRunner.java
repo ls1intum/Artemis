@@ -45,23 +45,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Runs one Java/{@code GENERATE} agent attempt in three enforced phases — specification, coherent executable build, and student-facing statement — each with its own system prompt
- * ({@link AgentSystemPromptService#buildStage}), its own bounded turn budget, and a mechanical gate that must pass before the next stage starts. This replaces one
- * {@code agentLoopRunner.run(...)} call in {@link GenerationOrchestrationService#generate}; everything before and after that call site (workspace seeding, mechanical
- * verification, spec-fidelity review, the outer repair-attempt loop) is unchanged and treats the aggregated {@link AgentLoopResult} this class returns exactly like a
- * single-call result.
+ * ({@link AgentSystemPromptService#buildStage}), its own bounded turn budget, and a mechanical gate that must pass before the next stage starts. It stands in for a single
+ * {@code agentLoopRunner.run(...)} call: the aggregated {@link AgentLoopResult} it returns is consumed exactly like a single-call result, so workspace seeding, mechanical
+ * verification, spec-fidelity review, and the outer repair-attempt loop are unaffected by the staging.
  * <p>
  * Phase file tools enforce write scope: specification is frozen after approval; the executable builder owns solution, template, tests, and grading plan together; the final
- * projection owns only the statement. There is no re-entry into an *earlier* phase — a gate failure that exhausts its own re-entry budget (see below) stops the whole run
- * immediately
- * and hands the aggregated result (with the gate report appended) back to the existing outer attempt loop, which already knows how to turn a rejected candidate into a repair
- * prompt for the next attempt.
+ * projection owns only the statement. There is no re-entry into an <em>earlier</em> phase — a gate failure that exhausts its own re-entry budget stops the whole run immediately
+ * and hands the aggregated result (with the gate report appended) back to the outer attempt loop, which turns a rejected candidate into the next attempt's repair prompt.
  * <p>
  * Conversation continuity across stages is controlled by {@code artemis.hyperion.agent.staged-context} ({@link StagedContext}, default {@code CONTINUOUS}): CONTINUOUS
  * checkpoints specification provenance, carries one logical conversation through the executable stages, then starts a clean statement conversation from the approved contract
- * and a typed grading handoff. FRESH starts a brand-new conversation per stage via {@link AgentLoopRunner#run}. Either way,
- * on a stage's first gate failure the stage gets one re-entry (same stage, gate feedback fed back in) if the shared pool still has at least {@link #MIN_STAGE_BUDGET}
- * turns and the run has not yet spent its total re-entry budget ({@link #MAX_TOTAL_REENTRIES} across the whole run); a second failure at the same stage stops the run as
- * described above.
+ * and a typed grading handoff. FRESH starts a brand-new conversation per stage via {@link AgentLoopRunner#run}. Either way, a stage's first gate failure buys one re-entry
+ * (same stage, gate feedback fed back in) while the shared pool still holds at least {@link #MIN_STAGE_BUDGET} turns and the run has not spent its {@link #MAX_TOTAL_REENTRIES}
+ * whole-run re-entry budget; a second failure at the same stage stops the run.
  */
 @Lazy
 @Component
@@ -73,7 +69,7 @@ public class StagedGenerationRunner {
     /** One shared limit for every semantic specification repair; review labels choose the repair scope but never create extra retry channels. */
     private static final int MAX_SEMANTIC_SPEC_REFINEMENTS = 3;
 
-    /** A complete SPEC rewrite plus verification fits in five turns; every refinement still competes for the unchanged global turn and wall-clock budgets. */
+    /** A complete SPEC rewrite plus verification fits in five turns; a refinement competes for the same global turn and wall-clock budgets as everything else. */
     private static final int SEMANTIC_SPEC_REFINEMENT_BUDGET = 5;
 
     /**
@@ -82,10 +78,7 @@ public class StagedGenerationRunner {
      */
     private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.TESTS, GenerationStage.STATEMENT);
 
-    /**
-     * Base per-stage turn budget, in {@link #STAGE_ORDER} order; sums to 68, leaving headroom under {@link #POOL_HARD_CAP} for rollover. SPEC runs no builds but now carries the
-     * whole plan (rules, worked examples, design, testing strategy), so it gets more room than the old thin spec+design pair combined minus their hand-off overhead.
-     */
+    /** Base per-stage turn budget, in {@link #STAGE_ORDER} order. Deliberately sums to less than {@link #POOL_HARD_CAP}, leaving the difference as rollover headroom. */
     private static final int[] STAGE_BASE_BUDGETS = { 7, 54, 7 };
 
     /**
@@ -137,9 +130,6 @@ public class StagedGenerationRunner {
     /** Test hook so a wall-clock test can advance time deterministically instead of sleeping; production always uses the real clock. */
     private Supplier<Instant> clock = Instant::now;
 
-    /**
-     * The conversation-carry strategy for the enforced stage sequence (see {@link #run}).
-     */
     enum StagedContext {
 
         /**
@@ -161,7 +151,7 @@ public class StagedGenerationRunner {
         }
     }
 
-    // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
+    // Required: with the package-private test constructors also present, Spring cannot pick an injection constructor without it.
     @Autowired
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer, ExerciseConceptSelector conceptSelector,
@@ -247,15 +237,13 @@ public class StagedGenerationRunner {
         String lastFinalMessage = "";
         AgentLoopResult.Status lastStatus = AgentLoopResult.Status.COMPLETED;
         AgentVerifyReport lastTestsReport = null;
-        // CONTINUOUS carries one logical conversation across every stage (and re-entry) via AgentLoopRunner#runSession; FRESH never populates this (stays null forever), so
-        // every stage starts a brand-new conversation via the plain run() call, exactly as before this feature existed.
+        // Stays null for the whole run under FRESH, which is what makes every stage there start a brand-new conversation via the plain run() call.
         List<Message> conversation = null;
         List<Message> archivedConversation = new ArrayList<>();
         int reentriesRemaining = MAX_TOTAL_REENTRIES;
         int semanticSpecRefinementsUsed = 0;
-        // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic — an observed run scored its worked-example replay
-        // 1/2, then 2/2, then 0/2, then 0/2, and froze the last one — so the loop keeps the best rather than trusting the most recent. Reset whenever the concept is
-        // replaced: a specification written for a rejected concept must never come back.
+        // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic, so a later draft can be worse than an earlier one and the
+        // loop keeps the best rather than the most recent. Reset whenever the concept is replaced: a specification written for a rejected concept must never come back.
         String bestSpecSnapshot = null;
         int bestSpecFindingCount = Integer.MAX_VALUE;
         String semanticSpecFeedback = null;
@@ -349,8 +337,8 @@ public class StagedGenerationRunner {
                 else {
                     String stageBriefPrompt = switch (stage) {
                         case SPEC -> specPromptWithSelectedConcept(briefPrompt, selectedConcept);
-                        // Statement authoring starts from a deliberately fresh context. Give it the raw instructor authority plus the typed SPEC/visible-test handoff below,
-                        // not the turn-0 workspace/reference listing that was useful only while building executable artifacts.
+                        // Statement authoring starts from a deliberately fresh context: the raw instructor authority plus the typed SPEC/visible-test handoff below, not the
+                        // turn-0 workspace listing, which is useful only while building executable artifacts.
                         case STATEMENT -> sourceBrief;
                         default -> briefPrompt;
                     };
@@ -385,8 +373,8 @@ public class StagedGenerationRunner {
                 }
                 if (stage == GenerationStage.TESTS) {
                     lastTestsReport = gate.report();
-                    // The agent's own in-loop TESTS-stage checks may have set this already; setting it again from the runner's own official gate result (fresh or reused) covers
-                    // the case where the gate never went through the tools at all (a reused cache, or a TESTS turn that never called verify/submit), so STATEMENT is never blind.
+                    // The agent's own in-loop checks may have recorded this already, but a gate that never went through the tools (a reused cache, or a TESTS turn that never
+                    // called verify/submit) would leave STATEMENT blind, so the official gate result is always written back.
                     baseTools.recordLastTestsReport(gate.report());
                 }
 
@@ -416,11 +404,10 @@ public class StagedGenerationRunner {
                                 bestSpecSnapshot = specSnapshot;
                             }
                             if (!review.complete()) {
-                                // Fail open on the subjective axis. A qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
-                                // already passed the deterministic mechanical gate. Freeze the checked contract and let downstream mechanical verification (compile, tests,
-                                // differential oracle — all still fail-closed), the post-generation artifact critic, and instructor review carry quality forward.
-                                // The same non-monotonic refinement the restore below exists for: if the LAST review broke, the current draft is unmeasured, and a strictly
-                                // better measured one may already be in hand. Restoring it here costs nothing and keeps the fail-open path from freezing the worse draft.
+                                // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
+                                // already passed the deterministic mechanical gate. Downstream mechanical verification, the post-generation artifact critic, and instructor
+                                // review all remain fail-closed and carry quality forward. The current draft is unmeasured on this path, so a strictly better measured draft
+                                // already in hand is restored rather than frozen over.
                                 if (bestSpecSnapshot != null && !bestSpecSnapshot.equals(specSnapshot)) {
                                     String restoreAfterIncompleteReview = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
                                     if (restoreAfterIncompleteReview != null && !restoreAfterIncompleteReview.startsWith("ERROR")) {
@@ -447,9 +434,9 @@ public class StagedGenerationRunner {
                                 boolean repeatedLearningFitFailure = rejectedDirection != null && rejectedDirection.equals(previousRejectedLearningFitDirection);
                                 previousRejectedLearningFitDirection = rejectedDirection;
                                 if (review.conceptualReworkRequired() || repeatedLearningFitFailure) {
-                                    // The selected concept itself failed the pre-freeze review. Re-enter the same context-separated discovery boundary instead of asking
-                                    // the SPEC agent to privately replace its own plan. Repeating the same learning-fit direction also triggers reselection: optimizing a
-                                    // second rewrite against an unchanged qualitative proxy caused the number-puzzle escalation this boundary prevents.
+                                    // The selected concept itself failed the pre-freeze review. Re-enter the same context-separated discovery boundary rather than let the SPEC
+                                    // agent privately replace its own plan. A repeated learning-fit direction also triggers reselection: rewriting a second time against an
+                                    // unchanged qualitative proxy optimizes the proxy instead of the concept.
                                     if (conversation != null) {
                                         archivedConversation.addAll(conversation);
                                     }
@@ -562,7 +549,7 @@ public class StagedGenerationRunner {
                 boolean stageCanReenter = stageReentriesUsed == 0 && reentriesRemaining > 0;
                 if (!stageCanReenter || remainingPool < MIN_STAGE_BUDGET) {
                     // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
-                    // but it cannot reconstruct a specification that was never approved. Fail only that case closed; otherwise preserve the existing bounded repair path.
+                    // but it cannot reconstruct a specification that was never approved, so only that case fails closed.
                     AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
                     return finish(exercise, exitStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), archivedConversation, conversation);
                 }
@@ -656,10 +643,7 @@ public class StagedGenerationRunner {
         return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation);
     }
 
-    /**
-     * Builds the post-gate progress line: pass/fail in the same voice as {@link #STAGE_PROGRESS_LABELS}, bounding a failure's report to its first line, ~140 chars. A passing
-     * gate that reused the tools' cached check (see {@link #evaluateGate}) instead of re-running it carries a suffix so the transcript stays honest about why it was instant.
-     */
+    /** A gate that reused the tools' cached check instead of re-running it says so, to keep the transcript honest about why it was instant. */
     private String gateProgressLabel(int index, GenerationStage stage, StageCheckResult gate, boolean reused) {
         String prefix = "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": " + stage.displayName().toLowerCase(Locale.ROOT) + " gate ";
         if (!gate.passed()) {
@@ -668,13 +652,11 @@ public class StagedGenerationRunner {
         return reused ? prefix + "passed (reused in-stage check)" : prefix + "passed";
     }
 
-    /** Extracts the first line of {@code text}, bounded to {@code maxChars} code points (an ellipsis marks truncation). Used to keep a gate-failure progress line short. */
     private static String firstLineBounded(@Nullable String text, int maxChars) {
         if (text == null) {
             return "";
         }
-        // A header line ending in ':' carries no information on its own (observed live: "solution gate failed: The reference solution does not compile:" with
-        // nothing after the colon) — fold the first content line in so the instructor-visible event actually says what went wrong.
+        // A header line ending in ':' carries no information on its own, so fold the first content line in and the instructor-visible event actually says what went wrong.
         String[] lines = text.strip().split("\n");
         String firstLine = lines[0].strip();
         if (firstLine.endsWith(":")) {
@@ -701,14 +683,13 @@ public class StagedGenerationRunner {
         return Math.max(MIN_STAGE_BUDGET, Math.min(base + rollover, remainingPool));
     }
 
-    /** One gate evaluation's outcome, together with whether it came from {@link SandboxAgentTools#reuseCachedPassingCheck} instead of a fresh {@link StageCheckService} call. */
     private record GateEvaluation(StageCheckResult result, boolean reused) {
     }
 
     /**
      * Evaluates one stage's exit gate: reuses the tools' cached passing check when nothing has changed since it ran (see {@link SandboxAgentTools#reuseCachedPassingCheck}) so a
-     * stage the agent already verified clean does not pay for a redundant check, and otherwise delegates to {@link StageCheckService}. This runner owns only stage sequencing,
-     * turn budgets, re-entry, and this cache consultation (see the class javadoc); it does not itself decide whether a stage's artifact passed.
+     * stage the agent already verified clean does not pay for a redundant check, and otherwise delegates to {@link StageCheckService}. This runner never decides itself whether a
+     * stage's artifact passed; it owns only stage sequencing, turn budgets, re-entry, and this cache consultation.
      */
     private GateEvaluation evaluateGate(GenerationStage stage, SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
             Map<String, String> seedTestsFiles, @Nullable AgentVerifyReport lastTestsReport, Supplier<Set<String>> structuralSeedHook) {
@@ -735,9 +716,8 @@ public class StagedGenerationRunner {
     /**
      * Builds a stage's user prompt. When no conversation is carried this re-injects the current SPEC.md and workspace layout; a carried conversation already has that context.
      *
-     * @param carriesConversation whether this call receives a prior conversation
-     * @param retryFeedback       the previous failed attempt's gate report, folded into a {@code FRESH}-mode retry prompt ({@code null} on a first attempt, and always {@code null}
-     *                                under {@code continuous} — a continuous retry hands the feedback back as its own turn instead, see {@link #run})
+     * @param retryFeedback the previous failed attempt's gate report, folded into a {@code FRESH}-mode retry prompt. Always {@code null} under {@code continuous}, where a retry
+     *                          hands the feedback back as its own turn instead (see {@link #run}).
      */
     private String buildStagePrompt(GenerationStage stage, String briefPrompt, InteractiveSandbox sandbox, String sessionId, boolean carriesConversation,
             @Nullable String retryFeedback) {
@@ -855,7 +835,6 @@ public class StagedGenerationRunner {
         }
     }
 
-    /** Test hook: inject a deterministic clock so the wall-clock guard can be exercised without sleeping. */
     void setClockForTests(Supplier<Instant> clock) {
         this.clock = clock;
     }

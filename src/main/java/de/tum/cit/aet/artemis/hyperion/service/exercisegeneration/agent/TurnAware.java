@@ -7,9 +7,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 public interface TurnAware {
 
     /**
-     * Notifies the tools that a new agent turn is about to execute.
-     *
-     * @param turn the 1-based turn number
+     * @param turn the 1-based turn number about to execute
      */
     void onTurn(int turn);
 }

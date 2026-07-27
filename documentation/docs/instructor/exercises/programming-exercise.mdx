@@ -739,7 +739,16 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 </Callout>
 
-Hyperion can generate or adapt a complete Java Maven programming exercise: problem statement, template, solution, and tests. The action is limited to supported unreleased draft exercises without student participations. Output is saved to the exercise's normal repositories after mechanical verification. If automated quality review still finds concerns after the repair attempts, Artemis saves the mechanically valid exercise as **Needs review** instead of discarding the instructor's draft. Review every artifact before release; use review comments and **Adapt exercise** for follow-up changes.
+Hyperion can generate or adapt a complete Java Maven programming exercise: problem statement, template, solution, and tests. Output is saved to the exercise's normal repositories after mechanical verification. If automated quality review still finds concerns after the repair attempts, Artemis saves the mechanically valid exercise as **Needs review** instead of discarding the instructor's draft. Review every artifact before release; use review comments and **Adapt exercise** for follow-up changes.
+
+Because Hyperion writes directly to the repositories, the exercise must still be a draft that no student can reach. Both generation and adaptation require an exercise that:
+
+- uses **Java** with a **Maven** project type — Gradle and the other languages are not supported;
+- has **no auxiliary repositories**;
+- has **no student participations**; and
+- has a **release date in the future**. An exercise with no release date at all counts as live and is rejected, so set one before starting. For exam exercises the exam start date takes that role.
+
+If the exercise is already live, copy it or move its release date before asking Hyperion to rewrite it.
 
 There are two entry points:
 
@@ -765,9 +774,11 @@ Use **Apply with AI** on active consistency-review threads to include them in th
 
 Before a manually started generation or adaptation, Artemis explains that mechanically verified output is saved automatically. The activity panel streams progress and changed-file paths. After persistence, **Review saved changes** opens the problem-statement version history or the exact Hyperion commit diff for each touched repository. A reload reconnects to the retained job state. You can cancel while Hyperion is authoring or checking the exercise; once mechanical verification has completed, Artemis finishes saving the verified work instead of discarding it.
 
-Hyperion saves generated content to the exercise's normal branch only after an authoritative mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness. Quality findings are shown as **Needs review**, but the mechanically valid result remains available in the exercise so the instructor can inspect it, leave review comments, adapt it again, or revert the generation. A `PARTIAL` result means that saving across the exercise repositories did not complete and requires manual inspection before further editing.
+Hyperion saves generated content to the exercise's normal branch only after an authoritative mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness. Quality findings are shown as **Needs review**, but the mechanically valid result remains available in the exercise so the instructor can inspect it, leave review comments, adapt it again, or revert the generation.
 
-A successfully persisted generation or adaptation offers **Undo generation** or **Undo adaptation** while its in-memory baseline remains available, provided the repositories have not changed again. Undo restores the captured pre-run commits and problem statement. The action is not crash-durable: a server restart or conflicting repository change can make it unavailable. Review and undo promptly when needed.
+A `PARTIAL` result means the run stopped part-way through saving: some changes may already be live and others not. Inspect every repository and the problem statement before editing further, and expect undo to be unavailable.
+
+A successfully persisted generation or adaptation offers **Undo generation** or **Undo adaptation**, provided the repositories have not changed again — undo refuses to overwrite a commit that is no longer the one Hyperion created. Undo restores the captured pre-run commits and problem statement. The offer expires: it is dropped after a week, when the next run starts writing, and if the server that recorded it is restarted on a single-node deployment. Review and undo promptly when needed.
 
 <Callout variant={CalloutVariant.warning}>
 

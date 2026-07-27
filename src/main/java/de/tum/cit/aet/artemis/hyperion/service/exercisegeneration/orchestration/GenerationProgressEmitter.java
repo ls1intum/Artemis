@@ -6,8 +6,8 @@ import java.util.function.Consumer;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Records each event into the authoritative replayable transcript before pushing it to the live client. Events rejected after a terminal transcript are not published. A
- * generation run is bounded (~15–90 turns, roughly one progress line per agent turn), so pushing each accepted line is not a flood.
+ * Records each event into the authoritative replayable transcript before pushing it to the live client, so an event the transcript rejects — anything after a terminal event —
+ * is never published. A run emits roughly one line per bounded agent turn, so every accepted line can be pushed without batching.
  */
 class GenerationProgressEmitter {
 
@@ -20,7 +20,6 @@ class GenerationProgressEmitter {
         this.send = send;
     }
 
-    /** Records a progress line and pushes it only when the transcript accepts it. */
     void progress(String message) {
         ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, message);
         if (recordEvent.test(event, false)) {
@@ -28,7 +27,7 @@ class GenerationProgressEmitter {
         }
     }
 
-    /** Records a milestone and sends it only when accepted. Terminal milestones mark the transcript done. */
+    /** Terminal milestones mark the transcript done, after which it accepts nothing further. */
     void milestone(ExerciseGenerationEventDTO event) {
         boolean terminal = event.type() == ExerciseGenerationEventDTO.Type.DONE || event.type() == ExerciseGenerationEventDTO.Type.CANCELLED
                 || event.type() == ExerciseGenerationEventDTO.Type.ERROR;

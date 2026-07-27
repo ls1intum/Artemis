@@ -9,28 +9,25 @@ import java.util.regex.Pattern;
 
 /**
  * Text-level inspection of Java sources and Maven manifests, split out of {@link ExerciseIntegrityGate} because it answers questions about <em>the Java language</em> rather than
- * about what makes a generated exercise trustworthy. The gates above it read as policy; everything here is the lexical machinery those policies happen to need.
+ * about what makes a generated exercise trustworthy.
  * <p>
- * There is no parser: the generated tree is a map of file contents that never has to compile for the gate to run (a rejected candidate is frequently broken source), so a real
- * front end is both unavailable and unaffordable. What is here instead is deliberately narrow — a comment/string-literal scanner, annotation-block assembly, and non-greedy XML
- * element extraction — and every function is total: malformed input yields a conservative answer rather than an exception.
+ * There is no parser: a candidate under inspection is often broken source that never has to compile for the gates to run, so every function here is total and yields a
+ * conservative answer rather than an exception on malformed input.
  * <p>
- * Two invariants the callers depend on, and which a "simplification" into regexes would silently break:
+ * Two invariants the callers depend on, which a "simplification" into regexes would silently break:
  * <ul>
  * <li>{@link #stripJavaComments} preserves the line structure exactly (a removed character becomes a space, a newline stays a newline), because
  * {@link #javaTestAnnotationSummary} matches methods to their enclosing class by line index.</li>
- * <li>{@link #xmlBlocks} is non-greedy per element, so a {@code groupId} from one dependency can never pair with an {@code artifactId} from the next one to fake a dependency
- * that is not declared.</li>
+ * <li>{@link #xmlBlocks} is non-greedy per element, so a {@code groupId} from one dependency can never pair with an {@code artifactId} from the next to fake a dependency nobody
+ * declared.</li>
  * </ul>
  */
 final class JavaSourceInspector {
 
     /**
-     * The trusted {@code @StrictTimeout} bound, in seconds. The gate exists to prevent an UNBOUNDED test (e.g. an infinite loop) from hanging grading, not to pin one magic
-     * constant: Artemis's own seeded structural test classes ({@code templates/java/test/testFiles/structural/ClassTest.java} and its three siblings) carry
-     * {@code @StrictTimeout(10)} for {@link StructuralOracleSeedingService}'s reflection-heavy generated tests, which a gate demanding exactly {@code 1} would reject as soon as a
-     * missing public class is seeded — a false rejection of Artemis's own trusted output. Any value in this bounded range is accepted; only an unset, shadowed, or unbounded
-     * timeout is rejected.
+     * The trusted {@code @StrictTimeout} range, in seconds. The gate exists to stop an unbounded test from hanging grading, not to pin one magic constant: Artemis's own seeded
+     * structural test classes ({@code templates/java/test/testFiles/structural/}) carry {@code @StrictTimeout(10)} for {@link StructuralOracleSeedingService}'s reflection-heavy
+     * tests, so demanding exactly {@code 1} would falsely reject Artemis's own trusted output. Only an unset, shadowed, or unbounded timeout is rejected.
      */
     static final int MIN_STRICT_TIMEOUT_SECONDS = 1;
 
@@ -61,11 +58,7 @@ final class JavaSourceInspector {
     }
 
     /**
-     * Scans a Java test source for the Artemis/Ares annotation conventions, resolving simple annotation names against the file's imports so a package-local look-alike (a
-     * self-declared {@code Public}) cannot pass for the trusted annotation.
-     *
-     * @param content the Java source
-     * @return what the Ares convention gate needs to know about the file
+     * Resolves simple annotation names against the file's imports, so a package-local look-alike (a self-declared {@code Public}) cannot pass for the trusted annotation.
      */
     static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
         String withoutComments = stripJavaComments(content);
@@ -127,10 +120,7 @@ final class JavaSourceInspector {
         return new JavaTestAnnotationSummary(hasTestMethods, missingClassAnnotations, missingTimeouts);
     }
 
-    /**
-     * Appends the remaining lines of an annotation whose argument list is still open at the end of {@code startLine}, so a multi-line {@code @StrictTimeout(\n 1)} is read as one
-     * annotation instead of being cut in half.
-     */
+    /** Reads on while the argument list is still open, so a multi-line {@code @StrictTimeout(\n 1)} is one annotation instead of two halves. */
     private static int appendAnnotationContinuation(String[] lines, int startLine, StringBuilder annotations) {
         int parenthesisBalance = parenthesisBalance(lines[startLine]);
         int lineIndex = startLine;
@@ -157,7 +147,6 @@ final class JavaSourceInspector {
         return balance;
     }
 
-    /** The annotation block of the last class declared at or before {@code line} — the class that encloses a method on that line. */
     private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int line) {
         String annotations = "";
         for (JavaClassAnnotation javaClass : classes) {
@@ -180,7 +169,6 @@ final class JavaSourceInspector {
                 || (imports.contains("de.tum.in.test.api.StrictTimeout") && hasBoundedStrictTimeout(annotations, "StrictTimeout"));
     }
 
-    /** Whether {@code annotations} carries an {@code @<name>(<seconds>)} annotation whose numeric argument falls within the trusted bounded range. */
     private static boolean hasBoundedStrictTimeout(String annotations, String name) {
         Matcher matcher = Pattern.compile("@" + Pattern.quote(name) + "\\s*\\(\\s*(\\d+)\\s*\\)").matcher(annotations);
         while (matcher.find()) {
@@ -191,7 +179,7 @@ final class JavaSourceInspector {
                 }
             }
             catch (NumberFormatException e) {
-                // An unrepresentably large literal is certainly out of the trusted range; keep scanning any further match on the same annotated element.
+                // An unrepresentably large literal is out of the trusted range; keep scanning further matches on the same element.
             }
         }
         return false;
@@ -215,12 +203,8 @@ final class JavaSourceInspector {
     }
 
     /**
-     * Blanks out line and block comments while leaving string and character literals intact, so a {@code //} inside a URL literal is not mistaken for a comment and a
-     * commented-out annotation cannot spoof a gate. Every removed character is replaced by a space and every newline is kept, so offsets and line numbers still line up with the
-     * original source.
-     *
-     * @param content the Java (or Groovy/Gradle) source
-     * @return the same text with comment bodies blanked out
+     * Blanks out comments while leaving string and character literals intact, so a {@code //} inside a URL literal is not mistaken for a comment and a commented-out annotation
+     * cannot spoof a gate. Every removed character becomes a space and every newline is kept, so offsets and line numbers still line up with the original source.
      */
     static String stripJavaComments(String content) {
         StringBuilder stripped = new StringBuilder(content.length());
@@ -280,22 +264,11 @@ final class JavaSourceInspector {
         return stripped.toString();
     }
 
-    /**
-     * Normalizes a file body for content-equality: CRLF folded and surrounding whitespace stripped.
-     *
-     * @param content the file body, possibly {@code null}
-     * @return the normalized body, empty for {@code null}
-     */
     static String normalizeBody(String content) {
         return content == null ? "" : content.replace("\r\n", "\n").strip();
     }
 
-    /**
-     * Whether a repository-relative path is a Java source file that ships, excluding compiler output under {@code target/} or {@code build/}.
-     *
-     * @param path the repository-relative path
-     * @return {@code true} for a Java source outside a build-output directory
-     */
+    /** Compiler output under {@code target/} or {@code build/} is not a shipping source. */
     static boolean isJavaSource(String path) {
         if (path == null) {
             return false;
@@ -306,12 +279,7 @@ final class JavaSourceInspector {
     }
 
     /**
-     * Shared declaration matcher for the prospective write guard and the authoritative final repository check. Matches a top-level, nested, or secondary declaration, and covers
-     * the non-Java declaration keywords too so the same check serves the language-agnostic ownership gates.
-     *
-     * @param content the source text
-     * @param type    the simple type name to look for
-     * @return {@code true} when the source declares that type
+     * Matches a top-level, nested, or secondary declaration, and covers the non-Java declaration keywords too so the same check serves the language-agnostic ownership gates.
      */
     static boolean sourceDeclaresType(String content, String type) {
         String declarationStart = "(?:^|[;{}])\\s*";
@@ -322,13 +290,8 @@ final class JavaSourceInspector {
 
     /**
      * Whether a Java source's declared package matches the directory it sits in, relative to one of {@code sourceRoots}. A Unicode escape anywhere before the end of the package
-     * declaration is rejected outright: escapes are translated before the file is parsed, so a source that spells part of its package declaration with them can declare one
-     * package to the compiler while showing a different one to a reader.
-     *
-     * @param path        the repository-relative path of the file
-     * @param content     the file's source text
-     * @param sourceRoots the candidate source roots the path may start with
-     * @return {@code true} when the declared package matches the path
+     * declaration is rejected outright: escapes are translated before parsing, so a source spelling part of its package with them declares one package to the compiler while
+     * showing a different one to a reader.
      */
     static boolean declaresPackageMatchingPath(String path, String content, List<String> sourceRoots) {
         String sourceRoot = sourceRoots.stream().filter(path::startsWith).findFirst().orElse(null);
@@ -344,27 +307,12 @@ final class JavaSourceInspector {
         return matcher.group(1).equals(expectedPackage);
     }
 
-    /**
-     * Whether the POM declares the given dependency. Both coordinates must sit in the SAME {@code <dependency>} block, so a group from one entry and an artifact from another
-     * cannot combine into a dependency nobody declared.
-     *
-     * @param pom        the POM text, comments already stripped
-     * @param groupId    the expected group id
-     * @param artifactId the expected artifact id
-     * @return {@code true} when one dependency block carries both coordinates
-     */
+    /** Both coordinates must sit in the SAME {@code <dependency>} block; {@code pom} must already have its comments stripped. */
     static boolean hasMavenDependency(String pom, String groupId, String artifactId) {
         return xmlBlocks(pom, "dependency").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
     }
 
-    /**
-     * Whether the POM declares the given build plugin, with the same same-block requirement as {@link #hasMavenDependency}.
-     *
-     * @param pom        the POM text, comments already stripped
-     * @param groupId    the expected group id
-     * @param artifactId the expected artifact id
-     * @return {@code true} when one plugin block carries both coordinates
-     */
+    /** Same same-block requirement as {@link #hasMavenDependency}. */
     static boolean hasMavenPlugin(String pom, String groupId, String artifactId) {
         return xmlBlocks(pom, "plugin").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
     }
@@ -379,14 +327,7 @@ final class JavaSourceInspector {
         return blocks;
     }
 
-    /**
-     * Whether some {@code <element>} in {@code content} has text containing {@code expectedText}. Only element text is considered, never attribute values.
-     *
-     * @param content      the XML text
-     * @param element      the element name
-     * @param expectedText the substring the element's text must contain
-     * @return {@code true} when at least one such element matches
-     */
+    /** Only element text is considered, never attribute values. */
     static boolean hasXmlElementText(String content, String element, String expectedText) {
         Matcher matcher = Pattern.compile("(?s)<" + Pattern.quote(element) + "\\b[^>]*>\\s*([^<]*?)\\s*</" + Pattern.quote(element) + ">").matcher(content);
         while (matcher.find()) {
@@ -397,12 +338,7 @@ final class JavaSourceInspector {
         return false;
     }
 
-    /**
-     * Removes XML comments so a commented-out declaration cannot satisfy a manifest probe.
-     *
-     * @param content the XML text
-     * @return the same text without {@code <!-- ... -->} spans
-     */
+    /** Removes XML comments so a commented-out declaration cannot satisfy a manifest probe. */
     static String stripXmlComments(String content) {
         return content.replaceAll("(?s)<!--.*?-->", "");
     }

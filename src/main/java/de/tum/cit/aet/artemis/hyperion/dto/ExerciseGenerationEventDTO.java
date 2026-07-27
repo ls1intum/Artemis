@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * {@link Serializable} because it is retained (inside {@code JobTranscript}) in a distributed Hazelcast map for reconnect/replay.
  *
  * @param type                   the event kind
- * @param message                a human-readable progress or result message (already localised-agnostic; the client decides presentation)
+ * @param message                a human-readable progress or result message
  * @param completionStatus       on a terminal {@code DONE} event, whether the run succeeded, needs review, or partially completed; otherwise {@code null}
  * @param verdict                on a terminal event with a verification result, the structured verdict (which gates passed/failed) so the client can render scannable chips; else
  *                                   {@code null}

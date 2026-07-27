@@ -5,29 +5,27 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Identifies non-behavioural build/compile/configure gate test cases — the C/C++ FACT harness reports e.g. {@code GBS-Tester-1.36.CompileSort} / {@code TestConfigure}, the C
- * {@code Compile}/{@code TestCompile}, a generic {@code Configure}/{@code Build}. They assert only "does it compile/configure", which the same-signature placeholder template
- * satisfies by design, so they legitimately pass on both the solution and the template.
+ * Identifies non-behavioural build/compile/configure gate test cases, such as the C/C++ FACT harness's {@code GBS-Tester-1.36.CompileSort} or a generic {@code Configure}. They
+ * assert only that the tree compiles or configures, which the same-signature placeholder template satisfies by design, so they legitimately pass on both assignments.
  * <p>
- * Shared by two call sites that must agree: the differential oracle exempts these from its "every gradable test must fail on the template" gate, and the persistence step
- * zero-weights them on the generated exercise so production grading gives no points for them — otherwise a student submitting the untouched (compiling) template would score above
- * 0%.
+ * Shared by two call sites that must agree: the differential oracle exempts them from its "every gradable test must fail on the template" gate, and persistence zero-weights them
+ * on the generated exercise. Without the second half, a student submitting the untouched (compiling) template would score above 0%.
  */
 public final class BuildGateTestNames {
 
     private static final Set<String> EXACT_NAMES = Set.of("testconfigure", "configure", "compile", "testcompile", "build", "testbuild", "cmake");
 
-    /** Prefixes of a per-target build gate ({@code CompileSort}, {@code ConfigureDebug}, {@code BuildTests}). Case-insensitive. */
+    /** Prefixes of a per-target build gate ({@code CompileSort}, {@code ConfigureDebug}, {@code BuildTests}). */
     private static final List<String> PREFIXES = List.of("compile", "configure", "build");
 
     private BuildGateTestNames() {
     }
 
     /**
-     * Whether a test name is a build/compile/configure gate (exact word, or a {@code GateWord<UpperCaseTarget>} form), checking both the whole name and its last dot-segment (the
-     * real C++ harness prefixes the gate with the framework suite, e.g. {@code GBS-Tester-1.36.TestConfigure}).
+     * Whether a test name is a build gate (an exact word, or a {@code GateWord<UpperCaseTarget>} form). Both the whole name and its last dot-segment are checked, because a
+     * harness may prefix the gate with its framework suite ({@code GBS-Tester-1.36.TestConfigure}).
      *
-     * @param name the test name (as the test runner reports it; a leading/trailing {@code ()} is tolerated)
+     * @param name the test name as the runner reports it; a trailing {@code ()} is tolerated
      * @return whether it is a build/compile/configure gate
      */
     public static boolean isBuildGate(String name) {
@@ -42,16 +40,14 @@ public final class BuildGateTestNames {
         return lastDot >= 0 && lastDot < normalized.length() - 1 && matchesToken(normalized.substring(lastDot + 1));
     }
 
-    /** Whether a token is exactly a build-gate word, or a {@code GateWord<UpperCaseTarget>} form (e.g. {@code CompileSort}). */
     private static boolean matchesToken(String token) {
         String lower = token.toLowerCase(Locale.ROOT);
         if (EXACT_NAMES.contains(lower)) {
             return true;
         }
         for (String prefix : PREFIXES) {
-            // The C/C++ FACT harness emits PascalCase gates (CompileSort, ConfigureDebug, BuildTests): the gate word AND its target are both capitalized. Requiring both — an
-            // uppercase first char and an uppercase target after the gate word — keeps a JVM camelCase behaviour test (e.g. buildGraphFromEdges, compileExpression) from ever being
-            // mistaken for a build gate, while still catching the PascalCase C/C++ gates. A snake_case behaviour test (compiles_an_empty_program) also never matches.
+            // Build gates are PascalCase in both halves (CompileSort, ConfigureDebug), so requiring an uppercase first character AND an uppercase target keeps camelCase
+            // (buildGraphFromEdges) and snake_case (compiles_an_empty_program) behaviour tests from ever being mistaken for one.
             if (lower.startsWith(prefix) && token.length() > prefix.length() && Character.isUpperCase(token.charAt(0)) && Character.isUpperCase(token.charAt(prefix.length()))) {
                 return true;
             }

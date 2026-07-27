@@ -45,7 +45,6 @@ public class AgentTranscriptWriter {
         this.transcriptDirectory = transcriptDirectory == null ? "" : transcriptDirectory.strip();
     }
 
-    /** @return whether transcript writing is enabled (a target directory is configured) */
     public boolean enabled() {
         return !transcriptDirectory.isBlank();
     }
@@ -54,8 +53,8 @@ public class AgentTranscriptWriter {
      * Writes one session's conversation under {@code <transcript-dir>/exercise-<id>/<timestamp>-<label>.md}. No-op when disabled or the conversation is absent.
      *
      * @param exerciseId   the exercise the session generated
-     * @param label        a short caller-chosen label (e.g. {@code attempt-1-staged}, {@code attempt-2-repair}); sanitized for the filename
-     * @param conversation the conversation as returned by the agent loop (system message excluded), or {@code null}
+     * @param label        a short caller-chosen label, sanitized for the filename
+     * @param conversation the conversation as returned by the agent loop, system message excluded
      */
     public void write(long exerciseId, String label, @Nullable List<Message> conversation) {
         if (!enabled() || conversation == null || conversation.isEmpty()) {
@@ -75,7 +74,7 @@ public class AgentTranscriptWriter {
     }
 
     /**
-     * Writes non-conversational generation evidence, such as a context-separated review decision, beside the agent transcript without presenting it as model dialogue.
+     * Writes non-conversational generation evidence, such as a context-separated review decision, beside the transcript without presenting it as model dialogue.
      *
      * @param exerciseId the exercise whose generation produced the evidence
      * @param label      a short audit label used in the file name

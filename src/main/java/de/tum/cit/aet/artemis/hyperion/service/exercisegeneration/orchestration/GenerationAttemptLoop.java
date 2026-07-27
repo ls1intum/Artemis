@@ -58,13 +58,11 @@ class GenerationAttemptLoop {
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
     /**
-     * Total wall-clock ceiling for one generation run across ALL attempts. The staged first attempt has its own 22-minute guard (see StagedGenerationRunner), but repair
-     * attempts previously had none — a run's time was unbounded exactly where, empirically, most of it is spent. Checked before starting each repair attempt; the current
-     * candidate and verification state proceed to the normal outcome path.
+     * Total wall-clock ceiling for one generation run across all attempts, covering the repair attempts that the staged first attempt's own guard does not. Checked before
+     * starting each repair attempt; exceeding it keeps the current candidate and verification state, which proceed to the normal outcome path.
      */
     private static final Duration TOTAL_WALL_CLOCK_BUDGET = Duration.ofMinutes(35);
 
-    /** Everything the loop needs from its owning service that is fixed for the service's lifetime; built once in the service's constructor. */
     record Dependencies(GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner, DifferentialVerificationService verifier,
             StructuralOracleSeedingService structuralOracleSeeder, SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService,
             StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter, boolean stagedGenerationEnabled, int maxTurns, int maxGenerationAttempts,
@@ -82,7 +80,6 @@ class GenerationAttemptLoop {
             Consumer<ChatResponse> usageSink) {
     }
 
-    /** One attempt's read-back workspace: the candidate tree the gates and the review consume, and the verification request derived from it. */
     private record CandidateArtifacts(Map<RepositoryType, Map<String, String>> candidateFiles, Set<String> extractionFailed, VerificationRequest verificationRequest,
             @Nullable String testPlanJson) {
     }
@@ -94,7 +91,6 @@ class GenerationAttemptLoop {
     record ExtractedCandidate(AgentLoopResult loopResult, Map<RepositoryType, Map<String, String>> producedFiles, String problemStatement) {
     }
 
-    /** What the repair scheduler decided about the next round: run one more attempt, or end the loop with the candidate as it stands. */
     private enum LoopStep {
         NEXT_ATTEMPT, STOP
     }
@@ -160,12 +156,11 @@ class GenerationAttemptLoop {
 
     private final Consumer<ChatResponse> usageSink;
 
-    // Java/GENERATE is the only contract StagedGenerationRunner supports today (see its javadoc); ADAPT and every other language keep the original single, open-ended agent-loop
-    // call unchanged. Decided once per run — the mode and language do not change across repair attempts.
+    // Java/GENERATE is the only contract StagedGenerationRunner supports (see its javadoc); every other mode and language uses the single, open-ended agent-loop call.
     private final boolean useStagedGeneration;
 
-    // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and writing a competing SPEC.md would at best
-    // duplicate it and at worst drift from it (the product's draft flow is how instructors control specs).
+    // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and a competing SPEC.md would at best
+    // duplicate it and at worst drift from it.
     private final boolean specStageApplies;
 
     // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair prompt so
@@ -179,8 +174,8 @@ class GenerationAttemptLoop {
     @Nullable
     private AgentLoopResult loopResult;
 
-    // One logical conversation spans the whole run: the staged first attempt hands its conversation out, and every repair attempt continues it (with compaction) instead of
-    // starting blind and re-reading the workspace it just produced. Stays null when the first attempt ran FRESH staged context or the legacy path produced none.
+    // One logical conversation spans the whole run: the first attempt hands its conversation out and every repair attempt continues it, instead of starting blind and re-reading
+    // the workspace it just produced. Null when the first attempt produced no carryable conversation (FRESH staged context, or the unstaged path).
     @Nullable
     private List<Message> carriedConversation;
 
@@ -189,13 +184,12 @@ class GenerationAttemptLoop {
     @Nullable
     private VerificationResult verification;
 
-    // The final attempt's produced files and problem statement ride the outcome so persist reuses them instead of re-reading the sandbox (verification already extracted them for
-    // the integrity gates). Overwritten each attempt so the outcome carries the last (accepted or exhausted) attempt's tree.
+    // Overwritten each attempt, so the outcome carries the last (accepted or exhausted) attempt's tree. Persist reuses this rather than re-reading the sandbox, since verification
+    // already extracted it for the integrity gates.
     private final Map<RepositoryType, Map<String, String>> producedFilesByType = new EnumMap<>(RepositoryType.class);
 
     private String producedProblemStatement = "";
 
-    // Recomputed each attempt; the final attempt's report rides the outcome.
     private SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
 
     @Nullable
@@ -205,26 +199,26 @@ class GenerationAttemptLoop {
 
     private final int semanticRepairLimit;
 
-    private int semanticMechanicalCorrectionsRemaining = 1;
+    private int mechanicalCorrectionsAfterRepairRemaining = 1;
 
-    private int initialMechanicalAttempts;
+    private int mechanicalAttemptsBeforeAnyRepair;
 
     // At most one witness-adoption round per generation, so offering ready-to-adopt tests can never turn into repeated rewrites of a finished candidate.
     private boolean witnessAdoptionAttempted;
 
-    // One re-review per generation when the reviewer fails to return a verdict; see the retry below.
     private boolean reviewRetried;
 
-    // Repair-surface fairness state: which surfaces have been repaired, and how long the current one has held (see SemanticRepairBatch#next).
-    private final Set<RepairSurface> servedRepairSurfaces = EnumSet.noneOf(RepairSurface.class);
+    // Fairness state for the surface scheduler; see SemanticRepairBatch#next.
+    private final Set<RepairSurface> repairedSurfaces = EnumSet.noneOf(RepairSurface.class);
 
     @Nullable
     private RepairSurface currentRepairSurface;
 
     private int consecutiveRoundsOnSurface;
 
+    // The candidate as it stood before the semantic repair now in flight; it remains the review authority until that repair completes its own review.
     @Nullable
-    private CandidateSnapshot preSemanticRepairCandidate;
+    private CandidateSnapshot candidateBeforeCurrentRepair;
 
     @Nullable
     private SemanticRepairBatch pendingSemanticRepair;
@@ -280,9 +274,9 @@ class GenerationAttemptLoop {
     /**
      * Runs attempts until the candidate is accepted, a budget is exhausted, or the run ends early.
      * <p>
-     * On mechanical rejection, the verifier's reasons are fed back and the attempt is retried up to a small bound. The verifier enforces rules the agent's own verify.sh cannot
-     * show (template must fail a meaningful fraction; problem statement must bind tasks), so this loop turns a "builds but not quite right" first attempt into a mechanically
-     * verified candidate that persistence saves for instructor review (see GenerationPersistenceService) rather than an auto-published exercise.
+     * On mechanical rejection, the verifier's reasons are fed back and the attempt is retried within a bounded budget. The verifier enforces rules the agent's own verify.sh
+     * cannot show — the template must fail a meaningful fraction, the problem statement must bind tasks — so a "builds, but not quite right" candidate is repaired here rather
+     * than reaching an instructor.
      *
      * @return the outcome when the run ended inside the loop (cancelled, errored, or a preserved checkpoint), or {@code null} when the loop ran to completion and the caller
      *         resolves the outcome from the final state
@@ -300,8 +294,8 @@ class GenerationAttemptLoop {
                 return stoppedOutcome;
             }
 
-            // Seed Java structural tests when the produced solution/template structures differ. Their authoritative names can resolve task bindings, but the verifier still
-            // requires every seeded grading check to appear in the student checklist; a first-attempt omission is returned to the agent for repair.
+            // Seeded structural names are authoritative enough to resolve task bindings, but the verifier still requires every seeded grading check to appear in the student
+            // checklist, so a first-attempt omission comes back to the agent as a repair.
             Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
@@ -332,8 +326,7 @@ class GenerationAttemptLoop {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
 
-            // Run the expensive semantic review only after the deterministic mechanical gate passes. Reviewing a candidate that cannot build or grade wastes provider quota and
-            // produces findings against artifacts the next attempt must replace anyway.
+            // Reviewing a candidate that cannot build or grade would spend provider quota on findings against artifacts the next attempt must replace anyway.
             if (verification.mechanicallyVerified()) {
                 GenerationOutcome cancelledDuringReview = reviewCandidate(artifacts, specDocumentSnapshot);
                 if (cancelledDuringReview != null) {
@@ -344,9 +337,8 @@ class GenerationAttemptLoop {
                 specFidelityReport = SpecFidelityReport.empty();
             }
 
-            // A validated witness is advisory, so nothing above blocks and the loop would stop here with the witness unread by the agent — which is what the first live run
-            // did, leaving ready-to-adopt tests in the report while the suite still missed the rules they pin. One adoption round is granted instead, once per generation
-            // and only when the candidate is otherwise finished, so the cost is bounded and a witness cannot drive repeated rewrites.
+            // A validated witness is advisory, so nothing above blocks and the loop would otherwise stop with the witness never offered to the agent. One adoption round is
+            // granted instead: once per generation and only on an otherwise finished candidate, so a witness can never drive repeated rewrites.
             boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !witnessAdoptionAttempted
                     && attempt < maxGenerationAttempts && semanticRepairsStarted < semanticRepairLimit
                     // An adaptation gets a single semantic round; spending it on optional tests rather than on a defect would be a poor trade.
@@ -357,7 +349,7 @@ class GenerationAttemptLoop {
             if (attempt == maxGenerationAttempts) {
                 break;
             }
-            if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++initialMechanicalAttempts >= MAX_MECHANICAL_ATTEMPTS) {
+            if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
                 emit("The bounded mechanical repair phase is exhausted; keeping the current candidate for instructor review.");
                 break;
             }
@@ -367,13 +359,13 @@ class GenerationAttemptLoop {
                 }
                 continue;
             }
-            if (semanticRepairsStarted > 0 && semanticMechanicalCorrectionsRemaining == 0) {
+            if (semanticRepairsStarted > 0 && mechanicalCorrectionsAfterRepairRemaining == 0) {
                 emit("The one mechanical correction after semantic repair was not enough; preserving the last mechanically verified candidate instead of starting "
                         + "another open-ended repair cycle.");
                 break;
             }
             if (semanticRepairsStarted > 0) {
-                semanticMechanicalCorrectionsRemaining--;
+                mechanicalCorrectionsAfterRepairRemaining--;
                 emit("The semantic repair broke mechanical verification; allowing one narrow mechanical correction without reopening semantic scope.");
             }
             emit("Verification rejected the exercise; asking the agent to fix the issues and try again.");
@@ -383,11 +375,10 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Runs one authoring attempt, either as the staged first attempt or as the legacy single agent-loop call, and carries the conversation and turn count forward.
+     * Runs one authoring attempt, either as the staged first attempt or as a single agent-loop call, and carries the conversation and turn count forward.
      * <p>
-     * Staged authoring applies to the FIRST attempt only: retry attempts carry a targeted repair prompt (verification reasons / critic findings) plus the frozen spec contract —
-     * re-running the spec stage against a repair brief fails its gate by construction. Repairs run the legacy single loop, which is built for surgical fixes on an existing
-     * workspace.
+     * Staged authoring applies to the FIRST attempt only: a retry carries a targeted repair prompt (verification reasons, critic findings) plus the frozen spec contract, and
+     * re-running the spec stage against such a prompt fails its gate by construction. Repairs therefore run the single loop, which suits surgical fixes on an existing workspace.
      */
     private void runAttempt(int attempt) {
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
@@ -421,18 +412,16 @@ class GenerationAttemptLoop {
         }
         totalAgentTurns += loopResult.turns();
         if (stagedAttempt) {
-            // Unstage the shared tools instance again: a later repair attempt reuses it through the legacy single-loop path, which must see currentStage back at null rather
-            // than left at whichever stage the staged run last entered (STAGE_CHECK dispatch would otherwise leak into the repair loop's verify/submit).
+            // Unstage the shared tools instance: a later repair attempt reuses it through the single-loop path, which must see no current stage rather than whichever stage the
+            // staged run last entered, or that stage's check would dispatch from the repair loop's verify/submit.
             baseTools.exitStagedGeneration();
         }
         log.info("Exercise generation attempt {} took {} turn(s); {} turn(s) total so far", attempt, loopResult.turns(), totalAgentTurns);
     }
 
     /**
-     * The outcome to return when the attempt just run ended the whole session: the agent was cancelled, it errored out, or a cancellation arrived during its last turn. The loop
-     * only polls cancellation between turns, so the last check honours a cancel that would otherwise cost minutes of verification build.
-     *
-     * @return the outcome to return, or {@code null} when the run continues
+     * The outcome to return when the attempt just run ended the whole session, or {@code null} when the run continues. Cancellation is only polled between turns, so the final
+     * check here honours a cancel that would otherwise cost minutes of verification build.
      */
     @Nullable
     private GenerationOutcome outcomeIfAgentStopped() {
@@ -463,9 +452,8 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Reads the produced repositories and problem statement back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across
-     * template/solution) and derives this attempt's verification request. The extraction-failed flag lets the verifier fail closed on a read-back error, distinct from an empty
-     * repo.
+     * Reads the produced repositories and problem statement back for the sandbox-free integrity gates and derives this attempt's verification request. The extraction-failed
+     * flag lets the verifier fail closed on a read-back error, which it could not otherwise tell apart from a genuinely empty repository.
      */
     private CandidateArtifacts captureArtifacts(Set<String> seededStructuralTestNames) {
         GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS,
@@ -477,7 +465,6 @@ class GenerationAttemptLoop {
         producedTests = GenerationOrchestrationService.replacePlaceholders(producedTests, placeholderReplacements);
         producedTemplate = GenerationOrchestrationService.replacePlaceholders(producedTemplate, placeholderReplacements);
         producedSolution = GenerationOrchestrationService.replacePlaceholders(producedSolution, placeholderReplacements);
-        // Capture this attempt's extraction so persist reuses it — the same full-repo read verification needs for the integrity gates, not a second sandbox round-trip.
         producedFilesByType.put(RepositoryType.TESTS, producedTests.files());
         producedFilesByType.put(RepositoryType.TEMPLATE, producedTemplate.files());
         producedFilesByType.put(RepositoryType.SOLUTION, producedSolution.files());
@@ -514,8 +501,6 @@ class GenerationAttemptLoop {
         String testPlanSnapshot = artifacts.testPlanJson();
         Runnable restoreCandidate = () -> {
             sandbox.resetSession(sessionId);
-            // /workspace is a tmpfs (see GenerationWorkspaceService#materializeRepositoryFiles), so the reset wipes problem-statement.md too; re-seed it alongside the
-            // repositories or the next attempt's extraction fails with "the generated problem statement is missing".
             workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
@@ -545,53 +530,46 @@ class GenerationAttemptLoop {
         CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                 SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
                 specDocumentSnapshot, artifacts.testPlanJson());
-        if (preSemanticRepairCandidate == null) {
+        if (candidateBeforeCurrentRepair == null) {
             lastMechanicallyVerifiedCandidate = mechanicallyVerifiedCandidate;
         }
     }
 
-    /**
-     * Reviews the mechanically verified candidate against the brief and the frozen contract, then offers any contract witness the reference solution already passes, and promotes
-     * the reviewed candidate to the checkpoint the run falls back to.
-     *
-     * @return the outcome to return when a cancellation arrived during the review, or {@code null} when the run continues
-     */
+    /** Returns an outcome only when a cancellation arrived during the review; {@code null} means the run continues. */
     @Nullable
     private GenerationOutcome reviewCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         @Nullable
         String adaptationChanges = mode == GenerationMode.ADAPT
                 ? GenerationOrchestrationService.renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
                 : null;
-        String repairDelta = mode == GenerationMode.GENERATE && preSemanticRepairCandidate != null
-                ? GenerationOrchestrationService.renderGenerationRepairChanges(preSemanticRepairCandidate.problemStatement(), producedProblemStatement,
-                        preSemanticRepairCandidate.producedFiles(), producedFilesByType, preSemanticRepairCandidate.testPlanJson(), artifacts.testPlanJson())
+        String repairDelta = mode == GenerationMode.GENERATE && candidateBeforeCurrentRepair != null
+                ? GenerationOrchestrationService.renderGenerationRepairChanges(candidateBeforeCurrentRepair.problemStatement(), producedProblemStatement,
+                        candidateBeforeCurrentRepair.producedFiles(), producedFilesByType, candidateBeforeCurrentRepair.testPlanJson(), artifacts.testPlanJson())
                 : null;
-        SpecFidelityReport previousReview = preSemanticRepairCandidate == null ? specFidelityReport : preSemanticRepairCandidate.reviewReport();
-        // specFidelityReport still holds the previous attempt's report at this point (SpecFidelityReport.empty() on attempt 1 or after a mechanical rejection);
-        // The preserved candidate remains the review authority after a mechanically broken semantic repair, while the mutable report is deliberately cleared so
-        // the narrow mechanical-correction prompt does not reopen semantic scope.
+        // The checkpointed candidate, not the mutable field, is the review authority once a repair is in flight: a mechanical rejection clears the field so the narrow
+        // mechanical-correction prompt cannot reopen semantic scope, and the previous verdict would be lost with it.
+        SpecFidelityReport previousReview = candidateBeforeCurrentRepair == null ? specFidelityReport : candidateBeforeCurrentRepair.reviewReport();
         specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), adaptationChanges, repairDelta, previousReview,
                 effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-        // Runs only once the mechanical gate has passed, so the graded suite is already known deterministic: a suite that could fail by coincidence would make a
-        // witness result meaningless. Skipped while anything still blocks, for two reasons: a repair round is coming that will rewrite the artifacts these
-        // witnesses were derived from, and a witness is validated against the solution as it stands, so one authored now could stop passing before it is offered.
+        // Skipped while anything still blocks: a repair round is coming that will rewrite the very artifacts a witness is derived from and validated against, so one authored
+        // now could stop passing before it is ever offered.
         if (!specFidelityReport.hasBlockingFindings()) {
             specFidelityReport = adoptContractWitnesses(specFidelityReport, specDocumentSnapshot);
         }
         lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement, specFidelityReport,
                 specDocumentSnapshot, artifacts.testPlanJson());
         if (cancelled.getAsBoolean()) {
-            CandidateSnapshot safeCheckpoint = preSemanticRepairCandidate == null ? lastMechanicallyVerifiedCandidate : preSemanticRepairCandidate;
+            CandidateSnapshot safeCheckpoint = candidateBeforeCurrentRepair == null ? lastMechanicallyVerifiedCandidate : candidateBeforeCurrentRepair;
             return service.preserveCandidate(safeCheckpoint, sandbox, sessionId, workspaceSeed);
         }
         return null;
     }
 
     /**
-     * Schedules the next scoped semantic repair on a mechanically verified candidate, or ends the loop when the budget is spent, the reviewer never returned a verdict, or no
-     * blocking finding maps to a repairable surface.
+     * Schedules the next scoped semantic repair on a mechanically verified candidate.
      *
-     * @return {@link LoopStep#NEXT_ATTEMPT} once a repair prompt is prepared, {@link LoopStep#STOP} to keep the current candidate
+     * @return {@link LoopStep#NEXT_ATTEMPT} once a repair prompt is prepared, or {@link LoopStep#STOP} to keep the current candidate — because the budget is spent, the reviewer
+     *         never returned a verdict, or no blocking finding maps to a repairable surface
      */
     private LoopStep applySemanticRepair(int attempt, boolean adoptWitnesses, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         if (semanticRepairsStarted >= semanticRepairLimit) {
@@ -605,10 +583,9 @@ class GenerationAttemptLoop {
             witnessAdoptionAttempted = true;
         }
         if (reviewUnavailable && repairBatch.isEmpty()) {
-            // "The review could not complete" is not a statement about the exercise, so it must not end the effort to improve it. Failing open on the VERDICT is
-            // right — a broken reviewer may never reject a mechanically sound candidate — but the loop was also failing open on the WORK, stopping with repair
-            // rounds unspent because the reviewer, not the exercise, had a bad turn, reporting "1 blocking quality gap" to the instructor when it really meant
-            // "we could not review this". One re-review is attempted before giving up.
+            // "The review could not complete" is not a statement about the exercise. Failing open on the VERDICT is right — a broken reviewer must never reject a mechanically
+            // sound candidate — but failing open on the WORK is not: ending with repair rounds unspent because the reviewer had a bad turn reports a quality gap the reviewer
+            // never actually found. One re-review is attempted before giving up, at most once per run.
             if (!reviewRetried) {
                 reviewRetried = true;
                 log.info("Exercise {}: the quality review did not complete; re-reviewing once before ending the repair phase", exercise.getId());
@@ -628,21 +605,20 @@ class GenerationAttemptLoop {
             }
         }
         if (repairBatch.isEmpty()) {
-            // The counterpart of the scheduling telemetry below. A blocking finding that maps to no repair surface ends the loop with budget still unspent, and
-            // until this line existed the run simply stopped: "1 blocking gap" reached the instructor with five unused rounds and nothing recording why.
+            // A blocking finding that maps to no repair surface ends the loop with budget still unspent; without this record, that is indistinguishable from an exhausted budget.
             log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), semanticRepairsStarted,
                     semanticRepairLimit, specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                             .collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())));
             return LoopStep.STOP;
         }
-        preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
+        candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
         semanticRepairsStarted++;
         pendingSemanticRepair = repairBatch.get();
         if (!adoptWitnesses) {
             markSurfaceRepaired(pendingSemanticRepair.surface());
         }
-        // Which quality findings the critic raised, and which of them this attempt was actually given to repair. Without this the repair loop is unobservable after
-        // the fact: a weakness that was found but never scheduled is indistinguishable in the logs from one that was never found at all.
+        // Both what the critic raised and what this attempt was given to repair: without the pair, a weakness that was found but never scheduled cannot be told apart from one
+        // that was never found.
         log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,
                 pendingSemanticRepair.surface(), specFidelityReport.findings().stream().collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())),
                 pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
@@ -652,28 +628,24 @@ class GenerationAttemptLoop {
         return LoopStep.NEXT_ATTEMPT;
     }
 
-    /** The next surface to repair under the fairness rule; see {@link SemanticRepairBatch#next}. */
     private Optional<SemanticRepairBatch> chooseRepairSurface() {
-        return SemanticRepairBatch.next(specFidelityReport, servedRepairSurfaces, currentRepairSurface, consecutiveRoundsOnSurface);
+        return SemanticRepairBatch.next(specFidelityReport, repairedSurfaces, currentRepairSurface, consecutiveRoundsOnSurface);
     }
 
     /**
-     * Fairness bookkeeping, which tracks which surfaces have had REPAIR. A witness-adoption round only offers optional tests, so recording it as an oracle round would make the
-     * scheduler believe that surface had already had its turn and deny it the unserved-surface preference when a genuine weak oracle appears — hence adoption rounds never reach
-     * this method.
+     * Fairness bookkeeping over surfaces that were actually REPAIRED. A witness-adoption round only offers optional tests, so recording it here would make the scheduler believe
+     * the oracle surface already had its turn and deny it the unrepaired-surface preference when a genuine weak oracle appears; adoption rounds therefore never call this.
      */
     private void markSurfaceRepaired(RepairSurface surface) {
         consecutiveRoundsOnSurface = surface == currentRepairSurface ? consecutiveRoundsOnSurface + 1 : 1;
         currentRepairSurface = surface;
-        servedRepairSurfaces.add(surface);
+        repairedSurfaces.add(surface);
     }
 
     /**
-     * Adds any contract witness the reference solution actually satisfied to the report, as advisory findings the agent can adopt.
-     * <p>
-     * This is the executable counterpart to the oracle review, which reasons about wrong implementations but never runs one: its {@code killed} flag is the reviewing model's own
-     * claim. A witness costs one solution build for the whole batch and is only offered once it has passed against the reference solution, so a mistaken one never reaches the
-     * agent. Any failure — no approved specification, an unavailable critic, a probe that could not run — leaves the report exactly as it was.
+     * Adds any contract witness the reference solution actually satisfied to the report, as advisory findings the agent can adopt. The executable counterpart to the oracle
+     * review, which reasons about wrong implementations but never runs one, so its {@code killed} flag is only the reviewing model's own claim. A witness is offered only once
+     * it has passed against the reference solution, so a mistaken one never reaches the agent, and any failure along the way leaves the report exactly as it was.
      */
     private SpecFidelityReport adoptContractWitnesses(SpecFidelityReport report, @Nullable String specDocumentSnapshot) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
@@ -702,7 +674,6 @@ class GenerationAttemptLoop {
         }
     }
 
-    /** Concatenates a repository's sources into one reviewable document, each preceded by its path. */
     private static String renderArtifactSources(Map<String, String> files) {
         return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue()).collect(Collectors.joining("\n\n"));
     }
@@ -728,10 +699,6 @@ class GenerationAttemptLoop {
                 combined.addAll(messageless);
                 report = new SpecFidelityReport(combined);
             }
-            // A finding that asks the tests to grade a technique is reclassified rather than scheduled. The critic reports these as WEAK_TEST_ORACLE, which is a repairable
-            // surface, so the loop would otherwise hand the agent a task it cannot do, and the only way to appear to do it is a test that grades the student's source text
-            // (see ExerciseIntegrityGate#gradedTestsReadingSourceTreeReasons). Reclassifying costs a round nothing and removes the incentive at its source; the finding
-            // survives as the advisory the instructor sees.
             report = reclassifyUngradeableTechniqueFindings(report, specSnapshotForReview);
             // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
             List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview);
@@ -761,9 +728,8 @@ class GenerationAttemptLoop {
      * Downgrades a repairable finding that in fact demands an ungradeable implementation technique.
      * <p>
      * {@code WEAK_TEST_ORACLE} and {@code UNCOVERED_REQUIREMENT} map to the oracle repair surface, so the loop schedules them and asks the agent to write a discriminating test.
-     * When the "requirement" is that the implementation be recursive or use a stream pipeline, no such test exists, and the agent's attempts to invent one are actively harmful:
-     * measured across live runs, they produced a test reading the student's source tree, an assertion on the presence of a type name in that source, and repeated rounds whose
-     * finding set came back byte-identical. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
+     * When the "requirement" is that the implementation be recursive or use a stream pipeline, no such test exists, and the only way to appear to write one is to assert on the
+     * student's source text. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
      */
     private static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report, @Nullable String specSnapshot) {
         // Provenance first: unless the frozen contract actually mandates a technique, no finding is downgraded. This is what keeps the reclassification honest — it can only
@@ -792,20 +758,21 @@ class GenerationAttemptLoop {
                 && ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding.requirement() + " " + finding.detail());
     }
 
-    private String attemptFraming(int attempt) {
-        int repairAttempt = attempt;   // the prompt built after attempt N drives attempt N+1
-        boolean finalAttempt = repairAttempt + 1 >= maxGenerationAttempts;
-        return "Repair attempt " + (repairAttempt + 1) + " of " + maxGenerationAttempts
+    /** Frames the prompt built after {@code completedAttempt}, which drives the attempt after it. */
+    private String attemptFraming(int completedAttempt) {
+        int upcomingAttempt = completedAttempt + 1;
+        boolean finalAttempt = upcomingAttempt >= maxGenerationAttempts;
+        return "Repair attempt " + upcomingAttempt + " of " + maxGenerationAttempts
                 + (finalAttempt ? " — this is the FINAL attempt; prioritise the blocking findings (especially any repeated from earlier reviews) over cosmetic ones. " : ". ");
     }
 
     /**
-     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list on purpose: the candidate already passed every gate, the witnesses are known to
-     * pass against the reference solution, and adopting one can only add coverage. Declining is explicitly allowed so the agent is not pushed into restating a case its suite
-     * already makes — a redundant test is a cost, not a win, and a witness the exercise does not need should be dropped rather than padded in.
+     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list, because the candidate already passed every gate. Declining is explicitly
+     * allowed so the agent is not pushed into restating a case its suite already makes: a redundant test is a cost, not a win.
      */
-    private String witnessAdoptionPrompt(int attempt, @Nullable String specSnapshotForPrompt, SemanticRepairBatch batch) {
-        return attemptFraming(attempt) + "Your previous attempt is fully verified and accepted; nothing is broken. An independent reviewer derived the tests below from the "
+    private String witnessAdoptionPrompt(int completedAttempt, @Nullable String specSnapshotForPrompt, SemanticRepairBatch batch) {
+        return attemptFraming(completedAttempt)
+                + "Your previous attempt is fully verified and accepted; nothing is broken. An independent reviewer derived the tests below from the "
                 + "approved specification and the server has already run each one against your reference solution, which passes them. Add each test to the graded suite unless an "
                 + "existing assertion already distinguishes exactly the same wrong implementation, in which case leave the suite as it is and say which test covers it. Change "
                 + "nothing else: the solution, template, statement and every existing test stay as they are. Then call the structured `verify` tool, and call submit when it "
@@ -813,9 +780,10 @@ class GenerationAttemptLoop {
                 + specFidelityCritic.renderForRetryPrompt(batch.report());
     }
 
-    private String semanticRepairPrompt(int attempt, SemanticRepairBatch batch) {
+    private String semanticRepairPrompt(int completedAttempt, SemanticRepairBatch batch) {
         String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
-        return attemptFraming(attempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers." + scopeGuidance
+        return attemptFraming(completedAttempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
+                + scopeGuidance
                 + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
                 + batch.guidance()
                 + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
@@ -825,13 +793,12 @@ class GenerationAttemptLoop {
                 + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(batch.report());
     }
 
-    /** The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised. */
-    private String mechanicalRejectionPrompt(int attempt) {
+    private String mechanicalRejectionPrompt(int completedAttempt) {
         String semanticCorrectionGuidance = semanticRepairsStarted > 0 && lastSemanticRepair != null ? "\n\nThis rejection followed a "
                 + lastSemanticRepair.surface().name().toLowerCase(Locale.ROOT)
                 + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract does not "
                 + "require, fix or remove the unsupported assertion first. " + lastSemanticRepair.guidance() : "";
-        return attemptFraming(attempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
+        return attemptFraming(completedAttempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                 + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
                 + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                 + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
@@ -840,7 +807,7 @@ class GenerationAttemptLoop {
 
     /**
      * The frozen, gate-approved specification appended to every repair prompt, so a repair under verification pressure faces the behavioural contract it might otherwise
-     * silently cut. Empty when no spec was captured (skipped stage or legacy path).
+     * silently cut. Empty when no spec was captured, either because the stage was skipped or because the run was not staged.
      */
     private static String specContractSection(@Nullable String specSnapshot) {
         if (specSnapshot == null || specSnapshot.isBlank()) {
@@ -849,9 +816,7 @@ class GenerationAttemptLoop {
         return "\n\nTHE SPECIFICATION (frozen at the spec gate — the read-only behavioural contract; repair downstream artifacts against it):\n" + specSnapshot.strip();
     }
 
-    /**
-     * Gives the semantic critic the frozen contract. The live workspace is a fallback only when no specification gate ran.
-     */
+    /** The frozen contract is what the semantic critic reviews against; the live workspace copy is a fallback only when no specification gate ran. */
     private static String effectiveSpecReviewContext(@Nullable String approvedSpec, @Nullable String liveSpec) {
         String approved = approvedSpec == null ? "" : approvedSpec.strip();
         String live = liveSpec == null ? "" : liveSpec.strip();

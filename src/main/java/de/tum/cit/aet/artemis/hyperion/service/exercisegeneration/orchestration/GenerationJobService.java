@@ -226,9 +226,9 @@ public class GenerationJobService {
                     budgetReservationId, sourceBrief));
         }
         catch (RejectedExecutionException e) {
-            // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained
-            // state (value-guarded, so a later run for this exercise is never clobbered) instead of leaving the exercise wedged as "running", and surface a busy
-            // error the instructor can act on. Note: TaskRejectedException (thrown by ThreadPoolTaskExecutor) is a RejectedExecutionException subclass, so it is caught here too.
+            // The generation executor is saturated (AbortPolicy), so the @Async listener never ran and no terminal event will ever fire. Roll the claimed slot and its retained
+            // state back — value-guarded, so a later run for this exercise is never clobbered — rather than leave the exercise wedged as "running". This also catches
+            // ThreadPoolTaskExecutor's TaskRejectedException, a RejectedExecutionException subclass.
             rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
@@ -774,9 +774,6 @@ public class GenerationJobService {
      * could let a replacement generation start and interleave with an un-fenced writer still completing a mutation. This generalizes the same fail-closed rule already applied
      * to {@code external-mutation-*} slots below. Availability is sacrificed only in this precisely unknowable state; the slot requires the same kind of audited, exact-token
      * recovery as an external mutation to be released (see {@link #recoverExternalMutationSlot(long, String)}).
-     * <p>
-     * Not yet covered by tests: the multi-node partition race in which a stale owner is still writing while a replacement claims the slot. Until those exist, this path fails
-     * closed — it keeps the slot rather than reclaiming it — so an untested race cannot produce two concurrent writers.
      *
      * @return {@code true} when the slot was reclaimed
      */
@@ -788,8 +785,7 @@ public class GenerationJobService {
         }
         if (!current.cancellable()) {
             // Durable persistence/revert mutation may already be in flight. Fail closed: retain the slot so a replacement claim conflicts instead of possibly overlapping the
-            // old owner's un-fenced Git/DB writes. Only log when the owner is actually absent — a live owner with a merely stale heartbeat was already silently retained before
-            // this change (e.g. a scheduler pause), and that is not a new, actionable condition for an operator.
+            // old owner's un-fenced Git/DB writes. Only an absent owner is logged; a live owner with a merely stale heartbeat (a scheduler pause, say) is not actionable.
             if (!ownerMemberIsPresent(current)) {
                 log.warn(
                         "Retaining non-cancellable generation slot for job {} (exercise {}) after its owner {} left the Hazelcast cluster: cluster departure does not prove that "

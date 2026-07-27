@@ -1163,9 +1163,9 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aWeakOracleFindingDemandingAnUngradeableTechniqueStopsHoldingRepairRounds() {
-        // The critic reports "the tests do not check that the implementation is recursive" as WEAK_TEST_ORACLE, which is a repairable surface, so the loop asks the agent for a
-        // discriminating test that cannot exist. One live run answered with a test that reads the student's source file and fails anyone whose correct solution still carries a
-        // TODO comment, then burned two further attempts being rejected for it. Reclassified, the finding still reaches the instructor and never holds a round.
+        // The critic reports "the tests do not check that the implementation is recursive" as WEAK_TEST_ORACLE, a repairable surface, so the loop would ask the agent for a
+        // discriminating test that cannot exist and the only way to appear to write one is to assert on the student's source text. Reclassified, the finding still reaches the
+        // instructor and never holds a round.
         acceptedCandidateWithSpecAndTests("| R1 | `sum` must be implemented recursively |");
         // Phrased the way the critic actually phrases a weak-oracle finding: the requirement carries the surviving mutant's description, in the critic's voice, without "must".
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(List.of(
@@ -1223,8 +1223,8 @@ class GenerationOrchestrationServiceTest {
     @Test
     void anUngradeableTechniqueRuleReachesTheReportWithoutBlockingTheCandidate() {
         // The detector itself is covered in the critic's own tests; what is covered here is the wiring, which nothing else exercises: the orchestrator must call it and merge
-        // its findings into the report the instructor sees. Measured live, an exercise generated from "teach recursion" awards full marks to iterative implementations, so this
-        // is the only channel that tells anyone.
+        // its findings into the report. An exercise whose brief asks for recursion still awards full marks to an iterative implementation, so this is the only channel that
+        // tells the instructor so.
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport.Finding techniqueRule = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "must be recursive",
                 "behavioural tests cannot see how a result was produced");
@@ -1244,8 +1244,8 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aReviewThatCouldNotCompleteIsRetriedInsteadOfEndingTheRepairPhase() {
-        // Two consecutive live runs saved after one repair round and none respectively, reporting "1 blocking quality gap" that was really "we could not review this". The
-        // verdict must still fail open, but the WORK must not: a reviewer having a bad turn is not a reason to stop improving the exercise.
+        // A review that returns no verdict reports "1 blocking quality gap" when it means "we could not review this". The verdict must still fail open, but the WORK must not:
+        // a reviewer having a bad turn is not a reason to stop improving the exercise.
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
         SpecFidelityReport actionable = new SpecFidelityReport(
@@ -1255,8 +1255,8 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
-        // The failed review, the retry, and the reviews after each repair the retry unlocked. The decisive assertion is that repair happened at all: before this change the
-        // run ended at the failed review with its whole budget unspent.
+        // The failed review, the retry, and the reviews after each repair the retry unlocked. The decisive assertion is that repair happened at all, rather than the run ending
+        // at the failed review with its whole budget unspent.
         verify(specFidelityCritic, atLeast(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
@@ -1277,15 +1277,15 @@ class GenerationOrchestrationServiceTest {
     // --- Repair-surface scheduling ---
 
     private static SpecFidelityReport oracleAndScaffoldFindings() {
-        // The exact mix a live run reported on two consecutive rounds: {WEAK_TEST_ORACLE=2, TEMPLATE_QUALITY_GAP=2}, repairing only the oracle both times.
+        // Blocking findings on two surfaces at once, which is what makes the scheduler's choice observable.
         return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "..."),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter has no anchor", "...")));
     }
 
     @Test
-    void aSurfaceMayHoldConsecutiveRoundsBecauseTheStrongestRunNeededExactlyThat() {
-        // Three straight oracle rounds is how the best observed run earned a suite that rejects every contract-breaking implementation tried against it. Yielding after one
-        // round would have cost it the round that closed its last gap.
+    void aSurfaceMayHoldConsecutiveRoundsBecauseStrengtheningOneCanTakeSeveral() {
+        // Strengthening an oracle until it rejects every contract-breaking implementation can genuinely take several rounds, so yielding after one would cost the round that
+        // closes the last gap.
         SpecFidelityReport report = oracleAndScaffoldFindings();
 
         assertThat(SemanticRepairBatch.next(report, EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
@@ -1294,7 +1294,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aSurfaceThatHasHeldTooLongYieldsToOneNeverRepaired() {
-        // The observed defect: the scaffold findings above sat unscheduled across consecutive rounds and shipped unrepaired.
+        // Otherwise the scaffold findings above sit unscheduled across consecutive rounds and ship unrepaired.
         SpecFidelityReport report = oracleAndScaffoldFindings();
 
         SemanticRepairBatch batch = SemanticRepairBatch.next(report, EnumSet.of(RepairSurface.ORACLE), RepairSurface.ORACLE, 2).orElseThrow();
@@ -1313,7 +1313,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void repairSchedulingStillCarriesOnlyTheScheduledSurfacesFindings() {
-        // The causal scoping an earlier fix introduced, which this change must not undo: one repair is never handed every artifact's findings at once.
+        // Repairs stay causally scoped: one repair is never handed every artifact's findings at once.
         SemanticRepairBatch batch = SemanticRepairBatch.next(oracleAndScaffoldFindings(), EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow();
 
         assertThat(batch.report().findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
@@ -1369,8 +1369,8 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void witnessesAreNotAuthoredWhileSomethingStillBlocks() {
-        // A repair round is coming that rewrites the artifacts the witnesses were derived from, and a witness is validated against the solution as it stands. Observed live
-        // authoring the same three witnesses three times, each costing a provider call and a full solution build.
+        // A repair round is coming that rewrites the artifacts the witnesses were derived from, and a witness is validated against the solution as it stands, so authoring one
+        // now re-pays a provider call and a full solution build for a witness that may not survive.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
                 new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives"))));
@@ -1382,8 +1382,8 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aValidatedWitnessBuysExactlyOneAdoptionRound() {
-        // Without it the loop stops on the accepted candidate and the agent never reads the witness — observed live, with ready-to-adopt tests sitting in the report while the
-        // suite still missed the rules they pin. The round is granted once, so witnesses can never drive repeated rewrites of a finished exercise.
+        // Without the round the loop stops on the accepted candidate and the agent never reads the witness, leaving ready-to-adopt tests in the report while the suite still
+        // misses the rules they pin. It is granted once, so witnesses can never drive repeated rewrites of a finished exercise.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
         when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));

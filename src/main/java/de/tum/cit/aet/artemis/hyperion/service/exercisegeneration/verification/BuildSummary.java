@@ -19,14 +19,14 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 /**
- * The aggregated test outcome of one {@code verify.sh} run, built by parsing the collected report files with the same production parsers LocalCI uses
- * ({@link TestResultXmlParser} for JUnit, {@link ReportParser} for SCA), so the oracle's view is parity-by-construction with grading.
+ * The aggregated test outcome of one {@code verify.sh} run, built by parsing the collected reports with the same parsers LocalCI uses ({@link TestResultXmlParser} for JUnit,
+ * {@link ReportParser} for SCA), so the oracle's view of a build is parity-by-construction with grading's.
  *
- * @param tests           tests that ran (zero when the build did not reach the runner, e.g. a compile error); excludes {@code <skipped>} cases, as production grades
+ * @param tests           tests that ran (zero when the build never reached the runner); excludes {@code <skipped>} cases, exactly as production grades
  * @param testNames       distinct test-case names from the JUnit XML, composed as production does; empty if none collected
- * @param testFailedNames distinct names of cases that failed/errored; used by the strict per-test gate; empty if none collected
+ * @param testFailedNames distinct names of cases that failed or errored; empty if none collected
  * @param failureEvidence bounded, sanitized names and first useful failure messages for agent feedback
- * @param scaFindings     SCA findings (tool + real derived category from {@link ReportParser}); populated only when the SCA reports were collected; empty otherwise
+ * @param scaFindings     SCA findings (tool plus the category {@link ReportParser} derives); empty unless SCA reports were collected
  */
 record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
         List<AgentVerifyReport.TestFailureEvidence> failureEvidence, List<ScaPenaltyParity.ScaFinding> scaFindings) {
@@ -84,7 +84,7 @@ record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, Lis
         }
     }
 
-    /** The canonical routing token a collected file name carries (the segment after the {@code <seq>__} prefix): the JUnit token or an SCA tool's canonical report name. */
+    /** The segment after the sequence prefix: either the JUnit token or an SCA tool's canonical report name. */
     private static String canonicalToken(String collectedName) {
         int sep = collectedName.indexOf(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR);
         return sep < 0 ? collectedName : collectedName.substring(sep + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR.length());

@@ -194,8 +194,7 @@ class GenerationWorkspaceServiceTest {
 
     @Test
     void readStyleGuides_loadsAllSixArtifactGuidesWithoutACompetingWorkedExercise() {
-        // Unlike readReferenceSample, the style guides are language-agnostic prose (not source code), so the method takes no exercise/language parameter at all: it is seeded
-        // identically for every GENERATE run.
+        // Unlike readReferenceSample the style guides are language-agnostic prose, so the method takes no exercise parameter and every GENERATE run is seeded identically.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
         ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
@@ -212,7 +211,7 @@ class GenerationWorkspaceServiceTest {
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
         assertThat(guides.get("reference/style/solution.md")).contains("Diff discipline");
         assertThat(guides.get("reference/style/tests.md")).contains("Harness conventions (Java/Ares)");
-        // Style guidance must stay topic-neutral. The canonical Artemis Bubble Sort sample is the only complete worked exercise available to the agent.
+        // Style guidance must stay topic-neutral: the seeded worked sample is the only place the agent may read a concrete exercise topic from.
         assertThat(guides.values())
                 .noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy") || content.contains("LoyaltyAccount")
                         || content.contains("RewardStrategy") || content.contains("Cafe Loyalty") || content.contains("Loyalty Points"))

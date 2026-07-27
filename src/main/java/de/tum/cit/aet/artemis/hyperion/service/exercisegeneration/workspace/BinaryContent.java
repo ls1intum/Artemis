@@ -17,8 +17,8 @@ public final class BinaryContent {
     }
 
     /**
-     * @param bytes complete file content
-     * @return whether the bytes contain NUL or invalid UTF-8
+     * @param bytes the complete file content, not a prefix, so a marker appearing late is still seen
+     * @return whether the content contains NUL or invalid UTF-8
      */
     public static boolean isBinary(byte[] bytes) {
         if (bytes == null || bytes.length == 0) {
@@ -40,11 +40,10 @@ public final class BinaryContent {
     }
 
     /**
-     * Detects binary content across the complete file so a late marker cannot make a scaffolded binary look like an orphaned text file. Unreadable paths are not silently
-     * protected from normal orphan handling.
+     * Scans the complete file rather than a prefix, so a binary marker appearing late cannot make a scaffolded binary look like an orphaned text file.
      *
      * @param path the file to inspect
-     * @return whether the complete file contains NUL or invalid UTF-8
+     * @return whether the file contains NUL or invalid UTF-8; {@code false} for an unreadable path, leaving it to normal orphan handling
      */
     public static boolean isBinaryFile(Path path) {
         try (var reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {

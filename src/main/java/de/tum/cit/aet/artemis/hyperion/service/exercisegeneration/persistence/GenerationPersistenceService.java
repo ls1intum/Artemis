@@ -63,12 +63,12 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Persists a verified-complete generated exercise through Artemis's normal pipeline (commit repositories, wait for the tests push to trigger test-case sync, update the problem
- * statement, record an exercise version), the same path a manual instructor edit uses. Runs only after the exercise passes mechanical verification.
+ * Persists a verified-complete generated exercise through Artemis's normal pipeline — commit the repositories, wait for the tests push to trigger test-case sync, update the
+ * problem statement, record an exercise version — the same path a manual instructor edit takes.
  * <p>
- * The three repositories (template, solution, tests) cannot commit inside a single database/git transaction, so a broad {@code @Transactional} would not make the multi-repository
- * write atomic anyway. Each push uses the captured remote head as an exact ref lease, and failures caught in-process compensate already-pushed repositories in reverse order.
- * Concurrent repository changes are never overwritten.
+ * The three repositories cannot commit inside one database/git transaction, so a broad {@code @Transactional} would not make the multi-repository write atomic anyway. Instead
+ * each push uses the captured remote head as an exact ref lease, and a failure caught in-process compensates the already-pushed repositories in REVERSE commit order, so the
+ * tests repository (pushed last, and the one that drives grading) is the first to be rolled back. Concurrent repository changes are never overwritten.
  */
 @Lazy
 @Service
@@ -125,7 +125,7 @@ public class GenerationPersistenceService {
                 problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll);
     }
 
-    // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
+    // Package-private so tests can shrink the sync wait instead of sleeping for seconds.
     GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
@@ -199,7 +199,7 @@ public class GenerationPersistenceService {
         requirePersistenceInputsSafe(outcome);
         Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);
-        // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
+        // Captured before writing, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
         Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
         List<RepositoryType> committed = new ArrayList<>();
@@ -208,8 +208,7 @@ public class GenerationPersistenceService {
         String producedProblemStatement = outcome.producedProblemStatement();
         String targetTitle = exercise.getTitle();
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
-        // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. An adapt run keeps the
-        // instructor's title.
+        // Only from scratch: the create page's placeholder title yields to the agent's own H1. An adapt run keeps the instructor's title.
         if (mode == GenerationMode.GENERATE && shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
             String generatedTitle = extractTitleFromH1(producedProblemStatement);
             if (generatedTitle != null) {
@@ -238,16 +237,14 @@ public class GenerationPersistenceService {
             assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
         }
         catch (RuntimeException e) {
-            // Compensation: revert the already-committed repositories to their captured pre-persist commit so no publishable half-generated tree survives on the default branch.
+            // Revert the already-committed repositories to their captured pre-persist commit, so no publishable half-generated tree survives on the default branch.
             boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
-            // An ambiguous push (the local commit call reported failure, but the remote branch had already moved and reconciliation could not prove it back out) is never
-            // compensated by compensateAndResyncBaseline: that helper only walks `committed`, which this repository was never added to because commitRepository threw before
-            // returning a commit hash. Treat it conservatively: the live exercise MAY have changed, and the best-known (not confirmed) commit hash is surfaced rather than
-            // silently reporting an empty, falsely-reassuring commit map.
+            // An ambiguous push is never compensated above: that helper walks only `committed`, and this repository never reached it because commitRepository threw before
+            // returning a hash. Report it conservatively — the live exercise MAY have changed — and surface the best-known (unconfirmed) hash rather than an empty, falsely
+            // reassuring commit map.
             boolean ambiguousRemoteState = e instanceof AmbiguousCommitFailure;
             boolean liveExerciseChanged = ambiguousRemoteState || !fullyReverted;
-            // EnumMap's Map-argument constructor throws IllegalArgumentException on an empty source map (it cannot infer the key type), so build it directly with the enum class
-            // and populate conditionally instead of trying to wrap a possibly-empty map.
+            // EnumMap cannot infer its key type from an empty source map, so populate one built from the enum class instead of wrapping a possibly-empty map.
             Map<RepositoryType, String> reportedCommits = new EnumMap<>(RepositoryType.class);
             if (!fullyReverted) {
                 reportedCommits.putAll(postPersistHashes);
@@ -271,8 +268,8 @@ public class GenerationPersistenceService {
         if (shouldSaveProblemStatement) {
             try {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-                // The metadata write and the task rebuild it drives are one narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): either both land or
-                // neither does, so a task-rebuild failure never leaves a committed problem statement paired with a half-rebuilt task set.
+                // The metadata write and the task rebuild it drives are one narrow transaction (see ProblemStatementMetadataUpdateService), so a task-rebuild failure never
+                // leaves a committed problem statement paired with a half-rebuilt task set.
                 saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, expectedProblemStatement, expectedTitle, beforeFirstDurableMutation);
             }
             catch (RuntimeException e) {
@@ -282,7 +279,7 @@ public class GenerationPersistenceService {
             }
         }
 
-        // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so finalization explicitly triggers the canonical tests build before waiting for test-case sync.
+        // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
         String expectedFinalProblemStatement = shouldSaveProblemStatement ? producedProblemStatement.trim() : expectedProblemStatement;
         String expectedFinalTitle = shouldSaveProblemStatement ? targetTitle : expectedTitle;
         Map<RepositoryType, String> persistedRepositoryHeads = new EnumMap<>(RepositoryType.class);
@@ -389,11 +386,10 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Re-synchronises the exercise after its repositories were force-reset back to a captured commit (the {@code revert this adaptation} affordance). The git reset itself is done
-     * by the caller; this triggers the canonical tests build so test-case grading follows the reverted tests, re-applies the build-gate zero-weighting, and records a new exercise
-     * version so open editors and search see the reverted state — exactly the post-commit steps {@link #persist} runs. Best-effort: a failure here leaves the repositories reverted
-     * (the important part) and only logs. {@code problemStatement}/{@code title} are the pre-adaptation values to restore, guarded by a compare-and-set against the
-     * {@code expected*} values captured immediately after the adaptation; a {@code null} signal skips the build.
+     * Runs the post-commit half of {@link #persist} again after a caller force-reset the repositories back to a captured commit: trigger the canonical tests build so grading
+     * follows the reverted tests, re-apply the build-gate zero-weighting, and record an exercise version so open editors and search see the reverted state. Best-effort — a
+     * failure here leaves the repositories reverted, which is the part that matters. {@code problemStatement}/{@code title} are the values to restore, guarded by a
+     * compare-and-set against the {@code expected*} values; a {@code null} signal skips the build.
      */
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds) {
@@ -418,8 +414,8 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when no new version was recorded (a tolerated failure with
-     *         {@code failOnFinalizationFailure == false}, or the version service judged the snapshot unchanged from the previous version)
+     * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when none was recorded (a tolerated failure with
+     *         {@code failOnFinalizationFailure == false}, or a snapshot the version service judged unchanged)
      */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, @Nullable String testPlanJson) {
@@ -428,8 +424,8 @@ public class GenerationPersistenceService {
             triggerTestsBuild(exercise, testsBuildSignal);
             zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
-        // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. Keep the ownership guard immediately before this durable
-        // mutation; when a tests commit exists, triggerTestsBuild and zeroWeightBuildGateTestCases have already waited for the synchronized test-case set.
+        // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. The guard belongs immediately before this durable
+        // mutation; where a tests commit exists, the two calls above have already waited for the synchronized test-case set.
         finalizationGuard.run();
         applyGeneratedTestPlan(exercise, testPlanJson);
         finalizationGuard.run();
@@ -466,7 +462,7 @@ public class GenerationPersistenceService {
                 return false;
             }
             MetadataSnapshot current = currentMetadata.get();
-            // One narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): a task-rebuild failure rolls the metadata write back with it.
+            // One narrow transaction (see ProblemStatementMetadataUpdateService): a task-rebuild failure rolls the metadata write back with it.
             int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, problemStatement, title, current.problemStatement(), current.title());
             if (updatedRows != 1) {
                 log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
@@ -538,7 +534,7 @@ public class GenerationPersistenceService {
         MetadataSnapshot current = currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
                 () -> new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits"));
         beforeFirstDurableMutation.run();
-        // Narrow @Transactional unit (metadata CAS write + task rebuild only, no Git/CI inside): a task-rebuild failure rolls the metadata write back with it.
+        // One narrow transaction (see ProblemStatementMetadataUpdateService): a task-rebuild failure rolls the metadata write back with it.
         int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, trimmedProblemStatement, title, current.problemStatement(),
                 current.title());
         if (updatedRows != 1) {
@@ -629,7 +625,7 @@ public class GenerationPersistenceService {
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
-            // Capture the checked-out local HEAD after pull and before mutation, so compensation reverts to the exact parent this Hyperion commit was built on.
+            // After pull and before mutation, so compensation reverts to the exact parent this commit was built on.
             prePersistHead = gitService.getLocalHeadHash(repository);
             prePersistHashes.put(repositoryType, prePersistHead);
             if (seedHead != null && !seedHead.equals(prePersistHead)) {
@@ -642,8 +638,8 @@ public class GenerationPersistenceService {
             }
             gitService.stageAllChanges(repository);
             String postHash = gitService.commitStagedChanges(repository, commitMessage, user);
-            // The draft/ownership guard is intentionally adjacent to the external mutation. If eligibility changes while the push is in flight, the post-push check throws into
-            // the existing reconciliation path, which resets this exact leased commit before the outer persistence compensation handles earlier repositories.
+            // The ownership guard is deliberately adjacent to the push. If eligibility changes while it is in flight, the post-push check throws into the reconciliation path,
+            // which resets this exact leased commit before the outer compensation handles the earlier repositories.
             assertStillOwnsMutationSlot(stillOwnsMutationSlot);
             beforeFirstDurableMutation.run();
             gitService.pushCommitWithLease(repository, postHash, repositoryBranch, prePersistHead);
@@ -680,10 +676,9 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Thrown instead of a plain {@link IllegalStateException} when a repository push fails in a way that cannot be conclusively resolved: the local commit succeeded, but the
-     * remote branch could not be confirmed to still be at its pre-persist state, so whether the push actually landed remotely is unknown. Carries the repository and the
-     * best-known (unconfirmed) commit hash so the caller can report the live exercise as conservatively changed and surface a concrete lead for manual review, instead of
-     * collapsing to an empty, falsely-reassuring commit map.
+     * Thrown when a push fails inconclusively: the local commit succeeded, but the remote branch could not be confirmed to still be at its pre-persist state, so whether the push
+     * landed is unknown. Carries the repository and the best-known (unconfirmed) hash, so the caller can report the live exercise as conservatively changed and give manual
+     * review a concrete lead instead of an empty, falsely reassuring commit map.
      */
     static final class AmbiguousCommitFailure extends IllegalStateException {
 
@@ -821,8 +816,8 @@ public class GenerationPersistenceService {
             if (tracked.getValue() != FileType.FILE || producedPaths.contains(path)) {
                 continue;
             }
-            // Preserve binary scaffolding that generation never managed. A from-scratch generation deliberately cleared its source/test roots before verification, so stale binary
-            // files in those roots must also be removed or persistence would resurrect artifacts that were never verified.
+            // Binary scaffolding that generation never managed is preserved. Its source/test roots are the exception: a from-scratch run cleared them before verification, so
+            // keeping stale binaries there would resurrect artifacts nothing verified.
             if (repositoryRoot != null && BinaryContent.isBinaryFile(repositoryRoot.resolve(path))
                     && (mode == GenerationMode.ADAPT || !isGeneratedArtifactPath(repositoryType, path))) {
                 log.debug("Preserved scaffolded binary {} file {}", repositoryType, path);
@@ -876,10 +871,9 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Applies the TESTS stage's grading plan ({@code test-plan.json}) to the freshly synchronized test cases: per-test weights (the specification's core-vs-edge tiers) and
-     * {@code AFTER_DUE_DATE} visibility for hidden variants. Runs only on the main save path, AFTER {@link #syncTestCasesAndRecordVersion} has awaited the test-case sync, so the
-     * cases exist. A non-empty plan is part of the mechanically verified artifact set, so persistence fails if the synchronized cases no longer match it; silently falling back
-     * to Artemis defaults would publish a grading contract different from the one that was reviewed.
+     * Applies the TESTS stage's grading plan to the freshly synchronized test cases: per-test weights and {@code AFTER_DUE_DATE} visibility for hidden variants. Must run after
+     * {@link #syncTestCasesAndRecordVersion} has awaited the sync, so the cases exist. A non-empty plan is part of the mechanically verified artifact set, so a mismatch fails
+     * persistence: silently falling back to Artemis defaults would publish a grading contract other than the reviewed one.
      */
     private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
         if (testPlanJson == null || testPlanJson.isBlank()) {
@@ -971,12 +965,7 @@ public class GenerationPersistenceService {
         return testCaseRepository.findByExerciseId(exerciseId);
     }
 
-    /**
-     * Extracts the title from the first level-1 ATX heading ({@code # Title}); a {@code ## } heading does not match. Result is trimmed and capped at {@link #MAX_TITLE_LENGTH}.
-     *
-     * @param problemStatement the produced problem statement (must not be {@code null})
-     * @return the H1 title, or {@code null} when the statement has no level-1 heading
-     */
+    /** The first level-1 ATX heading only, so a {@code ## } heading never matches; trimmed and capped at {@link #MAX_TITLE_LENGTH}. */
     static String extractTitleFromH1(String problemStatement) {
         for (String line : problemStatement.split("\n", -1)) {
             String trimmed = line.strip();

@@ -21,8 +21,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * Tests the tar pack/unpack used to move the workspace in and out of the sandbox, in particular that large files survive the round trip (the per-file shell read it replaced
- * truncated anything over the output-capture limit, silently corrupting committed repositories).
+ * Tests the tar pack/unpack used to move the workspace in and out of the sandbox, in particular that a large file survives the round trip: a per-file shell read truncates
+ * anything over the exec output-capture limit, silently corrupting the committed repository.
  */
 class WorkspaceArchiveTest {
 

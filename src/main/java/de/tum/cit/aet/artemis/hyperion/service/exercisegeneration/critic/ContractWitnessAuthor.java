@@ -33,7 +33,7 @@ class ContractWitnessAuthor {
 
     private static final int CONTRACT_WITNESS_MAX_OUTPUT_TOKENS = 8_192;
 
-    /** Each witness costs a validating build (~35s measured), so the pass stays small enough to sit inside a generation without dominating it. */
+    /** Each witness costs a validating build, so the pass stays small enough to sit inside a generation without dominating its wall clock. */
     private static final int MAX_CONTRACT_WITNESSES = 3;
 
     /** Assertion calls a witness may use; a witness without one passes against every implementation and therefore pins nothing. */
@@ -55,22 +55,20 @@ class ContractWitnessAuthor {
     }
 
     /**
-     * Authors executable witnesses for rules of the approved specification, so coverage becomes something the server can run rather than something a model asserts.
+     * Authors executable witnesses for rules of the approved specification, so rule coverage becomes something the server can run rather than something a model asserts.
      * <p>
      * The oracle review already proposes plausible wrong implementations and reports whether the graded suite kills them, but its {@code killed} flag is the reviewing model's own
-     * claim and is never executed. Observed live: an exercise passed four consecutive review rounds while three implementations violating rules its own specification states still
-     * scored full marks. A witness closes that gap by being runnable — the caller validates each one against the reference solution and discards any that does not pass, so a
-     * mistaken witness weakens nothing.
+     * claim and is never executed. A witness is executed, so the caller can validate each one against the reference solution and discard any that does not pass.
      * <p>
-     * This is a separate pass from the oracle review on purpose: the authoring agent wrote the suite, and the reason a rule is untested is usually that the agent did not think of
-     * it, so asking that same context to attack its own work reproduces the blind spot.
+     * Kept separate from the oracle review on purpose: a rule is usually untested because the authoring agent did not think of it, so asking that same context to attack its own
+     * work reproduces the blind spot.
      *
      * @param specificationContract the approved specification whose {@code ## Rules} rows are the only admissible source of a witness
      * @param testSources           the graded test sources as produced, so the pass targets rules the suite does not already pin
      * @param solutionSources       the reference solution, which fixes the exact API a witness must call
      * @param usageSink             optional token-usage sink
      * @param cancelled             cooperative cancellation signal
-     * @return at most {@link #MAX_CONTRACT_WITNESSES} candidate witnesses, still unvalidated; empty whenever the pass is unavailable, cancelled, or does not parse
+     * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty whenever the pass is unavailable, cancelled, or does not parse
      */
     List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
@@ -123,9 +121,8 @@ class ContractWitnessAuthor {
             String testName = item.testName().strip();
             String code = item.code().strip();
             String ruleId = item.rule().strip();
-            // Each check below removes a witness that would otherwise be validated on no evidence. The name must be the method the code DECLARES, or a build result could never
-            // be attributed to it (a name mentioned in a comment or string would pass a substring test); a witness with no assertion passes against every implementation and so
-            // pins nothing; and a rule the approved specification does not contain is an invented requirement, which is exactly what this pass must never manufacture.
+            // Each check below drops a witness that would otherwise be validated on no evidence: the name must be the method the code DECLARES, or a build result could never be
+            // attributed to it; a witness with no assertion passes against every implementation; and a rule the specification does not contain is an invented requirement.
             if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId) || !seenNames.add(testName)) {
                 continue;
             }

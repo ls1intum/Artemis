@@ -18,29 +18,27 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 
 /**
- * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching broken-exercise classes the build
- * oracle alone cannot see (the sandbox build can pass while production is broken, the solution is leaked, or the approved student work has been scaffolded away):
+ * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching broken-exercise classes the build cannot
+ * see:
  * <ul>
- * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one, the sandbox build can still pass
- * while production fails because CI lays the tree out differently or because dependencies/plugins/scripts changed. We snapshot those files at seed time and reject any
- * post-generation harness change, modulo only the CI checkout-placeholder substitution the pipeline applies (so an agent that does not touch the harness is not penalized).</li>
- * <li><b>Solution leak.</b> The template repository ships to students. A reference-solution implementation copied into a non-graded template path hands students the answer while
- * the build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that
- * are
- * legitimately identical between template and solution (a graded-path copy that makes the template pass is left to the differential oracle).</li>
- * <li><b>Specification contract loss.</b> The differential proves that tests distinguish solution and template, but not that students still perform the work the approved spec
- * assigned to them. The final candidate maps are therefore checked against the immutable approved ownership decisions before persistence.</li>
+ * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production, so a sandbox build can pass while production fails. The
+ * snapshot taken at seed time must survive generation unchanged, modulo only the CI checkout-placeholder substitution the pipeline itself applies.</li>
+ * <li><b>Solution leak.</b> The template ships to students, so a reference implementation copied into a non-graded template path hands them the answer while the build still
+ * passes. Shared interfaces/headers and git config legitimately identical in both repositories are not flagged; a graded-path copy makes the template pass and is left to the
+ * differential oracle.</li>
+ * <li><b>Specification contract loss.</b> The differential proves the tests distinguish solution from template, not that students still perform the work the approved
+ * specification assigned them, so the final candidate maps are checked against the immutable approved ownership decisions before persistence.</li>
  * </ul>
- * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
- * read-back. Everything here states a policy; the lexical machinery those policies need to read Java sources and Maven manifests lives in {@link JavaSourceInspector}.
+ * Static and side-effect-free, so the gates are unit-testable without Docker and the residue strip can be reused by {@link GenerationWorkspaceService} on read-back. Everything
+ * here states a policy; the lexical machinery those policies need lives in {@link JavaSourceInspector}.
  */
 public final class ExerciseIntegrityGate {
 
     private static final Pattern TODO_SEAM = Pattern.compile("\\bTODO\\s+(S[1-9][0-9]*)\\s*:");
 
     /**
-     * The CI checkout directory names — the sibling repositories CI lays out next to each other, not legitimate top-level source folders. A file whose first path component is one
-     * of these is orphan residue (e.g. a nested {@code solution/src/…} left inside another repo): stripped on read-back, never counted as a harness or source file.
+     * The sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is one of these duplicates the CI
+     * layout inside a single repository and is orphan residue: stripped on read-back, never counted as a harness or source file.
      */
     private static final Set<String> CI_CHECKOUT_DIRECTORY_NAMES = Set.of("assignment", "solution", "template", "tests");
 
@@ -73,23 +71,15 @@ public final class ExerciseIntegrityGate {
         return slash < 0 ? path : path.substring(slash + 1);
     }
 
-    /**
-     * Whether a repository-relative path is orphan residue: its first path component is a CI checkout directory name. The canonical layout places sources directly under the repo
-     * root, so a path re-entering an {@code assignment/}/{@code solution/}/{@code template/}/{@code tests/} directory duplicates the CI sibling-checkout structure, not a real
-     * source.
-     *
-     * @param path the repository-relative path
-     * @return {@code true} if the file is residue and should be stripped
-     */
     static boolean isResidueOutsideCanonicalRoot(String path) {
         return CI_CHECKOUT_DIRECTORY_NAMES.contains(firstComponent(path).toLowerCase(Locale.ROOT));
     }
 
     /**
-     * Strips paths that re-enter a CI checkout directory from a TEMPLATE or SOLUTION file map while preserving canonical-root files and order.
+     * Strips orphan residue from a TEMPLATE or SOLUTION file map, preserving canonical-root files and their order.
      *
      * @param files the produced files keyed by repository-relative path
-     * @return the same map without orphan residue files
+     * @return the same map without residue files
      */
     public static Map<String, String> stripResidueOutsideCanonicalRoots(Map<String, String> files) {
         Map<String, String> cleaned = new LinkedHashMap<>();
@@ -102,9 +92,9 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Whether a tests-repo-relative path is a build/harness/manifest/report file that is graded verbatim in production and must not be changed by the agent.
+     * Whether a path names a build/harness/manifest file, graded verbatim in production and therefore immutable to the agent.
      *
-     * @param path the tests-repo-relative path
+     * @param path the repository-relative path
      * @return {@code true} if the file is part of the immutable harness
      */
     public static boolean isHarnessFile(String path) {
@@ -117,19 +107,16 @@ public final class ExerciseIntegrityGate {
                 return true;
             }
         }
-        // Build-config YAML at the tests-repo root (e.g. a CI build descriptor) but not arbitrary nested *.yml data files used by tests.
+        // Only root-level YAML is a build descriptor; a nested *.yml is test data.
         return (base.endsWith(".yml") || base.endsWith(".yaml")) && !path.contains("/");
     }
 
-    /** Applies only the checkout-placeholder substitutions performed by the build pipeline. */
+    /** Applies only the checkout-placeholder substitutions the build pipeline itself performs. */
     static String normalizeLayoutLine(String line) {
         return line.replace("${studentWorkingDirectory}", "/assignment/src").replace("${studentParentWorkingDirectoryName}", "assignment")
                 .replace("${solutionWorkingDirectory}", "assignment").replace("${testWorkingDirectory}", ".");
     }
 
-    /**
-     * Splits content into normalized lines (CRLF folded and checkout placeholders substituted), preserving every other byte.
-     */
     private static List<String> normalizedLines(String content) {
         List<String> lines = new ArrayList<>();
         for (String line : content.replace("\r\n", "\n").split("\n", -1)) {
@@ -139,14 +126,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Detects harness tampering (see class javadoc): seeded build/harness/manifest files must stay byte-equivalent after line-ending and CI checkout-placeholder normalization.
-     * <p>
-     * An empty snapshot normally disables the gate for harness-free languages. When {@code requireNonEmptySnapshot} is set, it instead indicates a failed capture and is rejected.
-     *
-     * @param seedTestsFiles          the tests-repo files snapshotted at seed time (repository-relative)
-     * @param producedTestsFiles      the tests-repo files read back after generation (repository-relative)
-     * @param requireNonEmptySnapshot whether the language guarantees a tests harness, so an empty snapshot is a failed capture that must fail closed
-     * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is disabled)
+     * Detects harness tampering (see class javadoc): seeded harness files must stay byte-equivalent after line-ending and checkout-placeholder normalization. An empty snapshot
+     * disables the gate for harness-free languages, unless {@code requireNonEmptySnapshot} marks it as a failed capture that must fail closed.
      */
     static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean requireNonEmptySnapshot) {
         return harnessTamperingReasons("tests", seedTestsFiles, producedTestsFiles, requireNonEmptySnapshot);
@@ -190,15 +171,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Rejects an adaptation that retains none of the exercise's existing graded test names. Partial test changes remain allowed.
-     * <p>
-     * Fails open on an empty baseline (generate, or a never-graded exercise). Names are trimmed but otherwise kept exact, matching Artemis task-binding semantics. Post-loop only:
-     * the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does not have mid-session, so this gate lives alongside
-     * the other read-back integrity gates, not the in-loop self-check.
-     *
-     * @param baselineGradedTestNames   the exercise's graded test names captured before the adapt ran (empty for generate or a never-graded exercise; the gate is then inert)
-     * @param producedSolutionTestNames the test names the produced tests ran against the solution (the post-adapt graded set)
-     * @return a single rejection reason when a non-empty baseline is retained by nothing produced, otherwise an empty list
+     * Rejects an adaptation that retains none of the exercise's existing graded test names; partial test changes remain allowed. Fails open on an empty baseline (generate, or a
+     * never-graded exercise). Post-loop only: the baseline comes from the pre-adapt persisted state the agent loop does not have mid-session.
      */
     static List<String> adaptWipedGradedTestsReasons(Set<String> baselineGradedTestNames, List<String> producedSolutionTestNames) {
         if (baselineGradedTestNames == null || baselineGradedTestNames.isEmpty()) {
@@ -235,14 +209,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Enforces the student/template ownership decisions from the specification that passed the SPEC gate against the exact repository maps final verification hands to
-     * persistence. A differential build cannot detect this contract violation: tests can pass against a fully stubbed template even when the approved exercise deliberately
-     * required students to create those types themselves.
-     *
-     * @param approvedSpec          the immutable SPEC.md snapshot accepted before implementation began
-     * @param producedTemplateFiles the exact template candidate that would be saved
-     * @param producedSolutionFiles the exact solution candidate that would be saved
-     * @return actionable contract violations, or an empty list when every student-created type exists only in the solution
+     * Enforces the approved specification's student/template ownership decisions against the exact repository maps final verification hands to persistence. A differential build
+     * cannot detect this violation: tests pass against a fully stubbed template even when the approved exercise required students to create those types themselves.
      */
     static List<String> approvedSpecificationReasons(String approvedSpec, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
         if (approvedSpec == null || approvedSpec.isBlank()) {
@@ -261,9 +229,8 @@ public final class ExerciseIntegrityGate {
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
                     + "approval cannot turn the required design work into prebuilt stubs.");
         }
-        // The template is the student's starting scaffold. A contract that supplies nothing produces an empty starter repository, and an empty template defeats the differential
-        // itself: it "compiles" (no sources) and "fails every test" (none run), so the degenerate candidate satisfies the very checks meant to reject it. The stage gate refuses
-        // such a design at approval time, but acceptance is decided here — and repair attempts do not re-run the staged gates.
+        // An all-student-creates design defeats the differential itself: the empty template "compiles" (no sources) and "fails every test" (none run), so the degenerate candidate
+        // satisfies the very checks meant to reject it. Duplicated from the stage gate because repair attempts do not re-run the staged gates but do reach acceptance.
         if (StageCheckService.designTableRows(approvedSpec).stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
             reasons.add("the approved specification marks every type 'student-creates', so the template ships no starting scaffold and students would clone an empty project. "
                     + "Supply at least one type as 'given' or 'stubbed' so the exercise has a teaching scaffold the differential can actually discriminate.");
@@ -307,19 +274,17 @@ public final class ExerciseIntegrityGate {
         }).toList();
     }
 
-    /** Ensures the exact grading plan headed to persistence still implements the approved specification and names only tests the verifier actually ran. */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames) {
         return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, true, Set.of());
     }
 
-    /** Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage remain intact through final verification. */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate) {
         return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, hasDueDate, Set.of());
     }
 
     /**
-     * Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage remain intact through final verification. Structural
-     * tests are identified from the server-seeded authority rather than a forgeable name pattern.
+     * Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage survive into the final candidate. Structural tests are
+     * identified from the server-seeded authority rather than a forgeable name pattern.
      */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate,
             Set<String> seededStructuralTestNames) {
@@ -363,8 +328,8 @@ public final class ExerciseIntegrityGate {
         }
         List<StageCheckService.TestingStrategyRow> declaredRows = StageCheckService.testingStrategyRows(approvedSpec);
         List<String> declaredSeams = declaredRows.stream().map(StageCheckService.TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
-        // Old saved plans/specifications predate seam metadata. New staged SPECs always declare S1..., so enforce traceability exactly where the new contract exists without
-        // making legacy/adaptation candidates invent metadata that cannot be persisted.
+        // Seam traceability is enforced exactly where the specification declares seams; a candidate without them (an adaptation of a hand-authored exercise) is not made to invent
+        // metadata that has nowhere to be persisted.
         if (!declaredSeams.isEmpty()) {
             List<String> entriesWithoutSeams = plan.tests().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
             if (!entriesWithoutSeams.isEmpty()) {
@@ -411,7 +376,7 @@ public final class ExerciseIntegrityGate {
         return List.of();
     }
 
-    /** Ensures post-loop repairs did not split one student-work seam into test-shaped statement tasks or mix unrelated seams into one checkbox. */
+    /** Ensures repairs did not split one student-work seam into test-shaped statement tasks or mix unrelated seams into one checkbox. */
     static List<String> statementTraceabilityReasons(String testPlanJson, String problemStatement) {
         if (testPlanJson == null || testPlanJson.isBlank() || problemStatement == null || problemStatement.isBlank()) {
             return List.of();
@@ -437,8 +402,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Verifies the specification's exact seam-to-owner links against the template. Stubbed owners carry their seam TODO in the source declaring that owner; an omitted
-     * student-created owner has no truthful template location and therefore must not have a fabricated breadcrumb in an unrelated collaborator.
+     * Verifies the specification's seam-to-owner links against the template: a stubbed owner carries its seam TODO in the source declaring it, while an omitted student-created
+     * owner has no truthful template location and so must not have a breadcrumb fabricated in an unrelated collaborator.
      */
     static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles) {
         List<StageCheckService.TestingStrategyRow> rows = StageCheckService.testingStrategyRows(specification == null ? "" : specification);
@@ -489,7 +454,6 @@ public final class ExerciseIntegrityGate {
         return List.copyOf(reasons);
     }
 
-    /** Finds a top-level, nested, or secondary type declaration. */
     private static boolean repositoryDeclaresType(Map<String, String> files, String type) {
         if (files == null || files.isEmpty()) {
             return false;
@@ -506,7 +470,7 @@ public final class ExerciseIntegrityGate {
         return false;
     }
 
-    /** The template must not contain either the declaration or a source artifact named after a type assigned to the student. */
+    /** A student-owned type must leave behind neither a declaration nor a source file named after it. */
     private static boolean repositoryContainsTypeArtifact(Map<String, String> files, String type) {
         if (files == null || files.isEmpty()) {
             return false;
@@ -521,32 +485,26 @@ public final class ExerciseIntegrityGate {
         });
     }
 
-    /** Shared filename-or-declaration predicate used by prospective writes and final repository verification. */
+    /** Shared by the prospective-write guard and final repository verification, so a write rejected in-loop is also rejected at acceptance. */
     static boolean pathOrContentRepresentsType(String path, String content, String type) {
         String normalizedPath = path.replace('\\', '/');
         String fileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
         return fileName.startsWith(type + ".") || JavaSourceInspector.sourceDeclaresType(content, type);
     }
 
-    /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */
+    /** Sorted and capped, so a large offending set never floods the rejection text and the message stays deterministic. */
     private static String sampleNames(Set<String> names) {
         return names.stream().sorted().limit(5).collect(Collectors.joining(", "));
     }
 
-    /**
-     * Java/JUnit exercises in Artemis are graded through the Ares test sandbox. A plain JUnit suite can pass the differential oracle while bypassing Ares' public-test and
-     * sandbox/timeout conventions.
-     *
-     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
-     * @return actionable rejection reasons when Java tests do not follow the Artemis/Ares conventions
-     */
     static List<String> javaAresConventionReasons(Map<String, String> producedTestsFiles) {
         return javaAresConventionReasons(Map.of(), producedTestsFiles, false);
     }
 
     /**
-     * Applies Ares conventions to every generated test source, while allowing an adaptation to preserve untouched legacy tests. Build-harness protections are always checked on
-     * the complete produced repository. A touched legacy test is generated output for this run and must meet the current conventions.
+     * Java exercises are graded through the Ares test sandbox, and a plain JUnit suite can pass the differential oracle while bypassing its public-test and timeout conventions.
+     * When {@code preserveUnchangedLegacyTests} is set, only sources this run touched are held to the conventions; the build-harness protections always apply to the whole
+     * produced repository.
      */
     static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedLegacyTests) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -620,8 +578,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Allows Java generation to change only exercise-package-scoped source artifacts. Files that already existed at seed time may remain unchanged, preserving legacy adaptation;
-     * newly added or modified files cannot impersonate dependencies, alter repository infrastructure, or escape the exercise package.
+     * Confines Java generation to exercise-package-scoped source artifacts. Files untouched since the seed stay valid, so an adaptation keeps its legacy tree; a newly added or
+     * modified file may not impersonate a dependency, alter repository infrastructure, or escape the exercise package.
      */
     static List<String> javaGeneratedSourceLayoutReasons(String packageName, Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles,
             Map<String, String> seedSolutionFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
@@ -678,21 +636,15 @@ public final class ExerciseIntegrityGate {
         return first != null ? first : second;
     }
 
-    /** Minimum normalized length for a body to be considered a meaningful source file (so an empty .gitkeep or a one-line marker is never called a leak). */
+    /** Minimum normalized length for a body to count as a meaningful source file, so an empty .gitkeep or a one-line marker is never called a leak. */
     private static final int MIN_LEAK_BODY_LENGTH = 40;
 
     /**
-     * Unseeded randomness in a graded test source. Each construct below exists only to make a run differ from the last one, so in a test that decides a grade it makes the score
-     * irreproducible: the same submission scores differently on re-run, and neither the student nor the instructor can tell a regression from a dice roll.
+     * Rejects unseeded randomness in a graded test: the same submission then scores differently on re-run, and neither student nor instructor can tell a regression from a dice
+     * roll. The differential oracle is structurally blind to it, building each assignment once, where a probabilistic pass looks exactly like a real one.
      * <p>
-     * The differential oracle is structurally blind to this — it builds solution and template once each, and a test that passes probabilistically looks exactly like one that
-     * passes. Observed live: a suite shuffled its input list "to ensure order-independence", and an implementation that never sorted at all passed 5 of 20 identical runs.
-     * <p>
-     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are deliberately NOT matched: constructing a value object with the current timestamp is
-     * legitimate and common in a test that never asserts on it, so matching them would reject correct suites.
-     *
-     * @param producedTestsFiles the exact tests repository that would be saved
-     * @return one actionable rejection per offending file, or an empty list when every graded test is deterministic
+     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are deliberately not matched: constructing a value object with the current timestamp is common in
+     * a test that never asserts on it, so matching them would reject correct suites.
      */
     static List<String> nondeterministicGradedTestReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -714,24 +666,14 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Detects a solution leak the differential oracle cannot see (see class javadoc). The hard part is what to flag:
-     * <ul>
-     * <li>Not files legitimately identical between template and solution at the same path — shared interfaces/headers, git dotfiles, harness files (an implementation file is one
-     * that differs from the template at its own path).</li>
-     * <li>Not a template that copies the solution into the same graded path — that makes the template pass, already rejected by the oracle's "template must fail" gate.</li>
-     * <li>Flags the solution implementation copied into an extra template file at a non-graded path.</li>
-     * </ul>
-     * Fails open when either side is empty.
-     *
-     * @param templateFiles the produced TEMPLATE repository files (repository-relative; residue already stripped)
-     * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
-     * @return a single reason listing the leaked paths, or empty when no leak
+     * Detects a solution leak the differential oracle cannot see (see class javadoc): a solution implementation copied into an extra template file at a non-graded path. Files
+     * identical at the same path are shared interfaces/headers/config rather than answers, and a copy at the same graded path makes the template pass and is the oracle's to
+     * reject. Both inputs are residue-stripped; fails open when either side is empty.
      */
     static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
             return List.of();
         }
-        // Solution implementation bodies: solution source whose content differs from the template's at the same path (so a shared interface/config identical there is excluded).
         Set<String> implementationBodies = new HashSet<>();
         for (Map.Entry<String, String> entry : solutionFiles.entrySet()) {
             if (isLeakIgnoredFile(entry.getKey())) {
@@ -742,7 +684,6 @@ public final class ExerciseIntegrityGate {
                 continue;
             }
             if (body.equals(JavaSourceInspector.normalizeBody(templateFiles.get(entry.getKey())))) {
-                // Identical at the same path => a shared interface/header/config, not an answer.
                 continue;
             }
             implementationBodies.add(body);
@@ -757,7 +698,7 @@ public final class ExerciseIntegrityGate {
             if (body.length() < MIN_LEAK_BODY_LENGTH || !implementationBodies.contains(body)) {
                 continue;
             }
-            // A copy at the same graded path makes the template pass — already rejected by the oracle, so do not double-report it.
+            // Left to the oracle's "template must fail" gate rather than double-reported here.
             if (body.equals(JavaSourceInspector.normalizeBody(solutionFiles.get(path)))) {
                 continue;
             }
@@ -783,7 +724,6 @@ public final class ExerciseIntegrityGate {
             // The standalone prohibition ("Loops are not allowed") needs a third discriminator, because a domain rule can be lexically identical: "Recursion is not allowed in
             // the grammar of the input language" is about the input, not the student's code. The mandate ends the clause or scopes itself to the implementation; the domain
             // rule continues into what it constrains. The hyphen lookbehind separately keeps "Self-loops are not allowed" out.
-            // Validated on nineteen legitimate rules and eighteen genuine mandates, both taken from generated specifications.
             "(?:must|should|shall)\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|implement\\w*\\s+[^.|\\n]{0,60}?\\brecursively\\b"
                     + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**"
                     + "(?:recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?)\\**\\b"
@@ -795,11 +735,11 @@ public final class ExerciseIntegrityGate {
             Pattern.CASE_INSENSITIVE);
 
     /**
-     * Prose that describes <em>how</em> an implementation is written rather than what it does. Distinct from {@link #TECHNIQUE_MANDATE}, which reads a specification rule; this
-     * reads a critic finding, and findings are written in the critic's voice ("an iterative implementation using an explicit stack"), so they almost never contain "must".
+     * Prose describing <em>how</em> an implementation is written rather than what it does. Distinct from {@link #TECHNIQUE_MANDATE}, which reads a specification rule; this reads
+     * a critic finding, written in the critic's voice ("an iterative implementation using an explicit stack") and so almost never containing "must".
      * <p>
-     * Deliberately demands a technique <em>contrast</em> or a named implementation shape. Merely mentioning the topic is not enough: on a recursion exercise nearly every
-     * finding says "recursive" somewhere, and "the recursive helper's base case is untested" is an ordinary repairable gap that must keep its repair round.
+     * Demands a technique <em>contrast</em> or a named implementation shape: merely mentioning the topic is not enough, because on a recursion exercise nearly every finding says
+     * "recursive" somewhere, and "the recursive helper's base case is untested" is an ordinary repairable gap that must keep its repair round.
      */
     private static final Pattern TECHNIQUE_CLAIM = Pattern
             .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?)\\b"
@@ -811,23 +751,17 @@ public final class ExerciseIntegrityGate {
     private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
 
     /**
-     * A literal naming a repository <em>source tree</em>: one of the directories production lays out, and then either a source root or a source file. A graded test that knows
-     * this path is grading layout, not behaviour. Naming the directory alone is not enough — "fixtures/template/simple.mustache" is an ordinary fixture in a template-rendering
-     * exercise, and rejecting it would discard valid work.
+     * A literal naming a repository <em>source tree</em>: one of the directories production lays out, followed by a source root or source file. Naming the directory alone is
+     * deliberately not enough — "fixtures/template/simple.mustache" is an ordinary fixture in a template-rendering exercise, and rejecting it would discard valid work.
      */
     private static final Pattern ASSIGNMENT_DIRECTORY_LITERAL = Pattern.compile(
             "\"(?:[^\"]*/)?(?:solution|template|assignment)/(?:[^\"]*/)?" + "(?:src/[^\"]*|[^\"/]*\\.(?:java|kt|py|ts|js|cpp|cc|c|h|hpp|rs|go|rb|cs|swift|hs|dart|scala|php|m))\"");
 
     /**
-     * Implementation-technique mandates stated in a specification's {@code ## Rules} section — that a method be recursive, use a stream pipeline, avoid loops.
-     * <p>
-     * Behavioural tests cannot observe these: no assertion over the public API separates a recursive implementation from an iterative one returning identical values. Stating
-     * one as a numbered rule is therefore a promise the exercise cannot keep, and it does active harm rather than merely being inert: an agent obliged to cover every rule
-     * either leaves the mandate ungraded — full marks for an implementation that ignores it — or reaches for the student's source text, which
-     * {@link #gradedTestsReadingSourceTreeReasons} then has to reject.
-     * <p>
-     * Deliberately narrow: only control-flow and API-use mandates match, and only inside {@code ## Rules}. A technique named as guidance in the student-facing statement is
-     * fine and often desirable; what must not happen is a graded rule the tests are then obliged to cover.
+     * Implementation-technique mandates stated as {@code ## Rules} — that a method be recursive, use a stream pipeline, avoid loops. No assertion over the public API separates a
+     * recursive implementation from an iterative one returning identical values, so an agent obliged to cover every rule either leaves the mandate ungraded or reaches for the
+     * student's source text, which {@link #gradedTestsReadingSourceTreeReasons} then has to reject. Deliberately narrow, and scoped to {@code ## Rules}: a technique named as
+     * guidance in the student-facing statement is fine and often desirable.
      *
      * @param spec the specification document
      * @return the distinct mandates stated as rules, in encounter order
@@ -843,8 +777,7 @@ public final class ExerciseIntegrityGate {
         List<String> mandates = new ArrayList<>();
         Matcher matcher = TECHNIQUE_MANDATE.matcher(rules);
         while (matcher.find()) {
-            // Markdown emphasis is presentation, not content: a rule written once as "must be recursive" and once as "must be **recursive**" states one mandate, and reporting
-            // it twice reads to the instructor as two separate problems.
+            // Markdown emphasis is presentation, not content: "must be recursive" and "must be **recursive**" state one mandate and must be reported once.
             String mandate = matcher.group().strip().replace("*", "").replaceAll("\\s+", " ").strip();
             if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {
                 mandates.add(mandate);
@@ -854,10 +787,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Whether a critic finding is about implementation technique rather than observable behaviour, and so cannot be repaired by strengthening the tests.
-     * <p>
-     * Callers must first establish that the specification actually mandates a technique — this predicate alone is not sufficient evidence, because a finding may legitimately
-     * contrast two implementations while still describing a behavioural difference the tests can see.
+     * Whether a critic finding is about implementation technique rather than observable behaviour, and so cannot be repaired by strengthening the tests. Callers must first
+     * establish that the specification really mandates a technique: a finding may contrast two implementations while still describing a behavioural difference the tests can see.
      *
      * @param text the finding's requirement and detail, concatenated
      * @return true when the text makes a technique claim
@@ -882,19 +813,9 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API.
-     * <p>
-     * The shape to catch is a test named something like {@code testNoLoopsInImplementation} that never looks for a loop: it searches {@code solution/}, {@code template/} and
-     * {@code assignment/} for the implementation file, reads it, and asserts that the source does not contain the string {@code TODO}. In production the student's repository is
-     * checked out as {@code assignment/}, so a student whose otherwise-correct solution still carries a TODO comment fails a graded test for a reason that has nothing to do with
-     * their work — a false negative against correct work, which is the most damaging kind.
-     * <p>
-     * Reading those directories is also how a test learns which assignment it is grading, and a test that branches on that answer can pass on both the solution and the
-     * template, quietly subverting the differential that is supposed to prove it discriminates. Behaviour is observable through the public API; the repository layout is not
-     * the test's business.
-     *
-     * @param producedTestsFiles the tests repository as it would be saved
-     * @return one actionable rejection per offending file, or empty when no graded test reads the source tree
+     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API. Production checks the student's repository out as
+     * {@code assignment/}, so such a test grades source text — an otherwise-correct submission that still carries a {@code TODO} comment fails. Reading those directories is also
+     * how a test learns which assignment it is grading, so one that branches on the answer can pass on both solution and template, subverting the differential.
      */
     static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -918,12 +839,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
-     * fail exactly the bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
-     *
-     * @param templateFiles the produced TEMPLATE repository files (repository-relative)
-     * @param solutionFiles the produced SOLUTION repository files (repository-relative)
-     * @return one reason naming the offending files, or empty when clean
+     * Rejects template/solution sources that inspect the grading context (stack traces, stack walking) to change behaviour per caller: a stub gamed this way fails exactly the
+     * bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
      */
     static List<String> gradingContextSniffingReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         List<String> offendingPaths = new ArrayList<>();
@@ -946,13 +863,7 @@ public final class ExerciseIntegrityGate {
                 + " in the template and do not bind a behavioural test to it.");
     }
 
-    /**
-     * Whether a file is excluded from the solution-leak comparison: orphan residue, a build/harness/manifest file (covered by the harness gate), or a dotfile that is legitimately
-     * identical between template and solution and contains no answer.
-     *
-     * @param path the repository-relative path
-     * @return {@code true} if the file is ignored by the leak gate
-     */
+    /** Residue, harness files (owned by the harness gate) and dotfiles carry no answer, so the leak comparison skips them. */
     private static boolean isLeakIgnoredFile(String path) {
         return isResidueOutsideCanonicalRoot(path) || isHarnessFile(path) || basename(path).startsWith(".");
     }

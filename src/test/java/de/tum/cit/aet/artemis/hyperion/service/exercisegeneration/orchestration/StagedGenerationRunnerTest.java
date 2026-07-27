@@ -448,8 +448,8 @@ class StagedGenerationRunnerTest {
 
     @Test
     void anExhaustedSpecificationRefinementFreezesTheBestDraftNotTheLatest() {
-        // Refinement is not monotonic. A live run scored its worked-example replay 1/2, then 2/2, then 0/2, then 0/2, and froze the last draft; the exercise built on that
-        // contract shipped a suite whose alignment test asserted nothing. The loop must keep the best draft this concept reached.
+        // Refinement is not monotonic: a later draft can review worse than an earlier one, and freezing the latest would hand every downstream stage the weaker contract. The
+        // loop must keep the best draft this concept reached.
         String draftA = VALID_SPEC_DOCUMENT + "\n<!-- draft A -->\n";
         String draftB = VALID_SPEC_DOCUMENT + "\n<!-- draft B -->\n";
         String draftC = VALID_SPEC_DOCUMENT + "\n<!-- draft C -->\n";

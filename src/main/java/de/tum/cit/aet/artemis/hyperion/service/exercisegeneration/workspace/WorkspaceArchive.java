@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 /**
  * Builds and parses the tar archives used to move the whole workspace in and out of the sandbox in one operation.
  * <p>
- * Using a single archive (rather than a shell command per file) avoids two problems: output truncation that would silently corrupt files larger than the exec capture limit, and
- * shell quoting of model-controlled file paths. The repository trees are packed from the checked-out working copies on disk (not from a string map) so that binary files such as
- * the Gradle wrapper JAR and the executable bit on {@code gradlew} survive the round-trip — without that, a Gradle-based exercise could not be built inside the sandbox.
+ * A single archive rather than a shell command per file avoids two problems: output truncation that silently corrupts files larger than the exec capture limit, and shell
+ * quoting of model-controlled paths. The repository trees are packed from the checked-out working copies on disk rather than a string map so that binary files such as the
+ * Gradle wrapper JAR, and the executable bit on {@code gradlew}, survive the round-trip; without that a Gradle-based exercise cannot be built inside the sandbox.
  */
 public final class WorkspaceArchive {
 
@@ -60,9 +60,9 @@ public final class WorkspaceArchive {
     }
 
     /**
-     * Signals that a {@code copyOut} workspace archive contained a rejected entry: one exceeding the read-back byte caps (a runaway agent writing a multi-GB file must not OOM the
-     * node), a symbolic/hard link, or a path that escapes the archive root ({@code ..}/absolute — the produced map feeds a git commit, so an escaping path must never reach the
-     * write). The caller treats this as a failed read-back and fails closed rather than materialising the archive.
+     * Signals that a {@code copyOut} archive contained a rejected entry: over the read-back byte caps, a symbolic or hard link, or a path escaping the archive root. The
+     * produced map feeds a git commit, so an escaping path must never reach the write, and a runaway agent's multi-GB file must not be materialised at all. The caller treats
+     * this as a failed read-back and fails closed.
      */
     public static final class RejectedWorkspaceEntryException extends RuntimeException {
 
@@ -135,9 +135,6 @@ public final class WorkspaceArchive {
         return out.toByteArray();
     }
 
-    /**
-     * Recursively adds all regular files under {@code root} to the archive under {@code prefix}, skipping the {@code .git} metadata and preserving the executable bit.
-     */
     private static long appendDirectory(TarArchiveOutputStream tar, Path root, String prefix, long total, int[] entryCount) throws IOException {
         if (!Files.isDirectory(root)) {
             return total;

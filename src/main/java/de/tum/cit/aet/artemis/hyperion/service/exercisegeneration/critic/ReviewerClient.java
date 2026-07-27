@@ -35,7 +35,7 @@ final class ReviewerClient {
 
     private static final JTokkitTokenCountEstimator TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
-    // Nullable like the sibling Hyperion services: the shared ChatClient bean is null when no AI provider is configured, in which case review fails closed.
+    // Null when no AI provider is configured, in which case every review pass fails closed rather than returning an empty verdict.
     @Nullable
     private final ChatClient chatClient;
 
@@ -97,8 +97,7 @@ final class ReviewerClient {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        // A thrown call yields no response to meter and the critic is advisory: its failure must never escalate into
-        // stopping the whole generation job via the usage sink's uncertainty path.
+        // The critic is advisory, so a thrown call must never escalate through the usage sink's uncertainty path and stop the whole generation job.
         ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
                 () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
         if (usageSink != null) {

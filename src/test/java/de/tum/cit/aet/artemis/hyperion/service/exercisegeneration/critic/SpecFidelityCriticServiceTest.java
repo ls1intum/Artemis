@@ -337,9 +337,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_acceptsDefectFreeVerdictWithMiscitedEvidenceId() {
-        // Regression for the production failure: a coherent, defect-free verdict was discarded only because the reviewer mis-cited
-        // objectiveEvidenceIds (here the non-existent E999). Evidence-ID citation is advisory grounding now, so the verdict is accepted in
-        // a single call with no correction retry.
+        // Evidence-ID citation is advisory grounding, so a coherent defect-free verdict that mis-cites objectiveEvidenceIds (here the
+        // non-existent E999) is accepted in a single call rather than discarded and re-asked.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
                 """
@@ -587,11 +586,6 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.feedback()).contains("2 + 2", "replay gives \"4\"", "evaluates to four", "correct the erroneous outcome").doesNotContain("replace 5 with 4");
     }
 
-    // Removed as verification theatre: the reviewer no longer requires an exampleChecks item for every worked-example data row. The
-    // exact-replay-set gate (specificationReviewRequiresAReplayForEveryWorkedExampleRow) and its specificationExampleReviewResponse helper
-    // were deleted along with the production gate: inconsistent example checks still become findings, but a mismatched or missing example-ID
-    // set no longer discards an otherwise-coherent verdict.
-
     @Test
     void specificationReview_rejectsMutuallyIncompatibleRulesBeforeTheContractFreezes() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
@@ -770,10 +764,9 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_distinguishesMalformedFromUngroundedVerdicts() {
-        // A MALFORMED verdict (a missing mandatory boolean/direction, or unparseable JSON) is still discarded as incomplete, because the
-        // verdict's integrity lives in its booleans, direction, and prose. An UNGROUNDED verdict — coherent, but citing an unknown evidence
-        // ID — is now accepted, because evidence-ID citation is advisory grounding rather than a terminal contract. A coherent verdict that
-        // reports a defect stays complete but not accepted.
+        // A malformed verdict — missing a mandatory boolean or direction, or unparseable JSON — is discarded as incomplete, because the
+        // verdict's integrity lives in its booleans, direction, and prose. An ungrounded one, coherent but citing an unknown evidence ID, is
+        // accepted, because evidence-ID citation is advisory grounding rather than a terminal contract.
         SpecFidelityCriticService malformedCritic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
@@ -815,8 +808,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_requiresTheRequestedObjectiveMechanismProse() {
-        // Evidence-ID citation is advisory now, but the learningFit's own prose remains mandatory: this fixture omits the objectiveMechanism
-        // field entirely, so the verdict is still discarded as incomplete.
+        // Evidence-ID citation is advisory, but the learningFit's own prose is mandatory: this fixture omits objectiveMechanism entirely,
+        // so the verdict is discarded as incomplete.
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],
@@ -828,11 +821,6 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.auditSummary()).contains("learningFit validation failed", "objectiveMechanism is mandatory");
     }
-
-    // Removed as verification theatre: the reviewer no longer checks that studentOwnershipEvidenceIds/assessmentEvidenceIds cite the exact
-    // non-given Design rows or Testing Strategy rows. The two correction tests that asserted those terminal gates
-    // (specificationReviewCorrectionNamesTheExactStudentOwnedDesignRows / ...TheExactTestingStrategyRows) were deleted with the production
-    // gate: evidence-ID citation is advisory grounding now, so a mis-cited ownership/assessment ID never triggers a correction re-call.
 
     @Test
     void specificationReviewDoesNotAcceptAGenericReasonWithoutBothRequiredAnalyses() {
@@ -848,7 +836,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void specificationReview_acceptsPositiveLearningVerdictEvenWhenEvidenceIdsAreAdvisory() {
         // A well-formed positive verdict whose learning-fit evidence IDs point at unknown lines (E99) is grounded by its booleans and prose,
-        // not by the pointers. It is accepted in a single call rather than discarded over the mis-citation.
+        // not by the pointers, so it is accepted in a single call rather than discarded over the mis-citation.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
                 """
@@ -867,8 +855,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewToleratesAnUnknownEvidenceIdWithoutRetrying() {
-        // An unknown evidence ID (E99) inside an otherwise coherent finding is advisory now: the unknown pointer resolves to an empty
-        // quote, the finding still renders, and the verdict is complete after a single call — no correction retry from scratch.
+        // An unknown evidence ID (E99) inside an otherwise coherent finding is advisory: the pointer resolves to an empty quote, the finding
+        // still renders, and the verdict is complete after a single call with no correction retry.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
                 """
@@ -2251,7 +2239,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_flagARecursionMandateNoAssertionCanObserve() {
-        // Verbatim from a generated exercise whose brief was "teach recursion". Rewriting both methods iteratively passed all nine graded tests.
+        // A specification whose brief asked for recursion: rewriting both methods iteratively still passes every graded test, so the mandate is unenforceable.
         String spec = "## Rules\n| R1 | `factorial(int n)` returns n!. The implementation **must be recursive** (direct or indirect self-call). |\n";
 
         assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
@@ -2263,7 +2251,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_flagAStreamPipelineMandate() {
-        // From the exercise whose brief was "teach the Java Streams API"; a plain for-loop scored full marks against its graded suite.
+        // A specification whose brief asked for the Streams API: a plain for-loop scores full marks against the graded suite.
         String spec = "## Rules\nR3: The implementation must use a Stream pipeline with a filter lambda and a mapToDouble step.\n";
 
         assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement()
@@ -2272,9 +2260,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_doNotFireOnOrdinaryRulesThatMerelyMentionStreamsOrLoops() {
-        // Every one of these was falsely rejected by an earlier revision. "stream" and "loop" are ordinary domain nouns — an input stream, a self-loop in a graph, a retry
-        // loop — and an iteratively refined algorithm is not a mandate to write a loop. A false positive here downgrades a real blocking finding to advisory, so the pattern
-        // has to earn every match.
+        // "stream" and "loop" are ordinary domain nouns — an input stream, a self-loop in a graph, a retry loop — and an iteratively refined algorithm is not a mandate to
+        // write a loop. A false positive downgrades a real blocking finding to advisory, so the pattern has to earn every match.
         String spec = """
                 ## Rules
                 | R1 | The parser must use the provided input stream and close it. |
@@ -2290,7 +2277,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_catchTheMandateShapesSpecificationsActuallyUse() {
-        // All six taken verbatim from generated specifications, including markdown emphasis and words between the verb and the construct.
+        // Realistic phrasings, including markdown emphasis and words between the verb and the construct.
         for (String rule : List.of("The implementation **must be recursive** (direct or indirect self-call).",
                 "Students must implement each method using **pure recursion**; explicit iterative constructs such as `for`, `while` are not allowed.",
                 "The total must use a Java **Stream** pipeline (filter, map, reduce).",
@@ -2302,8 +2289,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_staySilentOnRulesThatAreObservable() {
-        // The precision requirement. Delegation IS observable through a recording fake, ordering and validation through ordinary assertions — none may be flagged, or the
-        // finding becomes noise attached to every exercise.
+        // Delegation IS observable through a recording fake, and ordering and validation through ordinary assertions, so none may be flagged or the finding becomes noise
+        // attached to every exercise.
         String spec = """
                 ## Rules
                 R1: `aggregate` must delegate to the injected PricingPolicy and return its result unchanged.
@@ -2352,8 +2339,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_dropsAWitnessWhoseNameIsNotTheMethodItDeclares() {
-        // The name is how a build result is attributed back to a witness. One that does not appear in its own body could never be attributed, so it would silently count as
-        // validated no matter what the build reported.
+        // The name is how a build result is attributed back to a witness, so one that does not appear in its own body would count as validated whatever the build reported.
         assertThat(witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { assertTrue(true, \\"x\\"); }"}]}
                 """)).isEmpty();
@@ -2361,7 +2347,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_dropsAWitnessWhoseNameOnlyAppearsInACommentOrString() {
-        // A substring check would accept this: the build would report `actual`, nothing would be attributed to `testClaimedName`, and it would be validated on no evidence.
+        // A substring check would accept this: the build reports `actual`, nothing is attributed to `testClaimedName`, and it is validated on no evidence.
         assertThat(witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testClaimedName",
                  "code":"@Test\\nvoid actual() { assertEquals(1, 1, \\"see testClaimedName\\"); } // testClaimedName"}]}

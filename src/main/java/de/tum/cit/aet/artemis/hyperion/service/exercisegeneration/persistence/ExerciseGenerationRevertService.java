@@ -45,10 +45,10 @@ public class ExerciseGenerationRevertService {
 
     private static final String BASELINE_MAP_NAME = "hyperion-exercise-generation-baselines";
 
-    /** Latest-only, bounded recovery window; this intentionally is not a durable history. */
+    /** A bounded latest-only recovery window, deliberately not a durable history. */
     private static final int BASELINE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
-    /** The repositories reset by a revert, in the same order the persist commits them (tests last so the re-sync build sees the reverted solution). */
+    /** The same order the persist commits them, so tests come last and the re-sync build sees the reverted solution. */
     private static final RepositoryType[] REVERT_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
     private final HazelcastInstance hazelcastInstance;
@@ -88,7 +88,7 @@ public class ExerciseGenerationRevertService {
      * @param postRunHeads     repository heads after persistence
      * @param problemStatement problem statement before persistence
      * @param title            title before persistence
-     * @return whether the baseline was recorded and automatic revert is available
+     * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
             Map<RepositoryType, String> postRunHeads, String problemStatement, String title) {
@@ -96,7 +96,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Records a baseline only after a guarded persist has completed successfully. Failures leave the run saved but not undoable.
+     * Must be called only after a guarded persist completed successfully; a failure here leaves the run saved but not undoable.
      *
      * @param exercise                        the persisted exercise
      * @param jobId                           the completed job
@@ -107,7 +107,7 @@ public class ExerciseGenerationRevertService {
      * @param title                           title before persistence
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
-     * @return whether the baseline was recorded and automatic revert is available
+     * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
             Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
@@ -116,7 +116,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Records a successful run against the exact repository branch used for persistence.
+     * Records a successful run against the exact repository branch persistence used.
      *
      * @param exercise                        the persisted exercise
      * @param jobId                           the completed job
@@ -128,7 +128,7 @@ public class ExerciseGenerationRevertService {
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
      * @param repositoryBranch                repository branch used by the persistence operation
-     * @return whether the baseline was recorded and automatic revert is available
+     * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
             Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle,
@@ -169,8 +169,6 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Returns the job whose retained baseline can currently be undone.
-     *
      * @param exerciseId the exercise whose baseline should be inspected
      * @return the revertible job id, or empty when no baseline remains
      */
@@ -179,10 +177,8 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Invalidates any previously recorded automatic-revert baseline for the exercise. Callers must invoke this whenever a later run's persistence stops in a state that is not a
-     * clean, fully-verified save (a partial finalization, or a push whose remote outcome is ambiguous): an older baseline was captured relative to the repository state
-     * <em>before</em> that later run started, so applying it on top of the later run's (possibly partial or unconfirmed) changes would silently mix two unrelated, never
-     * jointly-verified states. Idempotent against a missing baseline.
+     * Callers must invoke this whenever a later run's persistence stops in anything but a clean, fully-verified save. A retained baseline was captured relative to the repository
+     * state <em>before</em> that later run started, so applying it on top of the run's partial or unconfirmed changes would mix two never jointly-verified states. Idempotent.
      *
      * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
      */
@@ -192,8 +188,6 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Returns the retained run metadata from one baseline-map read.
-     *
      * @param exerciseId the exercise whose baseline should be inspected
      * @return the retained job and mode, or empty when no baseline remains
      */
@@ -202,8 +196,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Reverts the most recent mechanically verified run: resets template/solution/tests back to the commits captured before persistence, then re-synchronises grading. Idempotent
-     * against a missing baseline (returns {@code false}); the baseline is consumed on a successful revert so it is not offered twice.
+     * Reverts the most recent mechanically verified run: resets the repositories to the commits captured before persistence, then re-synchronises grading.
      *
      * @param exercise the exercise to revert
      * @param user     the instructor performing the revert (exercise-version author)
@@ -214,7 +207,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Reverts the most recent mechanically verified run while aborting before durable mutations if this node no longer owns the job.
+     * Aborts before any durable mutation if this node no longer owns the job.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
@@ -227,23 +220,14 @@ public class ExerciseGenerationRevertService {
             return Optional.empty();
         }
         RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot);
-        // Consume the baseline only after every captured repository was reset. On a partial failure, keep it so a retry can reset the remaining repositories instead of stranding
-        // the exercise in a half-reverted state.
+        // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
             baselineMap.remove(exercise.getId(), baseline);
         }
         return Optional.of(result);
     }
 
-    /**
-     * Resets the exercise's repositories back to the captured baseline commits and re-synchronises grading. Package-private and baseline-driven (no Hazelcast) so the git behaviour
-     * is unit-testable with a mocked {@link GitService}.
-     *
-     * @param exercise the exercise to revert
-     * @param user     the instructor performing the revert
-     * @param baseline the captured pre-run baseline
-     * @return which repositories were reverted and whether every captured repository was reverted successfully
-     */
+    /** Baseline-driven rather than reading Hazelcast, so the git behaviour is unit-testable with a mocked {@link GitService}. */
     RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline) {
         return revertToBaseline(exercise, user, baseline, () -> true);
     }
@@ -320,7 +304,7 @@ public class ExerciseGenerationRevertService {
                         exercise.getId());
                 return new RevertResult(false, List.copyOf(reverted));
             }
-            // Resynchronization triggers the canonical tests build after every required repository reset has completed.
+            // Only after every required reset completed, so the tests build sees the fully reverted tree.
             try {
                 Map<RepositoryType, String> revertedRepositoryHeads = captureRepositoryHeads(exercise, repositoryBranch, baseline);
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
@@ -382,15 +366,12 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * The outcome of reverting generated changes.
-     *
-     * @param fullyReverted        {@code true} if every captured repository was reset successfully; {@code false} if any could not be (needs manual review)
+     * @param fullyReverted        whether every captured repository was reset successfully; {@code false} means manual review is needed
      * @param revertedRepositories the repositories that were reset back to their baseline commit
      */
     public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
     }
 
-    /** The retained job whose generated changes can be reverted. */
     public record RevertibleRun(String jobId, GenerationMode mode) {
     }
 }

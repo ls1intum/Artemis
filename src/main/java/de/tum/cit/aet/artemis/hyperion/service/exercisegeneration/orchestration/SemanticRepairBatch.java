@@ -16,9 +16,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set<String> writableRoots) {
 
     /**
-     * How many rounds in a row one surface may hold before a surface that has never been repaired takes precedence. Two, because a surface can legitimately need consecutive
-     * rounds — the strongest observed run spent three straight rounds strengthening its oracle, and each round fixed a different real gap — while an unserved surface must not
-     * wait forever behind it.
+     * How many rounds in a row one surface may hold before a surface that has never been repaired takes precedence. Greater than one because strengthening a single surface can
+     * legitimately take several rounds, each closing a different gap; bounded so a surface still waiting for its first round cannot be starved indefinitely.
      */
     private static final int MAX_CONSECUTIVE_ROUNDS_PER_SURFACE = 2;
 
@@ -33,24 +32,20 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
     }
 
     /**
-     * The next repair batch: still exactly one coherent surface per attempt — an earlier fix scoped repairs causally so a single repair could not rewrite every artifact at
-     * once, and that is unchanged — but no longer chosen by priority alone.
-     * <p>
-     * Priority alone let one surface hold the entire budget while another shipped unrepaired; yet consecutive rounds on one surface are also legitimate, since strengthening
-     * an oracle can genuinely take several. Both are honoured by letting a surface hold at most {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds while any surface still
-     * waits for its first.
+     * The next repair batch. Exactly one coherent surface per attempt, so a single repair cannot rewrite every artifact at once, and chosen by priority only while no surface is
+     * being starved: a surface that has held {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds in a row yields to any surface with blocking findings that has never had a round.
+     * Priority alone would let one surface hold the entire budget while another shipped unrepaired.
      *
      * @param report            the current review findings
-     * @param servedSurfaces    surfaces already repaired at least once in this generation
+     * @param repairedSurfaces  surfaces already repaired at least once in this generation
      * @param currentSurface    the surface the previous round repaired, or {@code null} for the first round
      * @param consecutiveRounds how many rounds in a row {@code currentSurface} has held
      */
-    static Optional<SemanticRepairBatch> next(SpecFidelityReport report, Set<RepairSurface> servedSurfaces, @Nullable RepairSurface currentSurface, int consecutiveRounds) {
-        boolean yieldToUnserved = currentSurface != null && consecutiveRounds >= MAX_CONSECUTIVE_ROUNDS_PER_SURFACE;
-        if (yieldToUnserved) {
-            Optional<SemanticRepairBatch> unserved = batchFor(report, surface -> !servedSurfaces.contains(surface));
-            if (unserved.isPresent()) {
-                return unserved;
+    static Optional<SemanticRepairBatch> next(SpecFidelityReport report, Set<RepairSurface> repairedSurfaces, @Nullable RepairSurface currentSurface, int consecutiveRounds) {
+        if (currentSurface != null && consecutiveRounds >= MAX_CONSECUTIVE_ROUNDS_PER_SURFACE) {
+            Optional<SemanticRepairBatch> neverRepaired = batchFor(report, surface -> !repairedSurfaces.contains(surface));
+            if (neverRepaired.isPresent()) {
+                return neverRepaired;
             }
         }
         return batchFor(report, surface -> true);

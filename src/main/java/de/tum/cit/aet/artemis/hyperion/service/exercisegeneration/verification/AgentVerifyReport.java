@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Structured feedback returned by the agent's in-loop {@code verify} tool. This is a mechanical precheck only; authoritative post-loop verification determines whether the
- * candidate can be saved, while quality review can request repairs or flag the saved exercise for instructor review.
+ * Structured feedback returned by the agent's in-loop {@code verify} tool. A mechanical precheck only: post-loop verification decides whether the candidate can be saved, and
+ * quality review can still request repairs or flag the saved exercise for instructor review.
  *
  * @param solutionTests           the number of tests the solution ran (parser form, {@code <skipped>} excluded as production grades)
  * @param solutionPassed          whether the solution compiled, ran at least one test, and passed every test
@@ -16,10 +16,10 @@ import java.util.regex.Pattern;
  * @param templateCompiled        whether the template compiled and ran at least one test
  * @param templateFailed          whether the template compiled and (correctly) failed enough tests; {@code false} when it compiled but passes too many (a near-complete template)
  * @param templateFailureEvidence bounded, sanitized failure-message excerpts for template tests
- * @param templateWronglyPassing  the parser-form names that pass on the template but should fail (the Go/no-exception zero-value-stub trap); each must be made to fail
+ * @param templateWronglyPassing  the parser-form names that pass on the template but must fail; each has to be made to fail
  * @param exactTestNames          every parser-form test name (suite-prefixed, verbatim); only its visible, non-build-gate subset is offered for {@code [task]} bindings
  * @param hiddenTestNames         the subset the grading plan hides until the due date: they grade silently and must NEVER be bound to a {@code [task]} line
- * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
+ * @param unresolvedTaskBindings  {@code [task]} bindings that reference a name matching no real test
  * @param possiblyDeadFiles       best-effort, language-agnostic: files present in only one assignment repository (advisory only; expected for student-created types)
  * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
@@ -43,7 +43,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
-    /** Keeps existing callers source-compatible while failure evidence is optional. */
+    /** Failure evidence is optional. */
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, int templateTests, boolean templateCompiled, boolean templateFailed,
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
             List<String> blockingReasons) {
@@ -51,7 +51,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
                 unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
     }
 
-    /** Keeps existing callers source-compatible while the hidden-name split is optional (no grading plan yet, or none readable). */
+    /** Hidden names are unavailable before the grading plan exists, or when none is readable. */
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
             boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
             List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons) {
@@ -59,7 +59,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
                 templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
     }
 
-    /** One parser-produced test failure and its first useful message, normalized for compact, single-line agent context. */
+    /** One test failure and its first useful message, normalized to a single line. */
     public record TestFailureEvidence(String testName, String message) {
 
         public TestFailureEvidence {
@@ -79,9 +79,8 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
     }
 
     /**
-     * Renders the report as the compact, structured observation text the {@code verify} tool returns to the agent. Each line is a single actionable fact; long name lists are
-     * truncated with a {@code (+N more)} count so the observation stays within the agent's per-tool-result context budget. The final line is the verdict the agent iterates
-     * against.
+     * Renders the report as the observation text the {@code verify} tool returns: one actionable fact per line, name lists truncated so the observation stays within the agent's
+     * per-tool-result context budget, and the verdict the agent iterates against on the final line.
      *
      * @return the agent-facing observation text
      */
@@ -89,7 +88,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         return toObservation(true);
     }
 
-    /** TESTS-stage rendering: names feed the grading plan now; task binding belongs to the later statement stage. */
+    /** TESTS-stage rendering: the names feed the grading plan, while task binding belongs to the later statement stage. */
     public String toTestsStageObservation() {
         return toObservation(false);
     }
@@ -117,8 +116,8 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
                     .append('\n');
         }
         else if (!templateFailed) {
-            // The template compiled and failed too few tests to be a real starting point (often: it passes everything, so there are no failed names to list). The blocking reasons
-            // carry the precise count; this line just flags the shape so the agent does not misread an empty wrongly-passing list as "correctly fails".
+            // The template compiled but failed too few tests, often passing everything, so there are no failed names to list. Flagging the shape here stops the agent from
+            // misreading an empty wrongly-passing list as "correctly fails"; the blocking reasons carry the precise count.
             builder.append("Template does NOT fail enough tests (it is nearly complete or passes them) — strip its bodies to wrong placeholders so every test fails.\n");
         }
         else {
@@ -152,7 +151,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
                     .append(renderNames(possiblyDeadFiles)).append('\n');
         }
 
-        // Surface the prose-hygiene reason verbatim (it is not reflected by any structured line above) so the agent cleans the student-facing statement before it submits.
+        // No structured line above reflects prose hygiene, so surface its reason verbatim.
         for (String reason : blockingReasons) {
             if (reason.contains("leaks grader internals")) {
                 builder.append(reason).append('\n');
@@ -205,7 +204,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         return sanitized.substring(0, maxLength - 1).stripTrailing() + "…";
     }
 
-    /** Renders a name list inline, truncating past {@link #MAX_RENDERED_NAMES} with a remaining-count so a large suite never floods the observation. */
+    /** Truncates past {@link #MAX_RENDERED_NAMES} with a remaining-count, so a large suite never floods the observation. */
     private static String renderNames(List<String> names) {
         if (names.isEmpty()) {
             return "[]";

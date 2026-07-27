@@ -329,7 +329,7 @@ class CriticVerdictParser {
         if (evidenceId.matches("P[1-9][0-9]*") && EvidenceSource.from("P", authoritativeSource).passages().containsKey(evidenceId)) {
             return true;
         }
-        // Compatibility for in-flight reviewers and older fixtures; new oracle prompts require the server-generated IDs above.
+        // Accepts a verdict that omits the server-generated evidence IDs, so a reviewer response predating them still parses.
         return normalizeQuote(authoritativeSource).contains(normalizeQuote(sourceQuote));
     }
 

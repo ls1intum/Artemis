@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -45,8 +44,6 @@ public class StageCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(StageCheckService.class);
 
-    private static final Duration DIFF_TIMEOUT = Duration.ofMinutes(5);
-
     private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy", "## Diagram");
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
@@ -56,9 +53,8 @@ public class StageCheckService {
     private static final int MIN_RULES_REQUIRING_SEVERAL_SEAMS = 4;
 
     /**
-     * Rule rows in the shapes generated specifications actually use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted item, or a
-     * bare {@code R1:} line. Earlier revisions required an explicit R-id on the list shapes and therefore counted a plainly numbered or bulleted rules list as ZERO rules,
-     * leaving the decomposition check inert on two of the commonest shapes. Undercounting is the safe direction here: it makes the check inert, never falsely rejecting.
+     * Rule rows in the shapes generated specifications use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted item, or a bare {@code R1:}
+     * line. Undercounting is the safe direction, because it only makes the decomposition check inert and can never cause a false rejection.
      */
     private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+|R\\d+\\s*[:.])", Pattern.MULTILINE);
 
@@ -66,7 +62,7 @@ public class StageCheckService {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
-    // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring cannot instantiate the bean.
+    // Required: with several constructors and no annotation, Spring cannot pick one.
     @Autowired
     public StageCheckService(DifferentialVerificationService verifier, ApprovedSpecRegistry approvedSpecs) {
         this.verifier = verifier;
@@ -74,9 +70,9 @@ public class StageCheckService {
     }
 
     /**
-     * Rejects a workspace mutation that would undo an already approved ownership decision. This runs at the write boundary rather than waiting for the next build: once SPEC.md
-     * passes its semantic and mechanical reviews it is the downstream contract, and a type assigned to the student cannot be restored to the template to make direct-reference
-     * tests compile. Executable artifacts remain writable so later stages can still repair real implementation defects.
+     * Rejects a workspace mutation that would undo an approved ownership decision, at the write boundary rather than at the next build: once SPEC.md passes its reviews it is the
+     * downstream contract, and a type assigned to the student cannot be restored to the template to make direct-reference tests compile. Executable artifacts stay writable so
+     * later stages can still repair real implementation defects.
      *
      * @param sessionId sandbox session whose approved specification is authoritative
      * @param path      workspace-relative target path
@@ -145,7 +141,7 @@ public class StageCheckService {
                 + ". Remove those artifacts with delete_file/edit_file. Test the omitted types through reflection and a dynamic proxy where needed; do not rewrite SPEC.md.");
     }
 
-    /** Test constructor: no approved-spec registry, so every check reads the live specification exactly as it did before the registry existed. */
+    /** Without a shared registry every check reads the live workspace specification. */
     StageCheckService(DifferentialVerificationService verifier) {
         this(verifier, new ApprovedSpecRegistry());
     }
@@ -165,9 +161,8 @@ public class StageCheckService {
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
-        // SPEC.md is read-only after approval through supported tools. Re-running its cheap mechanical gate is defense in depth against an out-of-band shell mutation; without
-        // it, a later stage could append [task] bindings or empty the Diagram decision and silently disarm checks derived from the workspace copy. Skipped when there is no
-        // SPEC.md at all: the SPEC stage does not run when the instructor's own problem statement IS the specification.
+        // Defence in depth against an out-of-band shell mutation: without re-running the cheap spec gate, a later stage could append [task] bindings or empty the Diagram decision
+        // and silently disarm every check derived from the workspace copy. Inert when there is no SPEC.md, which is the case when the instructor's statement IS the specification.
         if (stage != GenerationStage.SPEC && approvedSpecs.approved(sessionId).isEmpty() && !readSpec(sandbox, sessionId).isBlank()) {
             StageCheckResult specStillValid = checkSpec(sandbox, sessionId, exercise);
             if (!specStillValid.passed()) {
@@ -226,9 +221,8 @@ public class StageCheckService {
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
         }
-        // A design in which EVERY type is student-created makes an empty starter repository inevitable: the student clones a project with no sources, and the differential
-        // oracle's "the template must fail" becomes vacuous (nothing compiles, so everything fails) — the degenerate candidate then scores like a well-scaffolded one.
-        // The template is a teaching scaffold, so the contract must hand the student at least one supplied or stubbed type to read and build from.
+        // An all-student-creates design makes an empty starter repository inevitable, and the oracle's "the template must fail" then holds vacuously (nothing compiles, so
+        // everything fails), scoring the degenerate candidate like a well-scaffolded one.
         if (designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
             return StageCheckResult.failed("Every '## Design' row is marked 'student-creates', so the template repository would ship empty and students would start from a "
                     + "blank project. Give the exercise a starting point: mark at least one type 'given' (supplied complete) or 'stubbed' (signatures with TODO bodies) — "
@@ -271,10 +265,8 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
         }
-        // A single seam covering many rules is the shape the two weakest measured exercises had: one that collapsed four rules into one seam shipped a suite rejecting only
-        // two of four contract-breaking implementations, and another collapsing four rules rejected one of five. Six of twenty-six generated specifications took this shape
-        // despite the authoring prompt forbidding it, which is the signal to enforce it here rather than ask again. The floor is deliberately low — a genuinely single-seam
-        // exercise with up to three rules passes untouched — because the aim is to catch collapse, not to impose a decomposition the exercise does not need.
+        // A single seam covering many rules grades them as one indivisible unit, and such a suite discriminates far fewer contract-breaking implementations. The floor is
+        // deliberately low, letting a genuinely single-seam exercise of up to three rules through: the aim is to catch collapse, not to impose an unnecessary decomposition.
         int ruleCount = specRuleCount(spec);
         if (seamIds.size() == 1 && ruleCount >= MIN_RULES_REQUIRING_SEVERAL_SEAMS) {
             return StageCheckResult.failed("The '## Rules' section states " + ruleCount + " rules but the '## Testing Strategy' declares a single seam, so every rule is graded "
@@ -320,27 +312,22 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy requests hidden after-due-date coverage, but this exercise has no due date. Mark every Hidden variant cell 'no'; "
                     + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
         }
-        // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
+        // Echo the parsed plan back so the agent sees exactly what the later gates will hold it to, rather than only the absence of errors.
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
                 .collect(Collectors.joining(", "));
-        // The ownership decision is frozen here, so state its testing consequence here too. The graded tests are compiled against the TEMPLATE as well as the solution, so a
-        // student-created type simply does not exist at test-compile time. Discovering that later costs whole repair budgets: one observed run spent every attempt cycling
-        // "cannot find symbol" -> re-add the type to the template -> ownership gate rejects it -> remove it -> "cannot find symbol", never naming the real constraint.
+        // The ownership decision is frozen here, so state its testing consequence here too: graded tests compile against the template as well as the solution, so a
+        // student-created type does not exist at test-compile time. Left unsaid, that constraint is discovered as an unexplained "cannot find symbol" and costs repair budgets.
         List<String> createdTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).toList();
         String reflectionConsequence = createdTypes.isEmpty() ? ""
                 : " The graded tests compile against the template too, so nothing may import or name " + createdTypes + " directly: reach them through Class.forName and the "
                         + "seeded reflection utilities (a dynamic proxy when supplied code must receive a student-created interface). Adding them to the template to make the "
                         + "tests compile is the one repair the ownership gate will always reject; choose 'stubbed' instead at specification time if the tests need to name a "
                         + "type directly.";
-        // Advice, not a gate. A rule mandating a technique used to be rejected here, but six of eight matches on real specifications were false, and a false rejection at this
-        // stage discards a sound contract with no recourse. Said as advice on a pass it still reaches the agent while the specification is editable, which is where it changes
-        // the outcome: what caused real damage was not the rule itself but the Testing Strategy seam the agent then felt obliged to write for it.
+        // Advice on a pass, never a rejection: the mandate detector is not precise enough to justify discarding a sound contract with no recourse, and the harm comes from the
+        // Testing Strategy seam the agent would write for such a rule rather than from the rule itself. Delivered here because this is the last point at which the spec is still
+        // editable. The advice must also forbid instrumenting the API (call counters, invocation flags) — that grades nothing and burdens the student's contract.
         List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(spec);
-        // The prohibition on instrumenting the API is not a detail: it is the loophole the previous wording left open. Told only that a technique needs no seam, one live run
-        // answered by adding getFactorialRecCalls() and three siblings to the exercise's own type, backed by mutable static counters, and asserting calls > 1. Four of its
-        // twelve graded tests then measured nothing — an iterative implementation that increments the same counter passes every one of them — while the student's contract
-        // carried four accessors the exercise did not need.
         String techniqueAdvice = techniqueMandates.isEmpty() ? ""
                 : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
                         + "implementation from an iterative one returning identical values, so keep this as guidance in the student-facing statement and do NOT give it a "
@@ -361,7 +348,7 @@ public class StageCheckService {
     record TestingStrategyRow(String seamId, String ownerType, String observableResponsibility, String weightTier, String hiddenDecision) {
     }
 
-    /** Parses the '## Design' table's data rows (skipping the header and separator); the first cell is the type and the final cell is the closed-set template status. */
+    /** The first cell is the type and the FINAL cell is the closed-set template status, whatever columns a specification puts in between. */
     static List<DesignRow> designTableRows(String spec) {
         int start = spec.indexOf("## Design");
         if (start < 0) {
@@ -377,7 +364,6 @@ public class StageCheckService {
                 continue;
             }
             if (!pastHeader) {
-                // Everything up to and including the |---| separator row is the table header.
                 if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
                     pastHeader = true;
                 }
@@ -399,9 +385,8 @@ public class StageCheckService {
     }
 
     /**
-     * Canonicalizes punctuation only for a Design table's closed-set status cell. Language models commonly typeset an ASCII hyphen as a Unicode dash; treating
-     * {@code student‑creates} as an unrelated value silently disarms the ownership gate even though its meaning is unambiguous. The vocabulary remains closed: prose or extended
-     * tokens still fail the specification gate.
+     * Canonicalizes punctuation only for a Design table's closed-set status cell: a Unicode dash typeset for an ASCII hyphen would otherwise make {@code student‑creates} an
+     * unrelated value and silently disarm the ownership gate. The vocabulary stays closed, so prose or extended tokens still fail the specification gate.
      */
     private static String normalizeTemplateStatus(String cell) {
         String normalized = cell.replace("`", "").strip().toLowerCase(Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
@@ -458,17 +443,13 @@ public class StageCheckService {
     }
 
     /**
-     * Whether a '## Design' row's type name is a bare identifier the later gates can actually look for. Anything else ({@code Stack<T>}, a qualified name, {@code **bold**}, two
-     * types in one cell) is UNENFORCEABLE — and silently dropping it would make the spec gate's own pass observation ("the later gates will enforce...") a lie.
+     * Whether a '## Design' row's type name is a bare identifier the later gates can look for. Anything else ({@code Stack<T>}, a qualified name, {@code **bold**}, two types in
+     * one cell) is unenforceable, and silently dropping it would make the spec gate's own pass observation ("the later gates will enforce...") a lie.
      */
     private static boolean isEnforceableTypeName(String type) {
         return type.matches("[A-Za-z_][A-Za-z0-9_]*");
     }
 
-    /**
-     * The expected-result cells (last column) of every data row in the {@code ## Worked Examples} table: rows starting with '|' after that heading, skipping the header and the
-     * separator row.
-     */
     static List<String> workedExampleDataRows(String spec) {
         List<String> rows = new ArrayList<>();
         boolean inSection = false;
@@ -498,28 +479,18 @@ public class StageCheckService {
     }
 
     /**
-     * Whether SPEC.md's {@code ## Testing Strategy} declares at least one hidden after-due-date variant, read from a STRUCTURED cell — never from prose. An earlier prose
-     * heuristic here both false-triggered (a table that says "no hidden after-due-date variant" contains every keyword) and false-negatived (a paraphrase like "released at the
-     * deadline" contains none), which is exactly the opinion-shaped gate this class forbids. The declaration is now a table cell in the section's LAST column whose text starts
-     * with {@code yes} or {@code no}, parsed like the Design table's status tokens; anything else reads as "no declaration" and the gate stays silent.
+     * Whether SPEC.md's {@code ## Testing Strategy} declares at least one hidden after-due-date variant. Read from the structured last-column cell and never from prose, which
+     * cannot be parsed without holding an opinion: "no hidden after-due-date variant" contains every keyword, and "released at the deadline" contains none.
      */
     static boolean specDeclaresHiddenVariants(String spec) {
         return !hiddenVariantSeamIds(spec).isEmpty();
     }
 
-    /** Stable seam IDs whose Testing Strategy row explicitly requires a hidden after-due-date variant. */
     static Set<String> hiddenVariantSeamIds(String spec) {
         return testingStrategyRows(spec).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId).collect(Collectors.toUnmodifiableSet());
     }
 
-    /**
-     * Stable IDs from the first cell of each {@code ## Testing Strategy} data row. Invalid IDs are retained so the SPEC gate can report them rather than silently dropping them.
-     */
-    static List<String> testingStrategySeamIds(String spec) {
-        return testingStrategyRows(spec).stream().map(TestingStrategyRow::seamId).toList();
-    }
-
-    /** Parses the stable seam ID, exact Design owner, observable responsibility, and final hidden decision from the Testing Strategy table. */
+    /** Invalid seam IDs are retained rather than dropped, so the SPEC gate can name them in its rejection. */
     static List<TestingStrategyRow> testingStrategyRows(String spec) {
         int start = spec.indexOf("## Testing Strategy");
         if (start < 0) {
@@ -583,12 +554,12 @@ public class StageCheckService {
         }).orElseGet(List::of);
     }
 
-    /** The last-column cells of the {@code ## Testing Strategy} table's data rows, lower-cased and stripped; empty when the section is not a table. */
+    /** Empty when the section is not a table, which the SPEC gate reports as a missing decision. */
     private static List<String> hiddenVariantCells(String spec) {
         return testingStrategyRows(spec).stream().map(TestingStrategyRow::hiddenDecision).filter(cell -> !cell.isBlank()).toList();
     }
 
-    /** The normalized names the workspace's grading plan hides until the due date; empty (fail-open) when no readable, parseable plan exists — same contract as the oracle's. */
+    /** Empty (fail-open) when no readable, parseable plan exists — the same contract the oracle applies. */
     private Set<String> hiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
         if (planJson.isBlank()) {
@@ -603,13 +574,13 @@ public class StageCheckService {
         }
     }
 
-    /** The {@code student-creates} types from the frozen specification, falling back to the live workspace only for legacy/unapproved flows. */
+    /** The {@code student-creates} types from the frozen specification, falling back to the live workspace only when no spec gate ran for this session. */
     private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
         String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
         return specStudentCreatedTypes(specification);
     }
 
-    /** The {@code given} and {@code stubbed} types from the specification — the scaffold the template must ship to the student. Only enforceable bare names count. */
+    /** The scaffold the template must ship to the student; only enforceable bare names count. */
     static List<String> specScaffoldTypes(String spec) {
         return designTableRows(spec).stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
                 .filter(StageCheckService::isEnforceableTypeName).toList();
@@ -620,9 +591,9 @@ public class StageCheckService {
     }
 
     /**
-     * Where the given type is DECLARED under the given repo: a file named after it, or any source file declaring it. A filename probe alone both missed a nested or secondary
-     * declaration (the template ships the answer inside another file and the gate says "confirmed absent") and counted a stray {@code Type.md} or {@code Type.java.orig} as a
-     * leak. Type names were validated as bare identifiers, and {@code exec} spawns without a shell, so neither argument can inject. Fails open (empty) on a tooling error.
+     * Where the type is declared under the given repository: a file named after it OR any source file declaring it. Both probes are needed — a filename alone misses a nested or
+     * secondary declaration hidden in another file, and a declaration alone misses a stray {@code Type.md} or {@code Type.java.orig}. Type names are validated as bare
+     * identifiers and {@code exec} spawns without a shell, so neither argument can inject. Fails open on a tooling error.
      */
     private String findTypeDeclarations(InteractiveSandbox sandbox, String sessionId, String repo, String type) {
         String root = GenerationWorkspaceService.WORKSPACE + "/" + repo;
@@ -653,7 +624,7 @@ public class StageCheckService {
                             + "using the seeded reflection utilities/Class.forName; use a dynamic proxy when the context must receive the omitted interface.";
             return new StageCheckResult(false, "The executable test artifacts do not yet satisfy the TESTS-stage checks:\n" + observation + ownershipRepair, report);
         }
-        // Only once the differential is green does the grading plan matter — a missing plan must never drown out failing tests in the feedback.
+        // Checked only once the differential is green, so a missing plan never drowns out failing tests in the feedback.
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
         if (planJson.isBlank()) {
             List<String> behavioralTestNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name) && !BuildGateTestNames.isBuildGate(name))
@@ -700,8 +671,8 @@ public class StageCheckService {
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
                         + ". A [task]'s parenthesised names must be exact, visible test names from the TESTS stage, copied verbatim: " + bindableNames + ".");
             }
-            // Diagram testsColor links are interactive in Artemis (they render pass/fail per element); a name that matches no test is a silently dead link the student can
-            // never satisfy, so it is held to the same resolution standard as a [task] binding.
+            // Artemis renders testsColor links interactively (pass/fail per diagram element), so a name matching no test is a dead link the student can never satisfy and is held
+            // to the same resolution standard as a [task] binding.
             List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, exactTestNames, Set.of());
             if (!deadDiagramLinks.isEmpty()) {
                 return StageCheckResult.failed("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
@@ -745,13 +716,11 @@ public class StageCheckService {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
         }
-        // Exact duplicate headings are a mechanical statement defect; catching it here costs nothing.
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        // Same class of mechanical defect as the duplicate headings above, one level down: a task whose instruction sentence is pasted several times reads to a student as if
-        // it were three different requirements.
+        // The same defect one level down: a repeated instruction sentence reads to a student as several different requirements.
         List<String> duplicateInstructions = ProblemStatementBindingChecker.duplicateInstructionLines(statement);
         if (!duplicateInstructions.isEmpty()) {
             return StageCheckResult.failed(
@@ -765,8 +734,6 @@ public class StageCheckService {
         return StageCheckResult.passed("");
     }
 
-    /** Seam IDs from the frozen specification, with the live workspace used only for legacy/unapproved flows. */
-    /** Counts the rules a specification states, tolerating the table, numbered-list, and bare-prefix shapes generated specifications use. */
     private static int specRuleCount(String spec) {
         String section = sectionBody(spec, "## Rules");
         return section.isBlank() ? 0 : (int) SPEC_RULE_ROW.matcher(section).results().count();
@@ -786,20 +753,6 @@ public class StageCheckService {
         int nextSubsection = document.indexOf("\n### ", bodyStart);
         int next = nextSection < 0 ? nextSubsection : nextSubsection < 0 ? nextSection : Math.min(nextSection, nextSubsection);
         return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
-    }
-
-    private List<String> enforcedTestingSeamIds(InteractiveSandbox sandbox, String sessionId) {
-        return enforcedTestingStrategyRows(sandbox, sessionId).stream().map(TestingStrategyRow::seamId).filter(id -> id.matches("S[1-9][0-9]*")).distinct().toList();
-    }
-
-    private Set<String> enforcedHiddenVariantSeamIds(InteractiveSandbox sandbox, String sessionId) {
-        return enforcedTestingStrategyRows(sandbox, sessionId).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId)
-                .collect(Collectors.toUnmodifiableSet());
-    }
-
-    private List<TestingStrategyRow> enforcedTestingStrategyRows(InteractiveSandbox sandbox, String sessionId) {
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        return testingStrategyRows(specification);
     }
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {

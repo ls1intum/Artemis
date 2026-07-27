@@ -17,10 +17,6 @@ public record ExerciseGenerationBaseline(String jobId, GenerationMode mode, Map<
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * @param repositoryType the repository whose captured pre-run HEAD is requested
-     * @return the captured commit hash, or {@code null} when none was recorded for this repository
-     */
     @Nullable
     public String headFor(RepositoryType repositoryType) {
         return repositoryHeads.get(repositoryType);

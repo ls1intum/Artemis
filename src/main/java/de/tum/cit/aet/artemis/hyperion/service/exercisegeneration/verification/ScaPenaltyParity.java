@@ -30,7 +30,7 @@ final class ScaPenaltyParity {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
             return List.of();
         }
-        // maxStaticCodeAnalysisPenalty defaults to 100 when null (mirrors calculateTotalPenalty); 0 disables the SCA penalty entirely.
+        // Mirrors calculateTotalPenalty: null means 100, and 0 disables the SCA penalty entirely.
         int maxPenalty = exercise.getMaxStaticCodeAnalysisPenalty() != null ? exercise.getMaxStaticCodeAnalysisPenalty() : 100;
         if (maxPenalty <= 0 || persistedCategories == null || persistedCategories.isEmpty() || solutionFindings == null || solutionFindings.isEmpty()) {
             return List.of();

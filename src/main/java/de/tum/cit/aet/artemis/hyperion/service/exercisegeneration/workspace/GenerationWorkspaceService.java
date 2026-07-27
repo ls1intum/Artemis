@@ -60,21 +60,21 @@ public class GenerationWorkspaceService {
 
     private static final String PROBLEM_STATEMENT_FILE = "problem-statement.md";
 
-    /** The agent's workspace-root specification (see GenerationStage#SPEC); re-seeded across session resets like the problem statement so it survives verification builds. */
+    /** Re-seeded across session resets like the problem statement, so it survives the container restart each verification build performs. */
     private static final String SPEC_DOCUMENT_FILE = "SPEC.md";
 
-    /** The TESTS stage's grading plan; re-seeded across session resets like the specification, or a repair attempt would silently lose the weights and hidden tests. */
+    /** Re-seeded across session resets like the specification, or a repair attempt silently loses the grading weights and hidden tests. */
     private static final String TEST_PLAN_FILE = "test-plan.json";
 
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    /** Repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)}. */
+    /** Must match {@link #directoryFor(RepositoryType)}: the layout probe lists these directories and scans them for build manifests. */
     private static final String[] REPOSITORY_DIRECTORIES = { "solution", "template", "tests" };
 
     /**
-     * The single bound on any sandbox command that does no compilation: reading a workspace file, listing the layout, deleting build output, staging or clearing a fixture
-     * directory. Compilation is bounded separately and far more generously by the verification and build timeouts, so this stays short — a {@code cat} or {@code rm} that has not
-     * returned within this long means the sandbox is wedged, not that the work is slow.
+     * The single bound on any sandbox command that does no compilation: reading a file, listing the layout, deleting build output, staging a fixture directory. Compilation is
+     * bounded separately and far more generously by the verification and build timeouts, so this stays short — a {@code cat} or {@code rm} that has not returned within it means
+     * the sandbox is wedged, not that the work is slow.
      */
     public static final Duration SANDBOX_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -160,8 +160,8 @@ public class GenerationWorkspaceService {
      * @param sessionId              the session handle
      * @param exercise               the exercise whose components are seeded
      * @param mode                   whether to start from clean exercise artifacts or preserve the existing tree
-     * @param statementAuthoritative whether {@code exercise.getProblemStatement()} is a real instructor specification; {@code false} (a blank field or the client-seeded
-     *                                   default template readme) seeds an EMPTY problem-statement.md, so the agent never mistakes the default sorting readme for the spec
+     * @param statementAuthoritative whether {@code exercise.getProblemStatement()} is a real instructor specification; {@code false} seeds an EMPTY problem-statement.md, so
+     *                                   the agent cannot mistake the client-seeded default template readme for one
      * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
      */
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode, boolean statementAuthoritative) {
@@ -260,11 +260,11 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the existing Artemis Bubble Sort Java exercise from the classpath templates. The reference is assembled from the same shared and Maven-specific template resources
-     * used to create programming exercises; Hyperion deliberately owns no separate worked exercise.
+     * Assembles the worked reference from the same classpath template resources Artemis uses to create a programming exercise, so Hyperion owns no competing sample that could
+     * drift from the one instructors actually see.
      *
      * @param exercise the exercise whose language selects the reference
-     * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if none could be read
+     * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if the set is incomplete
      */
     Map<String, String> readReferenceSample(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
@@ -287,8 +287,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the language-agnostic per-artifact style guides (draft statement, final statement, template, solution, tests) from the classpath. Unlike {@link #readReferenceSample},
-     * this is not gated on Java: the guides are topic-neutral prose principles, not language-specific source, so every GENERATE run benefits from them.
+     * Unlike {@link #readReferenceSample} this is not gated on a language: the guides are topic-neutral prose, not source, so every GENERATE run gets them.
      *
      * @return the style guide files keyed by their archive-relative path under {@code reference/style/}, or empty if none could be read
      */
@@ -356,9 +355,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Adds the readable text files under {@code templates/<languageRelativeBase>/<area>} to {@code reference}, keyed {@code reference/<area>/<rest>} (the path relative to the
-     * language
-     * template root), respecting the remaining byte budget. Robust across filesystem and jar resources via the {@code /templates/<languageRelativeBase>/} URI marker.
+     * Adds the readable text files under {@code templates/<sourceArea>} keyed {@code reference/<targetArea>/<rest>}, within the remaining byte budget. The relative path is
+     * recovered from a URI marker rather than the resource path so the same code works for filesystem and jar resources.
      */
     private void addReferenceArea(Map<String, String> reference, String sourceArea, String targetArea, Predicate<String> include, int[] remainingBytes) {
         String marker = "/templates/" + sourceArea + "/";
@@ -458,7 +456,6 @@ public class GenerationWorkspaceService {
         }
     }
 
-    /** Caps the layout snapshot at {@link #LAYOUT_PROBE_MAX_CHARS}, appending a truncation notice so the agent knows to list deeper itself. */
     private static String truncateLayout(String layout) {
         if (layout.length() <= LAYOUT_PROBE_MAX_CHARS) {
             return layout;
@@ -467,11 +464,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads a working tree's text files into a repository-relative UTF-8 map, skipping {@code .git} metadata, to snapshot the seeded tests harness for the immutability gate.
-     * Best-effort: binary/unreadable files are skipped; a partial snapshot only weakens the gate, never breaks the run.
-     *
-     * @param workingTree the checked-out repository working tree
-     * @return the text files keyed by repository-relative path
+     * Snapshots the seeded harness for the immutability gate. Best-effort by design: a binary or unreadable file is skipped, because a partial snapshot only weakens the gate
+     * while a thrown exception would fail the run.
      */
     private static Map<String, String> readWorkingTreeTextFiles(Path workingTree) {
         Map<String, String> files = new LinkedHashMap<>();
@@ -546,25 +540,20 @@ public class GenerationWorkspaceService {
     /**
      * Overwrites repository text files with the canonical bytes that verification and persistence must share.
      * <p>
-     * Also re-seeds the workspace-root problem statement when given. This matters because callers use this method to restore a candidate into a sandbox session that was just
-     * {@code resetSession}'d: {@code /workspace} is mounted on a bounded tmpfs (see {@code InteractiveSandboxService#hardenedHostConfig}), so a container restart empties it
-     * completely — a candidate restore that touched only the three repositories would silently drop {@code problem-statement.md} (it lives at the workspace root, outside any
-     * repository), and the next read of it would fail with "the generated problem statement is missing".
+     * Also re-seeds the workspace-root files when given. Callers use this to restore a candidate into a session that was just reset, and {@code /workspace} is a bounded tmpfs,
+     * so the container restart empties it completely. A restore that touched only the three repositories would silently drop everything living at the workspace root.
      *
      * @param sandbox               the sandbox session
      * @param sessionId             the session handle
      * @param filesByRepository     the canonical repository text files
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
-     * @param exercise              the exercise whose workspace-root bootstrap files ({@code verify.sh}, and for GENERATE the {@code reference/} sample and
-     *                                  {@code reference/style/} guides) are re-seeded alongside the repositories — the session reset wipes the whole tmpfs workspace, and a
-     *                                  restore that reproduces only a subset of the bootstrap leaves later attempts chasing files the prompts promise exist
+     * @param exercise              the exercise whose workspace-root bootstrap files ({@code verify.sh}, and for GENERATE the {@code reference/} sample and style guides) are
+     *                                  re-seeded alongside the repositories, so later attempts are not left chasing files the prompts promise exist
      * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
      * @param testPlanJson          the TESTS stage's {@code test-plan.json} to re-seed at the workspace root, or {@code null} to leave it untouched
-     * @param specDocument          the agent's {@code SPEC.md} specification to re-seed at the workspace root, or {@code null} to leave it untouched; without this, the
-     *                                  session reset before each pristine verification build silently discards it — repair attempts lose the design rationale and the outcome's
-     *                                  design-document capture reads nothing
+     * @param specDocument          the agent's {@code SPEC.md} to re-seed at the workspace root, or {@code null} to leave it untouched
      */
     public void materializeRepositoryFiles(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode,
             Map<RepositoryType, Map<String, String>> filesByRepository, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
@@ -598,7 +587,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Removes disposable build outputs that raw debugging commands may have left inside the seeded repositories before canonical extraction.
+     * Removes disposable build outputs that raw debugging commands may have left inside the seeded repositories, so canonical extraction does not persist them.
      *
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
@@ -619,7 +608,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the produced files of a repository back out of the sandbox. Uses the tar API rather than per-file reads so large files are never truncated.
+     * Reads the produced files back out through the tar API rather than per-file shell reads, which would truncate anything over the exec output-capture limit.
      *
      * @param sandbox          the sandbox session
      * @param sessionId        the session handle
@@ -652,11 +641,10 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the produced problem statement back out of the sandbox.
-     *
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
      * @return the produced problem statement
+     * @throws IllegalStateException if it is missing or unreadable, so an empty statement can never be persisted as if it had been authored
      */
     public String extractProblemStatement(InteractiveSandbox sandbox, String sessionId) {
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + PROBLEM_STATEMENT_FILE)) {
@@ -719,10 +707,10 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Maps a repository type to the stable workspace sub-directory name the generation workspace lays out on disk.
+     * The workspace layout contract: every prompt, the verify script, and repository extraction resolve a repository through this one mapping.
      *
      * @param repositoryType the repository type to place
-     * @return the sub-directory name ({@code template}, {@code solution}, {@code tests}, or the lower-cased type name for any other value)
+     * @return the sub-directory name
      */
     public static String directoryFor(RepositoryType repositoryType) {
         return switch (repositoryType) {

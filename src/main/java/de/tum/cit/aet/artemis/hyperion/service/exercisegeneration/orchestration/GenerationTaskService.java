@@ -146,10 +146,6 @@ public class GenerationTaskService {
         ScheduledFuture<?> deadlineFuture = null;
         ScheduledFuture<?> heartbeatFuture = null;
         try {
-            // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
-            // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
-            // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that
-            // exception.
             if (jobService.isCancelled(jobId)) {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
                 return;
@@ -163,6 +159,9 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
                 return;
             }
+            // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are
+            // detached and touching one during seeding would throw. Re-load it with exactly those associations initialized, and fail closed if it has since been deleted rather
+            // than falling back to the detached entity.
             ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
             if (exercise == null) {
                 log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
@@ -174,7 +173,7 @@ public class GenerationTaskService {
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because the exercise configuration is no longer supported."));
                 return;
             }
-            deadlineFuture = scheduleDeadline(exerciseId, jobId, deadlineExceeded, event.deadlineAt());
+            deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
             Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded,
@@ -185,8 +184,7 @@ public class GenerationTaskService {
                     ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink)
                     : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink, event.sourceBrief());
             try (GenerationOutcome outcome = generated) {
-                // Surface the approved SPEC.md as an observable intermediate result as soon as the outcome lands, regardless of the terminal branch below, so specification
-                // quality is inspectable through the status/replay API even when the run does not end up saved.
+                // Before any terminal branch below, so specification quality stays inspectable through the status/replay API even for a run that is never saved.
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }
@@ -196,9 +194,8 @@ public class GenerationTaskService {
                     return;
                 }
                 if (tokenBudgetExceeded.get()) {
-                    // The budget is a cost control on PROVIDER SPEND: it must stop further model calls (the cancelled supplier above already did), never discard work that is
-                    // already paid for and mechanically verified — saving consumes no provider tokens, and this method's own save-obligation doctrine applies. Only a run with
-                    // no verified candidate ends here.
+                    // The budget controls provider spend, so it stops further model calls but must not discard work already paid for: saving consumes no provider tokens. Only
+                    // a run without a mechanically verified candidate ends here.
                     if (!outcome.isMechanicallyVerified()) {
                         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false)));
                         return;
@@ -206,10 +203,8 @@ public class GenerationTaskService {
                     emitter.progress("The token budget was reached; keeping and saving the already-verified exercise instead of discarding it.");
                 }
                 if (deadlineExceeded.get()) {
-                    // The wall-clock deadline is a SAFETY control, not a user stop: the same save-obligation doctrine as the token budget applies. It stopped further model work,
-                    // but a candidate that already passed mechanical verification is checkpointed work that persisting neither re-runs nor re-bills — save it (as NEEDS_REVIEW when
-                    // the quality review still had findings) rather than discarding a run that produced a usable exercise. Only a deadline hit with no verified checkpoint
-                    // discards.
+                    // Same rule as the token budget above: the deadline stops further model work, it does not invalidate a candidate that already passed verification, and
+                    // persisting one neither re-runs nor re-bills it. Only a deadline hit with no verified checkpoint discards.
                     if (!outcome.isMechanicallyVerified()) {
                         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
                         return;
@@ -248,8 +243,8 @@ public class GenerationTaskService {
                             }
                             return;
                         }
-                        // A verified candidate is now a save obligation. User cancellation and the generation deadline no longer discard it; Git, CI, and repository operations
-                        // retain their own bounded timeouts, while ownership and draft-state checks still fence every mutation.
+                        // A verified candidate is a save obligation from here on: neither user cancellation nor the generation deadline may discard it. Git, CI, and repository
+                        // operations carry their own bounded timeouts, and ownership and draft-state checks still fence every mutation.
                         cancelScheduled(deadlineFuture);
                         deadlineFuture = null;
                         emitter.progress("Checks passed. Saving the exercise.");
@@ -289,8 +284,6 @@ public class GenerationTaskService {
                             return;
                         }
                         if (isNoOpPersist(persistResult)) {
-                            // No repository was committed and the problem statement/title did not change: the generated candidate already matched the live exercise. Recording a
-                            // baseline here would be dishonest (there is nothing to undo) and would needlessly discard whatever earlier run's baseline is still valid.
                             emitter.milestone(ExerciseGenerationEventDTO.done("The generated exercise already matched the current exercise. No changes were needed.",
                                     ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, false, Map.of()));
                             return;
@@ -378,18 +371,17 @@ public class GenerationTaskService {
         return normalized.length() <= 600 ? normalized : normalized.substring(0, 597) + "...";
     }
 
-    private ScheduledFuture<?> scheduleDeadline(long exerciseId, String jobId, AtomicBoolean deadlineExceeded, Instant deadlineAt) {
+    /**
+     * The deadline is a wall-clock SAFETY control, not a user stop. It halts further model work — the cancelled supplier reads {@code deadlineExceeded}, so the run stops at the
+     * next poll — but deliberately does not cancel the job: that would make {@link GenerationJobService#enterNonCancellablePhase} refuse and discard a mechanically verified
+     * candidate that is already a save obligation. The terminal branch decides save-vs-discard from whether a verified checkpoint survived.
+     */
+    private ScheduledFuture<?> scheduleDeadline(AtomicBoolean deadlineExceeded, Instant deadlineAt) {
         Instant effectiveDeadlineAt = effectiveDeadlineAt(deadlineAt);
         if (effectiveDeadlineAt == null) {
             return null;
         }
-        return taskScheduler.schedule(() -> {
-            // The deadline is a wall-clock SAFETY control, not a user stop. It must halt further model work — the cancelled supplier includes deadlineExceeded, so setting this
-            // flag stops the run at the next poll — but it must NOT force-cancel the job. Marking the job cancelled here would make enterNonCancellablePhase fail and discard a
-            // mechanically verified candidate that is already a save obligation (same doctrine as the token budget). The terminal branch below decides save-vs-discard from
-            // whether a verified checkpoint survived. Job/budget cleanup still runs unconditionally in the finally block.
-            deadlineExceeded.set(true);
-        }, effectiveDeadlineAt);
+        return taskScheduler.schedule(() -> deadlineExceeded.set(true), effectiveDeadlineAt);
     }
 
     private ScheduledFuture<?> scheduleHeartbeat(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
@@ -468,9 +460,8 @@ public class GenerationTaskService {
                 }
                 long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
                 if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
-                    // Flip only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls, which is the entire point of the budget.
-                    // Deliberately NOT requestSystemCancellation — that would mark the job cancelled and make enterNonCancellablePhase refuse the save, discarding a
-                    // mechanically verified candidate that is already paid for. The terminal handling below decides between saving a verified candidate and ending cancelled.
+                    // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Deliberately not requestSystemCancellation, which
+                    // would mark the job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
                     log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
                 }
             }
@@ -524,8 +515,8 @@ public class GenerationTaskService {
     }
 
     /**
-     * A persist that committed no repository and wrote no problem statement/title change: the generated candidate already matched the live exercise. Recording an
-     * automatic-revert baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save.
+     * A persist that committed no repository and changed no problem statement or title: the generated candidate already matched the live exercise. Recording an automatic-revert
+     * baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save, and would discard an earlier run's still-valid baseline.
      */
     private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
         return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged();

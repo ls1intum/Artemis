@@ -40,12 +40,12 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
- * stops, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring AI's automatic tool execution has no iteration cap and
- * no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided separately by the authoritative verifier.
+ * stops, the turn budget is reached, cancellation is requested, or an error occurs. The loop is manual because Spring AI's automatic tool execution has no iteration cap and no
+ * per-step hook, so it can enforce neither the safety budget nor the transcript. Artifact correctness is decided separately by the authoritative verifier.
  * <p>
  * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn, so a
- * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
- * cancel hook (see {@code GenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
+ * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. Prompt abort of a long-running tool is the caller's: it registers a
+ * cancel hook that tears down the sandbox session, which makes the in-flight tool call fail fast.
  */
 public class AgentLoopRunner {
 
@@ -53,10 +53,8 @@ public class AgentLoopRunner {
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
-    /** After this many consecutive tool-execution failures the model is considered stuck and the loop ends with an error. */
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
-    /** The tool the agent calls to declare the exercise complete; calling it ends the loop and hands off to the authoritative verifier. */
     private static final String SUBMIT_TOOL_NAME = "submit";
 
     private static final int MAX_PROGRESS_PATH_CHARS = 160;
@@ -76,9 +74,8 @@ public class AgentLoopRunner {
     private static final int KEEP_RECENT_TOKENS = 20_000;
 
     /**
-     * Exact tokenizer for text spans. gpt-5-mini and the gpt-oss family use the {@code o200k_base} encoding, so we pin it here rather than take the library default
-     * ({@code cl100k_base}). It only counts message text; the per-message structural overheads below (envelope, tool-call framing) are added on top because the framework
-     * estimator does not see them.
+     * Pinned to the encoding of the model families this loop targets rather than the library default ({@code cl100k_base}). It counts message text only; the per-message
+     * structural overheads below (envelope, tool-call framing) are added on top because the estimator cannot see them.
      */
     private static final JTokkitTokenCountEstimator TEXT_TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
@@ -105,7 +102,6 @@ public class AgentLoopRunner {
     /** Prefix marking the synthetic compaction-summary message, so a later compaction recognizes and folds it into the next summary. */
     private static final String SUMMARY_SENTINEL = "[SESSION SUMMARY — earlier steps were compacted to fit the context window. The workspace files on disk are the source of truth; re-read any file you need.]";
 
-    /** System prompt for the out-of-band summarization call that performs compaction; structured so the agent keeps goal, decisions, file state, and next steps. */
     private static final String SUMMARIZATION_SYSTEM_PROMPT = """
             You are compacting the working memory of an autonomous agent that is authoring a programming exercise inside a sandbox. Summarize the earlier part of the agent's \
             session so it can continue WITHOUT the full history. Be concise and strictly factual; never invent progress. Preserve exactly what the agent needs to finish: the \
@@ -219,33 +215,27 @@ public class AgentLoopRunner {
         return runSession(systemPrompt, null, userPrompt, tools, maxTurns, cancelled, usageSink, stepListener).result();
     }
 
-    /**
-     * A {@link #runSession} outcome paired with the conversation it produced, so a caller can span one logical conversation across multiple {@code runSession} calls (each with
-     * its own system prompt, user prompt, and turn budget). {@code conversation} excludes the system message — the next call supplies its own via {@code systemPrompt}.
-     */
+    /** {@code conversation} excludes the system message, because the next {@code runSession} call supplies its own via {@code systemPrompt}. */
     public record AgentLoopSession(AgentLoopResult result, List<Message> conversation) {
     }
 
     /**
-     * Drives the agent loop for one Hyperion sandbox, accepting the conversation returned by a prior {@code runSession} call so several bounded loop invocations can share one
-     * logical conversation (the model keeps everything it learned in earlier calls), and returning the resulting conversation so the caller can continue it again. {@link #run} is
-     * the single-shot form of this method.
+     * Drives one bounded agent loop, optionally continuing a conversation an earlier call produced so several loop invocations share one logical conversation. {@link #run} is the
+     * single-shot form.
      * <p>
-     * When {@code priorConversation} is {@code null} this starts a fresh two-message conversation (system, user). Otherwise the given
-     * {@code systemPrompt} replaces the system message, {@code priorConversation} is spliced in after it unchanged, and {@code userPrompt} is appended as the next turn before
-     * the loop continues — so in-loop compaction (which always protects the first two messages) keeps operating over the whole carried history exactly as it does within a
-     * single {@link #run} call.
+     * With no prior conversation this starts a fresh two-message conversation (system, user). Otherwise {@code systemPrompt} replaces the system message, the prior conversation
+     * is spliced in after it unchanged, and {@code userPrompt} is appended as the next turn — so in-loop compaction, which always protects the first two messages, operates over
+     * the whole carried history rather than only this call's part of it.
      *
-     * @param systemPrompt      the system prompt for this call (replaces whatever system message headed the prior conversation, if any)
-     * @param priorConversation the conversation returned by an earlier {@code runSession} call (system message excluded), or {@code null} to start fresh
-     * @param userPrompt        this call's instruction, appended after the prior conversation (or the sole initial instruction when starting fresh)
+     * @param systemPrompt      the system prompt for this call, replacing whatever system message headed the prior conversation
+     * @param priorConversation the conversation an earlier call returned (system message excluded), or {@code null} to start fresh
+     * @param userPrompt        this call's instruction, appended after the prior conversation
      * @param tools             the tools object whose {@code @Tool} methods are exposed to the model (typically {@link SandboxAgentTools})
-     * @param maxTurns          the hard cap on model turns for this call (safety budget)
-     * @param cancelled         a supplier polled before each turn; if it returns {@code true} the loop stops cooperatively
-     * @param usageSink         invoked after every successful model call (the main loop call and the summarization call) with its {@link ChatResponse}, so the caller can record
-     *                              token usage; may be {@code null}
-     * @param stepListener      invoked after every step with a short human-readable progress line (tool calls, completion); may be {@code null}
-     * @return the loop outcome together with the resulting conversation (system message excluded), ready to be passed as {@code priorConversation} to a subsequent call
+     * @param maxTurns          the hard cap on model turns for this call
+     * @param cancelled         polled before each turn; {@code true} stops the loop cooperatively
+     * @param usageSink         invoked with the {@link ChatResponse} of every successful model call, including the summarization call, so the caller can record token usage
+     * @param stepListener      invoked after every step with a short human-readable progress line
+     * @return the loop outcome and the resulting conversation, ready to be passed as {@code priorConversation} to a subsequent call
      */
     public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled,
             @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
@@ -253,18 +243,6 @@ public class AgentLoopRunner {
         return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, tools, provider.getToolCallbacks(), maxTurns, cancelled, usageSink, stepListener);
     }
 
-    /**
-     * Runs a bounded text-only model session. Use this for planning calls that must not have access to the exercise workspace or any other tools.
-     *
-     * @param systemPrompt      the system prompt for this call
-     * @param priorConversation a prior text-only conversation to continue, or {@code null}
-     * @param userPrompt        this call's instruction
-     * @param maxTurns          the hard cap on model turns for this call
-     * @param cancelled         a supplier polled before each turn
-     * @param usageSink         invoked after every successful model call, or {@code null}
-     * @param stepListener      invoked after every step with progress, or {@code null}
-     * @return the loop outcome and resulting conversation
-     */
     public AgentLoopSession runTextSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, int maxTurns, BooleanSupplier cancelled,
             @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
         return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, null, new ToolCallback[0], maxTurns, cancelled, usageSink, stepListener);
@@ -278,7 +256,6 @@ public class AgentLoopRunner {
         requireTextSafe("provider/system-prompt", systemPrompt);
         requireTextSafe("provider/user-prompt", userPrompt);
 
-        // The ChatModel does not auto-execute tools on call(), so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
         if (priorConversation != null) {
@@ -289,7 +266,6 @@ public class AgentLoopRunner {
         Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
-        // Context-window accounting: the previous call's real prompt-token count anchors the estimate; only messages appended since are estimated — see estimateContextTokens().
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
 
@@ -298,7 +274,6 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelling generation…");
                 return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
             }
-            // Tag any out-of-band events the tools emit this turn (e.g. streamed file changes) with the current turn number.
             if (tools instanceof TurnAware turnAware) {
                 turnAware.onTurn(turn);
             }
@@ -311,7 +286,6 @@ public class AgentLoopRunner {
                 }
                 return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
             }
-            // Strip leaked harmony control tokens from tool names before dispatch (see normalizeToolNames).
             response = normalizeToolNames(response);
             lastPromptTokens = promptTokensOf(response);
             if (cancelled.getAsBoolean()) {
@@ -325,9 +299,8 @@ public class AgentLoopRunner {
             }
 
             if (!response.hasToolCalls()) {
-                // No more tool calls: the model considers the task complete; the verifier decides whether it actually is. Append this final turn before returning (unlike the
-                // mid-loop reassignment below, nothing else in this call needs `conversation` updated afterwards) so a caller carrying the conversation forward via
-                // runSession(...) does not lose the model's closing message.
+                // The model considers the task complete; the verifier decides whether it actually is. Append this closing turn before returning so a caller carrying the
+                // conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
                 List<Message> completedConversation = new ArrayList<>(conversation);
                 completedConversation.add(response.getResult().getOutput());
@@ -337,9 +310,8 @@ public class AgentLoopRunner {
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
 
-            // A "length" stop means the completion was cut off by the token limit, so every tool call in it may carry silently truncated arguments (e.g. half a file in
-            // write_file's content). Executing them would corrupt the workspace while the model believes the calls landed; answer each call id with a re-issue instruction
-            // instead, exactly like an unavailable-tool turn.
+            // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
+            // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
             if (isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
                 emit(stepListener, "The response was cut off at the length limit; asking the agent to re-issue its last actions.");
                 conversation.add(response.getResult().getOutput());
@@ -376,41 +348,38 @@ public class AgentLoopRunner {
                     emit(stepListener, "The build environment stopped responding.");
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
-                // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
+                // Unknown tool or malformed arguments surface here: feed the error back so the model can self-correct rather than failing the run on one bad call.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
-                // Tool NAMES are not sensitive (only arguments/paths are, see sanitizeProgressPath) — naming the action turns an opaque recurring line into a diagnosable one.
+                // Tool names are model-chosen identifiers, not user content, so naming them here is safe; arguments and paths are not (see sanitizeProgressPath).
                 emit(stepListener, "The agent tried an unavailable action (" + attemptedToolNames(response) + ") and is correcting it.");
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
-                // Must answer every requested call id, or the chat-completions tool-pairing contract is violated; per-call errors also tell the model which call failed.
+                // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
                 List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
                         .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), "ERROR: this tool call could not be executed: " + e.getMessage()
                                 + ". Only use the available tools (read_file, write_file, edit_file, delete_file, bash, verify, submit) with valid JSON arguments, then continue."))
                         .toList();
-                // The catch is only reachable when this turn had tool calls (the no-tool-calls path returns above), so errorResponses always covers at least one call id.
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
                 continue;
             }
 
-            // Rebuild from the executed tool-call history (covers both the submit and the continuing paths), so a carried conversation reflects the submit turn too.
+            // Rebuild from the executed tool-call history so a carried conversation reflects the submit turn too.
             conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
             // Bound each result as it enters the context, so one oversized build log cannot blow the window before compaction runs.
             capToolResponses(conversation);
 
             if (submitRequested) {
                 if (isSubmitVetoed(tools)) {
-                    // A staged session's submit() already ran this stage's mechanical check itself and rejected it (see SubmitVetoAware); its rejection message is already the
-                    // tool result in `conversation`. Do not end the loop — fall through to the ordinary next-turn handling below so the model can fix the issues and resubmit.
+                    // The rejection message is already the tool result in `conversation`, so falling through to the ordinary next-turn handling lets the model fix and resubmit.
                     emit(stepListener, "Submit was rejected by the stage check; continuing to address the reported issues.");
                 }
                 else {
-                    // End the loop so the authoritative post-loop verifier can determine save eligibility before the quality review optionally requests repairs.
                     emit(stepListener, "Submitting the exercise for verification.");
                     return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, conversation);
                 }
@@ -460,20 +429,13 @@ public class AgentLoopRunner {
         };
     }
 
-    /**
-     * Whether the {@code submit} call just executed this turn was rejected by the tools object and must not end the loop; see {@link SubmitVetoAware}. A tools object that does
-     * not implement the interface (or does not veto) never blocks the loop-ending effect, so this is a pure opt-in seam.
-     */
     private static boolean isSubmitVetoed(Object tools) {
         return tools instanceof SubmitVetoAware vetoAware && vetoAware.consumeSubmitVeto();
     }
 
     /**
-     * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash}. Rebuilds the response only when a
-     * name actually changes (usually a no-op).
-     *
-     * @param response the model response (possibly carrying a leaked tool name)
-     * @return the same response, or a copy with normalized tool-call names
+     * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash} instead of matching no registered
+     * tool. Rebuilds the response only when a name actually changes, which is the rare case.
      */
     private static ChatResponse normalizeToolNames(ChatResponse response) {
         if (response.getResult() == null || response.getResult().getOutput() == null) {
@@ -505,13 +467,6 @@ public class AgentLoopRunner {
         return new ChatResponse(List.of(new Generation(rebuilt, response.getResult().getMetadata())), response.getMetadata());
     }
 
-    /**
-     * Strips harmony control tokens ({@code <|...|>}) and the trailing channel suffix from a tool name, reducing e.g. {@code bash<|channel|>commentary} to {@code bash}. A clean
-     * name is returned unchanged.
-     *
-     * @param name the raw tool name from the model
-     * @return the normalized tool name
-     */
     static String sanitizeToolName(String name) {
         if (name == null || name.isEmpty()) {
             return "";
@@ -538,7 +493,6 @@ public class AgentLoopRunner {
     }
 
     @Nullable
-    /** Joins the turn's attempted tool NAMES for the correction progress line — names are model-chosen identifiers, not user content; unsafe characters are stripped. */
     private static String attemptedToolNames(ChatResponse response) {
         try {
             String names = response.getResult().getOutput().getToolCalls().stream().map(AssistantMessage.ToolCall::name)
@@ -570,9 +524,6 @@ public class AgentLoopRunner {
         return sanitized.substring(0, end) + "…";
     }
 
-    /**
-     * Extracts a JSON string value (e.g. the {@code path} argument of a file tool) from a tool call's raw JSON arguments, unescaping the common escapes, or {@code null} if absent.
-     */
     @Nullable
     private static String extractJsonStringValue(String json, String key) {
         Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").matcher(json);
@@ -582,12 +533,6 @@ public class AgentLoopRunner {
         return matcher.group(1).replace("\\\"", "\"").replace("\\/", "/").replace("\\\\", "\\");
     }
 
-    /**
-     * Test hook: shrink the empty-response re-sampling backoff so tests do not wait.
-     *
-     * @param baseMillis the backoff base
-     * @param capMillis  the backoff cap
-     */
     void setEmptyResponseRetryTimingForTests(long baseMillis, long capMillis) {
         this.emptyResponseRetryBaseMillis = baseMillis;
         this.emptyResponseRetryCapMillis = capMillis;
@@ -606,14 +551,12 @@ public class AgentLoopRunner {
             }
             try {
                 requirePromptSafe(prompt);
-                // A thrown call yields no response to meter; its spend is bounded by the retry policy and turn budget,
-                // and the loop's own error handling reports the failure. Only a successful response feeds the usage sink.
+                // Only a successful response feeds the usage sink: a thrown call yields nothing to meter, and its spend is already bounded by the retry policy and turn budget.
                 ChatResponse response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
                 emitUsage(usageSink, response);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }
-                // No tool calls and no text: a genuinely-flaky empty sample. Re-sample rather than treat it as a silent completion.
                 log.warn("Agent loop model call returned an empty response on turn {} (sample {}/{})", turn, sample, EMPTY_RESPONSE_SAMPLES);
                 if (sample < EMPTY_RESPONSE_SAMPLES) {
                     emit(stepListener, "Model returned an empty response; retrying.");
@@ -649,7 +592,6 @@ public class AgentLoopRunner {
             return !cancelled.getAsBoolean();
         }
         catch (InterruptedException ie) {
-            // Honour the interrupt instead of swallowing it.
             Thread.currentThread().interrupt();
             log.warn("Interrupted while backing off before re-sampling an empty model response on turn {}", turn);
             return false;
@@ -667,17 +609,6 @@ public class AgentLoopRunner {
         return !hasToolCalls && (text == null || text.isBlank());
     }
 
-    /**
-     * Compacts the conversation when the estimated prompt approaches the context window, returning the original list otherwise. The trigger fires once the estimated token count
-     * exceeds {@code contextWindow - RESERVE_TOKENS}.
-     *
-     * @param conversation       the current conversation (system, initial user, then assistant/tool-result turns)
-     * @param lastPromptTokens   the real prompt-token count the previous model call reported (0 if unavailable yet)
-     * @param messagesAtLastCall the conversation size when that call was issued, so only the messages appended since are estimated
-     * @param usageSink          receives the summarization call's {@link ChatResponse} for token-usage tracking
-     * @param stepListener       progress sink, notified when compaction runs
-     * @return the (possibly compacted) conversation
-     */
     private List<Message> compactIfNeeded(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
         long contextTokens = estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall);
@@ -721,7 +652,6 @@ public class AgentLoopRunner {
         if (message instanceof AssistantMessage assistant) {
             tokens += estimateTextTokens(assistant.getText());
             for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                // Tokenize name and arguments separately, then add the structural framing overhead the text estimator does not account for.
                 tokens += TOOLCALL_OVERHEAD_TOKENS + estimateTextTokens(toolCall.name()) + estimateTextTokens(toolCall.arguments());
             }
             return tokens;
@@ -729,7 +659,6 @@ public class AgentLoopRunner {
         return tokens + estimateTextTokens(message.getText());
     }
 
-    /** Exact token count of a text span via jtokkit (0 for null/empty); callers add the structural per-message/per-tool-call overheads the estimator does not see. */
     private static long estimateTextTokens(@Nullable String text) {
         if (text == null || text.isEmpty()) {
             return 0;
@@ -737,7 +666,6 @@ public class AgentLoopRunner {
         return TEXT_TOKEN_ESTIMATOR.estimate(text);
     }
 
-    /** The real prompt-token count the response reports, or 0 if the provider did not supply usage. */
     private static long promptTokensOf(@Nullable ChatResponse response) {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return 0;
@@ -771,7 +699,7 @@ public class AgentLoopRunner {
     }
 
     private static String truncateMiddle(String data) {
-        // head + marker + tail stays within MAX_TOOL_RESPONSE_CHARS.
+        // head + marker + tail must stay within MAX_TOOL_RESPONSE_CHARS.
         int head = MAX_TOOL_RESPONSE_CHARS / 4;
         int elidedEstimate = data.length() - MAX_TOOL_RESPONSE_CHARS;
         String marker = "\n[… " + elidedEstimate
@@ -844,14 +772,13 @@ public class AgentLoopRunner {
             cut = i;
         }
         cut = snapToTurnStart(conversation, cut);
-        // Push the cut forward until prefix + summary + kept tail all fit under the budget.
         long budget = (long) contextWindowTokens - RESERVE_TOKENS;
         long fixed = estimateTokens(conversation, 0, protectedPrefix) + SUMMARY_MAX_OUTPUT_TOKENS + MESSAGE_OVERHEAD_TOKENS;
         while (cut < n && fixed + estimateTokens(conversation, cut, n) > budget) {
             cut = snapToTurnStart(conversation, cut + 1);
         }
         if (cut == n) {
-            // Even the minimal tail does not fit: the conversation becomes summary-only. Rare (per-result caps bound messages), so make it observable.
+            // Even the minimal tail does not fit, so the conversation becomes summary-only. The per-result caps make this unreachable in practice; log it if it ever happens.
             log.warn("Compaction kept no recent turns verbatim: the context did not fit even minimally (window {} tokens, {} messages).", contextWindowTokens, n);
         }
         return cut;
@@ -874,12 +801,9 @@ public class AgentLoopRunner {
         }
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
-        // OpenAiChatOptions with no tool callbacks so the summarizer cannot call tools; the output cap keeps the summary small. Must be OpenAiChatOptions (not a generic
-        // ChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a DefaultChatOptions would throw ClassCastException. Model pinned
-        // as in the agent loop (see configuredModel()).
-        // Compaction is a bounded factual summary, not an authoring decision. Use explicit low reasoning when the provider enables reasoning so its server default cannot consume
-        // the
-        // small summary allowance; omit the field for providers that do not support it.
+        // No tool callbacks, so the summarizer cannot call tools. The options must be OpenAiChatOptions rather than a generic ChatOptions: OpenAiChatModel#buildRequestPrompt
+        // casts the runtime options, so a DefaultChatOptions throws ClassCastException. Compaction is a bounded factual summary, not an authoring decision, so reasoning effort
+        // is pinned low where the provider supports it — a server-side reasoning default would otherwise consume the whole summary allowance.
         OpenAiChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null)
                 .maxTokens(null).maxCompletionTokens(null);
         int summaryOutputTokens = Math.min(SUMMARY_MAX_OUTPUT_TOKENS, configuredTurnTokenLimit().tokens());

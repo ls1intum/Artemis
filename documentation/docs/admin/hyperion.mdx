@@ -9,7 +9,7 @@ import Callout from '../../src/components/Callout/Callout';
 
 # Hyperion Service
 
-Hyperion extends Artemis with AI-assisted authoring features for programming exercises. It offers consistency checks for problem statements and exercise artefacts and can rewrite instructions with the help of generative AI. The functionality is provided entirely by Artemis and Spring AI, so no EduTelligence service needs to be deployed.
+Hyperion extends Artemis with AI-assisted authoring features for programming exercises. It offers consistency checks for problem statements and exercise artefacts and can rewrite instructions with the help of generative AI. On LocalCI/LocalVC deployments it can additionally generate or adapt a complete exercise — problem statement, template, solution, and tests — with a sandboxed agent. The functionality is provided entirely by Artemis and Spring AI, so no EduTelligence service needs to be deployed.
 
 <Callout variant={CalloutVariant.info}>
     For local development setups using LM Studio, refer to the [Spring AI Development Guide](/developer/spring-ai) in the Developer documentation.
@@ -41,7 +41,7 @@ artemis:
 ```
 
 This enables the general Hyperion authoring features, such as consistency checks and problem-statement rewriting. Agentic whole-exercise generation and adaptation have a separate,
-off-by-default safety switch. Enable them only after configuring the LocalCI capacity and admission controls below:
+off-by-default safety switch:
 
 ```yaml
 artemis:
@@ -53,6 +53,13 @@ artemis:
 
 Both properties must be `true`, and the server must load the `core`, `localci`, and `localvc` profiles. Leaving `artemis.hyperion.exercise-generation.enabled` unset or `false`
 keeps the whole-exercise endpoints and orchestration components unregistered without disabling the other Hyperion features.
+
+<Callout variant={CalloutVariant.warning}>
+    These two properties alone are not sufficient. Generation additionally needs a build agent that is explicitly configured to host sandboxes — see{' '}
+    <a href="#configure-exercise-generation">Configure exercise generation</a>. Until then, every start request is rejected with{' '}
+    <code>503 generationCapacityUnavailable</code>, including on a single-node deployment that runs the build agent in the same process.
+</Callout>
+
 Configuration flags and capacity limits are read at startup; restart the affected Artemis server and build-agent processes after changing them.
 
 ### Provider data boundary
@@ -61,23 +68,10 @@ Whole-exercise generation sends the instructor's request, problem statement, rel
 courses and repositories whose contents may be processed under that provider's data policy. Keep credentials out of exercise repositories and enforce the institution's normal
 secret-scanning or pre-receive controls before content reaches Artemis.
 
-Hyperion blocks a narrow set of high-confidence credential files and token formats as defense in depth. This is not complete data-loss prevention: generic, novel, or transformed
-secrets may not be recognized. The sandbox's disabled network prevents generated code from making network requests, but it does not prevent Artemis itself from sending exercise
-context to the configured model provider.
-
-For multi-node deployments, configure the expected Hazelcast data-member topology explicitly on every Artemis node before enabling exercise generation:
-
-```yaml
-jhipster:
-    cache:
-        hazelcast:
-            expected-data-member-count: 3
-```
-
-Set this value to the exact number of core/data Hazelcast members. Do not count standalone build-agent clients or lite members. Artemis derives a strict majority from this value
-for Hyperion's protected maps and checks the locally visible member count while holding the exercise's coordination lock before each generation or mutation-slot admission. A
-membership change still has Hazelcast's normal failure-detection delay, so this is cooperative protection rather than a CP fence. When scaling, stop new generation, drain active
-jobs, update every core node consistently, verify the complete cluster, and only then reopen admission.
+Hyperion blocks a narrow set of high-confidence credential files and token formats as defense in depth: dotenv files, well-known credential and cloud/CLI configuration files,
+private-key files and keystores, PEM private-key blocks, and AWS/GitHub/GitLab token formats. This is not data-loss prevention and not an authorization boundary — generic
+assignments, high-entropy strings, JWTs, and transformed or novel secrets are not recognized. The sandbox's disabled network prevents generated code from making network requests,
+but it does not prevent Artemis itself from sending exercise context to the configured model provider.
 
 ## Configure Spring AI
 
@@ -98,13 +92,21 @@ spring:
                 temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
 
-The OpenAI SDK owns bounded transport retries. Hyperion itself only re-samples once when a successful response contains neither text nor tool calls; it does not add another transport-retry layer. `spring.ai.retry.*` is not used for OpenAI chat calls in this setup.
+The OpenAI SDK owns transport retries, bounded by `spring.ai.openai.max-retries`. Hyperion itself only re-samples once when a successful response contains neither text nor tool
+calls; it does not add another transport-retry layer, and `spring.ai.retry.*` is not used for OpenAI chat calls in this setup.
 
-Set `artemis.hyperion.agent.context-window-tokens` to the provider's usable context window (the default is 128,000). Hyperion uses
-`max_completion_tokens` by default and leaves enough room for reasoning-model output: 16,384 tokens for agent turns and up to 32,768 for semantic review. If an older
-OpenAI-compatible endpoint only accepts `max_tokens`, configure `spring.ai.openai.chat.options.max-tokens` explicitly. Otherwise, use
-`spring.ai.openai.chat.options.max-completion-tokens` only when the provider requires a lower output ceiling. Do not configure both fields. Hyperion clamps agent and reviewer
-requests to the configured provider ceiling and remaining context; low ceilings can make the fail-closed review return `NEEDS_REVIEW`.
+Set `artemis.hyperion.agent.context-window-tokens` to the provider's usable context window (the default is 128,000). Hyperion sends `max_completion_tokens` by default, sized to
+leave room for reasoning-model output: 16,384 tokens per agent turn, and between 4,096 and 32,768 for a review pass depending on how much of the exercise that pass inspects. It
+clamps every request to the remaining context, and fails the call rather than sending a request with too little room left.
+
+Override the ceiling only if the provider demands it:
+
+- If an older OpenAI-compatible endpoint accepts only `max_tokens`, set `spring.ai.openai.chat.options.max-tokens`. Hyperion then switches to that wire field.
+- If the provider enforces a lower output ceiling than the defaults above, set `spring.ai.openai.chat.options.max-completion-tokens`.
+- Do not set both: `max-completion-tokens` silently wins and `max-tokens` is ignored.
+
+A configured value replaces the built-in per-turn default in both directions, so raising it also raises the agent-turn ceiling. Setting it too low does not fail loudly — review
+responses are truncated, the fail-closed quality review reports itself unavailable, and runs finish as **Needs review** even when the exercise is mechanically sound.
 
 ### Azure OpenAI / Microsoft Foundry
 
@@ -234,18 +236,17 @@ management:
                 enabled: false
 ```
 
-## Verifying the integration
+## Configure exercise generation
 
-1. Restart the Artemis server and confirm that `hyperion` appears in `activeModuleFeatures` on `/management/info`.
-2. Log in as an instructor and open the programming exercise problem statement editor. New Hyperion actions appear in the markdown editor toolbar (rewrite and consistency check).
-3. Run a consistency check to ensure the LLM call succeeds. Inspect the server logs for `Hyperion` entries if the request fails; misconfigured credentials and missing network egress are the most common causes.
-4. If whole-exercise generation is enabled, confirm that `hyperion-exercise-generation` also appears in `activeModuleFeatures`, then open a supported unreleased Java programming
-   exercise and confirm that **Generate exercise** is available. If it is absent, verify the dedicated property and the `core`, `localci`, and `localvc` profiles before checking
-   provider or capacity settings.
+Skip this section if `artemis.hyperion.exercise-generation.enabled` is `false`. Otherwise work through all three parts — build-agent hosting, cluster topology, and admission
+controls — before the feature is usable.
 
-## Build-agent placement (multi-node)
+### Build-agent placement
 
 Agentic exercise generation runs inside a **resource-bounded, network-isolated Docker sandbox on a LocalCI build agent**. The agent can be shared with normal LocalCI work or dedicated to generation. Each generation job uses exactly one slot and one sandbox container from workspace setup through automated checks. The container is released before repository persistence and LocalCI synchronization. Jobs can run for several minutes and consume CPU, memory, and Docker resources throughout.
+
+Core nodes reach the sandbox over a cluster relay addressed by build-agent `short-name`. There is no direct in-process shortcut, so a deployment that runs `core` and `buildagent`
+in the same JVM uses the same relay and the same per-agent capacity setting as a distributed one.
 
 To keep generation from ever competing with exam builds by accident, **hosting is opt-in per build agent and off by default**:
 
@@ -263,26 +264,45 @@ artemis:
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    Leave <code>max-generation-sandbox-slots</code> at <strong>0</strong> on every exam-critical build agent. Set it to the measured number of generation jobs that may run
-    concurrently on that agent: each job reserves one slot and runs one container. On a single-node integrated deployment (core + build agent on one host), the co-located node
-    still uses the relay and this capacity setting.
+    <code>max-generation-sandbox-slots</code> defaults to <strong>0</strong>, which means the agent never hosts generation. Leave it at 0 on every exam-critical build agent. At
+    least one agent in the cluster must be raised above 0 or no generation can start anywhere.
 </Callout>
 
 Generation slots and normal LocalCI build slots are separate admission limits. Artemis does not dynamically subtract one from the other. On a mixed host, set
-`specify-concurrent-builds: true` and choose `concurrent-build-size` so the combined CPU and memory ceilings of normal builds and generation sandboxes fit the host. Start with one
-generation slot on a mixed non-exam agent. On a dedicated generation agent, set `run-build-jobs: false` and also start with one generation slot. Keep generation disabled on exam agents.
-Increase these values only after representative load tests meet defined CPU-pressure, throttling, latency, memory, Docker-disk, and failure-rate thresholds.
+`specify-concurrent-builds: true` and choose `concurrent-build-size` so the combined CPU and memory ceilings of normal builds and generation sandboxes fit the host.
+
+Start with one generation slot, on a mixed non-exam agent or on a dedicated agent with `run-build-jobs: false`. Raise it one step at a time, and only after a load test
+representative of the host's real mix leaves headroom in CPU pressure and throttling, build latency, memory, and Docker disk.
 
 Additional controls:
 
-- **Pausing a build agent** (from the LocalCI build-agent admin page) stops it accepting **new** Hyperion generation jobs, so you can drain it before maintenance or an exam. In-flight jobs finish and their containers are removed cleanly.
+- **Pausing a build agent** (from the LocalCI build-agent admin page) stops it accepting **new** Hyperion generation jobs, so you can drain it before maintenance or an exam. In-flight jobs keep their containers and run to completion; only normal build-job intake stops immediately.
 - Orphaned sandbox containers are checked every `generation-sandbox-cleanup-interval-minutes` (default 15) and reaped after `generation-sandbox-idle-timeout-minutes` (default 90).
 
-Every concurrently running build-agent process must have a unique `short-name`. Do not overlap two process incarnations with the same short name during a rolling replacement: relay routing and sandbox reconciliation use that value as the agent identity. Restarting an agent removes its prior generation containers rather than resuming them. If an agent is renamed, remove containers associated with its previous short name manually.
+Every concurrently running build-agent process must have a unique `short-name`; Artemis validates its format but cannot detect a duplicate. Two live processes sharing one short
+name overwrite each other's capacity advertisement, and one of them stops answering relay requests — including teardown for sandboxes it owns. Do not overlap two process
+incarnations during a rolling replacement. Restarting an agent removes its prior generation containers rather than resuming them; if an agent is renamed, remove containers
+associated with its previous short name manually.
 
-## Generation admission controls
+### Cluster topology
 
-Agentic generation can run for several minutes and consume many model tokens. Configure these server-side limits before enabling it for production courses:
+Configure the expected Hazelcast data-member topology explicitly on every Artemis node before enabling exercise generation:
+
+```yaml
+jhipster:
+    cache:
+        hazelcast:
+            expected-data-member-count: 3
+```
+
+Set this value to the exact number of core/data Hazelcast members. Do not count standalone build-agent clients or lite members. Artemis derives a strict majority from this value
+for Hyperion's protected maps and checks the locally visible member count while holding the exercise's coordination lock before each generation or mutation-slot admission. A
+membership change still has Hazelcast's normal failure-detection delay, so this is cooperative protection rather than a CP fence. When scaling, stop new generation, drain active
+jobs, update every core node consistently, verify the complete cluster, and only then reopen admission.
+
+### Admission controls
+
+Agentic generation can run for several minutes and consume many model tokens. Review these server-side limits before enabling it for production courses:
 
 | Property                                                        | Default     | Purpose                                                                                                                                                                                                                                                                    |
 | --------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -291,23 +311,40 @@ Agentic generation can run for several minutes and consume many model tokens. Co
 | `artemis.hyperion.agent.max-job-duration`                       | `PT30M`     | Admission-to-cancellation deadline. Cancellation is cooperative: provider, sandbox, verification, and repository operations must also have bounded timeouts.                                                                                                               |
 | `artemis.hyperion.agent.context-window-tokens`                  | `128000`    | Usable provider context window. Hyperion keeps prompt and completion headroom within this limit; set it to the deployed model/proxy's real limit.                                                                                                                          |
 | `artemis.hyperion.agent.max-turns`                              | `60`        | Per-attempt model-turn cap. The orchestrator can still retry verification-guided near misses (the attempt ceiling is derived from `max-semantic-repairs`), but one runaway attempt is bounded.                                                                                                  |
-| `artemis.hyperion.exercise-generation.max-semantic-repairs`     | `6`         | How many quality-repair rounds a run may spend after it first verifies mechanically. Clamped to 1..12. The attempt ceiling is derived from it, so raising it lengthens a worst-case run.                                                     |
-| `artemis.hyperion.agent.max-tokens-per-job`                     | `3000000`   | Per-job post-response cost guard and the amount reserved against enabled rolling budgets while a job runs. The job is cancelled before the next agent turn once reached.                                                                                                   |
+| `artemis.hyperion.exercise-generation.max-semantic-repairs`     | `6`         | How many quality-repair rounds a run may spend after it first verifies mechanically. Values outside 1–12 fall back to the default rather than being clamped. The attempt ceiling is derived from it, so raising it lengthens a worst-case run.                                                     |
+| `artemis.hyperion.agent.max-tokens-per-job`                     | `3000000`   | Per-job post-response cost guard and the amount reserved against enabled rolling budgets while a job runs. Once reached, no further model call is made; an already-verified exercise is still saved rather than discarded.                                                                                                   |
 | `artemis.hyperion.agent.token-budget-window`                    | `PT24H`     | Rolling window for admission budgets.                                                                                                                                                                                                                                      |
-| `artemis.hyperion.agent.admission-max-tokens-per-user`          | `12000000`  | Rolling per-user admission limit. `0` disables the limit.                                                                                                                                                                                                                  |
-| `artemis.hyperion.agent.admission-max-tokens-per-course`        | `120000000` | Rolling per-course admission limit. `0` disables the limit.                                                                                                                                                                                                                |
-| `artemis.hyperion.agent.admission-max-tokens-global`            | `600000000` | Rolling global admission limit. `0` disables the limit.                                                                                                                                                                                                                    |
-| `artemis.hyperion.agent.owner-heartbeat-interval`               | `PT15S`     | How often the worker node refreshes its ownership heartbeat.                                                                                                                                                                                                               |
-| `artemis.hyperion.agent.stale-job-timeout`                      | `PT35M`     | How long another node waits before recovering a job whose owner left the cluster. Keep this above `max-job-duration`.                                                                                                                                                      |
-| `artemis.hyperion.agent.stale-job-scan-ms`                      | `60000`     | Scan interval for cooperative deadline/stale-slot cleanup.                                                                                                                                                                                                                 |
-| `artemis.hyperion.agent.provider-hard-failure-cooldown`         | `PT5M`      | Shared cooldown for provider quota/auth/configuration failures; transient rate limits still use per-call backoff.                                                                                                                                                          |
+| `artemis.hyperion.agent.admission-max-tokens-per-user`          | `12000000`  | Rolling per-user admission limit. `0` disables the limit; any other value must be at least `max-tokens-per-job` or startup fails.                                                                                                                                                                  |
+| `artemis.hyperion.agent.admission-max-tokens-per-course`        | `120000000` | Rolling per-course admission limit. Same rules as the per-user limit.                                                                                                                                                                                                                |
+| `artemis.hyperion.agent.admission-max-tokens-global`            | `600000000` | Rolling global admission limit. Same rules as the per-user limit.                                                                                                                                                                                                                    |
+| `artemis.hyperion.agent.owner-heartbeat-interval`               | `PT15S`     | How often the worker node refreshes its ownership heartbeat. Must be shorter than `max-job-duration`.                                                                                                                                                               |
+| `artemis.hyperion.agent.stale-job-timeout`                      | `PT35M`     | How long another node waits before reclaiming a job whose owner left the cluster. Must exceed `max-job-duration`. Slots held by a run past its point of no return, and external-mutation slots, are never reclaimed automatically.                                                                                                                                                      |
+| `artemis.hyperion.agent.stale-job-scan-ms`                      | `60000`     | Interval of the scan that reclaims stale slots. Per-job deadlines are enforced separately by the owning node, not by this scan.                                                                                                                                                                 |
+| `artemis.hyperion.agent.provider-hard-failure-cooldown`         | `PT5M`      | Cluster-wide cooldown after a provider quota, billing, authentication, or model-configuration failure, so a broken provider does not burn every queued run. Rate limits (HTTP 429) do not open it; they are retried by the OpenAI SDK.                                                                                                                                                          |
+| `artemis.hyperion.generation.test-case-sync-timeout`            | `PT10M`     | How long persistence waits for the LocalCI tests build that publishes the exercise's test cases. Allow for CI queueing plus a full build. On timeout the run ends as `PARTIAL` and automatic undo is no longer offered.                                                                                                                    |
+| `artemis.hyperion.generation.test-case-sync-poll`               | `PT3S`      | Poll interval while waiting for that build result.                                                                                                                                                                                                                          |
+| `artemis.hyperion.agent.staged-generation`                      | `true`      | Enforces the design → solution → template → tests → statement stage order with a per-stage gate. Applies to Java `GENERATE` runs only; adaptation and other languages ignore it.                                                                                                                             |
+| `artemis.hyperion.agent.staged-context`                         | `CONTINUOUS` | `CONTINUOUS` carries one conversation across all five stages; `FRESH` starts each stage blank, which lowers per-call context at the cost of losing earlier reasoning. Any other value fails startup.                                                                                                          |
+| `artemis.hyperion.agent.transcript-dir`                         | unset       | Diagnostics only. When set to a directory, Hyperion writes each finished session's full conversation there as Markdown. See the data-protection note below before enabling it.                                                                                                                              |
+
+## Verifying the integration
+
+1. Restart the Artemis server and confirm that `hyperion` appears in `activeModuleFeatures` on `/management/info`.
+2. Log in as an instructor and open the programming exercise problem statement editor. New Hyperion actions appear in the markdown editor toolbar (rewrite and consistency check).
+3. Run a consistency check to ensure the LLM call succeeds. Inspect the server logs for `Hyperion` entries if the request fails; misconfigured credentials and missing network egress are the most common causes.
+
+If whole-exercise generation is enabled, continue:
+
+4. Confirm that `hyperion-exercise-generation` also appears in `activeModuleFeatures`. If it does not, the dedicated property is off or one of the `core`, `localci`, `localvc` profiles is missing.
+5. Open a Java Maven programming exercise that has no student participations, no auxiliary repositories, and a release date in the future, and confirm that **Generate exercise** is offered.
+6. Start one generation run end to end. A `503` at this point means no build agent is advertising a free generation slot — check `max-generation-sandbox-slots` on the agents and that they are not paused.
 
 ## Operational considerations
 
-- **Capacity:** Sandboxes inherit the build agent's `default-docker-flags` (2 CPUs, 2 GiB memory, no container swap, and 1,000 PIDs by default). These are elastic hard ceilings, not reservations: an idle container does not reserve 2 GiB, while a busy container may consume up to its limits. Generation and normal LocalCI use separate admission pools, so a mixed host must be sized for their combined configured ceilings. A five-job generation-only profile is not evidence that five jobs are safe beside sustained LocalCI traffic. Start with one generation slot per host, then increase one step at a time only when representative load tests preserve headroom. Size core workers, aggregate sandbox slots, normal build slots, provider concurrency, and token budgets together.
+- **Capacity:** Sandboxes inherit the build agent's `default-docker-flags` (2 CPUs, 2 GiB memory, no container swap, and 1,000 PIDs by default), then additionally drop all capabilities, disable networking, and mount a read-only root filesystem. The resource values are hard ceilings, not reservations: an idle container does not hold 2 GiB, while a busy one may consume up to its limits. Generation and normal LocalCI use separate admission pools, so a mixed host must be sized for their combined configured ceilings, and a generation-only benchmark does not predict behaviour beside sustained LocalCI traffic. Size core workers, aggregate sandbox slots, normal build slots, provider concurrency, and token budgets together.
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the full problem statement, so costs scale with exercise size. Keep provider context/output limits aligned with `max-tokens-per-job`; the server token guard runs after provider responses are recorded. If completed usage cannot be recorded, or a worker disappears while provider usage is uncertain, Hyperion retains the worst-case reservation for the configured budget window. Provider retries and timed-out calls can still consume quota without returning a response, so server-side counters are not a hard spend ceiling. The finite defaults allow several worst-case jobs but are not cost recommendations; lower them to match provider pricing and course size.
 - **Multi-node ownership:** Hyperion uses shared job slots, owner heartbeats, and repository ownership checks to reduce duplicate writers. This is cooperative fencing, not a CP transaction. If a node disappears while saving, Artemis marks the run partial, releases capacity, and requires repository review before use.
-- **Break-glass recovery:** External mutation slots never expire automatically because the original HTTP, SSH, Git, or database writer cannot be fenced by Hazelcast membership alone. Before calling the admin recovery endpoint, terminate the recorded owner process, verify repository and database activity has stopped, restore the configured Hazelcast topology, and inspect the affected exercise. Recovery requires the exact slot token plus a nonblank incident reason and writes a persistent audit event before removing the slot; if audit persistence fails, recovery remains blocked.
-- **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production.
+- **Break-glass recovery:** External mutation slots never expire automatically because the original HTTP, SSH, Git, or database writer cannot be fenced by Hazelcast membership alone. Before calling the admin recovery endpoint, terminate the recorded owner process, verify repository and database activity has stopped, restore the configured Hazelcast topology, and inspect the affected exercise. Recovery requires the exact slot token plus a nonblank incident reason, and it only proceeds once the owning node is gone from the cluster. A persistent audit event is written before the slot is removed; if audit persistence fails, recovery remains blocked.
+- **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production. `artemis.hyperion.agent.transcript-dir` additionally writes prompts, repository file contents, and tool output to local disk without redaction; leave it unset outside deliberate debugging, and treat any such directory as sensitive.
 - **Sandbox image trust:** Use only institutionally approved, immutable build images that contain no credentials. Generation refuses unbounded CPU, memory, or PID settings and disables swap, host mounts, capabilities, and networking, but the build-agent process still controls the Docker daemon and must run on a trusted host.
 - **Exam safety:** Because generation shares build-agent hosts with exam builds, keep `max-generation-sandbox-slots` at 0 on exam agents (see _Build-agent placement_).

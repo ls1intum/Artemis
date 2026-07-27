@@ -13,17 +13,15 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 /**
- * Narrowly-scoped database unit that couples the problem-statement/title compare-and-set write with the resulting task rebuild, so the two can never be observed half-applied.
+ * Couples the problem-statement/title compare-and-set write with the task rebuild it drives, so the two can never be observed half-applied.
  * <p>
- * {@link ProgrammingExerciseRepository#updateProblemStatementAndTitleIfUnchanged} and {@link ProgrammingExerciseTaskService#updateTasksFromProblemStatement} are each their own
- * separate database round trip (the latter does an unguarded delete-then-saveAll). Without a shared transaction, a failure between the two leaves a committed problem
- * statement/title paired with a half-rebuilt (or stale) task set. This class exists solely so {@code @Transactional} can wrap exactly those two calls and nothing else: no Git
- * operation, CI trigger, or other network I/O happens inside the annotated method, keeping the transaction short-lived as required by the project's narrow-{@code @Transactional}
- * convention (see {@code documentation/docs/developer/guidelines} and {@link de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService} for the
- * broad-scope counter-example this deliberately avoids).
+ * {@link ProgrammingExerciseRepository#updateProblemStatementAndTitleIfUnchanged} and {@link ProgrammingExerciseTaskService#updateTasksFromProblemStatement} are separate database
+ * round trips, the latter an unguarded delete-then-saveAll, so without a shared transaction a failure between them leaves a committed statement paired with a half-rebuilt task
+ * set. This class exists solely so {@code @Transactional} can wrap exactly those two calls: no Git operation, CI trigger, or other network I/O may enter the annotated method,
+ * keeping the transaction short-lived as the project's narrow-{@code @Transactional} convention requires (see {@code documentation/docs/developer/guidelines}).
  * <p>
- * Kept as its own Spring bean (rather than a private method on {@link GenerationPersistenceService}) because {@code @Transactional} only takes effect through the Spring AOP
- * proxy; calling an annotated method on {@code this} from within the same class silently skips the transactional advice.
+ * It must stay its own Spring bean rather than a private method on {@link GenerationPersistenceService}: {@code @Transactional} takes effect only through the AOP proxy, so a
+ * same-class call would silently skip the advice.
  */
 @Lazy
 @Service
@@ -40,16 +38,14 @@ class ProblemStatementMetadataUpdateService {
     }
 
     /**
-     * Updates the problem statement/title (compare-and-set against the currently persisted values) and rebuilds the exercise's tasks from the new problem statement as a single
-     * database transaction. If the task rebuild fails after the metadata write, the whole unit rolls back so the caller never has to reconcile a committed statement against a
-     * half-deleted task set.
+     * Compare-and-set the problem statement/title, then rebuild the exercise's tasks from it, in one transaction: a rebuild failure rolls the metadata write back with it.
      *
-     * @param exercise                the in-memory exercise to mutate on success (so the caller's copy reflects the new statement/title for any later logic in the same call)
+     * @param exercise                mutated in memory on success, so the caller's copy reflects the new statement/title
      * @param targetProblemStatement  the problem statement to write
      * @param targetTitle             the title to write
-     * @param currentProblemStatement the problem statement expected to currently be persisted (CAS guard)
-     * @param currentTitle            the title expected to currently be persisted (CAS guard)
-     * @return the number of updated rows (0 if the compare-and-set guard did not match; 1 on success)
+     * @param currentProblemStatement the problem statement expected to currently be persisted
+     * @param currentTitle            the title expected to currently be persisted
+     * @return the number of updated rows (0 when the compare-and-set guard did not match, 1 on success)
      */
     @Transactional
     int updateProblemStatementAndTasks(ProgrammingExercise exercise, String targetProblemStatement, String targetTitle, String currentProblemStatement, String currentTitle) {

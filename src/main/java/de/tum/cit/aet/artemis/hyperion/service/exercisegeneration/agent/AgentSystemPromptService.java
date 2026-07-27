@@ -22,22 +22,18 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 
 /**
- * Builds the system prompt for the exercise-generation agent.
+ * Builds the system prompt for the exercise-generation agent: the verifier contract, repository layout, self-check workflow, and language conventions the model cannot infer from
+ * an empty scaffold.
  * <p>
- * Encodes the verifier contract, repository layout, self-check workflow, and language-specific conventions that the model cannot infer from an empty scaffold.
- * <p>
- * Two families of prompts share the same section constants so the rules never drift between them: {@link #build(ProgrammingExercise)} /
- * {@link #build(ProgrammingExercise, GenerationMode)}
- * build the full single-loop prompt (the only path for {@link GenerationMode#ADAPT}, and the fallback for a non-staged {@link GenerationMode#GENERATE} run), while
- * {@link #buildStage(ProgrammingExercise, GenerationStage)} builds a shorter, stage-scoped prompt for the orchestrator-enforced staged workflow — one bounded agent loop per
- * {@link GenerationStage}, each seeing only its own stage's instructions.
+ * Two prompt families share the same section constants so their rules cannot drift apart. {@link #build(ProgrammingExercise, GenerationMode)} produces the single-loop prompt —
+ * the only path for {@link GenerationMode#ADAPT} and the fallback for a non-staged {@link GenerationMode#GENERATE} run. {@link #buildStage} produces a shorter, stage-scoped
+ * prompt for the orchestrator-enforced staged workflow: one bounded agent loop per {@link GenerationStage}, each seeing only its own stage's instructions.
  */
 @Lazy
 @Service
@@ -48,7 +44,6 @@ public class AgentSystemPromptService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    /** Normalized default template readmes, cached by language/project-type key — loaded at most once per configuration. */
     private final Map<String, Optional<String>> normalizedDefaultReadmes = new ConcurrentHashMap<>();
 
     public AgentSystemPromptService(SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService) {
@@ -57,10 +52,9 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Whether the exercise's problem statement is a real, instructor-authored specification the generation must honour. A statement that is merely the DEFAULT template readme
-     * (the client seeds every new exercise with {@code templates/<language>[/<projectType>]/readme} so the field is never empty) is NOT a specification — treating it as one
-     * made the agent faithfully rebuild the classic sorting exercise from a blank create form and silently skipped the SPEC stage. Trivially short statements are also not
-     * authoritative.
+     * Whether the exercise's problem statement is a real, instructor-authored specification the generation must honour. A non-empty statement is not sufficient evidence: the
+     * client seeds every new exercise with {@code templates/<language>[/<projectType>]/readme}, so a blank create form still reaches the server carrying that sample exercise.
+     * Accepting it as a specification would make the agent faithfully rebuild the sample and skip the SPEC stage.
      *
      * @param exercise the exercise whose statement is judged
      * @return {@code true} only for a non-trivial statement that does not match the exercise's default template readme
@@ -73,7 +67,6 @@ public class AgentSystemPromptService {
         return !normalizeStatement(statement).equals(defaultTemplateReadme(exercise).orElse(null));
     }
 
-    /** The normalized default template readme for the exercise's language/project type, empty when no template readme resource exists. */
     private Optional<String> defaultTemplateReadme(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() == null) {
             return Optional.empty();
@@ -96,19 +89,18 @@ public class AgentSystemPromptService {
                 }
             }
             catch (IOException | RuntimeException e) {
-                // Fall through to the next candidate; an unreadable template readme must never break prompt building.
+                // Fall through to the next candidate: an unreadable template readme must never break prompt building.
             }
         }
         return Optional.empty();
     }
 
-    /** Whitespace-insensitive normalization, so line-ending or trailing-newline differences between the client-loaded readme and the resource never defeat the comparison. */
+    /** Whitespace-insensitive, because the statement reaches the server over HTTP and its line endings need not match the classpath resource it is compared against. */
     private static String normalizeStatement(String statement) {
         return statement.replaceAll("\\s+", " ").strip();
     }
 
-    // Shared section constants. Every one of these is reused verbatim by both the legacy single-loop build() and the staged buildStage(), so the underlying rules can never drift
-    // between the two prompt families.
+    // Sections shared verbatim by the single-loop build() and the staged buildStage(), so a rule cannot drift between the two prompt families.
 
     private static final String INTRO = """
             You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox.
@@ -199,10 +191,9 @@ public class AgentSystemPromptService {
 
             """;
 
-    // The GENERATE-mode staged workflow. Each phase's instructions are their own constant so buildStage() can select exactly one, while the legacy single-loop build() still sees
-    // the executable-build and final-statement block (GENERATE_GROUNDED_WORKFLOW below) — the wording is never duplicated between the two call sites. STAGE_SPEC_INSTRUCTIONS is
-    // deliberately NOT part of the legacy composition: the SPEC stage only exists under the orchestrator's gate (the legacy loop runs when a specification already exists —
-    // an instructor statement or a repair prompt carrying the frozen spec contract), and including it would push the full prompt past its size budget for nothing.
+    // One constant per stage so buildStage() can select exactly one while the single-loop build() composes several. STAGE_SPEC_INSTRUCTIONS is excluded from that composition:
+    // the single-loop path runs only when a specification already exists (an instructor statement, or a repair prompt carrying the frozen contract), so including it would cost
+    // prompt budget for guidance that can never apply.
 
     private static final String STAGED_WORKFLOW_INTRO = """
             Build the executable exercise in coherent learning increments: for each risk-chosen seam, update the canonical solution, derived template, behavioral evidence, and
@@ -316,7 +307,6 @@ public class AgentSystemPromptService {
             `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
             """;
 
-    /** The full GENERATE-mode fallback workflow uses the same coherent executable-build and final-statement instructions as the staged path. */
     private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
 
     private static final String ADAPT_GROUNDED_WORKFLOW = """
@@ -329,16 +319,11 @@ public class AgentSystemPromptService {
             and every task-bound behavioural test fails on the template (a structural check may already pass). Run `verify` once more. Submit only after `MECHANICAL PRECHECK: PASS`; authoritative post-loop verification determines save eligibility, and quality review may request repairs.
             """;
 
-    /**
-     * Prepended in {@link GenerationMode#ADAPT} to require a targeted revision of the seeded exercise while preserving unrelated work.
-     */
     private static final String ADAPT_MODE_FRAMING = """
             ADAPT MODE: revise the existing seeded exercise. Apply the user's feedback with the smallest coherent change, preserve requirements and artifacts where the feedback is silent,
             and keep the statement, solution, template, tests, and task bindings consistent. Do not rewrite unrelated work. The contract below still applies.
 
             """;
-
-    // Staged-workflow-only constants, used solely by buildStage().
 
     private static final String STAGE_INTRO = """
             You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox. The orchestrator runs generation as a sequence of bounded stages;
@@ -346,7 +331,7 @@ public class AgentSystemPromptService {
 
             """;
 
-    /** The one canonical statement of the seeded-harness immutability rule, shared by both prompt families so the wording can never drift between them again. */
+    /** Single source of the seeded-harness immutability rule; both prompt families interpolate it so the wording cannot drift between them. */
     private static final String HARNESS_IMMUTABILITY_RULE = "Build manifests, wrappers, plugins, reporter configuration, commands, placeholders, and report paths in solution/, "
             + "template/, and tests/ are seeded and managed by Artemis; never edit or replace them.";
 
@@ -358,11 +343,6 @@ public class AgentSystemPromptService {
 
             """.formatted(HARNESS_IMMUTABILITY_RULE);
 
-    /**
-     * How often and how cheaply to call {@code verify}/{@code submit} in the staged workflow: every stage's check is delegated to {@link StageCheckService} at that stage's own
-     * depth (a free scan, one build, or the full differential), so the agent should call it once per meaningful milestone, not after every edit, and trust the exit gate to reuse
-     * a still-clean pass instead of re-earning it.
-     */
     private static final String STAGE_VERIFICATION_CADENCE = """
             VERIFICATION CADENCE
             Finish a coherent milestone, call `verify`, fix what it reports in the owning increment, and call `verify` again — repeat until it passes. In the executable-build
@@ -372,39 +352,27 @@ public class AgentSystemPromptService {
 
             """;
 
-    /**
-     * The line every stage prompt ends with, so the agent never confuses "this stage's `submit`" with "the whole exercise is done".
-     */
     private static final String STAGE_CLOSE_LINE = "In this stage, calling `submit` means THIS STAGE's goal is met — the orchestrator checks the stage gate and starts the next "
             + "stage; the exercise is only complete after the final stage.\n";
 
-    /**
-     * @param exercise the exercise being generated or adapted
-     * @return the full system prompt in the default {@link GenerationMode#GENERATE} framing
-     */
     public String build(ProgrammingExercise exercise) {
         return build(exercise, GenerationMode.GENERATE);
     }
 
     /**
-     * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan, while
-     * {@link GenerationMode#ADAPT} tells the agent to apply requested feedback to the seeded exercise while preserving unaffected content. The remaining guidance is shared.
-     * <p>
-     * This is the single-loop path: the agent sees the executable-build and final-statement workflow (for GENERATE) or the adaptation workflow (for ADAPT) up front and
-     * self-paces through it. It
-     * remains the only path for {@link GenerationMode#ADAPT} and the fallback for a non-staged {@link GenerationMode#GENERATE} run; see {@link #buildStage} for the
-     * orchestrator-enforced staged alternative.
+     * Builds the single-loop system prompt: the agent sees the whole workflow up front and self-paces through it. Only the framing and the workflow block branch on the mode;
+     * the contract, layout, and tool rules are shared.
      *
      * @param exercise the exercise being generated or adapted
-     * @param mode     the explicit run intent (generate a fresh exercise vs. adapt the existing one)
+     * @param mode     the run intent (author a fresh exercise vs. apply feedback to the seeded one)
      * @return the full system prompt for the given mode
      */
     public String build(ProgrammingExercise exercise, GenerationMode mode) {
         String groundedWorkflow = mode == GenerationMode.ADAPT ? ADAPT_GROUNDED_WORKFLOW : GENERATE_GROUNDED_WORKFLOW;
         String testSourceGuidance = mode == GenerationMode.ADAPT ? "Edit only exercise-specific test sources required by the feedback; preserve all others."
                 : "Replace only exercise-specific test source files.";
-        // The coherent GENERATE builder already carries the scaffold derivation rules; repeating the older artifact-stage block dilutes the risk-driven workflow. ADAPT still
-        // needs that standalone block because its surgical workflow does not restate how an existing template must be preserved.
+        // GENERATE's workflow already carries the scaffold derivation rules, so repeating them dilutes it; ADAPT's surgical workflow does not restate how an existing template
+        // must be preserved, so it needs the standalone block.
         String scaffoldGuidance = mode == GenerationMode.ADAPT ? TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE : DIFF_DISCIPLINE;
         String prompt = INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, mode) + THE_CONTRACT + scaffoldGuidance + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS
                 + layoutAndHarnessSection(exercise, testSourceGuidance) + groundedWorkflowSection(groundedWorkflow) + safeToolUseSection(exercise);
@@ -412,20 +380,18 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Builds a stage-scoped system prompt for the orchestrator-enforced staged generation workflow: one bounded agent loop per {@link GenerationStage}, gated by the orchestrator
-     * before the next stage starts. Always framed as GENERATE (staging an ADAPT run is not supported; use {@link #build(ProgrammingExercise, GenerationMode)} for that).
+     * Builds a stage-scoped system prompt: one bounded agent loop per {@link GenerationStage}, gated by the orchestrator before the next stage starts. Always framed as GENERATE;
+     * staging an ADAPT run is not supported, so {@link #build(ProgrammingExercise, GenerationMode)} handles that.
      * <p>
-     * Shares the security boundary, workspace layout, and {@code THE CONTRACT} rules with {@link #build}, but includes only the given phase's
-     * instructions plus a one-line reminder of what earlier stages already produced, and points at that artifact's style guide instead of inlining every artifact-specific
-     * section — so every stage prompt is shorter than the single-loop prompt.
+     * Shares the security boundary, workspace layout, and contract with {@link #build}, but carries only this stage's instructions plus a line naming what earlier stages
+     * produced, and points at the artifact's style guide instead of inlining every artifact-specific section.
      *
      * @param exercise the exercise being generated
      * @param stage    the stage whose instructions to build
      * @return the stage-scoped system prompt
      */
     public String buildStage(ProgrammingExercise exercise, GenerationStage stage) {
-        // The SCA constraint binds the solution (must be lint-clean) and is checked by the TESTS-stage differential; without it here, a staged run only learned about SCA
-        // when the differential rejected an already-finished solution — guaranteed late rework.
+        // The TESTS-stage differential is what enforces the SCA constraint on the solution, so the solution must learn it before it is written rather than at rejection time.
         String scaGuidance = stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
         String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
         return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
@@ -439,10 +405,6 @@ public class AgentSystemPromptService {
                 : "\nDUE-DATE CAPABILITY: this exercise has a configured due date, so a justified Testing Strategy `yes` may use an additional `AFTER_DUE_DATE` witness.\n";
     }
 
-    /**
-     * Composes one stage's section: what earlier stages already produced (empty for the first stage), that stage's STAGE N instructions, any artifact-specific rules that apply
-     * only to that stage's output, this stage's style-guide pointer, and the shared stage-close line.
-     */
     private static String stageSection(GenerationStage stage) {
         return stageWriteBoundary(stage) + switch (stage) {
             case SPEC -> STAGE_SPEC_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
@@ -462,18 +424,15 @@ public class AgentSystemPromptService {
                 + ". Do not author future-stage artifacts early, including through bash; each later artifact needs its own instructions and gate.\n";
     }
 
-    /** One line naming what earlier phases already produced, so the agent can orient itself without replaying obsolete artifact-by-artifact instructions. */
     private static String earlierStagesLine(GenerationStage stage) {
         String produced = switch (stage) {
             case SPEC -> null;
-            // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement, which then IS the specification).
             case TESTS -> "the approved specification";
             case STATEMENT -> "the specification, the reference solution, the template, and the differential tests";
         };
         return produced == null ? "" : "Earlier stages already produced: " + produced + ".\n";
     }
 
-    /** This stage's style-guide pointer: every stage points at its seeded {@code reference/style/} file. */
     private static String stylePointer(GenerationStage stage) {
         if (stage == GenerationStage.SPEC) {
             return "FORM GUIDANCE: the complete SPEC.md section and table contract is included above. Do not spend this bounded stage re-reading the worked reference or a duplicate "
@@ -488,10 +447,6 @@ public class AgentSystemPromptService {
                 + "or code.\n";
     }
 
-    /**
-     * The WORKSPACE section: the problem-statement bullet (mode- and spec-state-aware), the fixed repository layout, the reference/ and reference/style/ bullets (GENERATE only),
-     * the resolved programming language, and this exercise's build-context section.
-     */
     private String workspaceSection(ProgrammingExercise exercise, GenerationMode mode) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
@@ -520,7 +475,7 @@ public class AgentSystemPromptService {
                 """.formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
     }
 
-    /** The LAYOUT AND HARNESS section, used only by the single-loop {@link #build}: it repeats what {@link #STAGE_TOOLS_NOTE} states more tersely for the staged prompts. */
+    /** Single-loop counterpart of {@link #STAGE_TOOLS_NOTE}, which states the same rules more tersely for the stage prompts' tighter budget. */
     private String layoutAndHarnessSection(ProgrammingExercise exercise, String testSourceGuidance) {
         return """
                 LAYOUT AND HARNESS
@@ -551,12 +506,11 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * A tight, exercise-specific build-context block: the resolved project type, package/module name, checkout layout, the build phase commands the grader runs, and the report
-     * locations it parses. Derived from the same recipe behind {@code verify.sh} so it cannot drift from what the grader runs, closing the "verify.sh passed but real CI scored
-     * zero" class. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
+     * The exercise-specific build context the agent must not fight: checkout layout, the phase commands the grader runs, and the report locations it parses. Derived from the same
+     * recipe that renders {@code verify.sh}, so what the agent is told and what the grader runs cannot diverge.
      *
      * @param exercise the exercise being generated or adapted
-     * @return the build-context section (prefixed with a blank line), or {@code ""} when it cannot be resolved
+     * @return the build-context section (prefixed with a blank line), or {@code ""} when it cannot be resolved, so prompt building never fails on it
      */
     private String buildContextSection(ProgrammingExercise exercise) {
         SandboxBuildCommandService.BuildContextSummary context;
@@ -594,19 +548,17 @@ public class AgentSystemPromptService {
         return section.toString();
     }
 
-    /** Max chars of a build-phase command previewed in the prompt before eliding, so a long script is listed as a hint rather than dumped in full. */
+    /** Max chars of a build-phase command previewed in the prompt, so a long phase script is listed as a hint rather than dumped in full. */
     private static final int MAX_COMMAND_PREVIEW_CHARS = 200;
 
-    /** Collapses a (possibly multi-line) build-phase command to a single trimmed line and caps its length, so the prompt lists the command without dumping a long script. */
     private static String capCommand(String command) {
         String oneLine = command.replaceAll("\\s+", " ").trim();
         return oneLine.length() > MAX_COMMAND_PREVIEW_CHARS ? oneLine.substring(0, MAX_COMMAND_PREVIEW_CHARS) + " …" : oneLine;
     }
 
     /**
-     * Extra contract clause when static code analysis is enabled: the reference solution must be clean of findings in the graded categories, because production folds an SCA
-     * penalty
-     * into the score and the verifier rejects a solution whose build trips a graded SCA category (it would otherwise grade below 100%). Empty when SCA is disabled.
+     * Extra contract clause when static code analysis is enabled: grading folds an SCA penalty into the score, so a solution that trips a graded category cannot reach full marks
+     * and the verifier rejects it. Empty when SCA is disabled.
      */
     private static String staticCodeAnalysisGuidance(ProgrammingExercise exercise) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -616,26 +568,16 @@ public class AgentSystemPromptService {
                 + "template need not be lint-clean; only the solution must be clean.";
     }
 
-    /**
-     * Minimum stripped length for a problem statement to count as a real instructor spec (vs. an empty field or a short placeholder) that the agent must build the exercise to
-     * match.
-     */
+    /** Minimum stripped length for a problem statement to be a candidate specification rather than an empty field or a short placeholder. */
     private static final int NON_TRIVIAL_PROBLEM_STATEMENT_MIN_CHARS = 40;
 
-    /**
-     * Whether the exercise already carries a real, instructor-provided problem statement to build against, rather than authoring one from scratch (a present brief may still refine
-     * or change it). Used by both the system prompt (spec vs from-scratch framing) and the resource (mode-aware default instruction), so the two always agree.
-     *
-     * @param problemStatement the exercise's current problem statement (may be {@code null})
-     * @return {@code true} if it is non-trivial enough to be treated as the spec
-     */
     public boolean isNonTrivialProblemStatement(@Nullable String problemStatement) {
         return problemStatement != null && problemStatement.strip().length() >= NON_TRIVIAL_PROBLEM_STATEMENT_MIN_CHARS;
     }
 
     /**
-     * Resolves the instruction for a generation run. A generation brief may replace the current task; adaptation feedback is always a targeted revision that preserves artifacts
-     * where it is silent. With no brief the default matches an existing statement or authors a fresh exercise from scratch.
+     * Resolves the instruction for a generation run. A generation brief is authoritative and may change the task entirely, so it outranks an existing statement on a different
+     * topic; that statement remains the starting point wherever the brief is silent. Adaptation feedback is always a targeted revision. With no brief, the statement alone binds.
      *
      * @param request  the generation request holding the optional prompt
      * @param exercise the exercise being generated or adapted
@@ -643,8 +585,6 @@ public class AgentSystemPromptService {
      */
     public String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
         String brief = request.prompt() == null ? "" : request.prompt().strip();
-        // A present brief is the authoritative instruction for this run and may change the task entirely, so it can override a statement on a different topic; the statement is the
-        // starting point, preserved where the brief is silent. With no brief, the statement alone binds.
         boolean hasSpec = isAuthoritativeProblemStatement(exercise);
         if (!brief.isBlank()) {
             if (request.mode() == GenerationMode.ADAPT) {
@@ -666,19 +606,14 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * The oracle-verifiable languages Hyperion offers for one-click whole-exercise generation, defined on {@link LanguageGenerationProfile#supportedLanguages()}. Exposed so the
-     * resource can both guard a run and serve the set to clients rather than have them hardcode it.
+     * Exposed so the resource can both guard a run and serve the set to clients, rather than have them hardcode a second copy of it.
      *
-     * @return the immutable set of generation-supported languages
+     * @return the languages Hyperion offers for whole-exercise generation
      */
     public Set<ProgrammingLanguage> supportedGenerationLanguages() {
         return LanguageGenerationProfile.supportedLanguages();
     }
 
-    /**
-     * @param exercise the exercise configuration to check, or {@code null}
-     * @return whether Hyperion can verify generation for its language and project type
-     */
     public boolean isGenerationSupported(@Nullable ProgrammingExercise exercise) {
         return LanguageGenerationProfile.isSupported(exercise);
     }

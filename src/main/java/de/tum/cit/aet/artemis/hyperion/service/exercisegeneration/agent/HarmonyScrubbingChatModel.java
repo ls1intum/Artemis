@@ -46,12 +46,7 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         return delegate.getOptions();
     }
 
-    /**
-     * Rebuilds the response only when an assistant message actually carries a harmony control token (usually a no-op), preserving tool calls and metadata.
-     *
-     * @param response the raw model response
-     * @return the same response, or a copy with harmony control tokens removed from assistant content
-     */
+    /** Rebuilds the response only when an assistant message actually carries a control token, so a clean response is returned as the same instance. */
     static ChatResponse scrub(ChatResponse response) {
         if (response == null || response.getResults() == null || response.getResults().isEmpty()) {
             return response;
@@ -74,12 +69,6 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         return changed ? new ChatResponse(rebuilt, response.getMetadata()) : response;
     }
 
-    /**
-     * Removes harmony control tokens of the form {@code <|...|>} from the given content.
-     *
-     * @param content the assistant content returned by the endpoint
-     * @return the content with any harmony control tokens removed
-     */
     static String sanitizeHarmonyTokens(String content) {
         if (content == null || content.indexOf("<|") < 0) {
             return content;

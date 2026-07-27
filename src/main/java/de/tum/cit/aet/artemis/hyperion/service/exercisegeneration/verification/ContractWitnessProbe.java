@@ -12,18 +12,15 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 
 /**
- * Turns candidate {@link ContractWitness}es into validated ones by running them against the reference solution.
+ * Turns candidate {@link ContractWitness}es into validated ones by running them against the reference solution. The pieces here are pure so they are unit-testable without
+ * Docker; the sandbox half (write the probe, build the solution, remove the probe) belongs to the caller that already owns a session.
  * <p>
- * The pieces here are pure so they are unit-testable without Docker: building the probe source, and deciding what a build outcome is allowed to prove. The sandbox half (write the
- * probe, build the solution, remove the probe) belongs to the caller that already owns a session.
- * <p>
- * <b>Why validation demands positive evidence.</b> "The build did not report this as failing" is not evidence that it passed — it is equally satisfied by a witness that never
- * ran. A witness is therefore validated only when the build reports it among the tests it RAN. Reading silence as success would manufacture evidence out of a build that never
- * exercised the witness, which is the exact mistake this whole mechanism exists to stop.
+ * Validation demands positive evidence: "the build did not report this as failing" is equally satisfied by a witness that never ran, so a witness counts only when the build
+ * reports it among the tests it RAN. Reading silence as success would manufacture evidence out of a build that never exercised the witness.
  */
 public final class ContractWitnessProbe {
 
-    /** The probe class name. Distinctive on purpose: it must be recognisable as machine-authored and never collide with a generated suite. */
+    /** Distinctive on purpose: recognisable as machine-authored, and unlikely to collide with a generated suite. */
     public static final String PROBE_CLASS_NAME = "HyperionContractWitnessProbeTest";
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+[^;]+;", Pattern.MULTILINE);
@@ -34,11 +31,9 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Builds one compilable probe class carrying every witness method.
-     * <p>
-     * The package and imports are lifted from a test the authoring agent actually produced rather than assembled from a fixed list, so the probe automatically matches whichever
-     * assertion library, JUnit version and harness annotations that exercise uses. Class-level harness annotations are deliberately NOT copied: they are the graded suite's
-     * contract with the production grader, and the probe is a throwaway that must never look like a graded test.
+     * Builds one compilable probe class carrying every witness method. The package and imports are lifted from a test the agent produced rather than assembled from a fixed list,
+     * so the probe matches whichever assertion library and JUnit version that exercise uses. Class-level harness annotations are deliberately NOT copied: they are the graded
+     * suite's contract with the production grader, and this throwaway must never look like a graded test.
      *
      * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
      * @param witnesses          the candidate witnesses, each contributing one method
@@ -70,11 +65,9 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Decides which witnesses the build actually validated: a witness must appear among the tests the build REPORTED RUNNING, and must not appear among its failures.
-     * <p>
-     * Requiring positive evidence of execution is the whole point. "Absent from the failure list" is satisfied by a witness that never ran at all — one the runner did not
-     * discover, one whose annotation the model omitted, one disabled or aborted by an assumption, or a whole probe class that failed to compile while the ordinary graded tests
-     * still ran and made the build look healthy. Each of those would otherwise be recorded as a passing witness on no evidence whatsoever.
+     * Decides which witnesses the build validated: a witness must appear among the tests the build REPORTED RUNNING and must not appear among its failures. Absence from the
+     * failure list alone is satisfied by a witness the runner never discovered, one disabled by an assumption, or a whole probe class that failed to compile while the graded
+     * tests still ran and made the build look healthy.
      *
      * @param executedTestNames the names the build reported running (from the same parsed report production grading uses)
      * @param failedTestNames   the names the build reported as failing
@@ -93,10 +86,7 @@ public final class ContractWitnessProbe {
         return List.copyOf(validated);
     }
 
-    /**
-     * Reduces reported test names to bare method names. Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the
-     * bare name keeps attribution stable across them.
-     */
+    /** Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the bare name keeps attribution stable. */
     private static Set<String> bareNames(@Nullable List<String> reportedNames) {
         Set<String> bare = new LinkedHashSet<>();
         if (reportedNames == null) {
@@ -121,7 +111,7 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * The workspace-relative path the probe is written to: alongside the graded test it borrowed its package from, so the build discovers it by the same convention.
+     * Places the probe alongside the graded test it borrowed its package from, so the build discovers it by the same convention.
      *
      * @param existingTestPath  the workspace-relative path of that graded test
      * @param existingFilePaths every path already present in the tests repository
@@ -133,7 +123,7 @@ public final class ContractWitnessProbe {
             return null;
         }
         String path = existingTestPath.substring(0, lastSlash + 1) + PROBE_CLASS_NAME + ".java";
-        // The name is distinctive, not reserved. Writing over a generated test of the same name would destroy graded work, and removing the probe afterwards would delete it.
+        // The name is distinctive, not reserved: overwriting a generated test of the same name would destroy graded work, and removing the probe would then delete it.
         return existingFilePaths.contains(path) ? null : path;
     }
 }

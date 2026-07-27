@@ -46,20 +46,16 @@ public final class GenerationOutcome implements AutoCloseable {
 
     private final Map<RepositoryType, String> seedRepositoryHeads;
 
-    /**
-     * The produced problem statement captured to avoid a later sandbox read. It may also be present on an errored run for diagnostics.
-     */
+    /** Captured to avoid a later sandbox read; also present on an errored run, for diagnostics. */
     @Nullable
     private final String capturedProblemStatement;
 
-    /**
-     * Full-artifact review findings. Blocking findings require instructor review of the saved mechanically valid exercise; presentation findings are advisory.
-     */
+    /** Full-artifact review findings. Blocking findings require instructor review of the saved mechanically valid exercise; presentation findings are advisory. */
     private final SpecFidelityReport specFidelityReport;
 
     /**
-     * The workspace's {@code SPEC.md} content, read once (best effort) after the agent loop finishes; {@code null} when it could not be read (e.g. not produced, or a
-     * read failure). Never persisted into any repository — it is the agent's planning artifact, surfaced here so its final (possibly stage-updated) state is observable.
+     * The workspace's {@code SPEC.md} content, read once (best effort) after the agent loop finishes; {@code null} when it could not be read. Never persisted into any
+     * repository — it is the agent's planning artifact, surfaced here only so its final state is observable.
      */
     @Nullable
     private final String specDocument;
@@ -120,14 +116,10 @@ public final class GenerationOutcome implements AutoCloseable {
         return new GenerationOutcome(loopResult, errorMessage);
     }
 
-    /**
-     * @return the spec-fidelity and adaptation-scope report; never {@code null}
-     */
     public SpecFidelityReport specFidelityReport() {
         return specFidelityReport;
     }
 
-    /** @return whether the generated exercise passed the authoritative mechanical verification */
     public boolean isMechanicallyVerified() {
         return verification != null && verification.mechanicallyVerified();
     }
@@ -166,29 +158,20 @@ public final class GenerationOutcome implements AutoCloseable {
         return seedRepositoryHeads;
     }
 
-    /**
-     * @return the workspace's {@code SPEC.md} content captured after the agent loop finished, or {@code null} when none was captured (not staged generation, the file was
-     *         never written, or it could not be read)
-     */
     @Nullable
     public String specDocument() {
         return specDocument;
     }
 
     /**
-     * @return the workspace's {@code test-plan.json} content captured after the agent loop finished, or {@code null} when none was written; persistence applies it to the
-     *         synchronized test cases (weights and AFTER_DUE_DATE visibility) after the save's test-case sync
+     * @return the grading plan, or {@code null} when none was written; persistence applies it to the synchronized test cases (weights and AFTER_DUE_DATE visibility) after the
+     *         save's test-case sync
      */
     @Nullable
     public String testPlanJson() {
         return testPlanJson;
     }
 
-    /**
-     * The produced problem statement verification already read and captured on this outcome.
-     *
-     * @return the produced problem statement, or an empty string when none was captured
-     */
     public String producedProblemStatement() {
         return capturedProblemStatement != null ? capturedProblemStatement : "";
     }

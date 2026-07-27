@@ -47,21 +47,10 @@ public interface ProviderFailureCooldown {
         }
     }
 
-    /**
-     * Produces the provider key shared by the guarded Hyperion chat paths.
-     *
-     * @param configuredModel configured provider model, if available
-     * @return the stable model key or the default fallback
-     */
     static String keyForModel(@Nullable String configuredModel) {
         return configuredModel == null || configuredModel.isBlank() ? "default" : configuredModel;
     }
 
-    /**
-     * Returns a no-op implementation for focused tests that do not exercise provider admission.
-     *
-     * @return the shared no-op implementation
-     */
     static ProviderFailureCooldown disabled() {
         return Disabled.INSTANCE;
     }

@@ -39,15 +39,14 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
 
 /**
- * Adds Ares structural tests to a generated Java exercise, like a manually authored one: runs the deterministic {@link OracleGenerator} over the produced solution and template
- * and,
- * only when their structures differ, seeds the {@code test.json} oracle plus each applicable Ares test provider ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/
- * {@code ConstructorTest}) into the test repository. Providers whose oracle section is empty are omitted: their empty dynamic factory is reported under the common method name
- * {@code generateTestsForAllClasses}, creating duplicate production test cases instead of a useful structural check.
+ * Adds Ares structural tests to a generated Java exercise exactly as a manually authored one carries them: the deterministic {@link OracleGenerator} runs over the produced
+ * solution and template and, only when their structures differ, the {@code test.json} oracle and each applicable Ares provider are seeded into the tests repository. A provider
+ * whose oracle section is empty is omitted, because its empty dynamic factory is reported under the shared method name {@code generateTestsForAllClasses} and would create
+ * duplicate production test cases instead of a useful structural check.
  * <p>
- * Conservative: seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its public/protected surface,
- * so a correct behaviour-only exercise is never burdened with spurious structural requirements. Legacy/no-structure flows remain best-effort; once an approved specification
- * requires student-created types, failure is explicit because silently omitting their grading contract would publish a different exercise.
+ * Deliberately conservative: it seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and then only its
+ * public/protected surface, so a correct behaviour-only exercise is never burdened with spurious structural requirements. Without an approved specification, seeding is
+ * best-effort; once one requires student-created types, failure is explicit, since silently omitting their grading contract would publish a different exercise.
  */
 @Lazy
 @Service
@@ -70,7 +69,7 @@ public class StructuralOracleSeedingService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** Matches a top-level type declaration so we can tell whether a class exists in a source set and whether the solution declares it {@code public}. */
+    /** Captures the optional {@code public} modifier, because only a public solution type may be seeded. */
     private static final Pattern TYPE_DECLARATION = Pattern
             .compile("(?m)(?:^|\\s)(public\\s+)?(?:abstract\\s+|final\\s+|sealed\\s+|non-sealed\\s+|strictfp\\s+)*(?:class|interface|enum|record)\\s+(\\w+)");
 
@@ -92,11 +91,10 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * Generates the structure oracle and seeds the structural tests when the structures differ. Java only; a no-op for other languages and on any error.
+     * Generates the structure oracle and seeds the structural tests when the structures differ; Java only, and a no-op for other languages.
      * <p>
-     * Returns the authoritative set of structural test-case names seeded this call ({@code testClass[X]} plus names for non-empty member sections), derived from the oracle this
-     * service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a behaviour test into structural-test handling. The verifier uses these names
-     * for starter-credit handling and task-binding resolution, while still requiring them to appear in the student checklist. Empty when nothing was seeded.
+     * The returned names are derived from the oracle this service generated, never from anything the agent wrote, so the agent cannot grow the set to smuggle a behaviour test
+     * into structural-test handling. The verifier keys its starter-credit and task-binding exemptions to exactly this set.
      *
      * @param sandbox   the live sandbox session holding the produced files
      * @param sessionId the session id
@@ -189,9 +187,8 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * The exact Ares dynamic-test names the applicable structural providers report at runtime. Every retained class has {@code testClass[<ClassName>]}; method, attribute, and
-     * constructor names exist only when that oracle section is non-empty. Reconstructed from the oracle this service produced so the verifier's exemption is keyed to a
-     * forgery-resistant authority, not a name pattern the agent could imitate.
+     * The exact Ares dynamic-test names the seeded providers report at runtime: every retained class has {@code testClass[<ClassName>]}, while member names exist only where that
+     * oracle section is non-empty. Reconstructed from the oracle rather than matched by name shape, which the agent could imitate.
      */
     private static Set<String> structuralTestNames(String oracle) throws IOException {
         Set<String> names = new LinkedHashSet<>();
@@ -214,7 +211,7 @@ public class StructuralOracleSeedingService {
         return names;
     }
 
-    /** Seeds only Ares providers that have at least one dynamic test to create; an empty provider is reported under its shared factory name and creates duplicate test cases. */
+    /** Only providers with at least one dynamic test to create (see class javadoc on the shared factory name). */
     private static List<String> requiredStructuralClasses(String oracle) throws IOException {
         ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
         List<String> classes = new ArrayList<>();
@@ -244,9 +241,7 @@ public class StructuralOracleSeedingService {
         return values.isArray() && !values.isEmpty();
     }
 
-    /**
-     * The directory of the first {@code .java} test file (so structural tests land in the same source set and package), or {@code null} if the agent wrote no Java test file.
-     */
+    /** The first Java test file's directory, so structural tests land in the same source set and package; {@code null} when the agent wrote none. */
     private static String locateTestSourceDirectory(Map<String, String> testFiles) {
         return testFiles.keySet().stream().filter(path -> path.endsWith(".java") && path.contains("/")).map(path -> path.substring(0, path.lastIndexOf('/'))).findFirst()
                 .orElse(null);
@@ -257,8 +252,8 @@ public class StructuralOracleSeedingService {
     }
 
     /**
-     * Structural tests are seeded before the agent authors behavioral tests, so their location cannot depend on an existing test source. The Java generation workspace has one
-     * canonical test source root ({@code test/}) and mirrors the solution package beneath it.
+     * Structural tests are seeded before the agent authors behavioural tests, so their location cannot depend on an existing test source. The Java generation workspace has one
+     * canonical test source root and mirrors the solution package beneath it.
      */
     private static String canonicalJavaTestDirectory(String packageName) {
         return packageName.isBlank() ? "test" : "test/" + packageName.replace('.', '/');
@@ -277,7 +272,7 @@ public class StructuralOracleSeedingService {
     private Path materialize(Map<String, String> files, String prefix) throws IOException {
         Path dir = tempFileUtilService.createTempDirectory(prefix);
         for (Map.Entry<String, String> entry : files.entrySet()) {
-            // qdox only needs the .java sources.
+            // qdox reads only .java sources.
             if (!entry.getKey().endsWith(".java")) {
                 continue;
             }
@@ -319,14 +314,14 @@ public class StructuralOracleSeedingService {
         boolean anyUnmarkedClass = STRUCTURAL_CLASSES.stream().filter(className -> testFiles.containsKey(prefix + className))
                 .anyMatch(className -> !testFiles.get(prefix + className).contains(GENERATED_MARKER));
         if (anyUnmarkedClass) {
-            // A structural class this service did not write. That is someone's hand-authored grading harness, and it must never be overwritten.
+            // Someone's hand-authored grading harness, which must never be overwritten.
             return StructuralAssetOwnership.UNMANAGED;
         }
         boolean anyMarkedClass = STRUCTURAL_CLASSES.stream().anyMatch(className -> testFiles.getOrDefault(prefix + className, "").contains(GENERATED_MARKER));
         if (anyMarkedClass) {
             return StructuralAssetOwnership.HYPERION_MANAGED;
         }
-        // No structural class survives. A bare oracle file grades nothing on its own, so it is this service's leftover rather than a harness worth protecting.
+        // No structural class survives, and a bare oracle grades nothing on its own, so it is leftover rather than a harness worth protecting.
         return testFiles.containsKey(prefix + ORACLE_FILE) ? StructuralAssetOwnership.HYPERION_MANAGED : StructuralAssetOwnership.UNMANAGED;
     }
 
@@ -347,10 +342,7 @@ public class StructuralOracleSeedingService {
         return "";
     }
 
-    /**
-     * Filters the raw oracle to entries whose class is a {@code public} solution type absent from the template (a class the student must create), keeping only public/protected
-     * members. Returns {@code []} when nothing qualifies.
-     */
+    /** Keeps only classes the student must create (public in the solution, absent from the template) and only their public/protected members; {@code []} when none qualify. */
     static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles) throws IOException {
         return filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles, Set.of(), false);
     }
@@ -383,7 +375,7 @@ public class StructuralOracleSeedingService {
         return result.isEmpty() ? "[]" : MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(result);
     }
 
-    /** Drops members whose modifiers do not include {@code public} or {@code protected}; private/package-private members are implementation details, not part of the contract. */
+    /** Private and package-private members are implementation details, not part of the graded contract. */
     private static void stripNonPublicMembers(ObjectNode classEntry, String field) {
         if (!(classEntry.get(field) instanceof ArrayNode members)) {
             return;
@@ -407,7 +399,7 @@ public class StructuralOracleSeedingService {
         classEntry.set(field, kept);
     }
 
-    /** The simple names of top-level types declared across the given sources; when {@code publicOnly}, only types declared {@code public}. */
+    /** Simple names of top-level types; when {@code publicOnly}, restricted to those declared {@code public}. */
     private static Set<String> declaredTypes(Map<String, String> files, boolean publicOnly) {
         Set<String> names = new HashSet<>();
         for (String content : files.values()) {
@@ -421,7 +413,7 @@ public class StructuralOracleSeedingService {
         return names;
     }
 
-    /** An oracle with no class diffs serialises to an empty JSON array; treat that as "nothing to seed". */
+    /** An oracle with no class diffs serialises to an empty JSON array, which means there is nothing to seed. */
     static boolean isStructurallyEmpty(String oracle) {
         if (oracle == null) {
             return true;

@@ -766,7 +766,7 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
-        // The safety deadline no longer force-cancels the job; with no verified candidate the run simply ends without persisting.
+        // The safety deadline never force-cancels the job; with no verified candidate the run simply ends without persisting.
         verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
     }
@@ -774,8 +774,7 @@ class GenerationTaskServiceTest {
     @Test
     void deadlineExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
         // The wall-clock deadline is a SAFETY control, not a user stop. It stops further model work, but a candidate that already passed mechanical verification is a
-        // checkpointed, paid-for save obligation — persisting it re-runs and re-bills nothing. The old behavior force-cancelled the job and discarded the run for nothing;
-        // this is the exact failure observed in the live GPU run (three verified candidates, saved none).
+        // checkpointed, paid-for save obligation, and persisting it re-runs and re-bills nothing. Force-cancelling the job here would discard the run for nothing.
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             BooleanSupplier shouldCancel = invocation.getArgument(5);

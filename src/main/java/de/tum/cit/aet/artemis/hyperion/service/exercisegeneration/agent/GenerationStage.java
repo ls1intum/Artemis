@@ -27,9 +27,6 @@ public enum GenerationStage {
         this.displayName = displayName;
     }
 
-    /**
-     * @return the human-readable name of this stage, suitable for a progress message (e.g. "Template")
-     */
     public String displayName() {
         return displayName;
     }

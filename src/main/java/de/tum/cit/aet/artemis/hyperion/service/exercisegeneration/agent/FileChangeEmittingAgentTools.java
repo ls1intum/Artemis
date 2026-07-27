@@ -45,11 +45,11 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
     }
 
     /**
-     * Writes the file, delegating to {@link SandboxAgentTools#writeFile}, and emits a file-change notification when the write succeeds.
+     * Emits a file-change notification when the delegate reports success.
      *
      * @param path    the workspace-relative file path to write
      * @param content the complete new file content
-     * @return a confirmation, or an actionable error message
+     * @return the delegate's confirmation or error message
      */
     @Tool(name = "write_file", description = AgentToolDescriptions.WRITE_FILE)
     public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
@@ -65,12 +65,12 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
     }
 
     /**
-     * Edits the file, delegating to {@link SandboxAgentTools#editFile}, and emits a file-change notification when the edit succeeds.
+     * Emits a file-change notification when the delegate reports success.
      *
      * @param path    the workspace-relative file path to edit
      * @param oldText the exact text to replace
      * @param newText the replacement text
-     * @return a confirmation, or an actionable error message if the match is missing or ambiguous
+     * @return the delegate's confirmation or error message
      */
     @Tool(name = "edit_file", description = AgentToolDescriptions.EDIT_FILE)
     public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
@@ -86,10 +86,10 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
     }
 
     /**
-     * Deletes the file, delegating to {@link SandboxAgentTools#deleteFile}, and emits a file-change notification when the delete succeeds.
+     * Emits a file-change notification when the delegate reports success.
      *
      * @param path the workspace-relative file path to delete
-     * @return a confirmation, or an actionable error message
+     * @return the delegate's confirmation or error message
      */
     @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
     public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {

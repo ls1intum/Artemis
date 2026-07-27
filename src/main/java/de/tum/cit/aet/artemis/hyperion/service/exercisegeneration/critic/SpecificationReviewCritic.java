@@ -191,8 +191,8 @@ class SpecificationReviewCritic {
         if (!validConceptAlignment(parsed.conceptAlignment(), evidence)) {
             return incompleteSpecificationReview("conceptAlignment was missing a disposition or reason for the supplied concept.");
         }
-        // Worked-example replay is a quality signal, not a terminal contract: whatever consistent/inconsistent checks the reviewer returns are used below; a mismatched or
-        // missing example-ID set no longer discards the verdict.
+        // Worked-example replay is a quality signal, not a terminal contract: an inconsistent check still becomes a finding, but a mismatched or missing example-ID set must
+        // not discard an otherwise coherent verdict.
         SpecificationConceptDisposition conceptDisposition = evidence.hasConcept() ? parsed.conceptAlignment().disposition() : SpecificationConceptDisposition.ALIGNED;
         List<String> findings = new ArrayList<>();
         SpecificationLearningFitItem learningFit = parsed.learningFit();
@@ -306,10 +306,8 @@ class SpecificationReviewCritic {
         if (item == null) {
             return "the mandatory learningFit object is missing.";
         }
-        // Evidence-ID citation (briefEvidenceIds/specEvidenceIds/objectiveEvidenceIds/studentOwnershipEvidenceIds/assessmentEvidenceIds) is advisory grounding only.
-        // A mis-cited, missing, or wrong-section line pointer must never invalidate an otherwise-coherent verdict — line indices renumber on every SPEC rewrite, so
-        // demanding exact IDs discarded mechanically-valid, defect-free specifications over a self-report slip. The verdict's integrity is its booleans, direction, and
-        // prose reasoning, which the model derives from the evidence it was shown; those remain mandatory below.
+        // Evidence-ID citation is advisory grounding only: line indices renumber on every SPEC rewrite, so demanding exact IDs would discard defect-free specifications over a
+        // self-report slip. The verdict's integrity lives in its booleans, direction, and prose reasoning, which stay mandatory below.
         if (item.objectiveMechanism() == null || item.objectiveMechanism().isBlank()) {
             return "objectiveMechanism is mandatory.";
         }

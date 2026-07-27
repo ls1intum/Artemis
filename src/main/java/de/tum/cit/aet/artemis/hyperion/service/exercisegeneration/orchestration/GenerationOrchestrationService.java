@@ -81,13 +81,9 @@ public class GenerationOrchestrationService {
     static final String CHANGE_SUMMARY_TRUNCATED = "\n... [change summary truncated]\n";
 
     /**
-     * The semantic repair budget. Sized originally as one round per coherent surface (contract, oracle, scaffold), but the scheduler never allocated it that way: it picks the
-     * highest-priority surface with findings, so one surface can consume the whole budget. Live telemetry shows both halves of that mismatch — a run where the oracle surface
-     * took all three rounds while {@code TEMPLATE_QUALITY_GAP} findings sat unscheduled across two consecutive rounds and shipped unrepaired, and runs that reached the oracle
-     * surface late or never and ended with suites that accept contract-breaking implementations.
-     * <p>
-     * Three is also simply too few: every observed run reached its last round with blocking findings still open, so generation terminated on budget rather than on convergence.
-     * Configurable so the ceiling can be tuned per deployment against the wall-clock guard rather than recompiled.
+     * The semantic repair budget: how many scoped repair rounds one run may schedule. Deliberately larger than the number of repair surfaces, because rounds are allocated to
+     * whichever surface currently carries the highest-priority findings rather than one per surface, so a single surface can legitimately hold several rounds. Configurable so
+     * the ceiling can be tuned per deployment against the wall-clock guard rather than recompiled.
      */
     private static final int DEFAULT_MAX_SEMANTIC_REPAIRS = 6;
 
@@ -103,8 +99,7 @@ public class GenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
-    // poll.
+    // Holds the node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn poll.
     private final GenerationJobService jobService;
 
     // Source of the pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a build-agent-only node; when
@@ -116,11 +111,8 @@ public class GenerationOrchestrationService {
     /** The per-session specification the spec gate approved; dropped when the session is destroyed so the registry never outlives its runs. */
     private final ApprovedSpecRegistry approvedSpecs;
 
-    // Wired into SandboxAgentTools so a staged session's verify/submit tools can dispatch to the current stage's mechanical check; unused by an unstaged (legacy) session, which
-    // never calls SandboxAgentTools#enterStage.
     private final StageCheckService stageCheckService;
 
-    /** Everything the per-run attempt loop needs from this bean; fixed for the bean's lifetime, so it is assembled once here rather than per run. */
     private final GenerationAttemptLoop.Dependencies attemptLoopDependencies;
 
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
@@ -129,7 +121,7 @@ public class GenerationOrchestrationService {
             @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, @Value("${artemis.hyperion.exercise-generation.max-semantic-repairs:6}") int maxSemanticRepairs,
             StagedGenerationRunner stagedGenerationRunner, @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled,
             StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
-        // maxTurns is a hard cap on agent turns per attempt; generous so slow multi-file languages finish in one attempt, still bounded against runaways.
+        // maxTurns bounds each attempt, not the whole run.
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
@@ -141,11 +133,10 @@ public class GenerationOrchestrationService {
         this.jobService = jobService;
         this.testCaseRepository = testCaseRepository;
         int effectiveMaxSemanticRepairs = maxSemanticRepairs > 0 && maxSemanticRepairs <= MAX_CONFIGURABLE_SEMANTIC_REPAIRS ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
-        // The attempt ceiling: the mechanical repairs plus one attempt per semantic repair the budget allows. These are scoped repairs, not additional open-ended
-        // initial-authoring attempts, and the wall-clock guard remains the real bound. Derived from the semantic budget rather than fixed, so that raising the budget cannot
-        // leave rounds arithmetically unreachable — a repair that breaks the build costs two attempts. The extra attempt is the narrow mechanical correction the loop grants
-        // when a semantic repair breaks the build: a whole attempt that neither term above pays for, so without it the last configured repair round is unreachable on exactly
-        // the runs that needed it most.
+        // The attempt ceiling: the mechanical repair phase, one attempt per semantic repair the budget allows, and one more for the narrow mechanical correction the loop grants
+        // when a semantic repair breaks the build. That correction is a whole attempt neither of the other two terms pays for, so without it the last configured repair round is
+        // unreachable. Derived from the semantic budget rather than fixed, so raising the budget can never leave rounds arithmetically unreachable; the wall-clock guard remains
+        // the real bound.
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + effectiveMaxSemanticRepairs + 1;
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;
@@ -187,8 +178,8 @@ public class GenerationOrchestrationService {
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         String baselineProblemStatement = exercise.getProblemStatement();
-        // The client seeds every new exercise with the default template readme; only a REAL instructor statement may steer the brief, the workspace seed, or skip the SPEC
-        // stage — otherwise the classic sorting readme becomes "requirements to preserve" everywhere at once (observed live: bubble sort generated from a non-sorting brief).
+        // The client seeds every new exercise with the default template readme, so only a real instructor statement may steer the brief, the workspace seed, or skip the SPEC
+        // stage. Otherwise that template's contents become "requirements to preserve" everywhere at once.
         boolean generatedFromSourceBrief = mode == GenerationMode.GENERATE && originalSourceBrief != null && !originalSourceBrief.isBlank();
         boolean statementAuthoritative = mode == GenerationMode.ADAPT || !generatedFromSourceBrief && systemPromptService.isAuthoritativeProblemStatement(exercise);
         String sourceBrief = generatedFromSourceBrief ? originalSourceBrief.strip() : renderReviewBrief(mode, userPrompt, statementAuthoritative ? baselineProblemStatement : null);
@@ -238,12 +229,11 @@ public class GenerationOrchestrationService {
             // verification inside the attempt loop stays the mechanical-verification decision.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise, testsSeedSnapshot, mode == GenerationMode.ADAPT, stageCheckService);
             baseTools.configureStructuralOracleRefresh(() -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
-            // Wrap the tools in the file-change decorator when a sink is supplied, so each successful write/edit/delete emits a lightweight notification (path, repository bucket,
-            // action, turn) for the instructor's live activity view — not the file content itself. The decorator re-exposes the same @Tool surface (the model sees the same tools)
-            // and only adds emission.
+            // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
+            // identical tool set either way.
             Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
 
-            // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
+            // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.
             String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief));
 
@@ -463,12 +453,6 @@ public class GenerationOrchestrationService {
         }
     }
 
-    /**
-     * Extracts the test identifiers bound by {@code [task]} lines in the problem statement, deduplicated and trimmed.
-     *
-     * @param problemStatement the produced problem statement (may be empty)
-     * @return the distinct task-bound test names, in encounter order
-     */
     static List<String> extractTaskBoundTestNames(String problemStatement) {
         if (problemStatement == null || problemStatement.isBlank()) {
             return List.of();
@@ -486,13 +470,6 @@ public class GenerationOrchestrationService {
         return List.copyOf(names);
     }
 
-    /**
-     * Prepends the seeded-workspace layout snapshot to the user prompt as a delimited observation block. An empty/blank layout returns the prompt unchanged.
-     *
-     * @param layout     the rendered layout snapshot (may be empty)
-     * @param userPrompt the instruction for this run
-     * @return the user prompt with the layout block prepended, or the unchanged prompt when there is no layout to show
-     */
     static String prependWorkspaceLayout(String layout, String userPrompt) {
         if (layout == null || layout.isBlank()) {
             return userPrompt;
@@ -501,12 +478,8 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * The exercise's currently-persisted test names — a conservative superset of the graded coverage the adapt total-wipe gate protects: it reads every persisted case via
-     * {@code findByExerciseId} (the same repository production grading uses) rather than re-deriving the active/weighted subset, so it never under-reports the baseline. Returns
-     * empty
-     * (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing baseline never fabricates a rejection.
-     *
-     * @return the persisted test names, or an empty set when no authoritative baseline is available
+     * A deliberately conservative superset of the graded coverage the adapt total-wipe gate protects: every persisted case rather than the active/weighted subset, so the
+     * baseline is never under-reported. Empty — leaving the gate inert — when no authoritative baseline is available, so a missing baseline can never fabricate a rejection.
      */
     private Set<String> captureBaselineGradedTestNames(ProgrammingExercise exercise) {
         if (testCaseRepository.isEmpty() || exercise.getId() == null) {

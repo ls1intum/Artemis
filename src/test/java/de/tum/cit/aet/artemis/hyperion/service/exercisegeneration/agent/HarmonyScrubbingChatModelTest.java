@@ -20,9 +20,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import reactor.core.publisher.Flux;
 
 /**
- * Unit test for the pure, HTTP-free {@link HarmonyScrubbingChatModel} decorator that replaced the prototype's bespoke {@code GpuEndpointChatModel}. It locks the two behaviours the
- * long-running agent loop depends on: gpt-oss "harmony" control tokens are stripped from the assistant {@code content} while tool calls and metadata are preserved verbatim, and a
- * clean response is returned unchanged (same instance) so healthy runs pay nothing. The wire transport is now the stock Spring AI OpenAI starter, so only the scrubber is tested.
+ * Locks the two behaviours the long-running agent loop depends on: harmony control tokens are stripped from the assistant {@code content} while tool calls and metadata survive
+ * verbatim, and a clean response is returned as the same instance so a healthy run pays nothing.
  */
 class HarmonyScrubbingChatModelTest {
 

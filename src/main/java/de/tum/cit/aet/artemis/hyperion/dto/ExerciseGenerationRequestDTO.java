@@ -11,11 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Request to start an agentic whole-exercise generation or adaptation run.
- * <p>
- * The {@code mode} is explicit and never inferred from the exercise's contents: one endpoint and one engine drive both {@link GenerationMode#GENERATE} and
- * {@link GenerationMode#ADAPT}, and only the client knows which the instructor intends.
  *
- * @param mode                      the explicit run intent (generate a fresh exercise vs. adapt an existing one)
+ * @param mode                      the run intent; see {@link GenerationMode} for why the client states it rather than the server inferring it
  * @param prompt                    optional brief (generate) or feedback (adapt); capped to bound LLM cost/abuse
  * @param selectedFeedbackThreadIds optional review-comment thread ids the adapt run should address; capped to bound the rendered context
  */

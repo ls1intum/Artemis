@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 /** Unit tests for generation prompting and the production Java capability contract. */
 class AgentSystemPromptServiceTest {
 
-    /** Headroom over the largest representative Java prompt, so no future section can grow the prompt without an explicit decision. */
+    /** Headroom over the largest representative prompt, so no new section can grow the prompt without an explicit decision to raise this. */
     private static final int MAX_SYSTEM_PROMPT_CHARS = 16_100;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
@@ -335,8 +335,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void exerciseWithAuxiliaryRepositoryIsUnsupportedUntilGenerationCanPreserveIt() {
-        // The aux-repos fact is passed EXPLICITLY (queried by the caller): reading the entity's lazy collection here threw LazyInitializationException on detached exercises
-        // and turned the clean 400 rejection into a 500.
+        // The aux-repository fact is passed explicitly rather than read from the entity: touching that lazy collection on a detached exercise turns a clean 400 into a 500.
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
 
         assertThat(LanguageGenerationProfile.isSupported(exercise, true)).isFalse();
@@ -366,8 +365,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void supportedGenerationLanguages_pinsTheOracleVerifiableSet() {
-        // The production-enabled offer is intentionally JUST Java for this rollout (only the Java differential oracle is validated end-to-end); pin the exact set so server drift
-        // (the source of truth the client consumes) is caught, consistent with the Java-only gate and the sibling HyperionExerciseGenerationResourceTest.
+        // Only the Java differential oracle is validated end to end, so the offer is Java alone. The server is the source of truth the client consumes, so pin the exact set.
         assertThat(systemPromptService.supportedGenerationLanguages()).containsExactly(ProgrammingLanguage.JAVA);
     }
 
@@ -384,8 +382,8 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void isAuthoritativeProblemStatement_rejectsTheDefaultTemplateReadmeTheClientSeedsIntoEveryNewExercise() throws Exception {
-        // The client fills problemStatement with templates/<language>/<projectType>/readme on create, so a "blank" create form reaches the server carrying the classic
-        // sorting-strategy statement. Treating that as an instructor spec skipped the SPEC stage and made the agent rebuild bubble sort from a one-line brief (observed live).
+        // The client fills problemStatement with templates/<language>/<projectType>/readme on create, so a "blank" create form reaches the server carrying the sample
+        // exercise's statement. Treating that as an instructor spec skips the SPEC stage and has the agent rebuild the sample from a one-line brief.
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         String defaultReadme = new String(

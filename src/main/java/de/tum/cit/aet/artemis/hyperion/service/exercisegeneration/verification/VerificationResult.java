@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import java.util.List;
 
 /**
- * Outcome of the authoritative verification of a generated exercise.
- * <p>
- * Mechanical verification passes only when the differential oracle holds: the solution compiles and passes all tests, and the template compiles but fails them (a student starting
- * from the template has not yet done the work). A passing template, or a test suite that is empty or trivially satisfied, is rejected. The {@code reasons} list explains any
- * failure in human-readable terms that can both be shown to the instructor and fed back to the agent for another iteration.
+ * Outcome of the authoritative verification of a generated exercise. Mechanical verification passes only when the differential oracle holds: the solution compiles and passes all
+ * tests, and the template compiles but fails them, because a student starting from the template has not yet done the work. The {@code reasons} are worded so the same text can be
+ * shown to the instructor and fed back to the agent for another iteration.
  *
  * @param mechanicallyVerified whether the exercise passed all mechanical gates
  * @param solutionPassed       whether the solution compiled and passed all tests
@@ -18,7 +16,7 @@ import java.util.List;
 public record VerificationResult(boolean mechanicallyVerified, boolean solutionPassed, boolean templateFailed, int testCount, List<String> reasons) {
 
     /**
-     * @return a compact report suitable both for the instructor-facing transcript and for feeding back to the agent
+     * @return a compact report for the instructor-facing transcript and the agent alike
      */
     public String report() {
         if (mechanicallyVerified) {

@@ -5,8 +5,8 @@ import java.util.Map;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Thrown when saving or finalizing a generated exercise stops after persistence may have begun. It records whether canonical state changed and any exact repository commits that
- * remain available for instructor review.
+ * Thrown when saving or finalizing a generated exercise stops after persistence may have begun, recording whether canonical state changed and which repository commits remain
+ * available for instructor review.
  */
 public class GenerationIncompleteException extends RuntimeException {
 

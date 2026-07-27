@@ -630,8 +630,8 @@ class SandboxAgentToolsTest {
         assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
     }
 
-    // Stage-aware verify()/submit(): in a staged session every stage delegates to the wired StageCheckService for the CURRENT stage; an unstaged/legacy session (no enterStage()
-    // call) keeps the old always-on full-differential behavior via the verifier directly.
+    // Stage-aware verify()/submit(): a staged session delegates to the wired StageCheckService for the CURRENT stage, while an unstaged session runs the full differential
+    // through the verifier directly.
 
     @Test
     void unstagedRepairVerifyRefreshesAndThreadsTheStructuralOracle() {
@@ -877,7 +877,7 @@ class SandboxAgentToolsTest {
         tools.exitStagedGeneration();
 
         assertThat(tools.reuseCachedPassingCheck(GenerationStage.STATEMENT)).isEmpty();
-        // A legacy tool call after exiting staged mode must not be gated or dispatched through the (still-wired) stage-check service.
+        // A tool call after exiting staged mode must not be gated or dispatched through the still-wired stage-check service.
         assertThat(tools.submit(null)).isEqualTo("Submitted for verification.");
     }
 

@@ -294,8 +294,8 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_normalizesLeakedHarmonyToolName_andDispatchesToTheRealTool() {
         ChatModel chatModel = mock(ChatModel.class);
-        // Some model servers leak a harmony control token into the tool name (observed: "bash<|channel|>commentary"). Without normalization the name matches no registered tool and
-        // the loop would thrash on tool-execution failures. With normalization it dispatches to "bash" and the run completes cleanly.
+        // A model server can leak a harmony control token into the tool name. Without normalization the name matches no registered tool and the loop thrashes on
+        // tool-execution failures; with it the call dispatches to "bash" and the run completes.
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash<|channel|>commentary", "{\"command\":\"ls\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -357,8 +357,8 @@ class AgentLoopRunnerTest {
 
     @Test
     void agentLoop_nonStagedSubmit_isNeverVetoed_endsOnTheFirstCallEvenWhenTheToolsObjectImplementsSubmitVetoAware() {
-        // SandboxAgentTools always implements SubmitVetoAware, but an unstaged (legacy) session's submit() never sets the veto flag: the interface being implemented must not by
-        // itself change today's behavior.
+        // SandboxAgentTools always implements SubmitVetoAware, but an unstaged session's submit() never sets the flag: implementing the interface must not by itself gate a
+        // session that was never staged.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), textResponse("must not be called"));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -374,8 +374,8 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_appendsTheBudgetPressureNudge_intoThePromptOfTheFinalAllowedTurn() {
         ChatModel chatModel = mock(ChatModel.class);
-        // The model keeps calling a tool and never submits. With maxTurns=2, the loop must inject the budget-pressure nudge AFTER rebuilding the conversation from turn 1's tool
-        // result, so it actually reaches the model on turn 2. The source explicitly warns the nudge would be DISCARDED if appended before that rebuild — this pins the ordering.
+        // The model keeps calling a tool and never submits. With maxTurns=2 the nudge must be appended AFTER the conversation is rebuilt from turn 1's tool result, or the
+        // rebuild discards it and it never reaches the model on turn 2.
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);

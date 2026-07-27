@@ -52,7 +52,7 @@ public class GenerationReviewService {
     }
 
     /**
-     * Attaches all quality findings to the already-saved exercise. Comment creation is best effort because failure must not misreport or roll back a completed canonical save.
+     * Best effort: the exercise is already saved, so a failure to attach findings must neither misreport nor roll that save back.
      *
      * @param exercise the saved exercise that receives the review threads
      * @param user     the instructor recorded as the review-thread author

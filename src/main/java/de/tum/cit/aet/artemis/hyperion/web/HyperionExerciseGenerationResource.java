@@ -50,10 +50,10 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for Hyperion's agentic whole-exercise generation and adaptation.
  * <p>
- * A single endpoint and a single engine drive both {@code GENERATE} and {@code ADAPT} — the client picks the mode explicitly (never inferred from the exercise's contents). The
- * agent produces or revises a complete exercise candidate (problem statement plus all repositories). Mechanically verified work is saved to the exercise and versioned; automated
- * quality findings become review comments for the instructor. Mechanically invalid or interrupted candidates are not saved. Progress streams over the websocket topic
- * {@code /user/topic/hyperion/exercise-generation/jobs/{jobId}}; a run is a multi-minute async job addressed by the returned {@code jobId}.
+ * One endpoint drives both {@link GenerationMode} values. The agent produces or revises a complete exercise candidate (problem statement plus all repositories). Mechanically
+ * verified work is saved to the exercise and versioned; automated quality findings become review comments for the instructor. Mechanically invalid or interrupted candidates are
+ * not saved. A run is a multi-minute async job addressed by the returned {@code jobId}, streaming progress over the websocket topic
+ * {@code /user/topic/hyperion/exercise-generation/jobs/{jobId}}.
  */
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @Lazy
@@ -117,7 +117,7 @@ public class HyperionExerciseGenerationResource {
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language + "' and project type '"
                     + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
-        // Queried explicitly (never through the entity's lazy collection, which is uninitializable on this detached instance and would 500 instead of 400).
+        // Queried explicitly: the entity's lazy auxiliary-repository collection is not initialized on this detached instance.
         if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
             throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
                     + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
@@ -146,10 +146,9 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * GET programming-exercises/generation/supported-languages : the languages Artemis Intelligence offers for one-click whole-exercise generation (the oracle-verifiable set).
+     * GET programming-exercises/generation/supported-languages : the languages whole-exercise generation can be verified for, so clients fetch the set instead of hardcoding it.
      * <p>
-     * Not exercise-scoped, so guarded by the global least-privilege role that can create exercises ({@link EnforceAtLeastEditor}). Exposed as the server-authoritative set for
-     * clients to fetch rather than hardcode.
+     * Not exercise-scoped, so it is guarded by the least-privileged global role that can create exercises ({@link EnforceAtLeastEditor}) rather than by course membership.
      *
      * @return the supported programming languages
      */
@@ -190,7 +189,9 @@ public class HyperionExerciseGenerationResource {
     /**
      * DELETE programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId} : cancels a running generation job and immediately exposes its terminal status. An in-flight
      * provider
-     * request may finish at the transport layer, but its response is fenced from tool execution and completion publication.
+     * request may still finish at the transport layer, but its response is fenced from tool execution and completion publication.
+     * <p>
+     * Editor rights in the course are necessary but not sufficient: job ids are observable, so only the user who started the job may cancel it.
      *
      * @param exerciseId the programming exercise id
      * @param jobId      the job id to cancel
@@ -200,16 +201,14 @@ public class HyperionExerciseGenerationResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> cancelExerciseGeneration(@PathVariable long exerciseId, @PathVariable String jobId) {
         log.debug("REST request to cancel agentic exercise generation job [{}] for exercise [{}]", jobId, exerciseId);
-        // Only the instructor who started the job may cancel it (the jobId is observable, so course scope alone is not enough — see requestCancellation).
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean cancelled = jobService.requestCancellation(exerciseId, jobId, user);
         return cancelled ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent saved generation or adaptation, resetting its
-     * template/solution/tests
-     * repositories back to the state captured before persistence.
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent saved generation or adaptation, resetting its template/solution/tests repositories
+     * back to the state captured before persistence.
      *
      * @param exerciseId the programming exercise id
      * @return 200 if a baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
@@ -238,14 +237,6 @@ public class HyperionExerciseGenerationResource {
         }
     }
 
-    /**
-     * For {@link GenerationMode#ADAPT}, appends the instructor's selected active review threads to the brief. Other requests remain unchanged.
-     *
-     * @param basePrompt the resolved brief
-     * @param exerciseId the exercise id
-     * @param request    the generation request (mode + selected feedback thread ids)
-     * @return the prompt with the rendered feedback appended when applicable
-     */
     private String withSelectedFeedback(String basePrompt, long exerciseId, ExerciseGenerationRequestDTO request) {
         if (request.mode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
             return basePrompt;
@@ -269,13 +260,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Labels a repository the same way {@link ExerciseGenerationFileChangeDTO} already does for file-change events ({@code template}/{@code solution}/{@code tests}), instead of
-     * {@link RepositoryType#getName()} (which returns the LocalVC-facing name {@code "exercise"} for {@link RepositoryType#TEMPLATE}). Both endpoints describe the same three
-     * repositories within this one Hyperion feature; using one shared, instructor-facing vocabulary keeps {@code revertedRepositories} consistent with the file-change stream
-     * (which already has translation keys for {@code template}/{@code solution}/{@code tests}) instead of leaking the unrelated git-naming convention into this response.
-     *
-     * @param repositoryType the repository that was reverted
-     * @return the Hyperion-facing repository label
+     * Reuses the labels of {@link ExerciseGenerationFileChangeDTO} so both endpoints name the same three repositories identically and share the client's translation keys.
+     * {@link RepositoryType#getName()} cannot be used: it returns the LocalVC-facing {@code "exercise"} for {@link RepositoryType#TEMPLATE}.
      */
     private static String repositoryLabel(RepositoryType repositoryType) {
         return switch (repositoryType) {
@@ -287,11 +273,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Hyperion writes directly to the exercise repositories on mechanically verified runs, so it must only run on unreleased instructor drafts without student participations.
-     * Released/null
-     * release-date exercises are considered live in Artemis; instructors should clone or move the release date into the future before asking the agent to rewrite the exercise.
-     *
-     * @param exercise the exercise to validate
+     * Hyperion writes directly to the exercise repositories, so it must only run on drafts no student can reach. Note that {@link ProgrammingExercise#isReleased()} is also true
+     * when there is no release date at all, which makes an exercise without one ineligible rather than eligible.
      */
     private void validateDraftExercise(ProgrammingExercise exercise) {
         if (exercise.isReleased()) {
