@@ -13,7 +13,7 @@ interface IrisActivityViewItem extends IrisActivityItem {
     stateClass: string;
     icon: typeof faCircleNotch;
     spin: boolean;
-    /** Accessible label (name + duration) exposed on the stepper node via aria-label. */
+    /** Accessible label (name + detail + state + duration) exposed on the stepper node via aria-label. */
     tooltip: string;
 }
 
@@ -44,8 +44,13 @@ export class IrisActivityFeedComponent {
         return this.activities().map((activity) => {
             const label = this.translateActivityName(activity.name);
             const durationLabel = this.formatDuration(activity);
-            // Accessible name reads name (+ detail) (+ duration), matching the visible label order.
+            // Accessible name reads name (+ detail) + state (+ duration), matching the visible label order.
+            // The state is otherwise conveyed only by the node icon, which is invisible to screen readers.
             const namePart = activity.detail ? `${label} · ${activity.detail}` : label;
+            const parts = [namePart, this.translateActivityState(activity.state)];
+            if (durationLabel) {
+                parts.push(durationLabel);
+            }
             return {
                 ...activity,
                 label,
@@ -53,7 +58,7 @@ export class IrisActivityFeedComponent {
                 stateClass: activity.state.toLowerCase(),
                 icon: this.iconFor(activity.state),
                 spin: activity.state === IrisActivityState.RUNNING,
-                tooltip: durationLabel ? `${namePart} · ${durationLabel}` : namePart,
+                tooltip: parts.join(' · '),
             };
         });
     });
@@ -70,6 +75,15 @@ export class IrisActivityFeedComponent {
             return translated;
         }
         return prettifyActivityName(name);
+    }
+
+    private translateActivityState(state: IrisActivityState): string {
+        const key = `artemisApp.iris.activities.states.${state.toLowerCase()}`;
+        const translated = this.translateService.instant(key);
+        if (typeof translated === 'string' && translated !== key && !translated.startsWith('translation-not-found[')) {
+            return translated;
+        }
+        return prettifyActivityName(state.toLowerCase());
     }
 
     private formatDuration(activity: IrisActivityItem): string | undefined {

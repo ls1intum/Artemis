@@ -257,6 +257,11 @@
                 "liveLabel": "Aktuelle Iris-Aktivität",
                 "trailLabel": "Iris-Aktivitätsverlauf",
                 "trailSummary": "Gedankengang: {{ count }} · {{ duration }}s",
+                "states": {
+                    "running": "Läuft",
+                    "finished": "Fertig",
+                    "failed": "Fehlgeschlagen"
+                },
                 "lecture_content_retrieval": "Lese Vorlesung",
                 "faq_content_retrieval": "Lese FAQs",
                 "get_course_details": "Suche Kursinformationen",
