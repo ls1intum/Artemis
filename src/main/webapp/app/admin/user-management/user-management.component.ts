@@ -13,17 +13,18 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { DialogModule } from 'primeng/dialog';
-import { TableModule } from 'primeng/table';
-import { SortEvent } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { InputTextModule } from 'primeng/inputtext';
-import { CheckboxModule } from 'primeng/checkbox';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { MessageModule } from 'primeng/message';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -126,20 +127,22 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
-        PaginatorModule,
-        TableModule,
-        ButtonModule,
-        TooltipModule,
-        InputTextModule,
-        CheckboxModule,
-        RadioButtonModule,
-        MessageModule,
+        TumUiPaginatorComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiRadioButtonComponent,
+        TumUiMessageComponent,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        DialogModule,
+        TumUiDialogComponent,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -575,19 +578,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    /** Handles a tum-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
         this.transition();
     }
 
     /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
-    onTableSort(event: SortEvent): void {
+    onTableSort(event: TumUiTableSortEvent): void {
         if (!event.field) {
             return;
         }
         this.predicate.set(event.field);
-        this.ascending.set((event.order ?? 1) === 1);
+        this.ascending.set(event.order === 1);
         this.transition();
     }
 
