@@ -42,8 +42,8 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.StreamType;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
@@ -279,7 +279,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     @Override
-    public String createSession(SandboxSessionSpec spec) {
+    public String createSession(SandboxSessionSpecDTO spec) {
         if (!buildAgentConfiguration.isDockerAvailable()) {
             throw new LocalCIException("Docker is not available. Cannot create interactive sandbox session.");
         }
@@ -400,7 +400,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     @Override
-    public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+    public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
         try (OperationLease ignored = beginOperation(sessionId)) {
             DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
             try (final var execCreateCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
@@ -455,7 +455,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     if (!completed) {
                         destroySession(sessionId);
                         closeQuietly(callback);
-                        return new SandboxExecResult(-1, stdout.snapshot(), stderr.snapshot(), true);
+                        return new SandboxExecResultDTO(-1, stdout.snapshot(), stderr.snapshot(), true);
                     }
 
                     Throwable execError = errorRef.get();
@@ -478,7 +478,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                         invalidateSessionAfterOperationFailure(sessionId, callback, failure);
                         throw failure;
                     }
-                    return new SandboxExecResult(exitCode, stdout.snapshot(), stderr.snapshot(), false);
+                    return new SandboxExecResultDTO(exitCode, stdout.snapshot(), stderr.snapshot(), false);
                 }
                 finally {
                     // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.

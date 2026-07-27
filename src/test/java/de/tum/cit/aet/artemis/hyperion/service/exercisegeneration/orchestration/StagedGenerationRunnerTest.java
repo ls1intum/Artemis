@@ -35,8 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
@@ -99,12 +99,12 @@ class StagedGenerationRunnerTest {
         private String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
                 if (path.endsWith("SPEC.md")) {
@@ -126,12 +126,12 @@ class StagedGenerationRunnerTest {
             return found("");
         }
 
-        private static SandboxExecResult found(String value) {
-            return new SandboxExecResult(0, value, "", false);
+        private static SandboxExecResultDTO found(String value) {
+            return new SandboxExecResultDTO(0, value, "", false);
         }
 
-        private static SandboxExecResult missing() {
-            return new SandboxExecResult(1, "", "not found", false);
+        private static SandboxExecResultDTO missing() {
+            return new SandboxExecResultDTO(1, "", "not found", false);
         }
 
         @Override
@@ -235,8 +235,6 @@ class StagedGenerationRunnerTest {
             order.verify(systemPromptService).buildStage(exercise, stage);
             order.verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
         }
-        verify(baseTools, never()).enterStage(GenerationStage.SOLUTION);
-        verify(baseTools, never()).enterStage(GenerationStage.TEMPLATE);
     }
 
     @Test

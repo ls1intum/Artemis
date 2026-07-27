@@ -24,30 +24,19 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * The mechanical per-stage gates enforced by the staged generation workflow
  * ({@code de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.StagedGenerationRunner}),
- * one method per {@link GenerationStage}: SPEC.md's required sections and evidence gates, one pristine build each for SOLUTION and TEMPLATE, the differential self-check for TESTS,
- * and the
- * problem-statement task-binding resolution for STATEMENT. The runner owns stage sequencing, turn budgets, and re-entry; this service owns only "does this stage's artifact pass".
- * <p>
- * The SOLUTION/TEMPLATE compile gates run a single build via {@link DifferentialVerificationService#singleBuild}, which shares its build-and-parse machinery with the full
- * differential ({@code runDifferential}) so a stage gate and the eventual TESTS/post-loop differential can never disagree about whether an assignment compiled.
- * <p>
- * <b>The "compiled" definition fix:</b> {@code verify.sh} exits non-zero both for a genuine compile failure and for failing tests once tests exist. A template that correctly fails
- * its behavioural tests — the entire point of a template — must not be misreported as "does not compile" just because its exit code is non-zero. Both compile gates therefore judge
- * "compiled" as {@code testsRun > 0 || exitCode == 0} (see {@link SingleBuildResult#compiled()}), never {@code exitCode == 0} alone: once tests exist, failing tests on the
- * solution
- * is a differential-quality problem to report by name (not a compile error), and failing tests on the template is the expected, healthy outcome.
+ * one method per {@link GenerationStage}: SPEC.md's required sections and evidence gates, the differential self-check for TESTS, and the problem-statement task-binding resolution
+ * for STATEMENT. The runner owns stage sequencing, turn budgets, and re-entry; this service owns only "does this stage's artifact pass".
  */
 @Lazy
 @Service
@@ -72,9 +61,6 @@ public class StageCheckService {
      * leaving the decomposition check inert on two of the commonest shapes. Undercounting is the safe direction here: it makes the check inert, never falsely rejecting.
      */
     private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+|R\\d+\\s*[:.])", Pattern.MULTILINE);
-
-    /** Bound on how many extracted build-error lines a compile-failure observation carries, so a noisy build log cannot flood the agent's context. */
-    private static final int MAX_ERROR_LINES = 15;
 
     private final DifferentialVerificationService verifier;
 
@@ -132,7 +118,7 @@ public class StageCheckService {
             return Optional.empty();
         }
         String encoded = Base64.getEncoder().encodeToString(approved.get().getBytes(StandardCharsets.UTF_8));
-        SandboxExecResult restore = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
+        SandboxExecResultDTO restore = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "echo '" + encoded + "' | base64 -d > '" + GenerationWorkspaceService.WORKSPACE + "/SPEC.md'");
         if (!restore.isSuccess()) {
             throw new IllegalStateException("A shell command changed the approved specification and it could not be restored");
@@ -191,8 +177,6 @@ public class StageCheckService {
         }
         return switch (stage) {
             case SPEC -> checkSpec(sandbox, sessionId, exercise);
-            case SOLUTION -> checkSolution(sandbox, sessionId, exercise);
-            case TEMPLATE -> checkTemplate(sandbox, sessionId, exercise);
             case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
             case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport);
         };
@@ -513,97 +497,6 @@ public class StageCheckService {
         return List.copyOf(rows);
     }
 
-    private StageCheckResult checkSolution(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        SingleBuildResult result;
-        try {
-            result = verifier.singleBuild(sandbox, sessionId, exercise, "solution");
-        }
-        catch (RuntimeException e) {
-            return StageCheckResult.failed("Could not run the reference solution compile check: " + e.getMessage());
-        }
-        if (!result.compiled()) {
-            return StageCheckResult.failed("The reference solution does not compile:\n" + extractErrorLines(result.boundedLog()));
-        }
-        if (result.testsRun() > 0 && result.failures() > 0) {
-            return StageCheckResult
-                    .failed("The solution must pass every test; failing: " + result.failedTestNames() + ". This is not a compile error — fix the solution's behaviour.");
-        }
-        List<String> createdTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
-        List<String> missingCreatedTypes = createdTypes.stream().filter(type -> findTypeDeclarations(sandbox, sessionId, "solution", type).isBlank()).toList();
-        if (!missingCreatedTypes.isEmpty()) {
-            return StageCheckResult.failed("SPEC.md's '## Design' table marks these types 'student-creates', but the solution contains no file for them: " + missingCreatedTypes
-                    + ". The reference solution must fully implement every student-created type because that is the accepted learning contract; add the missing file(s).");
-        }
-        return StageCheckResult.passed(createdTypes.isEmpty() ? "" : "Solution compiles and contains every student-created type from the specification: " + createdTypes + ".");
-    }
-
-    private StageCheckResult checkTemplate(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        SingleBuildResult result;
-        try {
-            result = verifier.singleBuild(sandbox, sessionId, exercise, "template");
-        }
-        catch (RuntimeException e) {
-            return StageCheckResult.failed("Could not run the template compile check: " + e.getMessage());
-        }
-        if (!result.compiled()) {
-            return StageCheckResult.failed("The template does not compile:\n" + extractErrorLines(result.boundedLog()));
-        }
-        String observation = result.testsRun() > 0 && result.failures() > 0 ? "Template compiles. Template correctly failing " + result.failures() + " of " + result.testsRun()
-                + " tests (expected — the template must not implement the " + "required behaviour)." : "";
-        try {
-            SandboxExecResult diff = sandbox.exec(sessionId, DIFF_TIMEOUT, "diff", "-rq", GenerationWorkspaceService.WORKSPACE + "/solution",
-                    GenerationWorkspaceService.WORKSPACE + "/template");
-            if (!diff.timedOut() && diff.exitCode() == 0) {
-                return StageCheckResult.failed("The template is byte-identical to the solution (a degenerate copy). Remove the student work the specification marks 'stubbed' or "
-                        + "'student-creates' from the template so it still compiles but no longer matches the solution.");
-            }
-        }
-        catch (RuntimeException e) {
-            // Advisory only: a tooling failure here must not block an otherwise sound template.
-            log.debug("Degenerate-copy check could not run (fail-open): {}", e.getMessage());
-        }
-        List<String> createdTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
-        List<String> leakedFiles = createdTypes.stream().map(type -> findTypeDeclarations(sandbox, sessionId, "template", type)).filter(found -> !found.isBlank())
-                .flatMap(found -> found.lines().map(String::strip)).toList();
-        if (!leakedFiles.isEmpty()) {
-            return StageCheckResult.failed("SPEC.md's '## Design' table marks type(s) 'student-creates', so the template must NOT contain their files — students create them "
-                    + "from scratch (they are graded through the seeded structural checks and reflection-based tests). Delete these template files: " + leakedFiles
-                    + ". This ownership decision passed the specification gate; changing SPEC.md now cannot turn the required design work into a stub.");
-        }
-        if (!createdTypes.isEmpty()) {
-            observation = (observation.isBlank() ? "" : observation + " ") + "Confirmed absent from the template, as the specification requires students to create them: "
-                    + createdTypes + ".";
-        }
-        // The dual of the leak check above: the approved contract's supplied and stubbed types are the student's starting scaffold, so they must be PRESENT here. An empty
-        // template still "compiles" (no sources, exit 0) and still "fails every test" (nothing to run), so neither the compile gate nor the differential can notice that the
-        // scaffold is gone.
-        List<String> scaffoldTypes = enforcedScaffoldTypes(sandbox, sessionId);
-        List<String> missingScaffold = scaffoldTypes.stream().filter(type -> findTypeDeclarations(sandbox, sessionId, "template", type).isBlank()).toList();
-        // Java declares every type in a file named after it, so the probe is exact and each missing scaffold type can be named. Elsewhere a declaration may be invisible to the
-        // probe (a type need not own a file, and syntax varies), so only a WHOLLY missing scaffold is unambiguous enough to report — anything narrower would fail closed on a
-        // healthy repository.
-        boolean exactProbe = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-        boolean scaffoldGone = exactProbe ? !missingScaffold.isEmpty() : !scaffoldTypes.isEmpty() && missingScaffold.size() == scaffoldTypes.size();
-        if (scaffoldGone) {
-            // Naming the individual types matters: a partially missing scaffold surfaces downstream only as "cannot find symbol" while the tests compile against the template,
-            // which cost one observed run its whole repair budget without ever identifying the absent type.
-            return StageCheckResult.failed("The template repository is missing type(s) the approved '## Design' table supplies as the student's starting point: " + missingScaffold
-                    + ". Every 'given' type must ship complete and every 'stubbed' type as signatures with TODO bodies, in the template as well as the solution; only "
-                    + "'student-creates' types may be absent. Restore them rather than deleting the tests or references that need them.");
-        }
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        Map<String, String> templateFiles = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
-                ? DifferentialVerificationService.readRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE)
-                : Map.of();
-        if (!templateFiles.isEmpty()) {
-            List<String> todoReasons = ExerciseIntegrityGate.templateTodoSeamReasons(specification, templateFiles);
-            if (!todoReasons.isEmpty()) {
-                return StageCheckResult.failed(String.join(" ", todoReasons));
-            }
-        }
-        return StageCheckResult.passed(observation);
-    }
-
     /**
      * Whether SPEC.md's {@code ## Testing Strategy} declares at least one hidden after-due-date variant, read from a STRUCTURED cell — never from prose. An earlier prose
      * heuristic here both false-triggered (a table that says "no hidden after-due-date variant" contains every keyword) and false-negatived (a paraphrase like "released at the
@@ -716,12 +609,7 @@ public class StageCheckService {
         return specStudentCreatedTypes(specification);
     }
 
-    /** The {@code given} and {@code stubbed} types from the frozen specification — the scaffold the template must ship to the student. Only enforceable bare names count. */
-    private List<String> enforcedScaffoldTypes(InteractiveSandbox sandbox, String sessionId) {
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        return specScaffoldTypes(specification);
-    }
-
+    /** The {@code given} and {@code stubbed} types from the specification — the scaffold the template must ship to the student. Only enforceable bare names count. */
     static List<String> specScaffoldTypes(String spec) {
         return designTableRows(spec).stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
                 .filter(StageCheckService::isEnforceableTypeName).toList();
@@ -914,21 +802,9 @@ public class StageCheckService {
         return testingStrategyRows(specification);
     }
 
-    /**
-     * Extracts up to {@link #MAX_ERROR_LINES} compiler-error lines from a build log for a bounded, actionable compile-failure observation; falls back to the full (already
-     * bounded) log when no such line is found.
-     */
-    private static String extractErrorLines(String boundedLog) {
-        if (boundedLog == null || boundedLog.isBlank()) {
-            return "[no build output]";
-        }
-        List<String> errorLines = boundedLog.lines().filter(line -> line.contains("[ERROR]") || line.contains("error:")).limit(MAX_ERROR_LINES).toList();
-        return errorLines.isEmpty() ? boundedLog : String.join("\n", errorLines);
-    }
-
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, command);
+            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, command);
             return result.isSuccess() && result.stdout() != null ? result.stdout() : "";
         }
         catch (RuntimeException e) {

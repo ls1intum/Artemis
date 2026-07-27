@@ -43,7 +43,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -788,13 +788,13 @@ class GenerationOrchestrationServiceTest {
         when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(3);
             if (path.endsWith("/SPEC.md")) {
-                return new SandboxExecResult(0, specReads.getAndIncrement() == 0 ? "# Verified spec" : "# Broken repair spec", "", false);
+                return new SandboxExecResultDTO(0, specReads.getAndIncrement() == 0 ? "# Verified spec" : "# Broken repair spec", "", false);
             }
             if (path.endsWith("/test-plan.json")) {
-                return new SandboxExecResult(0, planReads.getAndIncrement() == 0 ? "{\"tests\":[{\"name\":\"testGood\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}"
+                return new SandboxExecResultDTO(0, planReads.getAndIncrement() == 0 ? "{\"tests\":[{\"name\":\"testGood\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}"
                         : "{\"tests\":[{\"name\":\"testBroken\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}", "", false);
             }
-            return new SandboxExecResult(1, "", "not found", false);
+            return new SandboxExecResultDTO(1, "", "not found", false);
         });
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -916,7 +916,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(3);
-            return path.endsWith("/test-plan.json") ? new SandboxExecResult(0, testPlan, "", false) : new SandboxExecResult(1, "", "not found", false);
+            return path.endsWith("/test-plan.json") ? new SandboxExecResultDTO(0, testPlan, "", false) : new SandboxExecResultDTO(1, "", "not found", false);
         });
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Intro.\n[task][Sort](test_sort,test_empty)\n[task][Edge](test_negative)");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION), any()))
@@ -1336,7 +1336,7 @@ class GenerationOrchestrationServiceTest {
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/RosterParserTest.java", "package p;\nclass RosterParserTest { }"), false));
         when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
             String path = invocation.getArgument(3);
-            return path.endsWith("/SPEC.md") ? new SandboxExecResult(0, "## Rules\n" + rulesBody, "", false) : new SandboxExecResult(1, "", "not found", false);
+            return path.endsWith("/SPEC.md") ? new SandboxExecResultDTO(0, "## Rules\n" + rulesBody, "", false) : new SandboxExecResultDTO(1, "", "not found", false);
         });
     }
 

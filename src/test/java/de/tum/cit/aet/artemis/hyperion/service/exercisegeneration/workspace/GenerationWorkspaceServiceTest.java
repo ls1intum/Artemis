@@ -28,7 +28,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -416,7 +416,7 @@ class GenerationWorkspaceServiceTest {
     @Test
     void cleanTransientBuildOutputs_removesOnlyKnownBuildDirectoriesFromSeededRepositories() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("session"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        when(sandbox.exec(eq("session"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), mock(), tempFileUtilService());
 
         service.cleanTransientBuildOutputs(sandbox, "session");

@@ -35,8 +35,8 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
@@ -201,26 +201,26 @@ class DifferentialVerificationServiceTest {
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             String joined = String.join(" ", command);
             if ("cat".equals(command[0])) {
                 if (command.length > 1 && command[1].endsWith("test-plan.json")) {
-                    return testPlanJson == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, testPlanJson, "", false);
+                    return testPlanJson == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, testPlanJson, "", false);
                 }
                 if (command.length > 1 && command[1].endsWith("SPEC.md")) {
-                    return specDocument == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, specDocument, "", false);
+                    return specDocument == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, specDocument, "", false);
                 }
-                return new SandboxExecResult(0, problemStatement, "", false);
+                return new SandboxExecResultDTO(0, problemStatement, "", false);
             }
             if (!joined.contains("verify.sh")) {
-                return new SandboxExecResult(0, "", "", false);
+                return new SandboxExecResultDTO(0, "", "", false);
             }
             BuildReportSpec spec = joined.contains("solution") ? solution : template;
-            return new SandboxExecResult(spec.exitCode(), buildOutput, "", spec.timedOut());
+            return new SandboxExecResultDTO(spec.exitCode(), buildOutput, "", spec.timedOut());
         }
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
@@ -328,7 +328,8 @@ class DifferentialVerificationServiceTest {
     @Test
     void buildEnvironmentPreflightConvertsBuildExecFailureIntoASafeError() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(anyString(), any(), any(String[].class))).thenReturn(new SandboxExecResult(0, "", "", false)).thenThrow(new IllegalStateException("Bearer secret-value"));
+        when(sandbox.exec(anyString(), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false))
+                .thenThrow(new IllegalStateException("Bearer secret-value"));
 
         Optional<String> failure = newVerifier().checkBuildEnvironment(sandbox, "session", new ProgrammingExercise());
 
@@ -444,25 +445,25 @@ class DifferentialVerificationServiceTest {
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             String joined = String.join(" ", command);
             execCommands.add(joined);
             if ("cat".equals(command[0])) {
                 if (command.length > 1 && command[1].endsWith("test-plan.json")) {
                     // No grading plan in these path-dispatch tests: the oracle must then behave exactly as it did before visibility existed.
-                    return new SandboxExecResult(1, "", "no such file", false);
+                    return new SandboxExecResultDTO(1, "", "no such file", false);
                 }
-                return new SandboxExecResult(0, problemStatement, "", false);
+                return new SandboxExecResultDTO(0, problemStatement, "", false);
             }
             if (!joined.contains("verify.sh")) {
-                return new SandboxExecResult(0, "", "", false);
+                return new SandboxExecResultDTO(0, "", "", false);
             }
             BuildReportSpec spec = joined.contains(" solution") ? pristineSolution : pristineTemplate;
-            return new SandboxExecResult(spec.exitCode(), "", "", spec.timedOut());
+            return new SandboxExecResultDTO(spec.exitCode(), "", "", spec.timedOut());
         }
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
@@ -1033,15 +1034,15 @@ class DifferentialVerificationServiceTest {
         InteractiveSandbox sandbox = new InteractiveSandbox() {
 
             @Override
-            public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+            public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
                 if ("cat".equals(command[0])) {
-                    return new SandboxExecResult(0, PROBLEM_STATEMENT_WITH_TASK, "", false);
+                    return new SandboxExecResultDTO(0, PROBLEM_STATEMENT_WITH_TASK, "", false);
                 }
-                return new SandboxExecResult(0, "", "", false);
+                return new SandboxExecResultDTO(0, "", "", false);
             }
 
             @Override
-            public String createSession(SandboxSessionSpec spec) {
+            public String createSession(SandboxSessionSpecDTO spec) {
                 return "s";
             }
 
@@ -1517,53 +1518,6 @@ class DifferentialVerificationServiceTest {
                     Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
             assertThat(result.mechanicallyVerified()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("retained NONE"));
-        }
-    }
-
-    /**
-     * {@link DifferentialVerificationService#singleBuild} is the shared build-and-parse machinery {@link StageCheckService} calls for the staged-generation compile gates; these
-     * tests pin that it reuses the same collected-report parsing as the two-build differential (rather than duplicating it) and reseeds the pristine script on every call.
-     */
-    @Nested
-    class SingleBuild {
-
-        @Test
-        void reportsTestsAndFailuresFromTheCollectedReports() {
-            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(1, names, List.of("sortsArrayWithDuplicates")), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
-
-            SingleBuildResult result = newVerifier().singleBuild(sandbox, "s", new ProgrammingExercise(), "solution");
-
-            assertThat(result.exitCode()).isEqualTo(1);
-            assertThat(result.testsRun()).isEqualTo(2);
-            assertThat(result.failures()).isEqualTo(1);
-            assertThat(result.failedTestNames()).containsExactly("sortsArrayWithDuplicates");
-            assertThat(result.compiled()).as("tests ran, so this is a failing-test outcome, not a compile failure").isTrue();
-        }
-
-        @Test
-        void nonZeroExitWithNoTestsRun_isNotCompiled() {
-            ScriptedSandbox sandbox = new ScriptedSandbox(result(0, 0, 0, 0), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
-
-            SingleBuildResult result = newVerifier().singleBuild(sandbox, "s", new ProgrammingExercise(), "template");
-
-            assertThat(result.exitCode()).isEqualTo(1);
-            assertThat(result.testsRun()).isZero();
-            assertThat(result.compiled()).as("no tests ran and the exit code is non-zero: a genuine compile failure").isFalse();
-        }
-
-        @Test
-        void reSeedsThePristineScriptOnEveryCall_soASoloSolutionOrTemplateCallNeverSeesTheConsumedReadinessFixture() {
-            ScriptedSandbox sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
-            DifferentialVerificationService verifier = newVerifier();
-
-            SingleBuildResult solution = verifier.singleBuild(sandbox, "s", new ProgrammingExercise(), "solution");
-            SingleBuildResult template = verifier.singleBuild(sandbox, "s", new ProgrammingExercise(), "template");
-
-            assertThat(solution.testsRun()).isEqualTo(2);
-            assertThat(solution.failures()).isZero();
-            assertThat(template.testsRun()).isEqualTo(2);
-            assertThat(template.failures()).isEqualTo(2);
         }
     }
 }

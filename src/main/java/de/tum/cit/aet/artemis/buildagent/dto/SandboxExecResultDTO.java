@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @param stderr   the captured standard error (already truncated)
  * @param timedOut whether the command was killed because it exceeded its timeout
  */
-public record SandboxExecResult(int exitCode, String stdout, String stderr, boolean timedOut) implements Serializable {
+public record SandboxExecResultDTO(int exitCode, String stdout, String stderr, boolean timedOut) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

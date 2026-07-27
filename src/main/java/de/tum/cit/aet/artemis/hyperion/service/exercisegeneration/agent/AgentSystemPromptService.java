@@ -274,22 +274,6 @@ public class AgentSystemPromptService {
             against it, never rewrite it to escape a gate.
             """;
 
-    private static final String STAGE_1_SOLUTION_INSTRUCTIONS = """
-            STAGE 1 — SOLUTION: implement the reference solution per the specification. The solution must exemplify the design it teaches: never bypass an
-            abstraction it defines (e.g. instanceof on one concrete implementation instead of delegating through the interface) — fix the design instead.
-            The approved specification is read-only. Independently replay every worked example, using the sandbox when useful. If the implementation disagrees with a correct
-            example, fix the solution. If the example itself is inconsistent, do not edit the specification or patch code to match it; stop and report the contract defect.
-            Write complete Javadoc on every public member now; the template inherits it verbatim — never defer docs to that stage.
-            """;
-
-    private static final String STAGE_2_TEMPLATE_INSTRUCTIONS = """
-            STAGE 2 — TEMPLATE: derive it FROM the solution, removing exactly `stubbed` and `student-creates` work. Omit each student-created type entirely and never move its seam.
-            Stubbed bodies normally retain Javadoc plus their in-body seam TODO and throw. If an absent type makes a stubbed owner's whole seam undeclarable, keep an empty owner
-            class with its own class-body seam TODO and omit the dependent members. The template must compile; failing behavioural tests are expected. Shared Javadoc and non-TODO
-            comments stay byte-identical to the solution.
-            If a doc is missing from the solution, add it there first and re-derive; never author docs only in the template.
-            """;
-
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             EXECUTABLE BUILD — work in coherent learning increments, not one finished repository at a time. Read the approved specification and choose the seam with the greatest
             pedagogical or architectural risk. For that seam, update its solution behavior, derive the corresponding student template gap, add its visible behavioral evidence,
@@ -440,9 +424,9 @@ public class AgentSystemPromptService {
      * @return the stage-scoped system prompt
      */
     public String buildStage(ProgrammingExercise exercise, GenerationStage stage) {
-        // The SCA constraint binds the SOLUTION (must be lint-clean) and is re-checked by the TESTS-stage differential; without it here, a staged run only learned about SCA
+        // The SCA constraint binds the solution (must be lint-clean) and is checked by the TESTS-stage differential; without it here, a staged run only learned about SCA
         // when the differential rejected an already-finished solution — guaranteed late rework.
-        String scaGuidance = stage == GenerationStage.SOLUTION || stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
+        String scaGuidance = stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
         String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
         return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
                 + stageSection(stage) + dueDateGuidance + scaGuidance + LanguageGenerationProfile.guidanceFor(exercise);
@@ -462,9 +446,6 @@ public class AgentSystemPromptService {
     private static String stageSection(GenerationStage stage) {
         return stageWriteBoundary(stage) + switch (stage) {
             case SPEC -> STAGE_SPEC_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
-            case SOLUTION -> earlierStagesLine(stage) + STAGE_1_SOLUTION_INSTRUCTIONS + "\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
-            case TEMPLATE ->
-                earlierStagesLine(stage) + STAGE_2_TEMPLATE_INSTRUCTIONS + "\n\n" + TEMPLATE_AS_TEACHING_SCAFFOLD + DIFF_DISCIPLINE + stylePointer(stage) + STAGE_CLOSE_LINE;
             case TESTS -> earlierStagesLine(stage) + STAGE_3_TESTS_INSTRUCTIONS + "\n\n" + stylePointer(stage) + STAGE_CLOSE_LINE;
             case STATEMENT ->
                 earlierStagesLine(stage) + STAGE_4_STATEMENT_INSTRUCTIONS + "\n\n" + STUDENT_FACING_STATEMENT + ARTEMIS_TASK_BINDINGS + stylePointer(stage) + STAGE_CLOSE_LINE;
@@ -474,8 +455,6 @@ public class AgentSystemPromptService {
     private static String stageWriteBoundary(GenerationStage stage) {
         String writable = switch (stage) {
             case SPEC -> "SPEC.md";
-            case SOLUTION -> "solution/ (SPEC.md is now read-only)";
-            case TEMPLATE -> "solution/ and template/ (SPEC.md is read-only)";
             case TESTS -> "solution/, template/, tests/, and test-plan.json (SPEC.md is read-only)";
             case STATEMENT -> "problem-statement.md (read the completed artifacts, but do not rewrite them in this stage)";
         };
@@ -488,8 +467,6 @@ public class AgentSystemPromptService {
         String produced = switch (stage) {
             case SPEC -> null;
             // SPEC.md may be absent (the stage is skipped when the instructor provided a real statement, which then IS the specification).
-            case SOLUTION -> "the specification (SPEC.md when present, else the instructor statement)";
-            case TEMPLATE -> "the specification and the reference solution";
             case TESTS -> "the approved specification";
             case STATEMENT -> "the specification, the reference solution, the template, and the differential tests";
         };
@@ -504,8 +481,6 @@ public class AgentSystemPromptService {
         }
         String styleFile = switch (stage) {
             case SPEC -> throw new IllegalStateException("SPEC uses inline guidance");
-            case SOLUTION -> "solution.md";
-            case TEMPLATE -> "template.md";
             case TESTS -> "solution.md`, `reference/style/template.md`, and `reference/style/tests.md";
             case STATEMENT -> "final-statement.md";
         };

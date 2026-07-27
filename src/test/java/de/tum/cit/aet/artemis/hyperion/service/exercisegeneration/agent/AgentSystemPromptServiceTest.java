@@ -130,8 +130,8 @@ class AgentSystemPromptServiceTest {
         assertThat(generatePrompt).doesNotContain("TEMPLATE AS TEACHING SCAFFOLD");
     }
 
-    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.SOLUTION, "STAGE 1 — SOLUTION",
-            GenerationStage.TEMPLATE, "STAGE 2 — TEMPLATE", GenerationStage.TESTS, "EXECUTABLE BUILD", GenerationStage.STATEMENT, "FINAL STATEMENT");
+    private static final Map<GenerationStage, String> STAGE_HEADERS = Map.of(GenerationStage.SPEC, "STAGE — SPECIFICATION", GenerationStage.TESTS, "EXECUTABLE BUILD",
+            GenerationStage.STATEMENT, "FINAL STATEMENT");
 
     private static final String STAGE_CLOSE_LINE_MARKER = "calling `submit` means THIS STAGE's goal is met";
 
@@ -164,24 +164,6 @@ class AgentSystemPromptServiceTest {
         // SPEC's guidance is inlined, so the stage must NOT send the agent to a style guide (there is none, and re-reading would burn its bounded turns).
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
-    }
-
-    @Test
-    void buildStage_solution_carriesOnlyItsOwnStageAndNamesTheSpecificationAsAlreadyProduced() {
-        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SOLUTION);
-
-        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SOLUTION);
-        assertThat(prompt).contains("Earlier stages already produced: the specification (SPEC.md when present, else the instructor statement).")
-                .contains("reference/style/solution.md");
-    }
-
-    @Test
-    void buildStage_template_carriesOnlyItsOwnStageAndTheTeachingScaffoldAndDiffDisciplineRules() {
-        String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.TEMPLATE);
-
-        assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TEMPLATE);
-        assertThat(prompt).contains("Earlier stages already produced: the specification and the reference solution.").contains("TEMPLATE AS TEACHING SCAFFOLD")
-                .contains("DIFF DISCIPLINE").contains("reference/style/template.md");
     }
 
     @Test

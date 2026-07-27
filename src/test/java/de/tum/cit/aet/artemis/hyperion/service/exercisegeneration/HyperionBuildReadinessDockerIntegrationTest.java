@@ -20,8 +20,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -69,7 +69,7 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
         ProgrammingExercise exercise = scaffoldExercise(projectType, sequentialTestRuns);
         poisonExerciseSources(exercise, sequentialTestRuns);
         InteractiveSandbox sandbox = interactiveSandbox.orElseThrow();
-        SandboxSessionContext context = new SandboxSessionContext("readiness-" + projectType + "-" + sequentialTestRuns, exercise.getId(), exercise.getTitle(),
+        SandboxSessionContextDTO context = new SandboxSessionContextDTO("readiness-" + projectType + "-" + sequentialTestRuns, exercise.getId(), exercise.getTitle(),
                 exercise.getCourseViaExerciseGroupOrCourseMember().getId(), TEST_PREFIX + "instructor1", GenerationMode.ADAPT.name());
         String sessionId = sandbox.createSession(workspace.sessionSpec(exercise, context));
         try {
@@ -77,8 +77,9 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
             workspace.stageBuildReadinessFixture(sandbox, sessionId, exercise);
 
             assertThat(verifier.checkBuildEnvironment(sandbox, sessionId, exercise)).isEmpty();
-            SandboxExecResult fixtureRemoved = sandbox.exec(sessionId, java.time.Duration.ofSeconds(10), "sh", "-c", "test -d " + SandboxBuildCommandService.READINESS_FIXTURE_DIR
-                    + " && test -z \"$(find " + SandboxBuildCommandService.READINESS_FIXTURE_DIR + " -mindepth 1 -print -quit)\"");
+            SandboxExecResultDTO fixtureRemoved = sandbox.exec(sessionId, java.time.Duration.ofSeconds(10), "sh", "-c",
+                    "test -d " + SandboxBuildCommandService.READINESS_FIXTURE_DIR + " && test -z \"$(find " + SandboxBuildCommandService.READINESS_FIXTURE_DIR
+                            + " -mindepth 1 -print -quit)\"");
             assertThat(fixtureRemoved.isSuccess()).as("the readiness fixture is empty before agent tools can run").isTrue();
         }
         finally {

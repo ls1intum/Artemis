@@ -5,8 +5,8 @@ import java.time.Duration;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 
 /**
  * A long-lived interactive execution sandbox: a warm Docker container an agentic exercise-Hyperion sandbox drives through many cheap operations (read a file, write a file, run a
@@ -24,7 +24,7 @@ public interface InteractiveSandbox {
      * @param spec the container image, resource limits and seed inputs for the session
      * @return an opaque session handle (the container id) used by every subsequent operation
      */
-    String createSession(SandboxSessionSpec spec);
+    String createSession(SandboxSessionSpecDTO spec);
 
     /**
      * Runs a command inside the session container; it is executed without a shell unless the caller passes {@code sh -c ...}, and stdout/stderr are truncated to a bounded size so
@@ -35,7 +35,7 @@ public interface InteractiveSandbox {
      * @param command   the command and its arguments (run directly, not through a shell)
      * @return the exit code and the bounded captured stdout/stderr
      */
-    SandboxExecResult exec(String sessionId, Duration timeout, String... command);
+    SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command);
 
     /**
      * Copies a tar archive into the session container at the given absolute destination path.

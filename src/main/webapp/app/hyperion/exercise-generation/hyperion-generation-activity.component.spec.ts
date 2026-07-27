@@ -4,7 +4,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
@@ -81,6 +80,15 @@ function fileChange(path: string, action: 'write' | 'edit' | 'delete', overrides
     return { type: 'FILE_CHANGE', path, repo, action, turn: 1, timestamp: '', ...overrides };
 }
 
+/** The undo confirmation is a `tum-ui-dialog`, so its panel is portaled into the CDK overlay container, not into the fixture. */
+function revertConfirmDialog(): HTMLElement | null {
+    return document.querySelector('.tum-ui-dialog');
+}
+
+function revertConfirmButton(action: 'accept' | 'reject'): HTMLButtonElement {
+    return document.querySelector(`[data-testid="hyperion-generation-revert-${action}"] button`)!;
+}
+
 describe('HyperionGenerationActivityComponent', () => {
     let service: MockService;
 
@@ -117,7 +125,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.statusLoading()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-empty"]')).not.toBeNull();
 
-        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-start"]')).triggerEventHandler('onClick');
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-start"]')).triggerEventHandler('clicked');
         expect(startRequested).toHaveBeenCalledOnce();
     });
 
@@ -214,7 +222,7 @@ describe('HyperionGenerationActivityComponent', () => {
         vi.advanceTimersByTime(60_000);
         expect(service.getStatus).toHaveBeenCalledTimes(3);
 
-        fixture.debugElement.query(By.css('p-button')).triggerEventHandler('onClick');
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-status-retry"]')).triggerEventHandler('clicked');
         expect(service.getStatus).toHaveBeenCalledTimes(4);
         expect(fixture.componentInstance.statusLoading()).toBe(true);
     });
@@ -510,7 +518,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(terminalMessage.tagName).toBe('DIV');
         expect(terminalMessage.getAttribute('role')).toBeNull();
         expect(terminalMessage.getAttribute('aria-live')).toBeNull();
-        expect(terminalMessage.closest('p-message')).toBeNull();
+        expect(terminalMessage.closest('tum-ui-message')).toBeNull();
     });
 
     it('announces the editor refresh before reporting the terminal result as ready', () => {
@@ -748,7 +756,7 @@ describe('HyperionGenerationActivityComponent', () => {
         const requested = vi.fn();
         fixture.componentInstance.reviewRequested.subscribe(requested);
 
-        fixture.debugElement.query(By.css('[data-review-target="template"]')).triggerEventHandler('onClick');
+        fixture.debugElement.query(By.css('[data-review-target="template"]')).triggerEventHandler('clicked');
 
         expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'template', jobId: 'job-42', commitHash: 'template-commit' });
     });
@@ -834,7 +842,7 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.startRequested.subscribe(requested);
         fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-run-again"]')).triggerEventHandler('onClick');
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-run-again"]')).triggerEventHandler('clicked');
         expect(requested).toHaveBeenCalledExactlyOnceWith(mode);
     });
 
@@ -1257,7 +1265,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.fileChanges()[0].path).toBe('solution/A.java');
     });
 
-    it('confirms undo for a mechanically verified adaptation and leaves one truthful terminal state', () => {
+    it('confirms undo for a mechanically verified adaptation and leaves one truthful terminal state', async () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
         const reverted = vi.fn();
@@ -1285,13 +1293,18 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.running()).toBe(false);
         expect(component.canRevert()).toBe(true);
 
-        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-revert"]')).triggerEventHandler('onClick');
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-revert"]')).triggerEventHandler('clicked');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(service.revertCalls).toEqual([]);
-        const confirmation = confirm.mock.calls[0][0];
-        expect(confirmation.defaultFocus).toBe('reject');
-        confirmation.accept?.();
+        expect(revertConfirmDialog()?.textContent).toContain('undoAdaptationConfirmHeader');
+        expect(revertConfirmDialog()?.textContent).toContain('undoAdaptationConfirmMessage');
+        // The destructive action must not be pre-focused, which is what the replaced confirm dialog expressed as `defaultFocus: 'reject'`.
+        expect(document.activeElement).not.toBe(revertConfirmButton('accept'));
+
+        revertConfirmButton('accept').click();
 
         expect(service.revertCalls).toEqual([42]);
         expect(component.reverted()).toBe(true);
@@ -1332,9 +1345,9 @@ describe('HyperionGenerationActivityComponent', () => {
             liveExerciseChanged: true,
         });
 
-        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
         component.confirmRevert();
-        confirm.mock.calls[0][0].accept?.();
+        expect(component.confirmRevertVisible()).toBe(true);
+        component.acceptRevert();
 
         expect(service.revertCalls).toEqual([42]);
         expect(component.reverted()).toBe(false);
@@ -1376,9 +1389,9 @@ describe('HyperionGenerationActivityComponent', () => {
             liveExerciseChanged: true,
         });
 
-        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
         component.confirmRevert();
-        confirm.mock.calls[0][0].accept?.();
+        expect(component.confirmRevertVisible()).toBe(true);
+        component.acceptRevert();
 
         expect(service.revertCalls).toEqual([42]);
         expect(reverted).not.toHaveBeenCalled();
@@ -1471,12 +1484,12 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.requestReview('problem-statement');
         expect(review).not.toHaveBeenCalled();
 
-        const confirmation = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
         const success = vi.spyOn(TestBed.inject(AlertService), 'success');
         fixture.componentInstance.confirmRevert();
-        expect(confirmation.mock.calls[0][0].header).toContain('undoAdaptationConfirmHeader');
-        expect(confirmation.mock.calls[0][0].message).toContain('undoAdaptationConfirmMessage');
-        confirmation.mock.calls[0][0].accept?.();
+        fixture.detectChanges();
+        expect(revertConfirmDialog()?.textContent).toContain('undoAdaptationConfirmHeader');
+        expect(revertConfirmDialog()?.textContent).toContain('undoAdaptationConfirmMessage');
+        fixture.componentInstance.acceptRevert();
         expect(success).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.undoAdaptationSuccess');
         expect(fixture.componentInstance.undoneLabelKey()).toBe('artemisApp.hyperion.generationActivity.adaptationUndone');
     });

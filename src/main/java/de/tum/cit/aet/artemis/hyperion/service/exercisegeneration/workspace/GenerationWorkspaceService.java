@@ -28,9 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -132,7 +132,7 @@ public class GenerationWorkspaceService {
         this.tempFileUtilService = tempFileUtilService;
     }
 
-    public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise) {
+    public SandboxSessionSpecDTO sessionSpec(ProgrammingExercise exercise) {
         return sessionSpec(exercise, null);
     }
 
@@ -143,9 +143,9 @@ public class GenerationWorkspaceService {
      * @param context  the session context recorded for observability, or {@code null}
      * @return the sandbox session spec
      */
-    public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise, @Nullable SandboxSessionContext context) {
+    public SandboxSessionSpecDTO sessionSpec(ProgrammingExercise exercise, @Nullable SandboxSessionContextDTO context) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
-        return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), "none", 0, 0, 0), context);
+        return new SandboxSessionSpecDTO(image, new DockerRunConfig(List.of(), "none", 0, 0, 0), context);
     }
 
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode) {
@@ -334,7 +334,7 @@ public class GenerationWorkspaceService {
      * @param exercise  the exercise whose build layout the fixture must match
      */
     public void stageBuildReadinessFixture(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        SandboxExecResult preparation = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c",
+        SandboxExecResultDTO preparation = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "find " + SandboxBuildCommandService.READINESS_FIXTURE_DIR + " -mindepth 1 -delete");
         if (!preparation.isSuccess()) {
             throw new IllegalStateException("Could not prepare the build-readiness fixture directory: " + preparation.combinedOutput());
@@ -445,7 +445,7 @@ public class GenerationWorkspaceService {
                 + " (non-persisted worked example: study its language and test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
                 + " 2>/dev/null | head -c 1500; fi\n";
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", script);
+            SandboxExecResultDTO result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", script);
             if (result.timedOut()) {
                 return "";
             }
@@ -608,7 +608,7 @@ public class GenerationWorkspaceService {
                 + "/solution/buildSrc/.gradle " + WORKSPACE + "/solution/buildSrc/build " + WORKSPACE + "/template/.gradle " + WORKSPACE + "/template/build " + WORKSPACE
                 + "/template/target " + WORKSPACE + "/template/buildSrc/.gradle " + WORKSPACE + "/template/buildSrc/build " + WORKSPACE + "/tests/.gradle " + WORKSPACE
                 + "/tests/build " + WORKSPACE + "/tests/target " + WORKSPACE + "/tests/buildSrc/.gradle " + WORKSPACE + "/tests/buildSrc/build";
-        SandboxExecResult result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", command);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", command);
         if (!result.isSuccess()) {
             throw new IllegalStateException("Could not remove transient sandbox build outputs: " + result.combinedOutput());
         }

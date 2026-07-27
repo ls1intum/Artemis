@@ -37,10 +37,10 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
@@ -78,9 +78,9 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     private final DistributedDataAccessService distributedDataAccessService;
 
     /** Pending operations keyed by correlation id; completed by the response listener when the matching reply arrives. */
-    private final Map<String, CompletableFuture<SandboxOpResponse>> pendingOperations = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<SandboxOpResponseDTO>> pendingOperations = new ConcurrentHashMap<>();
 
-    private DistributedTopic<SandboxOpResponse> responsesTopic;
+    private DistributedTopic<SandboxOpResponseDTO> responsesTopic;
 
     private UUID responseListenerId;
 
@@ -99,7 +99,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public void registerResponseListener() {
         this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
         this.responseListenerId = responsesTopic.addMessageListener(response -> {
-            CompletableFuture<SandboxOpResponse> future = pendingOperations.remove(response.correlationId());
+            CompletableFuture<SandboxOpResponseDTO> future = pendingOperations.remove(response.correlationId());
             if (future != null) {
                 future.complete(response);
             }
@@ -130,7 +130,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     @Override
-    public String createSession(SandboxSessionSpec spec) {
+    public String createSession(SandboxSessionSpecDTO spec) {
         List<String> candidates = selectCandidateAgents();
         if (candidates.isEmpty()) {
             throw new LocalCIException("No build agent has a free Hyperion generation sandbox slot. Set "
@@ -138,7 +138,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
-            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec).withDeadline(controlOpTimeout);
+            SandboxOpRequestDTO request = SandboxOpRequestDTO.create(newCorrelationId(), targetAgent, spec).withDeadline(controlOpTimeout);
             CreateAttempt attempt = attemptCreate(request);
             if (attempt.containerId() != null) {
                 return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
@@ -161,10 +161,10 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /** Attempts one create and distinguishes agent-local declines from deterministic failures. */
-    private CreateAttempt attemptCreate(SandboxOpRequest request) {
+    private CreateAttempt attemptCreate(SandboxOpRequestDTO request) {
         try {
-            CompletableFuture<SandboxOpResponse> future = registerAndPublish(request);
-            SandboxOpResponse response = awaitResponse(request, future, controlOpTimeout);
+            CompletableFuture<SandboxOpResponseDTO> future = registerAndPublish(request);
+            SandboxOpResponseDTO response = awaitResponse(request, future, controlOpTimeout);
             if (response.success()) {
                 return CreateAttempt.success(response.sessionId());
             }
@@ -205,11 +205,11 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     @Override
-    public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+    public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = SandboxOpRequest.exec(newCorrelationId(), targetAgent, containerId, command, timeout.toSeconds());
-        SandboxOpResponse response = relay(request, timeout.plus(RELAY_SLACK));
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.exec(newCorrelationId(), targetAgent, containerId, command, timeout.toSeconds());
+        SandboxOpResponseDTO response = relay(request, timeout.plus(RELAY_SLACK));
         return response.execResult();
     }
 
@@ -223,7 +223,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         // them on its event thread.
         distributedDataAccessService.getHyperionSandboxPayloads().put(correlationId, payload);
         try {
-            SandboxOpRequest request = SandboxOpRequest.copyIn(correlationId, targetAgent, containerId, destinationPath);
+            SandboxOpRequestDTO request = SandboxOpRequestDTO.copyIn(correlationId, targetAgent, containerId, destinationPath);
             relay(request, controlOpTimeout);
         }
         finally {
@@ -237,7 +237,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
         String correlationId = newCorrelationId();
-        SandboxOpRequest request = SandboxOpRequest.copyOut(correlationId, targetAgent, containerId, path);
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.copyOut(correlationId, targetAgent, containerId, path);
         try {
             relay(request, controlOpTimeout);
             byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().get(correlationId);
@@ -256,14 +256,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public void resetSession(String sessionId) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        relay(SandboxOpRequest.reset(newCorrelationId(), targetAgent, containerId), controlOpTimeout);
+        relay(SandboxOpRequestDTO.reset(newCorrelationId(), targetAgent, containerId), controlOpTimeout);
     }
 
     @Override
     public void destroySession(String sessionId) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = SandboxOpRequest.destroy(newCorrelationId(), targetAgent, containerId);
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.destroy(newCorrelationId(), targetAgent, containerId);
         relay(request, controlOpTimeout);
     }
 
@@ -274,7 +274,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      * @return active sessions with composite session identifiers
      */
     public List<GenerationSandboxSessionDTO> listSessions(String agentName) {
-        SandboxOpRequest request = SandboxOpRequest.list(newCorrelationId(), agentName);
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.list(newCorrelationId(), agentName);
         List<GenerationSandboxSessionDTO> sessions = relay(request, OBSERVABILITY_OP_TIMEOUT).sessions();
         if (sessions == null) {
             return List.of();
@@ -283,11 +283,11 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /** Relays one operation and translates failed or late responses to {@link LocalCIException}. */
-    private SandboxOpResponse relay(SandboxOpRequest request, Duration budget) {
+    private SandboxOpResponseDTO relay(SandboxOpRequestDTO request, Duration budget) {
         request = request.withDeadline(budget);
         try {
-            CompletableFuture<SandboxOpResponse> future = registerAndPublish(request);
-            SandboxOpResponse response = awaitResponse(request, future, budget);
+            CompletableFuture<SandboxOpResponseDTO> future = registerAndPublish(request);
+            SandboxOpResponseDTO response = awaitResponse(request, future, budget);
             if (!response.success()) {
                 throw new LocalCIException("Remote sandbox operation " + request.op() + " failed on agent " + request.targetAgentShortName() + ": " + response.errorMessage());
             }
@@ -315,14 +315,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
     }
 
-    private CompletableFuture<SandboxOpResponse> registerAndPublish(SandboxOpRequest request) {
+    private CompletableFuture<SandboxOpResponseDTO> registerAndPublish(SandboxOpRequestDTO request) {
         Lock operationLock = lifecycleLock.readLock();
         operationLock.lock();
         try {
             if (shuttingDown.get()) {
                 throw new LocalCIException("Remote interactive sandbox client is shutting down.");
             }
-            CompletableFuture<SandboxOpResponse> future = new CompletableFuture<>();
+            CompletableFuture<SandboxOpResponseDTO> future = new CompletableFuture<>();
             pendingOperations.put(request.correlationId(), future);
             try {
                 distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
@@ -338,7 +338,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
     }
 
-    private SandboxOpResponse awaitResponse(SandboxOpRequest request, CompletableFuture<SandboxOpResponse> future, Duration budget)
+    private SandboxOpResponseDTO awaitResponse(SandboxOpRequestDTO request, CompletableFuture<SandboxOpResponseDTO> future, Duration budget)
             throws InterruptedException, ExecutionException, TimeoutException {
         long deadline = System.nanoTime() + budget.toNanos();
         while (true) {
@@ -358,7 +358,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
     }
 
-    private void publishRetry(SandboxOpRequest request) {
+    private void publishRetry(SandboxOpRequestDTO request) {
         Lock operationLock = lifecycleLock.readLock();
         operationLock.lock();
         try {

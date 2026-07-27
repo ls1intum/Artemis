@@ -36,8 +36,8 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.openai.errors.OpenAIIoException;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
@@ -68,24 +68,24 @@ class AgentLoopRunnerTest {
         private final List<String> execCommands = new ArrayList<>();
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "fake-session";
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             execCommands.add(String.join(" ", command));
             // Emulate the two operations the tools use: `cat <path>` and `sh -c "... base64 -d > <path>"`.
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
                 String content = files.getOrDefault(path, null);
                 if (content == null) {
-                    return new SandboxExecResult(1, "", "cat: " + path + ": No such file or directory", false);
+                    return new SandboxExecResultDTO(1, "", "cat: " + path + ": No such file or directory", false);
                 }
-                return new SandboxExecResult(0, content, "", false);
+                return new SandboxExecResultDTO(0, content, "", false);
             }
             // Any other command (mkdir/base64 write, bash) succeeds.
-            return new SandboxExecResult(0, "ok", "", false);
+            return new SandboxExecResultDTO(0, "ok", "", false);
         }
 
         @Override
@@ -159,8 +159,8 @@ class AgentLoopRunnerTest {
         FakeSandbox sandbox = new FakeSandbox() {
 
             @Override
-            public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
-                return new SandboxExecResult(-1, "", "", true);
+            public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
+                return new SandboxExecResultDTO(-1, "", "", true);
             }
         };
         List<String> steps = new ArrayList<>();
@@ -336,10 +336,10 @@ class AgentLoopRunnerTest {
         // and only that second, passing submit() ends the loop.
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), toolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"fixed\"}"),

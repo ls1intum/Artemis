@@ -49,11 +49,11 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
@@ -115,9 +115,9 @@ public class InteractiveSandboxRelayHandler {
 
     private final Map<String, String> jobIdsBySessionId = new ConcurrentHashMap<>();
 
-    private DistributedTopic<SandboxOpRequest> requestsTopic;
+    private DistributedTopic<SandboxOpRequestDTO> requestsTopic;
 
-    private DistributedTopic<SandboxOpResponse> responsesTopic;
+    private DistributedTopic<SandboxOpResponseDTO> responsesTopic;
 
     private UUID requestListenerId;
 
@@ -204,7 +204,8 @@ public class InteractiveSandboxRelayHandler {
                     return;
                 }
                 if (shuttingDown.get()) {
-                    SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+                    SandboxOpResponseDTO response = SandboxOpResponseDTO.failure(request.correlationId(),
+                            "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
                     rememberCompletedResponse(response);
                     publishResponse(response);
                     return;
@@ -218,7 +219,7 @@ public class InteractiveSandboxRelayHandler {
                         log.warn("Interactive sandbox relay rejected request {} because its bounded worker queue is full", request.correlationId());
                     }
                     String refusal = draining ? DRAINING_REFUSAL_MARKER : OVERLOAD_REFUSAL_MARKER;
-                    SandboxOpResponse response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + refusal + ".");
+                    SandboxOpResponseDTO response = SandboxOpResponseDTO.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + refusal + ".");
                     rememberCompletedResponse(response);
                     publishResponse(response);
                 }
@@ -317,13 +318,13 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private void handle(SandboxOpRequest request) {
+    private void handle(SandboxOpRequestDTO request) {
         Lock operationLock = lifecycleLock.readLock();
         operationLock.lock();
-        SandboxOpResponse response;
+        SandboxOpResponseDTO response;
         try {
             if (shuttingDown.get()) {
-                response = SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+                response = SandboxOpResponseDTO.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
             }
             else if (isDeadlineExpired(request)) {
                 response = deadlineExpiredResponse(request);
@@ -343,7 +344,7 @@ public class InteractiveSandboxRelayHandler {
         catch (Exception e) {
             log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,
                     e.getClass().getSimpleName());
-            response = SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed: " + sanitizedCauseMessage(e));
+            response = SandboxOpResponseDTO.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed: " + sanitizedCauseMessage(e));
         }
         finally {
             operationLock.unlock();
@@ -352,7 +353,7 @@ public class InteractiveSandboxRelayHandler {
         publishResponse(response);
     }
 
-    RequestClaim claimRequest(SandboxOpRequest request) {
+    RequestClaim claimRequest(SandboxOpRequestDTO request) {
         synchronized (requestDeduplicationLock) {
             long now = System.currentTimeMillis();
             completedResponses.values().removeIf(cached -> cached.expiresAtEpochMillis() < now);
@@ -362,20 +363,20 @@ public class InteractiveSandboxRelayHandler {
             }
             long requestDeadline = request.deadlineEpochMillis() > 0 ? request.deadlineEpochMillis() : now + UNDATED_REQUEST_RETENTION_MILLIS;
             if (requestDeadline <= now) {
-                return new RequestClaim(false, SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution."));
+                return new RequestClaim(false, SandboxOpResponseDTO.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution."));
             }
             if (inFlightCorrelationIds.containsKey(request.correlationId())) {
                 return new RequestClaim(false, null);
             }
             if (completedResponses.size() >= MAX_REMEMBERED_CORRELATION_IDS) {
-                return new RequestClaim(false, SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + OVERLOAD_REFUSAL_MARKER + "."));
+                return new RequestClaim(false, SandboxOpResponseDTO.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + OVERLOAD_REFUSAL_MARKER + "."));
             }
             inFlightCorrelationIds.put(request.correlationId(), requestDeadline + REQUEST_DEADLINE_GRACE_MILLIS);
             return new RequestClaim(true, null);
         }
     }
 
-    void rememberCompletedResponse(SandboxOpResponse response) {
+    void rememberCompletedResponse(SandboxOpResponseDTO response) {
         synchronized (requestDeduplicationLock) {
             Long expiresAt = inFlightCorrelationIds.remove(response.correlationId());
             if (expiresAt == null) {
@@ -385,7 +386,7 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private void publishResponse(SandboxOpResponse response) {
+    private void publishResponse(SandboxOpResponseDTO response) {
         try {
             responsesTopic.publish(response);
         }
@@ -394,19 +395,19 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    record RequestClaim(boolean accepted, SandboxOpResponse completedResponse) {
+    record RequestClaim(boolean accepted, SandboxOpResponseDTO completedResponse) {
     }
 
-    private record CachedResponse(SandboxOpResponse response, long expiresAtEpochMillis) {
+    private record CachedResponse(SandboxOpResponseDTO response, long expiresAtEpochMillis) {
     }
 
-    private SandboxOpResponse handleCreate(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleCreate(SandboxOpRequestDTO request) {
         if (request.sessionSpec() == null || request.sessionSpec().context() == null) {
-            return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
+            return SandboxOpResponseDTO.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
         }
-        SandboxSessionContext context = request.sessionSpec().context();
+        SandboxSessionContextDTO context = request.sessionSpec().context();
         if (context.jobId() == null || context.jobId().isBlank()) {
-            return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires a job id.");
+            return SandboxOpResponseDTO.failure(request.correlationId(), "Generation sandbox CREATE requires a job id.");
         }
         JobCoordination jobCoordination = acquireJobCoordination(context.jobId());
         try {
@@ -417,17 +418,17 @@ public class InteractiveSandboxRelayHandler {
             if (existingSessionId != null && ownsSession(existingSessionId)) {
                 ActiveSession existingSession = activeSessions.get(existingSessionId);
                 if (existingSession == null || !existingSession.sessionSpec().equals(request.sessionSpec())) {
-                    return SandboxOpResponse.failure(request.correlationId(), "Generation job " + context.jobId() + " is already bound to a different sandbox specification.");
+                    return SandboxOpResponseDTO.failure(request.correlationId(), "Generation job " + context.jobId() + " is already bound to a different sandbox specification.");
                 }
-                return SandboxOpResponse.created(request.correlationId(), existingSessionId);
+                return SandboxOpResponseDTO.created(request.correlationId(), existingSessionId);
             }
 
             if (!sharedQueueProcessingService.tryAcquireGenerationAdmission()) {
-                return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
+                return SandboxOpResponseDTO.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
             }
             try {
                 if (!sandboxSlotPermits.tryAcquire()) {
-                    return SandboxOpResponse.failure(request.correlationId(),
+                    return SandboxOpResponseDTO.failure(request.correlationId(),
                             "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
                 }
                 boolean created = false;
@@ -441,7 +442,7 @@ public class InteractiveSandboxRelayHandler {
                         if (created) {
                             // The originating core may already have timed out. Cache CREATED so a retry on this handler recovers the retained container instead of replaying a
                             // false failure that could trigger duplicate placement.
-                            return SandboxOpResponse.created(request.correlationId(), containerId);
+                            return SandboxOpResponseDTO.created(request.correlationId(), containerId);
                         }
                         return deadlineExpiredResponse(request);
                     }
@@ -456,10 +457,10 @@ public class InteractiveSandboxRelayHandler {
                         // here.
                         log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
                     }
-                    return SandboxOpResponse.created(request.correlationId(), containerId);
+                    return SandboxOpResponseDTO.created(request.correlationId(), containerId);
                 }
                 catch (RuntimeException e) {
-                    return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+                    return SandboxOpResponseDTO.failure(request.correlationId(), e.getMessage());
                 }
                 finally {
                     if (!created) {
@@ -476,9 +477,9 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private SandboxOpResponse handleExec(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleExec(SandboxOpRequestDTO request) {
         requireOwnedSession(request.sessionId());
-        SandboxExecResult result;
+        SandboxExecResultDTO result;
         try {
             result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
         }
@@ -496,31 +497,31 @@ public class InteractiveSandboxRelayHandler {
         if (result.timedOut()) {
             releaseOwnedPermit(request.sessionId());
         }
-        return SandboxOpResponse.exec(request.correlationId(), request.sessionId(), result);
+        return SandboxOpResponseDTO.exec(request.correlationId(), request.sessionId(), result);
     }
 
-    private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleCopyIn(SandboxOpRequestDTO request) {
         requireOwnedSession(request.sessionId());
         // Keep the staged payload until the caller receives a terminal response, so a retried request can recover after a lost response without losing the input.
         byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().get(request.correlationId());
         if (payload == null) {
-            return SandboxOpResponse.failure(request.correlationId(),
+            return SandboxOpResponseDTO.failure(request.correlationId(),
                     "Copy-in payload for correlation id " + request.correlationId() + " was not staged (already consumed or evicted).");
         }
         try (InputStream tar = new ByteArrayInputStream(payload)) {
             interactiveSandboxService().copyIn(request.sessionId(), request.workspacePath(), tar);
         }
         catch (IOException e) {
-            return SandboxOpResponse.failure(request.correlationId(), "Failed to read copy-in payload: " + e.getMessage());
+            return SandboxOpResponseDTO.failure(request.correlationId(), "Failed to read copy-in payload: " + e.getMessage());
         }
         catch (RuntimeException e) {
             reconcileMissingSessionAfterFailure(request.sessionId(), e);
             throw e;
         }
-        return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+        return SandboxOpResponseDTO.ok(request.correlationId(), request.sessionId());
     }
 
-    private SandboxOpResponse handleCopyOut(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleCopyOut(SandboxOpRequestDTO request) {
         requireOwnedSession(request.sessionId());
         try (TarArchiveInputStream tar = interactiveSandboxService().copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
@@ -536,10 +537,10 @@ public class InteractiveSandboxRelayHandler {
                 payloads.remove(request.correlationId());
                 return deadlineExpiredResponse(request);
             }
-            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId());
+            return SandboxOpResponseDTO.copiedOut(request.correlationId(), request.sessionId());
         }
         catch (IOException e) {
-            return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
+            return SandboxOpResponseDTO.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
         }
         catch (RuntimeException e) {
             reconcileMissingSessionAfterFailure(request.sessionId(), e);
@@ -547,11 +548,11 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private SandboxOpResponse handleReset(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleReset(SandboxOpRequestDTO request) {
         requireOwnedSession(request.sessionId());
         try {
             interactiveSandboxService().resetSession(request.sessionId());
-            return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+            return SandboxOpResponseDTO.ok(request.correlationId(), request.sessionId());
         }
         catch (RuntimeException e) {
             reconcileMissingSessionAfterFailure(request.sessionId(), e);
@@ -570,7 +571,7 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private boolean retainExpiredContainerWhenCleanupFails(String containerId, SandboxSessionSpec sessionSpec) {
+    private boolean retainExpiredContainerWhenCleanupFails(String containerId, SandboxSessionSpecDTO sessionSpec) {
         try {
             interactiveSandboxService().destroySession(containerId);
             return false;
@@ -599,12 +600,12 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private static boolean isDeadlineExpired(SandboxOpRequest request) {
+    private static boolean isDeadlineExpired(SandboxOpRequestDTO request) {
         return request.deadlineEpochMillis() > 0 && request.deadlineEpochMillis() <= System.currentTimeMillis();
     }
 
-    private static SandboxOpResponse deadlineExpiredResponse(SandboxOpRequest request) {
-        return SandboxOpResponse.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution completed.");
+    private static SandboxOpResponseDTO deadlineExpiredResponse(SandboxOpRequestDTO request) {
+        return SandboxOpResponseDTO.failure(request.correlationId(), "Interactive sandbox request deadline expired before execution completed.");
     }
 
     /** A short, single-line, length-bounded rendering of the failure cause to include in the response sent back to the blocked caller. */
@@ -699,7 +700,7 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private SandboxOpResponse handleDestroy(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleDestroy(SandboxOpRequestDTO request) {
         String jobId = jobIdsBySessionId.get(request.sessionId());
         if (jobId == null) {
             return destroyOwnedSession(request);
@@ -713,9 +714,9 @@ public class InteractiveSandboxRelayHandler {
         }
     }
 
-    private SandboxOpResponse destroyOwnedSession(SandboxOpRequest request) {
+    private SandboxOpResponseDTO destroyOwnedSession(SandboxOpRequestDTO request) {
         if (!ownsSession(request.sessionId())) {
-            return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+            return SandboxOpResponseDTO.ok(request.correlationId(), request.sessionId());
         }
         try {
             interactiveSandboxService().destroySession(request.sessionId());
@@ -728,17 +729,17 @@ public class InteractiveSandboxRelayHandler {
             log.info("Sandbox session {} was already absent after an ambiguous destroy failure; releasing its slot.", request.sessionId());
         }
         releaseOwnedPermitLocked(request.sessionId());
-        return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+        return SandboxOpResponseDTO.ok(request.correlationId(), request.sessionId());
     }
 
-    private SandboxOpResponse handleList(SandboxOpRequest request) {
+    private SandboxOpResponseDTO handleList(SandboxOpRequestDTO request) {
         List<GenerationSandboxSessionDTO> sessions = activeSessions.entrySet().stream()
                 .map(entry -> entry.getValue().toDto(entry.getKey(), interactiveSandboxService().lastActivity(entry.getKey()))).toList();
-        return SandboxOpResponse.sessions(request.correlationId(), sessions);
+        return SandboxOpResponseDTO.sessions(request.correlationId(), sessions);
     }
 
-    private void registerSession(String containerId, SandboxSessionSpec sessionSpec) {
-        SandboxSessionContext context = sessionSpec.context();
+    private void registerSession(String containerId, SandboxSessionSpecDTO sessionSpec) {
+        SandboxSessionContextDTO context = sessionSpec.context();
         activeSessions.put(containerId, new ActiveSession(sessionSpec, Instant.now()));
         sessionIdsByJobId.put(context.jobId(), containerId);
         jobIdsBySessionId.put(containerId, context.jobId());
@@ -846,10 +847,10 @@ public class InteractiveSandboxRelayHandler {
         private int users;
     }
 
-    private record ActiveSession(SandboxSessionSpec sessionSpec, Instant startedAt) {
+    private record ActiveSession(SandboxSessionSpecDTO sessionSpec, Instant startedAt) {
 
         GenerationSandboxSessionDTO toDto(String containerId, Optional<Instant> lastActivity) {
-            SandboxSessionContext context = sessionSpec.context();
+            SandboxSessionContextDTO context = sessionSpec.context();
             return new GenerationSandboxSessionDTO(containerId, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
                     context.mode(), startedAt, lastActivity.orElse(startedAt));
         }

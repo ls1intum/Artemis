@@ -59,12 +59,12 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOp;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
@@ -85,9 +85,9 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private SharedQueueProcessingService queueProcessingService;
 
-    private LocalTopic<SandboxOpRequest> requestsTopic;
+    private LocalTopic<SandboxOpRequestDTO> requestsTopic;
 
-    private LocalTopic<SandboxOpResponse> responsesTopic;
+    private LocalTopic<SandboxOpResponseDTO> responsesTopic;
 
     private DistributedDataAccessService clientAccess;
 
@@ -167,7 +167,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSessionWithoutObservabilityContextFailsBeforeDockerCreate() {
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpec("some-image", null))).withMessageContaining("context");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpecDTO("some-image", null))).withMessageContaining("context");
 
         verify(localSandbox, never()).createSession(any());
     }
@@ -213,8 +213,8 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void listSessions_reportsMetadataAndPermitOwnershipAcrossTheSessionLifecycle() {
         Instant lastActivity = Instant.parse("2026-07-12T10:15:30Z");
-        SandboxSessionContext context = new SandboxSessionContext("job-42", 123L, "Sorting exercise", 7L, "instructor", "GENERATE");
-        SandboxSessionSpec spec = new SandboxSessionSpec("some-image", null, context);
+        SandboxSessionContextDTO context = new SandboxSessionContextDTO("job-42", 123L, "Sorting exercise", 7L, "instructor", "GENERATE");
+        SandboxSessionSpecDTO spec = new SandboxSessionSpecDTO("some-image", null, context);
         when(localSandbox.createSession(any())).thenReturn("generation-container");
         when(localSandbox.lastActivity(anyString())).thenReturn(java.util.Optional.of(lastActivity));
 
@@ -246,10 +246,10 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void exec_returnsStdoutAndExitFromAgent() {
-        SandboxExecResult agentResult = new SandboxExecResult(0, "hello stdout", "", false);
+        SandboxExecResultDTO agentResult = new SandboxExecResultDTO(0, "hello stdout", "", false);
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("hello"))).thenReturn(agentResult);
 
-        SandboxExecResult result = client.exec(createOwnedHandle(), Duration.ofSeconds(30), "echo", "hello");
+        SandboxExecResultDTO result = client.exec(createOwnedHandle(), Duration.ofSeconds(30), "echo", "hello");
 
         assertThat(result.exitCode()).isZero();
         assertThat(result.stdout()).isEqualTo("hello stdout");
@@ -466,7 +466,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void requestForDifferentAgent_isIgnoredByHandler() {
-        SandboxOpRequest foreignRequest = SandboxOpRequest.destroy("corr-foreign", "some-other-agent", CONTAINER_ID);
+        SandboxOpRequestDTO foreignRequest = SandboxOpRequestDTO.destroy("corr-foreign", "some-other-agent", CONTAINER_ID);
         requestsTopic.publish(foreignRequest);
 
         verify(localSandbox, never()).destroySession(anyString());
@@ -484,7 +484,7 @@ class InteractiveSandboxRelayRoundTripTest {
             }
         });
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
-        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
 
         requestsTopic.publish(request);
         assertThat(firstResponseReceived.await(5, TimeUnit.SECONDS)).isTrue();
@@ -497,15 +497,15 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void drainingHandlerReplaysCompletedCreateInsteadOfReturningAnAmbiguousDecline() throws Exception {
         String correlationId = "corr-completed-before-drain";
-        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.create(correlationId, AGENT_SHORT_NAME, sessionSpec());
         assertThat(handler.claimRequest(request).accepted()).isTrue();
-        handler.rememberCompletedResponse(SandboxOpResponse.ok(correlationId, CONTAINER_ID));
-        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(correlationId);
+        handler.rememberCompletedResponse(SandboxOpResponseDTO.ok(correlationId, CONTAINER_ID));
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(correlationId);
         AtomicBoolean shuttingDown = (AtomicBoolean) ReflectionTestUtils.getField(handler, "shuttingDown");
         shuttingDown.set(true);
         try {
             requestsTopic.publish(request);
-            SandboxOpResponse replayed = matchingResponses.poll(5, TimeUnit.SECONDS);
+            SandboxOpResponseDTO replayed = matchingResponses.poll(5, TimeUnit.SECONDS);
             assertThat(replayed).isNotNull();
             assertThat(replayed.success()).isTrue();
             assertThat(replayed.sessionId()).isEqualTo(CONTAINER_ID);
@@ -518,31 +518,31 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void inFlightCorrelationId_isNotEvictedByCompletedResponseHistory() {
         String inFlightId = "corr-in-flight";
-        SandboxOpRequest inFlightRequest = SandboxOpRequest.list(inFlightId, AGENT_SHORT_NAME);
+        SandboxOpRequestDTO inFlightRequest = SandboxOpRequestDTO.list(inFlightId, AGENT_SHORT_NAME);
         assertThat(handler.claimRequest(inFlightRequest).accepted()).isTrue();
 
         for (int i = 0; i < InteractiveSandboxRelayHandler.MAX_REMEMBERED_CORRELATION_IDS; i++) {
             String correlationId = "corr-completed-" + i;
-            assertThat(handler.claimRequest(SandboxOpRequest.list(correlationId, AGENT_SHORT_NAME)).accepted()).isTrue();
-            handler.rememberCompletedResponse(SandboxOpResponse.ok(correlationId, CONTAINER_ID));
+            assertThat(handler.claimRequest(SandboxOpRequestDTO.list(correlationId, AGENT_SHORT_NAME)).accepted()).isTrue();
+            handler.rememberCompletedResponse(SandboxOpResponseDTO.ok(correlationId, CONTAINER_ID));
         }
 
         InteractiveSandboxRelayHandler.RequestClaim retryWhileRunning = handler.claimRequest(inFlightRequest);
         assertThat(retryWhileRunning.accepted()).isFalse();
         assertThat(retryWhileRunning.completedResponse()).isNull();
 
-        InteractiveSandboxRelayHandler.RequestClaim overload = handler.claimRequest(SandboxOpRequest.list("corr-over-cap", AGENT_SHORT_NAME));
+        InteractiveSandboxRelayHandler.RequestClaim overload = handler.claimRequest(SandboxOpRequestDTO.list("corr-over-cap", AGENT_SHORT_NAME));
         assertThat(overload.accepted()).isFalse();
         assertThat(overload.completedResponse().errorMessage()).contains(InteractiveSandboxRelayHandler.OVERLOAD_REFUSAL_MARKER);
 
-        SandboxOpResponse completed = SandboxOpResponse.ok(inFlightId, CONTAINER_ID);
+        SandboxOpResponseDTO completed = SandboxOpResponseDTO.ok(inFlightId, CONTAINER_ID);
         handler.rememberCompletedResponse(completed);
         assertThat(handler.claimRequest(inFlightRequest).completedResponse()).isEqualTo(completed);
     }
 
     @Test
     void expiredRequestIsRejectedWithoutExecution() {
-        SandboxOpRequest expired = SandboxOpRequest.list("corr-expired", AGENT_SHORT_NAME).withDeadline(Duration.ofSeconds(-1));
+        SandboxOpRequestDTO expired = SandboxOpRequestDTO.list("corr-expired", AGENT_SHORT_NAME).withDeadline(Duration.ofSeconds(-1));
 
         InteractiveSandboxRelayHandler.RequestClaim claim = handler.claimRequest(expired);
 
@@ -558,7 +558,7 @@ class InteractiveSandboxRelayRoundTripTest {
         CountDownLatch finishFirstCreate = new CountDownLatch(1);
         CountDownLatch secondCreateStarted = new CountDownLatch(1);
         when(localSandbox.createSession(any())).thenAnswer(invocation -> {
-            SandboxSessionSpec spec = invocation.getArgument(0);
+            SandboxSessionSpecDTO spec = invocation.getArgument(0);
             if (spec.context().jobId().equals("Aa")) {
                 firstCreateStarted.countDown();
                 finishFirstCreate.await(5, TimeUnit.SECONDS);
@@ -591,15 +591,15 @@ class InteractiveSandboxRelayRoundTripTest {
             finishCreate.await(5, TimeUnit.SECONDS);
             return CONTAINER_ID;
         });
-        SandboxOpRequest request = SandboxOpRequest.create("corr-late-create", AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
-        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.create("corr-late-create", AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(request.correlationId());
 
         requestsTopic.publish(request);
         assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
         await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
         finishCreate.countDown();
 
-        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO response = matchingResponses.poll(2, TimeUnit.SECONDS);
         assertThat(response).isNotNull();
         assertThat(response.success()).isFalse();
         assertThat(response.errorMessage()).contains("deadline expired");
@@ -619,20 +619,20 @@ class InteractiveSandboxRelayRoundTripTest {
         });
         doThrow(new LocalCIException("rollback failed")).when(localSandbox).destroySession(CONTAINER_ID);
         when(localSandbox.sessionExists(CONTAINER_ID)).thenReturn(true);
-        SandboxOpRequest request = SandboxOpRequest.create(correlationId, AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
-        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(correlationId);
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.create(correlationId, AGENT_SHORT_NAME, sessionSpec()).withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(correlationId);
 
         requestsTopic.publish(request);
         assertThat(createStarted.await(2, TimeUnit.SECONDS)).isTrue();
         await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
         finishCreate.countDown();
 
-        SandboxOpResponse firstResponse = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO firstResponse = matchingResponses.poll(2, TimeUnit.SECONDS);
         assertThat(firstResponse).isNotNull();
         assertThat(firstResponse.success()).isTrue();
         assertThat(firstResponse.sessionId()).isEqualTo(CONTAINER_ID);
         requestsTopic.publish(request);
-        SandboxOpResponse replay = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO replay = matchingResponses.poll(2, TimeUnit.SECONDS);
         assertThat(replay).isEqualTo(firstResponse);
         verify(localSandbox, times(1)).createSession(any());
         verify(localSandbox, times(1)).destroySession(CONTAINER_ID);
@@ -652,15 +652,15 @@ class InteractiveSandboxRelayRoundTripTest {
             finishCopyOut.await(5, TimeUnit.SECONDS);
             return new TarArchiveInputStream(new ByteArrayInputStream(tar));
         });
-        SandboxOpRequest request = SandboxOpRequest.copyOut("corr-late-copy-out", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
-        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.copyOut("corr-late-copy-out", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(request.correlationId());
 
         requestsTopic.publish(request);
         assertThat(copyOutStarted.await(2, TimeUnit.SECONDS)).isTrue();
         await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
         finishCopyOut.countDown();
 
-        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO response = matchingResponses.poll(2, TimeUnit.SECONDS);
         assertThat(response).isNotNull();
         assertThat(response.success()).isFalse();
         assertThat(response.errorMessage()).contains("deadline expired");
@@ -691,15 +691,15 @@ class InteractiveSandboxRelayRoundTripTest {
         when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(expiringDuringPutPayloads);
         byte[] tar = tarWithSingleFile("result.txt", "late output");
         when(localSandbox.copyOut(CONTAINER_ID, "/workspace/out")).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
-        SandboxOpRequest request = SandboxOpRequest.copyOut("corr-expired-during-put", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
-        BlockingQueue<SandboxOpResponse> matchingResponses = responsesFor(request.correlationId());
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.copyOut("corr-expired-during-put", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(request.correlationId());
 
         requestsTopic.publish(request);
         assertThat(payloadStored.await(2, TimeUnit.SECONDS)).isTrue();
         await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
         finishPut.countDown();
 
-        SandboxOpResponse response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO response = matchingResponses.poll(2, TimeUnit.SECONDS);
         assertThat(response).isNotNull();
         assertThat(response.success()).isFalse();
         assertThat(response.errorMessage()).contains("deadline expired");
@@ -708,10 +708,10 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void sameHandlerResponsePublicationFailureIsRecoveredByReplayingTheCompletedResultWithoutRepeatingCreate() {
-        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
-        LocalTopic<SandboxOpResponse> deliveredResponses = new LocalTopic<>();
+        LocalTopic<SandboxOpRequestDTO> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponseDTO> deliveredResponses = new LocalTopic<>();
         @SuppressWarnings("unchecked")
-        DistributedTopic<SandboxOpResponse> droppingResponses = mock(DistributedTopic.class);
+        DistributedTopic<SandboxOpResponseDTO> droppingResponses = mock(DistributedTopic.class);
         AtomicInteger responsePublications = new AtomicInteger();
         doAnswer(invocation -> {
             if (responsePublications.incrementAndGet() == 1) {
@@ -759,7 +759,7 @@ class InteractiveSandboxRelayRoundTripTest {
         AtomicReference<Thread> execThread = new AtomicReference<>();
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("x"))).thenAnswer(invocation -> {
             execThread.set(Thread.currentThread());
-            return new SandboxExecResult(0, "", "", false);
+            return new SandboxExecResultDTO(0, "", "", false);
         });
 
         Thread callerThread = Thread.currentThread();
@@ -893,7 +893,7 @@ class InteractiveSandboxRelayRoundTripTest {
         ReflectionTestUtils.setField(replaced, "maxGenerationSandboxSlots", 2);
         replaced.registerRequestListener();
 
-        requestsTopic.publish(SandboxOpRequest.create("correlation", AGENT_SHORT_NAME, sessionSpec()));
+        requestsTopic.publish(SandboxOpRequestDTO.create("correlation", AGENT_SHORT_NAME, sessionSpec()));
 
         verify(sandbox, never()).createSession(any());
         replaced.shutdown();
@@ -918,10 +918,10 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void concurrentDestroy_removesTheContainerExactlyOnce() throws Exception {
         CountDownLatch destroyRequestsPublished = new CountDownLatch(2);
-        LocalTopic<SandboxOpRequest> observedRequests = new LocalTopic<>() {
+        LocalTopic<SandboxOpRequestDTO> observedRequests = new LocalTopic<>() {
 
             @Override
-            public void publish(SandboxOpRequest request) {
+            public void publish(SandboxOpRequestDTO request) {
                 super.publish(request);
                 if (request.op() == SandboxOp.DESTROY) {
                     destroyRequestsPublished.countDown();
@@ -1002,10 +1002,10 @@ class InteractiveSandboxRelayRoundTripTest {
     void createForTheSameJobWaitsUntilDestroyCompletes() throws Exception {
         AtomicInteger createRequests = new AtomicInteger();
         CountDownLatch replacementCreatePublished = new CountDownLatch(1);
-        LocalTopic<SandboxOpRequest> observedRequests = new LocalTopic<>() {
+        LocalTopic<SandboxOpRequestDTO> observedRequests = new LocalTopic<>() {
 
             @Override
-            public void publish(SandboxOpRequest request) {
+            public void publish(SandboxOpRequestDTO request) {
                 super.publish(request);
                 if (request.op() == SandboxOp.CREATE && createRequests.incrementAndGet() == 2) {
                     replacementCreatePublished.countDown();
@@ -1085,7 +1085,7 @@ class InteractiveSandboxRelayRoundTripTest {
     void timedOutExec_releasesThePermitForTheContainerDestroyedByTheService() {
         try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
-            when(harness.localSandbox().exec(eq(CONTAINER_ID), any(), any(String[].class))).thenReturn(new SandboxExecResult(-1, "", "", true));
+            when(harness.localSandbox().exec(eq(CONTAINER_ID), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(-1, "", "", true));
             String handle = harness.client().createSession(sessionSpec());
 
             assertThat(harness.client().exec(handle, Duration.ofSeconds(1), "sleep", "10").timedOut()).isTrue();
@@ -1117,17 +1117,17 @@ class InteractiveSandboxRelayRoundTripTest {
             when(harness.localSandbox().exec(eq(CONTAINER_ID), any(), any(String[].class))).thenAnswer(invocation -> {
                 workersStarted.countDown();
                 releaseWorkers.await(10, TimeUnit.SECONDS);
-                return new SandboxExecResult(0, "", "", false);
+                return new SandboxExecResultDTO(0, "", "", false);
             });
 
-            List<CompletableFuture<SandboxExecResult>> running = List.of(
+            List<CompletableFuture<SandboxExecResultDTO>> running = List.of(
                     CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers),
                     CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers));
             assertThat(workersStarted.await(2, TimeUnit.SECONDS)).isTrue();
             ThreadPoolExecutor executor = (ThreadPoolExecutor) ReflectionTestUtils.getField(harness.handler(), "workerExecutor");
             assertThat(executor.getQueue()).isEmpty();
 
-            CompletableFuture<SandboxExecResult> rejected = CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers);
+            CompletableFuture<SandboxExecResultDTO> rejected = CompletableFuture.supplyAsync(() -> harness.client().exec(handle, Duration.ofSeconds(10), "true"), callers);
             assertThat(rejected).failsWithin(Duration.ofSeconds(2)).withThrowableThat().withCauseInstanceOf(LocalCIException.class).withMessageContaining("overloaded");
 
             releaseWorkers.countDown();
@@ -1137,8 +1137,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsOverToTheNextAgent_whenTheFirstDeclinesAtCapacity() {
-        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
-        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalTopic<SandboxOpRequestDTO> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponseDTO> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
@@ -1170,8 +1170,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_doesNotFailOverWhenTheFirstAgentReportsACreateFailure() {
-        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
-        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalTopic<SandboxOpRequestDTO> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponseDTO> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
@@ -1202,8 +1202,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_failsFast_whenTheFirstHitsADeterministicDockerError() {
-        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
-        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalTopic<SandboxOpRequestDTO> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponseDTO> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
@@ -1220,7 +1220,7 @@ class InteractiveSandboxRelayRoundTripTest {
         InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 2, requests, responses, payloads, sandbox2);
 
         try {
-            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(new SandboxSessionSpec("bogus-image", null, sessionContext())))
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(new SandboxSessionSpecDTO("bogus-image", null, sessionContext())))
                     .withMessageContaining("no such image");
             verify(sandbox2, never()).createSession(any());
         }
@@ -1231,8 +1231,8 @@ class InteractiveSandboxRelayRoundTripTest {
         }
     }
 
-    private static InteractiveSandboxRelayHandler sharedHandler(String shortName, int maxSessions, LocalTopic<SandboxOpRequest> requests, LocalTopic<SandboxOpResponse> responses,
-            LocalMap<String, byte[]> payloads, InteractiveSandboxService sandbox) {
+    private static InteractiveSandboxRelayHandler sharedHandler(String shortName, int maxSessions, LocalTopic<SandboxOpRequestDTO> requests,
+            LocalTopic<SandboxOpResponseDTO> responses, LocalMap<String, byte[]> payloads, InteractiveSandboxService sandbox) {
         DistributedDataAccessService access = mock(DistributedDataAccessService.class);
         when(access.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(access.getHyperionSandboxResponsesTopic()).thenReturn(responses);
@@ -1260,8 +1260,8 @@ class InteractiveSandboxRelayRoundTripTest {
         return newHarness(maxGenerationSandboxSlots, new LocalTopic<>());
     }
 
-    private static RelayHarness newHarness(int maxGenerationSandboxSlots, LocalTopic<SandboxOpRequest> requests) {
-        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+    private static RelayHarness newHarness(int maxGenerationSandboxSlots, LocalTopic<SandboxOpRequestDTO> requests) {
+        LocalTopic<SandboxOpResponseDTO> responses = new LocalTopic<>();
         LocalMap<String, byte[]> payloads = new LocalMap<>();
 
         DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
@@ -1289,16 +1289,16 @@ class InteractiveSandboxRelayRoundTripTest {
         return new RelayHarness(client, handler, localSandbox, informationService);
     }
 
-    private static SandboxSessionSpec sessionSpec() {
+    private static SandboxSessionSpecDTO sessionSpec() {
         return sessionSpec("job");
     }
 
-    private static SandboxSessionSpec sessionSpec(String jobId) {
+    private static SandboxSessionSpecDTO sessionSpec(String jobId) {
         return sessionSpec(jobId, "some-image");
     }
 
-    private static SandboxSessionSpec sessionSpec(String jobId, String image) {
-        return new SandboxSessionSpec(image, null, new SandboxSessionContext(jobId, 1L, "Sorting exercise", 2L, "instructor", "GENERATE"));
+    private static SandboxSessionSpecDTO sessionSpec(String jobId, String image) {
+        return new SandboxSessionSpecDTO(image, null, new SandboxSessionContextDTO(jobId, 1L, "Sorting exercise", 2L, "instructor", "GENERATE"));
     }
 
     private static SharedQueueProcessingService availableQueueProcessingService() {
@@ -1307,8 +1307,8 @@ class InteractiveSandboxRelayRoundTripTest {
         return service;
     }
 
-    private static SandboxSessionContext sessionContext() {
-        return new SandboxSessionContext("job", 1L, "Sorting exercise", 2L, "instructor", "GENERATE");
+    private static SandboxSessionContextDTO sessionContext() {
+        return new SandboxSessionContextDTO("job", 1L, "Sorting exercise", 2L, "instructor", "GENERATE");
     }
 
     private static String handle() {
@@ -1320,8 +1320,8 @@ class InteractiveSandboxRelayRoundTripTest {
         return client.createSession(sessionSpec());
     }
 
-    private BlockingQueue<SandboxOpResponse> responsesFor(String correlationId) {
-        BlockingQueue<SandboxOpResponse> responses = new LinkedBlockingQueue<>();
+    private BlockingQueue<SandboxOpResponseDTO> responsesFor(String correlationId) {
+        BlockingQueue<SandboxOpResponseDTO> responses = new LinkedBlockingQueue<>();
         responsesTopic.addMessageListener(response -> {
             if (correlationId.equals(response.correlationId())) {
                 responses.add(response);

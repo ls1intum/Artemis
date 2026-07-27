@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
  * The agent has a full shell safely because correctness is never judged from what these tools report. In a staged session, {@code verify} and the gating half of {@code submit}
- * delegate to {@link StageCheckService} for the current stage's mechanical check (as cheap as that stage allows — a structure scan, one build, or the full differential); in an
+ * delegate to {@link StageCheckService} for the current stage's mechanical check (as cheap as that stage allows — a structure scan or the full differential); in an
  * unstaged (legacy) session {@code verify} always runs the same differential as the authoritative post-loop verifier. Either way this is advisory only; the post-loop verifier
  * decides mechanical validity.
  */
@@ -223,7 +223,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return screenObservation(safe, "ERROR: could not read '" + safe + "': " + result.combinedOutput());
         }
@@ -316,7 +316,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
         String script = "mkdir -p \"$(dirname '" + target + "')\" && echo '" + encoded + "' | base64 -d > '" + target + "'";
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c", script);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c", script);
         if (!result.isSuccess()) {
             return "ERROR: could not write '" + safe + "': " + result.combinedOutput();
         }
@@ -346,7 +346,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stageRejection != null) {
             return stageRejection;
         }
-        SandboxExecResult read = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        SandboxExecResultDTO read = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!read.isSuccess()) {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();
         }
@@ -489,7 +489,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 return contractRejection;
             }
         }
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
         }
@@ -545,7 +545,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 + "  printf 'ERROR: Artemis could not checkpoint the current stage boundary, so the shell command was not run. Use the structured file tools instead.\\n' > \"$LOG\"\n"
                 + "  rc=2\n" + "fi\n" + stageSnapshotRestore(protectedPaths) + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
                 + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
-        SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
             sandboxSessionTerminated = true;
             throw new LocalCIException("Sandbox command timed out and the sandbox session was terminated");
@@ -647,8 +647,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         boolean allowed = switch (stage) {
             case SPEC -> path.equals("SPEC.md");
-            case SOLUTION -> path.startsWith("solution/");
-            case TEMPLATE -> path.startsWith("solution/") || path.startsWith("template/");
             case TESTS -> path.startsWith("solution/") || path.startsWith("template/") || path.startsWith("tests/") || path.equals("test-plan.json");
             case STATEMENT -> path.equals("problem-statement.md");
         };
@@ -669,8 +667,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         return switch (stage) {
             case SPEC -> List.of("solution", "template", "tests", "test-plan.json", "problem-statement.md");
-            case SOLUTION -> List.of("SPEC.md", "template", "tests", "test-plan.json", "problem-statement.md");
-            case TEMPLATE -> List.of("SPEC.md", "tests", "test-plan.json", "problem-statement.md");
             case TESTS -> List.of("SPEC.md", "problem-statement.md");
             case STATEMENT -> List.of("SPEC.md", "solution", "template", "tests", "test-plan.json");
         };
@@ -765,7 +761,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * Composes the model-facing result: parses the leading {@code __HYP_META__} line for the real exit code and size, then returns the exit code, the output tail, and — when the
      * output exceeded the tail — a marker pointing at the spill file.
      */
-    private String composeBashOutput(SandboxExecResult result, String logPath) {
+    private String composeBashOutput(SandboxExecResultDTO result, String logPath) {
         String output = result.combinedOutput() == null ? "" : result.combinedOutput();
         int newline = output.indexOf('\n');
         Matcher meta = BASH_META.matcher(newline < 0 ? output.strip() : output.substring(0, newline).strip());
@@ -801,8 +797,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * Runs the mechanical precheck for the current session.
      * <p>
      * In a staged session ({@link #currentStage} set), {@code verify} delegates to {@link StageCheckService} for the CURRENT stage at that stage's right depth — a free structure
-     * scan for {@link GenerationStage#SPEC}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the solution/template differential and
-     * executable-artifact checks for {@link GenerationStage#TESTS}, and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS stage's exact test names.
+     * scan for {@link GenerationStage#SPEC}, the solution/template differential and executable-artifact checks for {@link GenerationStage#TESTS}, and a no-build binding check for
+     * {@link GenerationStage#STATEMENT} against the TESTS stage's exact test names.
      * Statement and grading-plan checks remain deferred until their artifacts exist; the unstaged path below checks the complete candidate. Every call re-runs the check (no
      * cache); a passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
      * {@link #reuseCachedPassingCheck}), but never skips itself. An unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always the full differential.

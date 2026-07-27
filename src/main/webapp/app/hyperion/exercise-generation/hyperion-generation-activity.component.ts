@@ -5,12 +5,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faCircleCheck, faCircleXmark, faRotateLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -72,13 +72,21 @@ export interface HyperionGenerationCompletedEvent {
     templateUrl: './hyperion-generation-activity.component.html',
     styleUrl: './hyperion-generation-activity.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ButtonModule, ConfirmDialogModule, MessageModule, TagModule, TooltipModule],
-    providers: [ConfirmationService],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+        TumUiMessageComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class HyperionGenerationActivityComponent implements OnDestroy {
     private readonly service = inject(HyperionExerciseGenerationService);
     private readonly alertService = inject(AlertService);
-    private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -112,6 +120,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     readonly detailsExpanded = signal<boolean>(true);
     readonly cancelRequested = signal<boolean>(false);
+    readonly confirmRevertVisible = signal<boolean>(false);
 
     readonly reverting = signal<boolean>(false);
     readonly reverted = signal<boolean>(false);
@@ -144,6 +153,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     );
     readonly undoneLabelKey = computed(() =>
         this.effectiveRevertMode() === 'GENERATE' ? 'artemisApp.hyperion.generationActivity.generationUndone' : 'artemisApp.hyperion.generationActivity.adaptationUndone',
+    );
+    readonly undoConfirmHeaderKey = computed(() =>
+        this.effectiveRevertMode() === 'GENERATE'
+            ? 'artemisApp.hyperion.generationActivity.undoGenerationConfirmHeader'
+            : 'artemisApp.hyperion.generationActivity.undoAdaptationConfirmHeader',
+    );
+    readonly undoConfirmMessageKey = computed(() =>
+        this.effectiveRevertMode() === 'GENERATE'
+            ? 'artemisApp.hyperion.generationActivity.undoGenerationConfirmMessage'
+            : 'artemisApp.hyperion.generationActivity.undoAdaptationConfirmMessage',
     );
 
     readonly hasDetails = computed(() => this.fileChanges().length > 0 || this.previousProgress().length > 0);
@@ -319,28 +338,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         if (!this.canRevert() || this.reverting()) {
             return;
         }
-        this.confirmationService.confirm({
-            header: this.translateService.instant(
-                this.effectiveRevertMode() === 'GENERATE'
-                    ? 'artemisApp.hyperion.generationActivity.undoGenerationConfirmHeader'
-                    : 'artemisApp.hyperion.generationActivity.undoAdaptationConfirmHeader',
-            ),
-            message: this.translateService.instant(
-                this.effectiveRevertMode() === 'GENERATE'
-                    ? 'artemisApp.hyperion.generationActivity.undoGenerationConfirmMessage'
-                    : 'artemisApp.hyperion.generationActivity.undoAdaptationConfirmMessage',
-            ),
-            rejectButtonProps: {
-                label: this.translateService.instant('entity.action.cancel'),
-                severity: 'secondary',
-            },
-            acceptButtonProps: {
-                label: this.translateService.instant(this.undoLabelKey()),
-                severity: 'danger',
-            },
-            defaultFocus: 'reject',
-            accept: () => this.revert(),
-        });
+        this.confirmRevertVisible.set(true);
+    }
+
+    dismissRevert(): void {
+        this.confirmRevertVisible.set(false);
+    }
+
+    acceptRevert(): void {
+        this.confirmRevertVisible.set(false);
+        this.revert();
     }
 
     toggleDetails(): void {
@@ -1043,6 +1050,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.cancellable.set(false);
         this.cancelRequested.set(false);
         this.cancellationStatusChecks = 0;
+        // The undo confirmation belongs to the run being discarded here, so it must not survive into the next one.
+        this.confirmRevertVisible.set(false);
         this.clearFileChanges();
     }
 

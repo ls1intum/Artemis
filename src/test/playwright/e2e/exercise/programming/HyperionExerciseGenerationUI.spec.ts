@@ -1290,7 +1290,7 @@ async function revertMechanicallyVerifiedAdaptationFromUi(page: Page, exerciseId
         { timeout: 120_000 },
     );
     await page.getByTestId('hyperion-generation-revert').click();
-    await page.getByRole('alertdialog', { name: 'Undo the most recent saved adaptation?' }).getByRole('button', { name: 'Undo adaptation', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Undo the most recent saved adaptation?' }).getByRole('button', { name: 'Undo adaptation', exact: true }).click();
     const revertResponse = await revertResponsePromise;
     expect(revertResponse.ok()).toBeTruthy();
     await expectNoRetainedGenerationStatus(page, exerciseId);
@@ -1361,7 +1361,7 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
             { timeout: 60_000 },
         );
         await adminPage.getByRole('button', { name: 'Cancel generation', exact: true }).click();
-        const confirmationDialog = adminPage.getByRole('alertdialog', { name: 'Cancel Hyperion generation' });
+        const confirmationDialog = adminPage.getByRole('dialog', { name: 'Cancel Hyperion generation' });
         await confirmationDialog.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         expect((await cancelResponsePromise).ok()).toBeTruthy();
         await expect(adminPage.getByText(/The job ended and its sandbox was released after cancellation was requested/)).toBeVisible({ timeout: 60_000 });

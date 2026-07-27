@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
@@ -56,9 +56,9 @@ public class DistributedDataAccessService {
 
     private DistributedTopic<String> resumeBuildAgentTopic;
 
-    private DistributedTopic<SandboxOpRequest> hyperionSandboxRequestsTopic;
+    private DistributedTopic<SandboxOpRequestDTO> hyperionSandboxRequestsTopic;
 
-    private DistributedTopic<SandboxOpResponse> hyperionSandboxResponsesTopic;
+    private DistributedTopic<SandboxOpResponseDTO> hyperionSandboxResponsesTopic;
 
     private DistributedMap<String, byte[]> hyperionSandboxPayloads;
 
@@ -332,7 +332,7 @@ public class DistributedDataAccessService {
      * @return the broadcast topic on which a core node publishes interactive-sandbox operation requests for a specific build agent.
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public DistributedTopic<SandboxOpRequest> getHyperionSandboxRequestsTopic() {
+    public DistributedTopic<SandboxOpRequestDTO> getHyperionSandboxRequestsTopic() {
         if (this.hyperionSandboxRequestsTopic == null) {
             this.hyperionSandboxRequestsTopic = this.distributedDataProvider.getTopic("hyperion-sandbox-requests");
         }
@@ -343,7 +343,7 @@ public class DistributedDataAccessService {
      * @return the broadcast topic on which a build agent publishes interactive-sandbox operation responses back to the originating core node.
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public DistributedTopic<SandboxOpResponse> getHyperionSandboxResponsesTopic() {
+    public DistributedTopic<SandboxOpResponseDTO> getHyperionSandboxResponsesTopic() {
         if (this.hyperionSandboxResponsesTopic == null) {
             this.hyperionSandboxResponsesTopic = this.distributedDataProvider.getTopic("hyperion-sandbox-responses");
         }

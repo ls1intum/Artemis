@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
@@ -219,7 +219,7 @@ class StructuralOracleSeedingServiceTest {
         // read the surviving oracle as somebody else's grading harness and threw, which discarded the entire generation with nothing saved. Its own incomplete output is the
         // state this service exists to repair.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         Map<String, String> tests = Map.of("test/sorting/ScoreProcessorTest.java", "package sorting; class ScoreProcessorTest {}", "test/sorting/test.json",
@@ -237,7 +237,7 @@ class StructuralOracleSeedingServiceTest {
     void reseedsWhenOnlySomeOfTheSeededStructuralClassesSurvive() {
         // The partial case: one marked class left behind, the other deleted. Completeness is not what identifies ownership — the marker is.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         Map<String, String> tests = Map.of("test/sorting/test.json", "[{\"class\":{\"name\":\"ScoreProcessor\"},\"methods\":[{\"name\":\"process\"}]}]",
@@ -254,7 +254,7 @@ class StructuralOracleSeedingServiceTest {
     @Test
     void refreshesACompleteManagedBundleWithOnlyApplicableProviders() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort { public void sort() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         String oracle = "[{\"class\":{\"name\":\"MergeSort\"},\"methods\":[{\"name\":\"sort\"}]}]";
@@ -273,7 +273,7 @@ class StructuralOracleSeedingServiceTest {
     @Test
     void removesManagedStructuralFiles_whenStructuresAreIdentical() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResult(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         String identical = "package sorting;\npublic class BubbleSort {\n    public int[] sort(int[] a){ return a; }\n}";
         Map<String, String> tests = new LinkedHashMap<>();
         tests.put("test/sorting/BubbleSortTest.java", "package sorting;\nclass BubbleSortTest {}");

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
 /**
- * The interactive-sandbox operation a {@link SandboxOpRequest} asks a remote build agent to perform. Each value maps one-to-one to a method of
+ * The interactive-sandbox operation a {@link SandboxOpRequestDTO} asks a remote build agent to perform. Each value maps one-to-one to a method of
  * {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox}, so the relay can dispatch a request to the local sandbox implementation without any further type
  * inspection.
  */

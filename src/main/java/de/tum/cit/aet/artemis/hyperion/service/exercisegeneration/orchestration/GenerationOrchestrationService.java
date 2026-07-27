@@ -29,9 +29,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -200,8 +200,8 @@ public class GenerationOrchestrationService {
         Map<String, String> placeholderReplacements = Map.of();
         Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
         GenerationAttemptLoop attemptLoop = null;
-        SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise,
-                new SandboxSessionContext(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
+        SandboxSessionSpecDTO sessionSpec = workspace.sessionSpec(exercise,
+                new SandboxSessionContextDTO(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
         try {
             if (cancelled.getAsBoolean()) {
                 return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
@@ -624,7 +624,7 @@ public class GenerationOrchestrationService {
             return null;
         }
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + fileName);
+            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + fileName);
             return result != null && result.isSuccess() ? result.stdout() : null;
         }
         catch (RuntimeException e) {

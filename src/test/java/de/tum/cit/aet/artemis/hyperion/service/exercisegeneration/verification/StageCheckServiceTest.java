@@ -21,18 +21,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
- * Unit tests for the mechanical per-stage gates, in particular the "compiled" definition fix ({@link SingleBuildResult#compiled()}): {@code verify.sh} exits non-zero both for a
- * genuine compile failure and for failing tests, so the SOLUTION/TEMPLATE gates must distinguish "did not compile" (an infrastructure-level problem) from "compiled but a test
- * fails" (an authoring-quality problem the differential is supposed to catch), and must never punish a template for correctly failing its behavioural tests. The differential
- * itself ({@link DifferentialVerificationService}) is mocked throughout; its own build-and-parse behaviour is covered by {@code DifferentialVerificationServiceTest}.
+ * Unit tests for the mechanical per-stage gates of the SPEC, TESTS and STATEMENT stages. The differential ({@link DifferentialVerificationService}) is mocked throughout; its own
+ * build-and-parse behaviour is covered by {@code DifferentialVerificationServiceTest}.
  */
 class StageCheckServiceTest {
 
@@ -73,7 +71,7 @@ class StageCheckServiceTest {
         private int diffExitCode = 1;
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
@@ -115,33 +113,33 @@ class StageCheckServiceTest {
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
                 if (path.endsWith("SPEC.md")) {
-                    return spec == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, spec, "", false);
+                    return spec == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, spec, "", false);
                 }
                 if (path.endsWith("test-plan.json")) {
-                    return testPlanJson == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, testPlanJson, "", false);
+                    return testPlanJson == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, testPlanJson, "", false);
                 }
                 if (path.endsWith("problem-statement.md")) {
-                    return problemStatement == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, problemStatement, "", false);
+                    return problemStatement == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, problemStatement, "", false);
                 }
             }
             if (command.length >= 1 && "diff".equals(command[0])) {
-                return new SandboxExecResult(diffExitCode, "", "", false);
+                return new SandboxExecResultDTO(diffExitCode, "", "", false);
             }
             if (command.length >= 2 && "find".equals(command[0])) {
-                return new SandboxExecResult(0, declarationProbe(command, command[1].contains("solution")), "", false);
+                return new SandboxExecResultDTO(0, declarationProbe(command, command[1].contains("solution")), "", false);
             }
             if (command.length >= 2 && "grep".equals(command[0])) {
                 if (java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("TODO"))) {
-                    return new SandboxExecResult(0, templateTodoOutput, "", false);
+                    return new SandboxExecResultDTO(0, templateTodoOutput, "", false);
                 }
                 boolean solutionRepo = java.util.Arrays.stream(command).anyMatch(argument -> argument.contains("/solution"));
-                return new SandboxExecResult(0, declarationProbe(command, solutionRepo), "", false);
+                return new SandboxExecResultDTO(0, declarationProbe(command, solutionRepo), "", false);
             }
-            return new SandboxExecResult(0, "", "", false);
+            return new SandboxExecResultDTO(0, "", "", false);
         }
 
         @Override
@@ -201,18 +199,6 @@ class StageCheckServiceTest {
 
     private ProgrammingExercise exercise;
 
-    private static SingleBuildResult compiled() {
-        return new SingleBuildResult(0, 0, 0, List.of(), "");
-    }
-
-    private static SingleBuildResult compileFailure(String buildOutput) {
-        return new SingleBuildResult(1, 0, 0, List.of(), buildOutput);
-    }
-
-    private static SingleBuildResult testsRan(int exitCode, int testsRun, int failures, List<String> failedTestNames) {
-        return new SingleBuildResult(exitCode, testsRun, failures, failedTestNames, "");
-    }
-
     private ApprovedSpecRegistry approvedSpecs;
 
     @BeforeEach
@@ -260,238 +246,6 @@ class StageCheckServiceTest {
 
         assertThat(service.approvedOwnershipViolationAfterCommand(sandbox, "s"))
                 .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy.java").contains("reflection").contains("delete_file/edit_file"));
-    }
-
-    @Nested
-    class Solution {
-
-        @Test
-        void passes_whenTheBuildExitsCleanlyWithNoTestsYet() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isTrue();
-        }
-
-        @Test
-        void passes_whenEveryTestPasses() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isTrue();
-        }
-
-        @Test
-        void fails_asACompileError_whenNoTestsRanAndTheExitCodeIsNonZero() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution")))
-                    .thenReturn(compileFailure("Compiling...\n[ERROR] Foo.java:[12,5] cannot find symbol\n[ERROR] Foo.java:[20,1] ';' expected\nBUILD FAILURE"));
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("The reference solution does not compile").contains("cannot find symbol").contains("';' expected")
-                    .doesNotContain("Compiling...", "BUILD FAILURE");
-        }
-
-        @Test
-        void fails_byNamingFailingTests_whenTestsRanButSomeFail_notAsACompileError() {
-            // The compiled-definition fix: a non-zero exit with tests > 0 is a failing-test outcome, not a compile failure.
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(1, 5, 2, List.of("testSortsDescending", "testHandlesEmpty")));
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("must pass every test").contains("testSortsDescending", "testHandlesEmpty").doesNotContain("does not compile");
-        }
-
-        @Test
-        void fails_gracefully_whenTheBuildInfrastructureThrows() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenThrow(new RuntimeException("sandbox unreachable"));
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("Could not run the reference solution compile check").contains("sandbox unreachable");
-        }
-
-        @Test
-        void fails_whenTheSpecDeclaresAStudentCreatedTypeTheSolutionNeverImplements() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("solution contains no file for them").contains("RewardStrategy");
-        }
-
-        @Test
-        void passes_andConfirmsPresence_whenTheStudentCreatedTypeExistsInTheSolution() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(testsRan(0, 5, 0, List.of()));
-            sandbox.spec = specWithDesign("| RewardStrategy | strategy | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
-            sandbox.solutionFindOutput = "/workspace/solution/src/de/tum/RewardStrategy.java";
-
-            StageCheckResult result = check(GenerationStage.SOLUTION);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).contains("contains every student-created type").contains("RewardStrategy");
-        }
-    }
-
-    @Nested
-    class Template {
-
-        private static final String SPEC_WITH_STUDENT_CREATED_TYPE = specWithDesign("""
-                | RewardStrategy | strategy interface | student-creates |
-                | LoyaltyAccount | context | stubbed |
-                """).replace("| S1 | RewardStrategy | typical; zero | 3 | no |", """
-                | S1 | RewardStrategy | typical; zero | 3 | no |
-                | S2 | LoyaltyAccount | delegation and replacement | 3 | no |""");
-
-        @BeforeEach
-        void defaultsToADifferingTree() {
-            sandbox.diffExitCode = 1; // solution/template differ, the healthy default
-        }
-
-        @Test
-        void passes_andReportsCorrectFailures_whenItCompilesAndFailsItsTests() {
-            // The compiled-definition fix: the template correctly failing its behavioural tests must PASS, not be misread as a compile failure.
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1", "t2", "t3", "t4", "t5")));
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).containsIgnoringCase("template correctly failing").contains("5");
-        }
-
-        @Test
-        void passes_silently_whenItCompilesWithNoTestsYet() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isTrue();
-        }
-
-        @Test
-        void doesNotGuessTodoAssociationWhenTheRepositorySnapshotIsUnavailable() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
-            sandbox.templateTodoOutput = "TODO S9:";
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isTrue();
-        }
-
-        @Test
-        void doesNotApplyJavaTodoOwnershipRulesToAnotherLanguage() {
-            exercise.setProgrammingLanguage(ProgrammingLanguage.C);
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compiled());
-            sandbox.templateRepositoryFiles = Map.of("src/main.c", "int main(void) { return 0; }");
-
-            assertThat(check(GenerationStage.TEMPLATE).passed()).isTrue();
-        }
-
-        @Test
-        void fails_asACompileError_whenNoTestsRanAndTheExitCodeIsNonZero() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(compileFailure("[ERROR] Bar.java:[3,1] class, interface, or enum expected"));
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("The template does not compile").contains("class, interface, or enum expected");
-        }
-
-        @Test
-        void fails_whenTheTemplateIsByteIdenticalToTheSolution_evenThoughItCompiles() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.diffExitCode = 0; // byte-identical
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("byte-identical to the solution");
-        }
-
-        @Test
-        void fails_gracefully_whenTheBuildInfrastructureThrows() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenThrow(new RuntimeException("sandbox unreachable"));
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("Could not run the template compile check").contains("sandbox unreachable");
-        }
-
-        @Test
-        void fails_whenAStudentCreatedTypeStillShipsInTheTemplate() {
-            // The evidence gate for the weakest live finding: three runs in a row shipped stubs where the brief demanded student-created types.
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
-            sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java").contains("changing SPEC.md now cannot");
-        }
-
-        @Test
-        void fails_whenTheTemplateShipsNoneOfTheSuppliedScaffoldTypes() {
-            // Observed live: a generated exercise marked every type student-created, shipped an EMPTY template, and still scored the pipeline's best grade — an empty template
-            // compiles (no sources, exit 0) and "fails every test" (nothing runs), so the differential is satisfied by the degenerate candidate it should reject.
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
-            sandbox.templateShipsScaffold = false;
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("missing type(s)").contains("LoyaltyAccount").contains("only");
-        }
-
-        @Test
-        void fails_andNamesTheType_whenOnlyPartOfTheJavaScaffoldIsMissing() {
-            // Observed live: a generics exercise declared two policy types 'given', shipped a template without them, and burned its whole repair budget on "cannot find symbol"
-            // while the tests compiled against the template — nothing ever named the absent type. Java declares each type in a file named after it, so the probe can be exact.
-            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.spec = specWithDesign("| Stack | student work | student-creates |\n| OverflowPolicy | supplied policy | given |\n| Support | supplied helper | given |\n");
-            // The template ships Support but not OverflowPolicy: a partial scaffold the wholly-missing check would wave through.
-            sandbox.templateFindOutput = "/workspace/template/src/Support.java";
-            sandbox.templateShipsScaffold = false;
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("OverflowPolicy").doesNotContain("Support");
-        }
-
-        @Test
-        void passes_andPositivelyConfirmsTheAbsence_whenStudentCreatedTypesAreOmitted() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).contains("Confirmed absent from the template").contains("RewardStrategy");
-        }
-
-        @Test
-        void rejectsAMisleadingStudentCreatedBreadcrumbBeforeTheTestsAndStatementStages() {
-            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.spec = SPEC_WITH_STUDENT_CREATED_TYPE;
-            sandbox.templateRepositoryFiles = Map.of("src/LoyaltyAccount.java", "class LoyaltyAccount { // TODO S1: create RewardStrategy\n// TODO S2: delegate to it\n}");
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("student-created", "S1", "LoyaltyAccount.java");
-        }
     }
 
     @Nested
@@ -938,40 +692,6 @@ class StageCheckServiceTest {
     @Nested
     class ApprovedSpecification {
 
-        private static final String APPROVED = specWithDesign("| RewardStrategy | strategy interface | student-creates |\n| LoyaltyAccount | context | stubbed |\n");
-
-        private static final String DOWNGRADED = specWithDesign("| RewardStrategy | strategy interface | stubbed |\n| LoyaltyAccount | context | stubbed |\n");
-
-        @BeforeEach
-        void templateCompilesAndDiffers() {
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("template"))).thenReturn(testsRan(1, 5, 5, List.of("t1")));
-            sandbox.diffExitCode = 1;
-        }
-
-        @Test
-        void ignoresTheLiveDowngradeAndChecksTheTemplateAgainstTheApprovedSnapshot() {
-            approvedSpecs.approve("s", APPROVED);
-            sandbox.spec = DOWNGRADED;
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).contains("Confirmed absent from the template").contains("RewardStrategy");
-        }
-
-        @Test
-        void stillEnforcesOmissionAfterTheLiveSpecDropsTheType() {
-            // The live copy is irrelevant after approval; the frozen copy still enforces omission.
-            approvedSpecs.approve("s", APPROVED);
-            sandbox.spec = DOWNGRADED;
-            sandbox.templateFindOutput = "/workspace/template/src/de/tum/RewardStrategy.java";
-
-            StageCheckResult result = check(GenerationStage.TEMPLATE);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("must NOT contain").contains("RewardStrategy.java");
-        }
-
         @Test
         void keepsTheApprovedDiagramPromise_afterTheLiveSpecRevokesIt() {
             approvedSpecs.approve("s",
@@ -1024,10 +744,9 @@ class StageCheckServiceTest {
         void laterStageFails_whenSpecMdWasEditedIntoAnInvalidSpecification() {
             // Observed live: a later stage appended a '## Tasks' section with [task] bindings and emptied the '## Diagram' decision, silently disarming the statement's
             // diagram-coherence check. The drift is caught where it happens instead of passing vacuously.
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
             sandbox.spec = sandbox.spec + "\n## Tasks\n[task][Do it](testDoIt)\n";
 
-            StageCheckResult result = check(GenerationStage.SOLUTION);
+            StageCheckResult result = check(GenerationStage.STATEMENT);
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("SPEC.md is no longer a valid specification").contains("must not contain [task] bindings")
@@ -1038,9 +757,8 @@ class StageCheckServiceTest {
         void laterStageRunsItsOwnCheck_whenThereIsNoSpecAtAll() {
             // The SPEC stage does not run when the instructor's own problem statement IS the specification, so a missing SPEC.md must never block a later stage.
             sandbox.spec = null;
-            when(verifier.singleBuild(any(), anyString(), eq(exercise), eq("solution"))).thenReturn(compiled());
 
-            assertThat(check(GenerationStage.SOLUTION).passed()).isTrue();
+            assertThat(check(GenerationStage.STATEMENT).passed()).isTrue();
         }
     }
 

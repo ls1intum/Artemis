@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
@@ -102,7 +102,8 @@ public class DifferentialVerificationService {
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat",
+                GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -112,7 +113,7 @@ public class DifferentialVerificationService {
      */
     private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
             if (!result.isSuccess() || result.stdout() == null || result.stdout().isBlank()) {
                 return Set.of();
             }
@@ -125,7 +126,7 @@ public class DifferentialVerificationService {
     }
 
     private static String readWorkspaceRootFile(InteractiveSandbox sandbox, String sessionId, String filename) {
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -165,7 +166,7 @@ public class DifferentialVerificationService {
     /** Lists assignment-repository source files for the asymmetric-file advisory, excluding hidden files and build manifests. Empty on any non-success (fail-open). */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
         String repoRoot = GenerationWorkspaceService.WORKSPACE + "/" + repoDirectory;
-        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "cd '" + repoRoot + "' 2>/dev/null && find . -type f | sed 's|^\\./||' | grep -v '/\\.' | grep -v '^\\.' || true");
         if (!result.isSuccess()) {
             return Set.of();
@@ -595,7 +596,7 @@ public class DifferentialVerificationService {
     }
 
     private PristineBuildExecution runPristineBuildWithExecution(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
-        SandboxExecResult run;
+        SandboxExecResultDTO run;
         try {
             run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
         }
@@ -624,7 +625,7 @@ public class DifferentialVerificationService {
         return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode()), run);
     }
 
-    private record PristineBuildExecution(BuildSummary summary, SandboxExecResult process) {
+    private record PristineBuildExecution(BuildSummary summary, SandboxExecResultDTO process) {
     }
 
     /** The solution gate: the solution must compile, run at least one test, and pass every test. Appends a rejection reason to {@code reasons} otherwise. */
@@ -858,7 +859,7 @@ public class DifferentialVerificationService {
      */
     private void removeContractWitnessProbe(InteractiveSandbox sandbox, String sessionId, String workspacePath) {
         try {
-            SandboxExecResult removal = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f",
+            SandboxExecResultDTO removal = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f",
                     GenerationWorkspaceService.WORKSPACE + "/" + workspacePath);
             if (!removal.isSuccess()) {
                 log.warn("The contract-witness probe {} could not be removed; the read-back residue strip is the remaining guard", workspacePath);
@@ -867,30 +868,6 @@ public class DifferentialVerificationService {
         catch (RuntimeException e) {
             log.warn("The contract-witness probe {} could not be removed: {}", workspacePath, e.getMessage());
         }
-    }
-
-    /**
-     * Runs one pristine build for a single assignment ({@code solution} or {@code template}) without a paired differential, for callers that only need "did it build, and which
-     * tests failed" before authoring the next stage — currently {@link StageCheckService}'s per-stage compile gates. Re-seeds the pristine verify script first (idempotent), the
-     * same as the two-build {@link #runDifferential}: until the first (re-)seed, {@code /opt/hyperion/verify.sh} still holds the readiness-probe variant from session bootstrap,
-     * whose fixture is already consumed, so invoking it fails with "build-readiness fixture is unavailable" (exit 66).
-     * <p>
-     * Reuses the same build-and-parse machinery ({@link #runPristineBuildWithExecution}) that {@link #runDifferential} calls twice, so a single-assignment caller and the full
-     * differential can never observe a different build for the same assignment.
-     *
-     * @param sandbox    the open sandbox session the pristine build runs in
-     * @param sessionId  the sandbox session id
-     * @param exercise   the exercise being built (drives the per-language build recipe)
-     * @param assignment {@code solution} or {@code template}
-     * @return the bounded, caller-facing projection of the build
-     */
-    public SingleBuildResult singleBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String assignment) {
-        seedPristineVerifyScript(sandbox, sessionId, exercise);
-        String buildCommand = "solution".equals(assignment) ? sandboxBuildCommandService.pristineSolutionBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
-        PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, buildCommand, assignment);
-        BuildSummary summary = execution.summary();
-        return new SingleBuildResult(summary.exitCode(), summary.tests(), summary.failures(), summary.testFailedNames(),
-                boundedReadinessDiagnostic(execution.process().combinedOutput()));
     }
 
     /**
@@ -904,7 +881,7 @@ public class DifferentialVerificationService {
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, String script) {
         try {
             // Docker's copy-to-container requires the destination directory to already exist.
-            SandboxExecResult preparation = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
+            SandboxExecResultDTO preparation = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
                     "find " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " -mindepth 1 -delete");
             if (!preparation.isSuccess()) {
                 throw new VerificationInfrastructureException("The verifier could not prepare its script directory", null);

@@ -1,9 +1,5 @@
 @if (visible()) {
     <section class="hyperion-activity" [attr.aria-label]="titleLabelKey() | artemisTranslate" data-testid="hyperion-generation-activity">
-        @if (canRevert()) {
-            <p-confirmDialog />
-        }
-
         @if (!idle() && !statusLoadFailed()) {
             <header class="hyperion-activity-header">
                 <div class="hyperion-activity-heading">
@@ -26,31 +22,32 @@
 
                 <div class="hyperion-activity-actions">
                     @if (editorRefreshFailed()) {
-                        <p-button size="small" severity="secondary" [text]="true" (onClick)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
+                        <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
                             <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                     @if (terminalStatus(); as terminal) {
-                        <p-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
+                        <tum-ui-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
                             <span [jhiTranslate]="terminal.labelKey"></span>
-                        </p-tag>
+                        </tum-ui-tag>
                     }
                     @if (persistenceState(); as persistence) {
-                        <p-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
+                        <tum-ui-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
                             <span [jhiTranslate]="persistence.labelKey"></span>
-                        </p-tag>
+                        </tum-ui-tag>
                     }
                     @if (reverted()) {
-                        <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
+                        <tum-ui-tag severity="secondary" data-testid="hyperion-generation-reverted">
                             <span [jhiTranslate]="undoneLabelKey()"></span>
-                        </p-tag>
+                        </tum-ui-tag>
                     }
                     @if (jobId() && hasDetails()) {
+                        <!-- Attribute form of the kit button so the disclosure semantics (aria-expanded / aria-controls) and the focus target stay on one native element. -->
                         <button
-                            pButton
+                            tumUiButton
                             type="button"
                             size="small"
-                            text
+                            variant="text"
                             severity="secondary"
                             [attr.aria-expanded]="detailsExpanded()"
                             aria-controls="hyperion-generation-details"
@@ -62,40 +59,38 @@
                         </button>
                     }
                     @if (running() && ownedByCaller() && cancellable()) {
-                        <p-button
+                        <tum-ui-button
                             size="small"
                             severity="danger"
-                            [text]="true"
+                            variant="text"
                             [loading]="cancelRequested()"
                             [disabled]="cancelRequested()"
-                            (onClick)="cancel()"
-                            [pTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
+                            (clicked)="cancel()"
+                            [tumUiTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
                             data-testid="hyperion-generation-cancel"
                         >
                             <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                     @if (canRunAgain()) {
-                        <p-button size="small" severity="secondary" [text]="true" (onClick)="runAgain()" data-testid="hyperion-generation-run-again">
+                        <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="runAgain()" data-testid="hyperion-generation-run-again">
                             <span jhiTranslate="artemisApp.hyperion.generationActivity.runAgain"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                     @if (canRevert()) {
-                        <p-button
+                        <tum-ui-button
                             size="small"
                             severity="secondary"
-                            [text]="true"
+                            variant="text"
                             [loading]="reverting()"
                             [disabled]="reverting()"
-                            (onClick)="confirmRevert()"
-                            [pTooltip]="undoTooltipKey() | artemisTranslate"
+                            [icon]="faRotateLeft"
+                            (clicked)="confirmRevert()"
+                            [tumUiTooltip]="undoTooltipKey() | artemisTranslate"
                             data-testid="hyperion-generation-revert"
                         >
-                            @if (!reverting()) {
-                                <fa-icon [icon]="faRotateLeft" />
-                            }
                             <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : undoLabelKey()"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                 </div>
             </header>
@@ -114,30 +109,31 @@
                 <strong jhiTranslate="artemisApp.hyperion.generationActivity.emptyTitle"></strong>
                 @if (startAllowed()) {
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
-                    <p-button size="small" (onClick)="requestStart()" data-testid="hyperion-generation-start">
+                    <tum-ui-button size="small" (clicked)="requestStart()" data-testid="hyperion-generation-start">
                         <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
-                    </p-button>
+                    </tum-ui-button>
                 } @else {
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.unavailableHint"></span>
                 }
             </div>
         }
 
+        <!-- role/aria-live are set explicitly: p-message carried them on its host, the kit message leaves the live-region semantics to the caller. -->
         @if (statusLoadFailed()) {
-            <p-message severity="error" class="hyperion-activity-message" [closable]="false">
+            <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite">
                 <div class="hyperion-activity-message-content">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
-                    <p-button size="small" severity="secondary" [text]="true" (onClick)="retryStatus()">
+                    <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="retryStatus()" data-testid="hyperion-generation-status-retry">
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
-                    </p-button>
+                    </tum-ui-button>
                 </div>
-            </p-message>
+            </tum-ui-message>
         }
 
         @if (revertPartialRepositories(); as repositories) {
-            <p-message severity="error" class="hyperion-activity-message" [closable]="false" data-testid="hyperion-generation-revert-partial">
+            <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite" data-testid="hyperion-generation-revert-partial">
                 <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
-            </p-message>
+            </tum-ui-message>
         }
 
         @if (verdict(); as currentVerdict) {
@@ -183,13 +179,13 @@
                 </span>
             </div>
             @if (!currentVerdict.mechanicallyVerified && currentVerdict.reasons.length) {
-                <p-message severity="error" class="hyperion-activity-message" [closable]="false">
+                <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite">
                     <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
                         @for (reason of currentVerdict.reasons; track $index) {
                             <li>{{ reason }}</li>
                         }
                     </ul>
-                </p-message>
+                </tum-ui-message>
             }
         }
 
@@ -201,16 +197,16 @@
                 </div>
                 <div class="hyperion-activity-review-actions">
                     @for (target of reviewTargets(); track target) {
-                        <p-button
+                        <tum-ui-button
                             size="small"
                             severity="secondary"
-                            [outlined]="true"
-                            (onClick)="requestReview(target)"
+                            variant="outlined"
+                            (clicked)="requestReview(target)"
                             data-testid="hyperion-generation-review-action"
                             [attr.data-review-target]="target"
                         >
                             <span [jhiTranslate]="'artemisApp.hyperion.generationActivity.reviewTarget.' + target"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                 </div>
             </section>
@@ -226,20 +222,20 @@
                                 <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
                                 @for (file of group.files; track file.repo + ':' + file.path) {
                                     @if (canNavigateFileChange(file)) {
-                                        <p-button
+                                        <tum-ui-button
                                             class="hyperion-activity-file"
                                             size="small"
                                             severity="secondary"
-                                            [text]="true"
-                                            [fluid]="true"
+                                            variant="text"
+                                            styleClass="w-full"
                                             [ariaLabel]="fileChangeAccessibleLabel(file)"
-                                            [pTooltip]="file.path"
-                                            tooltipPosition="right"
-                                            (onClick)="selectFile(file)"
+                                            [tumUiTooltip]="file.path"
+                                            tumUiTooltipPlacement="right"
+                                            (clicked)="selectFile(file)"
                                             data-testid="hyperion-generation-file"
                                         >
                                             <span class="hyperion-activity-file-path">{{ displayPath(file) }}</span>
-                                        </p-button>
+                                        </tum-ui-button>
                                     } @else {
                                         <div
                                             class="hyperion-activity-file-static"
@@ -266,5 +262,32 @@
                 }
             </div>
         }
+
+        <!--
+            Declared unconditionally on purpose: guarding it on canRevert() would destroy the dialog mid-interaction
+            whenever that predicate flips while the instructor is deciding. confirmRevert() already refuses to open it
+            when undo is unavailable, and revert() re-checks before calling the server.
+        -->
+        <tum-ui-dialog
+            [(visible)]="confirmRevertVisible"
+            [modal]="true"
+            [closable]="true"
+            [closeOnEscape]="true"
+            [dismissableMask]="true"
+            [draggable]="false"
+            [appendTo]="'body'"
+            [style]="{ width: '32rem' }"
+            [header]="undoConfirmHeaderKey() | artemisTranslate"
+        >
+            <span [jhiTranslate]="undoConfirmMessageKey()" data-testid="hyperion-generation-revert-confirm-message"></span>
+            <ng-template #footer>
+                <tum-ui-button type="button" severity="secondary" size="small" variant="outlined" (clicked)="dismissRevert()" data-testid="hyperion-generation-revert-reject">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tum-ui-button>
+                <tum-ui-button type="button" severity="danger" size="small" (clicked)="acceptRevert()" data-testid="hyperion-generation-revert-accept">
+                    <span [jhiTranslate]="undoLabelKey()"></span>
+                </tum-ui-button>
+            </ng-template>
+        </tum-ui-dialog>
     </section>
 }

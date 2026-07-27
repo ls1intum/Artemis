@@ -22,8 +22,8 @@ import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -51,22 +51,22 @@ class SandboxAgentToolsTest {
         private String lastWrittenBase64;
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             execCount++;
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String content = files.get(command[1]);
-                return content == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, content, "", false);
+                return content == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, content, "", false);
             }
             if (command.length == 3 && "sh".equals(command[0]) && command[2].contains("| base64 -d >")) {
                 int start = command[2].indexOf("echo '") + "echo '".length();
                 lastWrittenBase64 = command[2].substring(start, command[2].indexOf("'", start));
             }
-            return new SandboxExecResult(0, "", "", false);
+            return new SandboxExecResultDTO(0, "", "", false);
         }
 
         @Override
@@ -286,11 +286,17 @@ class SandboxAgentToolsTest {
             }
         }
 
-        SandboxAgentTools solutionStage = new SandboxAgentTools(new RecordingSandbox(), "s");
-        solutionStage.enterStage(GenerationStage.SOLUTION);
-        assertThat(solutionStage.writeFile("solution/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
-        assertThat(solutionStage.writeFile("template/src/Answer.java", "class Answer {}")).contains("cannot write");
-        assertThat(solutionStage.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).contains("cannot write");
+        // The executable artifacts are authored together in the TESTS stage, so all three roots are writable there and nowhere else.
+        SandboxAgentTools testsStage = new SandboxAgentTools(new RecordingSandbox(), "s");
+        testsStage.enterStage(GenerationStage.TESTS);
+        assertThat(testsStage.writeFile("solution/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
+        assertThat(testsStage.writeFile("template/src/Answer.java", "class Answer {}")).startsWith("Wrote ");
+        assertThat(testsStage.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).startsWith("Wrote ");
+
+        SandboxAgentTools statementStage = new SandboxAgentTools(new RecordingSandbox(), "s");
+        statementStage.enterStage(GenerationStage.STATEMENT);
+        assertThat(statementStage.writeFile("solution/src/Answer.java", "class Answer {}")).contains("cannot write");
+        assertThat(statementStage.writeFile("tests/test/AnswerTest.java", "class AnswerTest {}")).contains("cannot write");
     }
 
     @Test
@@ -315,7 +321,7 @@ class SandboxAgentToolsTest {
         when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy {}"))
                 .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
-        tools.enterStage(GenerationStage.TEMPLATE);
+        tools.enterStage(GenerationStage.TESTS);
 
         String result = tools.writeFile("template/src/FuelStrategy.java", "public interface FuelStrategy {}");
 
@@ -330,7 +336,7 @@ class SandboxAgentToolsTest {
         when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "// TODO: create this type"))
                 .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
-        tools.enterStage(GenerationStage.TEMPLATE);
+        tools.enterStage(GenerationStage.TESTS);
 
         assertThat(tools.writeFile("template/src/FuelStrategy.java", "// TODO: create this type")).contains("assigns FuelStrategy to the student");
         assertThat(sandbox.execCount).isZero();
@@ -376,21 +382,21 @@ class SandboxAgentToolsTest {
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */
     private static final class ScriptedSandbox implements InteractiveSandbox {
 
-        private final SandboxExecResult result;
+        private final SandboxExecResultDTO result;
 
         private String lastScript;
 
-        ScriptedSandbox(SandboxExecResult result) {
+        ScriptedSandbox(SandboxExecResultDTO result) {
             this.result = result;
         }
 
         @Override
-        public String createSession(SandboxSessionSpec spec) {
+        public String createSession(SandboxSessionSpecDTO spec) {
             return "s";
         }
 
         @Override
-        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             lastScript = command[command.length - 1];
             return result;
         }
@@ -409,8 +415,8 @@ class SandboxAgentToolsTest {
         }
     }
 
-    private static SandboxExecResult bashStdout(int exitCode, String stdout) {
-        return new SandboxExecResult(exitCode, stdout, "", false);
+    private static SandboxExecResultDTO bashStdout(int exitCode, String stdout) {
+        return new SandboxExecResultDTO(exitCode, stdout, "", false);
     }
 
     @Test
@@ -518,7 +524,7 @@ class SandboxAgentToolsTest {
 
     @Test
     void bash_timeoutFailsBecauseTheSandboxWasTerminated() {
-        SandboxAgentTools tools = new SandboxAgentTools(new ScriptedSandbox(new SandboxExecResult(-1, "", "", true)), "s");
+        SandboxAgentTools tools = new SandboxAgentTools(new ScriptedSandbox(new SandboxExecResultDTO(-1, "", "", true)), "s");
 
         assertThatThrownBy(() -> tools.bash("sleep 999")).isInstanceOf(LocalCIException.class).hasMessageContaining("sandbox session was terminated");
     }
@@ -725,7 +731,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise); // 4-arg ctor: stageCheckService is null
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         String out = tools.verify();
 
@@ -740,10 +746,10 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         String out = tools.submit("done");
 
@@ -757,10 +763,10 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         String rejected = tools.submit("done");
         String accepted = tools.submit("done");
@@ -787,9 +793,9 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isEmpty();
     }
 
     @Test
@@ -797,15 +803,15 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         tools.verify();
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).contains(new StageCheckResult(true, "clean", null));
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).contains(new StageCheckResult(true, "clean", null));
 
         tools.writeFile("solution/A.java", "x");
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).as("a write after the passing check must invalidate the cache").isEmpty();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).as("a write after the passing check must invalidate the cache").isEmpty();
     }
 
     @Test
@@ -813,15 +819,15 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         tools.verify();
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
 
         tools.deleteFile("solution/Old.java");
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isEmpty();
     }
 
     @Test
@@ -829,16 +835,16 @@ class SandboxAgentToolsTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
 
         tools.verify();
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
 
         tools.bash("ls");
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isEmpty();
     }
 
     @Test
@@ -846,15 +852,15 @@ class SandboxAgentToolsTest {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SOLUTION), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
-        tools.enterStage(GenerationStage.SOLUTION);
+        tools.enterStage(GenerationStage.TESTS);
         tools.verify();
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isPresent();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
 
-        tools.enterStage(GenerationStage.SOLUTION); // a fresh re-entry into the same stage must not read a stale pass
+        tools.enterStage(GenerationStage.TESTS); // a fresh re-entry into the same stage must not read a stale pass
 
-        assertThat(tools.reuseCachedPassingCheck(GenerationStage.SOLUTION)).isEmpty();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isEmpty();
     }
 
     @Test

@@ -51,7 +51,7 @@ import com.github.dockerjava.api.model.StreamType;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 class InteractiveSandboxServiceHostConfigTest {
@@ -107,7 +107,7 @@ class InteractiveSandboxServiceHostConfigTest {
     void createSession_enforcesNoNetworkAndSandboxHardening() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        service.createSession(new SandboxSessionSpec(IMAGE, new DockerRunConfig(List.of(), "none", 0, 0, 0)));
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, new DockerRunConfig(List.of(), "none", 0, 0, 0)));
 
         verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
         HostConfig hostConfig = hostConfigCaptor.getValue();
@@ -126,7 +126,7 @@ class InteractiveSandboxServiceHostConfigTest {
     void createSession_defaultsToNoNetworkWhenRunConfigIsAbsent() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        service.createSession(new SandboxSessionSpec(IMAGE, null));
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
 
         verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
         assertThat(hostConfigCaptor.getValue().getNetworkMode()).isEqualTo("none");
@@ -137,7 +137,7 @@ class InteractiveSandboxServiceHostConfigTest {
         inspectImageResponse.withConfig(new ContainerConfig().withVolumes(Map.of("/var/cache/compiler", Map.of())));
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        service.createSession(new SandboxSessionSpec(IMAGE, null));
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
 
         verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
         assertThat(hostConfigCaptor.getValue().getTmpFs()).containsEntry("/var/cache/compiler", "rw,exec,nosuid,nodev,size=256m");
@@ -148,7 +148,7 @@ class InteractiveSandboxServiceHostConfigTest {
         doReturn(HostConfig.newHostConfig()).when(buildAgentConfiguration).hostConfig();
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec(IMAGE, null)))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, null)))
                 .withMessageContaining("require positive CPU, memory, and PID limits");
     }
 
@@ -161,7 +161,7 @@ class InteractiveSandboxServiceHostConfigTest {
     void createSession_rejectsNetworkModesOtherThanNone() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec(IMAGE, new DockerRunConfig(List.of(), "host", 0, 0, 0))))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, new DockerRunConfig(List.of(), "host", 0, 0, 0))))
                 .withMessageContaining("only allow Docker network mode 'none'");
     }
 
@@ -173,7 +173,7 @@ class InteractiveSandboxServiceHostConfigTest {
         doThrow(new RuntimeException("start failed")).when(startContainerCmd).exec();
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpec(IMAGE, null))).withMessage("start failed");
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> service.createSession(new SandboxSessionSpecDTO(IMAGE, null))).withMessage("start failed");
 
         verify(removeContainerCmd).withForce(true);
         verify(removeContainerCmd).withRemoveVolumes(true);
@@ -237,7 +237,7 @@ class InteractiveSandboxServiceHostConfigTest {
     void createSession_resolvesTheConfiguredImageBeforeCreatingFromItsImmutableId() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        service.createSession(new SandboxSessionSpec(IMAGE, null));
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
 
         InOrder imageThenContainer = inOrder(buildAgentDockerService, dockerClient);
         imageThenContainer.verify(buildAgentDockerService).ensureDockerImageAvailable(IMAGE);
@@ -263,7 +263,7 @@ class InteractiveSandboxServiceHostConfigTest {
     void createSessionKeepsPidOneIndependentFromWorkspaceFiles() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
 
-        service.createSession(new SandboxSessionSpec(IMAGE, null));
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
 
         ArgumentCaptor<String[]> command = ArgumentCaptor.forClass(String[].class);
         verify(createContainerCmd).withCmd(command.capture());
