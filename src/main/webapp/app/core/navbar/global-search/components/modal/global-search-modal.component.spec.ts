@@ -565,7 +565,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(results).toHaveLength(1);
             expect(results[0].type).toBe('lecture_content');
             expect(results[0].title).toBe('Introduction to Signals');
-            expect(results[0].id).toBe('lecture-content-30-4');
+            expect(results[0].id).toBe('lecture-content-/courses/42/lectures/20/units/30?page=4&unit=30');
         });
 
         it('should fall back to globalSearch with the lecture type filter when iris is unavailable', () => {
