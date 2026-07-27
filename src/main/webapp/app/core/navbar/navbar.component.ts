@@ -844,6 +844,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
+
         const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
@@ -870,6 +872,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+
         const courseId = course?.id?.toString();
         const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
         const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;

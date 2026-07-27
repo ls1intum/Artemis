@@ -268,6 +268,16 @@ describe('NavbarComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123']);
         });
 
+        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])(
+            'should default perspective links to their overviews outside course routes for %s',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.studentViewLink()).toEqual(['/courses']);
+                expect(component.managementViewLink()).toEqual(['/course-management']);
+            },
+        );
+
         it.each([
             { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
             { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
