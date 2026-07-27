@@ -6,8 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaginatorState } from 'primeng/paginator';
-import { SortEvent } from 'primeng/api';
+import { TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
 
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
@@ -62,18 +61,18 @@ describe('LtiConfigurationComponent', () => {
         mockAlertService = TestBed.inject(AlertService);
     });
 
-    describe('pagination (PrimeNG paginator)', () => {
-        it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
+    describe('pagination (tum-ui paginator)', () => {
+        it('converts the 0-indexed paginator page to the 1-indexed page and navigates', () => {
             mockRouter.navigate.mockClear();
 
-            component.onPageChange({ page: 2 } as PaginatorState);
+            component.onPageChange(2);
 
             expect(component.page()).toBe(3);
             expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
         });
     });
 
-    describe('setActiveTab (PrimeNG tabs)', () => {
+    describe('setActiveTab (tum-ui tabs)', () => {
         it('coerces the numeric tab value to the activeTab signal', () => {
             component.setActiveTab(2);
             expect(component.activeTab()).toBe(2);
@@ -124,11 +123,11 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
     });
 
-    describe('onTableSort (PrimeNG table)', () => {
+    describe('onTableSort (tum-ui table)', () => {
         it('maps the sort field/order onto predicate/ascending and navigates (server-side sort)', () => {
             mockRouter.navigate.mockClear();
 
-            component.onTableSort({ field: 'customName', order: -1 } as SortEvent);
+            component.onTableSort({ field: 'customName', order: -1 } as TumUiTableSortEvent);
 
             expect(component.predicate()).toBe('customName');
             expect(component.ascending()).toBe(false);
@@ -139,7 +138,7 @@ describe('LtiConfigurationComponent', () => {
         });
 
         it('treats a missing order as ascending', () => {
-            component.onTableSort({ field: 'clientId' } as SortEvent);
+            component.onTableSort({ field: 'clientId' } as unknown as TumUiTableSortEvent);
 
             expect(component.predicate()).toBe('clientId');
             expect(component.ascending()).toBe(true);
@@ -148,7 +147,7 @@ describe('LtiConfigurationComponent', () => {
         it('ignores a sort event without a field and does not navigate', () => {
             mockRouter.navigate.mockClear();
 
-            component.onTableSort({} as SortEvent);
+            component.onTableSort({} as unknown as TumUiTableSortEvent);
 
             expect(component.predicate()).toBe('id');
             expect(mockRouter.navigate).not.toHaveBeenCalled();

@@ -60,3 +60,4 @@ The first part is the competency tree (one branch per competency with its linked
 <<<USER_DATA>>>
 {{competencyIndex}}
 <<<END_USER_DATA>>>
+{{atlasMLShortlist}}

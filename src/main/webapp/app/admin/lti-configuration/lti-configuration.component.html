@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate>
     <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
-    <p-message severity="info" styleClass="mt-3 w-full" data-testid="lti-documentation-message">
+    <tum-ui-message severity="info" styleClass="mt-3 w-full" data-testid="lti-documentation-message">
         <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
         <a
             href="https://docs.artemis.tum.de/instructor/lti-configuration/"
@@ -9,14 +9,14 @@
             jhiTranslate="artemisApp.lti.edit.documentationLinkText"
         ></a
         >.
-    </p-message>
-    <p-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
-        <p-tablist>
-            <p-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></p-tab>
-            <p-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></p-tab>
-        </p-tablist>
-        <p-tabpanels>
-            <p-tabpanel [value]="1">
+    </tum-ui-message>
+    <tum-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
+        <tum-ui-tab-list>
+            <tum-ui-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></tum-ui-tab>
+            <tum-ui-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></tum-ui-tab>
+        </tum-ui-tab-list>
+        <tum-ui-tab-panels>
+            <tum-ui-tab-panel [value]="1">
                 <dt class="flex items-center">
                     <h4 jhiTranslate="artemisApp.lti.dynamicRegistrationUrl"></h4>
                     <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip" />
@@ -30,110 +30,111 @@
                         <h4 class="mb-0" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
                     </div>
-                    <a [routerLink]="['/admin', 'lti-configuration', 'new']" pButton size="small" data-testid="add-platform-button">
+                    <a [routerLink]="['/admin', 'lti-configuration', 'new']" tumUiButton size="small" data-testid="add-platform-button">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
                     </a>
                 </dt>
-                <p-table
-                    [value]="platforms()"
-                    [customSort]="true"
-                    [sortField]="predicate()"
-                    [sortOrder]="ascending() ? 1 : -1"
-                    (onSort)="onTableSort($event)"
-                    size="small"
-                    styleClass="mt-3 overflow-x-auto"
-                    aria-describedby="lti-configuration-heading"
-                    data-testid="lti-platforms-table"
-                >
-                    <ng-template #header>
-                        <tr class="whitespace-nowrap">
-                            <th pSortableColumn="id">
-                                <span jhiTranslate="global.field.id"></span>
-                                <p-sortIcon field="id" />
-                            </th>
-                            <th pSortableColumn="customName">
-                                <span jhiTranslate="artemisApp.lti.customName"></span>
-                                <p-sortIcon field="customName" />
-                            </th>
-                            <th pSortableColumn="registrationId">
-                                <span jhiTranslate="artemisApp.lti.registrationId"></span>
-                                <p-sortIcon field="registrationId" />
-                            </th>
-                            <th pSortableColumn="clientId">
-                                <span jhiTranslate="artemisApp.lti.clientId"></span>
-                                <p-sortIcon field="clientId" />
-                            </th>
-                            <th pSortableColumn="originalURL">
-                                <span jhiTranslate="artemisApp.lti.toolUrl"></span>
-                                <p-sortIcon field="originalURL" />
-                            </th>
-                            <th pSortableColumn="authorizationUri">
-                                <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
-                                <p-sortIcon field="authorizationUri" />
-                            </th>
-                            <th pSortableColumn="jwkSetUri">
-                                <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
-                                <p-sortIcon field="jwkSetUri" />
-                            </th>
-                            <th pSortableColumn="tokenUri">
-                                <span jhiTranslate="artemisApp.lti.tokenUri"></span>
-                                <p-sortIcon field="tokenUri" />
-                            </th>
-                            <th></th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-platform>
-                        <tr id="platform-{{ platform.id }}" data-testid="lti-platform-row">
-                            <td>{{ platform.id }}</td>
-                            <td>{{ platform.customName }}</td>
-                            <td>{{ platform.registrationId }}</td>
-                            <td>{{ platform.clientId }}</td>
-                            <td>{{ platform.originalUrl }}</td>
-                            <td>{{ platform.authorizationUri }}</td>
-                            <td>{{ platform.jwkSetUri }}</td>
-                            <td>{{ platform.tokenUri }}</td>
-                            <td class="text-end">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a
-                                        [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']"
-                                        pButton
-                                        size="small"
-                                        severity="warn"
-                                        [pTooltip]="'entity.action.edit' | artemisTranslate"
-                                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
-                                        data-testid="edit-platform-button"
-                                    >
-                                        <fa-icon [icon]="faPencil" />
-                                        <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
-                                    </a>
-                                    <button
-                                        pButton
-                                        severity="danger"
-                                        size="small"
-                                        [renderButtonStyle]="false"
-                                        jhiDeleteButton
-                                        (delete)="deleteLtiPlatform(platform.id!)"
-                                        [dialogError]="dialogError$"
-                                        data-testid="delete-platform-button"
-                                    >
-                                        <fa-icon [icon]="faTrash" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+                <div class="mt-3 overflow-x-auto">
+                    <table
+                        tumUiTable
+                        [sortField]="predicate()"
+                        [sortOrder]="ascending() ? 1 : -1"
+                        (sortChange)="onTableSort($event)"
+                        size="small"
+                        aria-describedby="lti-configuration-heading"
+                        data-testid="lti-platforms-table"
+                    >
+                        <thead>
+                            <tr class="whitespace-nowrap">
+                                <th [tumUiSortableColumn]="'id'">
+                                    <span jhiTranslate="global.field.id"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'customName'">
+                                    <span jhiTranslate="artemisApp.lti.customName"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'registrationId'">
+                                    <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'clientId'">
+                                    <span jhiTranslate="artemisApp.lti.clientId"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'originalURL'">
+                                    <span jhiTranslate="artemisApp.lti.toolUrl"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'authorizationUri'">
+                                    <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'jwkSetUri'">
+                                    <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
+                                </th>
+                                <th [tumUiSortableColumn]="'tokenUri'">
+                                    <span jhiTranslate="artemisApp.lti.tokenUri"></span>
+                                </th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (platform of platforms(); track platform.id) {
+                                <tr id="platform-{{ platform.id }}" data-testid="lti-platform-row">
+                                    <td>{{ platform.id }}</td>
+                                    <td>{{ platform.customName }}</td>
+                                    <td>{{ platform.registrationId }}</td>
+                                    <td>{{ platform.clientId }}</td>
+                                    <td>{{ platform.originalUrl }}</td>
+                                    <td>{{ platform.authorizationUri }}</td>
+                                    <td>{{ platform.jwkSetUri }}</td>
+                                    <td>{{ platform.tokenUri }}</td>
+                                    <td class="text-end">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a
+                                                [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']"
+                                                tumUiButton
+                                                size="small"
+                                                severity="warn"
+                                                [tumUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                                data-testid="edit-platform-button"
+                                            >
+                                                <fa-icon [icon]="faPencil" />
+                                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                            </a>
+                                            <button
+                                                tumUiButton
+                                                severity="danger"
+                                                size="small"
+                                                [renderButtonStyle]="false"
+                                                jhiDeleteButton
+                                                (delete)="deleteLtiPlatform(platform.id!)"
+                                                [dialogError]="dialogError$"
+                                                data-testid="delete-platform-button"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
                 <div class="mt-3">
                     <div class="flex justify-center">
                         <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                     </div>
                     <div class="flex justify-center">
-                        <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+                        <tum-ui-paginator
+                            [page]="page() - 1"
+                            [pageSize]="itemsPerPage"
+                            [totalRecords]="totalItems()"
+                            [showCurrentPageReport]="false"
+                            [showRowsPerPage]="false"
+                            (pageChange)="onPageChange($event)"
+                        />
                     </div>
                 </div>
-            </p-tabpanel>
-            <p-tabpanel [value]="2">
+            </tum-ui-tab-panel>
+            <tum-ui-tab-panel [value]="2">
                 <dt>
                     <span jhiTranslate="artemisApp.lti.deepLinkingUrl"></span>
                 </dt>
@@ -169,7 +170,7 @@
                     <span>{{ getRedirectUri() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getRedirectUri()" />
                 </dd>
-            </p-tabpanel>
-        </p-tabpanels>
-    </p-tabs>
+            </tum-ui-tab-panel>
+        </tum-ui-tab-panels>
+    </tum-ui-tabs>
 </form>
