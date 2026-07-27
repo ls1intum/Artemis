@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -14,7 +13,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,38 +95,36 @@ class HyperionGenerationBudgetServiceTest {
         }
     }
 
+    /**
+     * Two admissions racing at the last free slot must not both win. The reservation is serialised by a lock on one shared map key, so two services sharing a member exercise
+     * exactly that mutual exclusion. Forming a real multi-member cluster would test Hazelcast's own distribution rather than this budget arithmetic, and needs network
+     * conditions a test host cannot be relied on to provide.
+     */
     @Test
-    void reserveGenerationBudget_concurrentMembersAdmitExactlyOneJobAtTheBudgetBoundary() throws Exception {
+    void reserveGenerationBudget_concurrentAdmissionsAdmitExactlyOneJobAtTheBudgetBoundary() throws Exception {
         Config config = new Config();
         config.setClusterName("hyperion-budget-service-test-" + System.nanoTime());
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember("127.0.0.1");
-        HazelcastInstance firstMember = Hazelcast.newHazelcastInstance(config);
-        HazelcastInstance secondMember = Hazelcast.newHazelcastInstance(config);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
-            await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-                assertThat(firstMember.getCluster().getMembers()).hasSize(2);
-                assertThat(secondMember.getCluster().getMembers()).hasSize(2);
-            });
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService firstService = new HyperionGenerationBudgetService(repository, firstMember, Duration.ofHours(24), 100, 0, 0, 100,
+            HyperionGenerationBudgetService firstService = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
                     Duration.ofMinutes(35));
-            HyperionGenerationBudgetService secondService = new HyperionGenerationBudgetService(repository, secondMember, Duration.ofHours(24), 100, 0, 0, 100,
+            HyperionGenerationBudgetService secondService = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
                     Duration.ofMinutes(35));
             firstService.init();
             secondService.init();
             CyclicBarrier startTogether = new CyclicBarrier(2);
-            Callable<Boolean> firstAttempt = () -> reserveAtBarrier(firstService, startTogether);
-            Callable<Boolean> secondAttempt = () -> reserveAtBarrier(secondService, startTogether);
 
-            var attempts = executor.invokeAll(List.of(firstAttempt, secondAttempt));
+            var attempts = executor.invokeAll(List.of(() -> reserveAtBarrier(firstService, startTogether), () -> reserveAtBarrier(secondService, startTogether)));
+
             assertThat(List.of(attempts.get(0).get(), attempts.get(1).get())).containsExactlyInAnyOrder(true, false);
         }
         finally {
             executor.shutdownNow();
-            secondMember.shutdown();
-            firstMember.shutdown();
+            hazelcastInstance.shutdown();
         }
     }
 
