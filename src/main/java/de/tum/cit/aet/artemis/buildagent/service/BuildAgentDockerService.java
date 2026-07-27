@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -124,6 +126,24 @@ public class BuildAgentDockerService {
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
+
+    /**
+     * Maximum time a single Docker image pull may take before it is aborted.
+     * <p>
+     * This bounds the image pull independently of the per-exercise build timeout: how long a pull takes depends on the image size and on the registry and network,
+     * not on the exercise, so a slow registry must not eat into the time budget a student's build gets. Without this, a pull that never makes progress would block
+     * the build thread indefinitely.
+     */
+    @Value("${artemis.continuous-integration.image-pull-timeout-seconds:900}")
+    private int imagePullTimeoutSeconds;
+
+    /**
+     * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
+     * <p>
+     * A job is registered here for the whole time it spends in {@link #pullDockerImage}, which includes waiting for {@link #lock} while another job pulls. During
+     * that window the job legitimately has no Docker container yet, so {@link SharedQueueProcessingService} must not treat it as stale.
+     */
+    private final Map<String, Instant> ongoingImagePulls = new ConcurrentHashMap<>();
 
     private static final String AMD64_ARCHITECTURE = "amd64";
 
@@ -262,6 +282,28 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        // Register the job for the whole pull phase, including the time spent waiting for the lock, so that the stale build job detection does not cancel a job that is
+        // simply waiting for its image.
+        ongoingImagePulls.put(buildJob.id(), Instant.now());
+        try {
+            doPullDockerImage(buildJob, buildLogsMap);
+        }
+        finally {
+            ongoingImagePulls.remove(buildJob.id());
+        }
+    }
+
+    /**
+     * Returns whether the given build job is currently pulling its Docker image.
+     *
+     * @param buildJobId the ID of the build job
+     * @return true if an image pull is in progress for this build job
+     */
+    public boolean isImagePullInProgress(String buildJobId) {
+        return ongoingImagePulls.containsKey(buildJobId);
+    }
+
+    private void doPullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
         final String imageName = buildJob.buildConfig().dockerImage();
         if (dockerClientNotAvailable("Cannot pull Docker image.")) {
             throw new LocalCIException("Docker is not available. Cannot pull image " + imageName);
@@ -298,7 +340,7 @@ public class BuildAgentDockerService {
                     // Only pull the image if the inspect command failed
                     var command = dockerClient.pullImageCmd(imageName).withPlatform(imageArchitecture);
                     var exec = command.exec(new MyPullImageResultCallback());
-                    exec.awaitCompletion();
+                    awaitPullCompletion(exec, imageName, buildJob, buildLogsMap);
 
                     // Check if the image is compatible with the current architecture
                     var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
@@ -317,7 +359,7 @@ public class BuildAgentDockerService {
                         try {
                             var fallbackCommand = dockerClient.pullImageCmd(imageName).withPlatform(AMD64_ARCHITECTURE);
                             var fallbackExec = fallbackCommand.exec(new MyPullImageResultCallback());
-                            fallbackExec.awaitCompletion();
+                            awaitPullCompletion(fallbackExec, imageName, buildJob, buildLogsMap);
 
                             // Verify the fallback image was pulled successfully
                             var inspectImageResponse = dockerClient.inspectImageCmd(imageName).exec();
@@ -349,6 +391,35 @@ public class BuildAgentDockerService {
                 lock.unlock();
             }
         }
+    }
+
+    /**
+     * Waits for a Docker image pull to finish, aborting it once {@code artemis.continuous-integration.image-pull-timeout-seconds} has elapsed.
+     * <p>
+     * Without a timeout a pull that stops making progress, for example because a configured registry mirror silently drops packets, blocks the build thread forever.
+     *
+     * @param callback     the callback of the running pull command
+     * @param imageName    the name of the Docker image being pulled
+     * @param buildJob     the build job the pull belongs to
+     * @param buildLogsMap a map for appending log entries related to the build process
+     * @throws InterruptedException if the current thread is interrupted while waiting
+     * @throws LocalCIException     if the pull does not finish within the configured timeout
+     */
+    private void awaitPullCompletion(PullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
+        if (callback.awaitCompletion(imagePullTimeoutSeconds, TimeUnit.SECONDS)) {
+            return;
+        }
+        // Close the callback so the underlying pull is aborted instead of continuing in the background.
+        try {
+            callback.close();
+        }
+        catch (IOException e) {
+            log.warn("Could not close the pull callback for image {} after the timeout: {}", imageName, e.getMessage());
+        }
+        String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " timed out after " + imagePullTimeoutSeconds + " seconds ~~~~~~~~~~~~~~~~~~~~";
+        log.error(msg);
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        throw new LocalCIException("Timed out after " + imagePullTimeoutSeconds + " seconds while pulling docker image " + imageName);
     }
 
     /**
