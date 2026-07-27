@@ -870,12 +870,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         String problemStatement = "[task][taskname](test1)";
         String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
-        programmingExercise.setProblemStatement(problemStatement);
-
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
-        var response = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        // The problem statement is owned by its own endpoint; a metadata update deliberately leaves it untouched (issue #13046).
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        var response = request.patchWithResponseBody(endpoint, problemStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
         assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
