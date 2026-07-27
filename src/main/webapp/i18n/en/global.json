@@ -88,7 +88,8 @@
                 "point": "point",
                 "points": "points",
                 "examExercise": "Exam",
-                "reply": "Reply"
+                "reply": "Reply",
+                "video": "Video"
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",

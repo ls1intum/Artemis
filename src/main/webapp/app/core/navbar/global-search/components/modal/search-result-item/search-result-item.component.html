@@ -35,6 +35,16 @@
                             <span>{{ courseName() }}</span>
                         </span>
                     }
+                    @if (isLectureContent()) {
+                        <span>•</span>
+                        <span>{{ lectureName() }}</span>
+                        <span>•</span>
+                        @if (pageNumber() >= 0) {
+                            <span>{{ 'global.search.pageAbbreviation' | artemisTranslate }} {{ pageNumber() }}</span>
+                        } @else {
+                            <span>{{ displayMeta() || ('global.search.results.video' | artemisTranslate) }}</span>
+                        }
+                    }
                     @if (channelName()) {
                         @if (courseName()) {
                             <span>•</span>

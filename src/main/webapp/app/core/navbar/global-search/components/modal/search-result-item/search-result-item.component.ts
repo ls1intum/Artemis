@@ -3,6 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import dayjs from 'dayjs/esm';
@@ -147,6 +148,11 @@ export class SearchResultItemComponent {
 
     protected isExamExercise = computed(() => this.result().type === 'exercise' && !!this.result().metadata?.['examId']);
     protected isMessage = computed(() => this.result().type === 'post' || this.result().type === 'answer_post');
+
+    protected readonly isLectureContent = computed(() => this.result().type === LECTURE_CONTENT_TYPE);
+    protected readonly lectureName = computed(() => this.result().metadata?.['lectureName']);
+    protected readonly pageNumber = computed(() => this.result().metadata?.['pageNumber']);
+    protected readonly displayMeta = computed(() => this.result().metadata?.['displayMeta']);
 
     protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty() || this.channelName()));
     protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));
