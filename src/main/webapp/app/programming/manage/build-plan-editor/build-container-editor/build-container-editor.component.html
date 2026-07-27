@@ -29,14 +29,13 @@
             />
         </div>
         @if (canRemove()) {
-            <p-button
+            <tum-ui-button
                 severity="danger"
-                [outlined]="true"
-                (onClick)="remove.set()"
-                [pTooltip]="'artemisApp.programmingExercise.buildContainersEditor.removeContainer' | artemisTranslate"
-            >
-                <fa-icon [icon]="faTrash" />
-            </p-button>
+                variant="outlined"
+                [icon]="faTrash"
+                (clicked)="remove.set()"
+                [tumUiTooltip]="'artemisApp.programmingExercise.buildContainersEditor.removeContainer' | artemisTranslate"
+            />
         }
     </div>
     @if (nameValidationMessageKey(); as messageKey) {
