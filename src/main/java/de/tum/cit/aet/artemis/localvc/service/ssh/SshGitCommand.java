@@ -120,14 +120,11 @@ public class SshGitCommand extends GitPackCommand {
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
                         try (var ignored = localVCServletService.claimProgrammingExerciseMutation(repository, exercise)) {
-                            // Prepare ReceivePack handler
                             ReceivePack receivePack = new ReceivePack(repository);
 
-                            // Register pre- and post-receive hooks for Artemis push handling
                             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
                             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
 
-                            // Begin receive-pack operation
                             receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                         }
                     }

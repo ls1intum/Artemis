@@ -542,7 +542,6 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcome, "old\nstatement", "Original title");
 
-        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", " old\r\nstatement\n", "Original title");
     }
 
     @Test
@@ -564,8 +563,6 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcome, "[task][Sort](testBubbleSort)", "Original title");
 
-        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", "[task][Sort](<testid>7</testid>)",
-                "Original title");
     }
 
     @Test

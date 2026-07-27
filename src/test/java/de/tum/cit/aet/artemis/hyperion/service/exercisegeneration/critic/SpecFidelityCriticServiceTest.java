@@ -793,42 +793,6 @@ class SpecFidelityCriticServiceTest {
     // gate: evidence-ID citation is advisory grounding now, so a mis-cited ownership/assessment ID never triggers a correction re-call.
 
     @Test
-    void specificationReviewAcceptsEveryDesignStatusSyntaxAcceptedByTheMechanicalGate() {
-        for (String status : List.of("**student‑creates**", "`stubbed`", "student-creates")) {
-            String specification = specificationWithEvidenceTables().replace("student-creates |", status.equals("student-creates") ? "student-creates" : status + " |");
-            SpecFidelityCriticService critic = criticReturning(rawResponse(specificationLearningFitResponse("E5", "E9")));
-
-            assertThat(critic.reviewSpecification("Create an intermediate Strategy exercise.", specification, null, () -> false).accepted()).as(status).isTrue();
-        }
-    }
-
-    private static String specificationWithEvidenceTables() {
-        return """
-                # Specification
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Policy` | learner-owned policy | student-creates |
-                ## Testing Strategy
-                | Seam | Observable behavior |
-                |---|---|
-                | `policy` | the context delegates through the policy |
-                """;
-    }
-
-    private static String specificationLearningFitResponse(String studentOwnershipEvidenceId, String assessmentEvidenceId) {
-        return """
-                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E5","E9"],"objectiveEvidenceIds":["E5","E9"],
-                 "studentOwnershipEvidenceIds":["%s"],"assessmentEvidenceIds":["%s"],
-                 "objectiveMechanism":"The learner-owned policy is exercised through the context.",
-                 "remainingStudentReasoning":"Students implement and integrate the policy.",
-                 "domainGrounding":"No qualitative theme was requested.",
-                 "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                """.formatted(studentOwnershipEvidenceId, assessmentEvidenceId);
-    }
-
-    @Test
     void specificationReviewDoesNotAcceptAGenericReasonWithoutBothRequiredAnalyses() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """

@@ -94,6 +94,27 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         const list = fixture.nativeElement.querySelector('ul[aria-labelledby="adaptExerciseFindingsHeading"]');
         expect(heading).not.toBeNull();
         expect(list.querySelectorAll('li')).toHaveLength(1);
+        expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('tum-ui-message[severity="warn"][role="alert"]')).not.toBeNull();
         expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
+    });
+
+    it('disables the confirm button while free mode has no instructions and confirms once they are entered', async () => {
+        const { fixture, close } = await setup({});
+        fixture.detectChanges();
+
+        const [cancelButton, confirmButton] = fixture.nativeElement.querySelectorAll('.review-adapt-exercise-dialog__actions tum-ui-button button');
+        expect(cancelButton.disabled).toBe(false);
+        expect(confirmButton.disabled).toBe(true);
+
+        confirmButton.click();
+        expect(close).not.toHaveBeenCalled();
+
+        fixture.componentInstance.instructions.set('rework the tests');
+        fixture.detectChanges();
+        expect(confirmButton.disabled).toBe(false);
+
+        confirmButton.click();
+        expect(close).toHaveBeenCalledWith({ instructions: 'rework the tests' } satisfies ReviewAdaptExerciseDialogResult);
     });
 });

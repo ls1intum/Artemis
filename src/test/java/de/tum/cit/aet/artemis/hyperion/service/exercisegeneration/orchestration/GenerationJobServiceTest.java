@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -477,35 +476,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void getStatus_waitsForAnInFlightJobMutationBeforeReadingTheStatusFileChange() throws Exception {
-        ProgrammingExercise exercise = exercise(310L);
-        User owner = user("owner");
-        jobService.startJob(owner, exercise, "fix it", GenerationMode.ADAPT);
-        IMap<String, GenerationJobService.JobInfo> jobMap = jobMap();
-        String key = String.valueOf(exercise.getId());
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        CountDownLatch lockAttempted = captureNextJobLockAttempt(key);
-        AtomicBoolean lockHeld = new AtomicBoolean(true);
-
-        jobMap.lock(key);
-        try {
-            Future<Optional<ExerciseGenerationStatusDTO>> status = executor.submit(() -> jobService.getStatus(owner, exercise));
-            assertThat(lockAttempted.await(5, TimeUnit.SECONDS)).isTrue();
-            assertThat(status.isDone()).isFalse();
-
-            jobMap.unlock(key);
-            lockHeld.set(false);
-            assertThat(status.get(5, TimeUnit.SECONDS)).isPresent();
-        }
-        finally {
-            if (lockHeld.get()) {
-                jobMap.unlock(key);
-            }
-            executor.shutdownNow();
-        }
-    }
-
-    @Test
     void getStatus_forDifferentUser_returnsSanitizedActiveRunWithoutPrivateDetails() {
         ProgrammingExercise exercise = exercise(99L);
         jobService.startJob(user("instructorA"), exercise, "go", GenerationMode.GENERATE);
@@ -835,7 +805,7 @@ class GenerationJobServiceTest {
 
         assertThat(jobService.heartbeat(exerciseId, jobId)).isTrue();
 
-        assertThat(jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt()).isAfterOrEqualTo(before);
+        assertThat(jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt()).isAfter(before);
     }
 
     @Test

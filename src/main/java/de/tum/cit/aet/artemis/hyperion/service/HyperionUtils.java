@@ -153,7 +153,6 @@ final class HyperionUtils {
     }
 
     private HyperionUtils() {
-        // utility class
     }
 
     /**
@@ -220,7 +219,6 @@ final class HyperionUtils {
         if (input == null) {
             return "";
         }
-        // Apply per-character sanitizations globally (these don't affect line count)
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
         // Use the line-scoped pattern so template vars spanning multiple lines
         // don't collapse embedded newlines and break line numbering.
@@ -372,7 +370,6 @@ final class HyperionUtils {
             expectedNumber++;
         }
 
-        // All non-blank lines are sequential — strip the prefixes
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < lines.length; i++) {
             if (lines[i].isBlank()) {
@@ -406,7 +403,6 @@ final class HyperionUtils {
         int start = 0;
         int end = lines.length - 1;
 
-        // Skip leading blank lines, then check for a wrapper marker
         while (start <= end && lines[start].isBlank()) {
             start++;
         }
@@ -414,7 +410,6 @@ final class HyperionUtils {
             start++;
         }
 
-        // Skip trailing blank lines, then check for a wrapper marker
         while (end >= start && lines[end].isBlank()) {
             end--;
         }

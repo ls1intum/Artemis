@@ -71,11 +71,12 @@ public class GenerationWorkspaceService {
     /** Repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)}. */
     private static final String[] REPOSITORY_DIRECTORIES = { "solution", "template", "tests" };
 
-    private static final Duration LAYOUT_PROBE_TIMEOUT = Duration.ofSeconds(30);
-
-    private static final Duration BUILD_OUTPUT_CLEANUP_TIMEOUT = Duration.ofSeconds(30);
-
-    private static final Duration FIXTURE_STAGE_TIMEOUT = Duration.ofSeconds(30);
+    /**
+     * The single bound on any sandbox command that does no compilation: reading a workspace file, listing the layout, deleting build output, staging or clearing a fixture
+     * directory. Compilation is bounded separately and far more generously by the verification and build timeouts, so this stays short — a {@code cat} or {@code rm} that has not
+     * returned within this long means the sandbox is wedged, not that the work is slow.
+     */
+    public static final Duration SANDBOX_READ_TIMEOUT = Duration.ofSeconds(30);
 
     /** Upper bound on the turn-0 layout observation so a deeply nested tree cannot blow up the prompt. */
     private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
@@ -131,37 +132,29 @@ public class GenerationWorkspaceService {
         this.tempFileUtilService = tempFileUtilService;
     }
 
-    /**
-     * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and disables Docker networking; generated code must not have egress.
-     *
-     * @param exercise the exercise whose language/project type selects the image
-     * @return the sandbox session spec
-     */
     public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise) {
         return sessionSpec(exercise, null);
     }
 
+    /**
+     * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and disables Docker networking; generated code must not have egress.
+     *
+     * @param exercise the exercise whose language/project type selects the image
+     * @param context  the session context recorded for observability, or {@code null}
+     * @return the sandbox session spec
+     */
     public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise, @Nullable SandboxSessionContext context) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
         return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), "none", 0, 0, 0), context);
     }
 
-    /**
-     * Checks out the repositories and seeds the problem statement, the {@code verify.sh} build helper, and all repository working trees into the sandbox as a single tar archive.
-     * The repositories are packed from their checked-out working copies on disk so binary files and the executable bit (e.g. {@code gradlew}) survive into the container.
-     *
-     * @param sandbox   the sandbox session
-     * @param sessionId the session handle
-     * @param exercise  the exercise whose components are seeded
-     * @param mode      whether to start from clean exercise artifacts or preserve the existing tree
-     * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
-     */
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode) {
         return seedWorkspace(sandbox, sessionId, exercise, mode, true);
     }
 
     /**
-     * Like {@link #seedWorkspace(InteractiveSandbox, String, ProgrammingExercise, GenerationMode)}, with control over whether the exercise's problem statement is seeded.
+     * Checks out the repositories and seeds the problem statement, the {@code verify.sh} build helper, and all repository working trees into the sandbox as a single tar archive.
+     * The repositories are packed from their checked-out working copies on disk so binary files and the executable bit (e.g. {@code gradlew}) survive into the container.
      *
      * @param sandbox                the sandbox session
      * @param sessionId              the session handle
@@ -341,7 +334,7 @@ public class GenerationWorkspaceService {
      * @param exercise  the exercise whose build layout the fixture must match
      */
     public void stageBuildReadinessFixture(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        SandboxExecResult preparation = sandbox.exec(sessionId, FIXTURE_STAGE_TIMEOUT, "sh", "-c",
+        SandboxExecResult preparation = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "find " + SandboxBuildCommandService.READINESS_FIXTURE_DIR + " -mindepth 1 -delete");
         if (!preparation.isSuccess()) {
             throw new IllegalStateException("Could not prepare the build-readiness fixture directory: " + preparation.combinedOutput());
@@ -452,7 +445,7 @@ public class GenerationWorkspaceService {
                 + " (non-persisted worked example: study its language and test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
                 + " 2>/dev/null | head -c 1500; fi\n";
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, LAYOUT_PROBE_TIMEOUT, "sh", "-c", script);
+            SandboxExecResult result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", script);
             if (result.timedOut()) {
                 return "";
             }
@@ -615,20 +608,12 @@ public class GenerationWorkspaceService {
                 + "/solution/buildSrc/.gradle " + WORKSPACE + "/solution/buildSrc/build " + WORKSPACE + "/template/.gradle " + WORKSPACE + "/template/build " + WORKSPACE
                 + "/template/target " + WORKSPACE + "/template/buildSrc/.gradle " + WORKSPACE + "/template/buildSrc/build " + WORKSPACE + "/tests/.gradle " + WORKSPACE
                 + "/tests/build " + WORKSPACE + "/tests/target " + WORKSPACE + "/tests/buildSrc/.gradle " + WORKSPACE + "/tests/buildSrc/build";
-        SandboxExecResult result = sandbox.exec(sessionId, BUILD_OUTPUT_CLEANUP_TIMEOUT, "sh", "-c", command);
+        SandboxExecResult result = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c", command);
         if (!result.isSuccess()) {
             throw new IllegalStateException("Could not remove transient sandbox build outputs: " + result.combinedOutput());
         }
     }
 
-    /**
-     * The {@link RepositoryExtraction#files()} of {@link #extractRepository}, dropping the extraction-failed flag.
-     *
-     * @param sandbox        the sandbox to read from
-     * @param sessionId      the sandbox session
-     * @param repositoryType the repository to extract
-     * @return the produced files keyed by repository-relative path
-     */
     public Map<String, String> extractRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
         return extractRepository(sandbox, sessionId, repositoryType, null).files();
     }

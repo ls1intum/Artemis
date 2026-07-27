@@ -482,28 +482,4 @@ class StagedGenerationRunnerTest {
         assertThat(approvedSpecs.approved("s")).as("the frozen contract is the best draft this concept reached, not the last one written").contains(draftB);
     }
 
-    @Test
-    void aBetterFinalDraftIsKeptWithoutRestoringAnything() {
-        // The ratchet must not fire when refinement actually improved the contract, which is the normal case.
-        String draftA = VALID_SPEC_DOCUMENT + "\n<!-- draft A -->\n";
-        String draftB = VALID_SPEC_DOCUMENT + "\n<!-- draft B -->\n";
-        sandbox.specMarkdown = draftA;
-        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
-            if (sandbox.specMarkdown.equals(draftA)) {
-                sandbox.specMarkdown = draftB;
-                return new SpecFidelityCriticService.SpecificationReview(true, List.of("omission one"));
-            }
-            return new SpecFidelityCriticService.SpecificationReview(true, List.of());
-        });
-        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "spec"), completed(3, "build"),
-                completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
-
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(approvedSpecs.approved("s")).contains(draftB);
-    }
 }

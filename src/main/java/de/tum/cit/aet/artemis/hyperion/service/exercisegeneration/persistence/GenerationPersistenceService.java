@@ -10,12 +10,15 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -343,7 +346,7 @@ public class GenerationPersistenceService {
             }
             for (Map.Entry<String, String> file : producedFiles.entrySet()) {
                 String content = file.getValue();
-                SECRET_MATERIAL_POLICY.requireSafe("persistence/" + repositoryType.name().toLowerCase(java.util.Locale.ROOT) + "/" + file.getKey(),
+                SECRET_MATERIAL_POLICY.requireSafe("persistence/" + repositoryType.name().toLowerCase(Locale.ROOT) + "/" + file.getKey(),
                         content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
             }
         }
@@ -551,14 +554,14 @@ public class GenerationPersistenceService {
 
     private boolean metadataPairMatches(long exerciseId, String currentProblemStatement, String currentTitle, String expectedProblemStatement, String expectedTitle) {
         return problemStatementMetadataMatches(exerciseId, currentProblemStatement, expectedProblemStatement)
-                && java.util.Objects.equals(normalizeMetadata(currentTitle), normalizeMetadata(expectedTitle));
+                && Objects.equals(normalizeMetadata(currentTitle), normalizeMetadata(expectedTitle));
     }
 
     private boolean problemStatementMetadataMatches(long exerciseId, String currentProblemStatement, String expectedProblemStatement) {
-        if (java.util.Objects.equals(normalizeMetadata(currentProblemStatement), normalizeMetadata(expectedProblemStatement))) {
+        if (Objects.equals(normalizeMetadata(currentProblemStatement), normalizeMetadata(expectedProblemStatement))) {
             return true;
         }
-        return java.util.Objects.equals(normalizeMetadata(problemStatementWithTaskIdsRenderedAsNames(exerciseId, currentProblemStatement)),
+        return Objects.equals(normalizeMetadata(problemStatementWithTaskIdsRenderedAsNames(exerciseId, currentProblemStatement)),
                 normalizeMetadata(problemStatementWithTaskIdsRenderedAsNames(exerciseId, expectedProblemStatement)));
     }
 
@@ -955,7 +958,7 @@ public class GenerationPersistenceService {
             throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
         }
         Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
-                .collect(java.util.stream.Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
         List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
         if (!plannedBuildGates.isEmpty()) {
             throw new IllegalStateException("The verified test plan contains zero-weight build gates, which cannot carry grading decisions: " + plannedBuildGates);

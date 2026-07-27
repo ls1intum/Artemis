@@ -77,8 +77,8 @@ public record GeneratedTestPlan(List<Entry> tests) {
             }
             entries.add(new Entry(name, seam, weight, visibility));
         }
-        List<String> duplicateNames = entries.stream().map(Entry::name).collect(java.util.stream.Collectors.groupingBy(name -> name)).entrySet().stream()
-                .filter(group -> group.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
+        List<String> duplicateNames = entries.stream().map(Entry::name).collect(Collectors.groupingBy(name -> name)).entrySet().stream()
+                .filter(group -> group.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
         if (!duplicateNames.isEmpty()) {
             throw new IllegalArgumentException("test-plan.json lists these test names more than once: " + duplicateNames + ". Keep exactly one entry per test.");
         }

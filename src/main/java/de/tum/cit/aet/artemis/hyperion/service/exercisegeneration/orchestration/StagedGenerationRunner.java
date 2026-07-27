@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -111,8 +113,6 @@ public class StagedGenerationRunner {
     /** Once the run has spent this long, no further stage is started; final (post-loop) verification decides the outcome of whatever was produced. */
     private static final Duration WALL_CLOCK_BUDGET = Duration.ofMinutes(22);
 
-    private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
     /** Bound on the gate-failure progress line (the full report still goes to the info log and the returned final message). */
     private static final int MAX_GATE_PROGRESS_CHARS = 140;
 
@@ -199,51 +199,12 @@ public class StagedGenerationRunner {
     public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
     }
 
-    /**
-     * Runs the enforced stages in order, honouring a shared turn-budget pool, a wall-clock ceiling, and cooperative cancellation between stages.
-     *
-     * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
-     * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
-     * @param tools              the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
-     * @param briefPrompt        the instructor brief / outer-attempt repair prompt, injected fresh into every stage's user prompt
-     * @param seedTestsFiles     the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
-     * @param sandbox            the open sandbox session
-     * @param sessionId          the sandbox session id
-     * @param cancelled          polled between stages (and inside each stage's own agent loop)
-     * @param usageSink          receives token usage for every model call; may be {@code null}
-     * @param progress           receives one short progress line per stage; may be {@code null}
-     * @param structuralSeedHook refreshes generated Java structural tests during executable-build verification (the orchestrator's post-loop call remains the final source of
-     *                               truth)
-     * @return one aggregated {@link AgentLoopResult}: summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the
-     *         last stage's final message (with the failing gate's report appended, if a gate failed)
-     */
     StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook) {
         return run(exercise, baseTools, tools, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, true, null);
     }
 
-    /**
-     * Like {@link #run(ProgrammingExercise, SandboxAgentTools, Object, String, Map, InteractiveSandbox, String, BooleanSupplier, Consumer, Consumer, Supplier)}, with control
-     * over the SPEC stage.
-     *
-     * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
-     * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage
-     * @param tools              the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
-     * @param briefPrompt        the instructor brief / outer-attempt repair prompt, injected fresh into every stage's user prompt
-     * @param seedTestsFiles     the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
-     * @param sandbox            the open sandbox session
-     * @param sessionId          the sandbox session id
-     * @param cancelled          polled between stages (and inside each stage's own agent loop)
-     * @param usageSink          receives token usage for every model call; may be {@code null}
-     * @param progress           receives one short progress line per stage; may be {@code null}
-     * @param structuralSeedHook refreshes generated Java structural tests during executable-build verification
-     * @param specStageApplies   whether to run the SPEC stage; {@code false} when the instructor already provided a non-trivial problem statement — that statement IS the
-     *                               specification, and the model must not overwrite it with a restatement
-     * @param specSink           receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen copy
-     *                               for the critic and repair prompts); may be {@code null}
-     * @return one aggregated {@link AgentLoopResult} plus the carried conversation, exactly as the shorter overload
-     */
     StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
@@ -252,23 +213,28 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Runs the staged workflow with the raw source brief kept separate from authoring context for the pre-freeze semantic review.
+     * Runs the enforced stages in order, honouring a shared turn-budget pool, a wall-clock ceiling, and cooperative cancellation between stages, with the raw source brief kept
+     * separate from the authoring context for the pre-freeze semantic review. Every shorter overload delegates here.
      *
-     * @param exercise           exercise being generated
-     * @param baseTools          shared stateful agent tools
-     * @param tools              tools exposed to the model
-     * @param briefPrompt        current authoring context, which may include repair feedback
-     * @param sourceBrief        raw instructor brief used as review authority and as the clean student-statement authoring context
-     * @param seedTestsFiles     tests repository before generation
-     * @param sandbox            open sandbox
-     * @param sessionId          sandbox session identifier
-     * @param cancelled          cooperative cancellation signal
-     * @param usageSink          optional token-usage sink
-     * @param progress           optional progress sink
-     * @param structuralSeedHook best-effort structural-test seeding hook
-     * @param specStageApplies   whether this run creates a specification
-     * @param specSink           optional approved-specification sink
-     * @return aggregated staged result and carried conversation
+     * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
+     * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
+     * @param tools              the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
+     * @param briefPrompt        the current authoring context — the instructor brief or an outer-attempt repair prompt — injected fresh into every stage's user prompt
+     * @param sourceBrief        the raw instructor brief, used as review authority and as the clean student-statement authoring context
+     * @param seedTestsFiles     the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
+     * @param sandbox            the open sandbox session
+     * @param sessionId          the sandbox session id
+     * @param cancelled          polled between stages (and inside each stage's own agent loop)
+     * @param usageSink          receives token usage for every model call; may be {@code null}
+     * @param progress           receives one short progress line per stage; may be {@code null}
+     * @param structuralSeedHook refreshes generated Java structural tests during executable-build verification (the orchestrator's post-loop call remains the final source of
+     *                               truth)
+     * @param specStageApplies   whether to run the SPEC stage; {@code false} when the instructor already provided a non-trivial problem statement — that statement IS the
+     *                               specification, and the model must not overwrite it with a restatement
+     * @param specSink           receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen copy
+     *                               for the critic and repair prompts); may be {@code null}
+     * @return one aggregated {@link AgentLoopResult} — summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the last
+     *         stage's final message (with the failing gate's report appended, if a gate failed) — together with the carried conversation
      */
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
@@ -822,8 +788,8 @@ public class StagedGenerationRunner {
             StringBuilder handoff = new StringBuilder("=== ACCEPTED STATEMENT HANDOFF ===\n");
             handoff.append("Bind tasks and testsColor links only to these visible tests, grouped by specification seam:\n");
             plan.visibleEntries().stream()
-                    .collect(java.util.stream.Collectors.groupingBy(GeneratedTestPlan.Entry::seam, java.util.LinkedHashMap::new,
-                            java.util.stream.Collectors.mapping(GeneratedTestPlan.Entry::name, java.util.stream.Collectors.toUnmodifiableList())))
+                    .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
+                            Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toUnmodifiableList())))
                     .forEach((seam, names) -> handoff.append("- ").append(seam).append(": ").append(String.join(", ", names)).append("\n"));
             if (!plan.hiddenEntries().isEmpty()) {
                 handoff.append(plan.hiddenEntries().size())
@@ -841,7 +807,7 @@ public class StagedGenerationRunner {
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, command);
+            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, command);
             return result.isSuccess() && result.stdout() != null ? result.stdout() : "";
         }
         catch (RuntimeException e) {

@@ -141,8 +141,7 @@
             <dd>{{ elapsedSeconds(generation.startedAt) | artemisDurationFromSeconds }}</dd>
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></dt>
             <dd>
-                {{ elapsedSeconds(generation.lastActivityAt) | artemisDurationFromSeconds }}
-                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
+                {{ generation.lastActivityAt | artemisTimeAgo }}
                 <span class="text-muted-color">({{ generation.lastActivityAt | artemisDate: 'long' : true }})</span>
             </dd>
         </dl>

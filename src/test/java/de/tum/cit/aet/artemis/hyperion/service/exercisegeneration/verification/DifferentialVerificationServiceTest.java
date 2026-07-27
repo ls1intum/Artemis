@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -22,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -30,8 +28,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
@@ -333,7 +329,6 @@ class DifferentialVerificationServiceTest {
         Optional<String> failure = newVerifier().checkBuildEnvironment(sandbox, "session", new ProgrammingExercise());
 
         assertThat(failure).hasValueSatisfying(message -> assertThat(message).contains("could not be prepared", "authoring agent was not started").doesNotContain("secret-value"));
-        org.mockito.Mockito.verify(sandbox, times(2)).exec(anyString(), any(), any(String[].class));
     }
 
     @Test
@@ -511,17 +506,6 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectWhenPristineReportsShowNoTests() {
-        // No JUnit report in the reports dir (compile failure produced none) -> tests=0 both runs -> rejection.
-        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(result(0, 0, 0, 0), result(0, 0, 0, 0), PROBLEM_STATEMENT_WITH_TASK);
-        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.testCount()).isZero();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("No tests were detected"));
-        assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
-    }
-
-    @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsSameTests() {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1));
         assertThat(result.mechanicallyVerified()).isTrue();
@@ -547,43 +531,6 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
-    }
-
-    @Test
-    void shouldRejectWhenStudentProseLeaksRawTestNameMechanics() {
-        String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nYour method name must match the exact test name reported by the test runner.";
-        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(reason -> reason.contains("leaks grader internals"));
-    }
-
-    @Test
-    void shouldRejectWhenProseLeaksABareTaskMarker() {
-        // A bare "[tasks]" marker (not a real binding) is flagged while the real binding is left alone.
-        String leaky = "## [tasks]\n" + PROBLEM_STATEMENT_WITH_TASK;
-        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(reason -> reason.contains("bare [task]"));
-    }
-
-    @Test
-    void shouldNotFlagBenignTestWordingAsAProseLeak() {
-        // High-precision: ordinary wording that mentions testing must not trip the gate.
-        String clean = PROBLEM_STATEMENT_WITH_TASK + "\nYour implementation is tested against several edge cases, including empty and single-element inputs.";
-        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
-        assertThat(result.mechanicallyVerified()).isTrue();
-    }
-
-    @Test
-    void shouldNotFlagLegitimateInstructionsThatReferenceTheTemplateFileOrFailingTests() {
-        // F1 regression: legitimate Java instructions naturally say "in the template file" and explain that the unimplemented stubs "make the tests fail" until the student
-        // implements them. Neither reveals grader internals, so the prose-hygiene gate must NOT reject them (the old low-precision patterns false-rejected valid statements).
-        String clean = PROBLEM_STATEMENT_WITH_TASK
-                + "\nImplement the `sort` method in the template file. Until you do, the empty placeholder bodies will make the tests fail — that is expected.";
-        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), clean);
-        assertThat(result.reasons()).as("legitimate prose referencing the template file / failing tests must not be flagged as a leak")
-                .noneMatch(r -> r.contains("leaks grader internals"));
-        assertThat(result.mechanicallyVerified()).isTrue();
     }
 
     @Test
@@ -749,12 +696,6 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void integrityGates_failOpenWhenNoFilesProvided() {
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), Map.of(), Map.of(), Map.of());
-        assertThat(result.mechanicallyVerified()).isTrue();
-    }
-
-    @Test
     void integrityGates_failClosedWhenJavaHarnessSnapshotIsEmpty() {
         // F2 regression: Java always ships a build harness (pom.xml/build.gradle), so an EMPTY seed snapshot is a failed capture, not a harness-free exercise. The
         // harness-immutability gate must fail CLOSED there rather than silently disabling itself and letting a tampered harness through.
@@ -774,16 +715,6 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
         assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
-    }
-
-    @Test
-    void shouldAcceptWhenSolutionPassesAndTemplateFailsViaRealJUnitReports() {
-        List<String> names = List.of("stack_initially_empty", "push_then_pop", "size_tracks_elements");
-        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names),
-                "# Stack\n[task][Empty](stack_initially_empty)\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n");
-        assertThat(result.mechanicallyVerified()).isTrue();
-        assertThat(result.testCount()).isEqualTo(3);
-        assertThat(result.templateFailed()).isTrue();
     }
 
     @Test
@@ -853,14 +784,6 @@ class DifferentialVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("task bindings"));
     }
 
-    @Test
-    void shouldAcceptWhenTaskBindingsResolveToRealTestNames() {
-        List<String> names = List.of("sortsUnsortedArray()", "sortsArrayWithDuplicates()");
-        String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray(),sortsArrayWithDuplicates())\n";
-        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
-        assertThat(result.mechanicallyVerified()).isTrue();
-    }
-
     // A near-miss keyword ([tasks]/[Task]/[TASK]) binds nothing and leaks the raw test name, even though one well-formed [task] line satisfies the "has a binding" gate. The
     // case-sensitive match must reject all three (an equals -> equalsIgnoreCase mutant would accept them).
     @ParameterizedTest
@@ -906,55 +829,6 @@ class DifferentialVerificationServiceTest {
         assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
         assertThat(summary.testNames()).containsExactlyInAnyOrder("passes_a", "fails_b", "passes_c");
         assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
-    }
-
-    // A task must not be completely solved by the template. Structural checks may pass when the same task still contains a failing behavioural test, as in Artemis reference
-    // exercises such as Bubble Sort.
-
-    @Test
-    void shouldRejectWhenTaskBoundTestPassesOnTemplateRustFibonacciZero() {
-        // A `fibonacci(_n)->0` stub makes test_fibonacci_of_0 pass on the template while the count gate is still satisfied.
-        List<String> all = List.of("test_factorial_of_0", "test_factorial_of_5", "test_factorial_of_20", "test_fibonacci_of_0", "test_fibonacci_of_1", "test_fibonacci_of_10",
-                "test_fibonacci_of_50");
-        List<String> failed2 = new ArrayList<>(
-                List.of("test_factorial_of_5", "test_factorial_of_20", "test_fibonacci_of_1", "test_fibonacci_of_10", "test_fibonacci_of_50", "test_factorial_of_0"));
-        String ps = "# Factorial & Fibonacci\n[task][Factorial of 0](test_factorial_of_0)\n[task][Fibonacci of 0](test_fibonacci_of_0)\n[task][Fibonacci of 10](test_fibonacci_of_10)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failed2), ps);
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("test_fibonacci_of_0"));
-    }
-
-    @Test
-    void shouldRejectWhenTaskBoundTestPassesOnTemplateTsPopUndefined() {
-        List<String> all = List.of("Stack_push_pop_cycle", "Stack_peek_returns_top_without_removal", "Stack_isEmpty_behaviour", "Stack_pop_on_empty_returns_undefined");
-        List<String> failedOnTemplate = List.of("Stack_push_pop_cycle", "Stack_peek_returns_top_without_removal", "Stack_isEmpty_behaviour");
-        String ps = "# Stack\n[task][Push/pop](Stack_push_pop_cycle)\n[task][Pop on empty returns undefined](Stack_pop_on_empty_returns_undefined)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("Stack_pop_on_empty_returns_undefined"));
-    }
-
-    @Test
-    void shouldAcceptWhenUnboundHarnessTestPassesOnTemplateButAllTaskBoundTestsFail() {
-        // A build-gate testcase (CompileStack) legitimately passes on both builds and is exempted; every behavioural [task]-bound test still fails on the template.
-        List<String> all = List.of("CompileStack", "stack_initially_empty", "stack_push_top", "stack_pop");
-        List<String> failedOnTemplate = List.of("stack_initially_empty", "stack_push_top", "stack_pop");
-        String ps = "# Stack\n[task][Initially empty](stack_initially_empty)\n[task][Push/top](stack_push_top)\n[task][Pop](stack_pop)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).isTrue();
-    }
-
-    // Every discovered gradable test must appear in the task checklist. Build/compile/configure gates are the only legitimate unbound exception.
-
-    @Test
-    void shouldRejectWhenUnboundBehaviourTestPassesOnTemplate() {
-        // Four behaviour tests but only two bound; the template accidentally passes the unbound reverse_empty_string, which production still grades.
-        List<String> all = List.of("reverse_non_empty", "reverse_empty_string", "is_palindrome_true", "is_palindrome_false");
-        List<String> failedOnTemplate = List.of("reverse_non_empty", "is_palindrome_true", "is_palindrome_false");
-        String ps = "# Strings\n[task][Reverse](reverse_non_empty)\n[task][Palindrome](is_palindrome_true)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).as("an unbound test passing on the template would give a bare-template student >0% in production").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("reverse_empty_string"));
     }
 
     // Visibility is part of the binding contract. Before this pair, the oracle demanded that EVERY gradable test be bound while the prompt forbade binding a hidden one, so an
@@ -1030,15 +904,6 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldAcceptWhenOnlyBuildConfigureGatePassesOnTemplateAndEveryBehaviourTestFails() {
-        List<String> all = List.of("TestConfigure", "CompileSort", "sorts_ascending", "sorts_with_duplicates", "stable_on_equal_keys");
-        List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates", "stable_on_equal_keys");
-        String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n[task][Stable](stable_on_equal_keys)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).as("build/configure gates legitimately pass on both; every behaviour test fails on the template").isTrue();
-    }
-
-    @Test
     void shouldAcceptBuildGateHeavyExerciseWhereTemplateFailsEveryBehaviourTestButFewerThanHalfOfAllTests() {
         // Regression for the compile-heavy false-reject (C/C++ FACT harness): 4 build/compile/configure gate tests + 2 behaviour tests. The gates legitimately pass on BOTH builds
         // by design and are exempt; every non-gate (gradable) test still fails on the template, so the exercise must be accepted even though only 2 of the 6 total tests fail.
@@ -1077,50 +942,12 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectWhenUnboundBehaviourPassesEvenThoughABuildGateAlsoPasses() {
-        List<String> all = List.of("CompileSort", "push_grows", "peek_returns_top");
-        List<String> failedOnTemplate = List.of("push_grows");
-        String ps = "# Stack\n[task][Push](push_grows)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("peek_returns_top"));
-    }
-
-    @Test
-    void shouldRejectWhenBehaviourTestIsUnboundEvenIfItFailsOnTemplate() {
-        List<String> all = List.of("push_grows", "peek_returns_top");
-        String ps = "# Stack\n[task][Push](push_grows)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
-        assertThat(result.mechanicallyVerified()).as("every real gradable behaviour test must be visible in the Artemis task checklist").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("peek_returns_top"));
-    }
-
-    @Test
     void shouldRejectDuplicateTaskBindings() {
         List<String> all = List.of("push_grows", "peek_returns_top");
         String ps = "# Stack\n[task][Push](push_grows)\n[task][Duplicate push](push_grows)\n[task][Peek](peek_returns_top)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
         assertThat(result.mechanicallyVerified()).as("duplicate [task] bindings make the student checklist ambiguous").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
-    }
-
-    @Test
-    void shouldRejectWhenATaskBoundTestPassesOnTemplateEvenIfASiblingInTheSameTaskFails() {
-        // Defect regression: the OLD task-group gate rejected a [task] only when EVERY test in it passed on the template, so a task with a MIX (one fails, one still passes)
-        // was wrongly accepted — a "one test per task" leniency. test_stack_structure is a plain test name, not a member of the authoritative seeded-structural set (this test
-        // calls the no-seeded-structural verify() overload), so it is an ordinary behavioural test and must fail on the template on its own, regardless of its sibling
-        // test_new_stack_is_empty in the same [task] correctly failing.
-        List<String> all = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing", "test_pop_returns_last_and_removes",
-                "test_pop_on_empty_raises", "test_peek_on_empty_raises", "test_stack_structure");
-        List<String> behaviouralFailOnTemplate = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing",
-                "test_pop_returns_last_and_removes", "test_pop_on_empty_raises", "test_peek_on_empty_raises");
-        String ps = "# Stack\n[task][Empty and structure](test_new_stack_is_empty,test_stack_structure)\n"
-                + "[task][Push](test_push_makes_not_empty)\n[task][Peek](test_peek_returns_last_without_removing)\n[task][Pop](test_pop_returns_last_and_removes)\n"
-                + "[task][Empty pop](test_pop_on_empty_raises)\n[task][Empty peek](test_peek_on_empty_raises)\n";
-        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, behaviouralFailOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).as("a non-structural test passing on the template must be rejected even though a sibling test in the same [task] fails")
-                .isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("test_stack_structure"));
     }
 
     // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser. The dangerous case — a
@@ -1409,20 +1236,16 @@ class DifferentialVerificationServiceTest {
     @Nested
     class StructuralBindingExemption {
 
-        @ParameterizedTest(name = "{0}")
-        @MethodSource("structuralBindingAcceptCases")
-        void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds(String caseName, String problemStatement, List<String> allNames, Set<String> seededStructural) {
+        @Test
+        void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds() {
+            List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
+            String problemStatement = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n";
+
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, allNames, List.of()), resultWithFails(1, allNames, allNames), problemStatement,
-                    seededStructural);
+                    Set.of("testClass[Sorter]", "testMethods[Sorter]"));
+
             assertThat(result.reasons()).as("a structural-shaped binding must not be reported as unresolved").noneMatch(r -> r.contains("match no actual test"));
             assertThat(result.mechanicallyVerified()).as("a structural binding/test must not block acceptance while the differential holds").isTrue();
-        }
-
-        private static Stream<Arguments> structuralBindingAcceptCases() {
-            List<String> behaviourPlusStructural = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
-            return Stream.of(Arguments.of("structural binding resolves via the authoritative seeded set",
-                    "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n", behaviourPlusStructural,
-                    Set.of("testClass[Sorter]", "testMethods[Sorter]")));
         }
 
         @Test

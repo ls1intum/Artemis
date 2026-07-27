@@ -191,16 +191,6 @@ public class GenerationJobService {
         return startJob(user, exercise, userPrompt, mode, null);
     }
 
-    /**
-     * Starts a new whole-exercise generation job and attaches a pre-admission budget reservation to the job metadata.
-     *
-     * @param user                the requesting instructor
-     * @param exercise            the target exercise
-     * @param userPrompt          the generation brief or the feedback to address
-     * @param mode                the explicit run intent
-     * @param budgetReservationId the optional token-budget reservation id to release when the job ends
-     * @return the started job id
-     */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId) {
         return startJob(user, exercise, userPrompt, mode, budgetReservationId, null);
     }
@@ -339,63 +329,22 @@ public class GenerationJobService {
         }
     }
 
-    /**
-     * Appends an event to the running job's transcript so it can be replayed when a client (re)connects. Bounded so a long run cannot grow the distributed map without limit.
-     *
-     * @param exerciseId the exercise id (the transcript key)
-     * @param jobId      the job id; the event is dropped if it does not match the retained transcript (a stale/older run)
-     * @param event      the event to retain
-     * @param terminal   whether this event terminates the run (marks the transcript done, so a reconnecting client knows not to expect more)
-     * @return whether the event was accepted into the authoritative transcript
-     */
     public boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         return replayStore.recordEvent(exerciseId, jobId, event, terminal);
     }
 
-    /**
-     * Records the latest lightweight change per path for reconnect replay.
-     *
-     * @param exerciseId the exercise id (the file-change key)
-     * @param jobId      the job id; the change is dropped if it does not match the retained store (a stale/older run)
-     * @param fileChange the lightweight file-change metadata to retain
-     * @return whether the change was accepted into the authoritative replay state
-     */
     public boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
         return replayStore.recordFileChange(exerciseId, jobId, fileChange);
     }
 
-    /**
-     * Records the gate-approved SPEC.md snapshot on the running job's transcript so the owner can review the behavioural specification while the run is still building —
-     * the earliest meaningful intermediate result. Defensively capped so a large document cannot grow the retained Hazelcast transcript without bound, and dropped when it does not
-     * match the retained transcript (a
-     * stale or older run).
-     *
-     * @param exerciseId   the exercise id (the transcript key)
-     * @param jobId        the job id; dropped if it does not match the retained transcript
-     * @param specDocument the SPEC.md content captured right after the spec gate passed
-     * @return whether the snapshot was accepted into the authoritative transcript
-     */
     public boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
         return replayStore.recordSpecDocument(exerciseId, jobId, specDocument);
     }
 
-    /**
-     * Returns the current or most-recent run's transcript for the exercise, for reconnection/replay, if it belongs to the requesting user.
-     *
-     * @param user     the requesting user
-     * @param exercise the exercise
-     * @return the reconnection view (with a {@code running} flag derived from the live slot), or empty if none is retained for this user
-     */
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         return replayStore.getStatus(user, exercise);
     }
 
-    /**
-     * Removes a matching completed run replay after its live changes were undone.
-     *
-     * @param exerciseId the exercise whose replay should be removed
-     * @param jobId      the completed run to remove
-     */
     public void discardRetainedRun(long exerciseId, String jobId) {
         replayStore.discardRetainedRun(exerciseId, jobId);
     }
@@ -449,22 +398,17 @@ public class GenerationJobService {
         return true;
     }
 
-    /**
-     * Cancels a job for server-side safety controls such as deadlines and token budgets. This uses the same atomic terminalization and late-response fence as user cancellation.
-     * The
-     * caller already owns the job id from the running task, so no user ownership check is required.
-     *
-     * Like {@link #requestCancellation(long, String, User)}, this refuses once the job already entered the non-cancellable persistence phase, so a deadline or budget trip that
-     * loses the race against {@link #enterNonCancellablePhase(long, String)} never claims to have stopped a save that is already underway.
-     *
-     * @param exerciseId the exercise id whose job should be cancelled
-     * @param jobId      the running job id
-     * @return true if cancellation was recorded
-     */
     public boolean requestSystemCancellation(long exerciseId, String jobId) {
         return requestSystemCancellation(exerciseId, jobId, SYSTEM_CANCELLATION_MESSAGE);
     }
 
+    /**
+     * Cancels a job for server-side safety controls such as deadlines and token budgets, using the same atomic terminalization and late-response fence as user cancellation. The
+     * caller already owns the job id from the running task, so no user ownership check is required.
+     * <p>
+     * Like {@link #requestCancellation(long, String, User)}, this refuses once the job already entered the non-cancellable persistence phase, so a deadline or budget trip that
+     * loses the race against {@link #enterNonCancellablePhase(long, String)} never claims to have stopped a save that is already underway.
+     */
     boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
         String key = key(exerciseId);
         ExerciseGenerationEventDTO cancellationEvent;
@@ -831,8 +775,8 @@ public class GenerationJobService {
      * to {@code external-mutation-*} slots below. Availability is sacrificed only in this precisely unknowable state; the slot requires the same kind of audited, exact-token
      * recovery as an external mutation to be released (see {@link #recoverExternalMutationSlot(long, String)}).
      * <p>
-     * TODO(pe-stale-owner report, "Simplest safe fix" item 3 / "Tests" items 4-6): generalizing the audited exact-token recovery workflow to generation/revert slots, and the
-     * in-flight-latch partition-race and multi-member integration tests, are out of scope for this change and are left for a follow-up.
+     * Not yet covered by tests: the multi-node partition race in which a stale owner is still writing while a replacement claims the slot. Until those exist, this path fails
+     * closed — it keeps the slot rather than reclaiming it — so an untested race cannot produce two concurrent writers.
      *
      * @return {@code true} when the slot was reclaimed
      */

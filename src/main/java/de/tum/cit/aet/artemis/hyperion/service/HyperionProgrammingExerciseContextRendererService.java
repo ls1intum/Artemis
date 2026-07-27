@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -86,7 +87,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * solution_repository/src/main/java/example/Stack.java:
  * --------------------------------------------------------------------------------
  *  1 | package example;
- *  2 | import java.util.ArrayDeque;
+ *  2 | import ArrayDeque;
  *  3 | public class Stack { // Full reference implementation }
  * </pre>
  *
@@ -133,8 +134,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             return "";
         }
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
-        SECRET_MATERIAL_POLICY.requireSafe("problem_statement.md", problemStatement.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+        SECRET_MATERIAL_POLICY.requireSafe("problem_statement.md", problemStatement.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
                 "template", exercise.getId());
@@ -309,7 +309,7 @@ public class HyperionProgrammingExerciseContextRendererService {
                     .sorted(Comparator.comparing(path -> repositoryPath.relativize(path).toString(), String.CASE_INSENSITIVE_ORDER)).forEach(path -> {
                         String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
                         String content = readBuildEnvironmentFile(path);
-                        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
                                 HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
                         if (assessment.isSafe()) {
                             buildFiles.put(relativePath, content);
@@ -462,8 +462,8 @@ public class HyperionProgrammingExerciseContextRendererService {
                             try {
                                 String content = Files.readString(path);
                                 String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
-                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath,
-                                        content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
+                                        HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
                                 if (assessment.isSafe()) {
                                     solutionCode.append("// File: ").append(relativePath).append("\n");
                                     solutionCode.append(content).append("\n\n");
@@ -520,8 +520,8 @@ public class HyperionProgrammingExerciseContextRendererService {
                             try {
                                 String relativePath = repositoryPath.relativize(path).toString().replace('\\', '/');
                                 String content = Files.readString(path);
-                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath,
-                                        content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                                HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(relativePath, content.getBytes(StandardCharsets.UTF_8),
+                                        HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
                                 if (assessment.isSafe()) {
                                     testCode.append("// File: ").append(relativePath).append("\n").append(content).append("\n\n");
                                 }

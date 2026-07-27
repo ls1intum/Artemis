@@ -8,6 +8,8 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNum
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUserPrompt;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -55,9 +57,9 @@ public class HyperionProblemStatementGenerationService {
             if (stream == null) {
                 return "";
             }
-            return new String(stream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
-        catch (java.io.IOException e) {
+        catch (IOException e) {
             log.warn("Could not load the draft style guide; rendering the prompt without it", e);
             return "";
         }

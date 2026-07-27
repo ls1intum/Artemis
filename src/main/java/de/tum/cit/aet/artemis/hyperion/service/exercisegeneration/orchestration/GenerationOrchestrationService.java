@@ -5,18 +5,23 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.Edit;
@@ -95,11 +100,8 @@ public class GenerationOrchestrationService {
 
     /**
      * The attempt ceiling: the mechanical repairs plus one attempt per semantic repair the budget allows. These are scoped repairs, not additional open-ended initial-authoring
-     * attempts, and the wall-clock guard remains the real bound.
-     * <p>
-     * Derived rather than fixed because it was fixed at {@code + 3} while the semantic budget became six, which made the configured budget arithmetically unreachable: a repair
-     * that breaks the build costs two attempts, so runs terminated on the attempt cap with rounds still unspent. Measured across twelve live runs, the semantic budget was never
-     * exhausted — the cap or the clock always bound first.
+     * attempts, and the wall-clock guard remains the real bound. Derived from the semantic budget rather than fixed, so that raising the budget cannot leave rounds
+     * arithmetically unreachable — a repair that breaks the build costs two attempts.
      */
     private final int maxGenerationAttempts;
 
@@ -131,9 +133,6 @@ public class GenerationOrchestrationService {
      */
     private static final Duration TOTAL_WALL_CLOCK_BUDGET = Duration.ofMinutes(35);
 
-    /** Best-effort read timeout for capturing {@code SPEC.md} once after the agent loop finishes, for {@link GenerationOutcome#specDocument()}. */
-    private static final Duration SPEC_DOCUMENT_READ_TIMEOUT = Duration.ofSeconds(30);
-
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
 
@@ -147,7 +146,6 @@ public class GenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Reviews brief coverage and, for adaptations, requests repair when unrelated changes cannot be ruled out.
     private final SpecFidelityCriticService specFidelityCritic;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
@@ -197,10 +195,9 @@ public class GenerationOrchestrationService {
          * The next repair batch: still exactly one coherent surface per attempt — an earlier fix scoped repairs causally so a single repair could not rewrite every artifact at
          * once, and that is unchanged — but no longer chosen by priority alone.
          * <p>
-         * Priority alone let one surface hold the entire budget. Telemetry from a live run: {@code findings {WEAK_TEST_ORACLE=2, TEMPLATE_QUALITY_GAP=2}; repairing
-         * [WEAK_TEST_ORACLE]} on two consecutive rounds, after which the run saved with those scaffold findings untouched. Yet consecutive rounds on one surface are also how
-         * the strongest observed run earned its oracle: three in a row, each fixing a different real gap. Both facts are honoured by letting a surface hold at most
-         * {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds while any surface still waits for its first.
+         * Priority alone let one surface hold the entire budget while another shipped unrepaired; yet consecutive rounds on one surface are also legitimate, since strengthening
+         * an oracle can genuinely take several. Both are honoured by letting a surface hold at most {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds while any surface still
+         * waits for its first.
          *
          * @param report            the current review findings
          * @param servedSurfaces    surfaces already repaired at least once in this generation
@@ -218,7 +215,7 @@ public class GenerationOrchestrationService {
             return batchFor(report, surface -> true);
         }
 
-        private static Optional<SemanticRepairBatch> batchFor(SpecFidelityReport report, java.util.function.Predicate<RepairSurface> eligible) {
+        private static Optional<SemanticRepairBatch> batchFor(SpecFidelityReport report, Predicate<RepairSurface> eligible) {
             for (RepairSurface surface : RepairSurface.values()) {
                 if (!eligible.test(surface)) {
                     continue;
@@ -308,27 +305,28 @@ public class GenerationOrchestrationService {
                         + "reachable build agent in the cluster to host the sandbox container."));
     }
 
-    /**
-     * Runs one generation/adaptation session, streaming a file change to {@code fileChangeSink} on every successful {@code write_file}/{@code edit_file} so the
-     * triggering
-     * instructor's editor can show which files the agent changes.
-     *
-     * @param exercise       the exercise to generate or adapt (its repositories must already be scaffolded)
-     * @param user           the instructor performing the generation, recorded with the LLM token-usage trace
-     * @param userPrompt     the instruction for this run (a generation brief, or the feedback to address)
-     * @param jobId          the job id, used to register a node-local cancel hook
-     * @param mode           the explicit run intent (generate vs. adapt)
-     * @param cancelled      polled cooperatively; if it returns {@code true} the session is aborted
-     * @param progress       receives short human-readable progress lines for the live transcript; may be {@code null}
-     * @param fileChangeSink receives a file change on every successful write for live streaming; {@code null} disables file-change streaming
-     * @param usageSink      receives token usage for every model call; {@code null} uses the default persisted run sink
-     * @return the outcome including the verification verdict and the produced files
-     */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
         return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null);
     }
 
+    /**
+     * Runs one generation/adaptation session, streaming a file change to {@code fileChangeSink} on every successful {@code write_file}/{@code edit_file} so the triggering
+     * instructor's editor can show which files the agent changes.
+     *
+     * @param exercise            the exercise to generate or adapt (its repositories must already be scaffolded)
+     * @param user                the instructor performing the generation, recorded with the LLM token-usage trace
+     * @param userPrompt          the instruction for this run (a generation brief, or the feedback to address)
+     * @param jobId               the job id, used to register a node-local cancel hook
+     * @param mode                the explicit run intent (generate vs. adapt)
+     * @param cancelled           polled cooperatively; if it returns {@code true} the session is aborted
+     * @param progress            receives short human-readable progress lines for the live transcript; may be {@code null}
+     * @param fileChangeSink      receives a file change on every successful write for live streaming; {@code null} disables file-change streaming
+     * @param usageSink           receives token usage for every model call; {@code null} uses the default persisted run sink
+     * @param originalSourceBrief the raw instructor brief when this run was started from one, kept separate from {@code userPrompt} so the review authority is not the
+     *                                repair-framed prompt; {@code null} otherwise
+     * @return the outcome including the verification verdict and the produced files
+     */
     GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled, Consumer<String> progress,
             @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink, @Nullable String originalSourceBrief) {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
@@ -437,7 +435,7 @@ public class GenerationOrchestrationService {
             // One re-review per generation when the reviewer fails to return a verdict; see the retry below.
             boolean reviewRetried = false;
             // Repair-surface fairness state: which surfaces have been repaired, and how long the current one has held (see SemanticRepairBatch#next).
-            java.util.Set<RepairSurface> servedRepairSurfaces = java.util.EnumSet.noneOf(RepairSurface.class);
+            Set<RepairSurface> servedRepairSurfaces = EnumSet.noneOf(RepairSurface.class);
             RepairSurface currentRepairSurface = null;
             int consecutiveRoundsOnSurface = 0;
             @Nullable
@@ -505,7 +503,7 @@ public class GenerationOrchestrationService {
                     Map<RepositoryType, Map<String, String>> erroredFiles = changedCapturedRepositoryFiles(baselineRepositoryFiles,
                             captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
                     String erroredStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
-                    boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), erroredStatement);
+                    boolean statementChanged = !Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), erroredStatement);
                     if (statementChanged || !erroredFiles.isEmpty()) {
                         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, erroredFiles, erroredStatement,
                                 SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
@@ -643,7 +641,6 @@ public class GenerationOrchestrationService {
                     // Runs only once the mechanical gate has passed, so the graded suite is already known deterministic: a suite that could fail by coincidence would make a
                     // witness result meaningless. Skipped while anything still blocks, for two reasons: a repair round is coming that will rewrite the artifacts these
                     // witnesses were derived from, and a witness is validated against the solution as it stands, so one authored now could stop passing before it is offered.
-                    // Observed live authoring the same three witnesses three times over, each costing a provider call and a full solution build.
                     if (!specFidelityReport.hasBlockingFindings()) {
                         specFidelityReport = appendValidatedContractWitnesses(specFidelityReport, sandbox, sessionId, exercise, producedFilesByType, specDocumentSnapshot,
                                 effectiveUsageSink, cancelled, progress);
@@ -692,8 +689,8 @@ public class GenerationOrchestrationService {
                     if (reviewUnavailable && repairBatch.isEmpty()) {
                         // "The review could not complete" is not a statement about the exercise, so it must not end the effort to improve it. Failing open on the VERDICT is
                         // right — a broken reviewer may never reject a mechanically sound candidate — but the loop was also failing open on the WORK, stopping with repair
-                        // rounds unspent because the reviewer, not the exercise, had a bad turn. Two consecutive live runs saved after one round and none respectively,
-                        // reporting "1 blocking quality gap" to the instructor that was really "we could not review this". One re-review is attempted before giving up.
+                        // rounds unspent because the reviewer, not the exercise, had a bad turn, reporting "1 blocking quality gap" to the instructor when it really meant
+                        // "we could not review this". One re-review is attempted before giving up.
                         if (!reviewRetried) {
                             reviewRetried = true;
                             log.info("Exercise {}: the quality review did not complete; re-reviewing once before ending the repair phase", exercise.getId());
@@ -718,7 +715,7 @@ public class GenerationOrchestrationService {
                         // until this line existed the run simply stopped: "1 blocking gap" reached the instructor with five unused rounds and nothing recording why.
                         log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), semanticRepairsStarted,
                                 semanticRepairLimit, specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
-                                        .collect(java.util.stream.Collectors.groupingBy(SpecFidelityReport.Finding::kind, java.util.stream.Collectors.counting())));
+                                        .collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())));
                         break;
                     }
                     preSemanticRepairCandidate = lastMechanicallyVerifiedCandidate;
@@ -735,8 +732,7 @@ public class GenerationOrchestrationService {
                     // the fact: a weakness that was found but never scheduled is indistinguishable in the logs from one that was never found at all.
                     log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,
                             pendingSemanticRepair.surface(),
-                            specFidelityReport.findings().stream()
-                                    .collect(java.util.stream.Collectors.groupingBy(SpecFidelityReport.Finding::kind, java.util.stream.Collectors.counting())),
+                            specFidelityReport.findings().stream().collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())),
                             pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
                     emit(progress, adoptWitnesses ? "The exercise is verified; offering the AI the contract tests an independent reviewer prepared for it."
                             : "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
@@ -835,10 +831,6 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * Frames a repair prompt with where the run stands, so the model can triage: on the final attempt it must prioritise blocking findings instead of treating every attempt
-     * identically (previously it had no signal that this was its last chance).
-     */
-    /**
      * The frozen, gate-approved specification appended to every repair prompt, so a repair under verification pressure faces the behavioural contract it might otherwise
      * silently cut. Empty when no spec was captured (skipped stage or legacy path).
      */
@@ -917,7 +909,7 @@ public class GenerationOrchestrationService {
         catch (RuntimeException extractionFailure) {
             statement = baselineProblemStatement == null ? "" : baselineProblemStatement.trim();
         }
-        boolean statementChanged = !java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), statement);
+        boolean statementChanged = !Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), statement);
         if (!statementChanged && files.isEmpty()) {
             return null;
         }
@@ -942,7 +934,7 @@ public class GenerationOrchestrationService {
 
     private static boolean hasProducedChanges(Map<RepositoryType, Map<String, String>> baselineFiles, Map<RepositoryType, Map<String, String>> producedFiles,
             @Nullable String baselineProblemStatement, String producedProblemStatement) {
-        if (!java.util.Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), producedProblemStatement)) {
+        if (!Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), producedProblemStatement)) {
             return true;
         }
         return List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS).stream()
@@ -985,17 +977,6 @@ public class GenerationOrchestrationService {
     /** Matches an Artemis {@code [task][Title](testA,testB)} binding, capturing the comma-separated test-name list. */
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task]\\[[^]]*]\\(([^)]*)\\)");
 
-    /**
-     * Reviews spec fidelity and adaptation scope without allowing reviewer failures to escape the orchestration boundary.
-     *
-     * @param brief             the instructor brief for this run
-     * @param problemStatement  the produced student-facing problem statement
-     * @param language          the exercise language (may be {@code null})
-     * @param producedArtifacts the mechanically verified solution, template, and tests repositories
-     * @param progress          the progress sink for a short transcript line
-     * @param previousReport    the immediately preceding attempt's report, threaded in for reviewer continuity; {@code null} on the first attempt
-     * @return the report (possibly empty); never {@code null}
-     */
     /**
      * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list on purpose: the candidate already passed every gate, the witnesses are known to
      * pass against the reference solution, and adopting one can only add coverage. Declining is explicitly allowed so the agent is not pushed into restating a case its suite
@@ -1048,8 +1029,7 @@ public class GenerationOrchestrationService {
 
     /** Concatenates a repository's sources into one reviewable document, each preceded by its path. */
     private static String renderArtifactSources(Map<String, String> files) {
-        return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue())
-                .collect(java.util.stream.Collectors.joining("\n\n"));
+        return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue()).collect(Collectors.joining("\n\n"));
     }
 
     /**
@@ -1109,9 +1089,9 @@ public class GenerationOrchestrationService {
                 report = new SpecFidelityReport(combined);
             }
             // A finding that asks the tests to grade a technique is reclassified rather than scheduled. The critic reports these as WEAK_TEST_ORACLE, which is a repairable
-            // surface, so the loop hands the agent an impossible task: one live run answered it by writing a test that reads the student's source file and fails anyone whose
-            // correct solution still carries a TODO comment, then spent two further attempts being rejected for it. Reclassifying costs a round nothing and removes the
-            // incentive at its source; the finding survives as the advisory the instructor sees.
+            // surface, so the loop would otherwise hand the agent a task it cannot do, and the only way to appear to do it is a test that grades the student's source text
+            // (see ExerciseIntegrityGate#gradedTestsReadingSourceTreeReasons). Reclassifying costs a round nothing and removes the incentive at its source; the finding
+            // survives as the advisory the instructor sees.
             report = reclassifyUngradeableTechniqueFindings(report, specSnapshot);
             // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
             List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshot);
@@ -1161,7 +1141,7 @@ public class GenerationOrchestrationService {
     }
 
     private static void appendChangedFile(StringBuilder changes, String path, @Nullable String before, @Nullable String after) {
-        if (changes.length() >= MAX_ADAPTATION_CHANGE_CHARS || java.util.Objects.equals(before == null ? "" : before, after == null ? "" : after)) {
+        if (changes.length() >= MAX_ADAPTATION_CHANGE_CHARS || Objects.equals(before == null ? "" : before, after == null ? "" : after)) {
             return;
         }
         appendCapped(changes, "\n--- " + path + "\n");
@@ -1270,7 +1250,7 @@ public class GenerationOrchestrationService {
     }
 
     private static Map<String, String> replacePlaceholders(Map<String, String> files, Map<String, String> replacements) {
-        Map<String, String> normalized = new java.util.LinkedHashMap<>();
+        Map<String, String> normalized = new LinkedHashMap<>();
         long totalBytes = 0;
         for (Map.Entry<String, String> file : files.entrySet()) {
             String content = replacePlaceholders(file.getValue(), replacements);
@@ -1377,7 +1357,7 @@ public class GenerationOrchestrationService {
             return null;
         }
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, SPEC_DOCUMENT_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + fileName);
+            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + fileName);
             return result != null && result.isSuccess() ? result.stdout() : null;
         }
         catch (RuntimeException e) {

@@ -107,10 +107,8 @@ public class AgentSystemPromptService {
         return statement.replaceAll("\\s+", " ").strip();
     }
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Shared section constants. Every one of these is reused verbatim by both the legacy single-loop build() and the staged buildStage(), so the underlying rules can never drift
     // between the two prompt families.
-    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private static final String INTRO = """
             You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox.
@@ -356,9 +354,7 @@ public class AgentSystemPromptService {
 
             """;
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Staged-workflow-only constants, used solely by buildStage().
-    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private static final String STAGE_INTRO = """
             You author production-quality Java programming exercises for Artemis in the `/workspace` sandbox. The orchestrator runs generation as a sequence of bounded stages;

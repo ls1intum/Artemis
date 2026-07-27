@@ -147,6 +147,10 @@ final class GenerationJobReplayStore {
         }
     }
 
+    /**
+     * Appends an event to the running job's transcript for reconnect replay, bounded so a long run cannot grow the distributed map without limit. Dropped when {@code jobId} does
+     * not match the retained transcript (a stale or older run); {@code terminal} marks the transcript done so a reconnecting client knows not to expect more.
+     */
     boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         String key = key(exerciseId);
         jobMap().lock(key);
@@ -176,6 +180,10 @@ final class GenerationJobReplayStore {
         return specDocument.length() <= MAX_SPEC_DOCUMENT_LENGTH ? specDocument : specDocument.substring(0, MAX_SPEC_DOCUMENT_LENGTH) + SPEC_DOCUMENT_TRUNCATION_MARKER;
     }
 
+    /**
+     * Records the gate-approved SPEC.md snapshot on the running job's transcript — the earliest meaningful intermediate result — capped so a large document cannot grow the
+     * retained Hazelcast transcript without bound, and dropped when {@code jobId} does not match the retained transcript.
+     */
     boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
         String key = key(exerciseId);
         jobMap().lock(key);
@@ -196,6 +204,7 @@ final class GenerationJobReplayStore {
         }
     }
 
+    /** Records the latest lightweight change per path for reconnect replay; dropped when {@code jobId} does not match the retained store (a stale or older run). */
     boolean recordFileChange(long exerciseId, String jobId, ExerciseGenerationFileChangeDTO fileChange) {
         String key = key(exerciseId);
         jobMap().lock(key);
@@ -229,6 +238,10 @@ final class GenerationJobReplayStore {
         }
     }
 
+    /**
+     * The current or most-recent run's transcript for the exercise, for reconnection/replay, with a {@code running} flag derived from the live slot; empty unless a transcript
+     * is retained for this user.
+     */
     Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         String key = key(exercise.getId());
         jobMap().lock(key);
@@ -272,6 +285,7 @@ final class GenerationJobReplayStore {
         }
     }
 
+    /** Removes a matching completed run's replay after its live changes were undone. */
     void discardRetainedRun(long exerciseId, String jobId) {
         String key = key(exerciseId);
         jobMap().lock(key);

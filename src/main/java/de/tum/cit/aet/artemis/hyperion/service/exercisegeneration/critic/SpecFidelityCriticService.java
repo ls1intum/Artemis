@@ -5,16 +5,22 @@ import java.text.Normalizer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -616,11 +622,11 @@ public class SpecFidelityCriticService {
                     }
                 }
             }
-            return new EvidenceSource(java.util.Collections.unmodifiableMap(passages));
+            return new EvidenceSource(Collections.unmodifiableMap(passages));
         }
 
         private String promptText() {
-            return passages.entrySet().stream().map(entry -> "[" + entry.getKey() + "] " + entry.getValue()).collect(java.util.stream.Collectors.joining("\n"));
+            return passages.entrySet().stream().map(entry -> "[" + entry.getKey() + "] " + entry.getValue()).collect(Collectors.joining("\n"));
         }
 
         private boolean containsAll(@Nullable List<String> evidenceIds) {
@@ -638,7 +644,7 @@ public class SpecFidelityCriticService {
             if (evidenceIds == null) {
                 return "";
             }
-            return evidenceIds.stream().map(passages::get).filter(java.util.Objects::nonNull).map(String::strip).collect(java.util.stream.Collectors.joining("\"; \""));
+            return evidenceIds.stream().map(passages::get).filter(Objects::nonNull).map(String::strip).collect(Collectors.joining("\"; \""));
         }
     }
 
@@ -1002,9 +1008,9 @@ public class SpecFidelityCriticService {
      */
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         Map<Integer, EvidenceSource> candidateEvidence = candidates.entrySet().stream()
-                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> EvidenceSource.from("C" + entry.getKey() + ".", entry.getValue())));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> EvidenceSource.from("C" + entry.getKey() + ".", entry.getValue())));
         String candidateText = candidateEvidence.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getValue().promptText())
-                .collect(java.util.stream.Collectors.joining("\n\n"));
+                .collect(Collectors.joining("\n\n"));
         requireReviewTextSafe("concept-review/brief", brief);
         requireReviewTextSafe("concept-review/candidates", candidateText);
         if (cancelled.getAsBoolean() || chatClient == null || brief.isBlank() || candidates.size() != 3) {
@@ -1051,7 +1057,7 @@ public class SpecFidelityCriticService {
         if (response.evaluations() == null || response.evaluations().size() != 3) {
             return incompleteConceptReview("evaluations must contain exactly three items.");
         }
-        Map<Integer, ConceptCandidateReviewItem> evaluations = new java.util.HashMap<>();
+        Map<Integer, ConceptCandidateReviewItem> evaluations = new HashMap<>();
         for (ConceptCandidateReviewItem item : response.evaluations()) {
             String validationError = conceptEvaluationValidationError(item, candidates, candidateEvidence);
             if (validationError != null) {
@@ -1173,7 +1179,7 @@ public class SpecFidelityCriticService {
         return truncateLearningEvidence(String.join("; ", failures));
     }
 
-    private static String failedConceptAxes(java.util.Collection<ConceptCandidateReviewItem> evaluations) {
+    private static String failedConceptAxes(Collection<ConceptCandidateReviewItem> evaluations) {
         List<String> axes = new ArrayList<>();
         if (evaluations.stream().anyMatch(item -> !item.briefCovered())) {
             axes.add("brief coverage");
@@ -1392,109 +1398,34 @@ public class SpecFidelityCriticService {
         return value.replace("&nbsp;", " ").replace("&#160;", " ").replace("&#xA0;", " ").replace("&#xa0;", " ").replace("**", "").replace("__", "").replace("`", "");
     }
 
-    /**
-     * Test seam: the usage-sink-free form of the full-artifact review. Production supplies the mechanically verified repository snapshot and a token-usage sink; this overload is
-     * package-private and exists only for focused unit tests.
-     *
-     * @param brief            the instructor's instruction for this run (the generation brief or the adapt feedback)
-     * @param problemStatement the produced student-facing problem statement
-     * @param testNames        the exact test identifiers the produced suite contains (as the runner writes them); may be empty
-     * @return the generation-quality report (possibly empty); never {@code null}
-     */
     SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
         return critique(brief, problemStatement, testNames, minimalArtifactSet(testNames), null);
     }
 
-    /** Test seam that also verifies critic token accounting without requiring a full repository fixture. */
     SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, @Nullable Consumer<ChatResponse> usageSink) {
         return critique(brief, problemStatement, testNames, minimalArtifactSet(testNames), usageSink);
     }
 
-    /**
-     * As {@link #critique(String, String, List)}, but token usage from both reviewer calls is reported to {@code usageSink} so it is counted against the generation run
-     * instead of going unrecorded.
-     *
-     * @param brief            the instructor's brief to critique coverage against
-     * @param problemStatement the produced problem statement
-     * @param testNames        the task-bound test names produced for the exercise
-     * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives the critic's {@code ChatResponse} for token accounting; {@code null} skips it (e.g. in isolated tests)
-     * @return the full-artifact report; contract-risk findings request repair and require instructor review if they remain
-     */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink) {
         return critique(brief, problemStatement, testNames, artifacts, usageSink, () -> false, null);
     }
 
-    /**
-     * Reviews complete generated artifacts while allowing a running generation to stop between provider calls.
-     *
-     * @param brief            the instructor's brief to critique coverage against
-     * @param problemStatement the produced problem statement
-     * @param testNames        the task-bound test names produced for the exercise
-     * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled        reports whether generation has been cancelled
-     * @return the full-artifact report
-     */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, null);
     }
 
-    /**
-     * Full-artifact review that additionally sees the monotonic specification contract, so the reviewer can report contradictions between the stated plan (state ownership,
-     * type structure) and the implemented artifacts — the axis on which past runs shipped a design document the code silently ignored.
-     *
-     * @param brief            the instructor's source requirements
-     * @param problemStatement the produced problem statement
-     * @param testNames        the produced test identifiers
-     * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled        polled between provider calls
-     * @param previousReport   the immediately preceding attempt's report, for review continuity
-     * @return the review report
-     */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport) {
         return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, null);
     }
 
-    /**
-     * Full-artifact review that additionally receives the gate-frozen SPEC.md snapshot. The snapshot extends the AUTHORITATIVE source for requirement-coverage findings: the
-     * spec was written before any code, approved by a mechanical gate, and is instructor-visible — so "no test covers this spec rule" becomes a reportable finding even when
-     * the instructor brief was one line (previously such findings had to abstain, which is why hollow exercises could ship). The produced STATEMENT stays excluded from
-     * authority: the final artifact must never authorize its own additions.
-     *
-     * @param brief            the instructor's source requirements
-     * @param problemStatement the produced problem statement
-     * @param testNames        the produced test identifiers
-     * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled        polled between provider calls
-     * @param previousReport   the immediately preceding attempt's report, for review continuity
-     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when the stage was skipped or never passed its gate
-     * @return the review report
-     */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument) {
         return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, specDocument, null);
     }
 
-    /**
-     * Full-artifact review with a bounded delta from the immediately preceding mechanically verified candidate, used to adjudicate whether prior blockers were repaired.
-     *
-     * @param brief            the instructor's source requirements
-     * @param problemStatement the produced problem statement
-     * @param testNames        the produced test identifiers
-     * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled        polled between provider calls
-     * @param previousReport   the immediately preceding attempt's report, for review continuity
-     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when unavailable
-     * @param repairDelta      the bounded artifact changes since the previous reviewed candidate, or {@code null} on the first review
-     * @return the review report
-     */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument,
             @Nullable String repairDelta) {
@@ -1502,19 +1433,26 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Full-artifact review including the exact grading plan that final verification and persistence consume.
+     * Reviews the complete generated artifacts; every shorter {@code critique} overload delegates here.
+     * <p>
+     * The gate-frozen SPEC.md snapshot extends the AUTHORITATIVE source for requirement-coverage findings: the spec was written before any code, approved by a mechanical gate,
+     * and is instructor-visible — so "no test covers this spec rule" is reportable even when the instructor brief was one line (such findings previously had to abstain, which is
+     * why hollow exercises could ship). It also lets the reviewer report contradictions between the stated plan (state ownership, type structure) and the implemented artifacts.
+     * The produced statement stays excluded from authority: the final artifact must never authorize its own additions.
      *
      * @param brief            the instructor's source requirements
      * @param problemStatement the produced problem statement
      * @param testNames        the produced test identifiers
      * @param artifacts        the generated repository files grouped by repository type
-     * @param usageSink        receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled        polled between provider calls
+     * @param usageSink        receives the critic's {@code ChatResponse} from every provider call, so reviewer tokens are counted against the generation run instead of going
+     *                             unrecorded; {@code null} skips accounting
+     * @param cancelled        polled between provider calls so a running generation can stop mid-review
      * @param previousReport   the immediately preceding attempt's report, for review continuity
-     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when unavailable
-     * @param repairDelta      the bounded artifact changes since the previous reviewed candidate, or {@code null} on the first review
+     * @param specDocument     the gate-frozen SPEC.md snapshot, or {@code null} when the stage was skipped or never passed its gate
+     * @param repairDelta      the bounded artifact changes since the previously reviewed candidate, used to adjudicate whether prior blockers were repaired; {@code null} on the
+     *                             first review
      * @param testPlanJson     the exact grading plan consumed by verification and persistence, or {@code null}
-     * @return the review report
+     * @return the review report; contract-risk findings request repair and require instructor review if they remain
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument,
@@ -1529,51 +1467,28 @@ public class SpecFidelityCriticService {
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
-    /**
-     * Reviews a mechanically verified adaptation against both its requested scope and complete generated artifacts.
-     *
-     * @param brief             the instructor's adaptation request
-     * @param problemStatement  the produced problem statement
-     * @param testNames         the produced test identifiers
-     * @param adaptationChanges the baseline-to-candidate diff
-     * @param artifacts         the generated repository files grouped by repository type
-     * @param usageSink         receives reviewer token usage; {@code null} skips accounting
-     * @return the full-artifact and adaptation-scope report
-     */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink) {
         return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, () -> false, null);
     }
 
-    /**
-     * Reviews a mechanically verified adaptation while allowing a running generation to stop between provider calls.
-     *
-     * @param brief             the instructor's adaptation request
-     * @param problemStatement  the produced problem statement
-     * @param testNames         the produced test identifiers
-     * @param adaptationChanges the baseline-to-candidate diff
-     * @param artifacts         the generated repository files grouped by repository type
-     * @param usageSink         receives reviewer token usage; {@code null} skips accounting
-     * @param cancelled         reports whether generation has been cancelled
-     * @return the full-artifact and adaptation-scope report
-     */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, artifacts, usageSink, cancelled, null);
     }
 
     /**
-     * As {@link #critiqueAdaptation(String, String, List, String, Map, Consumer, BooleanSupplier)}, but also threads the immediately preceding attempt's report into the
-     * reviewer prompt for continuity (see {@link #critique(String, String, List, Map, Consumer, BooleanSupplier, SpecFidelityReport)}).
+     * Reviews a mechanically verified adaptation against both its requested scope and the complete generated artifacts; every shorter {@code critiqueAdaptation} overload
+     * delegates here.
      *
      * @param brief             the primary source requirements, or {@code null}
      * @param problemStatement  the produced problem statement, or {@code null}
      * @param testNames         the reported gradable test names
-     * @param adaptationChanges the rendered summary of what the adaptation changed
+     * @param adaptationChanges the rendered summary of what the adaptation changed, reviewed as the requested scope
      * @param artifacts         the produced repository files by repository type
      * @param usageSink         the provider usage sink, or {@code null}
-     * @param cancelled         the cooperative cancellation signal
-     * @param previousReport    the immediately preceding attempt's report, or {@code null} when there is none
+     * @param cancelled         polled between provider calls so a running generation can stop mid-review
+     * @param previousReport    the immediately preceding attempt's report threaded into the reviewer prompt for continuity, or {@code null} when there is none
      * @return the full-artifact and adaptation-scope report
      */
     public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
@@ -1589,7 +1504,6 @@ public class SpecFidelityCriticService {
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
-    /** Test seam retained for focused adaptation-scope tests. */
     SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
             @Nullable Consumer<ChatResponse> usageSink) {
         return critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, minimalArtifactSet(testNames), usageSink);
@@ -1617,7 +1531,7 @@ public class SpecFidelityCriticService {
                 continue;
             }
             for (Map.Entry<String, String> file : repository.getValue().entrySet()) {
-                requireReviewTextSafe("critic/" + repository.getKey().name().toLowerCase(java.util.Locale.ROOT) + "/" + file.getKey(), file.getValue());
+                requireReviewTextSafe("critic/" + repository.getKey().name().toLowerCase(Locale.ROOT) + "/" + file.getKey(), file.getValue());
             }
         }
     }
@@ -1682,8 +1596,8 @@ public class SpecFidelityCriticService {
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
-        boolean expectExampleChecks = problemStatement != null && problemStatement.toLowerCase(java.util.Locale.ROOT).contains("example");
-        boolean expectApiChecks = artifacts.getOrDefault(RepositoryType.SOLUTION, Map.of()).values().stream().filter(java.util.Objects::nonNull)
+        boolean expectExampleChecks = problemStatement != null && problemStatement.toLowerCase(Locale.ROOT).contains("example");
+        boolean expectApiChecks = artifacts.getOrDefault(RepositoryType.SOLUTION, Map.of()).values().stream().filter(Objects::nonNull)
                 .anyMatch(content -> content.contains("public "));
         boolean expectTestChecks = !testNames.isEmpty();
         Map<String, String> templateStatuses = designTemplateStatuses(specificationContract);
@@ -1870,7 +1784,7 @@ public class SpecFidelityCriticService {
             if (cells.length < 3) {
                 continue;
             }
-            String status = cells[cells.length - 1].strip().toLowerCase(java.util.Locale.ROOT);
+            String status = cells[cells.length - 1].strip().toLowerCase(Locale.ROOT);
             if (!status.equals("given") && !status.equals("stubbed") && !status.equals("student-creates")) {
                 continue;
             }
@@ -2207,9 +2121,7 @@ public class SpecFidelityCriticService {
      * Flags rules that mandate an implementation technique, which behavioural tests cannot observe.
      * <p>
      * A rule such as "the implementation must be recursive" or "must use a Stream pipeline" reads like a graded requirement and is not one: no assertion over the public API can
-     * tell a recursive implementation from an iterative one that returns the same values. Measured on real generated exercises — an exercise generated from "teach the Java
-     * Streams API" awarded full marks to a plain for-loop, and one generated from "teach recursion" awarded full marks to two iterative methods. Both stated the technique as a
-     * numbered rule.
+     * tell a recursive implementation from an iterative one that returns the same values (see {@link SpecFidelityReport.Kind#UNENFORCEABLE_TECHNIQUE_RULE}).
      * <p>
      * Deterministic and deliberately narrow: only mandates naming a control-flow or API technique match. Across every specification generated so far this fires on exactly the
      * three whose brief asked for a technique and on nothing else, and it must stay that tight — a rule like "must delegate to the injected collaborator" IS observable through a
@@ -2226,7 +2138,7 @@ public class SpecFidelityCriticService {
         Set<String> seen = new HashSet<>();
         // One definition, shared with the specification gate that rejects these outright: this pass is the backstop for a mandate that reaches a later stage anyway.
         for (String mandate : ExerciseIntegrityGate.techniqueMandatesInRules(specificationContract)) {
-            if (findings.size() >= MAX_TECHNIQUE_RULE_FINDINGS || !seen.add(mandate.toLowerCase(java.util.Locale.ROOT))) {
+            if (findings.size() >= MAX_TECHNIQUE_RULE_FINDINGS || !seen.add(mandate.toLowerCase(Locale.ROOT))) {
                 continue;
             }
             findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, mandate,
@@ -2295,7 +2207,7 @@ public class SpecFidelityCriticService {
             // Requirements-level findings (contradictions, invented/hidden requirements, weak oracles) decide whether the exercise is RIGHT; TEMPLATE_QUALITY_GAP findings only
             // polish the scaffold. Rendering them in that order stops a repair attempt from spending its turns on placement nits while a design defect survives.
             report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
-                    .sorted(java.util.Comparator.comparing(finding -> finding.kind() == SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP ? 1 : 0))
+                    .sorted(Comparator.comparing(finding -> finding.kind() == SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP ? 1 : 0))
                     .forEach(finding -> appendRetryFinding(builder, finding));
         }
         if (report.findings().stream().anyMatch(finding -> !finding.isBlocking())) {

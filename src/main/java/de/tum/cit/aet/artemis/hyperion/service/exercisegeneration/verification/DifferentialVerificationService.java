@@ -66,8 +66,6 @@ public class DifferentialVerificationService {
 
     private static final Set<String> READINESS_TEST_NAMES = Set.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
 
-    private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
-
     private static final int PRISTINE_SCRIPT_MODE = 0755;
 
     private static final int MAX_READINESS_DIAGNOSTIC_CHARS = 4_000;
@@ -110,7 +108,7 @@ public class DifferentialVerificationService {
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
-        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -120,12 +118,12 @@ public class DifferentialVerificationService {
      */
     private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
             if (!result.isSuccess() || result.stdout() == null || result.stdout().isBlank()) {
                 return Set.of();
             }
             return GeneratedTestPlan.parse(result.stdout()).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
-                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+                    .collect(Collectors.toUnmodifiableSet());
         }
         catch (RuntimeException e) {
             return Set.of();
@@ -137,7 +135,7 @@ public class DifferentialVerificationService {
     }
 
     private static String readWorkspaceRootFile(InteractiveSandbox sandbox, String sessionId, String filename) {
-        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
         return result.isSuccess() ? result.stdout() : "";
     }
 
@@ -177,7 +175,7 @@ public class DifferentialVerificationService {
     /** Lists assignment-repository source files for the asymmetric-file advisory, excluding hidden files and build manifests. Empty on any non-success (fail-open). */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
         String repoRoot = GenerationWorkspaceService.WORKSPACE + "/" + repoDirectory;
-        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "cd '" + repoRoot + "' 2>/dev/null && find . -type f | sed 's|^\\./||' | grep -v '/\\.' | grep -v '^\\.' || true");
         if (!result.isSuccess()) {
             return Set.of();
@@ -320,9 +318,8 @@ public class DifferentialVerificationService {
      * <p>
      * It skips the sandbox-free integrity gates (they need the seed snapshot and read-back the agent loop lacks), so {@code wouldBeAccepted} reflects the differential + actionable
      * gates only; it neither checks nor proves semantic relevance. Final post-loop integrity checks determine mechanical validity; semantic review informs the instructor. Each
-     * call
-     * re-runs the two builds
-     * (no stale cache).
+     * call re-runs the two builds (no stale cache). The overloads add the pre-generation tests snapshot, the adaptation flag, and the server-authored structural names currently
+     * materialized in the workspace.
      *
      * @param sandbox   the open sandbox session the pristine builds run in
      * @param sessionId the sandbox session id
@@ -333,31 +330,10 @@ public class DifferentialVerificationService {
         return selfCheck(sandbox, sessionId, exercise, Map.of(), false);
     }
 
-    /**
-     * Runs the agent-visible verification while preserving untouched legacy tests during adaptation.
-     *
-     * @param sandbox        the open sandbox session
-     * @param sessionId      the sandbox session id
-     * @param exercise       the exercise being checked
-     * @param seedTestsFiles the tests repository snapshot taken before generation
-     * @param adaptation     whether the current job adapts an existing exercise
-     * @return the agent-readable differential report
-     */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation) {
         return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true);
     }
 
-    /**
-     * Runs a full agent-visible check with the server-authored structural names currently materialized in the workspace.
-     *
-     * @param sandbox                   the open sandbox session
-     * @param sessionId                 the sandbox session id
-     * @param exercise                  the exercise being checked
-     * @param seedTestsFiles            the tests repository snapshot taken before generation
-     * @param adaptation                whether the current job adapts an existing exercise
-     * @param seededStructuralTestNames server-authored structural test names currently materialized in the workspace
-     * @return the agent-readable differential report
-     */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             Set<String> seededStructuralTestNames) {
         return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTestNames);
@@ -946,7 +922,8 @@ public class DifferentialVerificationService {
      */
     private void removeContractWitnessProbe(InteractiveSandbox sandbox, String sessionId, String workspacePath) {
         try {
-            SandboxExecResult removal = sandbox.exec(sessionId, READ_TIMEOUT, "rm", "-f", GenerationWorkspaceService.WORKSPACE + "/" + workspacePath);
+            SandboxExecResult removal = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f",
+                    GenerationWorkspaceService.WORKSPACE + "/" + workspacePath);
             if (!removal.isSuccess()) {
                 log.warn("The contract-witness probe {} could not be removed; the read-back residue strip is the remaining guard", workspacePath);
             }
@@ -1003,7 +980,8 @@ public class DifferentialVerificationService {
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, String script) {
         try {
             // Docker's copy-to-container requires the destination directory to already exist.
-            SandboxExecResult preparation = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c", "find " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " -mindepth 1 -delete");
+            SandboxExecResult preparation = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
+                    "find " + SandboxBuildCommandService.PRISTINE_VERIFY_DIR + " -mindepth 1 -delete");
             if (!preparation.isSuccess()) {
                 throw new VerificationInfrastructureException("The verifier could not prepare its script directory", null);
             }

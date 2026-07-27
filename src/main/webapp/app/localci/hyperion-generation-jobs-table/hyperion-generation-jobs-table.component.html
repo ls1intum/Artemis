@@ -55,10 +55,7 @@
                             {{ elapsedSeconds(job.startedAt) | artemisDurationFromSeconds }}
                         }
                     </td>
-                    <td [title]="job.lastActivityAt | artemisDate: 'long' : true">
-                        {{ elapsedSeconds(job.lastActivityAt) | artemisDurationFromSeconds }}
-                        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
-                    </td>
+                    <td [title]="job.lastActivityAt | artemisDate: 'long' : true">{{ job.lastActivityAt | artemisTimeAgo }}</td>
                     <td>
                         @if (job.stale) {
                             <span

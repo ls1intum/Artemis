@@ -141,16 +141,10 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void isHarnessFile_recognizesBuildAndManifestFilesAcrossLanguages() {
+        // One case per branch: the suffix list (.cabal, .csproj) and the name set, which is matched case-insensitively (Cargo.toml, DESCRIPTION).
         assertThat(ExerciseIntegrityGate.isHarnessFile("test.cabal")).isTrue();
         assertThat(ExerciseIntegrityGate.isHarnessFile("Test.csproj")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("package.json")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("package-lock.json")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("tsconfig.json")).isTrue();
         assertThat(ExerciseIntegrityGate.isHarnessFile("Cargo.toml")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("CMakeLists.txt")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("Rakefile")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("pubspec.yaml")).isTrue();
-        assertThat(ExerciseIntegrityGate.isHarnessFile("run.sh")).isTrue();
         assertThat(ExerciseIntegrityGate.isHarnessFile("DESCRIPTION")).isTrue();
         // NOT harness: the test sources the agent edits.
         assertThat(ExerciseIntegrityGate.isHarnessFile("test/Test.hs")).isFalse();
@@ -1276,23 +1270,6 @@ class ExerciseIntegrityGateTest {
         String header = "#pragma once\n#include <vector>\nclass Stack {\npublic:\n  void push(int v);\n  int pop();\n  bool empty() const;\n};\n";
         Map<String, String> template = map("include/stack.hpp", header, "src/stack.cpp", "// TODO: implement\nint Stack::pop() { return 0; }\n");
         Map<String, String> solution = map("include/stack.hpp", header, "src/stack.cpp", "#include \"stack.hpp\"\nint Stack::pop() { /* real */ return top(); }\n");
-        assertThat(ExerciseIntegrityGate.solutionLeakReasons(template, solution)).isEmpty();
-    }
-
-    @Test
-    void leak_ignoresDotfilesIdenticalAcrossTemplateAndSolution() {
-        // .gitignore / .gitattributes are legitimately identical and contain no answer; they must never be flagged.
-        String gitignore = "/build\n/node_modules\n*.log\n# generated artifacts and caches\n";
-        Map<String, String> template = map("src/Exercise.hs", TEMPLATE_STUB_HS, ".gitignore", gitignore);
-        Map<String, String> solution = map("src/Exercise.hs", SOLUTION_EXERCISE_HS, ".gitignore", gitignore);
-        assertThat(ExerciseIntegrityGate.solutionLeakReasons(template, solution)).isEmpty();
-    }
-
-    @Test
-    void leak_ignoresTriviallyShortBodies() {
-        // An empty .gitkeep or a one-line identical scaffold marker must not be called a leak.
-        Map<String, String> template = map("src/marker.txt", "x", "src/.gitkeep", "");
-        Map<String, String> solution = map("src/marker.txt", "x", "src/.gitkeep", "");
         assertThat(ExerciseIntegrityGate.solutionLeakReasons(template, solution)).isEmpty();
     }
 

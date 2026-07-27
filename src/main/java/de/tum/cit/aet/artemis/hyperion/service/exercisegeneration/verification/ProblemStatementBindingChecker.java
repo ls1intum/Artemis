@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,13 +72,13 @@ final class ProblemStatementBindingChecker {
 
     /** Every [task] title that appears more than once — a title names one seam, so a repeat means tests were split 1:1 instead of grouped. */
     static List<String> duplicateTaskTitles(String problemStatement) {
-        return TASK_TITLE.matcher(problemStatement).results().map(match -> match.group(1).strip()).collect(java.util.stream.Collectors.groupingBy(title -> title)).entrySet()
-                .stream().filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
+        return TASK_TITLE.matcher(problemStatement).results().map(match -> match.group(1).strip()).collect(Collectors.groupingBy(title -> title)).entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
     }
 
     /** Every distinct {@code testsColor} name that matches none of the known test names — a silently dead interactive diagram link. */
     static List<String> unresolvedTestsColorNames(String problemStatement, List<String> actualTestNames, Set<String> seededStructuralTestNames) {
-        Set<String> known = new java.util.HashSet<>(actualTestNames);
+        Set<String> known = new HashSet<>(actualTestNames);
         known.addAll(seededStructuralTestNames);
         return TESTS_COLOR_NAME.matcher(problemStatement).results().map(match -> match.group(1).strip()).distinct().filter(name -> !known.contains(name)).sorted().toList();
     }
@@ -166,14 +171,14 @@ final class ProblemStatementBindingChecker {
             }
             prose.add(line);
         }
-        return prose.stream().collect(Collectors.groupingBy(line -> line)).entrySet().stream().filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey)
-                .sorted().toList();
+        return prose.stream().collect(Collectors.groupingBy(line -> line)).entrySet().stream().filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted()
+                .toList();
     }
 
     /** Every markdown heading line that appears more than once verbatim. */
     static List<String> duplicateHeadings(String problemStatement) {
-        return problemStatement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(java.util.stream.Collectors.groupingBy(line -> line)).entrySet().stream()
-                .filter(entry -> entry.getValue().size() > 1).map(java.util.Map.Entry::getKey).sorted().toList();
+        return problemStatement.lines().map(String::strip).filter(line -> line.startsWith("#")).collect(Collectors.groupingBy(line -> line)).entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
     }
 
     static boolean hasTaskBindings(String problemStatement) {
@@ -227,21 +232,21 @@ final class ProblemStatementBindingChecker {
             return List.of("these visible tests have no seam in test-plan.json: " + missingSeams + ". Assign each one the stable S1/S2/... ID from SPEC.md.");
         }
 
-        java.util.Map<String, String> seamByTest = visible.stream().collect(java.util.stream.Collectors.toMap(entry -> normalizeTestName(entry.name()),
-                GeneratedTestPlan.Entry::seam, (first, ignored) -> first, java.util.LinkedHashMap::new));
+        Map<String, String> seamByTest = visible.stream()
+                .collect(Collectors.toMap(entry -> normalizeTestName(entry.name()), GeneratedTestPlan.Entry::seam, (first, ignored) -> first, LinkedHashMap::new));
         Set<String> boundNames = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName)
-                .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
-        java.util.Map<String, Set<Integer>> taskGroupsBySeam = new java.util.LinkedHashMap<>();
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<String, Set<Integer>> taskGroupsBySeam = new LinkedHashMap<>();
         List<String> reasons = new ArrayList<>();
         List<List<String>> groups = boundTestGroups(problemStatement);
         for (int index = 0; index < groups.size(); index++) {
-            Set<String> seams = groups.get(index).stream().map(ProblemStatementBindingChecker::normalizeTestName).map(seamByTest::get).filter(java.util.Objects::nonNull)
-                    .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+            Set<String> seams = groups.get(index).stream().map(ProblemStatementBindingChecker::normalizeTestName).map(seamByTest::get).filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
             if (seams.size() > 1) {
                 reasons.add("task " + (index + 1) + " mixes tests from unrelated seams " + seams + "; use one task per seam.");
             }
             for (String seam : seams) {
-                taskGroupsBySeam.computeIfAbsent(seam, ignored -> new java.util.LinkedHashSet<>()).add(index);
+                taskGroupsBySeam.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(index);
             }
         }
         for (String seam : visible.stream().map(GeneratedTestPlan.Entry::seam).distinct().toList()) {
@@ -305,7 +310,7 @@ final class ProblemStatementBindingChecker {
 
     /** The normalized test names bound more than once by {@code [task]} entries. */
     static List<String> duplicateTaskBindings(String problemStatement) {
-        Set<String> seen = new java.util.LinkedHashSet<>();
+        Set<String> seen = new LinkedHashSet<>();
         List<String> duplicates = new ArrayList<>();
         for (String name : boundTestNames(problemStatement)) {
             String normalized = normalizeTestName(name);
@@ -353,7 +358,7 @@ final class ProblemStatementBindingChecker {
     /** Exact legal task-binding candidates: real tests except build gates and tests deliberately hidden until the due date, de-duplicated in report order. */
     static List<String> bindableTestNames(List<String> actualTestNames, Set<String> hiddenTestNames) {
         Set<String> hidden = hiddenTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        Set<String> bindable = new java.util.LinkedHashSet<>();
+        Set<String> bindable = new LinkedHashSet<>();
         for (String rawName : actualTestNames) {
             String normalized = normalizeTestName(rawName);
             if (!normalized.isEmpty() && !BuildGateTestNames.isBuildGate(normalized) && !hidden.contains(normalized)) {

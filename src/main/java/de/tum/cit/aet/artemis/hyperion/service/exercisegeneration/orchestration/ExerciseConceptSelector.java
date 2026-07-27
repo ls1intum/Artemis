@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +180,7 @@ public class ExerciseConceptSelector {
             }
             expectedNumber++;
         }
-        return matchCount == 3 ? java.util.Collections.unmodifiableMap(candidates) : Map.of();
+        return matchCount == 3 ? Collections.unmodifiableMap(candidates) : Map.of();
     }
 
     private static void emit(@Nullable Consumer<String> progress, String message) {

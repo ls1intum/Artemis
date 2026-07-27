@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { TextareaModule } from 'primeng/textarea';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,7 +25,7 @@ export interface ReviewAdaptExerciseDialogResult {
     templateUrl: './review-adapt-exercise-dialog.component.html',
     styleUrl: './review-adapt-exercise-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ButtonModule, TagModule, TextareaModule, MessageModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FormsModule, TumUiButtonComponent, TumUiTagComponent, TumUiInputDirective, TumUiMessageComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ReviewAdaptExerciseDialogComponent {
     private readonly dialogRef = inject(DynamicDialogRef);

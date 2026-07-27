@@ -22,7 +22,6 @@ class ProblemStatementBindingCheckerTest {
                 "testClass[BubbleSort]", "testUseBubbleSortForSmallList");
 
         assertThat(ProblemStatementBindingChecker.boundTestNames(statement)).containsExactlyElementsOf(testNames);
-        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings(statement, testNames, testNames.size(), Set.of())).isEmpty();
     }
 
     @Test

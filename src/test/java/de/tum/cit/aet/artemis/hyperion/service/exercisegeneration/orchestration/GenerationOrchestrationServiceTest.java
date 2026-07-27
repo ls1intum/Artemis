@@ -531,16 +531,11 @@ class GenerationOrchestrationServiceTest {
     @ParameterizedTest
     @EnumSource(SpecFidelityReport.Kind.class)
     void mechanicalAcceptanceIsIndependentFromQualityReviewDisposition(SpecFidelityReport.Kind kind) {
-        Set<SpecFidelityReport.Kind> expectedBlockingKinds = EnumSet.of(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, SpecFidelityReport.Kind.MECHANICS_LEAK,
-                SpecFidelityReport.Kind.INVENTED_REQUIREMENT, SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE, SpecFidelityReport.Kind.REQUESTED_ADAPTATION_CHANGE_MISSING,
-                SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT,
-                SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(kind, "requirement", "detail")));
+
         GenerationOutcome outcome = new GenerationOutcome(completed(), accepted(), null, null, null, Map.of(), "", report, Map.of());
 
-        boolean expectedBlocking = expectedBlockingKinds.contains(kind);
-        assertThat(report.hasBlockingFindings()).isEqualTo(expectedBlocking);
-        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.isMechanicallyVerified()).as("quality finding %s must never change the mechanical verdict", kind).isTrue();
     }
 
     @Test

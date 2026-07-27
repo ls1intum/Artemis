@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
  * Every later gate is derived from the specification — which types the template must omit, whether the statement needs a diagram. But SPEC.md lives in the workspace and the
  * agent may write it, so reading the live file at gate time let the agent dissolve the contract it was being judged against: observed live, the template stage hit a compile
  * failure caused by its own early-written tests, edited SPEC.md to downgrade three {@code student-creates} types to {@code stubbed}, and the gate then dutifully enforced the
- * weaker contract. A second run rewrote the {@code ## Diagram} decision from yes to no under statement-gate pressure.
+ * weaker contract.
  * <p>
  * Keeping the approved copy here makes the complete contract unreachable from the sandbox: every downstream gate uses this snapshot as its sole authority, while guarded file
  * tools reject edits and restore it after an out-of-band shell mutation. If implementation exposes a conflict, executable artifacts must be restructured to honour the accepted

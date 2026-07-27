@@ -8,9 +8,10 @@
         }
     </p>
 
-    <p-message severity="warn" [closable]="false">
+    <!-- role/aria-live are set explicitly: p-message carried them on its host, the kit message leaves the live-region semantics to the caller. -->
+    <tum-ui-message severity="warn" role="alert" aria-live="polite">
         <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
-    </p-message>
+    </tum-ui-message>
 
     @if (!isFreeMode) {
         <h3
@@ -23,7 +24,7 @@
             @for (finding of findings; track finding) {
                 <li class="review-adapt-exercise-dialog__finding-card">
                     <div class="review-adapt-exercise-dialog__finding-header">
-                        <p-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                        <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
                         <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
                         @if (finding.locationLabel) {
                             <code class="review-adapt-exercise-dialog__finding-location">{{ finding.locationLabel }}</code>
@@ -55,7 +56,7 @@
 
     <label class="review-adapt-exercise-dialog__label" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
     <textarea
-        pTextarea
+        tumUiTextarea
         id="adaptExerciseInstructions"
         class="review-adapt-exercise-dialog__instructions"
         rows="3"
@@ -70,12 +71,11 @@
     </small>
 
     <div class="review-adapt-exercise-dialog__actions">
-        <button pButton type="button" severity="secondary" (click)="cancel()">
+        <tum-ui-button severity="secondary" (clicked)="cancel()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
-        </button>
-        <button pButton type="button" [disabled]="confirmDisabled()" (click)="confirm()">
-            <fa-icon [icon]="facArtemisIntelligence" class="review-adapt-exercise-dialog__action-icon" />
+        </tum-ui-button>
+        <tum-ui-button [icon]="facArtemisIntelligence" [disabled]="confirmDisabled()" (clicked)="confirm()">
             {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
-        </button>
+        </tum-ui-button>
     </div>
 </div>

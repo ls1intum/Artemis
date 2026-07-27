@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -572,7 +573,7 @@ public final class ExerciseIntegrityGate {
         }
         Map<String, String> seed = safeFiles(seedTestsFiles);
         List<Map.Entry<String, String>> javaTests = producedTestsFiles.entrySet().stream().filter(entry -> isJavaTestSourcePath(entry.getKey()))
-                .filter(entry -> !preserveUnchangedLegacyTests || !java.util.Objects.equals(seed.get(entry.getKey()), entry.getValue())).toList();
+                .filter(entry -> !preserveUnchangedLegacyTests || !Objects.equals(seed.get(entry.getKey()), entry.getValue())).toList();
 
         List<String> reasons = new ArrayList<>();
         List<String> generatedBuildOutput = producedTestsFiles.keySet().stream().filter(path -> path.startsWith("target/") || path.startsWith("build/")).toList();
@@ -674,7 +675,7 @@ public final class ExerciseIntegrityGate {
         Map<String, String> safeProduced = safeFiles(producedFiles);
         Set<String> paths = new LinkedHashSet<>(safeSeed.keySet());
         paths.addAll(safeProduced.keySet());
-        paths.stream().filter(path -> !java.util.Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
+        paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
             boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
             boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path) || declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
@@ -969,21 +970,6 @@ public final class ExerciseIntegrityGate {
     private static final int MIN_LEAK_BODY_LENGTH = 40;
 
     /**
-     * Detects a solution leak the differential oracle cannot see (see class javadoc). The hard part is what to flag:
-     * <ul>
-     * <li>Not files legitimately identical between template and solution at the same path — shared interfaces/headers, git dotfiles, harness files (an implementation file is one
-     * that
-     * differs from the template at its own path).</li>
-     * <li>Not a template that copies the solution into the same graded path — that makes the template pass, already rejected by the oracle's "template must fail" gate.</li>
-     * <li>Flags the solution implementation copied into an extra template file at a non-graded path.</li>
-     * </ul>
-     * Fails open when either side is empty.
-     *
-     * @param templateFiles the produced TEMPLATE repository files (repository-relative; residue already stripped)
-     * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
-     * @return a single reason listing the leaked paths, or empty when no leak
-     */
-    /**
      * Unseeded randomness in a graded test source. Each construct below exists only to make a run differ from the last one, so in a test that decides a grade it makes the score
      * irreproducible: the same submission scores differently on re-run, and neither the student nor the instructor can tell a regression from a dice roll.
      * <p>
@@ -1015,6 +1001,20 @@ public final class ExerciseIntegrityGate {
         return List.copyOf(reasons);
     }
 
+    /**
+     * Detects a solution leak the differential oracle cannot see (see class javadoc). The hard part is what to flag:
+     * <ul>
+     * <li>Not files legitimately identical between template and solution at the same path — shared interfaces/headers, git dotfiles, harness files (an implementation file is one
+     * that differs from the template at its own path).</li>
+     * <li>Not a template that copies the solution into the same graded path — that makes the template pass, already rejected by the oracle's "template must fail" gate.</li>
+     * <li>Flags the solution implementation copied into an extra template file at a non-graded path.</li>
+     * </ul>
+     * Fails open when either side is empty.
+     *
+     * @param templateFiles the produced TEMPLATE repository files (repository-relative; residue already stripped)
+     * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
+     * @return a single reason listing the leaked paths, or empty when no leak
+     */
     static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
             return List.of();
@@ -1107,35 +1107,12 @@ public final class ExerciseIntegrityGate {
             "\"(?:[^\"]*/)?(?:solution|template|assignment)/(?:[^\"]*/)?" + "(?:src/[^\"]*|[^\"/]*\\.(?:java|kt|py|ts|js|cpp|cc|c|h|hpp|rs|go|rb|cs|swift|hs|dart|scala|php|m))\"");
 
     /**
-     * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
-     * fail exactly the bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
-     *
-     * @param templateFiles the produced TEMPLATE repository files (repository-relative)
-     * @param solutionFiles the produced SOLUTION repository files (repository-relative)
-     * @return one reason naming the offending files, or empty when clean
-     */
-    /**
-     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API.
-     * <p>
-     * Observed live: a test named {@code testNoLoopsInImplementation} that never looks for a loop. It searches
-     * {@code solution/}, {@code template/} and {@code assignment/} for the implementation file, reads it, and asserts that the source does not contain the string
-     * {@code TODO}. In production the student's repository is checked out as {@code assignment/}, so a student whose otherwise-correct solution still carries a TODO comment
-     * fails a graded test for a reason that has nothing to do with their work — a false negative against correct work, which is the most damaging kind.
-     * <p>
-     * Reading those directories is also how a test learns which assignment it is grading, and a test that branches on that answer can pass on both the solution and the
-     * template, quietly subverting the differential that is supposed to prove it discriminates. Behaviour is observable through the public API; the repository layout is not
-     * the test's business.
-     *
-     * @param producedTestsFiles the tests repository as it would be saved
-     * @return one actionable rejection per offending file, or empty when no graded test reads the source tree
-     */
-    /**
      * Implementation-technique mandates stated in a specification's {@code ## Rules} section — that a method be recursive, use a stream pipeline, avoid loops.
      * <p>
      * Behavioural tests cannot observe these: no assertion over the public API separates a recursive implementation from an iterative one returning identical values. Stating
-     * one as a numbered rule is therefore a promise the exercise cannot keep, and it does active harm rather than merely being inert. Both outcomes were measured. An exercise
-     * generated from "teach recursion" that stated the mandate awarded full marks to two iterative methods; another that stated it produced a graded test which read the
-     * student's source file and failed anyone whose correct solution still carried a TODO comment — the agent trying to honour a rule it had no legitimate way to grade.
+     * one as a numbered rule is therefore a promise the exercise cannot keep, and it does active harm rather than merely being inert: an agent obliged to cover every rule
+     * either leaves the mandate ungraded — full marks for an implementation that ignores it — or reaches for the student's source text, which
+     * {@link #gradedTestsReadingSourceTreeReasons} then has to reject.
      * <p>
      * Deliberately narrow: only control-flow and API-use mandates match, and only inside {@code ## Rules}. A technique named as guidance in the student-facing statement is
      * fine and often desirable; what must not happen is a graded rule the tests are then obliged to cover.
@@ -1155,7 +1132,7 @@ public final class ExerciseIntegrityGate {
         Matcher matcher = TECHNIQUE_MANDATE.matcher(rules);
         while (matcher.find()) {
             // Markdown emphasis is presentation, not content: a rule written once as "must be recursive" and once as "must be **recursive**" states one mandate, and reporting
-            // it twice reads to the instructor as two separate problems. Observed live.
+            // it twice reads to the instructor as two separate problems.
             String mandate = matcher.group().strip().replace("*", "").replaceAll("\\s+", " ").strip();
             if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {
                 mandates.add(mandate);
@@ -1192,6 +1169,21 @@ public final class ExerciseIntegrityGate {
         return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
     }
 
+    /**
+     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API.
+     * <p>
+     * The shape to catch is a test named something like {@code testNoLoopsInImplementation} that never looks for a loop: it searches {@code solution/}, {@code template/} and
+     * {@code assignment/} for the implementation file, reads it, and asserts that the source does not contain the string {@code TODO}. In production the student's repository is
+     * checked out as {@code assignment/}, so a student whose otherwise-correct solution still carries a TODO comment fails a graded test for a reason that has nothing to do with
+     * their work — a false negative against correct work, which is the most damaging kind.
+     * <p>
+     * Reading those directories is also how a test learns which assignment it is grading, and a test that branches on that answer can pass on both the solution and the
+     * template, quietly subverting the differential that is supposed to prove it discriminates. Behaviour is observable through the public API; the repository layout is not
+     * the test's business.
+     *
+     * @param producedTestsFiles the tests repository as it would be saved
+     * @return one actionable rejection per offending file, or empty when no graded test reads the source tree
+     */
     static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
             return List.of();
@@ -1213,6 +1205,14 @@ public final class ExerciseIntegrityGate {
         return List.copyOf(reasons);
     }
 
+    /**
+     * Rejects produced template/solution sources that inspect the grading context (stack traces, stack walking) to change behavior per caller. A template stub gamed this way can
+     * fail exactly the bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
+     *
+     * @param templateFiles the produced TEMPLATE repository files (repository-relative)
+     * @param solutionFiles the produced SOLUTION repository files (repository-relative)
+     * @return one reason naming the offending files, or empty when clean
+     */
     static List<String> gradingContextSniffingReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         List<String> offendingPaths = new ArrayList<>();
         for (Map<String, String> files : List.of(templateFiles == null ? Map.<String, String>of() : templateFiles,

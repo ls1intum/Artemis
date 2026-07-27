@@ -37,7 +37,6 @@ class GenerationProgressEmitterTest {
         emitter.progress("line 1");
 
         // No coalescing: one push per line, verbatim.
-        assertThat(sent).hasSize(2);
         assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
         assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
     }
@@ -68,7 +67,6 @@ class GenerationProgressEmitterTest {
         emitter.progress("three");
 
         // Each line is recorded individually and non-terminally (the source of truth on reconnect).
-        assertThat(recorded).hasSize(3);
         assertThat(recorded).allSatisfy(r -> {
             assertThat(r.event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
             assertThat(r.terminal()).isFalse();

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -172,7 +173,7 @@ public class HyperionProgrammingLanguageContextFilterService {
                 }
 
                 HyperionSecretMaterialPolicy.Assessment secretAssessment = SECRET_MATERIAL_POLICY.assess(filePath,
-                        content == null ? new byte[0] : content.getBytes(java.nio.charset.StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
+                        content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT);
                 if (!secretAssessment.isSafe()) {
                     log.debug("Skipping Hyperion context file [{}]: {}", secretAssessment.category().orElseThrow(), secretAssessment.safePath());
                     continue;

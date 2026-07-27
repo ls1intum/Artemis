@@ -2,6 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
@@ -45,13 +48,15 @@ describe('HyperionGenerationDetailComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         });
         fixture = TestBed.createComponent(HyperionGenerationDetailComponent);
     });
 
     it('loads the operational generation as its single sandbox job', () => {
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         expect(service.getGenerationSandboxes).toHaveBeenCalledWith('agent-1');
         expect(fixture.componentInstance.job()).toEqual(expect.objectContaining({ jobId: 'job-1', exerciseId: 42, sessionId: jobs[0].sessionId }));
@@ -61,7 +66,7 @@ describe('HyperionGenerationDetailComponent', () => {
     it('shows not found when the job is no longer active', () => {
         service.getGenerationSandboxes.mockReturnValue(of([]));
 
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         expect(fixture.componentInstance.notFound()).toBe(true);
     });
@@ -69,7 +74,7 @@ describe('HyperionGenerationDetailComponent', () => {
     it('keeps load failures distinct from a completed job', () => {
         service.getGenerationSandboxes.mockReturnValue(throwError(() => new Error('offline')));
 
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         expect(fixture.componentInstance.loadFailed()).toBe(true);
         expect(fixture.componentInstance.notFound()).toBe(false);
@@ -77,6 +82,10 @@ describe('HyperionGenerationDetailComponent', () => {
 
     it('preserves the last-known job when a generation naturally ends', async () => {
         vi.useFakeTimers();
+        // Re-create the component under fake timers so its elapsed-time clock is driven by them too. The original must be
+        // destroyed first: change detection ticks every attached view, so leaving it alive would double every request.
+        fixture.destroy();
+        fixture = TestBed.createComponent(HyperionGenerationDetailComponent);
         service.getGenerationSandboxes.mockReturnValueOnce(of(jobs)).mockReturnValueOnce(of([]));
         fixture.detectChanges();
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(1);
@@ -89,14 +98,15 @@ describe('HyperionGenerationDetailComponent', () => {
         const terminalDuration = fixture.componentInstance.elapsedSeconds(jobs[0].startedAt);
         await vi.advanceTimersByTimeAsync(10_000);
         expect(fixture.componentInstance.elapsedSeconds(jobs[0].startedAt)).toBe(terminalDuration);
-        fixture.componentInstance.ngOnDestroy();
+        expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
+        fixture.destroy();
         vi.useRealTimers();
     });
 
     it('announces release only after a requested cancellation disappears', () => {
         const cancellation = new Subject<void>();
         service.cancelGeneration.mockReturnValue(cancellation);
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         fixture.componentInstance.confirmCancel();
         expect(fixture.componentInstance.confirmCancelVisible()).toBe(true);
@@ -117,7 +127,7 @@ describe('HyperionGenerationDetailComponent', () => {
 
     it('keeps last-known data when a background refresh fails', () => {
         service.getGenerationSandboxes.mockReturnValueOnce(of(jobs)).mockReturnValueOnce(throwError(() => new Error('offline')));
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         fixture.componentInstance.load(false);
 
@@ -129,7 +139,7 @@ describe('HyperionGenerationDetailComponent', () => {
         vi.useFakeTimers();
         const pending = new Subject<typeof jobs>();
         service.getGenerationSandboxes.mockReturnValue(pending);
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
 
         await vi.advanceTimersByTimeAsync(15_000);
 
@@ -138,7 +148,7 @@ describe('HyperionGenerationDetailComponent', () => {
         pending.complete();
         await vi.advanceTimersByTimeAsync(5_000);
         expect(service.getGenerationSandboxes.mock.calls.length).toBeGreaterThan(1);
-        fixture.componentInstance.ngOnDestroy();
+        fixture.destroy();
         vi.useRealTimers();
     });
 
@@ -151,6 +161,14 @@ describe('HyperionGenerationDetailComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-container-id"]').textContent).toContain('0123456789abcdef0123456789abcdef');
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-sessions-scroll"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('p-table')).toBeNull();
+    });
+
+    it('presents the last sandbox activity as a self-updating relative time', () => {
+        service.getGenerationSandboxes.mockReturnValue(of([{ ...jobs[0], lastActivityAt: dayjs().subtract(5, 'minutes').toISOString() }]));
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('5 minutes ago');
     });
 
     it('moves focus to the stable back link when the job becomes terminal', () => {

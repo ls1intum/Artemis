@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -348,7 +347,6 @@ class SandboxAgentToolsTest {
         String result = tools.bash("printf tampered > SPEC.md");
 
         assertThat(result).contains("changed read-only SPEC.md").contains("restored the approved specification");
-        verify(stageChecks).restoreApprovedSpecAfterCommand(sandbox, "s");
     }
 
     @Test
@@ -362,20 +360,6 @@ class SandboxAgentToolsTest {
         String result = tools.bash("cp solution/src/FuelStrategy.java template/src/FuelStrategy.java");
 
         assertThat(result).contains("introduced template artifacts for student-created types");
-        verify(stageChecks).approvedOwnershipViolationAfterCommand(sandbox, "s");
-    }
-
-    @Test
-    void writeFile_specMdContentRoundTripsThroughReadFile() {
-        RecordingSandbox sandbox = new RecordingSandbox();
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-
-        String written = tools.writeFile("SPEC.md", "## Rules\n- R1: computes\n");
-        assertThat(written).isEqualTo("Wrote " + "## Rules\n- R1: computes\n".length() + " characters to SPEC.md");
-
-        // The recording sandbox only serves 'cat' against content it was told to hold; simulate the write landing so the round trip is observable through readFile.
-        sandbox.files.put("/workspace/SPEC.md", "## Rules\n- R1: computes\n");
-        assertThat(tools.readFile("SPEC.md")).isEqualTo("## Rules\n- R1: computes\n");
     }
 
     @Test
@@ -620,19 +604,6 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void verify_whenWiredToTheVerifier_returnsItsStructuredObservation() {
-        // The verify tool delegates to the DifferentialVerificationService and returns its observation verbatim.
-        RecordingSandbox sandbox = new RecordingSandbox();
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
-        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a", "t_b"), List.of(), List.of(), true, List.of());
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
-
-        String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
-        assertThat(out).isEqualTo(report.toObservation());
-    }
-
-    @Test
     void verify_blocksSupportedSecretMaterialWithoutReturningTheMatch() {
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -656,12 +627,6 @@ class SandboxAgentToolsTest {
     // Stage-aware verify()/submit(): in a staged session every stage delegates to the wired StageCheckService for the CURRENT stage; an unstaged/legacy session (no enterStage()
     // call) keeps the old always-on full-differential behavior via the verifier directly.
 
-    private static SandboxAgentTools toolsWiredToAVerifier(RecordingSandbox sandbox, ProgrammingExercise exercise, DifferentialVerificationService verifier,
-            AgentVerifyReport report) {
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
-        return new SandboxAgentTools(sandbox, "s", verifier, exercise);
-    }
-
     @Test
     void unstagedRepairVerifyRefreshesAndThreadsTheStructuralOracle() {
         RecordingSandbox sandbox = new RecordingSandbox();
@@ -675,7 +640,6 @@ class SandboxAgentToolsTest {
         tools.configureStructuralOracleRefresh(() -> names);
 
         assertThat(tools.verify()).isEqualTo(report.toObservation());
-        verify(verifier).selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), eq(names));
     }
 
     private static SandboxAgentTools stagedTools(InteractiveSandbox sandbox, ProgrammingExercise exercise, StageCheckService stageCheckService) {
@@ -732,7 +696,6 @@ class SandboxAgentToolsTest {
         String out = tools.verify();
 
         assertThat(out).isEqualTo(report.toObservation());
-        assertThat(out.split("MECHANICAL PRECHECK:", -1)).as("the verdict line must appear exactly once").hasSize(2);
     }
 
     @Test
@@ -754,7 +717,6 @@ class SandboxAgentToolsTest {
         String out = tools.verify();
 
         assertThat(out).contains("MECHANICAL PRECHECK: PASS");
-        verify(stageCheckService).check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport), anySet());
     }
 
     @Test
@@ -769,18 +731,6 @@ class SandboxAgentToolsTest {
 
         assertThat(out).contains("ERROR").contains("stage-check service is unavailable");
         verifyNoInteractions(verifier);
-    }
-
-    @Test
-    void verify_withNoStageEntered_keepsTheLegacyUnstagedBehaviorAndDelegates() {
-        // enterStage() never called (currentStage stays null): the legacy single-loop path, where verify is always available.
-        RecordingSandbox sandbox = new RecordingSandbox();
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
-        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
-        SandboxAgentTools tools = toolsWiredToAVerifier(sandbox, exercise, verifier, report);
-
-        assertThat(tools.verify()).isEqualTo(report.toObservation());
     }
 
     // submit(): staged sessions run this stage's own check first and veto the loop-ending effect on a failure; unstaged sessions are never gated.

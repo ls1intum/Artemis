@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -406,7 +407,7 @@ public class ExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         var user = userRepository.getUser();
         var mutationLease = exercise instanceof ProgrammingExercise ? programmingExerciseMutationGuard.claimExternalMutation(exerciseId)
-                : programmingExerciseMutationGuard.claimExternalMutation(java.util.OptionalLong.empty());
+                : programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty());
         try (mutationLease) {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
             boolean updatedExercise = exerciseRepository.toggleSecondCorrection(exercise);

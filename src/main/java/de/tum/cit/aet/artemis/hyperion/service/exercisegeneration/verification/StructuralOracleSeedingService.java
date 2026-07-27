@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -55,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.Oracl
 public class StructuralOracleSeedingService {
 
     private static final Logger log = LoggerFactory.getLogger(StructuralOracleSeedingService.class);
-
-    private static final Duration CLEANUP_TIMEOUT = Duration.ofSeconds(30);
 
     private static final String STRUCTURAL_RESOURCE_DIR = "templates/java/test/testFiles/structural/";
 
@@ -219,7 +217,7 @@ public class StructuralOracleSeedingService {
     /** Seeds only Ares providers that have at least one dynamic test to create; an empty provider is reported under its shared factory name and creates duplicate test cases. */
     private static List<String> requiredStructuralClasses(String oracle) throws IOException {
         ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
-        List<String> classes = new java.util.ArrayList<>();
+        List<String> classes = new ArrayList<>();
         classes.add("ClassTest.java");
         if (hasEntries(entries, "methods")) {
             classes.add("MethodTest.java");
@@ -299,7 +297,6 @@ public class StructuralOracleSeedingService {
             content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
         if (packageName.isEmpty()) {
-            // Default package: drop the package declaration line entirely.
             content = content.replaceFirst("(?m)^\\s*package\\s+" + Pattern.quote(PACKAGE_PLACEHOLDER) + "\\s*;\\s*\\n", "");
         }
         else {
@@ -318,10 +315,7 @@ public class StructuralOracleSeedingService {
             return StructuralAssetOwnership.UNMANAGED;
         }
         String prefix = testDirectory.isEmpty() ? "" : testDirectory + "/";
-        // Ownership is decided by the marker, never by whether the set of assets is complete. An earlier revision also required every class the oracle names to still exist,
-        // which made the seeder disown its own output the moment anything removed part of it: observed live, the agent deleted the ClassTest and MethodTest this service had
-        // seeded on a previous attempt, the surviving oracle was then read as a foreign harness, and the whole generation was thrown away with nothing saved. Incomplete own
-        // output is not a foreign harness — it is exactly the state this service exists to repair, and it rewrites every required class anyway.
+        // Ownership is decided by the marker, never by whether the asset set is complete: incomplete own output is exactly the state this service repairs.
         boolean anyUnmarkedClass = STRUCTURAL_CLASSES.stream().filter(className -> testFiles.containsKey(prefix + className))
                 .anyMatch(className -> !testFiles.get(prefix + className).contains(GENERATED_MARKER));
         if (anyUnmarkedClass) {
@@ -444,7 +438,7 @@ public class StructuralOracleSeedingService {
             command.append(" \"").append(dir).append("/").append(className).append("\"");
         }
         try {
-            var result = sandbox.exec(sessionId, CLEANUP_TIMEOUT, "sh", "-c", command.toString());
+            var result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c", command.toString());
             return result != null && result.isSuccess();
         }
         catch (RuntimeException e) {

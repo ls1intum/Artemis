@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -840,13 +842,13 @@ public class InteractiveSandboxRelayHandler {
 
         private final ReentrantLock lock = new ReentrantLock();
 
-        /** Accessed only from {@link ConcurrentHashMap#compute(Object, java.util.function.BiFunction)} for this job id. */
+        /** Accessed only from {@link ConcurrentHashMap#compute(Object, BiFunction)} for this job id. */
         private int users;
     }
 
     private record ActiveSession(SandboxSessionSpec sessionSpec, Instant startedAt) {
 
-        GenerationSandboxSessionDTO toDto(String containerId, java.util.Optional<Instant> lastActivity) {
+        GenerationSandboxSessionDTO toDto(String containerId, Optional<Instant> lastActivity) {
             SandboxSessionContext context = sessionSpec.context();
             return new GenerationSandboxSessionDTO(containerId, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
                     context.mode(), startedAt, lastActivity.orElse(startedAt));

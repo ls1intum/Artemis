@@ -1367,7 +1367,8 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
      * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
-     * <li><strong>Hyperion coordination maps:</strong> Generation ownership, cancellation, budget, recovery, provider cooldown, progress, and sandbox handoff state</li>
+     * <li><strong>Hyperion coordination maps:</strong> Provider-failure cooldowns, generation job ownership, cancellations, transcripts, file changes, token-budget
+     * reservations, generation baselines, and sandbox payload handoff state</li>
      * </ul>
      *
      * @param config            the Hazelcast configuration to modify

@@ -110,10 +110,6 @@
         gap: 0.5rem;
         margin-top: 0.25rem;
     }
-
-    &__action-icon {
-        margin-right: 0.25rem;
-    }
 }
 
 @media (max-width: 40rem) {
@@ -125,6 +121,8 @@
         &__actions {
             flex-direction: column-reverse;
 
+            // The kit button is an element component: stretch the host and the native <button> it wraps.
+            tum-ui-button,
             button {
                 width: 100%;
             }

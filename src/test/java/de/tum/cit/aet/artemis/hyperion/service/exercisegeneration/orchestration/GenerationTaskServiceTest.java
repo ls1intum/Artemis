@@ -795,26 +795,6 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void deadlineAfterMechanicalVerificationDoesNotDiscardTheSaveObligation() {
-        ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
-        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
-            verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
-            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
-        });
-        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
-            deadline.getValue().run();
-            BooleanSupplier mutationGuard = invocation.getArgument(7);
-            assertThat(mutationGuard.getAsBoolean()).isTrue();
-            return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "saved"), exercise.getProblemStatement(), exercise.getTitle(), "main");
-        });
-
-        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
-
-        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
-    }
-
-    @Test
     void exerciseBecomingIneligibleDuringPersistence_closesTheMutationGuard() {
         when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true, false);

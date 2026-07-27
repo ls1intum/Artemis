@@ -25,6 +25,8 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.openai.core.http.Headers;
+import com.openai.errors.UnauthorizedException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HyperionProviderFailureCooldownServiceTest {
@@ -124,6 +126,26 @@ class HyperionProviderFailureCooldownServiceTest {
         })).isInstanceOf(RuntimeException.class).hasMessageContaining("rate_limit_exceeded");
 
         assertThat(secondService.execute("model", Duration.ofMinutes(5), () -> "response")).isEqualTo("response");
+    }
+
+    @Test
+    void executeOpensCooldownForAMisconfiguredModel() {
+        // A missing/renamed deployment is a configuration failure, not a transient one: every worker would burn the same request, so it must cool down like a quota failure.
+        assertThatThrownBy(() -> firstService.execute("model", Duration.ofMinutes(5), () -> {
+            throw new RuntimeException("HTTP 404 model_not_found: requested model does not exist");
+        })).isInstanceOf(RuntimeException.class).hasMessageContaining("model_not_found");
+
+        assertThatThrownBy(() -> secondService.execute("model", Duration.ofMinutes(5), () -> "response")).isInstanceOf(ProviderFailureCooldown.ProviderInCooldownException.class);
+    }
+
+    @Test
+    void executeOpensCooldownForATypedUnauthorizedFailureWithoutAnyStatusInTheMessage() {
+        // The typed SDK exception carries its 401 in statusCode(), not in the message, so classification must read the OpenAI exception rather than regex the text.
+        assertThatThrownBy(() -> firstService.execute("model", Duration.ofMinutes(5), () -> {
+            throw UnauthorizedException.builder().headers(Headers.builder().build()).build();
+        })).isInstanceOf(UnauthorizedException.class);
+
+        assertThatThrownBy(() -> secondService.execute("model", Duration.ofMinutes(5), () -> "response")).isInstanceOf(ProviderFailureCooldown.ProviderInCooldownException.class);
     }
 
 }

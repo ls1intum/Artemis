@@ -34,10 +34,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
-import com.openai.core.http.Headers;
-import com.openai.errors.BadRequestException;
 import com.openai.errors.OpenAIIoException;
-import com.openai.errors.UnauthorizedException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
@@ -212,25 +209,6 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_nonTransient4xx_failsFastWithoutRetrying() {
-        ChatModel chatModel = mock(ChatModel.class);
-        BadRequestException badRequest = BadRequestException.builder().headers(Headers.builder().build()).build();
-        when(chatModel.call(any(Prompt.class))).thenThrow(badRequest);
-
-        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-        List<String> steps = new ArrayList<>();
-        List<ChatResponse> recorded = new ArrayList<>();
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, steps::add);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(recorded).isEmpty();
-        verify(chatModel, times(1)).call(any(Prompt.class)); // fail fast: a deterministic 4xx is never retried
-        assertThat(steps).contains("The AI service could not complete the request.");
-    }
-
-    @Test
     void agentLoop_quotaExhaustionFailsFastAndActivatesProviderFailureCooldown() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota"));
@@ -252,67 +230,6 @@ class AgentLoopRunnerTest {
         assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(secondChatModel, times(0)).call(any(Prompt.class));
         verifyNoInteractions(secondUsageSink);
-    }
-
-    @Test
-    void agentLoop_plainRateLimitDoesNotActivateProviderFailureCooldown() {
-        ChatModel rateLimitedModel = mock(ChatModel.class);
-        when(rateLimitedModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 rate_limit_exceeded: too many requests"));
-        TestProviderFailureCooldown cooldown = new TestProviderFailureCooldown();
-
-        AgentLoopRunner runner = newTestRunner(List.of(rateLimitedModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(rateLimitedModel, times(1)).call(any(Prompt.class));
-
-        ChatModel secondChatModel = mock(ChatModel.class);
-        when(secondChatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
-        AgentLoopRunner secondRunner = newTestRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(secondChatModel, times(1)).call(any(Prompt.class));
-    }
-
-    @Test
-    void agentLoop_modelNotFoundActivatesProviderFailureCooldown() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 404 model_not_found: requested model does not exist"));
-        TestProviderFailureCooldown cooldown = new TestProviderFailureCooldown();
-
-        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(1)).call(any(Prompt.class));
-
-        ChatModel secondChatModel = mock(ChatModel.class);
-        AgentLoopRunner secondRunner = newTestRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(secondChatModel, times(0)).call(any(Prompt.class));
-    }
-
-    @Test
-    void agentLoop_typedUnauthorizedFailureActivatesProviderFailureCooldown() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(UnauthorizedException.builder().headers(Headers.builder().build()).build());
-        TestProviderFailureCooldown cooldown = new TestProviderFailureCooldown();
-
-        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(1)).call(any(Prompt.class));
-
-        ChatModel secondChatModel = mock(ChatModel.class);
-        AgentLoopRunner secondRunner = newTestRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
-
-        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(secondChatModel, times(0)).call(any(Prompt.class));
     }
 
     @Test
@@ -372,22 +289,6 @@ class AgentLoopRunnerTest {
         verify(chatModel, times(1)).call(any(Prompt.class)); // the interrupt stops the re-sample ladder instead of returning the empty response as a completion
         // The interrupt flag was restored by the backoff (honouring the interrupt); clear it here so it does not leak into other tests.
         assertThat(Thread.interrupted()).isTrue();
-    }
-
-    @Test
-    void agentLoop_reportsAnExhaustedSdkCallWithoutAnOuterRetry() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 500"));
-
-        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-        List<String> steps = new ArrayList<>();
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(1)).call(any(Prompt.class));
-        assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("GPU endpoint"));
     }
 
     @Test

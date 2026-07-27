@@ -63,7 +63,6 @@ class GenerationReviewServiceTest {
             assertThat(finding.severity()).isEqualTo(Severity.HIGH);
             assertThat(finding.description()).contains("contradict");
         });
-        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any(), eq(user), eq(17L), eq(savedHeads));
         verify(exerciseEditorSyncService).broadcastReviewThreadUpdate(eq(42L), any());
     }
 

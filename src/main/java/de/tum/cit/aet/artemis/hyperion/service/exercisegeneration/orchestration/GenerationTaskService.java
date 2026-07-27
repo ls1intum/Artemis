@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,9 +270,8 @@ public class GenerationTaskService {
                             }
                             emitter.milestone(ExerciseGenerationEventDTO.done(
                                     "Saving did not complete. Some changes may already have been saved; manual review is required. Automatic revert to the previous state is no longer available for this exercise.",
-                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(),
-                                    e.savedRepositoryCommits().entrySet().stream().collect(java.util.stream.Collectors
-                                            .toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue))));
+                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(), e.savedRepositoryCommits().entrySet().stream()
+                                            .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue))));
                             return;
                         }
                         catch (RuntimeException e) {
@@ -336,8 +337,8 @@ public class GenerationTaskService {
                         emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + reviewNotes,
                                 instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict,
                                 true,
-                                persistResult.postPersistHeads().entrySet().stream().collect(
-                                        java.util.stream.Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(java.util.Locale.ROOT), Map.Entry::getValue)),
+                                persistResult.postPersistHeads().entrySet().stream()
+                                        .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)),
                                 persistResult.savedExerciseVersionId()));
                     }
                 }

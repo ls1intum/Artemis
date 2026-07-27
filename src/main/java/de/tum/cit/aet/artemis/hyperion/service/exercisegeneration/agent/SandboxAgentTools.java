@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.annotation.Tool;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -42,8 +44,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
     private static final String WORKSPACE = "/workspace";
-
-    private static final Duration FILE_OP_TIMEOUT = Duration.ofSeconds(30);
 
     private static final Duration BASH_TIMEOUT = Duration.ofMinutes(5);
 
@@ -166,12 +166,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Nullable
     private volatile AgentVerifyReport lastTestsReport;
 
-    /**
-     * @param sandbox   the sandbox session the tools operate on
-     * @param sessionId the session handle
-     * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check in an unstaged session
-     * @param exercise  the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
-     */
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise) {
         this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
     }
@@ -235,7 +229,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
-        SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return screenObservation(safe, "ERROR: could not read '" + safe + "': " + result.combinedOutput());
         }
@@ -328,7 +322,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
         String script = "mkdir -p \"$(dirname '" + target + "')\" && echo '" + encoded + "' | base64 -d > '" + target + "'";
-        SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "sh", "-c", script);
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c", script);
         if (!result.isSuccess()) {
             return "ERROR: could not write '" + safe + "': " + result.combinedOutput();
         }
@@ -358,7 +352,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stageRejection != null) {
             return stageRejection;
         }
-        SandboxExecResult read = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        SandboxExecResult read = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!read.isSuccess()) {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();
         }
@@ -501,7 +495,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 return contractRejection;
             }
         }
-        SandboxExecResult result = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
+        SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
         }
@@ -565,7 +559,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         String output = composeBashOutput(result, logPath);
         if (stageCheckService != null) {
-            List<String> contractRejections = java.util.stream.Stream
+            List<String> contractRejections = Stream
                     .of(stageCheckService.restoreApprovedSpecAfterCommand(sandbox, sessionId), stageCheckService.approvedOwnershipViolationAfterCommand(sandbox, sessionId))
                     .flatMap(Optional::stream).toList();
             if (!contractRejections.isEmpty()) {
@@ -614,16 +608,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
     /**
      * Records the authoritative structural checks seeded between TEMPLATE and TESTS so staged verification sees the same gradable name set as final verification.
      *
-     * @param names the structural test names materialized by the server
+     * @param names the structural test-case names the server seeded, or null for none
      */
     public void recordSeededStructuralTestNames(Set<String> names) {
         seededStructuralTestNames = names == null ? Set.of() : Set.copyOf(names);
     }
 
     /**
-     * Returns the server-authored structural test names currently used by staged and final verification.
-     *
-     * @return the current structural test names
+     * @return the server-authored structural test names currently used by staged and final verification
      */
     public Set<String> seededStructuralTestNames() {
         return seededStructuralTestNames;
@@ -632,16 +624,16 @@ public class SandboxAgentTools implements SubmitVetoAware {
     /**
      * Installs the server-owned structural-oracle refresh used at every TESTS/full-verification boundary.
      *
-     * @param refresh the callback that re-materializes the structural oracle
+     * @param refresh re-materializes the oracle and yields its authoritative test names
      */
     public void configureStructuralOracleRefresh(Supplier<Set<String>> refresh) {
         structuralOracleRefresh = refresh;
     }
 
     /**
-     * Re-materializes the server-owned structural oracle and returns its authoritative test names.
+     * Re-materializes the server-owned structural oracle.
      *
-     * @return the refreshed structural test names
+     * @return its authoritative test names, empty when no refresh is installed
      */
     public Set<String> refreshStructuralOracle() {
         Supplier<Set<String>> refresh = structuralOracleRefresh;

@@ -266,8 +266,8 @@ public class ProgrammingExerciseUpdateResource {
                 throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
             }
 
-            // Note: conversion between exam/course exercise is already validated above (lines 148-154)
-            // by comparing courseId and exerciseGroupId before the entity is mutated.
+            // Note: conversion between exam/course exercise is already rejected by updateProgrammingExercise, which compares the DTO's courseId and exerciseGroupId before the
+            // entity is mutated.
 
             // Check that only allowed Athena modules are used
             athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),

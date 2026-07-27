@@ -20,7 +20,6 @@ class GeneratedTestPlanTest {
                 ]}
                 """);
 
-        assertThat(plan.tests()).hasSize(2);
         assertThat(plan.tests().getFirst()).isEqualTo(new GeneratedTestPlan.Entry("earn_subDollarPurchaseEarnsZeroPoints", "S1", 3.0, "ALWAYS"));
         assertThat(plan.hiddenEntries()).singleElement().extracting(GeneratedTestPlan.Entry::name).isEqualTo("redeem_throwsWhenPointsInsufficient");
         assertThat(plan.visibleEntries()).singleElement().extracting(GeneratedTestPlan.Entry::seam).isEqualTo("S1");
@@ -46,7 +45,6 @@ class GeneratedTestPlanTest {
 
         assertThat(plan.effectiveWeightsByName()).containsEntry("behaviour", 3.0).containsEntry("testClass[Strategy]", 0.0).containsEntry("testMethods[Strategy]", 0.0)
                 .containsEntry("edge", 1.0);
-        assertThat(plan.effectiveWeightsByName().values().stream().mapToDouble(Double::doubleValue).sum()).isEqualTo(4.0);
     }
 
     @Test

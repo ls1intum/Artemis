@@ -4,6 +4,9 @@ import { HyperionGenerationJobsTableComponent } from './hyperion-generation-jobs
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import dayjs from 'dayjs/esm';
 
 describe('HyperionGenerationJobsTableComponent', () => {
     let fixture: ComponentFixture<HyperionGenerationJobsTableComponent>;
@@ -11,7 +14,7 @@ describe('HyperionGenerationJobsTableComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HyperionGenerationJobsTableComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideRouter([])],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
         });
         fixture = TestBed.createComponent(HyperionGenerationJobsTableComponent);
         fixture.componentRef.setInput('jobs', [
@@ -42,6 +45,13 @@ describe('HyperionGenerationJobsTableComponent', () => {
         expect(text).toContain('Concurrency Lab');
         expect(text).not.toContain('artemisApp.buildAgents.generationSandboxes.slots');
         expect(detailLink.getAttribute('href')).toContain('/admin/hyperion-generations/job-1?agentName=agent-1');
+    });
+
+    it('presents the last sandbox activity as a self-updating relative time', () => {
+        fixture.componentRef.setInput('jobs', [{ ...fixture.componentInstance.jobs()[0], lastActivityAt: dayjs().subtract(5, 'minutes').toISOString() }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('5 minutes ago');
     });
 
     it('does not present stale timing or a broken detail link as live data', () => {

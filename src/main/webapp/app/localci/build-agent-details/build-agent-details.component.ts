@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
-import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, catchError, debounceTime, exhaustMap, merge, switchMap, tap, timer } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -107,8 +107,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /** Subscription for initial running jobs REST API load */
     runningJobsSubscription?: Subscription;
 
+    /** Subscription for the Hyperion sandbox polling stream; re-created whenever the viewed agent changes. */
     generationSandboxesSubscription?: Subscription;
-    private generationSandboxesRefreshInterval?: ReturnType<typeof setInterval>;
+
+    /** Manual refresh requests (initial load, websocket agent update, retry button) folded into the polling stream. */
+    private readonly generationSandboxRefreshRequests = new Subject<void>();
 
     readonly generationSandboxes = signal<GenerationSandboxJob[]>([]);
     readonly generationSandboxesLoading = signal(false);
@@ -217,8 +220,18 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.buildDurationInterval = setInterval(() => {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             }, 1000); // 1 second
+            // Subscribe before the initial load so that the refresh requests it emits are picked up.
+            this.generationSandboxesSubscription = merge(
+                this.generationSandboxRefreshRequests,
+                timer(BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS, BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS),
+            )
+                .pipe(
+                    // exhaustMap, not switchMap: a slow refresh must not be cancelled and re-fired. It also subsumes the
+                    // former re-entrancy guard, as further requests are ignored while one is still in flight.
+                    exhaustMap(() => this.fetchGenerationSandboxes()),
+                )
+                .subscribe();
             this.loadAgentData();
-            this.generationSandboxesRefreshInterval ??= setInterval(() => this.refreshGenerationSandboxes(), BuildAgentDetailsComponent.GENERATION_SANDBOX_REFRESH_INTERVAL_MS);
             this.initWebsocketSubscription();
             // Set up debounced search for finished build jobs to avoid excessive API calls
             this.searchSubscription = this.finishedJobsSearchTrigger
@@ -250,9 +263,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsSubscription?.unsubscribe();
         this.generationSandboxesSubscription?.unsubscribe();
         this.searchSubscription?.unsubscribe();
-        if (this.generationSandboxesRefreshInterval) {
-            clearInterval(this.generationSandboxesRefreshInterval);
-        }
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -355,25 +365,36 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Requests an immediate refresh of the Hyperion sandbox list. The request is dropped when one is already in flight.
+     */
     refreshGenerationSandboxes(): void {
+        this.generationSandboxRefreshRequests.next();
+    }
+
+    /**
+     * Fetches the sandbox list once. Errors are handled inside this inner pipe so that a failing request can never
+     * complete the outer polling stream.
+     */
+    private fetchGenerationSandboxes(): Observable<unknown> {
         const agentName = this.agentName();
-        if (!agentName || this.generationSandboxesLoading()) {
-            return;
+        if (!agentName) {
+            return EMPTY;
         }
-        this.generationSandboxesSubscription?.unsubscribe();
         this.generationSandboxesLoading.set(true);
         this.generationSandboxesLoadFailed.set(false);
-        this.generationSandboxesSubscription = this.buildAgentsService.getGenerationSandboxes(agentName).subscribe({
-            next: (sessions) => {
+        return this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
+            tap((sessions) => {
                 this.generationSandboxes.set(sessions.map((session) => ({ ...session, agentName })));
                 this.generationSandboxesLoading.set(false);
-            },
-            error: () => {
+            }),
+            catchError(() => {
                 this.generationSandboxes.update((sessions) => sessions.map((session) => ({ ...session, stale: true })));
                 this.generationSandboxesLoading.set(false);
                 this.generationSandboxesLoadFailed.set(true);
-            },
-        });
+                return EMPTY;
+            }),
+        );
     }
 
     /**

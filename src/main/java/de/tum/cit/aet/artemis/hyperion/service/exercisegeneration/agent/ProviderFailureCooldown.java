@@ -134,7 +134,6 @@ public interface ProviderFailureCooldown {
 
         @Override
         public void startCooldown(String key, Instant until) {
-            // Intentionally disabled.
         }
     }
 

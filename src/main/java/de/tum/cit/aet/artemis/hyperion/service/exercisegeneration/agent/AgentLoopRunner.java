@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +42,10 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
  * stops, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring AI's automatic tool execution has no iteration cap and
  * no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided separately by the authoritative verifier.
+ * <p>
+ * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn, so a
+ * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
+ * cancel hook (see {@code GenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
  */
 public class AgentLoopRunner {
 
@@ -209,26 +214,6 @@ public class AgentLoopRunner {
         return builder.build();
     }
 
-    /**
-     * Drives the agent loop for one Hyperion sandbox as a single fresh conversation.
-     * <p>
-     * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn,
-     * so a
-     * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
-     * cancel hook (see {@code GenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
-     * <p>
-     * Equivalent to {@code runSession(systemPrompt, null, userPrompt, ...).result()}; see {@link #runSession} to span one logical conversation across multiple calls.
-     *
-     * @param systemPrompt the system prompt describing the task and the available tools
-     * @param userPrompt   the initial user instruction
-     * @param tools        the tools object whose {@code @Tool} methods are exposed to the model (typically {@link SandboxAgentTools})
-     * @param maxTurns     the hard cap on model turns (safety budget)
-     * @param cancelled    a supplier polled before each turn; if it returns {@code true} the loop stops cooperatively
-     * @param usageSink    invoked after every successful model call (the main loop call and the summarization call) with its {@link ChatResponse}, so the caller can record token
-     *                         usage; may be {@code null}
-     * @param stepListener invoked after every step with a short human-readable progress line (tool calls, completion); may be {@code null}
-     * @return the loop outcome
-     */
     public AgentLoopResult run(String systemPrompt, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> stepListener) {
         return runSession(systemPrompt, null, userPrompt, tools, maxTurns, cancelled, usageSink, stepListener).result();
@@ -242,10 +227,11 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Like {@link #run}, but accepts the conversation returned by a prior {@code runSession} call so several bounded loop invocations can share one logical conversation (the
-     * model keeps everything it learned in earlier calls), and returns the resulting conversation so the caller can continue it again.
+     * Drives the agent loop for one Hyperion sandbox, accepting the conversation returned by a prior {@code runSession} call so several bounded loop invocations can share one
+     * logical conversation (the model keeps everything it learned in earlier calls), and returning the resulting conversation so the caller can continue it again. {@link #run} is
+     * the single-shot form of this method.
      * <p>
-     * When {@code priorConversation} is {@code null} this behaves exactly like {@link #run}: a fresh two-message conversation (system, user). Otherwise the given
+     * When {@code priorConversation} is {@code null} this starts a fresh two-message conversation (system, user). Otherwise the given
      * {@code systemPrompt} replaces the system message, {@code priorConversation} is spliced in after it unchanged, and {@code userPrompt} is appended as the next turn before
      * the loop continues — so in-loop compaction (which always protects the first two messages) keeps operating over the whole carried history exactly as it does within a
      * single {@link #run} call.
@@ -293,7 +279,6 @@ public class AgentLoopRunner {
         requireTextSafe("provider/user-prompt", userPrompt);
 
         // The ChatModel does not auto-execute tools on call(), so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
-        // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
         if (priorConversation != null) {
@@ -963,8 +948,7 @@ public class AgentLoopRunner {
     }
 
     private static void requireTextSafe(String logicalPath, @Nullable String text) {
-        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
+        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
     }
 
     private static String truncateForSummary(@Nullable String value) {

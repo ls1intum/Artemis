@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faCircleCheck, faRotate, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,8 +14,9 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { Subscription, finalize } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, exhaustMap, interval, map, merge, takeUntil, tap, timer } from 'rxjs';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 
 @Component({
     selector: 'jhi-hyperion-generation-detail',
@@ -33,11 +35,19 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
         ArtemisTranslatePipe,
         ArtemisDatePipe,
         ArtemisDurationFromSecondsPipe,
+        ArtemisTimeAgoPipe,
     ],
 })
-export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
+export class HyperionGenerationDetailComponent implements OnInit {
+    /** How often the sandbox list is polled while the generation is still running. */
+    private static readonly REFRESH_INTERVAL_MS = 5000;
+
+    /** How often the elapsed-duration display re-renders. */
+    private static readonly CLOCK_INTERVAL_MS = 1000;
+
     private readonly route = inject(ActivatedRoute);
     private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly job = signal<GenerationSandboxJob | undefined>(undefined);
     readonly loading = signal(false);
@@ -49,7 +59,6 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     readonly cancellationRequested = signal(false);
     readonly released = signal(false);
     readonly naturallyEnded = signal(false);
-    readonly now = signal(Date.now());
     readonly confirmCancelVisible = signal(false);
 
     readonly jobId = this.route.snapshot.paramMap.get('jobId') ?? '';
@@ -59,81 +68,62 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     readonly faCircleCheck = faCircleCheck;
     readonly faTriangleExclamation = faTriangleExclamation;
 
-    private durationInterval?: ReturnType<typeof setInterval>;
-    private refreshInterval?: ReturnType<typeof setInterval>;
-    private loadSubscription?: Subscription;
-    private loadInProgress = false;
+    /** Emits once when the generation reached a terminal state; stops both the background refresh and the elapsed-time clock. */
+    private readonly generationEnded = new Subject<void>();
+
+    /** Manual (re)load requests from the retry buttons and from a completed cancellation; the value is the `showLoading` flag. */
+    private readonly loadRequests = new Subject<boolean>();
+
+    /**
+     * Ticks once per second so the elapsed duration re-renders. It stops for good when the generation ends, which freezes
+     * the signal on its last value and therefore freezes the displayed duration.
+     * NOTE: for clock-skew correctness this should read `ArtemisServerDateService.now()` instead of the raw client clock;
+     * that behaviour is deliberately left unchanged here.
+     */
+    private readonly now = toSignal(
+        interval(HyperionGenerationDetailComponent.CLOCK_INTERVAL_MS).pipe(
+            takeUntil(this.generationEnded),
+            map(() => Date.now()),
+        ),
+        { initialValue: Date.now() },
+    );
+
     private initialLoadResolved = false;
     private readonly backToAgent = viewChild<ElementRef<HTMLAnchorElement>>('backToAgent');
 
-    private readonly focusTerminalState = effect(() => {
-        if (this.released()) {
-            this.backToAgent()?.nativeElement.focus();
-        }
-    });
+    constructor() {
+        effect(() => {
+            if (this.released()) {
+                this.backToAgent()?.nativeElement.focus();
+            }
+        });
+    }
 
     ngOnInit(): void {
         if (!this.jobId || !this.agentName) {
             this.notFound.set(true);
             return;
         }
+        merge(
+            this.loadRequests,
+            // Background refresh; it stops as soon as the generation reached a terminal state.
+            timer(HyperionGenerationDetailComponent.REFRESH_INTERVAL_MS, HyperionGenerationDetailComponent.REFRESH_INTERVAL_MS).pipe(
+                takeUntil(this.generationEnded),
+                map(() => false),
+            ),
+        )
+            .pipe(
+                // exhaustMap, not switchMap: a slow refresh must not be cancelled and re-fired. It also subsumes the
+                // former re-entrancy guard, as further requests are ignored while one is still in flight.
+                exhaustMap((showLoading) => this.fetchJob(showLoading)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe();
         this.load();
-        this.durationInterval = setInterval(() => this.now.set(Date.now()), 1000);
-        this.refreshInterval = setInterval(() => this.load(false), 5000);
-    }
-
-    ngOnDestroy(): void {
-        this.focusTerminalState.destroy();
-        this.stopDurationClock();
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
-        this.loadSubscription?.unsubscribe();
     }
 
     load(showLoading = true): void {
-        if (this.loadInProgress) {
-            return;
-        }
-        this.loadInProgress = true;
-        this.loading.set(showLoading);
-        this.loadFailed.set(false);
-        this.backgroundRefreshFailed.set(false);
-        if (showLoading) {
-            this.notFound.set(false);
-        }
-        this.loadSubscription = this.buildAgentsService
-            .getGenerationSandboxes(this.agentName)
-            .pipe(finalize(() => (this.loadInProgress = false)))
-            .subscribe({
-                next: (jobs) => {
-                    const job = jobs.find((candidate) => candidate.jobId === this.jobId);
-                    if (job) {
-                        this.job.set({ ...job, agentName: this.agentName });
-                        this.notFound.set(false);
-                        this.initialLoadResolved = true;
-                    } else if (!this.initialLoadResolved) {
-                        this.notFound.set(true);
-                    } else if (this.cancellationRequested()) {
-                        this.released.set(true);
-                        this.stopDurationClock();
-                        this.stopRefresh();
-                    } else {
-                        this.naturallyEnded.set(true);
-                        this.stopDurationClock();
-                        this.stopRefresh();
-                    }
-                    this.loading.set(false);
-                },
-                error: () => {
-                    if (this.job()) {
-                        this.backgroundRefreshFailed.set(true);
-                    } else {
-                        this.loadFailed.set(true);
-                    }
-                    this.loading.set(false);
-                },
-            });
+        this.loadRequests.next(showLoading);
     }
 
     confirmCancel(): void {
@@ -165,6 +155,49 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
         return `artemisApp.buildAgents.generationSandboxes.${mode === 'ADAPT' ? 'adapt' : 'generate'}`;
     }
 
+    /**
+     * Requests the sandbox list once. Errors are handled inside this inner pipe so that a failing request can never
+     * complete the outer polling stream.
+     */
+    private fetchJob(showLoading: boolean): Observable<unknown> {
+        this.loading.set(showLoading);
+        this.loadFailed.set(false);
+        this.backgroundRefreshFailed.set(false);
+        if (showLoading) {
+            this.notFound.set(false);
+        }
+        return this.buildAgentsService.getGenerationSandboxes(this.agentName).pipe(
+            tap((jobs) => this.applyJobs(jobs)),
+            catchError(() => {
+                if (this.job()) {
+                    this.backgroundRefreshFailed.set(true);
+                } else {
+                    this.loadFailed.set(true);
+                }
+                this.loading.set(false);
+                return EMPTY;
+            }),
+        );
+    }
+
+    private applyJobs(jobs: GenerationSandboxJob[]): void {
+        const job = jobs.find((candidate) => candidate.jobId === this.jobId);
+        if (job) {
+            this.job.set({ ...job, agentName: this.agentName });
+            this.notFound.set(false);
+            this.initialLoadResolved = true;
+        } else if (!this.initialLoadResolved) {
+            this.notFound.set(true);
+        } else if (this.cancellationRequested()) {
+            this.released.set(true);
+            this.generationEnded.next();
+        } else {
+            this.naturallyEnded.set(true);
+            this.generationEnded.next();
+        }
+        this.loading.set(false);
+    }
+
     private cancel(job: GenerationSandboxJob): void {
         this.canceling.set(true);
         this.cancelFailed.set(false);
@@ -179,19 +212,5 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
                 this.cancelFailed.set(true);
             },
         });
-    }
-
-    private stopRefresh(): void {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-            this.refreshInterval = undefined;
-        }
-    }
-
-    private stopDurationClock(): void {
-        if (this.durationInterval) {
-            clearInterval(this.durationInterval);
-            this.durationInterval = undefined;
-        }
     }
 }

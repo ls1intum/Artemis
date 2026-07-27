@@ -2,12 +2,19 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -48,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 public class StageCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(StageCheckService.class);
-
-    private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
 
     private static final Duration DIFF_TIMEOUT = Duration.ofMinutes(5);
 
@@ -127,7 +132,7 @@ public class StageCheckService {
             return Optional.empty();
         }
         String encoded = Base64.getEncoder().encodeToString(approved.get().getBytes(StandardCharsets.UTF_8));
-        SandboxExecResult restore = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
+        SandboxExecResult restore = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
                 "echo '" + encoded + "' | base64 -d > '" + GenerationWorkspaceService.WORKSPACE + "/SPEC.md'");
         if (!restore.isSuccess()) {
             throw new IllegalStateException("A shell command changed the approved specification and it could not be restored");
@@ -200,7 +205,7 @@ public class StageCheckService {
             return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
                     + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Diagram' decision before continuing.");
         }
-        Set<String> exactSpecLines = spec.lines().map(String::strip).collect(java.util.stream.Collectors.toSet());
+        Set<String> exactSpecLines = spec.lines().map(String::strip).collect(Collectors.toSet());
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
         if (!missingSpecSections.isEmpty()) {
             return StageCheckResult.failed("SPEC.md is missing required section(s): " + missingSpecSections + ". Add them before continuing.");
@@ -225,7 +230,7 @@ public class StageCheckService {
                     + " — no 'absent', parentheses, or explanation. Do not move the token into the Role cell; the later template gate reads the final cell only.");
         }
         List<String> designTypes = designRows.stream().map(DesignRow::type).toList();
-        List<String> duplicateDesignTypes = designTypes.stream().filter(type -> java.util.Collections.frequency(designTypes, type) > 1).distinct().toList();
+        List<String> duplicateDesignTypes = designTypes.stream().filter(type -> Collections.frequency(designTypes, type) > 1).distinct().toList();
         if (!duplicateDesignTypes.isEmpty()) {
             return StageCheckResult.failed("The Design table declares the same type more than once: " + duplicateDesignTypes
                     + ". Keep one authoritative row per type so template ownership cannot contradict itself.");
@@ -277,7 +282,7 @@ public class StageCheckService {
             return StageCheckResult.failed("These Testing Strategy rows have no stable seam ID: " + malformedSeamIds
                     + ". Use S1, S2, ... in the first column. Describe the work in the remaining cells; do not use a prose label as the identifier.");
         }
-        List<String> duplicateSeamIds = seamIds.stream().filter(id -> java.util.Collections.frequency(seamIds, id) > 1).distinct().toList();
+        List<String> duplicateSeamIds = seamIds.stream().filter(id -> Collections.frequency(seamIds, id) > 1).distinct().toList();
         if (!duplicateSeamIds.isEmpty()) {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
@@ -309,8 +314,7 @@ public class StageCheckService {
             return StageCheckResult.failed("These Testing Strategy seams do not use a weight tier of exactly 1, 2, or 3: " + invalidWeights
                     + ". Put the seam's Artemis test-case weight in the fourth column.");
         }
-        Map<String, String> designStatusByType = designRows.stream()
-                .collect(java.util.stream.Collectors.toMap(DesignRow::type, DesignRow::status, (first, ignored) -> first, java.util.LinkedHashMap::new));
+        Map<String, String> designStatusByType = designRows.stream().collect(Collectors.toMap(DesignRow::type, DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
         List<String> unknownOwners = testingRows.stream().filter(row -> !designStatusByType.containsKey(row.ownerType())).map(row -> row.seamId() + "->" + row.ownerType())
                 .toList();
         if (!unknownOwners.isEmpty()) {
@@ -333,9 +337,9 @@ public class StageCheckService {
                     + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
         }
         // Echo the parsed plan back so the agent SEES what the later gates will hold it to (feedback quality: confirm understanding, not just absence of errors).
-        String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(java.util.stream.Collectors.joining(", "));
+        String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
-                .collect(java.util.stream.Collectors.joining(", "));
+                .collect(Collectors.joining(", "));
         // The ownership decision is frozen here, so state its testing consequence here too. The graded tests are compiled against the TEMPLATE as well as the solution, so a
         // student-created type simply does not exist at test-compile time. Discovering that later costs whole repair budgets: one observed run spent every attempt cycling
         // "cannot find symbol" -> re-add the type to the template -> ownership gate rejects it -> remove it -> "cannot find symbol", never naming the real constraint.
@@ -352,7 +356,7 @@ public class StageCheckService {
         // The prohibition on instrumenting the API is not a detail: it is the loophole the previous wording left open. Told only that a technique needs no seam, one live run
         // answered by adding getFactorialRecCalls() and three siblings to the exercise's own type, backed by mutable static counters, and asserting calls > 1. Four of its
         // twelve graded tests then measured nothing — an iterative implementation that increments the same counter passes every one of them — while the student's contract
-        // carried four accessors the exercise did not need. An earlier run answered the same demand by reading the student's source file.
+        // carried four accessors the exercise did not need.
         String techniqueAdvice = techniqueMandates.isEmpty() ? ""
                 : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
                         + "implementation from an iterative one returning identical values, so keep this as guidance in the student-facing statement and do NOT give it a "
@@ -379,7 +383,7 @@ public class StageCheckService {
         if (start < 0) {
             return List.of();
         }
-        List<DesignRow> rows = new java.util.ArrayList<>();
+        List<DesignRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
             if (line.startsWith("## ") && !line.startsWith("## Design")) {
@@ -389,14 +393,14 @@ public class StageCheckService {
                 continue;
             }
             if (!pastHeader) {
-                // The first two pipe rows are the header and the |---| separator.
+                // Everything up to and including the |---| separator row is the table header.
                 if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
                     pastHeader = true;
                 }
                 continue;
             }
             String row = line.substring(1, line.endsWith("|") ? line.length() - 1 : line.length());
-            List<String> cells = java.util.Arrays.stream(row.split("\\|", -1)).map(String::strip).toList();
+            List<String> cells = Arrays.stream(row.split("\\|", -1)).map(String::strip).toList();
             if (cells.isEmpty()) {
                 continue;
             }
@@ -416,7 +420,7 @@ public class StageCheckService {
      * tokens still fail the specification gate.
      */
     private static String normalizeTemplateStatus(String cell) {
-        String normalized = cell.replace("`", "").strip().toLowerCase(java.util.Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
+        String normalized = cell.replace("`", "").strip().toLowerCase(Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
         for (String emphasis : List.of("**", "__", "*", "_")) {
             if (normalized.startsWith(emphasis) && normalized.endsWith(emphasis) && normalized.length() > emphasis.length() * 2) {
                 return normalized.substring(emphasis.length(), normalized.length() - emphasis.length()).strip();
@@ -431,10 +435,9 @@ public class StageCheckService {
     }
 
     private static List<String> givenTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
-        Set<String> givenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(DesignRow::type).collect(java.util.stream.Collectors.toSet());
-        Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
-                .collect(java.util.stream.Collectors.toSet());
-        List<String> conflicts = new java.util.ArrayList<>();
+        Set<String> givenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
+        Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
+        List<String> conflicts = new ArrayList<>();
         boolean inPublicApi = false;
         @Nullable
         String currentOwner = null;
@@ -467,7 +470,7 @@ public class StageCheckService {
     }
 
     private static boolean containsTypeName(String text, String type) {
-        return java.util.regex.Pattern.compile("(?<![A-Za-z0-9_])" + java.util.regex.Pattern.quote(type) + "(?![A-Za-z0-9_])").matcher(text).find();
+        return Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(type) + "(?![A-Za-z0-9_])").matcher(text).find();
     }
 
     /**
@@ -483,7 +486,7 @@ public class StageCheckService {
      * separator row.
      */
     static List<String> workedExampleDataRows(String spec) {
-        List<String> rows = new java.util.ArrayList<>();
+        List<String> rows = new ArrayList<>();
         boolean inSection = false;
         boolean pastHeader = false;
         for (String line : spec.lines().map(String::strip).toList()) {
@@ -613,8 +616,7 @@ public class StageCheckService {
 
     /** Stable seam IDs whose Testing Strategy row explicitly requires a hidden after-due-date variant. */
     static Set<String> hiddenVariantSeamIds(String spec) {
-        return testingStrategyRows(spec).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId)
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        return testingStrategyRows(spec).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -630,7 +632,7 @@ public class StageCheckService {
         if (start < 0) {
             return List.of();
         }
-        List<TestingStrategyRow> rows = new java.util.ArrayList<>();
+        List<TestingStrategyRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
             if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
@@ -651,7 +653,7 @@ public class StageCheckService {
             String responsibility = columns.length > 3 ? normalizeTestingCell(columns[3]) : "";
             String weight = columns.length > 4 ? normalizeTestingCell(columns[4]) : "";
             int lastContentColumn = line.endsWith("|") ? columns.length - 2 : columns.length - 1;
-            String hidden = columns.length > 2 ? normalizeTestingCell(columns[lastContentColumn]).toLowerCase(java.util.Locale.ROOT) : "";
+            String hidden = columns.length > 2 ? normalizeTestingCell(columns[lastContentColumn]).toLowerCase(Locale.ROOT) : "";
             if (!seam.isBlank()) {
                 rows.add(new TestingStrategyRow(seam, owner, responsibility, weight, hidden));
             }
@@ -676,7 +678,7 @@ public class StageCheckService {
             return List.of();
         }
         return spec.substring(start).lines().map(String::strip).filter(line -> line.startsWith("|")).findFirst().map(line -> line.split("\\|", -1)).map(columns -> {
-            List<String> headers = new java.util.ArrayList<>();
+            List<String> headers = new ArrayList<>();
             int lastContentColumn = columns.length - 1;
             if (columns[lastContentColumn].isBlank()) {
                 lastContentColumn--;
@@ -701,7 +703,7 @@ public class StageCheckService {
         }
         try {
             return GeneratedTestPlan.parse(planJson).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
-                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+                    .collect(Collectors.toUnmodifiableSet());
         }
         catch (RuntimeException e) {
             return Set.of();
@@ -742,8 +744,7 @@ public class StageCheckService {
                 + "(class|interface|enum|record|trait|struct|protocol)[[:space:]]+" + type + "\\b";
         String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", declarationPattern, root, "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md",
                 "--exclude=*.txt");
-        return java.util.stream.Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct()
-                .collect(java.util.stream.Collectors.joining("\n"));
+        return Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct().collect(Collectors.joining("\n"));
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
@@ -856,13 +857,13 @@ public class StageCheckService {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
                     + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
         }
-        // Exact duplicate headings are a mechanical statement defect (observed shipping live: the same '### 1. ...' section twice); catching it here costs nothing.
+        // Exact duplicate headings are a mechanical statement defect; catching it here costs nothing.
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        // Same class of mechanical defect as the duplicate headings above, one level down: a task whose instruction sentence is pasted several times (observed live: three
-        // times under one [task]) reads to a student as if it were three different requirements.
+        // Same class of mechanical defect as the duplicate headings above, one level down: a task whose instruction sentence is pasted several times reads to a student as if
+        // it were three different requirements.
         List<String> duplicateInstructions = ProblemStatementBindingChecker.duplicateInstructionLines(statement);
         if (!duplicateInstructions.isEmpty()) {
             return StageCheckResult.failed(
@@ -905,7 +906,7 @@ public class StageCheckService {
 
     private Set<String> enforcedHiddenVariantSeamIds(InteractiveSandbox sandbox, String sessionId) {
         return enforcedTestingStrategyRows(sandbox, sessionId).stream().filter(row -> row.hiddenDecision().equals("yes")).map(TestingStrategyRow::seamId)
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private List<TestingStrategyRow> enforcedTestingStrategyRows(InteractiveSandbox sandbox, String sessionId) {
@@ -927,7 +928,7 @@ public class StageCheckService {
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {
         try {
-            SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, command);
+            SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, command);
             return result.isSuccess() && result.stdout() != null ? result.stdout() : "";
         }
         catch (RuntimeException e) {
