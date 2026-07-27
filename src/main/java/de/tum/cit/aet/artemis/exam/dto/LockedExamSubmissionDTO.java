@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,13 +32,15 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
         List<LockedSubmissionResultDTO> results) {
 
     /**
-     * Slim participation of a locked submission: only the id and the exercise the assessment-locks table reads.
+     * Slim participation of a locked submission: the id, the exercise, and the submission count the assessment-locks
+     * table reads.
      *
-     * @param id       the id of the participation (used for text-assessment routing)
-     * @param exercise the exercise the participation belongs to
+     * @param id              the id of the participation (used for text-assessment routing)
+     * @param exercise        the exercise the participation belongs to
+     * @param submissionCount the number of submissions of this participation, rendered by the table's submissions column
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LockedSubmissionParticipationDTO(Long id, LockedSubmissionExerciseDTO exercise) {
+    public record LockedSubmissionParticipationDTO(Long id, LockedSubmissionExerciseDTO exercise, Integer submissionCount) {
     }
 
     /**
@@ -66,16 +69,17 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
     /**
      * Converts a locked {@link Submission} into its slim exam-locks projection.
      *
-     * @param submission the submission whose assessment is locked (with participation, exercise and results loaded)
+     * @param submission                       the submission whose assessment is locked (with participation, exercise and results loaded)
+     * @param submissionCountByParticipationId batched submission counts per participation id (one query for all rows)
      * @return the projected DTO
      */
-    public static LockedExamSubmissionDTO of(Submission submission) {
+    public static LockedExamSubmissionDTO of(Submission submission, Map<Long, Integer> submissionCountByParticipationId) {
         // The locked-submissions query joins participation and exercise, so both are always present; projecting them
         // without guards lets a future query change fail loudly instead of emitting a DTO the client cannot render.
         Participation participation = submission.getParticipation();
         var exercise = participation.getExercise();
         var exerciseDTO = new LockedSubmissionExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle());
-        var participationDTO = new LockedSubmissionParticipationDTO(participation.getId(), exerciseDTO);
+        var participationDTO = new LockedSubmissionParticipationDTO(participation.getId(), exerciseDTO, submissionCountByParticipationId.getOrDefault(participation.getId(), 0));
 
         // results can contain null padding slots (correction rounds), so they are filtered defensively
         List<LockedSubmissionResultDTO> resultDTOs = submission.getResults().stream().filter(Objects::nonNull)

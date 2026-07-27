@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -133,6 +134,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -164,6 +166,8 @@ public class ExamResource {
     private String examArchivesDirPath;
 
     private final UserRepository userRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final CourseRepository courseRepository;
 
@@ -215,7 +219,8 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -240,6 +245,7 @@ public class ExamResource {
         this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -1377,7 +1383,10 @@ public class ExamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
-        List<LockedExamSubmissionDTO> lockedSubmissions = submissions.stream().map(LockedExamSubmissionDTO::of).toList();
+        // one batched query for the submission counts the assessment-locks table renders; never one query per row
+        List<Long> participationIds = submissions.stream().map(submission -> submission.getParticipation().getId()).distinct().toList();
+        Map<Long, Integer> submissionCounts = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);
+        List<LockedExamSubmissionDTO> lockedSubmissions = submissions.stream().map(submission -> LockedExamSubmissionDTO.of(submission, submissionCounts)).toList();
 
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);

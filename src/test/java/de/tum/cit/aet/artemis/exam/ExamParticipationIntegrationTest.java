@@ -758,6 +758,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
         assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
         assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
         assertThat(lockedSubmissionDTO.results()).hasSize(1);
         LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
         assertThat(resultDTO.score()).isEqualTo(55D);

@@ -321,6 +321,27 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
     });
 
+    it('restores the previous order and clears the pending flag when the reorder save is rejected', async () => {
+        comp.exerciseGroups.set(groups);
+        const failingSave = new Subject<HttpResponse<void>>();
+        vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(failingSave.asObservable());
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        // The optimistic swap is applied immediately.
+        comp.moveDown(0);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+        expect(comp.orderSavePending()).toBe(true);
+
+        // The server rejects the order (e.g. a stale tab whose groups no longer match the exam): the optimistic
+        // swap must not stay visible.
+        failingSave.error(new Error('rejected'));
+        await Promise.resolve();
+
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([0, 1, 2]);
+        expect(comp.orderSavePending()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+    });
+
     it('maps exercise types to exercise groups', () => {
         comp.exerciseGroups.set(groups);
         const firstGroupId = groups[0].id!;

@@ -298,20 +298,25 @@ export class ExerciseGroupsComponent implements OnInit {
             return;
         }
         const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            [exerciseGroups[index], exerciseGroups[index + offset]] = [exerciseGroups[index + offset], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-            this.exerciseGroups.set([...exerciseGroups]);
+        if (!exerciseGroups) {
+            return;
         }
-        this.saveOrder();
+        const previousOrder = [...exerciseGroups];
+        [exerciseGroups[index], exerciseGroups[index + offset]] = [exerciseGroups[index + offset], exerciseGroups[index]];
+        // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+        this.exerciseGroups.set([...exerciseGroups]);
+        this.saveOrder(previousOrder);
     }
 
-    private saveOrder(): void {
+    private saveOrder(previousOrder: ExerciseGroup[]): void {
         this.orderSavePending.set(true);
         this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
             // The response has no body; the already-applied optimistic order is the persisted order.
             next: () => this.orderSavePending.set(false),
             error: () => {
+                // The server rejected the order (e.g. a stale tab whose groups no longer match the exam), so the
+                // optimistic swap must not stay visible.
+                this.exerciseGroups.set(previousOrder);
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
                 this.orderSavePending.set(false);
             },
