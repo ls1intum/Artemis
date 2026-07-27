@@ -177,6 +177,6 @@ public class ExamSubmissionService {
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
             calculatedEndDate = withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
         }
-        return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
+        return calculatedEndDate != null && exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }
 }
