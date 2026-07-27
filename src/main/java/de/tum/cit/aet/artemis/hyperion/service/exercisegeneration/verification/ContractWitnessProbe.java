@@ -12,15 +12,11 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 
 /**
- * Turns candidate {@link ContractWitness}es into validated ones by running them against the reference solution. The pieces here are pure so they are unit-testable without
+ * Turns candidate {@link ContractWitness}es into validated ones by running them against the reference solution. Only the pure pieces live here so they are unit-testable without
  * Docker; the sandbox half (write the probe, build the solution, remove the probe) belongs to the caller that already owns a session.
- * <p>
- * Validation demands positive evidence: "the build did not report this as failing" is equally satisfied by a witness that never ran, so a witness counts only when the build
- * reports it among the tests it RAN. Reading silence as success would manufacture evidence out of a build that never exercised the witness.
  */
 public final class ContractWitnessProbe {
 
-    /** Distinctive on purpose: recognisable as machine-authored, and unlikely to collide with a generated suite. */
     public static final String PROBE_CLASS_NAME = "HyperionContractWitnessProbeTest";
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+[^;]+;", Pattern.MULTILINE);

@@ -10,23 +10,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The machine-readable grading plan the TESTS stage writes to {@code /workspace/test-plan.json}, implementing the specification's Testing Strategy with Artemis' native grading
- * features: seam-level importance tiers and {@code AFTER_DUE_DATE} visibility for overfit-resistant hidden variants. A seam's tier is repeated on each mapped test as
- * {@code seamWeightTier} so entries stay self-contained; persistence divides that tier evenly across the seam's cases, because Artemis stores weights per test case.
+ * features: seam-level importance tiers and {@code AFTER_DUE_DATE} visibility for overfit-resistant hidden variants.
  * <p>
- * Expected shape:
- * <code>{"tests":[{"name":"&lt;exact test name&gt;","seam":"S1","seamWeightTier":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}</code>. The seam is transient generation metadata
- * connecting tests to one student task, which persistence ignores. A plan without seams still parses, so a candidate verified without them can be persisted; the TESTS-stage gate
- * requires them wherever the specification declares them.
+ * A tier belongs to a seam rather than to a single test and is repeated on each of that seam's tests so entries stay self-contained; Artemis stores weights per test case, so the
+ * tier is divided evenly across the seam's cases. The seam id itself is transient generation metadata that persistence ignores, and a plan without seams still parses so a
+ * candidate verified without them can still be persisted; the TESTS-stage gate is what requires seams wherever the specification declares them.
  */
 public record GeneratedTestPlan(List<Entry> tests) {
 
-    /** One test case's seam mapping, its seam's importance tier, and its visibility decision. */
     public record Entry(String name, String seam, double seamWeightTier, String visibility) {
     }
 
-    static final double MIN_WEIGHT = 1.0;
+    private static final double MIN_SEAM_WEIGHT_TIER = 1.0;
 
-    static final double MAX_WEIGHT = 3.0;
+    private static final double MAX_SEAM_WEIGHT_TIER = 3.0;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -60,22 +57,22 @@ public record GeneratedTestPlan(List<Entry> tests) {
             if (!seam.isEmpty() && !seam.matches("S[1-9][0-9]*")) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seam '" + seam + "'; use a stable SPEC seam ID such as \"S1\".");
             }
-            // "weight" is a read-only alias: the field names a seam tier, not a per-case weight.
-            JsonNode weightNode = testNode.has("seamWeightTier") ? testNode.get("seamWeightTier") : testNode.get("weight");
-            if (weightNode == null || !weightNode.isNumber()) {
-                throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs a numeric \"seamWeightTier\" between " + (int) MIN_WEIGHT + " and " + (int) MAX_WEIGHT
-                        + " (core seams weigh more than supporting or edge seams).");
+            // "weight" is accepted as a read-only alias, but never echoed back: the field carries a seam tier, not the per-case weight persistence derives from it.
+            JsonNode tierNode = testNode.has("seamWeightTier") ? testNode.get("seamWeightTier") : testNode.get("weight");
+            if (tierNode == null || !tierNode.isNumber()) {
+                throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs a numeric \"seamWeightTier\" between " + (int) MIN_SEAM_WEIGHT_TIER + " and "
+                        + (int) MAX_SEAM_WEIGHT_TIER + " (core seams weigh more than supporting or edge seams).");
             }
-            double weight = weightNode.asDouble();
-            if (weight < MIN_WEIGHT || weight > MAX_WEIGHT) {
-                throw new IllegalArgumentException(
-                        "test-plan.json entry '" + name + "' has seamWeightTier " + weight + "; tiers must be between " + (int) MIN_WEIGHT + " and " + (int) MAX_WEIGHT + ".");
+            double tier = tierNode.asDouble();
+            if (tier < MIN_SEAM_WEIGHT_TIER || tier > MAX_SEAM_WEIGHT_TIER) {
+                throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seamWeightTier " + tier + "; tiers must be between " + (int) MIN_SEAM_WEIGHT_TIER
+                        + " and " + (int) MAX_SEAM_WEIGHT_TIER + ".");
             }
             String visibility = testNode.path("visibility").asText("").strip();
             if (!"ALWAYS".equals(visibility) && !"AFTER_DUE_DATE".equals(visibility)) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has visibility '" + visibility + "'; use \"ALWAYS\" or \"AFTER_DUE_DATE\".");
             }
-            entries.add(new Entry(name, seam, weight, visibility));
+            entries.add(new Entry(name, seam, tier, visibility));
         }
         List<String> duplicateNames = entries.stream().map(Entry::name).collect(Collectors.groupingBy(name -> name)).entrySet().stream()
                 .filter(group -> group.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();

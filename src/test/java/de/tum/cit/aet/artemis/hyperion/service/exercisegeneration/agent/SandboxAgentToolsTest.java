@@ -586,18 +586,18 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void isMangledArrayCommand_matchesOnlyTheRenderedArgvArray() {
+    void isRenderedArgvArray_matchesTheArgvArrayFormButNotAPosixTest() {
         // Rendered argv array (bracket, no space, comma inside): matches.
-        assertThat(SandboxAgentTools.isMangledArrayCommand("[bash, -lc, ls -R]")).isTrue();
-        assertThat(SandboxAgentTools.isMangledArrayCommand("  [sh, -c, sh verify.sh solution]  ")).isTrue();
-        assertThat(SandboxAgentTools.isMangledArrayCommand("[ls -R, grep foo]")).isTrue();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("[bash, -lc, ls -R]")).isTrue();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("  [sh, -c, sh verify.sh solution]  ")).isTrue();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("[ls -R, grep foo]")).isTrue();
         // POSIX test (space after the bracket): does not match.
-        assertThat(SandboxAgentTools.isMangledArrayCommand("[ -f solution/pom.xml ]")).isFalse();
-        assertThat(SandboxAgentTools.isMangledArrayCommand("[ -d tests ] && echo y")).isFalse();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("[ -f solution/pom.xml ]")).isFalse();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("[ -d tests ] && echo y")).isFalse();
         // Single-element render (no comma) and ordinary commands: do not match.
-        assertThat(SandboxAgentTools.isMangledArrayCommand("[ls]")).isFalse();
-        assertThat(SandboxAgentTools.isMangledArrayCommand("ls -R solution template tests")).isFalse();
-        assertThat(SandboxAgentTools.isMangledArrayCommand("grep -n 'a,b' tests/Foo.java")).isFalse();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("[ls]")).isFalse();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("ls -R solution template tests")).isFalse();
+        assertThat(SandboxAgentTools.isRenderedArgvArray("grep -n 'a,b' tests/Foo.java")).isFalse();
     }
 
     @Test

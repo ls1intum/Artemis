@@ -37,6 +37,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Handing the agent a full shell is safe because correctness is never judged from what these tools report. In a staged session, {@code verify} and the gating half of
  * {@code submit} delegate to {@link StageCheckService} for the current stage's check, as cheap as that stage allows; in an unstaged session {@code verify} runs the same
  * differential as the post-loop verifier. Either way the result is advisory — the post-loop verifier decides mechanical validity.
+ * <p>
+ * Nothing here is synchronized: one session's tool calls are serial, and the volatile fields exist only because the orchestrator may hand a stage over from a different thread
+ * between two of them.
  */
 public class SandboxAgentTools implements SubmitVetoAware {
 
@@ -62,10 +65,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     private static final int BASH_TAIL_BYTES = 10_000;
 
-    /**
-     * Characters {@code read_file} returns inline per call. Same constraint as {@link #BASH_TAIL_BYTES}: staying under the agent loop's per-tool-result cap keeps the
-     * continuation footer's {@code offset} the real next line to request, instead of a line the loop's own elision already dropped.
-     */
+    /** Characters {@code read_file} returns inline per call. Same cap constraint as {@link #BASH_TAIL_BYTES}, so the continuation footer names a line that really is next. */
     static final int READ_INLINE_MAX_CHARS = 10_000;
 
     /** Per-command spill-file ceiling via {@code ulimit -f} (512-byte blocks): 65536 * 512 = 32 MB, so a runaway command cannot fill the container disk before the timeout. */
@@ -75,27 +75,25 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private static final Pattern BASH_META = Pattern.compile("^__HYP_META__ rc=(-?\\d+) bytes=(\\d+) lines=(\\d+)$");
 
     /**
-     * Matches the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}) that Spring AI produces from {@code {"command":[...]}}, which is not a
-     * runnable shell command. A POSIX {@code [ -f x ]} test has a space after the bracket, and a single-element {@code [foo]} has no comma, so neither matches.
+     * Matches the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends {@code {"command":[...]}}
+     * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
      */
-    private static final Pattern MANGLED_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
+    private static final Pattern RENDERED_ARGV_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
 
-    /** Present when an observation already states its own verdict, so {@link #formatStageCheckObservation} does not synthesize a second verdict line on top of it. */
-    private static final String VERDICT_LINE_MARKER = "MECHANICAL PRECHECK:";
+    private static final String SELF_REPORTED_VERDICT_MARKER = "MECHANICAL PRECHECK:";
 
     private final InteractiveSandbox sandbox;
 
     private final String sessionId;
 
-    /** Reused by {@code verify} to run the same differential as the post-loop mechanical gate in an unstaged session; {@code null} leaves the tool unwired. */
+    /** Runs the unstaged {@code verify}, the same differential as the post-loop mechanical gate. */
     @Nullable
     private final DifferentialVerificationService verifier;
 
-    /** Supplies the {@code verify.sh} and SCA configuration the {@code verify} tool's differential runs under; {@code null} leaves the tool unwired. */
+    /** Supplies the {@code verify.sh} and SCA configuration the {@code verify} tool's differential runs under. */
     @Nullable
     private final ProgrammingExercise exercise;
 
-    /** Consulted by {@code verify} and the gating half of {@code submit} in a staged session; {@code null} in an unstaged session. */
     @Nullable
     private final StageCheckService stageCheckService;
 
@@ -104,15 +102,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     private final boolean adaptation;
 
-    /** Per-command spill-file counter; unsynchronized is safe — the agent loop calls the tools serially within a session and each session has its own instance and container. */
     private int bashSequence = 0;
 
     private boolean sandboxSessionTerminated;
 
-    /**
-     * The stage this session is running, set by the orchestrator via {@link #enterStage} before each stage's bounded agent loop; {@code null} means the session is unstaged.
-     * Volatile because the orchestrator and the agent loop need not run on the same thread across a stage transition, even though one stage's tool calls are always serial.
-     */
+    /** {@code null} means the session is unstaged, which is what makes {@code verify} and {@code submit} run the full differential instead of one stage's check. */
     private volatile GenerationStage currentStage;
 
     /** Root artifacts the current semantic repair may change; {@code null} outside a finding-scoped repair. */
@@ -124,23 +118,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Nullable
     private volatile Supplier<Set<String>> structuralOracleRefresh;
 
-    /**
-     * Set by {@link #submit} when the current stage's mechanical check rejected the submission, so {@link AgentLoopRunner} keeps the loop going instead of ending the session;
-     * cleared by {@link #consumeSubmitVeto()}.
-     */
+    /** Makes {@link AgentLoopRunner} keep the loop going instead of ending the session on a rejected {@code submit}; cleared by {@link #consumeSubmitVeto()}. */
     private volatile boolean submitVetoed;
 
-    /**
-     * Whether a file/shell tool has run since the last PASSING stage check, so a later check for the same stage cannot be skipped. Starts {@code true} (no passing check has
-     * run yet) and is reset by {@link #enterStage}.
-     */
     private volatile boolean dirtySinceLastPassingCheck = true;
 
-    /** The stage {@link #cachedPassingCheck} applies to, so a cache from an earlier stage can never be misread as current. */
     @Nullable
-    private volatile GenerationStage cachedStage;
+    private volatile GenerationStage cachedPassingCheckStage;
 
-    /** The last PASSING stage check's result, reused by the orchestrator's exit gate when nothing has changed since (see {@link #reuseCachedPassingCheck}). */
     @Nullable
     private volatile StageCheckResult cachedPassingCheck;
 
@@ -175,7 +160,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this(sandbox, sessionId, null, null, Map.of(), false, null);
     }
 
-    /** Convenience for callers and tests that want the default whole-file read (subject to the same inline budget as the tool call). */
     String readFile(String path) {
         return readFile(path, null, null);
     }
@@ -214,10 +198,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return pageFileContent(safe, result.stdout(), offset, limit);
     }
 
-    /**
-     * Applies offset/limit and the inline character budget to file content, cutting only on line boundaries and appending a continuation footer that names the exact next
-     * {@code offset} whenever anything was left out.
-     */
+    /** Cuts only on line boundaries, so a page never hands the model half a line it would then have to guess the rest of. */
     private static String pageFileContent(String safe, String content, @Nullable Integer offset, @Nullable Integer limit) {
         String[] allLines = content.split("\n", -1);
         // A trailing newline produces one final empty element that is an artifact of the split, not a real line.
@@ -240,7 +221,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             int addition = (selected.isEmpty() ? 0 : 1) + text.length();
             if (selected.length() + addition > READ_INLINE_MAX_CHARS) {
                 if (selected.isEmpty()) {
-                    // The first requested line alone exceeds the budget; hand the model a shell recipe instead of returning nothing.
+                    // The first requested line alone exceeds the budget: hand back a shell recipe rather than an empty result the model cannot act on.
                     return "[Line " + line + " of '" + safe + "' is " + text.length() + " characters, more than the " + READ_INLINE_MAX_CHARS
                             + " this tool returns. Read it in slices with bash: sed -n '" + line + "p' " + safe + " | cut -c1-" + READ_INLINE_MAX_CHARS + "]";
                 }
@@ -353,10 +334,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Finds {@code oldText} in {@code current} and returns the updated content, or an {@code ERROR:} message the model can act on. Tries the exact text first; when that finds
-     * nothing, retries in a normalized space that forgives the mismatches models actually produce when re-typing code they read earlier — trailing whitespace, smart quotes,
-     * Unicode dashes and non-breaking spaces (see {@link #normalizeForTolerantMatch}). A normalized match is only accepted when it is unique, and only the lines it touches are
-     * rewritten from the normalized text; every other line keeps its original bytes.
+     * Tries the exact text first and only then a normalized match (see {@link #normalizeForTolerantMatch}), because a tolerant match must never win over a byte-exact one. A
+     * normalized match is accepted only when it is unique, and only the lines it touches are rewritten from the normalized text; every other line keeps its original bytes.
      */
     private static EditOutcome applyUniqueReplacement(String safe, String current, String oldText, String newText) {
         int occurrences = countOccurrences(current, oldText);
@@ -382,9 +361,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Rebuilds the file after a tolerant (normalized-space) match: original lines outside the matched line range are kept byte-for-byte; the matched range is emitted from the
-     * normalized text with {@code newText} substituted. Fails loud (never expected — {@link #normalizeForTolerantMatch} preserves newlines) rather than corrupt the file if the
-     * normalization changed the line structure.
+     * Rebuilds the file after a tolerant match: lines outside the matched range keep their original bytes, and only the matched range is emitted from the normalized text. Bails
+     * out rather than corrupt the file if normalization changed the line structure, which {@link #normalizeForTolerantMatch} guarantees it does not.
      */
     private static EditOutcome spliceNormalizedMatch(String current, String normalizedCurrent, int matchIndex, int matchLength, String newText) {
         String[] originalLines = current.split("\n", -1);
@@ -427,9 +405,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Folds the mismatches a model introduces when re-typing code it read earlier — NFKC, trailing whitespace per line, smart quotes, Unicode dashes and spaces — so a
-     * near-miss edit succeeds instead of bouncing a "not found" error back for a byte-identical retry. Never adds or removes newlines, because
-     * {@link #spliceNormalizedMatch} relies on line indices staying aligned with the original text.
+     * Folds the mismatches a model introduces when re-typing code it read earlier — NFKC, trailing whitespace per line, smart quotes, Unicode dashes and spaces — so a near-miss
+     * edit succeeds instead of bouncing a "not found" error back for a byte-identical retry. Must never add or remove a newline: {@link #spliceNormalizedMatch} relies on line
+     * indices staying aligned with the original text.
      */
     static String normalizeForTolerantMatch(String text) {
         String folded = Normalizer.normalize(text, Normalizer.Form.NFKC).replaceAll("[\u2018\u2019\u201A\u201B]", "'").replaceAll("[\u201C\u201D\u201E\u201F]", "\"")
@@ -484,8 +462,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (command == null || command.isBlank()) {
             return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
-        // Rejected up front rather than run: the shell's failure on a mangled array reads to the model like a problem with the command, so it retries the same array form.
-        if (isMangledArrayCommand(command)) {
+        // Rejected up front rather than run: the shell's failure on an argv array reads to the model like a problem with the command, so it retries the same array form.
+        if (isRenderedArgvArray(command)) {
             return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
         }
         // `apply_patch` is not installed, so the shell would exit 127 and leave the workspace unchanged while the model believes the edit landed. Reject it loudly instead.
@@ -495,8 +473,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
-        // A shell command can mutate the workspace outside the file tools' guardrails, so even a read-only inspection invalidates a cached passing check. The case the cache
-        // exists for — a passing check immediately followed by the loop ending — has no bash call in between, so the conservative choice costs it nothing.
+        // Even a read-only inspection invalidates the cached passing check, because a shell command can mutate the workspace outside the file tools' guardrails. The case the
+        // cache exists for — a passing check immediately followed by the loop ending — has no bash call in between, so being conservative here costs nothing.
         markDirty();
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
@@ -539,8 +517,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Called by the orchestrator before each stage's bounded agent loop, so the tools that follow behave according to that stage's rules. Resetting the cache is what stops a
-     * fresh stage, or a re-entry into the same stage after gate feedback, from reusing a pass computed before this call. An unstaged session never calls this.
+     * Called by the orchestrator before each stage's bounded agent loop. Resetting the cache here is what stops a fresh stage, or a re-entry into the same stage after gate
+     * feedback, from reusing a pass computed before this call.
      *
      * @param stage the stage the orchestrator is about to run
      */
@@ -548,7 +526,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.repairWritableRoots = null;
         this.currentStage = stage;
         this.dirtySinceLastPassingCheck = true;
-        this.cachedStage = null;
+        this.cachedPassingCheckStage = null;
         this.cachedPassingCheck = null;
     }
 
@@ -563,7 +541,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.repairWritableRoots = Set.copyOf(writableRoots);
     }
 
-    /** Ends a finding-scoped repair before verification or a different repair surface starts. */
     public void exitRepairScope() {
         this.repairWritableRoots = null;
     }
@@ -582,8 +559,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Re-materializes the server-owned structural oracle so staged verification sees the same gradable name set as final verification.
-     *
      * @return the oracle's authoritative test names, empty when no refresh is installed
      */
     public Set<String> refreshStructuralOracle() {
@@ -622,10 +597,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 + "'. Finish only this stage's artifact (or correct an earlier dependency); the dedicated later stage will author this file with its own instructions and gate.";
     }
 
-    /**
-     * Paths outside the current stage's declared write capability. Shell stays available for inspection and builds, so the wrapper snapshots and rolls these back by comparison
-     * rather than trying to guess intent from command text.
-     */
+    /** The wrapper snapshots these and rolls them back by comparison, because guessing write intent from arbitrary shell command text is not something to attempt. */
     private static List<String> protectedStagePaths(@Nullable GenerationStage stage) {
         if (stage == null) {
             return List.of();
@@ -684,19 +656,18 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.currentStage = null;
         this.repairWritableRoots = null;
         this.dirtySinceLastPassingCheck = true;
-        this.cachedStage = null;
+        this.cachedPassingCheckStage = null;
         this.cachedPassingCheck = null;
     }
 
     /**
-     * Consulted only by the orchestrator's per-stage exit gate, so a stage that already passed and has seen no mutating tool call since does not pay for a redundant re-check.
-     * {@code verify} and {@code submit} deliberately do not consult it: they always run the live check.
+     * Consulted only by the orchestrator's per-stage exit gate. {@code verify} and {@code submit} deliberately never read it and always run the live check.
      *
      * @param stage the stage the orchestrator is about to gate
      * @return the cached passing result if the stage matches and nothing has mutated the workspace since, otherwise empty
      */
     public Optional<StageCheckResult> reuseCachedPassingCheck(GenerationStage stage) {
-        if (!dirtySinceLastPassingCheck && stage.equals(cachedStage) && cachedPassingCheck != null) {
+        if (!dirtySinceLastPassingCheck && stage.equals(cachedPassingCheckStage) && cachedPassingCheck != null) {
             return Optional.of(cachedPassingCheck);
         }
         return Optional.empty();
@@ -716,7 +687,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.dirtySinceLastPassingCheck = true;
     }
 
-    /** The container exec's own exit code reflects the wrapper, so the real one is parsed from the leading {@code __HYP_META__} line. */
     private String composeBashOutput(SandboxExecResultDTO result, String logPath) {
         String output = result.combinedOutput() == null ? "" : result.combinedOutput();
         int newline = output.indexOf('\n');
@@ -740,7 +710,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 + logPath + " — read more with: tail -n 200 " + logPath + "  (or sed -n '1,200p' " + logPath + ", grep PATTERN " + logPath + ")]" + timeoutNote;
     }
 
-    /** Last-resort character tail used only when the wrapper's meta line is unexpectedly absent. */
     private static String charTail(String output) {
         if (output.length() <= BASH_TAIL_BYTES) {
             return output;
@@ -749,13 +718,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Runs the mechanical precheck for the current session.
+     * Runs the mechanical precheck for the current session: a staged session checks only the current stage, at the depth that stage can afford, and defers a check whose
+     * artifacts do not exist yet rather than failing it; an unstaged session runs the full differential over the complete candidate.
      * <p>
-     * A staged session checks only the current stage, at the depth that stage can afford: a build-free structure scan for {@link GenerationStage#SPEC}, the solution/template
-     * differential for {@link GenerationStage#TESTS}, and a build-free binding check for {@link GenerationStage#STATEMENT} against the TESTS stage's exact test names. Checks
-     * whose artifacts do not exist yet are deferred rather than failed. An unstaged session always runs the full differential over the complete candidate.
-     * <p>
-     * Every call re-runs its check. A passing call populates the cache the orchestrator's exit gate may reuse, but never skips itself.
+     * Every call re-runs its check. A passing call populates the cache the orchestrator's exit gate may reuse, but never reads that cache itself.
      *
      * @return the agent-readable observation carrying a {@code MECHANICAL PRECHECK: PASS/FAIL} verdict line, or an error message if neither path is wired
      */
@@ -808,12 +774,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return vetoed;
     }
 
-    /**
-     * Shared by {@link #verify} and the gating half of {@link #submit} so their dispatch, caching, and report-threading cannot diverge.
-     *
-     * @param stage the current stage, guaranteed non-null by both callers
-     * @return the stage's check result, or a synthetic failure naming the missing wiring
-     */
+    /** Shared by {@link #verify} and the gating half of {@link #submit} so their dispatch, caching, and report-threading cannot diverge. */
     private StageCheckResult runStageCheck(GenerationStage stage) {
         if (stageCheckService == null || exercise == null) {
             return StageCheckResult.failed("ERROR: the stage-check service is unavailable in this session.");
@@ -827,7 +788,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         if (result.passed()) {
             dirtySinceLastPassingCheck = false;
-            cachedStage = stage;
+            cachedPassingCheckStage = stage;
             cachedPassingCheck = result;
         }
         return result;
@@ -836,7 +797,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     /** Synthesizes the verdict line for observations that do not already state one, so {@code verify} and {@code submit} speak one vocabulary across every stage. */
     private static String formatStageCheckObservation(StageCheckResult result) {
         String observation = result.observation();
-        if (observation != null && observation.contains(VERDICT_LINE_MARKER)) {
+        if (observation != null && observation.contains(SELF_REPORTED_VERDICT_MARKER)) {
             return observation;
         }
         String verdict = result.passed() ? "MECHANICAL PRECHECK: PASS" : "MECHANICAL PRECHECK: FAIL";
@@ -863,9 +824,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return "apply_patch".equals(program);
     }
 
-    /** See {@link #MANGLED_ARRAY}. */
-    static boolean isMangledArrayCommand(String command) {
-        return MANGLED_ARRAY.matcher(command.strip()).matches();
+    static boolean isRenderedArgvArray(String command) {
+        return RENDERED_ARGV_ARRAY.matcher(command.strip()).matches();
     }
 
     private static boolean isManagedBuildInfrastructurePath(String safe) {
@@ -879,10 +839,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return false;
     }
 
-    /**
-     * Whether a file may be written or deleted through {@link #writeFile}/{@link #deleteFile}. {@code SPEC.md} is a workspace-root planning artifact that repository extraction
-     * never reads, so it is writable from any stage whenever a later stage forces a design change.
-     */
+    /** {@code SPEC.md} is a workspace-root planning artifact that repository extraction never reads, so it stays writable from any stage that forces a design change. */
     private static boolean isWritableGenerationPath(String safe) {
         return safe.equals("SPEC.md") || safe.equals("test-plan.json") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/")
                 || safe.startsWith("tests/");
@@ -909,8 +866,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Normalises a model-supplied path to a workspace-relative one and validates it against a conservative source-file path allowlist
-     * ({@code [a-zA-Z0-9_./-]} and no {@code ..}), which rejects shell metacharacters including quotes.
+     * The allowlist is what makes every path below safe to interpolate into a shell command: it admits only source-file characters, so quotes, {@code $}, {@code ;} and
+     * traversal are all rejected here rather than escaped later.
      *
      * @return the relative path, or {@code null} if it is unsafe
      */

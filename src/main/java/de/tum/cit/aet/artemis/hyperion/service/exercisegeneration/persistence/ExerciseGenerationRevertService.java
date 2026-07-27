@@ -79,24 +79,8 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Records a baseline using the exercise's current metadata as the post-run guard.
-     *
-     * @param exercise         the persisted exercise
-     * @param jobId            the completed job
-     * @param mode             whether the run generated or adapted the exercise
-     * @param preRunHeads      repository heads before persistence
-     * @param postRunHeads     repository heads after persistence
-     * @param problemStatement problem statement before persistence
-     * @param title            title before persistence
-     * @return whether automatic revert is available for this run
-     */
-    public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
-            Map<RepositoryType, String> postRunHeads, String problemStatement, String title) {
-        return recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
-    }
-
-    /**
-     * Must be called only after a guarded persist completed successfully; a failure here leaves the run saved but not undoable.
+     * Records what a completed run has to be rolled back to. Call this only after a guarded persist succeeded: a failure here leaves the run saved but not undoable, and every
+     * "expected current" argument is a guard that later refuses the revert if something other than this run has since touched the exercise.
      *
      * @param exercise                        the persisted exercise
      * @param jobId                           the completed job
@@ -107,27 +91,7 @@ public class ExerciseGenerationRevertService {
      * @param title                           title before persistence
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
-     * @return whether automatic revert is available for this run
-     */
-    public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
-            Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
-        return recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle,
-                repositoryBranch(exercise));
-    }
-
-    /**
-     * Records a successful run against the exact repository branch persistence used.
-     *
-     * @param exercise                        the persisted exercise
-     * @param jobId                           the completed job
-     * @param mode                            whether the run generated or adapted the exercise
-     * @param preRunHeads                     repository heads before persistence
-     * @param postRunHeads                    repository heads after persistence
-     * @param problemStatement                problem statement before persistence
-     * @param title                           title before persistence
-     * @param expectedCurrentProblemStatement problem statement written by the run
-     * @param expectedCurrentTitle            title written by the run
-     * @param repositoryBranch                repository branch used by the persistence operation
+     * @param repositoryBranch                the branch persistence actually committed to, which is the branch the revert must reset
      * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
@@ -168,10 +132,6 @@ public class ExerciseGenerationRevertService {
         }
     }
 
-    /**
-     * @param exerciseId the exercise whose baseline should be inspected
-     * @return the revertible job id, or empty when no baseline remains
-     */
     public Optional<String> findRevertibleJobId(long exerciseId) {
         return Optional.ofNullable(baselineMap.get(exerciseId)).map(ExerciseGenerationBaseline::jobId);
     }
@@ -187,31 +147,17 @@ public class ExerciseGenerationRevertService {
         log.info("Invalidated the automatic-revert baseline for exercise {} before a later run began durable mutation", exerciseId);
     }
 
-    /**
-     * @param exerciseId the exercise whose baseline should be inspected
-     * @return the retained job and mode, or empty when no baseline remains
-     */
     public Optional<RevertibleRun> findRevertibleRun(long exerciseId) {
         return Optional.ofNullable(baselineMap.get(exerciseId)).map(baseline -> new RevertibleRun(baseline.jobId(), baseline.mode()));
     }
 
     /**
-     * Reverts the most recent mechanically verified run: resets the repositories to the commits captured before persistence, then re-synchronises grading.
-     *
-     * @param exercise the exercise to revert
-     * @param user     the instructor performing the revert (exercise-version author)
-     * @return the revert result, or empty when there is no retained baseline to revert to
-     */
-    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user) {
-        return revert(exercise, user, () -> true);
-    }
-
-    /**
-     * Aborts before any durable mutation if this node no longer owns the job.
+     * Resets the repositories to the commits captured before persistence, then re-synchronises grading. There is deliberately no unguarded entry point: force-pushing an
+     * exercise's repositories from a node that no longer owns the job would race the node that does.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
-     * @param stillOwnsMutationSlot guard checked before durable mutations
+     * @param stillOwnsMutationSlot re-checked before each durable mutation, so a lost slot stops the revert instead of finishing it
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
@@ -227,12 +173,7 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    /** Baseline-driven rather than reading Hazelcast, so the git behaviour is unit-testable with a mocked {@link GitService}. */
-    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline) {
-        return revertToBaseline(exercise, user, baseline, () -> true);
-    }
-
-    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
                         baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
@@ -351,11 +292,6 @@ public class ExerciseGenerationRevertService {
         }
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
-        String branch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
-        return branch == null || branch.isBlank() ? defaultBranch : branch;
-    }
-
     private static boolean metadataCanBeReverted(String currentValue, String expectedCurrentValue, String targetBaselineValue) {
         String current = normalizeMetadata(currentValue);
         return Objects.equals(current, normalizeMetadata(expectedCurrentValue)) || Objects.equals(current, normalizeMetadata(targetBaselineValue));
@@ -365,10 +301,7 @@ public class ExerciseGenerationRevertService {
         return value == null ? null : value.replace("\r\n", "\n").replace('\r', '\n').trim();
     }
 
-    /**
-     * @param fullyReverted        whether every captured repository was reset successfully; {@code false} means manual review is needed
-     * @param revertedRepositories the repositories that were reset back to their baseline commit
-     */
+    /** A {@code fullyReverted} of {@code false} leaves the exercise part-way between the two states and needs manual review. */
     public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
     }
 
