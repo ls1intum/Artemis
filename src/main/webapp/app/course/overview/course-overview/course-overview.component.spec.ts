@@ -492,50 +492,26 @@ describe('CourseOverviewComponent', () => {
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
-    it('should re-check access via the lightweight endpoint and redirect when switching in place to a course whose target tab is inaccessible', async () => {
+    it('should not re-check tab access itself when switching in place to another course', async () => {
+        // The component must NOT duplicate the guard: Angular's equalParamsAndUrlSegments recurses into the parent chain,
+        // so a changed :courseId already re-runs the child route's CourseOverviewGuard. A second component-side check
+        // would race the guard and could act on a stale response.
         (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
-        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
-        (route as any).params = paramsSubject.asObservable();
-        const accessSpy = vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({ lecturesEnabled: false }));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        await component.ngOnInit();
-
-        paramsSubject.next({ courseId: 999 });
-
-        expect(accessSpy).toHaveBeenCalledWith(999);
-        expect(navigateSpy).toHaveBeenCalledWith(['/courses/999/exercises']);
-    });
-
-    it('should not redirect after an in-place switch when the target tab is accessible', async () => {
-        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
-        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
-        (route as any).params = paramsSubject.asObservable();
-        vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({ lecturesEnabled: true }));
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        await component.ngOnInit();
-
-        paramsSubject.next({ courseId: 999 });
-
-        expect(navigateSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not re-check access for child routes that the guard does not protect on an in-place switch', async () => {
-        // settings/statistics/calendar have no access rule and must never trigger the access endpoint or a redirect
-        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
         const accessSpy = vi.spyOn(courseService, 'getCourseTabAccess');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         await component.ngOnInit();
 
         paramsSubject.next({ courseId: 999 });
 
         expect(accessSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 
     it('should reload the course content when navigating to a different course in place', async () => {
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
-        vi.spyOn(courseService, 'getCourseTabAccess').mockReturnValue(of({}));
         await component.ngOnInit();
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 

@@ -3,8 +3,6 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
-import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -62,7 +60,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
-    private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
 
     // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
@@ -105,8 +102,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const id = Number(params.courseId);
             const previousCourseId = this.courseId();
             this.courseId.set(id);
-            // In-place navigation to a different course (without destroying this container) must reload the course content
-            // and re-check tab access, because the CourseOverviewGuard is not re-evaluated when only the parent courseId changes.
+            // In-place navigation to a different course (without destroying this container) must reload the course content.
+            // Tab access does NOT need re-checking here: Angular's equalParamsAndUrlSegments recurses into the parent chain,
+            // so a changed :courseId re-runs the child route's CourseOverviewGuard on its own.
             if (previousCourseId && previousCourseId !== id) {
                 // Reset quiz websocket subscription so it points at the new course's topic
                 this.quizExercisesSubscription?.unsubscribe();
@@ -119,7 +117,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                         this.courseActionItems.set(this.getCourseActionItems());
                     },
                 });
-                this.checkChildRouteAccess(id);
             }
         });
         await super.ngOnInit();
@@ -413,30 +410,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 }
             });
         }
-    }
-
-    /**
-     * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
-     * This complements the {@link CourseOverviewGuard}: the guard decides on the first navigation into a course, but it is
-     * not re-evaluated on an in-place course switch (different courseId without re-creating this container), so the access
-     * check for the new target route has to run here. It uses the same lightweight access endpoint and decision logic as the guard.
-     */
-    private checkChildRouteAccess(courseId: number): void {
-        const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
-        // Only re-check routes that the CourseOverviewGuard actually protects: other child routes
-        // (e.g. settings, statistics, calendar) have no access rule and must not be redirected
-        if (!childPath || !COURSE_OVERVIEW_GUARDED_ROUTE_PATHS.has(childPath)) {
-            return;
-        }
-        // Re-check via the same lightweight access endpoint and decision logic as the guard; decideAccess navigates away when access is denied.
-        this.courseManagementService
-            .getCourseTabAccess(courseId)
-            .pipe(catchError(() => of(undefined)))
-            .subscribe((access) => {
-                if (access) {
-                    this.courseOverviewGuard.decideAccess(courseId, access, childPath);
-                }
-            });
     }
 
     override ngOnDestroy() {
