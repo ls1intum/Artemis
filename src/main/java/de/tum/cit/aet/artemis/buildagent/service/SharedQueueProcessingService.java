@@ -499,7 +499,9 @@ public class SharedQueueProcessingService {
                         // We cannot tell how old the job is, so we cannot tell whether it is still starting up. Skipping is the safe choice: a genuinely stuck job without
                         // a container is still caught by the orphan cross-check below, whereas counting it as stale here cancels jobs that just started. This happens when
                         // another agent force-cancelled and requeued the job while this agent was picking it up, which removes it from the distributed processing map.
+                        // Reset the counter as well, so that earlier detections cannot add up with later ones and cancel the job the moment its entry reappears.
                         log.debug("Job {} has no known build start date, skipping stale detection", jobId);
+                        staleJobDetectionCounts.remove(jobId);
                         continue;
                     }
                     long jobAgeSeconds = Duration.between(buildStartDate, ZonedDateTime.now()).getSeconds();

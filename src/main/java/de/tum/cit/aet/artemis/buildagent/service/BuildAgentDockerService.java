@@ -157,10 +157,25 @@ public class BuildAgentDockerService {
         this.taskScheduler = taskScheduler;
     }
 
-    // EventListener cannot be used here, as the bean is lazy
-    // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
+    /**
+     * Validates the image pull configuration and schedules the periodic cleanup of dangling build containers.
+     * <p>
+     * EventListener cannot be used here, as the bean is lazy, see the
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring docs</a>.
+     *
+     * @throws IllegalArgumentException if the configured image pull timeout is not positive
+     */
     @PostConstruct
     public void applicationReady() {
+        // A non-positive timeout would make awaitCompletion return immediately, so every image pull would be reported as timed out and no build could ever run. Fail fast
+        // at startup instead of turning every build into a confusing pull failure.
+        if (imagePullTimeoutSeconds <= 0) {
+            String errorMessage = "The Docker image pull timeout must be a positive number of seconds, but was " + imagePullTimeoutSeconds
+                    + ". It should be changed in the application properties under 'artemis.continuous-integration.image-pull-timeout-seconds'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
     }

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.command.InfoCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -169,6 +170,19 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         }
         finally {
             buildLogsMap.removeBuildLogs(build.id());
+        }
+    }
+
+    @Test
+    void testNonPositivePullTimeoutIsRejectedAtStartup() {
+        int originalTimeout = (int) ReflectionTestUtils.getField(buildAgentDockerService, "imagePullTimeoutSeconds");
+        try {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullTimeoutSeconds", 0);
+            // A non-positive timeout would make every pull report as timed out, so the build agent must refuse to start instead.
+            assertThatThrownBy(() -> buildAgentDockerService.applicationReady()).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("image-pull-timeout-seconds");
+        }
+        finally {
+            ReflectionTestUtils.setField(buildAgentDockerService, "imagePullTimeoutSeconds", originalTimeout);
         }
     }
 
