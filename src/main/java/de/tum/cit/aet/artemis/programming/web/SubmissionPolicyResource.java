@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 
 @Profile(PROFILE_CORE)
@@ -66,12 +66,12 @@ public class SubmissionPolicyResource {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ParticipationAuthorizationCheckService participationAuthCheckService, ExerciseVersionService exerciseVersionService, UserRepository userRepository,
-            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;

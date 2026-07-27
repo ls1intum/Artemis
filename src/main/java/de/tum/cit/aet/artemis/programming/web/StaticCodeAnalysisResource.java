@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
 /**
@@ -58,7 +58,7 @@ public class StaticCodeAnalysisResource {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     private final UserRepository userRepository;
 
@@ -66,7 +66,7 @@ public class StaticCodeAnalysisResource {
 
     public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard, UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;

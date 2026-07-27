@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.core.env.Environment;
@@ -119,6 +123,16 @@ class ModuleFeatureInfoContributorTest {
         var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
         var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
         assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
+    }
+
+    /**
+     * Makes the mocked environment honour the contract of the real one for the defaulting overload: {@code getProperty(key, type, default)} returns the default rather than
+     * null for an unknown key. Without this, any production lookup of a property this test does not explicitly stub returns null and fails with a NullPointerException the
+     * moment it is unboxed — which says nothing about the code under test and breaks whenever an unrelated feature flag is added.
+     */
+    @BeforeEach
+    void defaultUnknownBooleanPropertiesToTheirDefault() {
+        when(mockEnv.getProperty(anyString(), eq(Boolean.class), anyBoolean())).thenAnswer(invocation -> invocation.getArgument(2));
     }
 
     private void mockProperty(String key, Boolean value) {

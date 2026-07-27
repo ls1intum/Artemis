@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 
 /**
@@ -59,12 +59,12 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;

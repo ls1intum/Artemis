@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -59,7 +59,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
         Repository repository = ServletUtils.getRepository(servletRequest);
         ProgrammingExercise exercise = (ProgrammingExercise) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
-        final ProgrammingExerciseMutationGuard.MutationLease mutationLease;
+        final ProgrammingExerciseMutationGuardService.MutationLease mutationLease;
         try {
             mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise);
         }

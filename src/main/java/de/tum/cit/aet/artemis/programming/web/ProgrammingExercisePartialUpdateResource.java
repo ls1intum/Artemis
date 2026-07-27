@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 /**
@@ -63,12 +63,12 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService,
-            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;

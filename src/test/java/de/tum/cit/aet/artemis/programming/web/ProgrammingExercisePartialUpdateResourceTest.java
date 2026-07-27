@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -82,7 +82,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         ProgrammingExercise exercise = exercise(exerciseId);
         when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)).thenReturn(Optional.of(exercise));
         ProgrammingExerciseCreationUpdateService updateService = mock(ProgrammingExerciseCreationUpdateService.class);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         ProgrammingExercisePartialUpdateResource resource = resource(programmingExerciseRepository, updateService, mutationGuard);
 
@@ -100,7 +100,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         when(repository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)).thenReturn(Optional.of(stale), Optional.of(fresh));
         ProgrammingExerciseCreationUpdateService updateService = mock(ProgrammingExerciseCreationUpdateService.class);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
-        ProgrammingExerciseMutationGuard guard = realGuard();
+        ProgrammingExerciseMutationGuardService guard = realGuard();
         doAnswer(invocation -> {
             assertThat(invocation.getArgument(0, ProgrammingExercise.class)).isSameAs(fresh);
             assertGenerationCannotClaim(exerciseId);
@@ -180,20 +180,20 @@ class ProgrammingExercisePartialUpdateResourceTest {
     }
 
     private ProgrammingExercisePartialUpdateResource resource(ProgrammingExerciseRepository repository, ProgrammingExerciseCreationUpdateService updateService,
-            ProgrammingExerciseMutationGuard mutationGuard) {
+            ProgrammingExerciseMutationGuardService mutationGuard) {
         return resource(repository, updateService, mutationGuard, mock(ExerciseVersionService.class));
     }
 
     private ProgrammingExercisePartialUpdateResource resource(ProgrammingExerciseRepository repository, ProgrammingExerciseCreationUpdateService updateService,
-            ProgrammingExerciseMutationGuard mutationGuard, ExerciseVersionService versionService) {
+            ProgrammingExerciseMutationGuardService mutationGuard, ExerciseVersionService versionService) {
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user("editor"));
         return new ProgrammingExercisePartialUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), mock(ExerciseService.class), updateService,
                 mock(ProgrammingExerciseTaskService.class), versionService, mutationGuard);
     }
 
-    private ProgrammingExerciseMutationGuard realGuard() {
-        return new ProgrammingExerciseMutationGuard(Optional.of(new HyperionExerciseMutationApi(generationJobService)), hazelcastInstance);
+    private ProgrammingExerciseMutationGuardService realGuard() {
+        return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)), hazelcastInstance);
     }
 
     private void assertGenerationCannotClaim(long exerciseId) {

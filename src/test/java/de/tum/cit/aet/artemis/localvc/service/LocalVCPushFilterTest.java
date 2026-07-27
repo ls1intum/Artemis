@@ -21,7 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 class LocalVCPushFilterTest {
 
@@ -34,7 +34,7 @@ class LocalVCPushFilterTest {
         ProgrammingExercise exercise = exercise();
         Repository repository = mock(Repository.class);
         AtomicBoolean released = new AtomicBoolean();
-        var lease = new ProgrammingExerciseMutationGuard.MutationLease(() -> released.set(true));
+        var lease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true));
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
         when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise)).thenReturn(lease);
@@ -56,7 +56,8 @@ class LocalVCPushFilterTest {
         AtomicBoolean released = new AtomicBoolean();
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise)).thenReturn(new ProgrammingExerciseMutationGuard.MutationLease(() -> released.set(true)));
+        when(localVCServletService.claimProgrammingExerciseMutation(repository, exercise))
+                .thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true)));
         FilterChain filterChain = (_, _) -> {
             throw new IllegalStateException("disconnect");
         };

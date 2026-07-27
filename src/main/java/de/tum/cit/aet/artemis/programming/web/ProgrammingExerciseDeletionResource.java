@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 /**
  * REST controller for deleting/resetting programming exercises or related entities such as exercise tasks.
@@ -71,12 +71,12 @@ public class ProgrammingExerciseDeletionResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ProgrammingExerciseDeletionResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService,
-            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;

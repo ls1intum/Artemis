@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
@@ -82,7 +82,8 @@ class RepositoryResourceMutationGuardTest {
         GenerationJobService jobService = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
         jobService.init();
-        ProgrammingExerciseMutationGuard mutationGuard = new ProgrammingExerciseMutationGuard(Optional.of(new HyperionExerciseMutationApi(jobService)), hazelcastInstance);
+        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(jobService)),
+                hazelcastInstance);
         UserRepository userRepository = mock(UserRepository.class);
         User user = user("instructor");
         when(userRepository.getUser()).thenReturn(user);
@@ -130,7 +131,7 @@ class RepositoryResourceMutationGuardTest {
         when(auxiliaryRepositoryRepository.findExerciseIdById(17L)).thenReturn(Optional.of(EXERCISE_ID));
         AuxiliaryRepositoryResource resource = new AuxiliaryRepositoryResource(mock(UserRepository.class), mock(AuthorizationCheckService.class), mock(GitService.class),
                 mock(RepositoryService.class), mock(ProgrammingExerciseRepository.class), mock(RepositoryAccessService.class), Optional.empty(), auxiliaryRepositoryRepository,
-                new ProgrammingExerciseMutationGuard(Optional.empty(), mock(HazelcastInstance.class)));
+                new ProgrammingExerciseMutationGuardService(Optional.empty(), mock(HazelcastInstance.class)));
 
         assertThat(resource.getExerciseIdForMutation(17L)).hasValue(EXERCISE_ID);
     }
@@ -139,7 +140,7 @@ class RepositoryResourceMutationGuardTest {
     void auxiliaryRepositoryMutationGuard_rejectsMissingOwnershipInsteadOfUsingANoOpLease() {
         AuxiliaryRepositoryRepository auxiliaryRepositoryRepository = mock(AuxiliaryRepositoryRepository.class);
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, mock(UserRepository.class), mock(RepositoryAccessService.class),
-                mock(GitService.class), mock(ProgrammingExerciseMutationGuard.class));
+                mock(GitService.class), mock(ProgrammingExerciseMutationGuardService.class));
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L));
     }
@@ -164,8 +165,8 @@ class RepositoryResourceMutationGuardTest {
         RepositoryAccessService repositoryAccessService = mock(RepositoryAccessService.class);
         GitService gitService = mock(GitService.class);
         when(gitService.getOrCheckoutRepository(currentUri, true, true)).thenReturn(mock(Repository.class));
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
-        when(mutationGuard.claimExternalMutation(OptionalLong.of(EXERCISE_ID))).thenReturn(new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
+        when(mutationGuard.claimExternalMutation(OptionalLong.of(EXERCISE_ID))).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         }));
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, userRepository, repositoryAccessService, gitService, mutationGuard);
         Principal principal = () -> "instructor";
@@ -177,7 +178,7 @@ class RepositoryResourceMutationGuardTest {
     }
 
     private static AuxiliaryRepositoryResource auxiliaryResource(AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, GitService gitService, ProgrammingExerciseMutationGuard mutationGuard) {
+            RepositoryAccessService repositoryAccessService, GitService gitService, ProgrammingExerciseMutationGuardService mutationGuard) {
         return new AuxiliaryRepositoryResource(userRepository, mock(AuthorizationCheckService.class), gitService, mock(RepositoryService.class),
                 mock(ProgrammingExerciseRepository.class), repositoryAccessService, Optional.empty(), auxiliaryRepositoryRepository, mutationGuard);
     }
@@ -188,7 +189,7 @@ class RepositoryResourceMutationGuardTest {
                 mock(ParticipationAuthorizationCheckService.class), mock(GitService.class), mock(RepositoryService.class), mock(ProgrammingExerciseParticipationService.class),
                 programmingExerciseRepository, participationRepository, mock(BuildLogEntryService.class), mock(ProgrammingSubmissionRepository.class),
                 mock(SubmissionPolicyRepository.class), mock(RepositoryAccessService.class), Optional.empty(), mock(RepositoryParticipationService.class),
-                new ProgrammingExerciseMutationGuard(Optional.empty(), mock(HazelcastInstance.class)));
+                new ProgrammingExerciseMutationGuardService(Optional.empty(), mock(HazelcastInstance.class)));
     }
 
     private static User user(String login) {
@@ -208,7 +209,7 @@ class RepositoryResourceMutationGuardTest {
         private final Runnable onSave;
 
         private TestRepositoryResource(UserRepository userRepository, RepositoryService repositoryService, LocalVCServletService localVCServletService,
-                ProgrammingExerciseMutationGuard mutationGuard, Runnable onSave) {
+                ProgrammingExerciseMutationGuardService mutationGuard, Runnable onSave) {
             super(userRepository, mock(AuthorizationCheckService.class), mock(GitService.class), repositoryService, mock(ProgrammingExerciseRepository.class),
                     mock(RepositoryAccessService.class), Optional.of(localVCServletService), mutationGuard);
             this.onSave = onSave;

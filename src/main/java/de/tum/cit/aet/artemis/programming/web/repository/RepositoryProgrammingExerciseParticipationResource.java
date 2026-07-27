@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
@@ -97,7 +97,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
                 programmingExerciseMutationGuard);
         this.participationAuthCheckService = participationAuthCheckService;

@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
 class StaticCodeAnalysisResourceMutationGuardTest {
@@ -45,7 +45,7 @@ class StaticCodeAnalysisResourceMutationGuardTest {
         when(repository.findByIdElseThrow(Long.valueOf(SOURCE_EXERCISE_ID))).thenReturn(sourceExercise);
         AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
         StaticCodeAnalysisService staticCodeAnalysisService = mock(StaticCodeAnalysisService.class);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(TARGET_EXERCISE_ID))
                 .thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         StaticCodeAnalysisResource resource = resource(repository, authorizationCheckService, staticCodeAnalysisService, mutationGuard);
@@ -75,7 +75,7 @@ class StaticCodeAnalysisResourceMutationGuardTest {
             assertThat(invocation.<ProgrammingExercise>getArgument(0)).isSameAs(authoritativeExercise);
             throw failure;
         }).when(staticCodeAnalysisService).resetCategories(authoritativeExercise);
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld);
         StaticCodeAnalysisResource resource = resource(repository, mock(AuthorizationCheckService.class), staticCodeAnalysisService, mutationGuard);
 
         assertThatThrownBy(() -> resource.resetStaticCodeAnalysisCategories(TARGET_EXERCISE_ID)).isSameAs(failure);
@@ -100,7 +100,7 @@ class StaticCodeAnalysisResourceMutationGuardTest {
             assertThat(leaseHeld).isTrue();
             return null;
         }).when(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld);
         StaticCodeAnalysisResource resource = new StaticCodeAnalysisResource(mock(AuthorizationCheckService.class), repository, staticCodeAnalysisService,
                 mock(StaticCodeAnalysisCategoryRepository.class), mutationGuard, userRepository, exerciseVersionService);
 
@@ -112,16 +112,16 @@ class StaticCodeAnalysisResourceMutationGuardTest {
     }
 
     private static StaticCodeAnalysisResource resource(ProgrammingExerciseRepository repository, AuthorizationCheckService authorizationCheckService,
-            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseMutationGuard mutationGuard) {
+            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseMutationGuardService mutationGuard) {
         return new StaticCodeAnalysisResource(authorizationCheckService, repository, staticCodeAnalysisService, mock(StaticCodeAnalysisCategoryRepository.class), mutationGuard,
                 mock(UserRepository.class), mock(ExerciseVersionService.class));
     }
 
-    private static ProgrammingExerciseMutationGuard trackingGuard(AtomicBoolean leaseHeld) {
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+    private static ProgrammingExerciseMutationGuardService trackingGuard(AtomicBoolean leaseHeld) {
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(TARGET_EXERCISE_ID)).thenAnswer(invocation -> {
             assertThat(leaseHeld.compareAndSet(false, true)).isTrue();
-            return new ProgrammingExerciseMutationGuard.MutationLease(() -> leaseHeld.set(false));
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false));
         });
         return mutationGuard;
     }

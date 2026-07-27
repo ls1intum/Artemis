@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 class SshGitCommandTest {
 
@@ -42,7 +42,7 @@ class SshGitCommandTest {
         User user = new User();
         ServerSession session = mock(ServerSession.class);
         AtomicBoolean released = new AtomicBoolean();
-        var lease = new ProgrammingExerciseMutationGuard.MutationLease(() -> released.set(true));
+        var lease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true));
         GitLocationResolver resolver = (_, _, _, _) -> repositoryPath;
         SshGitCommand command = new SshGitCommand(resolver, "git-receive-pack 'exercise.git'", null, localVCServletService);
         when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);

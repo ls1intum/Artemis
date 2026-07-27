@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -26,19 +26,19 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class ProgrammingExerciseCreationResourceMutationGuardTest {
 
     private static final long EXERCISE_ID = 42L;
 
-    private final ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
+    private final ProgrammingExerciseTestRepository repository = mock(ProgrammingExerciseTestRepository.class);
 
-    private final UserRepository userRepository = mock(UserRepository.class);
+    private final UserTestRepository userRepository = mock(UserTestRepository.class);
 
     private final AuthorizationCheckService authCheckService = mock(AuthorizationCheckService.class);
 
@@ -50,7 +50,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
 
     private final ExerciseVersionService exerciseVersionService = mock(ExerciseVersionService.class);
 
-    private final ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+    private final ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
 
     private final Runnable leaseRelease = mock(Runnable.class);
 
@@ -62,7 +62,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
     void setUp() {
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         when(userRepository.getUser()).thenReturn(user);
-        when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new ProgrammingExerciseMutationGuard.MutationLease(leaseRelease));
+        when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(leaseRelease));
         resource = new ProgrammingExerciseCreationResource(authCheckService, courseService, validationService, creationUpdateService, mock(StaticCodeAnalysisService.class),
                 Optional.empty(), repository, userRepository, exerciseVersionService, mutationGuard);
     }

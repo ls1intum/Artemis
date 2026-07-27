@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 
 class SubmissionPolicyResourceMutationGuardTest {
@@ -46,7 +46,7 @@ class SubmissionPolicyResourceMutationGuardTest {
         when(repository.findByIdWithSubmissionPolicyElseThrow(EXERCISE_ID)).thenReturn(exercise);
         SubmissionPolicyService submissionPolicyService = mock(SubmissionPolicyService.class);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         SubmissionPolicyResource resource = new SubmissionPolicyResource(repository, mock(AuthorizationCheckService.class), submissionPolicyService,
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ParticipationAuthorizationCheckService.class), versionService, mock(UserRepository.class),
@@ -77,10 +77,10 @@ class SubmissionPolicyResourceMutationGuardTest {
         IllegalStateException failure = new IllegalStateException("policy add failed");
         when(submissionPolicyService.addSubmissionPolicyToProgrammingExercise(policy, exercise)).thenThrow(failure);
         AtomicBoolean leaseHeld = new AtomicBoolean();
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenAnswer(invocation -> {
             assertThat(leaseHeld.compareAndSet(false, true)).isTrue();
-            return new ProgrammingExerciseMutationGuard.MutationLease(() -> leaseHeld.set(false));
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false));
         });
         SubmissionPolicyResource resource = new SubmissionPolicyResource(repository, mock(AuthorizationCheckService.class), submissionPolicyService,
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ParticipationAuthorizationCheckService.class), mock(ExerciseVersionService.class),

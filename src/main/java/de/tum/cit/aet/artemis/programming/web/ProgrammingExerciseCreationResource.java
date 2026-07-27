@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
@@ -81,12 +81,12 @@ public class ProgrammingExerciseCreationResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;

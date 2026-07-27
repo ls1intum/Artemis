@@ -31,7 +31,7 @@ class ProgrammingExerciseMutationGuardHazelcastTest {
     private static final String SPLIT_BRAIN_PROTECTION_NAME = "artemis-split-brain-protection";
 
     /**
-     * Each scenario below only depends on the cluster membership observed at the moment {@link ProgrammingExerciseMutationGuard#claimExternalMutation(long)} runs
+     * Each scenario below only depends on the cluster membership observed at the moment {@link ProgrammingExerciseMutationGuardService#claimExternalMutation(long)} runs
      * (the guard re-reads {@code hazelcastInstance.getCluster().getMembers()} on every call), so every scenario stands up exactly the real Hazelcast topology it needs
      * from scratch instead of replaying a shared multi-step transition through a single test.
      */
@@ -44,7 +44,7 @@ class ProgrammingExerciseMutationGuardHazelcastTest {
             int port = findAvailablePort();
             HazelcastInstance soleMember = startMember(clusterName, port, List.of("127.0.0.1:" + port), "false");
             instances.add(soleMember);
-            ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.empty(), soleMember, 2);
+            ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.empty(), soleMember, 2);
 
             assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                     .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("hyperionDataMemberTopologyMismatch"));
@@ -61,7 +61,7 @@ class ProgrammingExerciseMutationGuardHazelcastTest {
         List<HazelcastInstance> instances = new ArrayList<>();
         try {
             HazelcastInstance disabledMember = joinTwoMemberCluster(clusterName, instances, "false", "true");
-            ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.empty(), disabledMember, 2);
+            ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.empty(), disabledMember, 2);
 
             assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                     .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("hyperionExerciseGenerationProfileSkew"));
@@ -78,7 +78,7 @@ class ProgrammingExerciseMutationGuardHazelcastTest {
         List<HazelcastInstance> instances = new ArrayList<>();
         try {
             HazelcastInstance disabledMember = joinTwoMemberCluster(clusterName, instances, "false", "false");
-            ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.empty(), disabledMember, 2);
+            ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.empty(), disabledMember, 2);
 
             assertThatCode(() -> guard.claimExternalMutation(42L).close()).doesNotThrowAnyException();
         }
@@ -94,7 +94,7 @@ class ProgrammingExerciseMutationGuardHazelcastTest {
         List<HazelcastInstance> instances = new ArrayList<>();
         try {
             HazelcastInstance disabledMember = joinTwoMemberCluster(clusterName, instances, "false", null);
-            ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.empty(), disabledMember, 2);
+            ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.empty(), disabledMember, 2);
 
             assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                     .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("hyperionExerciseGenerationCapabilityUnavailable"));

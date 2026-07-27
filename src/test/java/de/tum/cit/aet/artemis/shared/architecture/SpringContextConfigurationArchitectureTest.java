@@ -75,7 +75,10 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
      */
     private static final String[] ALLOWED_EXCEPTION_CLASSES = {
             // Redis-specific configuration requires a separate context
-            "RedissonDistributedDataTest" };
+            "RedissonDistributedDataTest",
+            // Hyperion generation must stay switched off in every other context: the sandbox-slot property defaults to zero, and raising it in the shared configuration would
+            // activate sandbox-hosting beans for all build-agent tests. These tests cannot run without capacity, so a separate context is the narrower option.
+            "AbstractHyperionMockedLlmEndToEndTest" };
 
     /**
      * Ensures that no test classes outside the allowed base classes use {@code @MockitoSpyBean}.

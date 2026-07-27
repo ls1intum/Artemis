@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 
 class ExerciseResourceMutationGuardTest {
@@ -35,7 +35,7 @@ class ExerciseResourceMutationGuardTest {
         exercise.setId(exerciseId);
         ExerciseRepository exerciseRepository = mock(ExerciseRepository.class);
         when(exerciseRepository.findByIdElseThrow(exerciseId)).thenReturn(exercise);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         ExerciseResource resource = new ExerciseResource(mock(ExerciseService.class), mock(ExerciseDeletionService.class), mock(ParticipationService.class),
                 mock(UserRepository.class), Optional.empty(), mock(AuthorizationCheckService.class), mock(TutorParticipationService.class),

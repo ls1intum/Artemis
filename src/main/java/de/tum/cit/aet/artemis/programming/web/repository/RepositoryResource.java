@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
@@ -69,13 +69,13 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    protected final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    protected final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;

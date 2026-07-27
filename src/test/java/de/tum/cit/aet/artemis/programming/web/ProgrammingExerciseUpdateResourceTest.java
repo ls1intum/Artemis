@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 
@@ -190,7 +190,8 @@ class ProgrammingExerciseUpdateResourceTest {
         CourseService courseService = mock(CourseService.class);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());
-        ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.of(new HyperionExerciseMutationApi(generationJobService)), hazelcastInstance);
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)),
+                hazelcastInstance);
         return new ProgrammingExerciseUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), courseService, exerciseService,
                 mock(ProgrammingExerciseValidationService.class), updateService, mock(ProgrammingExerciseRepositoryService.class), mock(AuxiliaryRepositoryService.class),
                 Optional.<AthenaApi>empty(), mock(ModuleFeatureService.class), Optional.<SlideApi>empty(), Optional.<AutomaticAfterDueDateService>empty(), versionService,

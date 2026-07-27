@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 
@@ -104,14 +104,14 @@ public class ProgrammingExerciseUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;

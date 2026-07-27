@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -66,7 +66,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
                 programmingExerciseMutationGuard);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;

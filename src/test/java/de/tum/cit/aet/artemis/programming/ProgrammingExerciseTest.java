@@ -46,9 +46,17 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
-    void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
+    /**
+     * Sends a metadata update and asserts what that request is allowed to change.
+     * <p>
+     * The problem statement is deliberately NOT one of those things. It is owned by the collaborative editor and its dedicated endpoint, and a metadata request can legitimately
+     * carry a blank or stale editor value; letting it through cost instructors their statement (issue #13046). The statement passed here is therefore expected to be ignored,
+     * which is what these assertions pin.
+     */
+    void updateProgrammingExercise(ProgrammingExercise programmingExercise, String ignoredProblemStatement, String newTitle) throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        programmingExercise.setProblemStatement(newProblem);
+        String persistedProblemStatement = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getProblemStatement();
+        programmingExercise.setProblemStatement(ignoredProblemStatement);
         programmingExercise.setTitle(newTitle);
 
         jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
@@ -59,8 +67,9 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises",
                 de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
 
-        // The result from the put response should be updated with the new data.
-        assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
+        // The result from the put response should be updated with the new data, except for the statement the request is not allowed to touch.
+        assertThat(updatedProgrammingExercise.getProblemStatement()).as("a metadata update must not overwrite the persisted problem statement")
+                .isEqualTo(persistedProblemStatement);
         assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
 
         // There should still be the same number of programming exercises.
@@ -68,7 +77,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         // The programming exercise in the db should also be updated.
         ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
-        assertThat(programmingExerciseFromDb.getProblemStatement()).isEqualTo(newProblem);
+        assertThat(programmingExerciseFromDb.getProblemStatement()).as("the persisted statement is unchanged by a metadata update").isEqualTo(persistedProblemStatement);
         assertThat(programmingExerciseFromDb.getTitle()).isEqualTo(newTitle);
     }
 

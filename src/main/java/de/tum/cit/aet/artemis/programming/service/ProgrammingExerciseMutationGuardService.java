@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 // Mirrors the nodes whose beans inject it: the core REST resources and the LocalVC git-server path. Every documented deployment pairs localvc with core, but naming
 // both keeps the bean present wherever an injection point exists rather than relying on that pairing holding.
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
-public class ProgrammingExerciseMutationGuard {
+public class ProgrammingExerciseMutationGuardService {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
@@ -41,14 +41,14 @@ public class ProgrammingExerciseMutationGuard {
     private final int expectedDataMemberCount;
 
     @Autowired
-    public ProgrammingExerciseMutationGuard(Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount) {
+    public ProgrammingExerciseMutationGuardService(Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi,
+            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount) {
         this.hyperionExerciseMutationApi = hyperionExerciseMutationApi;
         this.hazelcastInstance = hazelcastInstance;
         this.expectedDataMemberCount = expectedDataMemberCount;
     }
 
-    public ProgrammingExerciseMutationGuard(Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi, HazelcastInstance hazelcastInstance) {
+    public ProgrammingExerciseMutationGuardService(Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi, HazelcastInstance hazelcastInstance) {
         this(hyperionExerciseMutationApi, hazelcastInstance, 1);
     }
 

@@ -74,7 +74,7 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -131,7 +131,7 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
@@ -153,7 +153,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -318,7 +318,7 @@ public class LocalVCServletService {
      * @param exercise   the already-authorized exercise
      * @return a lease held by the transport until receive-pack and synchronous post-receive processing complete
      */
-    public ProgrammingExerciseMutationGuard.MutationLease claimProgrammingExerciseMutation(Repository repository, ProgrammingExercise exercise) {
+    public ProgrammingExerciseMutationGuardService.MutationLease claimProgrammingExerciseMutation(Repository repository, ProgrammingExercise exercise) {
         LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exercise);
         if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {

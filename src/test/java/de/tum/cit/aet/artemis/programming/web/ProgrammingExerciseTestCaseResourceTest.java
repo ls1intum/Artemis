@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 
 class ProgrammingExerciseTestCaseResourceTest {
@@ -44,7 +44,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         ProgrammingExerciseCreationScheduleService scheduleService = mock(ProgrammingExerciseCreationScheduleService.class);
@@ -71,7 +71,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
@@ -120,7 +120,7 @@ class ProgrammingExerciseTestCaseResourceTest {
             assertThat(leaseHeld).isTrue();
             return null;
         }).when(versionService).createExerciseVersionSynchronously(fresh, user);
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(exerciseId, leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(exerciseId, leaseHeld);
         ProgrammingExerciseTestCaseResource resource = resource(repository, userRepository, mock(AuthorizationCheckService.class), testCaseService, scheduleService, versionService,
                 mutationGuard);
 
@@ -159,7 +159,7 @@ class ProgrammingExerciseTestCaseResourceTest {
             assertThat(leaseHeld).isTrue();
             return null;
         }).when(versionService).createExerciseVersionSynchronously(fresh, user);
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(exerciseId, leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(exerciseId, leaseHeld);
         ProgrammingExerciseTestCaseResource resource = resource(repository, userRepository, mock(AuthorizationCheckService.class), testCaseService,
                 mock(ProgrammingExerciseCreationScheduleService.class), versionService, mutationGuard);
 
@@ -179,7 +179,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(exercise(exerciseId));
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         when(testCaseService.update(exerciseId, Set.of())).thenThrow(new IllegalStateException("update failed"));
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(exerciseId, leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(exerciseId, leaseHeld);
         ProgrammingExerciseTestCaseResource resource = resource(repository, testCaseService, mutationGuard);
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> resource.updateTestCases(exerciseId, Set.of()));
@@ -197,7 +197,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdElseThrow(exerciseId)).thenReturn(exercise, exercise);
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         when(testCaseService.reset(exercise)).thenThrow(new IllegalStateException("reset failed"));
-        ProgrammingExerciseMutationGuard mutationGuard = trackingGuard(exerciseId, leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(exerciseId, leaseHeld);
         ProgrammingExerciseTestCaseResource resource = resource(repository, testCaseService, mutationGuard);
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> resource.resetTestCases(exerciseId));
@@ -207,7 +207,7 @@ class ProgrammingExerciseTestCaseResourceTest {
     }
 
     private ProgrammingExerciseTestCaseResource resource(ProgrammingExerciseRepository repository, ProgrammingExerciseTestCaseService testCaseService,
-            ProgrammingExerciseMutationGuard mutationGuard) {
+            ProgrammingExerciseMutationGuardService mutationGuard) {
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user("editor"));
         return resource(repository, userRepository, mock(AuthorizationCheckService.class), testCaseService, mock(ProgrammingExerciseCreationScheduleService.class),
@@ -216,16 +216,16 @@ class ProgrammingExerciseTestCaseResourceTest {
 
     private ProgrammingExerciseTestCaseResource resource(ProgrammingExerciseRepository repository, UserRepository userRepository,
             AuthorizationCheckService authorizationCheckService, ProgrammingExerciseTestCaseService testCaseService, ProgrammingExerciseCreationScheduleService scheduleService,
-            ExerciseVersionService versionService, ProgrammingExerciseMutationGuard mutationGuard) {
+            ExerciseVersionService versionService, ProgrammingExerciseMutationGuardService mutationGuard) {
         return new ProgrammingExerciseTestCaseResource(mock(ProgrammingExerciseTestCaseRepository.class), testCaseService, scheduleService, repository, authorizationCheckService,
                 userRepository, versionService, mutationGuard);
     }
 
-    private ProgrammingExerciseMutationGuard trackingGuard(long exerciseId, AtomicBoolean leaseHeld) {
-        ProgrammingExerciseMutationGuard mutationGuard = mock(ProgrammingExerciseMutationGuard.class);
+    private ProgrammingExerciseMutationGuardService trackingGuard(long exerciseId, AtomicBoolean leaseHeld) {
+        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenAnswer(invocation -> {
             assertThat(leaseHeld.compareAndSet(false, true)).isTrue();
-            return new ProgrammingExerciseMutationGuard.MutationLease(() -> leaseHeld.set(false));
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false));
         });
         return mutationGuard;
     }

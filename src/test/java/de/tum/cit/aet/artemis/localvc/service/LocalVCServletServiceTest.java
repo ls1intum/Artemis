@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
@@ -97,7 +97,7 @@ class LocalVCServletServiceTest {
     private ExerciseVersionService exerciseVersionService;
 
     @Mock
-    private ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     @Mock
     private ProgrammingMessagingService programmingMessagingService;
@@ -332,7 +332,7 @@ class LocalVCServletServiceTest {
     void claimProgrammingExerciseMutationClaimsVersionableStaffRepository() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-exercise.git");
-        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(true);
@@ -347,7 +347,7 @@ class LocalVCServletServiceTest {
     void claimProgrammingExerciseMutationKeepsUserRepositoryUnguarded() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-testuser.git");
-        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.USER)).thenReturn(false);
@@ -363,7 +363,7 @@ class LocalVCServletServiceTest {
     void claimProgrammingExerciseMutationClaimsVersionableAuxiliaryRepository() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase() + "-customrepo.git");
-        var expectedLease = new ProgrammingExerciseMutationGuard.MutationLease(() -> {
+        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
         });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("customrepo", testExercise)).thenReturn(true);

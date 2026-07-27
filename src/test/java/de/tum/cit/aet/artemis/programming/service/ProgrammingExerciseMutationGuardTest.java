@@ -33,9 +33,9 @@ class ProgrammingExerciseMutationGuardTest {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
         when(hyperionApi.claimExternalMutationSlot(42L)).thenReturn("mutation-42");
         HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
-        ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.of(hyperionApi), hazelcastInstance);
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi), hazelcastInstance);
 
-        try (ProgrammingExerciseMutationGuard.MutationLease ignored = guard.claimExternalMutation(42L)) {
+        try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(42L)) {
             verify(hyperionApi).claimExternalMutationSlot(42L);
         }
 
@@ -48,7 +48,7 @@ class ProgrammingExerciseMutationGuardTest {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
         when(hyperionApi.claimExternalMutationSlot(42L))
                 .thenThrow(new ConflictException("Exercise 42 is already being mutated.", "programmingExercise", "hyperionMutationSlotConflict"));
-        ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.of(hyperionApi), mock(HazelcastInstance.class));
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi), mock(HazelcastInstance.class));
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> guard.claimExternalMutation(42L));
 
@@ -57,10 +57,10 @@ class ProgrammingExerciseMutationGuardTest {
 
     @Test
     void claimExternalMutation_isNoOpWhenGenerationIsDisabledOnAllCurrentMembers() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("false")), 2);
+        ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("false")), 2);
 
         assertThatCode(() -> {
-            try (ProgrammingExerciseMutationGuard.MutationLease ignored = guard.claimExternalMutation(42L)) {
+            try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(42L)) {
                 // no-op
             }
         }).doesNotThrowAnyException();
@@ -68,7 +68,7 @@ class ProgrammingExerciseMutationGuardTest {
 
     @Test
     void claimExternalMutation_rejectsProfileSkewBeforeMutationWhenCurrentMemberIsGenerationCapable() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("true")), 2);
+        ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("true")), 2);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                 .satisfies(exception -> assertServiceUnavailable(exception, "hyperionExerciseGenerationProfileSkew")).withMessageContaining("cluster member")
@@ -77,7 +77,7 @@ class ProgrammingExerciseMutationGuardTest {
 
     @Test
     void claimExternalMutation_rejectsIncompleteDataMemberTopology() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false")), 2);
+        ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false")), 2);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                 .satisfies(exception -> assertServiceUnavailable(exception, "hyperionDataMemberTopologyMismatch")).withMessageContaining("expected 2")
@@ -86,7 +86,7 @@ class ProgrammingExerciseMutationGuardTest {
 
     @Test
     void claimExternalMutation_rejectsMissingCapabilityAttribute() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember(null)), 2);
+        ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember(null)), 2);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> guard.claimExternalMutation(42L))
                 .satisfies(exception -> assertServiceUnavailable(exception, "hyperionExerciseGenerationCapabilityUnavailable"));
@@ -94,7 +94,7 @@ class ProgrammingExerciseMutationGuardTest {
 
     @Test
     void claimExternalMutation_ignoresLiteMembersWhenProvingAllDataMembersDisabled() {
-        ProgrammingExerciseMutationGuard guard = disabledGuard(hazelcastWithMembers(dataMember("false"), liteMember(null)), 1);
+        ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false"), liteMember(null)), 1);
 
         assertThatCode(() -> guard.claimExternalMutation(42L).close()).doesNotThrowAnyException();
     }
@@ -102,18 +102,18 @@ class ProgrammingExerciseMutationGuardTest {
     @Test
     void claimExternalMutation_isNoOpForAnUnrelatedRepository() {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
-        ProgrammingExerciseMutationGuard guard = new ProgrammingExerciseMutationGuard(Optional.of(hyperionApi), mock(HazelcastInstance.class));
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi), mock(HazelcastInstance.class));
 
         assertThatCode(() -> {
-            try (ProgrammingExerciseMutationGuard.MutationLease ignored = guard.claimExternalMutation(OptionalLong.empty())) {
+            try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(OptionalLong.empty())) {
                 // no-op
             }
         }).doesNotThrowAnyException();
         verifyNoInteractions(hyperionApi);
     }
 
-    private static ProgrammingExerciseMutationGuard disabledGuard(HazelcastInstance hazelcastInstance, int expectedDataMemberCount) {
-        return new ProgrammingExerciseMutationGuard(Optional.empty(), hazelcastInstance, expectedDataMemberCount);
+    private static ProgrammingExerciseMutationGuardService disabledGuard(HazelcastInstance hazelcastInstance, int expectedDataMemberCount) {
+        return new ProgrammingExerciseMutationGuardService(Optional.empty(), hazelcastInstance, expectedDataMemberCount);
     }
 
     private static HazelcastInstance hazelcastWithMembers(Member... members) {

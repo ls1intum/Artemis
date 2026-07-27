@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuard;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
@@ -106,13 +106,13 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final ProgrammingExerciseMutationGuard programmingExerciseMutationGuard;
+    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ProgrammingExerciseMutationGuard programmingExerciseMutationGuard) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;

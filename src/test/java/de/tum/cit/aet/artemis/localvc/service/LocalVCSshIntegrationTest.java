@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.UnresolvedAddressException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -83,7 +82,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     void sshStaffPushIsRejectedBeforeRefUpdateWhileExerciseMutationSlotIsOwned() throws Exception {
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
-        Path clonePath = Files.createTempDirectory(tempPath, "localvc-ssh-guard-");
+        Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-ssh-guard-");
         JGitKeyCache keyCache = new JGitKeyCache();
         SshdSessionFactory sessionFactory = createSshSessionFactory(keyPair, keyCache);
         String repositoryUri = "ssh://" + user.getLogin() + "@localhost:" + sshPort + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git";
