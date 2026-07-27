@@ -10,7 +10,7 @@
     [style]="{ width: '50rem' }"
     [breakpoints]="{ '850px': '95vw' }"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h5 class="modal-title">
             <span
                 jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
@@ -557,7 +557,7 @@
             }
         </div>
     }
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button type="button" class="btn btn-outline" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
     </ng-template>
 </p-dialog>

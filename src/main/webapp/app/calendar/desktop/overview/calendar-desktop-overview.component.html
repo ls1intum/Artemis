@@ -2,7 +2,7 @@
     <div class="header">
         <h3>{{ monthDescription() }}</h3>
         <div class="spacer"></div>
-        <p-multiSelect
+        <p-multiselect
             [options]="filterOptions()"
             [ngModel]="selectedFilterOptions()"
             (ngModelChange)="onSelectedFilterOptionsChange($event)"
@@ -10,7 +10,7 @@
             [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
         >
-            <ng-template pTemplate="selectedItems">
+            <ng-template #selecteditems>
                 @if (selectedFilterOptions().length) {
                     <div class="chips-section">
                         @for (optionWithMetadata of selectedFilterOptions(); track optionWithMetadata.option) {
@@ -25,7 +25,7 @@
                     </div>
                 }
             </ng-template>
-        </p-multiSelect>
+        </p-multiselect>
         <p-selectbutton
             [options]="presentationOptions()"
             [ngModel]="presentation()"

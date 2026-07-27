@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Extend the global_notification_type ENUM with MAVEN_CENTRAL_RATE_LIMIT (instructor emails about builds failing
+         due to Maven Central rate limiting). MySQL only: PostgreSQL stores the type as varchar(32) and needs no change.
+         modifyDataType drops the NOT NULL constraint on MySQL, so it is re-added explicitly afterwards. -->
+    <changeSet id="20260715-01-extend-global-notification-type-enum" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <modifyDataType tableName="global_notification_setting" columnName="global_notification_type"
+                        newDataType="ENUM('NEW_LOGIN','NEW_PASSKEY_ADDED','VCS_TOKEN_EXPIRED','SSH_KEY_EXPIRED','MAINTENANCE','MAVEN_CENTRAL_RATE_LIMIT')"/>
+        <addNotNullConstraint tableName="global_notification_setting" columnName="global_notification_type"
+                              columnDataType="ENUM('NEW_LOGIN','NEW_PASSKEY_ADDED','VCS_TOKEN_EXPIRED','SSH_KEY_EXPIRED','MAINTENANCE','MAVEN_CENTRAL_RATE_LIMIT')"/>
+    </changeSet>
+</databaseChangeLog>

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -12,8 +11,6 @@ import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 
 describe('PdfPreviewThumbnailGridComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewThumbnailGridComponent;
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let engineService: MockPdfEngineService;

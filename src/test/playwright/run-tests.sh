@@ -56,7 +56,7 @@ run_playwright() {
     NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=8192" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@" 2>&1 | tee "./test-reports/pw-output-${test_type}.log"
     local exit_code=${PIPESTATUS[0]}
 
-    if [ $exit_code -ne 0 ]; then
+    if [ "$exit_code" -ne 0 ]; then
         local junit_file="./test-reports/results-${test_type}.xml"
         check_test_results "$junit_file"
         local check_result=$?

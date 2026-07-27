@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -14,7 +15,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -35,10 +35,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyManagementComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyManagementComponent>;
     let component: CompetencyManagementComponent;
     let courseCompetencyApiService: CourseCompetencyApiService;
@@ -61,7 +59,7 @@ describe('CompetencyManagementComponent', () => {
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(MockHasAnyAuthorityDirective),

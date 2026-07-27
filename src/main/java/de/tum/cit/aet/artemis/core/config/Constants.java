@@ -85,6 +85,9 @@ public final class Constants {
 
     public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
 
+    // Must be consistent with the exam.title varchar(255) database column.
+    public static final int EXAM_TITLE_MAX_LENGTH = 255;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
@@ -137,6 +140,9 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
+    public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
 
     /**
      * Maximum length in the database for the feedback detail text.

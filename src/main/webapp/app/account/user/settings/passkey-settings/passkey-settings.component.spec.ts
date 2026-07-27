@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PasskeySettingsComponent } from 'app/account/user/settings/passkey-settings/passkey-settings.component';
 import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-settings/passkey-settings-api.service';
@@ -22,8 +21,6 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
 
 describe('PasskeySettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PasskeySettingsComponent;
     let fixture: ComponentFixture<PasskeySettingsComponent>;
     let passkeySettingsApiService: PasskeySettingsApiService;

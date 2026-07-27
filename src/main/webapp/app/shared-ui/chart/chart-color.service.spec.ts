@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ChartColorService, resolveCssColor } from 'app/shared-ui/chart/chart-color.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 
 describe('ChartColorService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ChartColorService;
     let getComputedStyleSpy: ReturnType<typeof vi.spyOn>;
     let cssVariables: Record<string, string>;

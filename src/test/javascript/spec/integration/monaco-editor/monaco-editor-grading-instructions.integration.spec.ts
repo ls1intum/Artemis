@@ -13,11 +13,8 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorActionGradingInstructionsIntegration', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 

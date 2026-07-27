@@ -109,11 +109,4 @@ export const PROFILE_JENKINS = 'jenkins';
 export const PROFILE_HADES = 'hades';
 
 export type ProfileFeature =
-    | typeof PROFILE_LOCALCI
-    | typeof PROFILE_BUILDAGENT
-    | typeof PROFILE_LTI
-    | typeof PROFILE_PROD
-    | typeof PROFILE_DEV
-    | typeof PROFILE_TEST
-    | typeof PROFILE_JENKINS
-    | typeof PROFILE_HADES;
+    typeof PROFILE_LOCALCI | typeof PROFILE_BUILDAGENT | typeof PROFILE_LTI | typeof PROFILE_PROD | typeof PROFILE_DEV | typeof PROFILE_TEST | typeof PROFILE_JENKINS | typeof PROFILE_HADES;

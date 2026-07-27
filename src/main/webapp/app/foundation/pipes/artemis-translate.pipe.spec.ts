@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,8 +19,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
 class TranslateHostComponent {}
 
 describe('ArtemisTranslatePipe', () => {
-    setupTestBed({ zoneless: true });
-
     let translateService: MockTranslateService;
 
     beforeEach(async () => {

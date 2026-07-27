@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { Subject } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -19,8 +19,6 @@ import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('SetupPasskeyModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
     let localStorageService: LocalStorageService;
@@ -141,6 +139,28 @@ describe('SetupPasskeyModalComponent', () => {
             createComponentAndInit();
 
             expect(component.visible()).toBe(true);
+        });
+
+        it('should not reopen the modal after "Set up later" when the authentication state emits again', () => {
+            enablePasskeyFeature();
+            const accountService = TestBed.inject(AccountService);
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+            const authenticationState = new Subject<User | undefined>();
+            vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(authenticationState.asObservable());
+
+            createComponentAndInit();
+
+            // Initial authentication emission opens the prompt
+            authenticationState.next({ askToSetupPasskey: true } as User);
+            expect(component.visible()).toBe(true);
+
+            // User chooses "Set up later"
+            component.closeModal();
+            expect(component.visible()).toBe(false);
+
+            // A later re-emission (e.g. after changing the AI experience) must not reopen it
+            authenticationState.next({ askToSetupPasskey: true } as User);
+            expect(component.visible()).toBe(false);
         });
     });
 });

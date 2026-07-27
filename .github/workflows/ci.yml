@@ -172,7 +172,6 @@ jobs:
       contents: write
       packages: write
     with:
-      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
@@ -403,7 +402,6 @@ jobs:
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
       contents: read
-      statuses: write
       pull-requests: write
       actions: read
     with:
@@ -440,13 +438,15 @@ jobs:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   # The single required status check. Depends on every deterministic job — build, test, and
-  # the quality gates — plus `e2e`. `e2e` is required: an E2E result of `failure` means at least
-  # one test failed ALL its retries (Playwright exits 0 when a test recovers on retry, so
-  # flaky-recovered runs stay green and do NOT block), which is a genuine regression signal worth
-  # blocking a merge on. This does add merge latency — the gate now waits for the full E2E run —
-  # which is the accepted trade-off for not merging over a reproducibly failing test. `e2e`
-  # reflects its honest outcome via ci-e2e's report-results job (advisory continue-on-error test
-  # steps, then a final step that fails the job when the aggregated outcome is not success).
+  # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
+  # result of `failure` means ci-e2e's report-results classified at least one failure as a REAL
+  # (non-flaky) regression against Helios history (classify-failures.js) — a genuine regression
+  # worth blocking a merge on. A run whose only failures are known-flaky is exonerated and reports
+  # success, so ambient flakiness does NOT block a good PR (flaky-recovered runs, where Playwright
+  # exits 0, also stay green). This does add merge latency — the gate now waits for the full E2E
+  # run — the accepted trade-off for not merging over a reproducible regression. `e2e` reflects its
+  # honest outcome via ci-e2e's report-results job (continue-on-error test steps, then a final step
+  # that fails the job only on a real / infra / unclassified verdict).
   # `detect-changes` is included so a change-detection failure fails the gate closed. Path-skipped
   # jobs report `skipped`, which the gate accepts as a pass.
   #
@@ -552,8 +552,8 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           # Everything except these is required (i.e. in all-required-ci-passed's needs).
-          # `e2e` is now required (blocks merge on a test that fails all its retries); only
-          # codeql and coverage-report remain advisory.
+          # `e2e` is now required (blocks merge on a real, non-flaky regression; known-flaky-only
+          # runs are exonerated); only codeql and coverage-report remain advisory.
           ADVISORY: codeql coverage-report
         run: |
           set -Eeuo pipefail

@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,15 +49,16 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearc
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -92,8 +94,6 @@ public class AttachmentVideoUnitResource {
 
     private final FileService fileService;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
     private final LectureUnitService lectureUnitService;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -103,8 +103,8 @@ public class AttachmentVideoUnitResource {
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
+            FileService fileService, LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -114,7 +114,6 @@ public class AttachmentVideoUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
@@ -129,12 +128,12 @@ public class AttachmentVideoUnitResource {
      */
     @GetMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
-    public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<AttachmentVideoUnitDTO> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
         AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(attachmentVideoUnit, lectureId);
 
-        return ResponseEntity.ok().body(attachmentVideoUnit);
+        return ResponseEntity.ok().body(AttachmentVideoUnitDTO.of(attachmentVideoUnit));
     }
 
     /**
@@ -153,9 +152,8 @@ public class AttachmentVideoUnitResource {
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
-    // TODO: we should use a DTO here for @RequestPart(required = false) Attachment attachment
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) Attachment attachment,
+    public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
             @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages,
             @RequestPart(required = false) List<SlideOrderDTO> pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -168,6 +166,8 @@ public class AttachmentVideoUnitResource {
         }
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
+        validateAttachmentUpdateIntent(updateIntent, attachment, file);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -176,11 +176,17 @@ public class AttachmentVideoUnitResource {
         // Update competency links using the proper mechanism
         lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachment, file,
-                keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+        // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
+        Attachment attachmentUpdate = toTransientAttachment(attachment);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
+                file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (notificationText != null && attachment != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
+            Attachment changedAttachment = savedAttachmentVideoUnit.getAttachment();
+            // notifyStudentGroupAboutAttachmentChange derives the course via attachment.getLecture(); a unit attachment does not carry its lecture,
+            // so set it from the (already course-loaded) unit lecture to avoid a NullPointerException.
+            changedAttachment.setLecture(savedAttachmentVideoUnit.getLecture());
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -192,52 +198,75 @@ public class AttachmentVideoUnitResource {
             }
         });
 
-        return ResponseEntity.ok(savedAttachmentVideoUnit);
+        return ResponseEntity.ok(AttachmentVideoUnitDTO.of(savedAttachmentVideoUnit));
+    }
+
+    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, AttachmentDTO attachment, MultipartFile file) {
+        boolean hasFile = file != null && !file.isEmpty();
+        if (updateIntent == null) {
+            throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
+        }
+        if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && file != null) {
+            throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
+        }
+        if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && (!hasFile || attachment == null)) {
+            throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
+        }
     }
 
     /**
      * POST lectures/:lectureId/attachment-video-units : creates a new attachment video unit.
      *
-     * @param lectureId           the id of the lecture to which the attachment video unit should be added
-     * @param attachmentVideoUnit the attachment video unit that should be created
-     * @param attachment          the attachment that should be created
-     * @param file                the file to upload
-     * @param keepFilename        specifies if the original filename should be kept or not
+     * @param lectureId              the id of the lecture to which the attachment video unit should be added
+     * @param attachmentVideoUnitDTO the attachment video unit that should be created
+     * @param attachment             the attachment that should be created
+     * @param file                   the file to upload
+     * @param keepFilename           specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
-            @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
-            throws URISyntaxException {
-        log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
-        if (attachmentVideoUnit.getId() != null) {
+    public ResponseEntity<AttachmentVideoUnitDTO> createAttachmentVideoUnit(@PathVariable Long lectureId,
+            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
+            @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
+        log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnitDTO, attachment);
+        if (attachmentVideoUnitDTO.id() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        if (attachment != null && attachment.getId() != null) {
+        if (attachment != null && attachment.id() != null) {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        if (attachment == null && attachmentVideoUnit.getVideoSource() == null) {
+        if (attachment == null && attachmentVideoUnitDTO.videoSource() == null) {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
+        if (attachment != null && (file == null || file.isEmpty()) && !StringUtils.hasText(attachment.link())) {
+            throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
+        }
 
-        validateYouTubeVideoSource(attachmentVideoUnit.getVideoSource());
+        validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
 
-        lectureUnitRepository.reconnectCompetencyLinks(attachmentVideoUnit);
+        // Build the managed entity server-side and copy only the client-provided fields (never deserialize an entity from the client)
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setName(attachmentVideoUnitDTO.name());
+        attachmentVideoUnit.setReleaseDate(attachmentVideoUnitDTO.releaseDate());
+        attachmentVideoUnit.setDescription(attachmentVideoUnitDTO.description());
+        attachmentVideoUnit.setVideoSource(attachmentVideoUnitDTO.videoSource());
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, attachmentVideoUnit);
 
         lecture.addLectureUnit(attachmentVideoUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
 
-        AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachment, file,
-                keepFilename);
+        Attachment attachmentToCreate = toTransientAttachment(attachment);
+        AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachmentToCreate,
+                file, keepFilename);
         // Split PDF into slides asynchronously (non-blocking for user request)
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);
@@ -254,7 +283,7 @@ public class AttachmentVideoUnitResource {
             }
         });
 
-        return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
+        return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(AttachmentVideoUnitDTO.of(persistedUnit));
     }
 
     /**
@@ -296,7 +325,7 @@ public class AttachmentVideoUnitResource {
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentVideoUnits(@PathVariable Long lectureId,
+    public ResponseEntity<List<AttachmentVideoUnitDTO>> createAttachmentVideoUnits(@PathVariable Long lectureId,
             @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, @PathVariable String filename) {
         log.debug("REST request to create AttachmentVideoUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
         checkLectureElseThrow(lectureId);
@@ -318,7 +347,7 @@ public class AttachmentVideoUnitResource {
                     service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
                 }
             }));
-            return ResponseEntity.ok().body(savedUnits);
+            return ResponseEntity.ok().body(savedUnits.stream().map(AttachmentVideoUnitDTO::of).toList());
         }
         catch (IOException e) {
             log.error("Could not create attachment video units automatically", e);
@@ -390,7 +419,7 @@ public class AttachmentVideoUnitResource {
      */
     @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+    public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
@@ -399,12 +428,32 @@ public class AttachmentVideoUnitResource {
 
         try {
             attachmentVideoUnitService.handleStudentVersionFile(studentVersionFile, attachment, existingAttachmentUnit.getId());
-            return ResponseEntity.ok(existingAttachmentUnit);
+            return ResponseEntity.ok(AttachmentVideoUnitDTO.of(existingAttachmentUnit));
         }
         catch (Exception e) {
             log.error("Could not set the Student Version of the Attachment Video Unit", e);
             throw new InternalServerErrorException("Could not set the Student Version of the Attachment Video Unit");
         }
+    }
+
+    /**
+     * Builds a transient {@link Attachment} carrying only the fields the client may set via the {@link AttachmentDTO} part.
+     * The service copies these onto the managed attachment; the client never deserializes an entity directly.
+     *
+     * @param attachmentDTO the attachment part from the request, or {@code null} if none was sent
+     * @return a new transient attachment, or {@code null} if {@code attachmentDTO} is {@code null}
+     */
+    private static Attachment toTransientAttachment(AttachmentDTO attachmentDTO) {
+        if (attachmentDTO == null) {
+            return null;
+        }
+        Attachment attachment = new Attachment();
+        attachment.setName(attachmentDTO.name());
+        attachment.setReleaseDate(attachmentDTO.releaseDate());
+        attachment.setAttachmentType(attachmentDTO.attachmentType());
+        // Preserve the client-provided link (used by URL-based attachments without a file upload); on file uploads the service overrides it
+        attachment.setLink(attachmentDTO.link());
+        return attachment;
     }
 
     /**

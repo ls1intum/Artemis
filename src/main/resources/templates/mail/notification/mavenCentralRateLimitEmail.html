@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.notification.mavenCentralRateLimit.title(${exerciseTitle})}">Notification Title</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <span th:text="#{email.notification.mavenCentralRateLimit.description(${exerciseTitle}, ${courseTitle})}">Builds are failing because Maven Central rate limits dependency downloads.</span>
+    </p>
+    <p>
+        <span th:text="#{email.notification.mavenCentralRateLimit.solution}">Add a Maven repository mirror as the first repository in the build configuration of the test repository:</span>
+        <a th:href="${documentationUrl}" th:text="${documentationUrl}">Documentation link</a>
+    </p>
+    <p>
+        <span th:text="#{email.notification.mavenCentralRateLimit.openEditor}">You can adapt the test repository directly in the online editor:</span>
+        <a th:with="url=(@{|${baseUrl}${editorPath}|})" th:href="${url}" th:text="${url}">Editor link</a>
+    </p>
+    <p>
+        <span th:text="#{email.notification.mavenCentralRateLimit.frequency}">You will receive this notification at most once per day for each affected exercise.</span>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
+
+</body>
+</html>

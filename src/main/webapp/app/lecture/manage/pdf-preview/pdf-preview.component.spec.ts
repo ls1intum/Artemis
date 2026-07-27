@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
@@ -15,10 +14,9 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 import { OrderedPage, PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+import { AttachmentUpdateIntent } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('PdfPreviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let engineService: MockPdfEngineService;
@@ -29,6 +27,11 @@ describe('PdfPreviewComponent', () => {
     let router: { navigate: ReturnType<typeof vi.fn> };
     // Mutable route data so ngOnInit-driven tests can inject an attachment / attachmentVideoUnit resolver payload.
     let routeData: any;
+
+    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
+        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
+        return JSON.parse(await attachmentVideoUnitPart.text());
+    };
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
@@ -218,6 +221,11 @@ describe('PdfPreviewComponent', () => {
         await component.updateAttachmentWithFile();
 
         expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
+        });
+        expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
         expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
         expect(alertService.success).toHaveBeenCalled();
     });

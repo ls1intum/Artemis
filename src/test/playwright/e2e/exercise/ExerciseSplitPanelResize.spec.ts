@@ -50,6 +50,8 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
 
         const splitter = page.locator('jhi-resizable-panels p-splitter').first();
         const gutter = splitter.locator('.p-splitter-gutter').first();
+        // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
+        // changed across PrimeNG majors, so revisit this selector when upgrading PrimeNG.
         const leftPanel = splitter.locator('.p-splitterpanel').first();
 
         await expect(gutter).toBeVisible({ timeout: 30_000 });
