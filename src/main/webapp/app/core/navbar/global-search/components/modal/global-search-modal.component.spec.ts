@@ -5,8 +5,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
-import { GlobalSearchModalComponent } from './global-search-modal.component';
+import { NEVER, of, throwError } from 'rxjs';
+import { CONTENT_SEARCH_TIMEOUT_MS, GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -17,6 +17,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
+import { LectureSearchService } from '../../services/lecture-search.service';
+import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -90,9 +93,20 @@ describe('GlobalSearchModalComponent', () => {
         getCourse: vi.fn<(courseId: number) => Course | undefined>().mockReturnValue(undefined),
     };
 
+    const mockLectureSearchService = {
+        search: vi.fn(() => of<LectureSearchResult[]>([])),
+    };
+
+    // Controllable stand-in for the root availability computed; the modal reads contentSearchAvailable().
+    const mockAvailability = {
+        contentSearchAvailable: signal(true),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         mockSearchService.globalSearch.mockReturnValue(of<GlobalSearchResult[]>([]));
+        mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([]));
+        mockAvailability.contentSearchAvailable.set(true);
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -105,6 +119,8 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: LectureSearchService, useValue: mockLectureSearchService },
+                { provide: IrisSearchAvailabilityService, useValue: mockAvailability },
             ],
         });
 
@@ -495,6 +511,141 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(true);
             // No additional HTTP call: still only the 1 from the first add
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Content search source-swap', () => {
+        const contentResult: LectureSearchResult = {
+            course: { id: 42, name: 'Advanced Web Development' },
+            lecture: { id: 20, name: 'Angular Basics' },
+            lectureUnit: {
+                id: 30,
+                name: 'Introduction to Signals',
+                link: '/courses/42/lectures/20/units/30',
+                pageNumber: 4,
+                sourceType: 'lecture_unit_slide',
+                queryParams: { unit: 30, page: 4 },
+                displayMeta: 'Slide 4',
+            },
+            snippet: 'Signals are a reactive primitive...',
+        };
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should call LectureSearchService with (query, 10, undefined) and NOT globalSearch when lecture chip + iris + valid query', () => {
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, undefined);
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
+        it('should pass [courseId] to LectureSearchService when a course filter is set', () => {
+            component['activeCourseId'].set(42);
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockLectureSearchService.search).toHaveBeenCalledWith('signals', 10, [42]);
+        });
+
+        it('should render mapped results with type lecture_content', () => {
+            mockLectureSearchService.search.mockReturnValue(of<LectureSearchResult[]>([contentResult]));
+
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            const results = component['results']();
+            expect(results).toHaveLength(1);
+            expect(results[0].type).toBe('lecture_content');
+            expect(results[0].title).toBe('Introduction to Signals');
+            expect(results[0].id).toBe('lecture-content-30-4');
+        });
+
+        it('should fall back to globalSearch with the lecture type filter when iris is unavailable', () => {
+            mockAvailability.contentSearchAvailable.set(false);
+
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+        });
+
+        it('should fall back to the metadata lecture search when content search errors', () => {
+            const metadataResults: GlobalSearchResult[] = [{ id: 'm1', type: 'lecture', title: 'Lecture hit', metadata: {} }];
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
+            mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
+
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(component['results']()).toEqual(metadataResults);
+            expect(component['searchError']()).toBeUndefined();
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('should fall back to the metadata lecture search when content search exceeds the timeout', () => {
+            const metadataResults: GlobalSearchResult[] = [{ id: 'm1', type: 'lecture', title: 'Lecture hit', metadata: {} }];
+            mockLectureSearchService.search.mockReturnValue(NEVER); // never emits -> triggers the rxjs timeout
+            mockSearchService.globalSearch.mockReturnValue(of(metadataResults));
+
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300); // debounce elapses, content search is subscribed and hangs
+            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(CONTENT_SEARCH_TIMEOUT_MS + 1); // timeout fires -> metadata fallback
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('signals', 'lecture', undefined);
+            expect(component['results']()).toEqual(metadataResults);
+            expect(component['searchError']()).toBeUndefined();
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('should show the searchFailed error state when both content search and the metadata fallback fail', () => {
+            mockLectureSearchService.search.mockReturnValue(throwError(() => new Error('content search failed')));
+            mockSearchService.globalSearch.mockReturnValue(throwError(() => new Error('metadata failed')));
+
+            component['activeFilters'].set(['lecture']);
+            component['onSearchInput']('signals');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.searchFailed');
+            expect(component['results']()).toEqual([]);
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('should keep the empty-query lecture chip on the metadata placeholder path with cache reuse', () => {
+            const placeholder: GlobalSearchResult[] = [{ id: 'p1', type: 'lecture', title: 'Placeholder', metadata: {} }];
+            mockSearchService.globalSearch.mockReturnValue(of(placeholder));
+
+            // Empty query + lecture chip -> metadata placeholder browse (content search requires a valid query)
+            component['addFilter'](['lecture']);
+            vi.advanceTimersByTime(300);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'lecture', undefined);
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual(placeholder);
+
+            // Remove then re-add -> served from cache, no new HTTP call, content search still untouched
+            component['removeFilter']('lecture');
+            vi.advanceTimersByTime(300);
+            component['addFilter'](['lecture']);
+            vi.advanceTimersByTime(300);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+            expect(mockLectureSearchService.search).not.toHaveBeenCalled();
+            expect(component['results']()).toEqual(placeholder);
         });
     });
 
