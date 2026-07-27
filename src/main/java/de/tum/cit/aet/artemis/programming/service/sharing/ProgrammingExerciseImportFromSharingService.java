@@ -72,15 +72,20 @@ public class ProgrammingExerciseImportFromSharingService {
         if (sharingSetupInfo.courseId() == 0) {
             throw new SharingException("Target course is missing for import");
         }
+        // Map the request body to the transient exercise the import pipeline works on. Null collections become empty
+        // ones, exactly as the previous entity binding produced them.
+        ProgrammingExercise exercise = sharingSetupInfo.exercise().toEntity();
         try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             User user = userRepository.getUserWithGroupsAndAuthorities();
             Course course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
 
-            if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
-                sharingSetupInfo.exercise().setCourse(course);
+            // An exam exercise reaches its course over the exercise group, which the request only references by id, so
+            // only a course exercise without a course needs the target course attached here.
+            if (!exercise.isExamExercise() && !exercise.isCourseExercise()) {
+                exercise.setCourse(course);
             }
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, course, user, true);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, zip, course, user, true);
         }
     }
 }
