@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -138,7 +139,7 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
@@ -314,7 +315,7 @@ public class ProgrammingExerciseUpdateResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
-        return ResponseEntity.ok(savedProgrammingExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise));
     }
 
     /**
@@ -497,7 +498,7 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
@@ -542,6 +543,6 @@ public class ProgrammingExerciseUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise, user);
 
-        return ResponseEntity.ok(savedExercise);
+        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedExercise));
     }
 }
