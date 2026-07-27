@@ -28,7 +28,13 @@
                 (keydown.space)="isRowClickable() && navigateToSubmission(result, $event)"
             >
                 <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
-                <fa-icon [icon]="getResultIcon(result)" [class]="getResultColorClass(result)" class="flex-shrink-0" style="font-size: 14px" />
+                <fa-icon
+                    [icon]="getResultIcon(result)"
+                    [animation]="getResultIconAnimation(result)"
+                    [class]="getResultColorClass(result)"
+                    class="flex-shrink-0"
+                    style="font-size: 14px"
+                />
                 <div class="flex-grow-1 d-flex flex-column overflow-hidden" style="gap: 3px">
                     <div class="d-flex align-items-center gap-1">
                         <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>

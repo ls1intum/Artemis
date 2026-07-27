@@ -8,7 +8,7 @@ import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
 import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import {
     MissingResultInformation,
+    ResultTemplateStatus,
     evaluateTemplateStatus,
     getResultIconClass,
     getTextColorClass,
@@ -167,6 +168,15 @@ export class ResultHistoryDropdownComponent {
         }
         const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getResultIconClass(result, participation, templateStatus);
+    }
+
+    getResultIconAnimation(result: Result): AnimationProp | undefined {
+        const participation = result.submission?.participation;
+        if (!participation) {
+            return undefined;
+        }
+        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
+        return templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
     }
 
     getResultColorClass(result: Result): string {

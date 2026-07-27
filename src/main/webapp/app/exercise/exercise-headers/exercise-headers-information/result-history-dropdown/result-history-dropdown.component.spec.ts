@@ -18,6 +18,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import dayjs from 'dayjs/esm';
 
 describe('ResultHistoryDropdownComponent', () => {
     let component: ResultHistoryDropdownComponent;
@@ -275,6 +276,42 @@ describe('ResultHistoryDropdownComponent', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
             const icon = component.getResultIcon(result);
             expect(icon).toBeTruthy();
+        });
+    });
+
+    describe('getResultIconAnimation', () => {
+        it('should spin while Athena feedback is being generated', () => {
+            const participation: Participation = { id: 1, exercise: defaultExercise } as Participation;
+            const result = {
+                id: 1,
+                score: 50,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().add(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBe('spin');
+        });
+
+        it('should not spin for completed Athena feedback', () => {
+            const participation: Participation = { id: 1, exercise: defaultExercise } as Participation;
+            const result = {
+                id: 1,
+                score: 50,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: true,
+                completionDate: dayjs().subtract(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+
+        it('should not spin when the result has no participation', () => {
+            const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
         });
     });
 
