@@ -59,16 +59,24 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     protected readonly MAX_POINTS = MAX_EXERCISE_POINTS;
     protected readonly maxDecimalPlaces = computed(() => getCourseFromExercise(this.programmingExercise())?.accuracyOfScores ?? DEFAULT_MAX_POINTS_DECIMAL_PLACES);
     protected readonly pointsPattern = computed(() => buildPointsPattern(this.maxDecimalPlaces()));
-    protected readonly pointsErrorTranslateValues = computed(() => ({
-        min: this.programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? MIN_EXERCISE_POINTS : MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE,
-        max: MAX_EXERCISE_POINTS,
-        maxDecimals: this.maxDecimalPlaces(),
-    }));
-    protected readonly bonusPointsErrorTranslateValues = computed(() => ({
-        min: MIN_EXERCISE_POINTS,
-        max: MAX_EXERCISE_POINTS,
-        maxDecimals: this.maxDecimalPlaces(),
-    }));
+    // Plain methods, not computed() signals: onIncludedInOverallScoreChange() mutates programmingExercise().includedInOverallScore
+    // in place rather than replacing the input signal's value, so a computed() here would never see a changed dependency version
+    // and could go stale across inclusion-mode changes. Called fresh from the template on every change detection run instead.
+    protected pointsErrorTranslateValues() {
+        return {
+            min: this.programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? MIN_EXERCISE_POINTS : MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE,
+            max: MAX_EXERCISE_POINTS,
+            maxDecimals: this.maxDecimalPlaces(),
+        };
+    }
+
+    protected bonusPointsErrorTranslateValues() {
+        return {
+            min: MIN_EXERCISE_POINTS,
+            max: MAX_EXERCISE_POINTS,
+            maxDecimals: this.maxDecimalPlaces(),
+        };
+    }
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
