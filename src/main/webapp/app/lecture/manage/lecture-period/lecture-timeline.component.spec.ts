@@ -6,6 +6,7 @@ import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lect
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import dayjs from 'dayjs/esm';
 
 describe('LectureTimelineComponent', () => {
     let fixture: ComponentFixture<LectureTimelineComponent>;
@@ -48,5 +49,15 @@ describe('LectureTimelineComponent', () => {
         timeline.timelineStatusChange.emit(status);
 
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(status);
+    });
+
+    it('should emit when a lecture date changes', () => {
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(component.datesChanged, 'emit');
+
+        component.startDate.set(dayjs());
+        fixture.detectChanges();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });

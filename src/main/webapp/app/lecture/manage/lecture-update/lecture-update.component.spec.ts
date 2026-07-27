@@ -314,13 +314,16 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('isChangeMadeToPeriodSection', () => {
-        it('should store emitted timeline status and update the period change state', async () => {
+        it('should store the emitted timeline status and update the period change state when dates change', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs().add(1, 'day') } as Lecture;
             lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') } as Lecture);
             const status = { valid: false, empty: false };
+            lectureUpdateComponentFixture.detectChanges();
+            const timeline = lectureUpdateComponentFixture.debugElement.query(By.directive(LectureTimelineComponent)).componentInstance as LectureTimelineComponent;
 
-            lectureUpdateComponent.onTimelineStatusChange(status);
+            timeline.timelineStatusChange.emit(status);
+            timeline.datesChanged.emit();
 
             expect(lectureUpdateComponent.timelineStatus()).toEqual(status);
             expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(true);

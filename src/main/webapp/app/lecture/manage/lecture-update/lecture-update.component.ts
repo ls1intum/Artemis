@@ -225,11 +225,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
     }
 
-    onTimelineStatusChange(status: ExerciseTimelineStatus): void {
-        this.timelineStatus.set(status);
-        this.updateIsChangesMadeToTitleOrPeriodSection();
-    }
-
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state, and we edited an existing lecture
