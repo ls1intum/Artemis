@@ -251,6 +251,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        if (result.type === LECTURE_CONTENT_TYPE) {
+            const link = result.metadata?.['link'];
+            const queryParams = result.metadata?.['queryParams'];
+            if (link) {
+                void this.router.navigate([link], { queryParams });
+            }
+            this.overlay.close();
+            return;
+        }
+
         const courseId = result.metadata?.['courseId'];
         if (!courseId) {
             this.overlay.close();

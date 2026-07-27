@@ -291,6 +291,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 component['navigateToResult']({ type: 'channel', id: '5', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'communication'], { queryParams: { conversationId: '5' } });
             });
+
+            it('should navigate to the exact link with queryParams for a lecture_content hit', () => {
+                component['navigateToResult']({
+                    type: 'lecture_content',
+                    id: 'lecture-content-30-4',
+                    metadata: { link: '/courses/10/lectures/20/units/30', queryParams: { unit: 30, page: 4 } },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses/10/lectures/20/units/30'], { queryParams: { unit: 30, page: 4 } });
+                expect(overlay.close).toHaveBeenCalled();
+            });
+
+            it('should close the overlay without navigating when a lecture_content hit has no link', () => {
+                component['navigateToResult']({ type: 'lecture_content', id: 'x', metadata: {} } as GlobalSearchResult);
+                expect(router.navigate).not.toHaveBeenCalled();
+                expect(overlay.close).toHaveBeenCalled();
+            });
         });
 
         describe('template', () => {
