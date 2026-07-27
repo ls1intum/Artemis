@@ -1,16 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,10 +11,6 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -50,16 +39,13 @@ public class AttachmentVideoUnitService {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
 
-    /**
-     * DPI used to render PDF pages for the content fingerprint. Low enough to keep rendering cheap, high enough to detect visual changes (replaced diagrams, vector graphics, ...).
-     */
-    private static final int FINGERPRINT_RENDER_DPI = 50;
-
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final AttachmentRepository attachmentRepository;
 
     private final FileService fileService;
+
+    private final AttachmentFileHashService attachmentFileHashService;
 
     private final SlideSplitterService slideSplitterService;
 
@@ -71,10 +57,11 @@ public class AttachmentVideoUnitService {
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService) {
+            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
+        this.attachmentFileHashService = attachmentFileHashService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -94,7 +81,7 @@ public class AttachmentVideoUnitService {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
 
-        if (attachment != null && file != null) {
+        if (attachment != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
@@ -151,24 +138,20 @@ public class AttachmentVideoUnitService {
             else if (existingAttachment != null) {
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-                // Re-uploading a file whose content is unchanged must not bump the version or trigger a re-ingest. The pdf-preview client re-serializes the PDF on every save
-                // (e.g. when only hidden-slide dates change), so the raw bytes always differ; we therefore compare the PDF content (extracted text + page count), which is stable
-                // across re-serialization. Only a genuine content change bumps the version.
-                boolean fileContentChanged = hasUploadedFile && !isUploadedFileContentIdenticalToStored(updateFile, existingAttachment);
-
-                // Update file and increment version number only when the uploaded content actually changed
-                if (fileContentChanged) {
-                    handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-                    final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-                    existingAttachment.setVersion(revision);
+                if (hasUploadedFile) {
+                    AttachmentFileUpdateResult fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    if (fileUpdateResult.fileBytesChanged()) {
+                        log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
+                                fileUpdateResult.newVersion());
+                    }
                 }
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                // Slide splitting is intentionally identical to develop: it runs on every uploaded file, independent of the content fingerprint. The fingerprint only gates the
-                // version bump (and therefore the Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
+                // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
+                // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
                 if (updateFile != null) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
@@ -214,81 +197,54 @@ public class AttachmentVideoUnitService {
                 unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
     }
 
-    /**
-     * Checks whether the uploaded file has the same content as the file currently stored for the attachment. This is used to avoid bumping the attachment version (and triggering
-     * a costly re-ingest) when a file with unchanged content is re-uploaded. For PDFs the comparison is based on a content fingerprint (extracted text + page count) rather than
-     * the raw bytes, because the pdf-preview client re-serializes the PDF on every save (e.g. when only hidden-slide dates change), which changes the bytes but not the content.
-     *
-     * @param uploadedFile       the newly uploaded file
-     * @param existingAttachment the attachment whose currently stored file the upload is compared against
-     * @return {@code true} if a stored file exists and its content fingerprint matches the uploaded file's fingerprint, {@code false} otherwise
-     */
-    private boolean isUploadedFileContentIdenticalToStored(MultipartFile uploadedFile, Attachment existingAttachment) {
-        if (existingAttachment == null || existingAttachment.getLink() == null) {
-            return false;
+    private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {
+        Integer oldVersion = existingAttachment.getVersion();
+        String uploadedHash = attachmentFileHashService.sha256(uploadedFile).value();
+        Optional<String> storedHash = getOrBackfillStoredFileSha256Hash(existingAttachment);
+
+        if (storedHash.isPresent() && storedHash.get().equals(uploadedHash)) {
+            existingAttachment.setSha256Hash(uploadedHash);
+            return AttachmentFileUpdateResult.unchanged(oldVersion);
         }
-        Path existingFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(existingAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-        if (!Files.exists(existingFilePath)) {
-            return false;
+
+        handleFile(uploadedFile, existingAttachment, keepFilename, attachmentVideoUnitId);
+        int newVersion = oldVersion == null ? 1 : oldVersion + 1;
+        existingAttachment.setVersion(newVersion);
+        existingAttachment.setSha256Hash(uploadedHash);
+        return AttachmentFileUpdateResult.changed(oldVersion, newVersion);
+    }
+
+    private Optional<String> getOrBackfillStoredFileSha256Hash(Attachment existingAttachment) {
+        String existingHash = existingAttachment.getSha256Hash();
+        if (existingHash != null) {
+            return Optional.of(existingHash);
         }
+        if (existingAttachment.getLink() == null) {
+            return Optional.empty();
+        }
+
         try {
-            String uploadedFingerprint = computeContentFingerprint(uploadedFile.getBytes(), uploadedFile.getOriginalFilename());
-            String existingFingerprint = computeContentFingerprint(Files.readAllBytes(existingFilePath), existingFilePath.getFileName().toString());
-            return uploadedFingerprint.equals(existingFingerprint);
+            Path existingFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(existingAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            if (!Files.exists(existingFilePath)) {
+                log.warn("Stored attachment file {} does not exist. Treating uploaded file as changed content.", existingAttachment.getLink());
+                return Optional.empty();
+            }
+
+            String storedHash = attachmentFileHashService.sha256(existingFilePath).value();
+            existingAttachment.setSha256Hash(storedHash);
+            return Optional.of(storedHash);
         }
-        catch (IOException e) {
-            // If the comparison fails for any reason, fall back to treating the upload as changed content so that processing still happens.
-            log.warn("Could not compare uploaded file with the stored attachment file (attachment {}). Treating the upload as changed content: {}", existingAttachment.getId(),
+        catch (AttachmentFileHashException | IllegalArgumentException | SecurityException e) {
+            log.warn("Could not compute stored attachment SHA-256 hash for attachment {}. Treating uploaded file as changed content: {}", existingAttachment.getId(),
                     e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Computes a content fingerprint for the given file. For PDFs this is a SHA-256 hash over the page count and the rendered pixels of every page, so that re-serializing the same
-     * PDF (which changes the raw bytes but not the visual appearance) yields the same fingerprint, while any visual change - text, vector graphics, diagrams, images or annotations
-     * -
-     * is detected because it changes the rendered pixels. For non-PDF files (or PDFs that cannot be rendered) it falls back to a hash of the raw bytes.
-     *
-     * @param fileBytes the file content
-     * @param filename  the original filename, used to detect PDFs
-     * @return a hex-encoded SHA-256 fingerprint of the file content
-     */
-    private String computeContentFingerprint(byte[] fileBytes, String filename) {
-        if (filename != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(filename))) {
-            try (PDDocument document = Loader.loadPDF(fileBytes)) {
-                StringBuilder fingerprintInput = new StringBuilder();
-                fingerprintInput.append(document.getNumberOfPages()).append('\n');
-                PDFRenderer renderer = new PDFRenderer(document);
-                for (int pageIndex = 0; pageIndex < document.getNumberOfPages(); pageIndex++) {
-                    // Render at a low DPI in grayscale: enough to detect visual changes while keeping the rendering cheap. The page order is part of the fingerprint, so reordering
-                    // pages is detected as well.
-                    BufferedImage renderedPage = renderer.renderImageWithDPI(pageIndex, FINGERPRINT_RENDER_DPI, ImageType.GRAY);
-                    fingerprintInput.append(sha256Hex(((DataBufferByte) renderedPage.getRaster().getDataBuffer()).getData())).append('\n');
-                }
-                return sha256Hex(fingerprintInput.toString());
-            }
-            catch (IOException e) {
-                log.warn("Could not render uploaded PDF for content fingerprinting, falling back to raw bytes: {}", e.getMessage());
-            }
-        }
-        return sha256Hex(fileBytes);
-    }
-
-    private static String sha256Hex(String value) {
-        return sha256Hex(value.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static String sha256Hex(byte[] value) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
-        }
-        catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 algorithm not available", e);
+            return Optional.empty();
         }
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
+        if (file != null && !file.isEmpty()) {
+            attachment.setSha256Hash(attachmentFileHashService.sha256(file).value());
+        }
         handleFile(file, attachment, keepFilename, attachmentVideoUnit.getId());
         // Default attachment
         attachment.setVersion(1);
