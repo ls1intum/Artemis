@@ -1,10 +1,9 @@
 <div>
     <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
     <div *adminTitleBarActions>
-        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="refresh()" data-testid="refresh-button">
-            <fa-icon [icon]="faSync" />
+        <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="health.refresh.button"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
     <div class="overflow-x-auto">
         <table id="healthCheck" class="w-full border-collapse" aria-describedby="health-page-heading">
@@ -35,7 +34,7 @@
                                 }
                             </td>
                             <td class="py-2 px-3 text-center" data-testid="status-cell">
-                                <p-tag
+                                <tum-ui-tag
                                     [severity]="getBadgeSeverity(componentHealth.value!.status)"
                                     [value]="'health.status.' + componentHealth.value!.status | artemisTranslate"
                                     data-testid="status-tag"
@@ -43,16 +42,16 @@
                             </td>
                             <td class="py-2 px-3 text-center">
                                 @if (componentHealth.value!.details) {
-                                    <p-button
+                                    <tum-ui-button
                                         size="small"
                                         severity="info"
-                                        pTooltip="{{ 'health.details.details' | artemisTranslate }}"
-                                        [attr.aria-label]="'health.details.details' | artemisTranslate"
-                                        (onClick)="showHealth({ key: componentHealth.key, value: componentHealth.value! })"
+                                        [tumUiTooltip]="'health.details.details' | artemisTranslate"
+                                        [ariaLabel]="'health.details.details' | artemisTranslate"
+                                        (clicked)="showHealth({ key: componentHealth.key, value: componentHealth.value! })"
                                         data-testid="details-link"
                                     >
                                         <fa-icon [icon]="faEye" />
-                                    </p-button>
+                                    </tum-ui-button>
                                 }
                             </td>
                         </tr>
@@ -60,10 +59,10 @@
                     <tr id="websocketConnection" class="border-b border-surface-100 odd:bg-surface-50 dark:border-surface-700 dark:odd:bg-surface-800">
                         <td class="py-2 px-3">Websocket Connection (Client -> Server)</td>
                         <td class="py-2 px-3 text-center" data-testid="status-cell">
-                            <p-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
+                            <tum-ui-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
                                 <fa-icon [fixedWidth]="true" [icon]="websocketConnected() ? faTowerBroadcast : faExclamation" />
                                 <span>{{ (websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate }}</span>
-                            </p-tag>
+                            </tum-ui-tag>
                         </td>
                         <td class="py-2 px-3 text-center">-</td>
                     </tr>

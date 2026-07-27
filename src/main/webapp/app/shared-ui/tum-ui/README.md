@@ -46,7 +46,25 @@ back to PrimeNG only for widgets the kit does not provide yet.
 | Table           | `tum-ui-table<T>`                          | Generic CDK-table data grid: dynamic columns, single-column server-side sort, server-side paging, global search, row actions, striped / scrollable. |
 | Paginator       | `tum-ui-paginator`                         | First / prev / numbered page buttons / next / last + page-size selector; emits `pageChange` / `pageSizeChange`.                            |
 | Date picker     | `tum-ui-date-picker`                       | `dayjs`-backed date + time picker with a hand-built calendar; implements the Signal Forms `FormValueControl` contract.                     |
-| Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that tooltip / popover / date picker build on.  |
+| Button (attr)   | `[tumUiButton]`                            | Attribute form of the button for a native `<a>` / `<button>` (keeps `routerLink`, `jhiDeleteButton`, etc.); mirrors `pButton`.             |
+| Message         | `tum-ui-message`                           | Inline alert box; `severity` info / success / warn / error / secondary / contrast, `[text]` or projected content.                         |
+| Input           | `[tumUiInput]` / `[tumUiTextarea]`         | Styles a native `<input>` / `<textarea>` (size, invalid state); composites `tum-ui-icon-field` and `tum-ui-input-group`(+`-addon`).        |
+| Select          | `tum-ui-select`                            | Single-select dropdown on the shared overlay; `ControlValueAccessor` (ngModel / reactive forms).                                          |
+| Checkbox        | `tum-ui-checkbox`                          | Binary checkbox over a hidden native input; CVA + `onChange`.                                                                             |
+| Radio button    | `tum-ui-radio-button`                      | Radio over a hidden native input; CVA plus the one-way `[ngModel]` + `(onClick)` pattern.                                                  |
+| Toggle switch   | `tum-ui-toggle-switch`                     | `role="switch"` on/off toggle; CVA + `changed`.                                                                                           |
+| Select button   | `tum-ui-select-button`                     | Segmented single-select; CVA + optional `[itemTemplate]`.                                                                                 |
+| Chip            | `tum-ui-chip`                              | Removable label pill; `(onRemove)`.                                                                                                       |
+| Autocomplete    | `tum-ui-autocomplete`                      | Async multi-select combobox with token chips on the shared overlay; CVA + `completeMethod` / `onSelect` / `onUnselect`.                    |
+| Progress bar    | `tum-ui-progress-bar`                      | Determinate bar with `[value]` and an optional label.                                                                                     |
+| Progress spinner| `tum-ui-progress-spinner`                  | Indeterminate loading spinner (`role="status"`).                                                                                          |
+| Card            | `tum-ui-card`                              | Surface card with `[tumUiCardHeader]` / body / `[tumUiCardFooter]` slots.                                                                  |
+| Panel           | `tum-ui-panel`                             | Titled, optionally collapsible content panel.                                                                                             |
+| Tabs            | `tum-ui-tabs` (+ `-tab-list` / `-tab` / `-tab-panels` / `-tab-panel`) | Tabbed navigation with a sliding active bar; `[value]` / `(valueChange)`.                    |
+| Button group    | `tum-ui-button-group`                      | Visually joins adjacent buttons (collapses shared borders / inner radii).                                                                  |
+| Dialog          | `tum-ui-dialog`                            | Declarative modal on the shared overlay; `[(visible)]`, `[header]`, `#header` / `#footer` slots, focus trap + Escape.                      |
+| Basic table     | `[tumUiTable]` + `[tumUiSortableColumn]`   | Styles a native `<table>` (PrimeNG-matched) with 3-state sortable headers, for hand-templated grids; `tum-ui-table-virtual-scroll` for large lists. |
+| Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that tooltip / popover / date picker / select / autocomplete / dialog build on. |
 
 Each component lives in its own folder with a colocated `*.spec.ts`. Variant class maps live in a small
 `*.variants.ts` (a local, dependency-free take on class-variance-authority).

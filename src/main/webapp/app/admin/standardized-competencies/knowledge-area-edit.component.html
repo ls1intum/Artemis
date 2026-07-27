@@ -6,13 +6,13 @@
             } @else {
                 <h4 jhiTranslate="artemisApp.knowledgeArea.details.titleCreate"></h4>
             }
-            <p-button
+            <tum-ui-button
                 severity="secondary"
                 size="small"
-                [text]="true"
+                variant="text"
                 [rounded]="true"
-                icon="pi pi-times"
-                (onClick)="close()"
+                [icon]="faXmark"
+                (clicked)="close()"
                 [ariaLabel]="'entity.action.close' | artemisTranslate"
                 data-testid="close-button"
             />
@@ -20,24 +20,24 @@
         <!-- do not allow these actions when creating a new knowledge area because it is not saved yet -->
         @if (knowledgeArea().id) {
             <div class="mb-1 flex flex-wrap items-center gap-2">
-                <p-button size="small" (onClick)="openNewCompetency()">
+                <tum-ui-button size="small" (clicked)="openNewCompetency()">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.knowledgeArea.details.createCompetencyButton"></span>
-                </p-button>
-                <p-button size="small" (onClick)="openNewKnowledgeArea()">
+                </tum-ui-button>
+                <tum-ui-button size="small" (clicked)="openNewKnowledgeArea()">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.knowledgeArea.details.createKnowledgeAreaButton"></span>
-                </p-button>
+                </tum-ui-button>
             </div>
             <div class="flex items-center justify-end gap-2">
                 @if (!isEditing()) {
-                    <p-button severity="warn" size="small" (onClick)="edit()">
+                    <tum-ui-button severity="warn" size="small" (clicked)="edit()">
                         <fa-icon [icon]="faPencil" />
                         <span jhiTranslate="entity.action.edit"></span>
-                    </p-button>
+                    </tum-ui-button>
                 }
                 <button
-                    pButton
+                    tumUiButton
                     severity="danger"
                     size="small"
                     [renderButtonStyle]="false"
@@ -56,30 +56,30 @@
     <div class="flex flex-col gap-3" [formGroup]="form">
         <div class="flex flex-col gap-2">
             <label for="title-input" jhiTranslate="artemisApp.knowledgeArea.model.title"></label>
-            <input type="text" pInputText id="title-input" formControlName="title" />
+            <input type="text" tumUiInput id="title-input" formControlName="title" />
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
-                <p-message severity="error" data-testid="title-error">
+                <tum-ui-message severity="error" data-testid="title-error">
                     @if (form.controls.title.errors?.required) {
                         <span jhiTranslate="artemisApp.knowledgeArea.details.error.titleRequired"></span>
                     }
                     @if (form.controls.title.errors?.maxlength) {
                         <span jhiTranslate="artemisApp.knowledgeArea.details.error.titleMaxLength" [translateValues]="{ max: validators.TITLE_MAX }"></span>
                     }
-                </p-message>
+                </tum-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
             <label for="short-title-input" jhiTranslate="artemisApp.knowledgeArea.model.shortTitle"></label>
-            <input type="text" pInputText id="short-title-input" formControlName="shortTitle" />
+            <input type="text" tumUiInput id="short-title-input" formControlName="shortTitle" />
             @if (form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)) {
-                <p-message severity="error" data-testid="short-title-error">
+                <tum-ui-message severity="error" data-testid="short-title-error">
                     @if (form.controls.shortTitle.errors?.required) {
                         <span jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleRequired"></span>
                     }
                     @if (form.controls.shortTitle.errors?.maxlength) {
                         <span jhiTranslate="artemisApp.knowledgeArea.details.error.shortTitleMaxLength" [translateValues]="{ max: validators.SHORT_TITLE_MAX }"></span>
                     }
-                </p-message>
+                </tum-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
@@ -95,14 +95,14 @@
                 <div disabled="true" class="markdown-preview rounded border p-1" [jhiMarkdown]="form.controls.description.value ?? '&nbsp;'"></div>
             }
             @if (form.controls.description.invalid && form.controls.description.dirty) {
-                <p-message severity="error" data-testid="description-error">
+                <tum-ui-message severity="error" data-testid="description-error">
                     <span jhiTranslate="artemisApp.knowledgeArea.details.error.descriptionMaxLength" [translateValues]="{ max: validators.DESCRIPTION_MAX }"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
-            <p-select
+            <tum-ui-select
                 inputId="knowledge-area-select"
                 [options]="knowledgeAreas()"
                 optionLabel="title"
@@ -112,22 +112,22 @@
                 appendTo="body"
             />
             @if (form.controls.parentId.invalid && (form.controls.parentId.dirty || form.controls.parentId.touched)) {
-                <p-message severity="error" data-testid="parent-error">
+                <tum-ui-message severity="error" data-testid="parent-error">
                     <span jhiTranslate="artemisApp.knowledgeArea.details.error.parentIdCircle"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
     </div>
     @if (isEditing()) {
         <div class="flex items-center justify-end gap-2 mt-3">
-            <p-button severity="secondary" size="small" (onClick)="cancel()">
+            <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
-            </p-button>
-            <p-button size="small" (onClick)="save()" [disabled]="form.invalid">
+            </tum-ui-button>
+            <tum-ui-button size="small" (clicked)="save()" [disabled]="form.invalid">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
-            </p-button>
+            </tum-ui-button>
         </div>
     }
 </div>
