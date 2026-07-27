@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -100,37 +99,23 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         Boolean releaseTestsWithExampleSolution, String feedbackSuggestionModule, ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey,
         String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
         List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course,
-        ExerciseGroupIdDTO exerciseGroup, TemplateParticipationRefDTO templateParticipation, SolutionParticipationRefDTO solutionParticipation)
-        implements CompetencyLinksHolderDTO {
+        ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation, SourceParticipationRefDTO solutionParticipation)
+        implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
-     * Reference to the source template participation. The from-file import reads the repository URI off the JSON part
-     * to rewrite legacy project names; the plain import ignores it.
+     * Reference to a source template or solution participation. The from-file import reads the repository URI off the
+     * JSON part to rewrite legacy project names; the plain import ignores it. The wire property name comes from the
+     * enclosing record's component, so both slots share one record.
      *
      * @param id            the participation id
-     * @param repositoryUri the URI of the template repository
-     * @param buildPlanId   the id of the template build plan
+     * @param repositoryUri the URI of the participation's repository
+     * @param buildPlanId   the id of the participation's build plan
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     // bare @JsonInclude(): request bodies must keep nulls and empty collections on the wire, and the shared
     // architecture rule forbids spelling out Include.ALWAYS (only NON_EMPTY or no explicit value are allowed)
     @JsonInclude()
-    public record TemplateParticipationRefDTO(Long id, String repositoryUri, String buildPlanId) {
-    }
-
-    /**
-     * Reference to the source solution participation. The from-file import reads the repository URI off the JSON part
-     * to rewrite legacy project names; the plain import ignores it.
-     *
-     * @param id            the participation id
-     * @param repositoryUri the URI of the solution repository
-     * @param buildPlanId   the id of the solution build plan
-     */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    // bare @JsonInclude(): request bodies must keep nulls and empty collections on the wire, and the shared
-    // architecture rule forbids spelling out Include.ALWAYS (only NON_EMPTY or no explicit value are allowed)
-    @JsonInclude()
-    public record SolutionParticipationRefDTO(Long id, String repositoryUri, String buildPlanId) {
+    public record SourceParticipationRefDTO(Long id, String repositoryUri, String buildPlanId) {
     }
 
     /**
@@ -142,59 +127,10 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
      */
     public ProgrammingExercise toEntity() {
         ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(id);
-        exercise.setTitle(title);
-        exercise.setShortName(shortName);
-        exercise.setChannelName(channelName);
-        exercise.setPackageName(packageName);
-        exercise.setProblemStatement(problemStatement);
-        exercise.setGradingInstructions(gradingInstructions);
+        ProgrammingExerciseRequestDTO.applyCommonFields(this, exercise);
+        // The three collections below are where import and create deliberately differ: import normalizes a missing
+        // collection to an empty one, create leaves it at the entity default.
         exercise.setCategories(categories == null ? new HashSet<>() : new HashSet<>(categories));
-        exercise.setDifficulty(difficulty);
-        // mode, maxPoints and bonusPoints map onto non-nullable columns with entity defaults: only overwrite them
-        // when the request actually carries a value.
-        if (mode != null) {
-            exercise.setMode(mode);
-        }
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig == null ? null : teamAssignmentConfig.toEntity());
-        if (maxPoints != null) {
-            exercise.setMaxPoints(maxPoints);
-        }
-        if (bonusPoints != null) {
-            exercise.setBonusPoints(bonusPoints);
-        }
-        if (includedInOverallScore != null) {
-            exercise.setIncludedInOverallScore(includedInOverallScore);
-        }
-        exercise.setReleaseDate(releaseDate);
-        exercise.setStartDate(startDate);
-        exercise.setDueDate(dueDate);
-        exercise.setAssessmentDueDate(assessmentDueDate);
-        exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
-        // The exercise has no assessment-type default: a missing value must stay null, exactly as the entity binding left it.
-        exercise.setAssessmentType(assessmentType);
-        exercise.setAllowComplaintsForAutomaticAssessments(Boolean.TRUE.equals(allowComplaintsForAutomaticAssessments));
-        exercise.setAllowFeedbackRequests(Boolean.TRUE.equals(allowFeedbackRequests));
-        exercise.setPresentationScoreEnabled(presentationScoreEnabled);
-        exercise.setSecondCorrectionEnabled(Boolean.TRUE.equals(secondCorrectionEnabled));
-        exercise.setAllowOnlineEditor(allowOnlineEditor);
-        exercise.setAllowOfflineIde(allowOfflineIde);
-        exercise.setAllowOnlineIde(Boolean.TRUE.equals(allowOnlineIde));
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setMaxStaticCodeAnalysisPenalty(maxStaticCodeAnalysisPenalty);
-        if (showTestNamesToStudents != null) {
-            // the setter writes a primitive field, so a null would unbox into a NullPointerException
-            exercise.setShowTestNamesToStudents(showTestNamesToStudents);
-        }
-        exercise.setReleaseTestsWithExampleSolution(Boolean.TRUE.equals(releaseTestsWithExampleSolution));
-        exercise.setFeedbackSuggestionModule(feedbackSuggestionModule);
-        exercise.setProgrammingLanguage(programmingLanguage);
-        exercise.setProjectType(projectType);
-        exercise.setTestRepositoryUri(testRepositoryUri);
-        if (buildConfig != null) {
-            exercise.setBuildConfig(buildConfig.toEntity());
-        }
         exercise.setGradingCriteria(
                 gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
         exercise.setAuxiliaryRepositories(new ArrayList<>());
@@ -202,16 +138,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
             repositories.forEach(exercise::addAuxiliaryRepository);
         }
-        exercise.setSubmissionPolicy(submissionPolicy == null ? null : submissionPolicy.toEntity());
-        exercise.setPlagiarismDetectionConfig(CreateProgrammingExerciseDTO.toPlagiarismDetectionConfigEntity(plagiarismDetectionConfig));
-        if (course != null) {
-            Course courseEntity = new Course();
-            courseEntity.setId(course.id());
-            exercise.setCourse(courseEntity);
-        }
-        if (exerciseGroup != null) {
-            exercise.setExerciseGroup(exerciseGroup.toEntity());
-        }
+        exercise.setTestRepositoryUri(testRepositoryUri);
         if (templateParticipation != null) {
             TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
             participation.setId(templateParticipation.id());

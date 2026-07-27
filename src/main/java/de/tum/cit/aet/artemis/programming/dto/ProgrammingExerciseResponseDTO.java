@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -138,23 +137,9 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
             return null;
         }
 
-        // Only populated for course exercises; exam exercises carry their course inside the exerciseGroup chain,
-        // mirroring the entity, whose `course` member is null for exam exercises.
-        ProgrammingExerciseCourseDTO course = null;
-        ProgrammingExerciseExamGroupDTO exerciseGroup = null;
-        if (exercise.isExamExercise()) {
-            exerciseGroup = ProgrammingExerciseExamGroupDTO.of(exercise.getExerciseGroup());
-        }
-        else if (exercise.isCourseExercise()) {
-            Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (courseEntity != null && Hibernate.isInitialized(courseEntity)) {
-                course = ProgrammingExerciseCourseDTO.of(courseEntity);
-            }
-        }
-
-        // categories is a LAZY @ElementCollection: never store the live Hibernate collection in the record, a
-        // toString() after the session closed would throw.
-        Set<String> categories = exercise.getCategories() != null && Hibernate.isInitialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
+        ProgrammingExerciseCourseDTO course = ProgrammingExerciseCourseDTO.ofCourseExercise(exercise);
+        ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
+        Set<String> categories = copyCategories(exercise);
 
         Set<GradingCriterionDTO> gradingCriteria = null;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
@@ -199,5 +184,20 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course,
                 exerciseGroup, TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()),
                 TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), studentParticipations, auxiliaryRepositories);
+    }
+
+    /**
+     * Copies the exercise categories into a detached set. {@code categories} is a LAZY {@code @ElementCollection}:
+     * the live Hibernate collection must never be stored in a record, because a {@code toString()} after the session
+     * closed would throw.
+     *
+     * @param exercise the exercise being mapped
+     * @return a copy of the categories, or {@code null} when they are not loaded
+     */
+    static Set<String> copyCategories(ProgrammingExercise exercise) {
+        if (exercise.getCategories() == null || !Hibernate.isInitialized(exercise.getCategories())) {
+            return null;
+        }
+        return Set.copyOf(exercise.getCategories());
     }
 }

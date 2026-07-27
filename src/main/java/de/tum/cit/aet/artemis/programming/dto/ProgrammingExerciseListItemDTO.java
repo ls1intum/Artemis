@@ -4,12 +4,9 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import org.hibernate.Hibernate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -71,19 +68,9 @@ public record ProgrammingExerciseListItemDTO(Long id, String type, String title,
             return null;
         }
 
-        ProgrammingExerciseCourseDTO course = null;
-        ProgrammingExerciseExamGroupDTO exerciseGroup = null;
-        if (exercise.isExamExercise()) {
-            exerciseGroup = ProgrammingExerciseExamGroupDTO.of(exercise.getExerciseGroup());
-        }
-        else if (exercise.isCourseExercise()) {
-            Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (courseEntity != null && Hibernate.isInitialized(courseEntity)) {
-                course = ProgrammingExerciseCourseDTO.of(courseEntity);
-            }
-        }
-
-        Set<String> categories = exercise.getCategories() != null && Hibernate.isInitialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
+        ProgrammingExerciseCourseDTO course = ProgrammingExerciseCourseDTO.ofCourseExercise(exercise);
+        ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
+        Set<String> categories = ProgrammingExerciseResponseDTO.copyCategories(exercise);
 
         return new ProgrammingExerciseListItemDTO(exercise.getId(), ProgrammingExerciseResponseDTO.TYPE, exercise.getTitle(), exercise.getShortName(),
                 exercise.getProgrammingLanguage(), categories, exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),

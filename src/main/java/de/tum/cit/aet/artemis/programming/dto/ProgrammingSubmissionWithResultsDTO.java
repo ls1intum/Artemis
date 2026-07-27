@@ -8,7 +8,6 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -50,7 +49,7 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
         }
         List<ResultDTO> resultDTOs = null;
         if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
-            resultDTOs = submission.getResults().stream().map(ProgrammingSubmissionWithResultsDTO::mapResult).toList();
+            resultDTOs = submission.getResults().stream().map(ResultDTO::ofNested).toList();
         }
         return of(submission, resultDTOs);
     }
@@ -70,9 +69,5 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
         }
         return new ProgrammingSubmissionWithResultsDTO(submission.getId(), SUBMISSION_EXERCISE_TYPE, submission.getType(), submission.isSubmitted(), submission.getSubmissionDate(),
                 submission.getCommitHash(), submission.isBuildFailed(), results);
-    }
-
-    private static ResultDTO mapResult(Result result) {
-        return ResultDTO.ofNested(result, Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks() : null);
     }
 }

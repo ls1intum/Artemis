@@ -225,8 +225,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     void test_addSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicyWireShapeAndSingleRow() throws Exception {
         // the client posts exactly these four properties for a new lock repository policy
         String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "lock_repository", 10, null, false), HttpStatus.CREATED);
-        Map<String, Object> body = objectMapper.readValue(response, new TypeReference<>() {
-        });
+        Map<String, Object> body = asJsonMap(response);
 
         assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
         assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 10).containsEntry("active", false);
@@ -241,8 +240,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_addSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicyWireShape() throws Exception {
         String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "submission_penalty", 15, 14.0, false), HttpStatus.CREATED);
-        Map<String, Object> body = objectMapper.readValue(response, new TypeReference<>() {
-        });
+        Map<String, Object> body = asJsonMap(response);
 
         assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "exceedingPenalty", "active");
         assertThat(body).containsEntry("type", "submission_penalty").containsEntry("submissionLimit", 15).containsEntry("exceedingPenalty", 14.0).containsEntry("active", false);
@@ -341,8 +339,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
         // the update form rebuilds its request body from the loaded policy, id included
         String response = request.patchWithResponseBody(requestUrl(), new SubmissionPolicyDTO(policyId, "lock_repository", 15, null, true), String.class, HttpStatus.OK);
-        Map<String, Object> body = objectMapper.readValue(response, new TypeReference<>() {
-        });
+        Map<String, Object> body = asJsonMap(response);
 
         assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
         assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 15).containsEntry("active", true);
@@ -671,7 +668,10 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     private Map<String, Object> getPolicyResponseBody() throws Exception {
-        String response = request.get(requestUrl(), HttpStatus.OK, String.class);
+        return asJsonMap(request.get(requestUrl(), HttpStatus.OK, String.class));
+    }
+
+    private Map<String, Object> asJsonMap(String response) throws Exception {
         return objectMapper.readValue(response, new TypeReference<>() {
         });
     }

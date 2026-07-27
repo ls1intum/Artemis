@@ -42,12 +42,17 @@ import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
  */
 class ProgrammingExerciseDtoMappingTest {
 
+    /**
+     * A bare mapper, not the Spring-configured one. The real wire contract of these responses is owned by the
+     * endpoint tests (SubmissionPolicyIntegrationTest asserts the exact key sets on the real HTTP responses); the
+     * mapping tests below only cover the record's own inclusion rules in a fast loop.
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // --- SubmissionPolicyDTO: exact wire shape and id pass-through -------------------------------------------------
+    // --- SubmissionPolicyDTO: inclusion rules and id pass-through --------------------------------------------------
 
     @Test
-    void lockRepositoryPolicySerializesWithoutTheSubtypeOnlyPenaltyKey() throws Exception {
+    void lockRepositoryPolicyMapsWithoutTheSubtypeOnlyPenaltyValue() throws Exception {
         LockRepositoryPolicy policy = new LockRepositoryPolicy();
         policy.setId(11L);
         policy.setSubmissionLimit(3);
@@ -67,7 +72,7 @@ class ProgrammingExerciseDtoMappingTest {
     }
 
     @Test
-    void submissionPenaltyPolicySerializesLimitAndPenalty() throws Exception {
+    void submissionPenaltyPolicyMapsLimitAndPenalty() throws Exception {
         SubmissionPenaltyPolicy policy = new SubmissionPenaltyPolicy();
         policy.setId(12L);
         policy.setSubmissionLimit(5);
@@ -275,6 +280,25 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(exercise.getGradingCriteria()).isEmpty();
         assertThat(exercise.getAuxiliaryRepositories()).isEmpty();
         assertThat(exercise.getCompetencyLinks()).isEmpty();
+    }
+
+    /**
+     * {@code Exercise.presentationScoreEnabled} is an initialized {@code false} entity default that the previous
+     * entity request binding left alone for an absent JSON key. Both request mappers must guard the assignment, or a
+     * body without the key persists {@code null} where it used to persist {@code false}.
+     */
+    @Test
+    void requestToEntityKeepsThePresentationScoreEnabledDefaultWhenTheKeyIsAbsent() {
+        CreateProgrammingExerciseDTO createDto = new CreateProgrammingExerciseDTO(null, "New exercise", "NEW", null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null);
+        ImportProgrammingExerciseRequestDTO importDto = new ImportProgrammingExerciseRequestDTO(null, "Imported", "IMP", null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null);
+
+        assertThat(createDto.toEntity().getPresentationScoreEnabled()).isFalse();
+        assertThat(importDto.toEntity().getPresentationScoreEnabled()).isFalse();
+        assertThat(createDto.presentationScoreEnabled()).isNull();
     }
 
     @Test

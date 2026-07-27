@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -174,7 +173,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     private static List<ResultDTO> mapResults(List<Result> results) {
-        return results.stream().map(result -> ResultDTO.ofNested(result, Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks() : null)).toList();
+        return results.stream().map(ResultDTO::ofNested).toList();
     }
 
     /**

@@ -80,6 +80,21 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      * them would repeat the whole submission/participation/exercise/course subtree once per result. Unlike
      * {@link #of(Result, Collection)} this never dereferences {@code result.getSubmission()}, so a result with a
      * {@code null} submission maps without a {@link NullPointerException}.
+     * <p>
+     * The feedback collection is only mapped when it is already initialized, so this never triggers a lazy load.
+     *
+     * @param result the result to convert
+     * @return the converted DTO
+     */
+    public static ResultDTO ofNested(Result result) {
+        return ofNested(result, Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks() : null);
+    }
+
+    /**
+     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO, with an
+     * explicit feedback list. Callers that filter feedback (sensitive-information filtering) use this overload so
+     * they never have to mutate the managed result to shape the JSON; callers that just want whatever is loaded use
+     * {@link #ofNested(Result)}.
      *
      * @param result           the result to convert
      * @param filteredFeedback the feedback that should be sent to the client; {@code null} maps to no feedback list

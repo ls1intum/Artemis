@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTaskDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 /**
@@ -39,16 +38,13 @@ public class ProgrammingExerciseTaskResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private final AuthorizationCheckService authCheckService;
 
-    public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService) {
+    public ProgrammingExerciseTaskResource(ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.authCheckService = authCheckService;
     }
@@ -73,7 +69,7 @@ public class ProgrammingExerciseTaskResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithTestCases(exerciseId);
         Set<ProgrammingExerciseTaskDTO> taskDTOs = tasks.stream().map(ProgrammingExerciseTaskDTO::ofWithoutInactiveTestCases).collect(Collectors.toSet());
 
         return ResponseEntity.ok(taskDTOs);

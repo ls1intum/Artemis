@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Minimal exam exercise-group reference carried on exam programming-exercise responses.
@@ -61,5 +62,16 @@ public record ProgrammingExerciseExamGroupDTO(Long id, ProgrammingExerciseExamDT
         ProgrammingExerciseExamDTO examReference = new ProgrammingExerciseExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.getPublishResultsDate(),
                 exam.getExampleSolutionPublicationDate(), exam.getNumberOfCorrectionRoundsInExam(), course);
         return new ProgrammingExerciseExamGroupDTO(exerciseGroup.getId(), examReference);
+    }
+
+    /**
+     * Resolves the {@code exerciseGroup} slot of an exercise response: populated for an exam exercise, {@code null}
+     * for a course exercise, which carries its course in the sibling {@code course} slot instead.
+     *
+     * @param exercise the exercise being mapped
+     * @return the nested exercise group, or {@code null} for a course exercise
+     */
+    public static ProgrammingExerciseExamGroupDTO ofExamExercise(ProgrammingExercise exercise) {
+        return exercise.isExamExercise() ? of(exercise.getExerciseGroup()) : null;
     }
 }

@@ -3,12 +3,15 @@ package de.tum.cit.aet.artemis.programming.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
@@ -74,5 +77,25 @@ public record ProgrammingExerciseCourseDTO(Long id, String title, String descrip
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
                 course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled(), course.getAccuracyOfScores(),
                 course.getPresentationScore());
+    }
+
+    /**
+     * Resolves the {@code course} slot of an exercise response. An exam exercise carries its course inside the
+     * {@code exerciseGroup.exam} chain instead, mirroring the entity, whose {@code course} member is null for exam
+     * exercises. Flattening either slot to a bare id breaks access rights and exam navigation, so both response
+     * records resolve them through this one method.
+     *
+     * @param exercise the exercise being mapped
+     * @return the nested course, or {@code null} for an exam exercise or an uninitialized course
+     */
+    public static ProgrammingExerciseCourseDTO ofCourseExercise(ProgrammingExercise exercise) {
+        if (!exercise.isCourseExercise()) {
+            return null;
+        }
+        Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (courseEntity == null || !Hibernate.isInitialized(courseEntity)) {
+            return null;
+        }
+        return of(courseEntity);
     }
 }

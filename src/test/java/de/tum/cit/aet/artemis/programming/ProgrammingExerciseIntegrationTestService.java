@@ -1554,13 +1554,26 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void getTestCases_asTutor() throws Exception {
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
-        // The response DTO reads no lazy slot of a test case (neither exercise nor tasks), so the count stays flat at 4;
+        // The response DTO reads no lazy slot of a test case (neither exercise nor tasks), so the count stays flat at 5;
         // one extra query per returned test case would breach this cap.
         final List<ProgrammingExerciseTestCaseResponseDTO> returnedTests = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCaseResponseDTO.class)).hasBeenCalledAtMostTimes(5);
         final Set<ProgrammingExerciseTestCase> testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final List<ProgrammingExerciseTestCaseResponseDTO> expectedTests = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
-        assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(expectedTests);
+
+        // assert against the entity getters, not against the mapper's own output: comparing the response to
+        // ProgrammingExerciseTestCaseResponseDTO.of(...) would compare the mapper with itself and pass for any
+        // mis-mapped field, including the defaulting bonusMultiplier/bonusPoints getters that carry the real logic
+        assertThat(returnedTests).hasSameSizeAs(testsInDB);
+        for (ProgrammingExerciseTestCase testCase : testsInDB) {
+            var returned = returnedTests.stream().filter(test -> testCase.getId().equals(test.id())).findFirst().orElseThrow();
+            assertThat(returned.testName()).isEqualTo(testCase.getTestName());
+            assertThat(returned.weight()).isEqualTo(testCase.getWeight());
+            assertThat(returned.bonusMultiplier()).isEqualTo(testCase.getBonusMultiplier());
+            assertThat(returned.bonusPoints()).isEqualTo(testCase.getBonusPoints());
+            assertThat(returned.active()).isEqualTo(testCase.isActive());
+            assertThat(returned.visibility()).isEqualTo(testCase.getVisibility());
+            assertThat(returned.type()).isEqualTo(testCase.getType());
+        }
     }
 
     void getTestCases_asStudent_forbidden() throws Exception {

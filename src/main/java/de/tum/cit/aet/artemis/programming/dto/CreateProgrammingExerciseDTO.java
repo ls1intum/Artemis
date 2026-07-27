@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -98,70 +96,22 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         Boolean releaseTestsWithExampleSolution, String feedbackSuggestionModule, ProgrammingLanguage programmingLanguage, ProjectType projectType,
         UpdateProgrammingExerciseBuildConfigDTO buildConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
         List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course,
-        ExerciseGroupIdDTO exerciseGroup) implements CompetencyLinksHolderDTO {
+        ExerciseGroupIdDTO exerciseGroup) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
      * Builds the transient {@link ProgrammingExercise} the creation pipeline works on, reproducing the binding the
-     * entity request body produced before this DTO existed. Competency links are deliberately not bound here; they are
-     * applied by the competency link service, which needs managed competencies.
+     * entity request body produced before this DTO existed. Competency links are deliberately not bound here; the
+     * creation resource applies them through the competency link service, which resolves managed competencies.
      *
      * @return the transient exercise described by this request
      */
     public ProgrammingExercise toEntity() {
         ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(id);
-        exercise.setTitle(title);
-        exercise.setShortName(shortName);
-        exercise.setChannelName(channelName);
-        exercise.setPackageName(packageName);
-        exercise.setProblemStatement(problemStatement);
-        exercise.setGradingInstructions(gradingInstructions);
+        ProgrammingExerciseRequestDTO.applyCommonFields(this, exercise);
+        // The three collections below are where create and import deliberately differ: create leaves a missing
+        // collection at the entity default, import normalizes it to an empty one.
         if (categories != null) {
             exercise.setCategories(new HashSet<>(categories));
-        }
-        exercise.setDifficulty(difficulty);
-        // mode, maxPoints and bonusPoints map onto non-nullable columns with entity defaults: only overwrite them
-        // when the request actually carries a value.
-        if (mode != null) {
-            exercise.setMode(mode);
-        }
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig == null ? null : teamAssignmentConfig.toEntity());
-        if (maxPoints != null) {
-            exercise.setMaxPoints(maxPoints);
-        }
-        if (bonusPoints != null) {
-            exercise.setBonusPoints(bonusPoints);
-        }
-        if (includedInOverallScore != null) {
-            exercise.setIncludedInOverallScore(includedInOverallScore);
-        }
-        exercise.setReleaseDate(releaseDate);
-        exercise.setStartDate(startDate);
-        exercise.setDueDate(dueDate);
-        exercise.setAssessmentDueDate(assessmentDueDate);
-        exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
-        // The exercise has no assessment-type default: a missing value must stay null, exactly as the entity binding left it.
-        exercise.setAssessmentType(assessmentType);
-        exercise.setAllowComplaintsForAutomaticAssessments(Boolean.TRUE.equals(allowComplaintsForAutomaticAssessments));
-        exercise.setAllowFeedbackRequests(Boolean.TRUE.equals(allowFeedbackRequests));
-        exercise.setPresentationScoreEnabled(presentationScoreEnabled);
-        exercise.setSecondCorrectionEnabled(Boolean.TRUE.equals(secondCorrectionEnabled));
-        exercise.setAllowOnlineEditor(allowOnlineEditor);
-        exercise.setAllowOfflineIde(allowOfflineIde);
-        exercise.setAllowOnlineIde(Boolean.TRUE.equals(allowOnlineIde));
-        exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        exercise.setMaxStaticCodeAnalysisPenalty(maxStaticCodeAnalysisPenalty);
-        if (showTestNamesToStudents != null) {
-            // the setter writes a primitive field, so a null would unbox into a NullPointerException
-            exercise.setShowTestNamesToStudents(showTestNamesToStudents);
-        }
-        exercise.setReleaseTestsWithExampleSolution(Boolean.TRUE.equals(releaseTestsWithExampleSolution));
-        exercise.setFeedbackSuggestionModule(feedbackSuggestionModule);
-        exercise.setProgrammingLanguage(programmingLanguage);
-        exercise.setProjectType(projectType);
-        if (buildConfig != null) {
-            exercise.setBuildConfig(buildConfig.toEntity());
         }
         if (gradingCriteria != null) {
             exercise.setGradingCriteria(gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
@@ -171,35 +121,6 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
             exercise.setAuxiliaryRepositories(new ArrayList<>());
             repositories.forEach(exercise::addAuxiliaryRepository);
         }
-        exercise.setSubmissionPolicy(submissionPolicy == null ? null : submissionPolicy.toEntity());
-        exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfigEntity(plagiarismDetectionConfig));
-        if (course != null) {
-            Course courseEntity = new Course();
-            courseEntity.setId(course.id());
-            exercise.setCourse(courseEntity);
-        }
-        if (exerciseGroup != null) {
-            exercise.setExerciseGroup(exerciseGroup.toEntity());
-        }
         return exercise;
-    }
-
-    /**
-     * Builds a transient plagiarism detection configuration; the shared DTO carries no {@code toEntity()} and must not
-     * be modified from this module.
-     */
-    static PlagiarismDetectionConfig toPlagiarismDetectionConfigEntity(PlagiarismDetectionConfigDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
-        config.setId(dto.id());
-        config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
-        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
-        config.setSimilarityThreshold(dto.similarityThreshold());
-        config.setMinimumScore(dto.minimumScore());
-        config.setMinimumSize(dto.minimumSize());
-        return config;
     }
 }
