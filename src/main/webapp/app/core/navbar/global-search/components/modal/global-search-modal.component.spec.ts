@@ -25,7 +25,6 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
-import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
 import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
 
 describe('GlobalSearchModalComponent', () => {
@@ -123,12 +122,12 @@ describe('GlobalSearchModalComponent', () => {
             ],
         });
 
-        // GlobalSearchActionItemComponent uses CSS custom-property bindings ([style.--accent]) that
-        // JSDOM's CSSStyleDeclaration proxy rejects. Mock it (and GlobalSearchIrisAnswerComponent)
-        // inside the navigation view so the modal spec is isolated from their rendering details.
+        // GlobalSearchIrisAnswerComponent uses CSS custom-property bindings that JSDOM's
+        // CSSStyleDeclaration proxy rejects. Mock it inside the navigation view so the modal
+        // spec is isolated from its rendering details.
         TestBed.overrideComponent(GlobalSearchNavigationViewComponent, {
-            remove: { imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent] },
-            add: { imports: [MockComponent(GlobalSearchActionItemComponent), MockComponent(GlobalSearchIrisAnswerComponent)] },
+            remove: { imports: [GlobalSearchIrisAnswerComponent] },
+            add: { imports: [MockComponent(GlobalSearchIrisAnswerComponent)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchModalComponent);
