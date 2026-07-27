@@ -56,6 +56,10 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  */
 class DifferentialVerificationServiceTest {
 
+    /** Production always restores the captured candidate before each pristine build; tests that do not exercise that hook pass this no-op. */
+    private static final Runnable NO_RESTORE = () -> {
+    };
+
     private static SandboxBuildCommandService sandboxBuildCommandService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
         when(phases.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of());
@@ -354,7 +358,7 @@ class DifferentialVerificationServiceTest {
                 "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}", false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                request);
+                request, NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("template already declares") && reason.contains("PlaybackStrategy"));
@@ -382,7 +386,7 @@ class DifferentialVerificationServiceTest {
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK, plan, false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK).withSpec(clarifiedSpec), "s",
-                new ProgrammingExercise(), request);
+                new ProgrammingExercise(), request, NO_RESTORE);
 
         assertThat(result.reasons()).noneMatch(reason -> reason.contains("PlaybackStrategy"));
     }
@@ -408,18 +412,18 @@ class DifferentialVerificationServiceTest {
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
     private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
-        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
     private static AgentVerifyReport selfCheck(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
-        return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
+        return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), false, Set.of());
     }
 
     /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of()));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of()), NO_RESTORE);
     }
 
     /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
@@ -500,7 +504,7 @@ class DifferentialVerificationServiceTest {
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), "No task bindings");
 
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isTrue();
     }
@@ -567,13 +571,13 @@ class DifferentialVerificationServiceTest {
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()));
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()), NO_RESTORE);
     }
 
     /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
     private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames), NO_RESTORE);
     }
 
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
@@ -613,7 +617,7 @@ class DifferentialVerificationServiceTest {
         var producedTests = Map.of("pom.xml", pom, "test/de/test/SortTest.java", plainJunitTest);
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+                new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
@@ -649,7 +653,8 @@ class DifferentialVerificationServiceTest {
         VerificationRequest request = new VerificationRequest(seedTests, Map.of(), Map.of(), producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(),
                 PROBLEM_STATEMENT_WITH_TASK, true);
 
-        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, request);
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, request,
+                NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.reasons()).noneMatch(reason -> reason.contains("LegacyTest.java"));
@@ -680,7 +685,7 @@ class DifferentialVerificationServiceTest {
         Map<String, String> solution = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), Set.of(), Set.of()));
+                new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), Set.of(), Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("canonical source roots") && reason.contains("FakeAres.java"));
@@ -702,7 +707,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -713,7 +718,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -823,9 +828,8 @@ class DifferentialVerificationServiceTest {
         // set.
         // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the free-points hole: these fail-open per-test gates now rely on
         // this invariant directly (the emitter-soundness gate that formerly enforced it was removed as redundant once fromReports was proven to keep the sets complete).
-        var summary = DifferentialVerificationService.BuildSummary
-                .fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
-                        ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
+        var summary = BuildSummary.fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
+                ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
         assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
         assertThat(summary.testNames()).containsExactlyInAnyOrder("passes_a", "fails_b", "passes_c");
         assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
@@ -1124,7 +1128,7 @@ class DifferentialVerificationServiceTest {
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", aresPom());
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
         }
 
         @Test
@@ -1157,7 +1161,7 @@ class DifferentialVerificationServiceTest {
             var harness = Map.of("pom.xml", aresPom());
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
             assertThat(result.mechanicallyVerified()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -1306,7 +1310,8 @@ class DifferentialVerificationServiceTest {
 
             AgentVerifyReport stageReport = verifier.selfCheckTestsStage(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s",
                     exercise, Map.of(), Set.of());
-            AgentVerifyReport fullReport = verifier.selfCheck(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s", exercise);
+            AgentVerifyReport fullReport = verifier.selfCheck(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s", exercise,
+                    Map.of(), false, Set.of());
 
             assertThat(stageReport.wouldBeAccepted()).isTrue();
             assertThat(stageReport.blockingReasons()).noneMatch(reason -> reason.contains("problem statement") || reason.contains("[task]"));
@@ -1371,13 +1376,13 @@ class DifferentialVerificationServiceTest {
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan)
                     .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO S1: create FireSpell\n}"), testsFiles);
-            AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise);
+            AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise, Map.of(), false, Set.of());
             assertThat(rejected.wouldBeAccepted()).isFalse();
             assertThat(rejected.blockingReasons()).anyMatch(reason -> reason.contains("student-created") && reason.contains("Mage.java"));
 
             ScriptedSandbox honest = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan).withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", mage), testsFiles);
-            assertThat(verifier.selfCheck(honest, "s", javaExercise).wouldBeAccepted()).isTrue();
+            assertThat(verifier.selfCheck(honest, "s", javaExercise, Map.of(), false, Set.of()).wouldBeAccepted()).isTrue();
         }
 
         @Test

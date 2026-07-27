@@ -18,8 +18,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -33,6 +35,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
@@ -83,6 +86,45 @@ class SpecFidelityCriticServiceTest {
 
     private static ChatResponse rawResponse(String body) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(body))));
+    }
+
+    /**
+     * The smallest artifact set that passes the completeness check, so a test that is not about artifact evidence does not have to spell one out. The tests repository carries the
+     * reviewed test names because several assertions read them back out of the rendered reviewer prompt.
+     */
+    private static Map<RepositoryType, Map<String, String>> minimalArtifacts(List<String> testNames) {
+        return Map.of(RepositoryType.SOLUTION, Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TEMPLATE,
+                Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TESTS,
+                Map.of("test-names.txt", testNames.isEmpty() ? "(no test names)" : String.join("\n", testNames)));
+    }
+
+    private static SpecFidelityReport critique(SpecFidelityCriticService critic, String brief, String problemStatement, List<String> testNames) {
+        return critique(critic, brief, problemStatement, testNames, null);
+    }
+
+    private static SpecFidelityReport critique(SpecFidelityCriticService critic, String brief, String problemStatement, List<String> testNames,
+            @Nullable Consumer<ChatResponse> usageSink) {
+        return critique(critic, brief, problemStatement, testNames, minimalArtifacts(testNames), usageSink);
+    }
+
+    private static SpecFidelityReport critique(SpecFidelityCriticService critic, @Nullable String brief, @Nullable String problemStatement, List<String> testNames,
+            Map<RepositoryType, Map<String, String>> artifacts, @Nullable Consumer<ChatResponse> usageSink) {
+        return critic.critique(brief, problemStatement, testNames, artifacts, usageSink, () -> false, null, null, null, null);
+    }
+
+    private static SpecFidelityReport critiqueAdaptation(SpecFidelityCriticService critic, String brief, String problemStatement, List<String> testNames, String adaptationChanges,
+            @Nullable Consumer<ChatResponse> usageSink) {
+        return critic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, minimalArtifacts(testNames), usageSink, () -> false, null);
+    }
+
+    private SpecFidelityCriticService criticWithModel(ChatClient chatClient, String configuredModel) {
+        return criticWithCooldown(chatClient, configuredModel, Duration.ZERO, ProviderFailureCooldown.disabled());
+    }
+
+    private SpecFidelityCriticService criticWithCooldown(ChatClient chatClient, String configuredModel, Duration providerHardFailureCooldown,
+            ProviderFailureCooldown providerFailureCooldown) {
+        return new SpecFidelityCriticService(chatClient, objectMapper, new HyperionPromptTemplateService(), configuredModel, providerHardFailureCooldown, providerFailureCooldown,
+                128_000, (ChatOptions) null);
     }
 
     private SpecFidelityCriticService criticReturning(ChatResponse response) {
@@ -954,7 +996,7 @@ class SpecFidelityCriticServiceTest {
         Map<RepositoryType, Map<String, String>> artifacts = Map.of(RepositoryType.SOLUTION, Map.of("src/Fixture.java", "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"),
                 RepositoryType.TEMPLATE, Map.of("src/Fixture.java", "class Fixture {}"), RepositoryType.TESTS, Map.of("test/FixtureTest.java", "class FixtureTest {}"));
         assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class)
-                .isThrownBy(() -> critic.critique("brief", "# Problem", List.of("fixture"), artifacts, null)).withMessageContaining("GITHUB_TOKEN")
+                .isThrownBy(() -> critique(critic, "brief", "# Problem", List.of("fixture"), artifacts, null)).withMessageContaining("GITHUB_TOKEN")
                 .withMessageNotContaining("ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij");
         verify(chatModel, never()).call(any(Prompt.class));
     }
@@ -977,7 +1019,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 """
                         # Rover
@@ -1013,7 +1055,7 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.TEMPLATE_QUALITY_GAP);
@@ -1043,7 +1085,7 @@ class SpecFidelityCriticServiceTest {
                 | Type | Role | Template status |
                 |---|---|---|
                 | `FireStrategy` | concrete policy | student-creates |
-                """);
+                """, null, null);
 
         assertThat(report.findings()).isEmpty();
     }
@@ -1062,7 +1104,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critic.critique(
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
@@ -1091,7 +1133,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.WEAK_TEST_ORACLE);
@@ -1125,7 +1167,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
@@ -1137,7 +1179,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void malformedInventedRequirementFailsClosed() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"invented\":[{}]}"));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
@@ -1160,7 +1202,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
@@ -1184,7 +1226,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Worked example: member 101 has two checkouts", List.of("example"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.CONTRACT_CONTRADICTION, Kind.WEAK_TEST_ORACLE);
@@ -1200,7 +1242,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.QUALITY_REVIEW_UNAVAILABLE, Kind.WEAK_TEST_ORACLE);
@@ -1209,16 +1251,16 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void unavailableOrMalformedQualityReviewFailsClosed() {
-        SpecFidelityReport unavailable = (new SpecFidelityCriticService(null, objectMapper)).critique(
+        SpecFidelityReport unavailable = critique(new SpecFidelityCriticService(null, objectMapper),
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport malformed = criticReturning(rawResponse("{\"uncovered\":[]}")).critique(
+        SpecFidelityReport malformed = critique(criticReturning(rawResponse("{\"uncovered\":[]}")),
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport malformedBlockingFinding = criticReturning(jsonResponse("{\"contradictions\":[{}]}")).critique(
+        SpecFidelityReport malformedBlockingFinding = critique(criticReturning(jsonResponse("{\"contradictions\":[{}]}")),
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport unsupportedBlockingFinding = criticReturning(jsonResponse("{\"contradictions\":[{\"requirement\":\"conflict\"}]}")).critique(
+        SpecFidelityReport unsupportedBlockingFinding = critique(criticReturning(jsonResponse("{\"contradictions\":[{\"requirement\":\"conflict\"}]}")),
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(unavailable.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
@@ -1240,7 +1282,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         SpecFidelityReport report = critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Rover", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null, () -> true);
+                "# Rover", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null, () -> true, null, null, null, null);
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         assertThat(report.hasBlockingFindings()).isTrue();
         verify(chatModel, never()).call(any(Prompt.class));
@@ -1252,7 +1294,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         Map<RepositoryType, Map<String, String>> oversizedArtifacts = Map.of(RepositoryType.SOLUTION, Map.of("src/Large.java", "x".repeat(100000)));
-        SpecFidelityReport report = critic.critique("Create an exercise.", "# Large", List.of(), oversizedArtifacts, null);
+        SpecFidelityReport report = critique(critic, "Create an exercise.", "# Large", List.of(), oversizedArtifacts, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         verify(chatModel, never()).call(any(Prompt.class));
     }
@@ -1264,7 +1306,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         Map<RepositoryType, Map<String, String>> missingTemplate = Map.of(RepositoryType.SOLUTION, Map.of("src/Exercise.java", "class Exercise {}"), RepositoryType.TESTS,
                 Map.of("test/ExerciseTest.java", "class ExerciseTest {}"));
-        SpecFidelityReport report = critic.critique("Create an exercise.", "# Exercise", List.of("testExercise"), missingTemplate, null);
+        SpecFidelityReport report = critique(critic, "Create an exercise.", "# Exercise", List.of("testExercise"), missingTemplate, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         verify(chatModel, never()).call(any(Prompt.class));
     }
@@ -1274,7 +1316,7 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique("x".repeat(120000), "# Large", List.of(), COMPLETE_ARTIFACTS, null);
+        SpecFidelityReport report = critique(critic, "x".repeat(120000), "# Large", List.of(), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         verify(chatModel, never()).call(any(Prompt.class));
     }
@@ -1283,7 +1325,7 @@ class SpecFidelityCriticServiceTest {
     void uncoveredCjkAndEmoji_areFlagged() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[{\"requirement\":\"CJK characters\",\"sourceQuote\":\"CJK characters\",\"reason\":\"no CJK test\"},{\"requirement\":\"emoji\",\"sourceQuote\":\"emoji\",\"reason\":\"no emoji test\"}]}"));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("test_ascii_only", "test_cafe_precomposed"));
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.UNCOVERED_REQUIREMENT);
@@ -1306,7 +1348,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
@@ -1329,7 +1371,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique("Create a Java exercise about calculating member penalties from checkout records; choose coherent API and business rules.",
+        SpecFidelityReport report = critique(critic, "Create a Java exercise about calculating member penalties from checkout records; choose coherent API and business rules.",
                 "A checkout is overdue when returnedAt is equal to or after dueAt. Add one penalty point for every overdue checkout.", List.of("countsDueDateEquality"),
                 COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).isEmpty();
@@ -1347,7 +1389,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes and return sorted diagnostics.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.WEAK_TEST_ORACLE, Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1372,7 +1414,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes and return sorted diagnostics.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("ignore emoji input");
@@ -1396,7 +1438,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique("Create a spacecraft navigation exercise.", "Use strategy objects.", List.of("navigates"), COMPLETE_ARTIFACTS, null);
+        SpecFidelityReport report = critique(critic, "Create a spacecraft navigation exercise.", "Use strategy objects.", List.of("navigates"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).isEmpty();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(3)).call(prompts.capture());
@@ -1406,7 +1448,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void fullyCoveredBrief_flagsNothing() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("test_cjk", "test_emoji", "test_combining", "test_cafe"));
         assertThat(report.findings()).isEmpty();
@@ -1417,7 +1459,7 @@ class SpecFidelityCriticServiceTest {
         ChatResponse response = jsonResponse("{\"uncovered\":[]}");
         SpecFidelityCriticService critic = criticReturning(response);
         List<ChatResponse> tracked = new ArrayList<>();
-        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), tracked::add);
+        critique(critic, UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), tracked::add);
         assertThat(tracked).containsExactly(response, response);
     }
 
@@ -1427,8 +1469,8 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
         when(chatModel.getOptions()).thenReturn(
                 OpenAiChatOptions.builder().model("configured-model").reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model");
-        critic.critique(
+        SpecFidelityCriticService critic = criticWithModel(ChatClient.create(chatModel), "configured-model");
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
@@ -1447,9 +1489,9 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model", Duration.ZERO,
-                ProviderFailureCooldown.disabled(), 128000, chatModel.getOptions());
-        critic.critique(
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, new HyperionPromptTemplateService(), "configured-model",
+                Duration.ZERO, ProviderFailureCooldown.disabled(), 128000, chatModel.getOptions());
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
@@ -1465,9 +1507,9 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model", Duration.ZERO,
-                ProviderFailureCooldown.disabled(), 16000, chatModel.getOptions());
-        critic.critique(
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, new HyperionPromptTemplateService(), "configured-model",
+                Duration.ZERO, ProviderFailureCooldown.disabled(), 16000, chatModel.getOptions());
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
@@ -1483,8 +1525,8 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "provider/reviewer-model");
-        critic.critique(
+        SpecFidelityCriticService critic = criticWithModel(ChatClient.create(chatModel), "provider/reviewer-model");
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
@@ -1497,7 +1539,7 @@ class SpecFidelityCriticServiceTest {
     void missingWorkedExample_isFlagged() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[{\"behaviour\":\"rollback after a failed checkout\",\"reason\":\"the interaction between undoing the charge and preserving queue position is difficult to apply without a trace\"}]}"));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "If checkout fails after charging the member, undo the charge and preserve the member's original queue position.", List.of("failedCheckoutRollsBackAtomically"));
         assertThat(report.findings()).hasSize(1).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.MISSING_WORKED_EXAMPLE);
@@ -1514,7 +1556,7 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.MISSING_WORKED_EXAMPLE, Kind.WEAK_TEST_ORACLE);
@@ -1527,7 +1569,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critic.critique(
+        critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
@@ -1552,7 +1594,7 @@ class SpecFidelityCriticServiceTest {
                 "Rotate the matrix; your solution must use O(1) extra space.", List.of("test_rotate"), COMPLETE_ARTIFACTS, null, () -> false, null, """
                         # Approved specification
                         Count grapheme clusters.\
-                        """);
+                        """, null, null);
         assertThat(report.findings()).hasSize(1).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.INVENTED_REQUIREMENT);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("O(1) extra space");
         assertThat(report.hasBlockingFindings()).isTrue();
@@ -1567,7 +1609,7 @@ class SpecFidelityCriticServiceTest {
                 "Rotate the matrix.", List.of("test_rotate"), COMPLETE_ARTIFACTS, null, () -> false, null, """
                         # Approved specification
                         Use O(1) extra space.\
-                        """);
+                        """, null, null);
         assertThat(report.findings()).isEmpty();
     }
 
@@ -1579,7 +1621,7 @@ class SpecFidelityCriticServiceTest {
                 """
                         # Approved specification
                         Example: 2 + 2 = 5\
-                        """);
+                        """, null, null);
         assertThat(report.findings()).isEmpty();
     }
 
@@ -1590,7 +1632,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityReport report = critic.critique("Create an arithmetic exercise.", "Example: 2 + 2 = 5", List.of("calculates"), COMPLETE_ARTIFACTS, null, () -> false, null, """
                 # Approved specification
                 Example: 2 + 2 = 5\
-                """);
+                """, null, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.CONTRACT_CONTRADICTION));
     }
 
@@ -1608,7 +1650,7 @@ class SpecFidelityCriticServiceTest {
         Map<RepositoryType, Map<String, String>> artifacts = Map.of(RepositoryType.SOLUTION,
                 Map.of("src/Inventory.java", "class Inventory { String policy = \"reject null inventory names\"; }"), RepositoryType.TEMPLATE,
                 Map.of("src/Inventory.java", "class Inventory {}"), RepositoryType.TESTS, Map.of("test/InventoryTest.java", "class InventoryTest {}"));
-        SpecFidelityReport report = critic.critique("Sort integer values.", "Sort integer values in ascending order.", List.of("sortsValues"), artifacts, null);
+        SpecFidelityReport report = critique(critic, "Sort integer values.", "Sort integer values in ascending order.", List.of("sortsValues"), artifacts, null);
         assertThat(report.findings()).isEmpty();
         verify(chatModel, times(3)).call(any(Prompt.class));
     }
@@ -1621,7 +1663,7 @@ class SpecFidelityCriticServiceTest {
                 jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique("Summarize checkout events.", "Implement summarize.", List.of("summarizesEvents"));
+        SpecFidelityReport report = critique(critic, "Summarize checkout events.", "Implement summarize.", List.of("summarizesEvents"));
         assertThat(report.findings()).isEmpty();
     }
 
@@ -1632,7 +1674,7 @@ class SpecFidelityCriticServiceTest {
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java removed displayName(String)\",\"reason\":\"the feedback explicitly preserves it\"}],\"missingRequestedChanges\":[]}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critiqueAdaptation("Change only remove(); preserve displayName(String).", "# Inventory", List.of("removeRejectsZero"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change only remove(); preserve displayName(String).", "# Inventory", List.of("removeRejectsZero"), """
                 --- solution/src/Inventory.java
                 - String displayName(String itemId)
                 """, null);
@@ -1657,7 +1699,7 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "todo!() in the template; the template must fail every test.", List.of("test_x"));
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).contains(Kind.MECHANICS_LEAK, Kind.HIDDEN_GRADED_REQUIREMENT, Kind.WEAK_TEST_ORACLE);
@@ -1675,7 +1717,7 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).noneMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.CONTRACT_CONTRADICTION);
@@ -1690,7 +1732,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"), usageSink);
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1706,7 +1748,8 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         AtomicBoolean cancelled = new AtomicBoolean();
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, response -> cancelled.set(true), cancelled::get);
+        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, response -> cancelled.set(true), cancelled::get, null,
+                null, null, null);
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         verify(chatModel).call(any(Prompt.class));
     }
@@ -1723,7 +1766,7 @@ class SpecFidelityCriticServiceTest {
         AtomicBoolean cancelled = new AtomicBoolean();
         AtomicInteger responses = new AtomicInteger();
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS,
-                response -> cancelled.set(responses.incrementAndGet() == 2), cancelled::get);
+                response -> cancelled.set(responses.incrementAndGet() == 2), cancelled::get, null, null, null, null);
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         verify(chatModel, times(2)).call(any(Prompt.class));
     }
@@ -1734,10 +1777,9 @@ class SpecFidelityCriticServiceTest {
         when(failingModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 401 unauthorized"));
         when(failingModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ProviderFailureCooldown cooldown = inMemoryCooldown();
-        SpecFidelityCriticService failingCritic = new SpecFidelityCriticService(ChatClient.create(failingModel), objectMapper, "configured-model", Duration.ofMinutes(5L),
-                cooldown);
+        SpecFidelityCriticService failingCritic = criticWithCooldown(ChatClient.create(failingModel), "configured-model", Duration.ofMinutes(5L), cooldown);
         ProviderUsageSink firstUsageSink = mock(ProviderUsageSink.class);
-        SpecFidelityReport firstReport = failingCritic.critique(
+        SpecFidelityReport firstReport = critique(failingCritic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"), firstUsageSink);
         assertThat(firstReport.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1745,9 +1787,9 @@ class SpecFidelityCriticServiceTest {
         verify(firstUsageSink, never()).markUncertain();
         ChatModel nextModel = mock(ChatModel.class);
         when(nextModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService nextCritic = new SpecFidelityCriticService(ChatClient.create(nextModel), objectMapper, "configured-model", Duration.ofMinutes(5L), cooldown);
+        SpecFidelityCriticService nextCritic = criticWithCooldown(ChatClient.create(nextModel), "configured-model", Duration.ofMinutes(5L), cooldown);
         ProviderUsageSink nextUsageSink = mock(ProviderUsageSink.class);
-        SpecFidelityReport nextReport = nextCritic.critique(
+        SpecFidelityReport nextReport = critique(nextCritic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Another candidate.", List.of("test_x"), nextUsageSink);
         assertThat(nextReport.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1760,12 +1802,11 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 rate_limit_exceeded: too many requests")).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, "configured-model", Duration.ofMinutes(5L),
-                inMemoryCooldown());
-        SpecFidelityReport firstReport = critic.critique(
+        SpecFidelityCriticService critic = criticWithCooldown(ChatClient.create(chatModel), "configured-model", Duration.ofMinutes(5L), inMemoryCooldown());
+        SpecFidelityReport firstReport = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
-        SpecFidelityReport nextReport = critic.critique(
+        SpecFidelityReport nextReport = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Another candidate.", List.of("test_x"));
         assertThat(firstReport.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
@@ -1776,7 +1817,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void garbageOutput_degradesGracefully() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse("I think the tests look fine to me, no JSON here at all."));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1785,7 +1826,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void emptyOutput_degradesGracefully() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(""));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
@@ -1801,7 +1842,7 @@ class SpecFidelityCriticServiceTest {
                         ```
                         <|end|>\
                         """));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Clean statement.", List.of("test_happy"));
         assertThat(report.findings()).hasSize(1);
@@ -1814,7 +1855,7 @@ class SpecFidelityCriticServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique("too short", "Clean statement.", List.of("test_x"));
+        SpecFidelityReport report = critique(critic, "too short", "Clean statement.", List.of("test_x"));
         assertThat(report.findings()).isEmpty();
         verify(chatModel, times(2)).call(any(Prompt.class));
     }
@@ -1824,7 +1865,7 @@ class SpecFidelityCriticServiceTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "", null);
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), "", null);
         assertThat(report.findings()).singleElement()
                 .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         assertThat(report.hasBlockingFindings()).isTrue();
@@ -1834,7 +1875,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void unavailableAdaptationScopeReview_blocksLivePersistence() {
         SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
                 - old
                 + new\
                 """, null);
@@ -1847,7 +1888,7 @@ class SpecFidelityCriticServiceTest {
     void adaptationDiff_exposesUnrequestedAdditionAsBlockingFinding() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java added reset()\",\"reason\":\"the feedback only requests changing remove()\"}],\"missingRequestedChanges\":[]}"));
-        SpecFidelityReport report = critic.critiqueAdaptation("Change only remove().", "# Inventory", List.of("removeRejectsZero"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change only remove().", "# Inventory", List.of("removeRejectsZero"), """
                 --- solution/src/Inventory.java
                 + void reset()
                 """, null);
@@ -1862,7 +1903,7 @@ class SpecFidelityCriticServiceTest {
     void adaptationResponseMapsMissingRequestedChangeToBlockingFinding() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[],\"missingRequestedChanges\":[{\"requirement\":\"reject zero quantities\",\"reason\":\"no validation was added\"}]}"));
-        SpecFidelityReport report = critic.critiqueAdaptation("Reject zero quantities.", "# Inventory", List.of("test_x"), "(no changes)", null);
+        SpecFidelityReport report = critiqueAdaptation(critic, "Reject zero quantities.", "# Inventory", List.of("test_x"), "(no changes)", null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
             assertThat(finding.kind()).isEqualTo(Kind.REQUESTED_ADAPTATION_CHANGE_MISSING);
             assertThat(finding.requirement()).isEqualTo("reject zero quantities");
@@ -1873,7 +1914,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void malformedAdaptationScopeResponse_blocksLivePersistence() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse("not json"));
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
                 - old
                 + new\
                 """, null);
@@ -1883,7 +1924,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void adaptationResponseMissingScopeVerdict_blocksLivePersistence() {
         SpecFidelityCriticService critic = criticReturning(rawResponse("{\"uncovered\":[]}"));
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
                 - old
                 + new\
                 """, null);
@@ -1893,7 +1934,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void malformedAdaptationScopeEntry_blocksLivePersistence() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"unrequestedChanges\":[{\"reason\":\"missing change\"}],\"missingRequestedChanges\":[]}"));
-        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), """
+        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
                 - old
                 + new\
                 """, null);
@@ -1905,7 +1946,7 @@ class SpecFidelityCriticServiceTest {
     void generationIgnoresAdaptationOnlyFields() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution added reset()\",\"reason\":\"not requested\"}],\"missingRequestedChanges\":[{\"requirement\":\"change remove()\",\"reason\":\"missing\"}]}"));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "# Inventory", List.of("test_x"));
         assertThat(report.hasFindings()).isFalse();
@@ -1921,7 +1962,7 @@ class SpecFidelityCriticServiceTest {
 
         body.append("]}");
         SpecFidelityCriticService critic = criticReturning(jsonResponse(body.toString()));
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Clean statement.", List.of("test_x"));
         assertThat(report.findings().size()).isLessThanOrEqualTo(12);
@@ -1937,7 +1978,7 @@ class SpecFidelityCriticServiceTest {
 
         body.append("],\"unrequestedChanges\":[{\"change\":\"solution removed displayName\",\"reason\":\"explicitly preserved\"}],\"missingRequestedChanges\":[]}");
         SpecFidelityCriticService critic = criticReturning(jsonResponse(body.toString()));
-        SpecFidelityReport report = critic.critiqueAdaptation(
+        SpecFidelityReport report = critiqueAdaptation(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Clean statement.", List.of("test_x"), "- displayName", null);
         assertThat(report.hasBlockingFindings()).isTrue();
@@ -1966,7 +2007,7 @@ class SpecFidelityCriticServiceTest {
                         """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).hasSizeLessThanOrEqualTo(12).extracting(SpecFidelityReport.Finding::kind).contains(Kind.WEAK_TEST_ORACLE);
@@ -1990,7 +2031,7 @@ class SpecFidelityCriticServiceTest {
                 """));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
+        SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.TEMPLATE_QUALITY_GAP);
@@ -2016,7 +2057,7 @@ class SpecFidelityCriticServiceTest {
                 List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
         critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport);
+                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport, null, null, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length",
@@ -2042,7 +2083,7 @@ class SpecFidelityCriticServiceTest {
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previous, "contract", """
                         --- tests/ExampleTest.java
                         + assertEquals(expected, callAgain());\
-                        """);
+                        """, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("REPAIR DELTA", "+ assertEquals(expected, callAgain())",
@@ -2067,7 +2108,7 @@ class SpecFidelityCriticServiceTest {
                 List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
         SpecFidelityReport report = critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport);
+                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport, null, null, null);
         assertThat(report.hasFindings()).as("the mutant is now killed, so the previously reported finding is resolved and must not reappear", new Object[0]).isFalse();
     }
 
@@ -2087,7 +2128,7 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
         critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, SpecFidelityReport.empty());
+                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, SpecFidelityReport.empty(), null, null, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).doesNotContain("PREVIOUS REVIEW"));

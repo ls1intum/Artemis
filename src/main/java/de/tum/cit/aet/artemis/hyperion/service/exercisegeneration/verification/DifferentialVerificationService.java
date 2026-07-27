@@ -28,23 +28,17 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
-import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.WorkspaceArchive;
-import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
-import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
-import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 /**
@@ -130,10 +124,6 @@ public class DifferentialVerificationService {
         }
     }
 
-    private String readSpecDocument(InteractiveSandbox sandbox, String sessionId) {
-        return readWorkspaceRootFile(sandbox, sessionId, "SPEC.md");
-    }
-
     private static String readWorkspaceRootFile(InteractiveSandbox sandbox, String sessionId, String filename) {
         SandboxExecResult result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspaceService.WORKSPACE + "/" + filename);
         return result.isSuccess() ? result.stdout() : "";
@@ -198,29 +188,15 @@ public class DifferentialVerificationService {
      * Runs the differential verification and the sandbox-free integrity gates (harness immutability and solution-leak); mechanical verification passes only when both pass.
      * <p>
      * The authoritative pass wipes and re-seeds the verifier control directory, deletes pre-existing report XML, builds in fresh temporary directories, and counts only reports
-     * written during the build. The integrity gates fail open on genuinely-empty inputs but fail closed when a repo seeded non-empty
-     * extracts empty at verify time (via {@code extractionFailedRepositories}), so a flaky read-back cannot silently disable a gate.
-     *
-     * @param sandbox   the open sandbox session the pristine builds run in
-     * @param sessionId the sandbox session id
-     * @param exercise  the exercise being verified (drives the per-language build recipe)
-     * @param request   the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
-     * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
-     */
-    public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request) {
-        return verify(sandbox, sessionId, exercise, request, () -> {
-        });
-    }
-
-    /**
-     * Runs authoritative verification after restoring the captured candidate independently before the solution and template builds. This prevents generated tests or detached
-     * processes from changing the second build's input and making the verifier approve a tree different from the one persistence receives.
+     * written during the build. The integrity gates fail open on genuinely-empty inputs but fail closed when a repo seeded non-empty extracts empty at verify time (via
+     * {@code extractionFailedRepositories}), so a flaky read-back cannot silently disable a gate.
      *
      * @param sandbox          the open sandbox session the pristine builds run in
      * @param sessionId        the sandbox session id
      * @param exercise         the exercise being verified (drives the per-language build recipe)
      * @param request          the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
-     * @param restoreCandidate resets the same sandbox container and materializes the exact captured candidate before each of the two builds
+     * @param restoreCandidate resets the same sandbox container and materializes the exact captured candidate independently before each of the two builds, so generated tests or
+     *                             detached processes cannot change the second build's input and make the verifier approve a tree different from the one persistence receives
      * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
@@ -312,55 +288,26 @@ public class DifferentialVerificationService {
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
 
+    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
+            Set<String> seededStructuralTestNames) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTestNames);
+    }
+
+    public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
+            Set<String> seededStructuralTestNames) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false, seededStructuralTestNames);
+    }
+
     /**
      * The in-loop self-check the agent's {@code verify} tool calls: runs the same two pristine builds + production parse + actionable gates as the post-loop {@link #verify} and
      * returns an agent-readable {@link AgentVerifyReport} as a mechanical precheck before final post-loop integrity and semantic review.
      * <p>
      * It skips the sandbox-free integrity gates (they need the seed snapshot and read-back the agent loop lacks), so {@code wouldBeAccepted} reflects the differential + actionable
      * gates only; it neither checks nor proves semantic relevance. Final post-loop integrity checks determine mechanical validity; semantic review informs the instructor. Each
-     * call re-runs the two builds (no stale cache). The overloads add the pre-generation tests snapshot, the adaptation flag, and the server-authored structural names currently
-     * materialized in the workspace.
-     *
-     * @param sandbox   the open sandbox session the pristine builds run in
-     * @param sessionId the sandbox session id
-     * @param exercise  the exercise being checked (drives the per-language build recipe)
-     * @return the agent-readable differential report (per-test pass/fail on solution and template, parser-form names, wrongly-passing template tests, unresolved bindings)
+     * call re-runs the two builds (no stale cache). Threading the server-authored {@code seededStructuralTestNames} through keeps the grading plan and statement contract identical
+     * to final verification instead of first revealing those gradable names in the outer repair loop; {@code includeStatementChecks} is false for the tests-stage entry point,
+     * which reports on test artifacts only.
      */
-    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        return selfCheck(sandbox, sessionId, exercise, Map.of(), false);
-    }
-
-    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true);
-    }
-
-    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
-            Set<String> seededStructuralTestNames) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTestNames);
-    }
-
-    /**
-     * Runs the executable-build check with generated structural checks refreshed from the approved ownership contract. Threading their authoritative names here keeps the grading
-     * plan and
-     * statement contract identical to final verification instead of first revealing those gradable names in the outer repair loop.
-     *
-     * @param sandbox                   the open sandbox session
-     * @param sessionId                 the sandbox session id
-     * @param exercise                  the exercise whose tests are checked
-     * @param seedTestsFiles            the immutable seeded tests snapshot
-     * @param seededStructuralTestNames structural names produced by the server-side seeder for this session
-     * @return a report limited to test-stage artifacts
-     */
-    public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Set<String> seededStructuralTestNames) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false, seededStructuralTestNames);
-    }
-
-    private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
-            boolean includeStatementChecks) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, includeStatementChecks, Set.of());
-    }
-
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             boolean includeStatementChecks, Set<String> seededStructuralTestNames) {
         String problemStatement = readProblemStatement(sandbox, sessionId);
@@ -375,7 +322,7 @@ public class DifferentialVerificationService {
         List<String> reasons = new ArrayList<>(includeStatementChecks ? analysis.actionableReasons() : analysis.testArtifactReasons());
         boolean javaAresConventionsHold = true;
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            Map<String, String> testsRepositoryFiles = readTestsRepositoryFiles(sandbox, sessionId);
+            Map<String, String> testsRepositoryFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
             List<String> javaAresConventionReasons = testsRepositoryFiles.isEmpty()
                     ? List.of("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.")
                     : ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation);
@@ -477,17 +424,13 @@ public class DifferentialVerificationService {
         return normalized.equals(expected) || normalized.endsWith("." + expected);
     }
 
-    private static Map<String, String> readTestsRepositoryFiles(InteractiveSandbox sandbox, String sessionId) {
-        return readRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
-    }
-
     /** The frozen approved specification, falling back to the live workspace only for a legacy/unapproved flow. */
     private List<String> contractSpecifications(InteractiveSandbox sandbox, String sessionId) {
         Optional<String> approved = approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank());
         if (approved.isPresent()) {
             return List.of(approved.get());
         }
-        String liveSpec = readSpecDocument(sandbox, sessionId);
+        String liveSpec = readWorkspaceRootFile(sandbox, sessionId, "SPEC.md");
         return liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy") ? List.of(liveSpec) : List.of();
     }
 
@@ -609,7 +552,7 @@ public class DifferentialVerificationService {
         }
         // The approved specification's diagram decision outranks the live file: a run under statement-gate pressure rewrote '## Diagram' from yes to no and the gate then
         // passed vacuously. A later edit may promise a diagram, never un-promise one.
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readSpecDocument(sandbox, sessionId))
+        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readWorkspaceRootFile(sandbox, sessionId, "SPEC.md"))
                 || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
@@ -631,17 +574,10 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The shared, sandbox-dependent half of verification: the two parsed build summaries plus the actionable gate outcome. Consumed by both the post-loop {@link #verify} (which
-     * adds
-     * the integrity gates and verdict) and the in-loop {@link #selfCheck} (which renders the agent observation).
-     *
-     * @param actionableGatesPass            whether every sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
-     * @param actionableReasons              the reasons any sandbox-dependent gate failed (empty when all hold); the same wording {@link #verify} surfaces
-     * @param unresolvedTaskBindings         the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
-     * @param possiblyDeadFiles              best-effort files present in only one assignment repository (advisory; empty when unavailable)
-     * @param gradableTestsPassingOnTemplate the exact, non-structural, non-build-gate solution test names that pass on the template (empty when the template did not build
-     *                                           soundly, or none pass); consumed both by the actionable gate and by {@link #selfCheck}'s agent-facing report so the two never
-     *                                           diverge
+     * The shared, sandbox-dependent half of verification: the two parsed build summaries, the actionable gate outcome and the reasons behind it, plus the exact name lists the
+     * agent is shown verbatim. Consumed by both the post-loop {@link #verify} (which layers the integrity gates and the verdict on top) and the in-loop {@link #selfCheck} (which
+     * renders the agent observation), so the two can never disagree — in particular {@code gradableTestsPassingOnTemplate} (non-structural, non-build-gate solution tests that
+     * also pass on the template; empty when the template did not build soundly) both drives the gate and is reported to the agent.
      */
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
             boolean actionableGatesPass, List<String> testArtifactReasons, List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles,
@@ -936,7 +872,8 @@ public class DifferentialVerificationService {
     /**
      * Runs one pristine build for a single assignment ({@code solution} or {@code template}) without a paired differential, for callers that only need "did it build, and which
      * tests failed" before authoring the next stage — currently {@link StageCheckService}'s per-stage compile gates. Re-seeds the pristine verify script first (idempotent), the
-     * same as the two-build {@link #runDifferential}, so this is also the reseed point for a fresh session's very first build (see {@link #ensurePristineVerifyScript}).
+     * same as the two-build {@link #runDifferential}: until the first (re-)seed, {@code /opt/hyperion/verify.sh} still holds the readiness-probe variant from session bootstrap,
+     * whose fixture is already consumed, so invoking it fails with "build-readiness fixture is unavailable" (exit 66).
      * <p>
      * Reuses the same build-and-parse machinery ({@link #runPristineBuildWithExecution}) that {@link #runDifferential} calls twice, so a single-assignment caller and the full
      * differential can never observe a different build for the same assignment.
@@ -948,25 +885,12 @@ public class DifferentialVerificationService {
      * @return the bounded, caller-facing projection of the build
      */
     public SingleBuildResult singleBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String assignment) {
-        ensurePristineVerifyScript(sandbox, sessionId, exercise);
+        seedPristineVerifyScript(sandbox, sessionId, exercise);
         String buildCommand = "solution".equals(assignment) ? sandboxBuildCommandService.pristineSolutionBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
         PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, buildCommand, assignment);
         BuildSummary summary = execution.summary();
         return new SingleBuildResult(summary.exitCode(), summary.tests(), summary.failures(), summary.testFailedNames(),
                 boundedReadinessDiagnostic(execution.process().combinedOutput()));
-    }
-
-    /**
-     * Public seam for the staged runner's compile gates: until the first verification (or in-loop self-check) runs, {@code /opt/hyperion/verify.sh} still holds the
-     * readiness-probe variant from session bootstrap, whose fixture is already consumed — invoking it fails with "build-readiness fixture is unavailable" (exit 66).
-     * Idempotent: re-renders and overwrites the pristine script.
-     *
-     * @param sandbox   the sandbox hosting the workspace
-     * @param sessionId the sandbox session
-     * @param exercise  the exercise whose build recipe the script encodes
-     */
-    public void ensurePristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        seedPristineVerifyScript(sandbox, sessionId, exercise);
     }
 
     /**
@@ -1027,91 +951,12 @@ public class DifferentialVerificationService {
      * same way production grading does ({@code findByExerciseId}), so the decision matches {@code calculateTotalPenalty}; fails open when the repository is absent.
      */
     private List<String> penalisingScaFindings(ProgrammingExercise exercise, BuildSummary solution) {
-        // Short-circuit before the DB read on the common non-SCA path.
         if (solution.scaFindings().isEmpty() || !Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) || exercise.getId() == null
                 || staticCodeAnalysisCategoryRepository.isEmpty()) {
             return List.of();
         }
         var categories = staticCodeAnalysisCategoryRepository.get().findByExerciseId(exercise.getId());
         return ScaPenaltyParity.penalisingFindings(exercise, categories, solution.scaFindings()).stream().map(f -> f.tool() + "|" + f.category()).toList();
-    }
-
-    /**
-     * The aggregated test outcome of one {@code verify.sh} run, built by parsing the collected report files with the same production parsers LocalCI uses
-     * ({@link TestResultXmlParser}
-     * for JUnit, {@link ReportParser} for SCA), so the oracle's view is parity-by-construction with grading.
-     *
-     * @param tests           tests that ran (zero when the build did not reach the runner, e.g. a compile error); excludes {@code <skipped>} cases, as production grades
-     * @param testNames       distinct test-case names from the JUnit XML, composed as production does; empty if none collected
-     * @param testFailedNames distinct names of cases that failed/errored; used by the strict per-test gate; empty if none collected
-     * @param failureEvidence bounded, sanitized names and first useful failure messages for agent feedback
-     * @param scaFindings     SCA findings (tool + real derived category from {@link ReportParser}); populated only when the SCA reports were collected; empty otherwise
-     */
-    record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
-            List<AgentVerifyReport.TestFailureEvidence> failureEvidence, List<ScaPenaltyParity.ScaFinding> scaFindings) {
-
-        /** Build killed for exceeding its timeout; treated as a failed build with no tests. */
-        static BuildSummary timedOut(int exitCode) {
-            return new BuildSummary(0, 0, exitCode, true, List.of(), List.of(), List.of(), List.of());
-        }
-
-        static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
-            List<LocalCITestJobDTO> failed = new ArrayList<>();
-            List<LocalCITestJobDTO> successful = new ArrayList<>();
-            List<ScaPenaltyParity.ScaFinding> scaFindings = new ArrayList<>();
-            for (Map.Entry<String, byte[]> report : reports.entrySet()) {
-                String canonical = canonicalToken(report.getKey());
-                String content = CollectedReports.asString(report.getValue());
-                if (SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN.equals(canonical)) {
-                    try {
-                        TestResultXmlParser.processTestResultFile(content, failed, successful);
-                    }
-                    catch (IOException | RuntimeException e) {
-                        throw VerificationInfrastructureException.reportRejected("The verifier could not parse JUnit report " + report.getKey(), e);
-                    }
-                }
-                else {
-                    parseScaReport(content, canonical, scaFindings);
-                }
-            }
-            List<String> testNames = new ArrayList<>();
-            List<String> failedNames = new ArrayList<>();
-            List<AgentVerifyReport.TestFailureEvidence> failureEvidence = new ArrayList<>();
-            failed.forEach(job -> {
-                testNames.add(job.name());
-                failedNames.add(job.name());
-                failureEvidence.add(AgentVerifyReport.TestFailureEvidence.from(job.name(), job.testMessages()));
-            });
-            successful.forEach(job -> testNames.add(job.name()));
-            int tests = failed.size() + successful.size();
-            return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(failureEvidence),
-                    List.copyOf(scaFindings));
-        }
-
-        private static void parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
-            try {
-                StaticCodeAnalysisReportDTO report = ReportParser.getReport(content, canonicalFileName);
-                if (report == null || report.issues() == null || report.tool() == null) {
-                    return;
-                }
-                String tool = report.tool().name();
-                for (StaticCodeAnalysisIssue issue : report.issues()) {
-                    scaFindings.add(new ScaPenaltyParity.ScaFinding(tool, issue.category()));
-                }
-            }
-            catch (UnsupportedToolException e) {
-                log.debug("No SCA parser for collected report {}: {}", canonicalFileName, e.getMessage());
-            }
-            catch (RuntimeException e) {
-                throw VerificationInfrastructureException.reportRejected("The verifier could not parse SCA report " + canonicalFileName, e);
-            }
-        }
-
-        /** The canonical routing token a collected file name carries (the segment after the {@code <seq>__} prefix): the JUnit token or an SCA tool's canonical report name. */
-        private static String canonicalToken(String collectedName) {
-            int sep = collectedName.indexOf(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR);
-            return sep < 0 ? collectedName : collectedName.substring(sep + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR.length());
-        }
     }
 
     /** Signals a verifier transport, archive-integrity, or report-parsing failure that authoring cannot repair reliably. */

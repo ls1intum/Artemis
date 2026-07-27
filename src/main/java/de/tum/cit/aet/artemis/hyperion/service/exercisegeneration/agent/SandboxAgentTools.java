@@ -191,13 +191,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         this.stageCheckService = stageCheckService;
     }
 
-    /**
-     * Verify-free constructor: the verifier, exercise, and stage-check service are absent, so neither {@code verify} nor a gated {@code submit} is wired. Used by unit tests of
-     * the file/shell tools.
-     *
-     * @param sandbox   the sandbox session the tools operate on
-     * @param sessionId the session handle
-     */
+    /** Verify-free constructor for unit tests of the file/shell tools: without a verifier and stage-check service, neither {@code verify} nor a gated {@code submit} is wired. */
     SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
         this(sandbox, sessionId, null, null, Map.of(), false, null);
     }
@@ -520,8 +514,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
         }
         // Short-circuit a Codex-style `apply_patch` invocation: it is not installed, so the shell would exit 127 but leave the workspace unchanged while the model believes the
-        // edit
-        // landed and thrashes. Reject loudly without touching the sandbox so the agent switches to write_file / edit_file.
+        // edit landed and thrashes. Reject loudly without touching the sandbox so the agent switches to write_file / edit_file.
         if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
@@ -606,15 +599,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Records the authoritative structural checks seeded between TEMPLATE and TESTS so staged verification sees the same gradable name set as final verification.
-     *
-     * @param names the structural test-case names the server seeded, or null for none
-     */
-    public void recordSeededStructuralTestNames(Set<String> names) {
-        seededStructuralTestNames = names == null ? Set.of() : Set.copyOf(names);
-    }
-
-    /**
      * @return the server-authored structural test names currently used by staged and final verification
      */
     public Set<String> seededStructuralTestNames() {
@@ -631,14 +615,16 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Re-materializes the server-owned structural oracle.
+     * Re-materializes the server-owned structural oracle and records the authoritative checks seeded between TEMPLATE and TESTS, so staged verification sees the same gradable
+     * name set as final verification.
      *
      * @return its authoritative test names, empty when no refresh is installed
      */
     public Set<String> refreshStructuralOracle() {
         Supplier<Set<String>> refresh = structuralOracleRefresh;
         if (refresh != null) {
-            recordSeededStructuralTestNames(refresh.get());
+            Set<String> names = refresh.get();
+            seededStructuralTestNames = names == null ? Set.of() : Set.copyOf(names);
         }
         return seededStructuralTestNames;
     }
@@ -818,8 +804,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * scan for {@link GenerationStage#SPEC}, one pristine build for {@link GenerationStage#SOLUTION} and {@link GenerationStage#TEMPLATE}, the solution/template differential and
      * executable-artifact checks for {@link GenerationStage#TESTS}, and a no-build binding check for {@link GenerationStage#STATEMENT} against the TESTS stage's exact test names.
      * Statement and grading-plan checks remain deferred until their artifacts exist; the unstaged path below checks the complete candidate. Every call re-runs the check (no
-     * cache); a
-     * passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
+     * cache); a passing call clears {@link #dirtySinceLastPassingCheck} for the orchestrator's exit gate to reuse (see
      * {@link #reuseCachedPassingCheck}), but never skips itself. An unstaged session ({@code currentStage} {@code null}) keeps the legacy behavior: always the full differential.
      *
      * @return the agent-readable observation carrying a {@code MECHANICAL PRECHECK: PASS/FAIL} verdict line, or an error message if neither path is wired
@@ -919,8 +904,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     /**
      * Detects whether the command's first shell word is {@code apply_patch} (a path prefix like {@code ./} or a trailing heredoc {@code <<'PATCH'} is tolerated). Matching the
-     * first
-     * token, not a substring, avoids flagging a command that merely mentions it (e.g. {@code grep apply_patch}).
+     * first token, not a substring, avoids flagging a command that merely mentions it (e.g. {@code grep apply_patch}).
      *
      * @param command the effective shell command
      * @return {@code true} if the command would run {@code apply_patch}

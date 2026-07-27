@@ -129,9 +129,7 @@ class GenerationPersistenceServiceTest {
         when(resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(anyLong())).thenReturn(Optional.empty(), Optional.of(resultWithId(1L)));
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), anyString(), any())).thenReturn(true);
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any())).thenReturn(1);
-        service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, tempFileUtilService,
-                programmingExerciseCreationScheduleService, Duration.ofSeconds(2), Duration.ofMillis(5));
+        service = newService(Duration.ofSeconds(2));
 
         exercise = mock(ProgrammingExercise.class);
         exerciseProblemStatement = new AtomicReference<>();
@@ -157,6 +155,14 @@ class GenerationPersistenceServiceTest {
         when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(templateUri);
         when(exercise.getRepositoryURI(RepositoryType.SOLUTION)).thenReturn(solutionUri);
         when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
+    }
+
+    /** Builds the service with a shrunken test-case sync wait and the real metadata/task-rebuild collaborator, so the build-completion wait is exercised without sleeping. */
+    private GenerationPersistenceService newService(Duration testCaseSyncTimeout) {
+        return new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
+                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
+                programmingExerciseCreationScheduleService, new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService),
+                tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5));
     }
 
     private static Result resultWithId(long id) {
@@ -811,9 +817,7 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        GenerationPersistenceService promptService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
-                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
-                programmingExerciseTaskService, tempFileUtilService, programmingExerciseCreationScheduleService, Duration.ofSeconds(10), Duration.ofMillis(5));
+        GenerationPersistenceService promptService = newService(Duration.ofSeconds(10));
 
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
@@ -837,9 +841,7 @@ class GenerationPersistenceServiceTest {
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
         Duration timeout = Duration.ofMillis(500);
-        GenerationPersistenceService boundedService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
-                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
-                programmingExerciseTaskService, tempFileUtilService, programmingExerciseCreationScheduleService, timeout, Duration.ofMillis(5));
+        GenerationPersistenceService boundedService = newService(timeout);
 
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any())).thenAnswer(invocation -> {
@@ -1016,7 +1018,7 @@ class GenerationPersistenceServiceTest {
         currentExercise.setTitle("Adapted Title");
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
 
-        boolean result = service.resyncAfterRevert(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title");
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title", Map.of());
 
         assertThat(result).isFalse();
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
@@ -1032,7 +1034,7 @@ class GenerationPersistenceServiceTest {
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title")).thenReturn(1);
 
-        boolean result = service.resyncAfterRevert(exercise, user, null, "old statement", "Old Title", "adapted statement\n", "Adapted Title");
+        boolean result = service.resyncAfterRevertWithSignal(exercise, user, null, "old statement", "Old Title", "adapted statement\n", "Adapted Title", Map.of());
 
         assertThat(result).isTrue();
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title");

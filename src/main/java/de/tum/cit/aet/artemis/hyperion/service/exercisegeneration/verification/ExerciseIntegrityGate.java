@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
  * assigned to them. The final candidate maps are therefore checked against the immutable approved ownership decisions before persistence.</li>
  * </ul>
  * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
- * read-back.
+ * read-back. Everything here states a policy; the lexical machinery those policies need to read Java sources and Maven manifests lives in {@link JavaSourceInspector}.
  */
 public final class ExerciseIntegrityGate {
 
@@ -57,8 +57,6 @@ public final class ExerciseIntegrityGate {
 
     /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is deliberately absent. */
     private static final List<String> NONDETERMINISM_SOURCES = List.of("Collections.shuffle", "Math.random()", "new Random()", "ThreadLocalRandom", "UUID.randomUUID()");
-
-    private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
 
     private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
 
@@ -305,7 +303,7 @@ public final class ExerciseIntegrityGate {
         }
         return files.entrySet().stream().filter(entry -> {
             String path = entry.getKey().replace('\\', '/');
-            return (path.equals(type + ".java") || path.endsWith(suffix)) && sourceDeclaresType(entry.getValue(), type);
+            return (path.equals(type + ".java") || path.endsWith(suffix)) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), type);
         }).toList();
     }
 
@@ -451,7 +449,7 @@ public final class ExerciseIntegrityGate {
                 .collect(Collectors.toMap(StageCheckService.DesignRow::type, StageCheckService.DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
         Map<String, Set<String>> seamFiles = new LinkedHashMap<>();
         Map<String, String> javaFiles = templateFiles == null ? Map.of()
-                : templateFiles.entrySet().stream().filter(entry -> isJavaSource(entry.getKey()) && entry.getValue() != null)
+                : templateFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, ignored) -> first, LinkedHashMap::new));
         javaFiles.forEach((path, content) -> TODO_SEAM.matcher(content).results().map(match -> match.group(1))
                 .forEach(seam -> seamFiles.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(path)));
@@ -474,7 +472,7 @@ public final class ExerciseIntegrityGate {
             if (!"stubbed".equals(status)) {
                 continue; // malformed owner/status is rejected by the specification gate
             }
-            Set<String> ownerFiles = javaFiles.entrySet().stream().filter(entry -> sourceDeclaresType(entry.getValue(), row.ownerType())).map(Map.Entry::getKey)
+            Set<String> ownerFiles = javaFiles.entrySet().stream().filter(entry -> JavaSourceInspector.sourceDeclaresType(entry.getValue(), row.ownerType())).map(Map.Entry::getKey)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             Set<String> correctlyPlaced = actualFiles.stream().filter(ownerFiles::contains).collect(Collectors.toCollection(LinkedHashSet::new));
             if (correctlyPlaced.isEmpty()) {
@@ -491,15 +489,6 @@ public final class ExerciseIntegrityGate {
         return List.copyOf(reasons);
     }
 
-    private static boolean isJavaSource(String path) {
-        if (path == null) {
-            return false;
-        }
-        String normalized = path.replace('\\', '/');
-        return normalized.endsWith(".java") && !normalized.startsWith("target/") && !normalized.contains("/target/") && !normalized.startsWith("build/")
-                && !normalized.contains("/build/");
-    }
-
     /** Finds a top-level, nested, or secondary type declaration. */
     private static boolean repositoryDeclaresType(Map<String, String> files, String type) {
         if (files == null || files.isEmpty()) {
@@ -510,7 +499,7 @@ public final class ExerciseIntegrityGate {
             if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
                 continue;
             }
-            if (sourceDeclaresType(file.getValue(), type)) {
+            if (JavaSourceInspector.sourceDeclaresType(file.getValue(), type)) {
                 return true;
             }
         }
@@ -536,15 +525,7 @@ public final class ExerciseIntegrityGate {
     static boolean pathOrContentRepresentsType(String path, String content, String type) {
         String normalizedPath = path.replace('\\', '/');
         String fileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
-        return fileName.startsWith(type + ".") || sourceDeclaresType(content, type);
-    }
-
-    /** Shared declaration matcher for the prospective write guard and the authoritative final repository check. */
-    static boolean sourceDeclaresType(String content, String type) {
-        String declarationStart = "(?:^|[;{}])\\s*";
-        String modifiers = "(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*";
-        return Pattern.compile(declarationStart + modifiers + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b", Pattern.MULTILINE)
-                .matcher(content).find();
+        return fileName.startsWith(type + ".") || JavaSourceInspector.sourceDeclaresType(content, type);
     }
 
     /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */
@@ -584,18 +565,19 @@ public final class ExerciseIntegrityGate {
         String pom = producedTestsFiles.get("pom.xml");
         String gradle = firstNonNull(producedTestsFiles.get("build.gradle"), producedTestsFiles.get("build.gradle.kts"));
         if (pom != null) {
-            String pomWithoutComments = stripXmlComments(pom);
-            if (!hasMavenDependency(pomWithoutComments, "de.tum.in.ase", "artemis-java-test-sandbox")) {
+            String pomWithoutComments = JavaSourceInspector.stripXmlComments(pom);
+            if (!JavaSourceInspector.hasMavenDependency(pomWithoutComments, "de.tum.in.ase", "artemis-java-test-sandbox")) {
                 reasons.add(
                         "Java Maven tests must keep the Artemis Ares dependency in tests/pom.xml (de.tum.in.ase:artemis-java-test-sandbox); do not replace it with plain JUnit.");
             }
-            if (!hasMavenPlugin(pomWithoutComments, "org.apache.maven.plugins", "maven-enforcer-plugin") || !hasXmlElementText(pomWithoutComments, "file", "de/tum/in/test/api/")
-                    || !hasXmlElementText(pomWithoutComments, "file", "org/junit/")) {
+            if (!JavaSourceInspector.hasMavenPlugin(pomWithoutComments, "org.apache.maven.plugins", "maven-enforcer-plugin")
+                    || !JavaSourceInspector.hasXmlElementText(pomWithoutComments, "file", "de/tum/in/test/api/")
+                    || !JavaSourceInspector.hasXmlElementText(pomWithoutComments, "file", "org/junit/")) {
                 reasons.add("Java Maven tests must keep the seeded Maven enforcer plugin in tests/pom.xml so student code cannot shadow trusted packages.");
             }
         }
         else if (gradle != null) {
-            String gradleWithoutComments = stripJavaComments(gradle);
+            String gradleWithoutComments = JavaSourceInspector.stripJavaComments(gradle);
             if (!Pattern.compile("(?m)^\\s*(?:testImplementation|implementation)\\s+['\"]de\\.tum\\.in\\.ase:artemis-java-test-sandbox:").matcher(gradleWithoutComments).find()) {
                 reasons.add(
                         "Java Gradle tests must keep the Artemis Ares dependency in tests/build.gradle (de.tum.in.ase:artemis-java-test-sandbox); do not replace it with plain JUnit.");
@@ -614,7 +596,7 @@ public final class ExerciseIntegrityGate {
         for (Map.Entry<String, String> javaTest : javaTests) {
             String path = javaTest.getKey();
             String content = javaTest.getValue();
-            JavaTestAnnotationSummary annotationSummary = javaTestAnnotationSummary(content);
+            var annotationSummary = JavaSourceInspector.javaTestAnnotationSummary(content);
             if (annotationSummary.hasTestMethods() && annotationSummary.classWithMissingAresAnnotations()) {
                 missingClassAnnotations.add(path);
             }
@@ -629,8 +611,8 @@ public final class ExerciseIntegrityGate {
                     + ". Copy these exact imports from the seeded reference tests; only @Public lives in the .jupiter package.");
         }
         if (!missingTimeouts.isEmpty()) {
-            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout, set to a bounded number of seconds between " + MIN_STRICT_TIMEOUT_SECONDS
-                    + " and " + MAX_STRICT_TIMEOUT_SECONDS
+            reasons.add("Every Java @Test method must carry the trusted de.tum.in.test.api.StrictTimeout, set to a bounded number of seconds between "
+                    + JavaSourceInspector.MIN_STRICT_TIMEOUT_SECONDS + " and " + JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS
                     + " inclusive (e.g. @StrictTimeout(1)), so an infinite loop cannot hang grading and a generous but still-bounded structural check is not falsely rejected; "
                     + "missing, shadowed, or out of that range in " + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
         }
@@ -678,23 +660,10 @@ public final class ExerciseIntegrityGate {
         paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
             boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
-            boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path) || declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
+            boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path)
+                    || JavaSourceInspector.declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
             return !inSourceRoot || !allowedFile || !packageMatchesPath;
         }).map(repository::concat).forEach(target::add);
-    }
-
-    private static boolean declaresPackageMatchingPath(String path, String content, List<String> sourceRoots) {
-        String sourceRoot = sourceRoots.stream().filter(path::startsWith).findFirst().orElse(null);
-        int filenameSeparator = path.lastIndexOf('/');
-        if (sourceRoot == null || filenameSeparator < sourceRoot.length() || content == null) {
-            return false;
-        }
-        Matcher matcher = JAVA_PACKAGE_DECLARATION.matcher(stripJavaComments(content));
-        if (!matcher.find() || Pattern.compile("\\\\u+").matcher(content.substring(0, matcher.end())).find()) {
-            return false;
-        }
-        String expectedPackage = path.substring(sourceRoot.length(), filenameSeparator).replace('/', '.');
-        return matcher.group(1).equals(expectedPackage);
     }
 
     private static Map<String, String> safeFiles(Map<String, String> files) {
@@ -707,263 +676,6 @@ public final class ExerciseIntegrityGate {
 
     private static String firstNonNull(String first, String second) {
         return first != null ? first : second;
-    }
-
-    private static boolean hasMavenDependency(String pom, String groupId, String artifactId) {
-        return xmlBlocks(pom, "dependency").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
-    }
-
-    private static boolean hasMavenPlugin(String pom, String groupId, String artifactId) {
-        return xmlBlocks(pom, "plugin").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
-    }
-
-    private static List<String> xmlBlocks(String content, String element) {
-        Matcher matcher = Pattern.compile("(?s)<" + Pattern.quote(element) + "\\b[^>]*>.*?</" + Pattern.quote(element) + ">").matcher(content);
-        List<String> blocks = new ArrayList<>();
-        while (matcher.find()) {
-            blocks.add(matcher.group());
-        }
-        return blocks;
-    }
-
-    private static boolean hasXmlElementText(String content, String element, String expectedText) {
-        Matcher matcher = Pattern.compile("(?s)<" + Pattern.quote(element) + "\\b[^>]*>\\s*([^<]*?)\\s*</" + Pattern.quote(element) + ">").matcher(content);
-        while (matcher.find()) {
-            if (matcher.group(1).contains(expectedText)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static String stripXmlComments(String content) {
-        return content.replaceAll("(?s)<!--.*?-->", "");
-    }
-
-    private record JavaClassAnnotation(int start, String annotations) {
-    }
-
-    private record JavaTestAnnotationSummary(boolean hasTestMethods, boolean classWithMissingAresAnnotations, boolean testMethodWithoutStrictTimeout) {
-    }
-
-    private static final Pattern JAVA_CLASS_DECLARATION = Pattern.compile("\\b(?:public\\s+)?(?:abstract\\s+)?class\\s+\\w+");
-
-    private static final Pattern JAVA_METHOD_DECLARATION = Pattern
-            .compile("\\b(?:public|protected|private)?\\s*(?:static\\s+)?[\\w<>\\[\\], ?]+\\s+\\w+\\s*\\([^;{}]*\\)\\s*(?:throws\\s+[^{}]+)?\\{");
-
-    private static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
-        String withoutComments = stripJavaComments(content);
-        Set<String> imports = new HashSet<>();
-        Matcher importMatcher = Pattern.compile("(?m)^\\s*import\\s+([\\w.]+)\\s*;").matcher(withoutComments);
-        while (importMatcher.find()) {
-            imports.add(importMatcher.group(1));
-        }
-        Matcher localTypeMatcher = Pattern.compile("\\b(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][\\w$]*)").matcher(withoutComments);
-        while (localTypeMatcher.find()) {
-            String localType = localTypeMatcher.group(1);
-            imports.removeIf(importedType -> importedType.endsWith("." + localType));
-        }
-        String[] lines = withoutComments.split("\\R", -1);
-        List<JavaClassAnnotation> classes = new ArrayList<>();
-        boolean hasTestMethods = false;
-        boolean missingClassAnnotations = false;
-        boolean missingTimeouts = false;
-        StringBuilder annotations = new StringBuilder();
-        for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-            String line = lines[lineIndex].trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            if (line.startsWith("@")) {
-                annotations.append(line).append('\n');
-                lineIndex = appendAnnotationContinuation(lines, lineIndex, annotations);
-                continue;
-            }
-            if (annotations.isEmpty()) {
-                continue;
-            }
-            int declarationLine = lineIndex;
-            String declaration = line;
-            while (!declaration.contains("{") && !declaration.contains(";") && lineIndex + 1 < lines.length) {
-                String nextLine = lines[lineIndex + 1].trim();
-                if (nextLine.startsWith("@")) {
-                    break;
-                }
-                declaration += " " + nextLine;
-                lineIndex++;
-            }
-            String annotationBlock = annotations.toString();
-            if (JAVA_CLASS_DECLARATION.matcher(declaration).find()) {
-                classes.add(new JavaClassAnnotation(declarationLine, annotationBlock));
-            }
-            else if (JAVA_METHOD_DECLARATION.matcher(declaration).find() && hasJUnitTestAnnotation(annotationBlock)) {
-                hasTestMethods = true;
-                String classAnnotations = enclosingClassAnnotations(classes, declarationLine);
-                if (!hasAresClassAnnotations(classAnnotations, imports)) {
-                    missingClassAnnotations = true;
-                }
-                if (!hasStrictTimeout(annotationBlock, imports) && !hasStrictTimeout(classAnnotations, imports)) {
-                    missingTimeouts = true;
-                }
-            }
-            annotations.setLength(0);
-        }
-        return new JavaTestAnnotationSummary(hasTestMethods, missingClassAnnotations, missingTimeouts);
-    }
-
-    private static int appendAnnotationContinuation(String[] lines, int startLine, StringBuilder annotations) {
-        int parenthesisBalance = parenthesisBalance(lines[startLine]);
-        int lineIndex = startLine;
-        while (parenthesisBalance > 0 && lineIndex + 1 < lines.length) {
-            lineIndex++;
-            String line = lines[lineIndex].trim();
-            annotations.append(line).append('\n');
-            parenthesisBalance += parenthesisBalance(line);
-        }
-        return lineIndex;
-    }
-
-    private static int parenthesisBalance(String line) {
-        int balance = 0;
-        for (int i = 0; i < line.length(); i++) {
-            char character = line.charAt(i);
-            if (character == '(') {
-                balance++;
-            }
-            else if (character == ')') {
-                balance--;
-            }
-        }
-        return balance;
-    }
-
-    private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int line) {
-        String annotations = "";
-        for (JavaClassAnnotation javaClass : classes) {
-            if (javaClass.start() > line) {
-                break;
-            }
-            annotations = javaClass.annotations();
-        }
-        return annotations;
-    }
-
-    private static boolean hasAresClassAnnotations(String annotations, Set<String> imports) {
-        return hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.jupiter.Public", "Public", null)
-                && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.WhitelistPath", "WhitelistPath", "\"target\"")
-                && hasTrustedAnnotation(annotations, imports, "de.tum.in.test.api.BlacklistPath", "BlacklistPath", "\"target/test-classes\"");
-    }
-
-    /**
-     * The trusted {@code @StrictTimeout} bound, in seconds. The gate exists to prevent an UNBOUNDED test (e.g. an infinite loop) from hanging grading, not to pin one magic
-     * constant: Artemis's own seeded structural test classes ({@code templates/java/test/testFiles/structural/ClassTest.java} and its three siblings) carry
-     * {@code @StrictTimeout(10)} for {@link StructuralOracleSeedingService}'s reflection-heavy generated tests, which a gate demanding exactly {@code 1} would reject as soon as a
-     * missing public class is seeded — a false rejection of Artemis's own trusted output. Any value in this bounded range is accepted; only an unset, shadowed, or unbounded
-     * timeout is rejected.
-     */
-    private static final int MIN_STRICT_TIMEOUT_SECONDS = 1;
-
-    private static final int MAX_STRICT_TIMEOUT_SECONDS = 15;
-
-    private static boolean hasStrictTimeout(String annotations, Set<String> imports) {
-        return hasBoundedStrictTimeout(annotations, "de.tum.in.test.api.StrictTimeout")
-                || (imports.contains("de.tum.in.test.api.StrictTimeout") && hasBoundedStrictTimeout(annotations, "StrictTimeout"));
-    }
-
-    /** Whether {@code annotations} carries an {@code @<name>(<seconds>)} annotation whose numeric argument falls within the trusted bounded range. */
-    private static boolean hasBoundedStrictTimeout(String annotations, String name) {
-        Matcher matcher = Pattern.compile("@" + Pattern.quote(name) + "\\s*\\(\\s*(\\d+)\\s*\\)").matcher(annotations);
-        while (matcher.find()) {
-            try {
-                long seconds = Long.parseLong(matcher.group(1));
-                if (seconds >= MIN_STRICT_TIMEOUT_SECONDS && seconds <= MAX_STRICT_TIMEOUT_SECONDS) {
-                    return true;
-                }
-            }
-            catch (NumberFormatException e) {
-                // An unrepresentably large literal is certainly out of the trusted range; keep scanning any further match on the same annotated element.
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasTrustedAnnotation(String annotations, Set<String> imports, String qualifiedName, String simpleName, String argument) {
-        String suffix = argument == null ? "\\b" : "\\s*\\(\\s*" + Pattern.quote(argument) + "\\s*\\)";
-        boolean fullyQualified = Pattern.compile("@" + Pattern.quote(qualifiedName) + suffix).matcher(annotations).find();
-        boolean imported = imports.contains(qualifiedName) && Pattern.compile("@" + Pattern.quote(simpleName) + suffix).matcher(annotations).find();
-        return fullyQualified || imported;
-    }
-
-    private static boolean hasJUnitTestAnnotation(String annotations) {
-        return hasAnnotation(annotations, "Test") || hasAnnotation(annotations, "ParameterizedTest") || hasAnnotation(annotations, "RepeatedTest")
-                || hasAnnotation(annotations, "TestFactory") || hasAnnotation(annotations, "TestTemplate");
-    }
-
-    private static boolean hasAnnotation(String annotations, String simpleName) {
-        return Pattern.compile("@(?:[\\w.]+\\.)?" + Pattern.quote(simpleName) + "\\b").matcher(annotations).find();
-    }
-
-    private static String stripJavaComments(String content) {
-        StringBuilder stripped = new StringBuilder(content.length());
-        boolean inLineComment = false;
-        boolean inBlockComment = false;
-        boolean inString = false;
-        boolean inChar = false;
-        for (int i = 0; i < content.length(); i++) {
-            char current = content.charAt(i);
-            char next = i + 1 < content.length() ? content.charAt(i + 1) : '\0';
-            if (inLineComment) {
-                if (current == '\n') {
-                    inLineComment = false;
-                    stripped.append(current);
-                }
-                else {
-                    stripped.append(' ');
-                }
-            }
-            else if (inBlockComment) {
-                if (current == '*' && next == '/') {
-                    inBlockComment = false;
-                    stripped.append("  ");
-                    i++;
-                }
-                else {
-                    stripped.append(current == '\n' ? '\n' : ' ');
-                }
-            }
-            else if (inString || inChar) {
-                stripped.append(current);
-                if (current == '\\' && next != '\0') {
-                    stripped.append(next);
-                    i++;
-                }
-                else if ((inString && current == '"') || (inChar && current == '\'')) {
-                    inString = false;
-                    inChar = false;
-                }
-            }
-            else if (current == '/' && next == '/') {
-                inLineComment = true;
-                stripped.append("  ");
-                i++;
-            }
-            else if (current == '/' && next == '*') {
-                inBlockComment = true;
-                stripped.append("  ");
-                i++;
-            }
-            else {
-                inString = current == '"';
-                inChar = current == '\'';
-                stripped.append(current);
-            }
-        }
-        return stripped.toString();
-    }
-
-    /** Normalizes a file body for content-equality: CRLF folded and surrounding whitespace stripped. */
-    private static String normalizeBody(String content) {
-        return content == null ? "" : content.replace("\r\n", "\n").strip();
     }
 
     /** Minimum normalized length for a body to be considered a meaningful source file (so an empty .gitkeep or a one-line marker is never called a leak). */
@@ -1025,11 +737,11 @@ public final class ExerciseIntegrityGate {
             if (isLeakIgnoredFile(entry.getKey())) {
                 continue;
             }
-            String body = normalizeBody(entry.getValue());
+            String body = JavaSourceInspector.normalizeBody(entry.getValue());
             if (body.length() < MIN_LEAK_BODY_LENGTH) {
                 continue;
             }
-            if (body.equals(normalizeBody(templateFiles.get(entry.getKey())))) {
+            if (body.equals(JavaSourceInspector.normalizeBody(templateFiles.get(entry.getKey())))) {
                 // Identical at the same path => a shared interface/header/config, not an answer.
                 continue;
             }
@@ -1041,12 +753,12 @@ public final class ExerciseIntegrityGate {
             if (isLeakIgnoredFile(path)) {
                 continue;
             }
-            String body = normalizeBody(entry.getValue());
+            String body = JavaSourceInspector.normalizeBody(entry.getValue());
             if (body.length() < MIN_LEAK_BODY_LENGTH || !implementationBodies.contains(body)) {
                 continue;
             }
             // A copy at the same graded path makes the template pass — already rejected by the oracle, so do not double-report it.
-            if (body.equals(normalizeBody(solutionFiles.get(path)))) {
+            if (body.equals(JavaSourceInspector.normalizeBody(solutionFiles.get(path)))) {
                 continue;
             }
             if (!leakedPaths.contains(path)) {

@@ -150,18 +150,6 @@ public class GenerationPersistenceService {
         this.testCaseSyncPoll = testCaseSyncPoll;
     }
 
-    // Package-private convenience constructor for tests that do not exercise the narrow-transactional metadata/task-rebuild path directly (they mock this service instead).
-    GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, TempFileUtilService tempFileUtilService,
-            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
-        this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
-                testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, programmingExerciseCreationScheduleService,
-                new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService), tempFileUtilService, testCaseSyncTimeout,
-                testCaseSyncPoll);
-    }
-
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
     private static final int MAX_TITLE_LENGTH = 255;
@@ -180,13 +168,9 @@ public class GenerationPersistenceService {
     }
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle) {
-        return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, () -> true);
-    }
-
-    public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
-            BooleanSupplier stillOwnsMutationSlot) {
-        return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, GenerationMode.GENERATE, "Generate exercise with Hyperion",
-                stillOwnsMutationSlot);
+        return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, GenerationMode.GENERATE, "Generate exercise with Hyperion", () -> true,
+                () -> {
+                });
     }
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle, String jobId,
@@ -208,12 +192,6 @@ public class GenerationPersistenceService {
     }
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
-            GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot) {
-        return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, commitMessage, stillOwnsMutationSlot, () -> {
-        });
-    }
-
-    private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
         if (!outcome.isMechanicallyVerified()) {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
@@ -228,8 +206,6 @@ public class GenerationPersistenceService {
         String testsCommitHash = null;
         TestsBuildSignal testsBuildSignal = null;
         String producedProblemStatement = outcome.producedProblemStatement();
-        String originalProblemStatement = expectedProblemStatement;
-        String originalTitle = expectedTitle;
         String targetTitle = exercise.getTitle();
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
         // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. An adapt run keeps the
@@ -241,7 +217,7 @@ public class GenerationPersistenceService {
             }
         }
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-        assertMetadataUnchangedSinceJobStart(exercise, originalProblemStatement, originalTitle);
+        assertMetadataMatches(exercise, expectedProblemStatement, expectedTitle);
         try {
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
@@ -297,7 +273,7 @@ public class GenerationPersistenceService {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 // The metadata write and the task rebuild it drives are one narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): either both land or
                 // neither does, so a task-rebuild failure never leaves a committed problem statement paired with a half-rebuilt task set.
-                saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle, beforeFirstDurableMutation);
+                saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, expectedProblemStatement, expectedTitle, beforeFirstDurableMutation);
             }
             catch (RuntimeException e) {
                 throw new GenerationIncompleteException("Saving the generated exercise failed while updating the problem statement after committing " + committed
@@ -307,8 +283,8 @@ public class GenerationPersistenceService {
         }
 
         // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so finalization explicitly triggers the canonical tests build before waiting for test-case sync.
-        String expectedFinalProblemStatement = shouldSaveProblemStatement ? producedProblemStatement.trim() : originalProblemStatement;
-        String expectedFinalTitle = shouldSaveProblemStatement ? targetTitle : originalTitle;
+        String expectedFinalProblemStatement = shouldSaveProblemStatement ? producedProblemStatement.trim() : expectedProblemStatement;
+        String expectedFinalTitle = shouldSaveProblemStatement ? targetTitle : expectedTitle;
         Map<RepositoryType, String> persistedRepositoryHeads = new EnumMap<>(RepositoryType.class);
         persistedRepositoryHeads.putAll(outcome.seedRepositoryHeads());
         persistedRepositoryHeads.putAll(postPersistHashes);
@@ -416,28 +392,9 @@ public class GenerationPersistenceService {
      * Re-synchronises the exercise after its repositories were force-reset back to a captured commit (the {@code revert this adaptation} affordance). The git reset itself is done
      * by the caller; this triggers the canonical tests build so test-case grading follows the reverted tests, re-applies the build-gate zero-weighting, and records a new exercise
      * version so open editors and search see the reverted state — exactly the post-commit steps {@link #persist} runs. Best-effort: a failure here leaves the repositories reverted
-     * (the important part) and only logs.
-     *
-     * @param exercise                 the exercise whose repositories were reset back to the baseline
-     * @param user                     the instructor performing the revert (exercise-version author)
-     * @param testsCommitHash          the tests repository's commit HEAD after the reset (drives the test-case-sync build); {@code null} skips the build
-     * @param problemStatement         the problem statement captured before the adaptation
-     * @param title                    the title captured before the adaptation
-     * @param expectedProblemStatement the problem statement captured immediately after the adaptation; used as a compare-and-set guard
-     * @param expectedTitle            the title captured immediately after the adaptation; used as a compare-and-set guard
-     * @return {@code true} if the metadata was restored and re-sync was attempted; {@code false} if concurrent metadata edits made the restore unsafe
+     * (the important part) and only logs. {@code problemStatement}/{@code title} are the pre-adaptation values to restore, guarded by a compare-and-set against the
+     * {@code expected*} values captured immediately after the adaptation; a {@code null} signal skips the build.
      */
-    public boolean resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash, String problemStatement, String title, String expectedProblemStatement,
-            String expectedTitle) {
-        return resyncAfterRevertWithSignal(exercise, user, testsCommitHash == null ? null : prepareTestsBuildSignal(exercise, testsCommitHash), problemStatement, title,
-                expectedProblemStatement, expectedTitle);
-    }
-
-    boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
-            String expectedProblemStatement, String expectedTitle) {
-        return resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, problemStatement, title, expectedProblemStatement, expectedTitle, Map.of());
-    }
-
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds) {
         if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
@@ -445,7 +402,7 @@ public class GenerationPersistenceService {
         }
         try {
             syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
-            }, repositoryCommitIds);
+            }, repositoryCommitIds, null);
             log.info("Re-synchronised exercise {} after reverting an adaptation", exercise.getId());
             return true;
         }
@@ -460,20 +417,10 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure) {
-        return syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, () -> {
-        }, Map.of());
-    }
-
     /**
      * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when no new version was recorded (a tolerated failure with
      *         {@code failOnFinalizationFailure == false}, or the version service judged the snapshot unchanged from the previous version)
      */
-    private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
-            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds) {
-        return syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, failOnFinalizationFailure, finalizationGuard, repositoryCommitIds, null);
-    }
-
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, @Nullable String testPlanJson) {
         finalizationGuard.run();
@@ -501,7 +448,8 @@ public class GenerationPersistenceService {
 
     private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal) {
         try {
-            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true);
+            syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
+            }, Map.of(), null);
             return true;
         }
         catch (RuntimeException e) {
@@ -518,8 +466,7 @@ public class GenerationPersistenceService {
                 return false;
             }
             MetadataSnapshot current = currentMetadata.get();
-            // The metadata write and the task rebuild it drives are one narrow @Transactional database unit, so a task-rebuild failure here never leaves a committed problem
-            // statement paired with a half-rebuilt task set.
+            // One narrow @Transactional database unit (see ProblemStatementMetadataUpdateService): a task-rebuild failure rolls the metadata write back with it.
             int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, problemStatement, title, current.problemStatement(), current.title());
             if (updatedRows != 1) {
                 log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
@@ -588,22 +535,13 @@ public class GenerationPersistenceService {
     private void saveProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle,
             Runnable beforeFirstDurableMutation) {
         String trimmedProblemStatement = problemStatement.trim();
-        MetadataSnapshot current = currentMetadataMatchingSafeSave(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
+        MetadataSnapshot current = currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
                 () -> new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits"));
         beforeFirstDurableMutation.run();
-        // Narrow @Transactional unit (metadata CAS write + task rebuild only, no Git/CI inside): a task-rebuild failure rolls the metadata write back too, instead of leaving a
-        // committed statement paired with a half-rebuilt task set.
+        // Narrow @Transactional unit (metadata CAS write + task rebuild only, no Git/CI inside): a task-rebuild failure rolls the metadata write back with it.
         int updatedRows = problemStatementMetadataUpdateService.updateProblemStatementAndTasks(exercise, trimmedProblemStatement, title, current.problemStatement(),
                 current.title());
         if (updatedRows != 1) {
-            throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
-        }
-    }
-
-    private void assertMetadataUnchangedSinceJobStart(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle) {
-        Optional<ProgrammingExercise> currentExercise = programmingExerciseRepository.findById(exercise.getId());
-        if (currentExercise.isEmpty()
-                || !metadataPairMatches(exercise.getId(), currentExercise.get().getProblemStatement(), currentExercise.get().getTitle(), expectedProblemStatement, expectedTitle)) {
             throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
         }
     }
@@ -615,11 +553,6 @@ public class GenerationPersistenceService {
             throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
         }
         return new MetadataSnapshot(currentExercise.get().getProblemStatement(), currentExercise.get().getTitle());
-    }
-
-    private Optional<MetadataSnapshot> currentMetadataMatchingSafeSave(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle,
-            String targetProblemStatement, String targetTitle) {
-        return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, targetProblemStatement, targetTitle);
     }
 
     private boolean compensate(ProgrammingExercise exercise, String repositoryBranch, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes,
@@ -952,7 +885,6 @@ public class GenerationPersistenceService {
         if (testPlanJson == null || testPlanJson.isBlank()) {
             return;
         }
-        boolean scheduleDueDateRecalculation = false;
         GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
         if (!plan.hiddenEntries().isEmpty() && exercise.getDueDate() == null) {
             throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
@@ -988,7 +920,7 @@ public class GenerationPersistenceService {
         if (!changed.isEmpty()) {
             testCaseRepository.saveAll(changed);
         }
-        scheduleDueDateRecalculation = changed.stream().anyMatch(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE);
+        boolean scheduleDueDateRecalculation = changed.stream().anyMatch(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE);
         log.info("Applied generated test plan to exercise {}: {} test case(s) weighted, {} hidden until the due date", exercise.getId(), changed.size(),
                 changed.stream().filter(testCase -> testCase.getVisibility() == Visibility.AFTER_DUE_DATE).count());
         if (scheduleDueDateRecalculation) {
