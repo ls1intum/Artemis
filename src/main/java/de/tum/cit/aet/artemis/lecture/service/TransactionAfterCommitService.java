@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 @Conditional(LectureEnabled.class)
 @Lazy
 @Service
-public class TransactionAfterCommitExecutor {
+public class TransactionAfterCommitService {
 
     /**
      * Executes the action after the current transaction commits. If no transaction synchronization is active, the action is executed immediately.

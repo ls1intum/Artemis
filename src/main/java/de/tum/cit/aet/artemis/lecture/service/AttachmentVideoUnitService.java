@@ -22,7 +22,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -65,26 +64,18 @@ public class AttachmentVideoUnitService {
 
     private final IrisLectureUnitSyncService irisLectureUnitSyncService;
 
-    private final SlideSplitterService slideSplitterService;
-
     private final SlideVisibilityUpdateService slideVisibilityUpdateService;
-
-    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    private final Optional<LectureContentProcessingService> contentProcessingService;
-
-    private final TransactionAfterCommitExecutor transactionAfterCommitExecutor;
+    private final AttachmentVideoUnitPostCommitService postCommitService;
 
     private final TransactionTemplate transactionTemplate;
 
-    public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
+    public AttachmentVideoUnitService(AttachmentVideoUnitRepository attachmentVideoUnitRepository, AttachmentRepository attachmentRepository, FileService fileService,
+            LectureUnitService lectureUnitService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
             LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
-            SlideVisibilityUpdateService slideVisibilityUpdateService, TransactionAfterCommitExecutor transactionAfterCommitExecutor,
-            PlatformTransactionManager transactionManager) {
+            SlideVisibilityUpdateService slideVisibilityUpdateService, AttachmentVideoUnitPostCommitService postCommitService, PlatformTransactionManager transactionManager) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -93,12 +84,9 @@ public class AttachmentVideoUnitService {
         this.lectureContentUpdateClassifierService = lectureContentUpdateClassifierService;
         this.slideRepository = slideRepository;
         this.irisLectureUnitSyncService = irisLectureUnitSyncService;
-        this.slideSplitterService = slideSplitterService;
         this.slideVisibilityUpdateService = slideVisibilityUpdateService;
-        this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
-        this.contentProcessingService = contentProcessingService;
-        this.transactionAfterCommitExecutor = transactionAfterCommitExecutor;
+        this.postCommitService = postCommitService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -123,7 +111,7 @@ public class AttachmentVideoUnitService {
             irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
         }
         // Trigger automated content processing (transcription and ingestion)
-        transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit)));
+        postCommitService.triggerContentProcessing(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
@@ -177,16 +165,14 @@ public class AttachmentVideoUnitService {
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
 
-        transactionAfterCommitExecutor.execute(() -> competencyProgressApi
-                .ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit)));
+        postCommitService.updateCompetencyProgress(originalCompetencyIds, savedAttachmentVideoUnit);
 
         // Process attachment if provided
         if (updateAttachment != null) {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    transactionAfterCommitExecutor
-                            .execute(() -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
+                    postCommitService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                     visibilitySyncDeferredToSlideSplit = true;
                     projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
@@ -220,12 +206,10 @@ public class AttachmentVideoUnitService {
                         if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                             visibilitySyncDeferredToSlideSplit = true;
                             if (pageOrder == null) {
-                                transactionAfterCommitExecutor.execute(
-                                        () -> slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null)));
+                                postCommitService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                             }
                             else {
-                                transactionAfterCommitExecutor.execute(() -> slideSplitterService
-                                        .splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder)));
+                                postCommitService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
                                 projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
                             }
                         }
@@ -258,7 +242,7 @@ public class AttachmentVideoUnitService {
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
-            transactionAfterCommitExecutor.execute(() -> contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit)));
+            postCommitService.triggerContentProcessing(savedAttachmentVideoUnit);
         }
     }
 

@@ -26,13 +26,13 @@ public class IrisLectureUnitSyncService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final TransactionAfterCommitExecutor transactionAfterCommitExecutor;
+    private final TransactionAfterCommitService transactionAfterCommitService;
 
     public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher,
-            TransactionAfterCommitExecutor transactionAfterCommitExecutor) {
+            TransactionAfterCommitService transactionAfterCommitService) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
-        this.transactionAfterCommitExecutor = transactionAfterCommitExecutor;
+        this.transactionAfterCommitService = transactionAfterCommitService;
     }
 
     /**
@@ -42,7 +42,7 @@ public class IrisLectureUnitSyncService {
      */
     public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now());
-        transactionAfterCommitExecutor.execute(() -> eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId())));
+        transactionAfterCommitService.execute(() -> eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId())));
     }
 
     /**
@@ -52,7 +52,7 @@ public class IrisLectureUnitSyncService {
      */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
-        transactionAfterCommitExecutor
+        transactionAfterCommitService
                 .execute(() -> eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber())));
     }
 

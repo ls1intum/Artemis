@@ -49,7 +49,7 @@ class IrisLectureUnitSyncServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new IrisLectureUnitSyncService(repository, eventPublisher, new TransactionAfterCommitExecutor());
+        service = new IrisLectureUnitSyncService(repository, eventPublisher, new TransactionAfterCommitService());
         doCallRealMethod().when(repository).markDirty(anyLong(), nullable(String.class), nullable(String.class), any(ZonedDateTime.class));
         when(repository.findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID)).thenReturn(Optional.of(new AttachmentVideoUnit()));
     }

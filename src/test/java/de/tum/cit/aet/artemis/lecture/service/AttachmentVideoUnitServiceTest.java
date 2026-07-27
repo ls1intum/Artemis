@@ -92,7 +92,7 @@ class AttachmentVideoUnitServiceTest {
     private PlatformTransactionManager transactionManager;
 
     @Mock
-    private TransactionAfterCommitExecutor transactionAfterCommitExecutor;
+    private TransactionAfterCommitService transactionAfterCommitService;
 
     @TempDir
     private Path tempDir;
@@ -102,14 +102,15 @@ class AttachmentVideoUnitServiceTest {
     @BeforeEach
     void setUp() {
         FilePathConverter.setFileUploadPath(tempDir);
-        service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
-                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(),
-                slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService, transactionAfterCommitExecutor, transactionManager);
+        var postCommitService = new AttachmentVideoUnitPostCommitService(slideSplitterService, Optional.empty(), Optional.of(contentProcessingService),
+                transactionAfterCommitService);
+        service = new AttachmentVideoUnitService(attachmentVideoUnitRepository, attachmentRepository, fileService, lectureUnitService, attachmentFileHashService, attachmentService,
+                new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService, postCommitService, transactionManager);
         lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         lenient().doAnswer(invocation -> {
             invocation.<Runnable>getArgument(0).run();
             return null;
-        }).when(transactionAfterCommitExecutor).execute(any());
+        }).when(transactionAfterCommitService).execute(any());
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
@@ -244,9 +245,9 @@ class AttachmentVideoUnitServiceTest {
 
     @Test
     void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
-        service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
-                Optional.empty(), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService,
-                slideVisibilityUpdateService, transactionAfterCommitExecutor, transactionManager);
+        var postCommitService = new AttachmentVideoUnitPostCommitService(slideSplitterService, Optional.empty(), Optional.empty(), transactionAfterCommitService);
+        service = new AttachmentVideoUnitService(attachmentVideoUnitRepository, attachmentRepository, fileService, lectureUnitService, attachmentFileHashService, attachmentService,
+                new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService, postCommitService, transactionManager);
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 
@@ -290,7 +291,7 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, hiddenPages, pageOrder, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
-        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit, hiddenPages, pageOrder);
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(eq(AttachmentVideoUnitSlideSplitJob.of(unit, hiddenPages, pageOrder)));
         verify(attachmentService).replaceUploadedStudentVersionFile(any(), eq(attachment), eq(LECTURE_UNIT_ID), eq(studentVersionFile.getOriginalFilename()));
         assertThat(attachment.getStudentVersion()).isEqualTo("attachments/student-unit-updated.pdf");
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
@@ -327,21 +328,23 @@ class AttachmentVideoUnitServiceTest {
         String newHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", newHash));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
-        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(unit)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("split failed")));
+        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class)))
+                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("split failed")));
 
         assertThat(service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, null, null, Set.of())).isSameAs(unit);
 
-        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit);
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(eq(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)));
         verify(contentProcessingService).triggerProcessing(unit);
     }
 
     @Test
     void updateAttachmentVideoUnitDefersAsyncSideEffectsUntilAfterCommit() {
-        var deferredExecutor = mock(TransactionAfterCommitExecutor.class);
+        var deferredTransactionService = mock(TransactionAfterCommitService.class);
         var competencyProgressApi = mock(CompetencyProgressApi.class);
-        service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.of(competencyProgressApi),
-                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(),
-                slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService, deferredExecutor, transactionManager);
+        var postCommitService = new AttachmentVideoUnitPostCommitService(slideSplitterService, Optional.of(competencyProgressApi), Optional.of(contentProcessingService),
+                deferredTransactionService);
+        service = new AttachmentVideoUnitService(attachmentVideoUnitRepository, attachmentRepository, fileService, lectureUnitService, attachmentFileHashService, attachmentService,
+                new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, slideVisibilityUpdateService, postCommitService, transactionManager);
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);
         var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
@@ -359,11 +362,11 @@ class AttachmentVideoUnitServiceTest {
         verifyNoInteractions(competencyProgressApi, slideSplitterService, contentProcessingService);
 
         var actionCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(deferredExecutor, times(3)).execute(actionCaptor.capture());
+        verify(deferredTransactionService, times(3)).execute(actionCaptor.capture());
         actionCaptor.getAllValues().forEach(Runnable::run);
 
         verify(competencyProgressApi).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, unit);
-        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit, hiddenPages, pageOrder);
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(eq(AttachmentVideoUnitSlideSplitJob.of(unit, hiddenPages, pageOrder)));
         verify(contentProcessingService).triggerProcessing(unit);
     }
 
