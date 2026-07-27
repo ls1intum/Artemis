@@ -268,3 +268,9 @@ deferredEagerBeanInstantiationViolations.dot
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/
+
+# Local AI-agent scratch space and live-LLM harness output. These hold run transcripts, generated
+# exercises, and endpoint configuration; none of it belongs in the repository.
+.ai/
+.superpowers/
+.e2e-local/

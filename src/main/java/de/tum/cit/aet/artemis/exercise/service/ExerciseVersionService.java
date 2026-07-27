@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -38,13 +39,16 @@ import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
@@ -59,6 +63,10 @@ public class ExerciseVersionService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);
 
     private final ExerciseVersionRepository exerciseVersionRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ProgrammingExerciseMutationGuardService mutationGuard;
 
     private final GitService gitService;
 
@@ -89,12 +97,15 @@ public class ExerciseVersionService {
     // under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
     private final Executor exerciseVersionExecutor;
 
-    public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
+    public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseMutationGuardService mutationGuard,
+            GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<FileUploadApi> fileUploadApi,
+            UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
             ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, ObjectMapper objectMapper,
             @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
         this.exerciseVersionRepository = exerciseVersionRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.mutationGuard = mutationGuard;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -108,6 +119,33 @@ public class ExerciseVersionService {
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
         this.exerciseVersionExecutor = exerciseVersionExecutor;
+    }
+
+    /**
+     * Toggles second correction for an exercise and records the resulting version, holding the mutation guard for the whole operation.
+     * <p>
+     * The guard matters because a Hyperion generation may own the exercise: it rewrites repositories and metadata, and a concurrent toggle would race that. Only programming
+     * exercises can be owned, so the claim is empty for every other type and the lease is then a no-op. Programming exercises version synchronously, because the caller's
+     * response asserts the change is already durable.
+     *
+     * @param exerciseId the exercise to toggle
+     * @param user       the user performing the toggle, recorded as the version's author
+     * @return the new second-correction state
+     */
+    public boolean toggleSecondCorrection(long exerciseId, User user) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        OptionalLong guardedExercise = exercise instanceof ProgrammingExercise ? OptionalLong.of(exerciseId) : OptionalLong.empty();
+        try (var lease = mutationGuard.claimExternalMutation(guardedExercise)) {
+            exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            boolean secondCorrectionEnabled = exerciseRepository.toggleSecondCorrection(exercise);
+            if (exercise instanceof ProgrammingExercise) {
+                createExerciseVersionSynchronously(exercise, user);
+            }
+            else {
+                createExerciseVersion(exercise, user);
+            }
+            return secondCorrectionEnabled;
+        }
     }
 
     /**
