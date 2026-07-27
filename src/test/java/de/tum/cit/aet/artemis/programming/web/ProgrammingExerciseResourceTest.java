@@ -732,7 +732,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
         request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
-        assertThat(submissionPolicyRepository.findAll()).extracting(entry -> entry.getId()).containsExactly(policyId);
+        // scope the row count to this exercise: the submission_policy table is shared with every other test in the run
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExercise.getId()))).extracting(entry -> entry.getId()).containsExactly(policyId);
         var exerciseFromDb = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow();
         assertThat(exerciseFromDb.getSubmissionPolicy().getId()).isEqualTo(policyId);
         assertThat(exerciseFromDb.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
