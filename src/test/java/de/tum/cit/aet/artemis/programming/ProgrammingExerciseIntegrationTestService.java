@@ -70,6 +70,8 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
+import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -100,6 +102,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -227,6 +230,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private HibernateQueryInterceptor queryInterceptor;
 
     private Course course;
 
@@ -1504,22 +1510,25 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void getTestCases_asTutor() throws Exception {
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
-        final List<ProgrammingExerciseTestCase> returnedTests = request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
-        final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
-        returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
-        assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(testsInDB);
+        // The response DTO reads no lazy slot of a test case (neither exercise nor tasks), so the count stays flat at 4;
+        // one extra query per returned test case would breach this cap.
+        final List<ProgrammingExerciseTestCaseResponseDTO> returnedTests = QueryCountAssert
+                .assertThatDb(queryInterceptor, () -> request.getList("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseTestCaseResponseDTO.class)).hasBeenCalledAtMostTimes(5);
+        final Set<ProgrammingExerciseTestCase> testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final List<ProgrammingExerciseTestCaseResponseDTO> expectedTests = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
+        assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(expectedTests);
     }
 
     void getTestCases_asStudent_forbidden() throws Exception {
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
-        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCaseResponseDTO.class);
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
-        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+        request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCaseResponseDTO.class);
     }
 
     void updateTestCases_asInstrutor() throws Exception {
@@ -1531,18 +1540,17 @@ public class ProgrammingExerciseIntegrationTestService {
                 testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
-        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
         }, HttpStatus.OK);
-        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var expectedTestCases = testCasesInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "tasks")
-                .containsExactlyInAnyOrderElementsOf(testCasesInDB);
+        assertThat(new HashSet<>(testCasesResponse)).containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
-            assertThat(testCase.isAfterDueDate()).isTrue();
-            assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
-            assertThat(testCase.getBonusMultiplier()).isEqualTo(testCase.getId() + 1.0);
-            assertThat(testCase.getBonusPoints()).isEqualTo(testCase.getId() + 2.0);
+            assertThat(testCase.visibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+            assertThat(testCase.weight()).isEqualTo(testCase.id() + 42);
+            assertThat(testCase.bonusMultiplier()).isEqualTo(testCase.id() + 1.0);
+            assertThat(testCase.bonusPoints()).isEqualTo(testCase.id() + 2.0);
         });
     }
 
@@ -1556,7 +1564,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
-        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
         }, HttpStatus.OK);
 
         assertThat(testCasesResponse).isNotNull();
@@ -1621,11 +1629,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
-        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
         }, HttpStatus.OK);
-        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.getFirst().id())).findFirst().orElseThrow();
-        assertThat(updatedTestCase.getBonusPoints()).isZero();
-        assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.id().equals(updates.getFirst().id())).findFirst().orElseThrow();
+        assertThat(updatedTestCase.bonusPoints()).isZero();
+        assertThat(testCasesResponse.stream().filter(testCase -> !testCase.id().equals(updatedTestCase.id()))).allMatch(testCase -> testCase.bonusPoints() == 1d);
     }
 
     private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
@@ -1643,13 +1651,14 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCase>>() {
-        }, HttpStatus.OK);
-        // Otherwise the HashSet for comparison can't be created because exercise id is used for the hashCode
-        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
+        // Resetting plus versioning takes 27 queries; mapping the reset test cases must not pull their exercise or tasks back in
+        final var testCasesResponse = QueryCountAssert
+                .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(30);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
 
-        assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(testsInDB);
+        assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isZero());
