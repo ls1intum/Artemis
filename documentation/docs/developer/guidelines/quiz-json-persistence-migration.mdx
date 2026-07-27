@@ -15,7 +15,15 @@ This migration **collapses each of those child tables into a single JSON column*
 | `submitted_answer.selection` | every `SubmittedAnswer` | the submission's selected-answer child tables / join table |
 | `quiz_statistic.counters` | each `QuizQuestionStatistic` | the per-component rows in `quiz_statistic_counter` |
 
-The child data is stored as plain POJOs serialized to JSON via Hibernate's native `@JdbcTypeCode(SqlTypes.JSON)` (the same mechanism already used by `QuizQuestionProgress.progress`, `ExamRoom.seats`, etc.). The public getters (`getDropLocations()`, `getAnswerOptions()`, `getSelectedOptions()`, `getSubmittedTexts()`, …) keep their exact signatures and resolve the JSON on access, so the REST/websocket wire format is unchanged.
+The child data is stored as plain POJOs serialized to JSON via Hibernate's native `@JdbcTypeCode(SqlTypes.JSON)` (the same mechanism already used by `QuizQuestionProgress.progress`, `ExamRoom.seats`, etc.). The public getters (`getDropLocations()`, `getAnswerOptions()`, `getSelectedOptions()`, `getSubmittedTexts()`, …) keep their exact signatures and resolve the JSON on access, so the REST/websocket wire format is unchanged — with the one deliberate exception documented below.
+
+### Breaking API change: short-answer submitted texts lose their `id`
+
+`ShortAnswerSubmittedTextDTO` no longer carries an `id`, and the field is gone from the generated client model `ShortAnswerSubmittedText`.
+
+Submitted texts used to be rows in `short_answer_submitted_text` and were serialized with that row id. They now live inside the submitted answer's JSON `selection` column as plain POJOs with no database row, so there is no stable identifier left to expose. Migrating a synthetic id into the JSON was considered and rejected: nothing reads it, and inventing an id that no longer identifies a row would be misleading.
+
+**What consumers must do:** address a submitted text through its spot (`spot.id`), which is stable and unchanged. Nothing inside Artemis read the submitted-text id (verified across the Angular client, the Playwright suite, and the generated client), so no in-tree caller needed updating; external API consumers relying on it have to switch to the spot id.
 
 The migration lives in `src/main/resources/config/liquibase/changelog/20260707080319_changelog.xml`.
 
