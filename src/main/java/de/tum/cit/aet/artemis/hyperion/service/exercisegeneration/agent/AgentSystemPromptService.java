@@ -191,9 +191,11 @@ public class AgentSystemPromptService {
 
             """;
 
-    // One constant per stage so buildStage() can select exactly one while the single-loop build() composes several. STAGE_SPEC_INSTRUCTIONS is excluded from that composition:
-    // the single-loop path runs only when a specification already exists (an instructor statement, or a repair prompt carrying the frozen contract), so including it would cost
-    // prompt budget for guidance that can never apply.
+    // One constant per stage so buildStage() can select exactly one while the single-loop build() composes several. STAGE_SPEC_INSTRUCTIONS is excluded from that composition
+    // deliberately, and NOT because a specification always already exists — the single loop also serves a first attempt with none (any non-Java language, or
+    // artemis.hyperion.agent.staged-generation=false). It is excluded because only the staged path has a spec gate: a SPEC.md authored in the single loop would never be
+    // reviewed or approved, yet the review grounding falls back to whatever SPEC.md is on disk and reviews the candidate against it as the contract. Without the gate, the
+    // contract of an unstaged run is the instructor's brief and statement.
 
     private static final String STAGED_WORKFLOW_INTRO = """
             Build the executable exercise in coherent learning increments: for each risk-chosen seam, update the canonical solution, derived template, behavioral evidence, and
@@ -475,7 +477,11 @@ public class AgentSystemPromptService {
                 """.formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
     }
 
-    /** Single-loop counterpart of {@link #STAGE_TOOLS_NOTE}, which states the same rules more tersely for the stage prompts' tighter budget. */
+    /**
+     * Single-loop only, and not a duplicate of anything the stage prompts carry: the harness layout, the cross-repository package parity rule and the per-mode test-source scope
+     * live here alone. The staged path replaces them with the per-stage instructions and the shared {@link #HARNESS_IMMUTABILITY_RULE} inside {@link #STAGE_TOOLS_NOTE}; the
+     * single-loop counterpart of that constant is {@link #safeToolUseSection}, not this method.
+     */
     private String layoutAndHarnessSection(ProgrammingExercise exercise, String testSourceGuidance) {
         return """
                 LAYOUT AND HARNESS
@@ -494,6 +500,7 @@ public class AgentSystemPromptService {
                 """.formatted(groundedWorkflow);
     }
 
+    /** Single-loop counterpart of {@link #STAGE_TOOLS_NOTE}: the same tool rules, stated for a prompt that is not stage-scoped. */
     private static String safeToolUseSection(ProgrammingExercise exercise) {
         return """
                 SAFE TOOL USE

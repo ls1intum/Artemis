@@ -33,7 +33,12 @@ class SpecificationReviewCritic {
 
     private static final String SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/specification_review_system.st";
 
-    /** The pre-freeze verdict has one evidence check and five small arrays; a full critic-sized response would add cost without useful evidence. */
+    /**
+     * Sized for the declared response shape: six finding arrays (omissions, conflicts, internal conflicts, example checks, ambiguities, unsupported constraints), each entry
+     * carrying evidence IDs and one short reason, plus the learning-fit object (five ID lists, three prose fields, five booleans, one direction) and the concept-alignment
+     * object. Findings are capped at {@link #SPECIFICATION_REVIEW_MAX_FINDINGS} anyway, so a full critic-sized budget would buy length rather than evidence — but the cap covers
+     * hidden reasoning too, and a response cut off by it is unparseable and costs the correction pass below.
+     */
     private static final int SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS = 8_192;
 
     /** Keeps a SPEC repair focused even when the reviewer reports more valid defects than requested. */

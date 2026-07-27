@@ -178,6 +178,17 @@ class SandboxAgentToolsTest {
         assertThat(result).contains("occurs 2 times").contains("whitespace-only differences");
     }
 
+    /**
+     * The tools' inline caps and the agent loop's per-tool-result cap are two constants in two classes that only work as a pair: if a tool returns more than the loop keeps, the
+     * loop elides on top of the tool's own elision and the tool's truncation marker misdescribes what the model can still see.
+     */
+    @Test
+    void inlineOutputCaps_stayBelowTheAgentLoopPerToolResultCap() {
+        assertThat(SandboxAgentTools.READ_INLINE_MAX_CHARS).isLessThan(AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS);
+        // Bytes, not characters: UTF-8 never encodes a character in fewer than one byte, so staying under the cap in bytes keeps it under in characters too.
+        assertThat(SandboxAgentTools.BASH_TAIL_BYTES).isLessThan(AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS);
+    }
+
     @Test
     void readFile_longFile_isPagedWithAnActionableContinuationFooter() {
         RecordingSandbox sandbox = new RecordingSandbox();

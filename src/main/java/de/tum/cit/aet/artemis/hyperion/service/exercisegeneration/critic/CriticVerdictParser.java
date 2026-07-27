@@ -290,10 +290,14 @@ class CriticVerdictParser {
     }
 
     /**
-     * Appends one blocking finding per grounded item, uniformly requiring a {@code sourceQuote} that literally appears in {@code authoritativeSource} (the brief for oracle
-     * categories, the brief plus produced statement for contract categories — see {@code SpecFidelityCriticService#reviewArtifacts}). An item whose quote does not validate is the
-     * critic's abstain
-     * outcome: it is logged for observability and dropped rather than surfaced, so it can never drive repair or reach the instructor as a hallucinated blocker.
+     * Appends one blocking finding per grounded item, uniformly requiring a {@code sourceQuote} that literally appears in the grounding source the caller passed. That source is
+     * not the same per pass (see {@code SpecFidelityCriticService#reviewArtifacts}): the ORACLE pass grounds against the instructor brief plus the frozen specification only,
+     * while the CONTRACT pass also accepts the produced problem statement, the grading plan, and the produced solution/template/test sources. Grounding therefore proves
+     * provenance — the quote was in something the reviewer was shown — and for the CONTRACT pass that can be the candidate's own artifacts rather than any instructor-authored
+     * requirement.
+     * <p>
+     * An item whose quote does not validate is the critic's abstain outcome: it is logged for observability and dropped rather than surfaced, so it can never drive repair or
+     * reach the instructor as a hallucinated blocker.
      */
     private static void appendGroundedBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
             SpecFidelityReport.Kind kind, String detailPrefix) {
@@ -329,7 +333,8 @@ class CriticVerdictParser {
         if (evidenceId.matches("P[1-9][0-9]*") && EvidenceSource.from("P", authoritativeSource).passages().containsKey(evidenceId)) {
             return true;
         }
-        // Accepts a verdict that omits the server-generated evidence IDs, so a reviewer response predating them still parses.
+        // Verbatim quoting is the general grounding mechanism, not a compatibility shim: server-generated evidence IDs are rendered for the ORACLE pass's primary source only, so
+        // a quote taken from the problem statement, the grading plan, or the produced artifacts can prove its provenance only by appearing literally in the grounding source.
         return normalizeQuote(authoritativeSource).contains(normalizeQuote(sourceQuote));
     }
 

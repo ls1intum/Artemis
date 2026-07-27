@@ -36,7 +36,11 @@ class ConceptSelectionCritic {
 
     private static final String CONCEPT_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/concept_review_system.st";
 
-    /** Concept selection is four short qualitative checks over three compact candidates. */
+    /**
+     * Sized for the declared response shape: the selected candidate and its reason, plus one evaluation per candidate carrying its evidence IDs, seven short prose analyses and
+     * nine booleans — so three candidates' worth of structured judgment, each field a phrase or a sentence rather than an essay. The cap covers hidden reasoning too, and a
+     * response cut off by it is unparseable and costs the correction pass below.
+     */
     private static final int CONCEPT_REVIEW_MAX_OUTPUT_TOKENS = 4_096;
 
     private static final String CONCEPT_REVIEW_CORRECTION = """

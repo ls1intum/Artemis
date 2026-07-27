@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -56,12 +54,6 @@ class GenerationAttemptLoop {
 
     /** Initial candidate plus at most three mechanical repairs. */
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
-
-    /**
-     * Total wall-clock ceiling for one generation run across all attempts, covering the repair attempts that the staged first attempt's own guard does not. Checked before
-     * starting each repair attempt; exceeding it keeps the current candidate and verification state, which proceed to the normal outcome path.
-     */
-    private static final Duration TOTAL_WALL_CLOCK_BUDGET = Duration.ofMinutes(35);
 
     record Dependencies(GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner, DifferentialVerificationService verifier,
             StructuralOracleSeedingService structuralOracleSeeder, SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService,
@@ -166,8 +158,6 @@ class GenerationAttemptLoop {
     // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair prompt so
     // scope-cutting under repair pressure faces the contract it is cutting.
     private final AtomicReference<String> specSnapshot = new AtomicReference<>();
-
-    private final Instant runStartedAt = Instant.now();
 
     private String currentPrompt;
 
@@ -277,6 +267,10 @@ class GenerationAttemptLoop {
      * On mechanical rejection, the verifier's reasons are fed back and the attempt is retried within a bounded budget. The verifier enforces rules the agent's own verify.sh
      * cannot show — the template must fail a meaningful fraction, the problem statement must bind tasks — so a "builds, but not quite right" candidate is repaired here rather
      * than reaching an instructor.
+     * <p>
+     * The loop deliberately holds no wall-clock ceiling of its own; its bounds are the attempt count and, per attempt, the turn budget. Wall-clock is owned entirely by
+     * {@code cancelled}, which carries the job deadline configured as {@code artemis.hyperion.agent.max-job-duration}: it is polled before every model turn, and a run it stops
+     * still keeps (and saves) the last verified candidate. A private ceiling here could only duplicate that or silently contradict an operator who changed it.
      *
      * @return the outcome when the run ended inside the loop (cancelled, errored, or a preserved checkpoint), or {@code null} when the loop ran to completion and the caller
      *         resolves the outcome from the final state
@@ -284,10 +278,6 @@ class GenerationAttemptLoop {
     @Nullable
     GenerationOutcome run() {
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
-            if (attempt > 1 && Duration.between(runStartedAt, Instant.now()).compareTo(TOTAL_WALL_CLOCK_BUDGET) > 0) {
-                emit("The generation time budget is used up; keeping the current candidate instead of starting repair attempt " + attempt + ".");
-                break;
-            }
             runAttempt(attempt);
             GenerationOutcome stoppedOutcome = outcomeIfAgentStopped();
             if (stoppedOutcome != null) {

@@ -83,7 +83,7 @@ public class GenerationOrchestrationService {
     /**
      * The semantic repair budget: how many scoped repair rounds one run may schedule. Deliberately larger than the number of repair surfaces, because rounds are allocated to
      * whichever surface currently carries the highest-priority findings rather than one per surface, so a single surface can legitimately hold several rounds. Configurable so
-     * the ceiling can be tuned per deployment against the wall-clock guard rather than recompiled.
+     * the ceiling can be tuned per deployment against the configured job deadline rather than recompiled.
      */
     private static final int DEFAULT_MAX_SEMANTIC_REPAIRS = 6;
 
@@ -135,8 +135,8 @@ public class GenerationOrchestrationService {
         int effectiveMaxSemanticRepairs = maxSemanticRepairs > 0 && maxSemanticRepairs <= MAX_CONFIGURABLE_SEMANTIC_REPAIRS ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
         // The attempt ceiling: the mechanical repair phase, one attempt per semantic repair the budget allows, and one more for the narrow mechanical correction the loop grants
         // when a semantic repair breaks the build. That correction is a whole attempt neither of the other two terms pays for, so without it the last configured repair round is
-        // unreachable. Derived from the semantic budget rather than fixed, so raising the budget can never leave rounds arithmetically unreachable; the wall-clock guard remains
-        // the real bound.
+        // unreachable. Derived from the semantic budget rather than fixed, so raising the budget can never leave rounds arithmetically unreachable; the configured job deadline
+        // (artemis.hyperion.agent.max-job-duration) remains the real bound.
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + effectiveMaxSemanticRepairs + 1;
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;

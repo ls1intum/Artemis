@@ -35,7 +35,8 @@ final class ReviewerClient {
 
     private static final JTokkitTokenCountEstimator TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
-    // Null when no AI provider is configured, in which case every review pass fails closed rather than returning an empty verdict.
+    // Null when no AI provider is configured. Each pass then decides for itself: a pass whose verdict can block returns an explicit unavailable verdict rather than a silent
+    // clean one, while an advisory pass that only offers extra material (contract-witness authoring) returns nothing at all.
     @Nullable
     private final ChatClient chatClient;
 
@@ -68,7 +69,7 @@ final class ReviewerClient {
         this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
     }
 
-    /** Whether an AI reviewer is configured at all; every pass returns an explicit unavailable verdict rather than an empty one when it is not. */
+    /** Whether an AI reviewer is configured at all; a blocking pass returns an explicit unavailable verdict rather than an empty one when it is not. */
     boolean configured() {
         return chatClient != null;
     }

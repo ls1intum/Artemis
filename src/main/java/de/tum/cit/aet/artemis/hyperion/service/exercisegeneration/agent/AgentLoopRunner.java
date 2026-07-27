@@ -43,6 +43,10 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
  * stops, the turn budget is reached, cancellation is requested, or an error occurs. The loop is manual because Spring AI's automatic tool execution has no iteration cap and no
  * per-step hook, so it can enforce neither the safety budget nor the transcript. Artifact correctness is decided separately by the authoritative verifier.
  * <p>
+ * This rests on the {@link ChatModel} contract: a model call returns the requested tool calls UNEXECUTED and never runs them itself, so
+ * executing them through {@code toolCallingManager.executeToolCalls} and feeding the results back is this loop's obligation, not an optimization. A model implementation that
+ * executed tools internally would silently bypass every budget, veto, and transcript rule below.
+ * <p>
  * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn, so a
  * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. Prompt abort of a long-running tool is the caller's: it registers a
  * cancel hook that tears down the sandbox session, which makes the in-flight tool call fail fast.
@@ -74,8 +78,10 @@ public class AgentLoopRunner {
     private static final int KEEP_RECENT_TOKENS = 20_000;
 
     /**
-     * Pinned to the encoding of the model families this loop targets rather than the library default ({@code cl100k_base}). It counts message text only; the per-message
-     * structural overheads below (envelope, tool-call framing) are added on top because the estimator cannot see them.
+     * Pinned to {@code o200k_base}, the tokenizer of the GPT-4o/GPT-5-class models Hyperion is configured against ({@code gpt-5-mini} by default), rather than the library
+     * default {@code cl100k_base}, which belongs to the older GPT-4/3.5 families and would mis-size the context of every model actually used here — under-counting risks a
+     * provider-side context overflow, over-counting compacts a conversation that still fits. It counts message text only; the per-message structural overheads
+     * below (envelope, tool-call framing) are added on top because the estimator cannot see them.
      */
     private static final JTokkitTokenCountEstimator TEXT_TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
@@ -83,8 +89,12 @@ public class AgentLoopRunner {
 
     private static final int TOOLCALL_OVERHEAD_TOKENS = 8;
 
-    /** Hard cap on a single tool result kept in the live context; head and tail (where the signal lives) are kept and the middle is elided. */
-    private static final int MAX_TOOL_RESPONSE_CHARS = 12_000;
+    /**
+     * Hard cap on a single tool result kept in the live context; head and tail (where the signal lives) are kept and the middle is elided. Package-private because every tool
+     * that caps its own inline output must stay below it (see {@code SandboxAgentTools}), or that tool's "output was truncated" marker describes an elision this loop then
+     * silently redoes.
+     */
+    static final int MAX_TOOL_RESPONSE_CHARS = 12_000;
 
     /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
     private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;

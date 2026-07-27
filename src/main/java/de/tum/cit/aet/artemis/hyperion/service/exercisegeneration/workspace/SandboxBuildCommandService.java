@@ -93,10 +93,6 @@ public class SandboxBuildCommandService {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
     }
 
-    public String buildEnvironmentPreflightCommand() {
-        return pristineSolutionBuildCommand();
-    }
-
     public static String reportsDirectoryFor(String assignment) {
         return REPORTS_DIR + "/" + assignment;
     }
@@ -185,8 +181,8 @@ public class SandboxBuildCommandService {
                         -e 's#${solutionWorkingDirectory}#@@SOLUTION_DIR@@#g' \\
                         -e 's#${testWorkingDirectory}#@@TEST_DIR@@#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
-                # Anti-forgery: delete every pre-existing report before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
-                # this run are collected.
+                # Anti-forgery: delete every pre-existing JUnit report before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports
+                # written this run are collected. SCA reports are deliberately not deleted here; see buildScaCollectSection.
                 find "$BUILD_DIR" -type f \\( @@REPORT_FIND@@ \\) -delete 2>/dev/null || true
                 # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
@@ -247,7 +243,11 @@ public class SandboxBuildCommandService {
         return value.replace("'", "'\\''");
     }
 
-    /** Each SCA report keeps its canonical per-tool name as the routing token so the verifier's production {@code ReportParser} picks the right parser for it. */
+    /**
+     * Each SCA report keeps its canonical per-tool name as the routing token so the verifier's production {@code ReportParser} picks the right parser for it. Unlike the JUnit
+     * reports, pre-existing SCA reports are not deleted before the phases run: the {@code -newer} marker is their only guard, which is enough because a surviving forged SCA
+     * report can only add issues to the candidate under review, never hide one.
+     */
     private static String buildScaCollectSection(String scaFindExpression) {
         if (scaFindExpression.isEmpty()) {
             return "";

@@ -531,7 +531,8 @@ public class GenerationWorkspaceService {
      * The produced files of a repository read back out of the sandbox, plus whether the result could not be represented safely for persistence. The verifier fails closed when
      * {@code extractionFailed} is true.
      *
-     * @param files            the produced files keyed by repository-relative path (empty if the repo is genuinely empty OR extraction failed)
+     * @param files            the produced files keyed by repository-relative path; whether it is empty says nothing about success, and a failed read-back can still carry files
+     *                             (residue stripped, binaries changed). Only {@code extractionFailed} decides.
      * @param extractionFailed {@code true} when extraction failed or the produced tree contains unsupported residue or binary changes
      */
     public record RepositoryExtraction(Map<String, String> files, boolean extractionFailed) {

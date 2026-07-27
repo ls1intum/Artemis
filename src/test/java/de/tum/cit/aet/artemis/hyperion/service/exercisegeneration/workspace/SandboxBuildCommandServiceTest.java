@@ -208,7 +208,6 @@ class SandboxBuildCommandServiceTest {
         // The verifier runs the pristine copy outside /workspace, which the agent's tools cannot reach.
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
-        assertThat(factory.buildEnvironmentPreflightCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(SandboxBuildCommandService.reportsDirectoryFor("solution")).isEqualTo("/opt/hyperion/reports/solution");
     }
 

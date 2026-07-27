@@ -365,8 +365,7 @@ public class DifferentialVerificationService {
      */
     public Optional<String> checkBuildEnvironment(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         try {
-            seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.readinessVerifyScriptContent(exercise));
-            PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, sandboxBuildCommandService.buildEnvironmentPreflightCommand(),
+            PristineBuildExecution execution = runPristineBuildWithExecution(sandbox, sessionId, seedReadinessProbe(sandbox, sessionId, exercise),
                     GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
             BuildSummary result = execution.summary();
             boolean trustedTestsRan = READINESS_TEST_NAMES.stream().allMatch(expected -> result.testNames().stream().anyMatch(name -> readinessNameMatches(name, expected)));
@@ -838,6 +837,16 @@ public class DifferentialVerificationService {
         catch (RuntimeException e) {
             log.warn("The contract-witness probe {} could not be removed: {}", workspacePath, e.getMessage());
         }
+    }
+
+    /**
+     * Installs the readiness variant of the pristine script and returns the command that runs it. The two are one step on purpose: the readiness script replaces the exercise's
+     * own test and assignment sources with the trusted fixture inside its disposable build tree, so running the ordinary solution command without installing it first would
+     * silently probe the exercise instead of the environment.
+     */
+    private String seedReadinessProbe(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.readinessVerifyScriptContent(exercise));
+        return sandboxBuildCommandService.pristineSolutionBuildCommand();
     }
 
     /** Recreates the verifier control directory, discarding anything the agent or an earlier in-loop verification left in it. */
