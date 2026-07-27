@@ -152,21 +152,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
-     * Get the number of currently locked submissions for the given course.
-     *
-     * @param courseId the id of the course
-     * @return the number of currently locked submissions for the given course
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM Submission s
-                LEFT JOIN s.results r
-            WHERE r.completionDate IS NULL
-                AND s.participation.exercise.course.id = :courseId
-            """)
-    long countLockedSubmissionsByCourseId(@Param("courseId") Long courseId);
-
-    /**
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
@@ -188,16 +173,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
      * assessments.
      *
-     * @param exerciseIds the id of the exercises
-     * @return the number of currently locked submissions for a specific user in the given course
+     * @param exerciseIds the ids of the exercises
+     * @return the number of currently locked submissions across the given exercises
      */
     @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM Submission s
-                LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT r.submission.id)
+            FROM Result r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
             """)
     long countLockedSubmissionsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
