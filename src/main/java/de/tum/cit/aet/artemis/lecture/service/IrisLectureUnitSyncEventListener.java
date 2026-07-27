@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -77,7 +76,6 @@ public class IrisLectureUnitSyncEventListener {
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
-    @Scheduled(fixedRate = 300000)
     public void retryDirtyStates() {
         syncStateRepository.findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
                 List.of(IrisLectureUnitSyncState.STATUS_DIRTY, IrisLectureUnitSyncState.STATUS_IN_PROGRESS), ZonedDateTime.now()).forEach(candidate -> {
@@ -90,7 +88,6 @@ public class IrisLectureUnitSyncEventListener {
      * Creates visibility synchronization state for active legacy units in bounded batches.
      * The resulting dirty event is handled by the same durable retry path as ordinary updates.
      */
-    @Scheduled(fixedRate = 300000)
     public void backfillMissingSyncStates() {
         attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50)).forEach(unit -> {
             try {

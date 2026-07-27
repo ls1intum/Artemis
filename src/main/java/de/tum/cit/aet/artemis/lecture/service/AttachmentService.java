@@ -44,11 +44,15 @@ public class AttachmentService {
 
     private final TempFileUtilService tempFileUtilService;
 
-    public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService, TempFileUtilService tempFileUtilService) {
+    private final TransactionAfterCommitService transactionAfterCommitService;
+
+    public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService, TempFileUtilService tempFileUtilService,
+            TransactionAfterCommitService transactionAfterCommitService) {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
         this.fileService = fileService;
         this.tempFileUtilService = tempFileUtilService;
+        this.transactionAfterCommitService = transactionAfterCommitService;
     }
 
     /**
@@ -262,17 +266,6 @@ public class AttachmentService {
     }
 
     private void deleteStudentVersionFileAfterCommit(String studentVersion) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-                @Override
-                public void afterCommit() {
-                    deleteStudentVersionFile(studentVersion);
-                }
-            });
-        }
-        else {
-            deleteStudentVersionFile(studentVersion);
-        }
+        transactionAfterCommitService.execute(() -> deleteStudentVersionFile(studentVersion));
     }
 }

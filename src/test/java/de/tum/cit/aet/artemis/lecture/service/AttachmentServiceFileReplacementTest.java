@@ -60,7 +60,7 @@ class AttachmentServiceFileReplacementTest {
     @BeforeEach
     void setUp() {
         FilePathConverter.setFileUploadPath(tempDirectory);
-        attachmentService = new AttachmentService(attachmentRepository, slideRepository, fileService, tempFileUtilService);
+        attachmentService = new AttachmentService(attachmentRepository, slideRepository, fileService, tempFileUtilService, new TransactionAfterCommitService());
         var attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setId(ATTACHMENT_VIDEO_UNIT_ID);
         attachment = new Attachment();
