@@ -574,60 +574,6 @@ public class ProcessingStateCallbackService {
         });
     }
 
-    /**
-     * Reset a stuck processing state directly to IDLE without touching the retry budget.
-     * <p>
-     * Used by stuck-job recovery in {@link de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingScheduler}.
-     * A job that missed a heartbeat due to a transient network gap is not a content-processing
-     * failure — it should be re-queued immediately, not penalised with backoff.
-     *
-     * @param state the stuck processing state to reset
-     */
-    void resetToIdleForRecovery(LectureUnitProcessingState state) {
-        log.info("Recovering stuck unit {} (was {}) — resetting to IDLE, retry budget preserved", state.getLectureUnit().getId(), state.getPhase());
-        state.setPhase(ProcessingPhase.IDLE);
-        state.setIngestionJobToken(null);
-        state.setStartedAt(null);
-        state.setRetryEligibleAt(null);
-        state.setLastUpdated(ZonedDateTime.now());
-        processingStateRepository.save(state);
-
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-        notifyProcessingStateChange(state, txStatus);
-    }
-
-    // -------------------- Iris Reset --------------------
-
-    /**
-     * Handle an Iris restart notification.
-     * <p>
-     * When Iris starts up, all previous in-flight jobs are lost. This method
-     * resets all TRANSCRIBING/INGESTING states to IDLE so they
-     * get re-dispatched to the now-fresh Iris instance.
-     *
-     * @return the number of jobs that were reset
-     */
-    @Transactional
-    public int handleIrisReset() {
-        List<LectureUnitProcessingState> activeStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-
-        if (activeStates.isEmpty()) {
-            log.info("Iris reset: no active processing jobs to recover");
-            return 0;
-        }
-
-        log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
-
-        for (LectureUnitProcessingState state : activeStates) {
-            // Do NOT call handleProcessingFailure here — Iris restarts are infrastructure events,
-            // not content-processing failures. Incrementing retryCount would burn the retry
-            // budget and could permanently fail otherwise healthy jobs after a few rollouts.
-            resetToIdleForRecovery(state);
-        }
-
-        return activeStates.size();
-    }
-
     // -------------------- Display Page Number Mapping --------------------
 
     /**
