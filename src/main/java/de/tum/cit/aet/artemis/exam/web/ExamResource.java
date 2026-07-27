@@ -282,7 +282,7 @@ public class ExamResource {
 
         // Fetch the original exam from the database (this is the managed entity)
         Exam originalExam = examRepository.findByIdElseThrow(examUpdateDTO.id());
-        var originalExamDuration = originalExam.getDuration();
+        var originalExamDuration = originalExam.getExamMode().isReal() ? originalExam.getDuration() : originalExam.getWorkingTime();
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
         ZonedDateTime originalEndDate = originalExam.getEndDate();
@@ -318,7 +318,8 @@ public class ExamResource {
         boolean gracePeriodChanged = !Objects.equals(originalGracePeriod, savedExam.getGracePeriod());
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int savedExamDuration = savedExam.getExamMode().isReal() ? savedExam.getDuration() : savedExam.getWorkingTime();
+        int workingTimeChange = savedExamDuration - originalExamDuration;
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
@@ -385,11 +386,13 @@ public class ExamResource {
         // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them.
         // We also need all student exams for updateStudentExamsAndRescheduleExercises.
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        var originalExamDuration = exam.getDuration();
+        int originalExamDuration = exam.getExamMode().isReal() ? exam.getDuration() : exam.getWorkingTime();
         final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
 
         // 1. Update the end date & working time of the exam
-        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        if (exam.getExamMode().isReal()) {
+            exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        }
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
@@ -543,7 +546,7 @@ public class ExamResource {
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
         // Max working time: 30 days = 2592000 seconds
         final int maxWorkingTimeSeconds = 2_592_000;
-        final int workingTimeToCheck = !exam.getExamMode().isReal() ? exam.getWorkingTime() : exam.getDuration();
+        final int workingTimeToCheck = exam.getExamMode().isReal() ? exam.getDuration() : exam.getWorkingTime();
         if (workingTimeToCheck > maxWorkingTimeSeconds) {
             throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
