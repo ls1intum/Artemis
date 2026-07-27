@@ -1,0 +1,91 @@
+// The box metrics + interaction states. Colors (bg/border/tick) come from the token utility classes on the box
+// element (see boxClasses()/iconClasses() in the component); this file owns only what utilities can't express:
+// the box geometry, the visually hidden native input, and the `:has()`-driven hover / focus states that key off
+// the real input's pseudo-classes. Sizes/typography reference the shared design-token custom properties.
+:host {
+    position: relative;
+    display: inline-flex;
+    width: calc(var(--spacing) * 5); // 1.25rem
+    height: calc(var(--spacing) * 5);
+    vertical-align: bottom;
+    user-select: none;
+}
+
+// Real checkbox, overlaid at full size and transparent (opacity 0). It carries all the behavior — clicks,
+// keyboard (Space), focus, and label association — while the box below is the painted surface.
+.tum-ui-checkbox-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    opacity: 0;
+    cursor: pointer;
+    appearance: none;
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.tum-ui-checkbox-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+
+    // A 1px solid edge with a small radius. Width/style live here because Tailwind Preflight is off, so a bare
+    // `border` utility would have no style; the color comes from the border-* utility in boxClasses(). The 0.25rem
+    // radius has no emitted design-token variable (only the md/lg/xl steps are), so it stays a literal.
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 0.25rem;
+    box-shadow:
+        0 0 transparent,
+        0 0 transparent,
+        0 1px 2px 0 rgb(18 18 23 / 0.05);
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+
+    // Hover/active state layer: a subtle neutral (black/white) tint, applied as a pseudo-element so it composes
+    // over any box color and lets the tick show through. Shared treatment with tum-ui-button / tum-ui-radio-button
+    // so the kit's interactive surfaces feel identical. This neutral overlay has no semantic color token.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+}
+
+.tum-ui-checkbox-icon {
+    font-size: var(--text-sm); // 0.875rem
+    line-height: 1;
+}
+
+// Hover: only while the (enabled) input is hovered — the input sits on top, so hover never reaches the box directly.
+:host:has(.tum-ui-checkbox-input:hover:not(:disabled)) .tum-ui-checkbox-box::after {
+    background-color: rgb(0 0 0 / 0.045);
+}
+
+// Keyboard focus ring, keyed to the brand token.
+:host:has(.tum-ui-checkbox-input:focus-visible) .tum-ui-checkbox-box {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+// Dark theme: light overlay on dark surfaces, keyed off the framework-neutral data-theme attribute set on <html>
+// by ThemeService (same approach as the other kit components).
+:host-context(html[data-theme='dark']):has(.tum-ui-checkbox-input:hover:not(:disabled)) .tum-ui-checkbox-box::after {
+    background-color: rgb(255 255 255 / 0.06);
+}
