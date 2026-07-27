@@ -895,6 +895,54 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testExam_failsWithWorkingTimeTooLow() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+
+        // Default working time is 3000, setting change to -3000 pushes it to 0 (must be >= 1)
+        int workingTimeChange = -3000;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testExam_failsWithWorkingTimeTooHigh() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+
+        // Default working time is 3000, duration is 4200 (70 mins). Adding 1500 makes working time 4500 > 4200.
+        int workingTimeChange = 1500;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testWithSimulation_failsWithWorkingTimeTooLow() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExam = examRepository.save(testExam);
+
+        int workingTimeChange = -3000;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testWithSimulation_failsWithWorkingTimeTooHigh() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExam = examRepository.save(testExam);
+
+        int workingTimeChange = 1500;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExamWorkingTime_realExam() throws Exception {
         Exam realExam = examRepository.findByIdElseThrow(exam1.getId());
         StudentExam studentExam = examUtilService.addStudentExam(realExam);

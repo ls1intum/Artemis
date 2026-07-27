@@ -394,6 +394,7 @@ public class ExamResource {
             exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         }
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        checkExamForWorkingTimeConflictsElseThrow(exam);
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
