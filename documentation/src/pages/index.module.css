@@ -419,7 +419,7 @@
 
 @media screen and (max-width: 576px) {
     .hero {
-        padding: 2.75rem 0 2.5rem;
+        padding: calc(var(--ifm-navbar-height) + 1.5rem) 0 2.5rem;
     }
 
     .heroContent {

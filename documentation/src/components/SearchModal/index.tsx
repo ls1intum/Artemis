@@ -199,7 +199,7 @@ export function SearchModalProvider({ children }: SearchModalProviderProps): Rea
                         </button>
                     </div>
                     <div className={styles.modalSearch}>
-                        <SearchBar />
+                        <SearchBar key={locationKey} />
                     </div>
                 </div>
             </dialog>
