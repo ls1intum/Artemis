@@ -115,4 +115,20 @@
             <column name="cost_per_million_output_tokens"/>
         </createIndex>
     </changeSet>
+
+    <!-- Drop the single-column index on participation.test_run. It is actively harmful and cannot be useful:
+         test_run is a boolean whose rarer value still covers 11.9% of 2.8M rows, so it can never be a selective filter,
+         but the optimizer picks it to satisfy "ORDER BY test_run, id" in the participation management/scores table and then
+         walks the whole table applying exercise_id as a filter. Measured on production for one exercise:
+           with the index:    2087 ms, 2 381 257 rows examined to return 50
+           without it (IGNORE INDEX): 1.5 ms, 1050 rows read via fk_participation_exercise_id plus a small filesort
+         Every JPQL predicate on testRun is paired with an exercise or participation id, which fk_participation_exercise_id
+         already serves, so no query loses an access path. This also frees ~48 MB on a table that already carries
+         904 MB of indexes against only 342 MB of data. -->
+    <changeSet id="20260718130000-10-drop-idx-participation-test-run" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="participation_test_run" tableName="participation"/>
+        </preConditions>
+        <dropIndex indexName="participation_test_run" tableName="participation"/>
+    </changeSet>
 </databaseChangeLog>
