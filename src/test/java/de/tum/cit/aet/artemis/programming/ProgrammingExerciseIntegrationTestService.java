@@ -1248,6 +1248,9 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
+        // the creation request body no longer carries a project key: the server always derives it from the course
+        // short name and the exercise short name, so the mock has to be set up for the derived key
+        programmingExercise.forceNewProjectKey();
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, true);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }

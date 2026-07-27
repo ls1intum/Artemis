@@ -68,6 +68,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
@@ -263,20 +265,22 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        // the response is the programming-exercise response DTO; its competency links carry the light competency
+        // projection, which the polymorphic entity deserializer cannot read back
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         // Compare as instants because PostgreSQL stores timestamps as UTC and the
         // original timezone offset is not preserved through the database round-trip.
-        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
+        assertThat(updatedExercise.releaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
-                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
+                var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.id());
                 assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
-                assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
-                assertThat(((Number) weaviateProperties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.getId());
+                assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.title());
+                assertThat(((Number) weaviateProperties.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(updatedExercise.id());
                 // Verify that the release date was actually updated in Weaviate
                 Object releaseDateObj = weaviateProperties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
@@ -312,7 +316,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, programmingExercise, 1)));
 
         request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
-                ProgrammingExercise.class, HttpStatus.OK);
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         assertThat(originalCompetencyIds.get()).containsExactly(competency.getId());
         assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
@@ -708,8 +712,48 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 templateBuildTestResults, solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe-sequential");
 
-        // Create the exercise and verify status code 201
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
+        // additional sub-graphs into the creation flow.
+        var createdExercise = assertThatDb(
+                () -> request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED))
+                .hasBeenCalledAtMostTimes(150);
+
+        assertCreationResponseReadContract(createdExercise, newExercise);
+    }
+
+    /**
+     * Pins the traced client read contract of the creation response: the redirect and the access-rights computation
+     * need the id and the nested course with its group names, the AI generation path routes into the template editor
+     * via {@code templateParticipation.id}, and the constant discriminator drives the client-side type switches.
+     *
+     * @param response          the body of {@code POST programming-exercises/setup}
+     * @param requestedExercise the exercise that was requested
+     */
+    private void assertCreationResponseReadContract(ProgrammingExerciseResponseDTO response, ProgrammingExercise requestedExercise) {
+        assertThat(response.id()).isNotNull();
+        assertThat(response.type()).isEqualTo(ProgrammingExerciseResponseDTO.TYPE);
+        assertThat(response.title()).isEqualTo(requestedExercise.getTitle());
+        assertThat(response.shortName()).isEqualTo(requestedExercise.getShortName());
+        assertThat(response.problemStatement()).isEqualTo(requestedExercise.getProblemStatement());
+        assertThat(response.mode()).isEqualTo(requestedExercise.getMode());
+        assertThat(response.maxPoints()).isEqualTo(requestedExercise.getMaxPoints());
+        assertThat(response.programmingLanguage()).isEqualTo(requestedExercise.getProgrammingLanguage());
+        assertThat(response.projectKey()).isNotNull();
+        assertThat(response.testRepositoryUri()).isNotNull();
+        assertThat(response.templateParticipation()).isNotNull();
+        assertThat(response.templateParticipation().id()).isNotNull();
+        assertThat(response.templateParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_TEMPLATE);
+        assertThat(response.solutionParticipation()).isNotNull();
+        assertThat(response.solutionParticipation().id()).isNotNull();
+        assertThat(response.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
+        assertThat(response.exerciseGroup()).isNull();
+        // the nested course carries the group names the client computes access rights from
+        assertThat(response.course()).isNotNull();
+        assertThat(response.course().id()).isEqualTo(course.getId());
+        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(response.course().editorGroupName()).isEqualTo(course.getEditorGroupName());
+        assertThat(response.course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
+        assertThat(response.course().studentGroupName()).isEqualTo(course.getStudentGroupName());
     }
 
     @Nested
