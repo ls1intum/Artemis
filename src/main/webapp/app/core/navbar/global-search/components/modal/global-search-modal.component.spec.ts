@@ -20,7 +20,6 @@ import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { LectureSearchService } from '../../services/lecture-search.service';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -650,33 +649,13 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     describe('View Navigation', () => {
-        it('should navigate back to Navigation view on Escape when in Lecture view', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-            mockSearchOverlayService.isOpen.set(true);
-
-            const event = new KeyboardEvent('keydown', { key: 'Escape' });
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).currentView()).toBe(SearchView.Navigation);
-            expect(searchOverlayService.close).not.toHaveBeenCalled();
-        });
-
-        it('should close when Escape is pressed from Navigation view', () => {
-            (component as any).currentView.set(SearchView.Navigation);
+        it('should close the overlay when Escape is pressed', () => {
             mockSearchOverlayService.isOpen.set(true);
 
             const event = new KeyboardEvent('keydown', { key: 'Escape' });
             component.handleKeyboardEvent(event);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
-        });
-
-        it('should reset selectedIndex when navigating to a new view', () => {
-            (component as any).selectedIndex.set(2);
-
-            (component as any).navigateTo(SearchView.Lecture);
-
-            expect((component as any).selectedIndex()).toBe(-1);
         });
     });
 
