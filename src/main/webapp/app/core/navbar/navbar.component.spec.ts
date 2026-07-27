@@ -212,17 +212,37 @@ describe('NavbarComponent', () => {
     });
 
     describe('perspective switch links', () => {
-        const course = {
+        const studentCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: false,
+            isAtLeastEditor: false,
+            isAtLeastInstructor: false,
+        } as Course;
+        const tutorCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: true,
+            isAtLeastEditor: false,
+            isAtLeastInstructor: false,
+        } as Course;
+        const editorCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: true,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: false,
+        } as Course;
+        const instructorCourse = {
             id: 123,
             title: 'Course1',
             isAtLeastTutor: true,
             isAtLeastEditor: true,
             isAtLeastInstructor: true,
-            tutorialGroupsConfiguration: {},
         } as Course;
 
         beforeEach(() => {
-            currentCourseContextService.setCourse(course);
+            currentCourseContextService.setCourse(instructorCourse);
         });
 
         it.each([
@@ -249,19 +269,20 @@ describe('NavbarComponent', () => {
         });
 
         it.each([
-            ['/courses/123/exams/1', ['/course-management', '123', 'exams']],
-            ['/courses/123/exercises/programming-exercises/1', ['/course-management', '123', 'exercises']],
-            ['/courses/123/lectures/1', ['/course-management', '123', 'lectures']],
-            ['/courses/123/communication?conversationId=123', ['/course-management', '123', 'communication']],
-            ['/courses/123/learning-path', ['/course-management', '123', 'learning-path-management']],
-            ['/courses/123/competencies', ['/course-management', '123', 'competency-management']],
-            ['/courses/123/faq', ['/course-management', '123', 'faqs']],
-            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups-checklist']],
-            ['/courses/123/statistics', ['/course-management', '123', 'course-statistics']],
-        ])('should link from student route %s to corresponding management route', (url, expectedLink) => {
+            { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
+            { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
+            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures'] },
+            { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
+            { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
+            { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
+            { url: '/courses/123/faq', course: tutorCourse, expected: ['/course-management', '123', 'faqs'] },
+            { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
+            { url: '/courses/123/statistics', course: tutorCourse, expected: ['/course-management', '123', 'course-statistics'] },
+        ])('should link from student route $url to corresponding management route', ({ url, course, expected }) => {
+            currentCourseContextService.setCourse(course);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expectedLink);
+            expect(component.managementViewLink()).toEqual(expected);
         });
 
         it('should default management view link to the course management overview when route has no management equivalent', () => {
@@ -271,22 +292,15 @@ describe('NavbarComponent', () => {
         });
 
         it.each([
-            [{ isAtLeastEditor: false }, '/courses/123/lectures/1'],
-            [{ isAtLeastInstructor: false }, '/courses/123/learning-path'],
-            [{ isAtLeastInstructor: false }, '/courses/123/competencies'],
-            [{ isAtLeastInstructor: false, tutorialGroupsConfiguration: undefined }, '/courses/123/tutorial-groups'],
-        ])('should default management view link to the course management overview when access is missing', (courseOverrides, url) => {
-            currentCourseContextService.setCourse({ ...course, ...courseOverrides });
+            { course: studentCourse, url: '/courses/123/exercises', expected: ['/course-management'] },
+            { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
+            { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
+            { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
+        ])('should default management view link when access is missing for $url', ({ course, url, expected }) => {
+            currentCourseContextService.setCourse(course);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
-        });
-
-        it('should link to tutorial group management for non-instructors when tutorial group configuration exists', () => {
-            currentCourseContextService.setCourse({ ...course, isAtLeastInstructor: false, tutorialGroupsConfiguration: {} });
-            router.setUrl('/courses/123/tutorial-groups');
-
-            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+            expect(component.managementViewLink()).toEqual(expected);
         });
 
         it('should omit the course id from base perspective links when no current course is available', () => {
@@ -1048,37 +1062,6 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
-        });
-
-        it.each([
-            { url: '/course-management/123/exams/1/edit', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'exams'] },
-            { url: '/course-management/123/exercises/new', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'exercises'] },
-            { url: '/course-management/123/lectures/1/details', course: { id: 123, isAtLeastEditor: true }, expected: ['/course-management', '123', 'lectures'] },
-            { url: '/course-management/123/communication?conversationId=123', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'communication'] },
-            { url: '/course-management/123/learning-path', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'learning-path-management'] },
-            { url: '/course-management/123/competencies', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'competency-management'] },
-            { url: '/course-management/123/faq', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'faqs'] },
-            { url: '/course-management/123/statistics', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'course-statistics'] },
-            { url: '/course-management/123/tutorial-groups', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'tutorial-groups-checklist'] },
-            {
-                url: '/course-management/123/tutorial-groups',
-                course: { id: 123, tutorialGroupsConfiguration: {} },
-                expected: ['/course-management', '123', 'tutorial-groups-checklist'],
-            },
-            { url: '/courses/123/settings', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123'] },
-            { url: '/courses/123/exercises', course: { id: 123, isAtLeastTutor: false }, expected: ['/course-management'] },
-        ])('should compute the correct management view link for $url', ({ url, course, expected }) => {
-            currentCourseContextService.setCourse(Object.assign({ isAtLeastTutor: true }, course) as Course);
-            router.setUrl(url);
-
-            expect(component.managementViewLink()).toEqual(expected);
-        });
-
-        it('should fall back to course management without a course id when there is no current course', () => {
-            currentCourseContextService.clearCourse();
-            router.setUrl('/courses/1/exercises');
-
-            expect(component.managementViewLink()).toEqual(['/course-management']);
         });
     });
 

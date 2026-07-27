@@ -874,7 +874,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
         const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
         const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
-        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
 
         if (!isAtLeastTutorInCourse) return ['/course-management'];
 
@@ -888,7 +887,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {
@@ -902,9 +901,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
         const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
         const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
-        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructorInCourse && !courseHasTutorialGroupConfiguration;
 
-        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
             return baseManagementPath;
         }
 
