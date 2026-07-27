@@ -98,6 +98,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     private originalEndDate?: dayjs.Dayjs;
 
+    private originalWorkingTime?: number;
+
     private componentActive = true;
 
     confirmEntityNameValue = signal('');
@@ -135,6 +137,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
                 this.originalStartDate = exam.startDate?.clone();
                 this.originalEndDate = exam.endDate?.clone();
+                this.originalWorkingTime = exam.workingTime;
 
                 this.course = data.course;
                 this.exam.course = data.course;
@@ -156,7 +159,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get oldWorkingTime(): number | undefined {
-        return normalWorkingTime(this.originalStartDate, this.originalEndDate);
+        return this.isRealExam(this.exam) ? normalWorkingTime(this.originalStartDate, this.originalEndDate) : this.originalWorkingTime;
     }
 
     get newWorkingTime(): number | undefined {
@@ -187,8 +190,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     handleSubmit() {
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+        const workingTimeChanged = this.exam.workingTime !== this.originalWorkingTime;
 
-        if (datesChanged && this.isOngoingExam) {
+        const triggersPopup = this.isRealExam(this.exam) ? datesChanged : workingTimeChanged;
+
+        if (triggersPopup && this.isOngoingExam) {
             this.confirmEntityNameValue.set('');
             this.confirmDateChangeVisible.set(true);
         } else {
