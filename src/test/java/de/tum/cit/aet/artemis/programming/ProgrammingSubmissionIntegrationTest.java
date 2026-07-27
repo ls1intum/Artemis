@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
@@ -491,6 +492,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(responseSubmissions).containsExactly(submissions.toArray(ProgrammingSubmission[]::new));
+    }
+
+    /**
+     * The service replaces the submission set with a count before returning: it nulls
+     * {@code participation.submissions} and stores the size in {@code participation.submissionCount}. The count has to
+     * survive onto the wire, otherwise the service computes it for nothing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAllProgrammingSubmissions_participationCarriesSubmissionCountAndStudent() throws Exception {
+        programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student1");
+
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submissions";
+        final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmissionForAssessmentDTO.class);
+
+        assertThat(responseSubmissions).isNotEmpty();
+        assertThat(responseSubmissions).allSatisfy(submission -> {
+            var participation = submission.participation();
+            // the response sends the count instead of the submissions themselves
+            assertThat(participation.submissions()).isNull();
+            assertThat(participation.submissionCount()).isEqualTo(submissionRepository.findAllByParticipationIdWithResults(participation.id()).size());
+            assertThat(participation.student().login()).startsWith(TEST_PREFIX + "student");
+        });
     }
 
     @Test

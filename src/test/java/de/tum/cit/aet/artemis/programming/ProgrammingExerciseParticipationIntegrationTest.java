@@ -36,6 +36,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -549,6 +551,146 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }
+    }
+
+    // --- wire shape of the migrated participation and build-log responses ------------------------------------------
+
+    /**
+     * The clone/code button decides that a repository belongs to the caller — and therefore that it must use the
+     * participation token instead of the broad staff token — solely from {@code participation.student.login}. This
+     * pins that field, together with the rest of the traced read contract of the participation root response.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_wireShape() throws Exception {
+        startExercise();
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+
+        assertThat(body.path("type").asText()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("repositoryUri").isMissingNode()).isFalse();
+        // the nested exercise carries the course group names access rights are computed from
+        assertThat(body.path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+        assertThat(body.path("exercise").path("course").path("instructorGroupName").isMissingNode()).isFalse();
+        assertThat(body.path("exercise").path("course").path("studentGroupName").isMissingNode()).isFalse();
+        // the results stay nested under their submission, where the client reads them
+        assertThat(body.path("submissions")).hasSize(1);
+        assertThat(body.path("submissions").get(0).path("submissionExerciseType").asText()).isEqualTo("programming");
+        assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
+    }
+
+    /**
+     * Masking must drop results from the response only, never from the database: the submission owns its results with
+     * {@code cascade = ALL, orphanRemoval = true}, so shaping the JSON by emptying the loaded collection deletes rows.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_examMaskingDeletesNoRows() throws Exception {
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        Set<Long> resultIdsBefore = resultIdsOfExercise();
+        Set<Long> submissionIdsBefore = submissionIdsOfParticipation(participation.getId());
+        assertThat(resultIdsBefore).isNotEmpty();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+
+        assertThat(body.path("submissions").get(0).path("results")).isEmpty();
+        assertThat(resultIdsOfExercise()).isEqualTo(resultIdsBefore);
+        assertThat(submissionIdsOfParticipation(participation.getId())).isEqualTo(submissionIdsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithAllResults_wireShape() throws Exception {
+        startExercise();
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        ProgrammingSubmission submission = (ProgrammingSubmission) result.getSubmission();
+        submission.setCommitHash("1234567890abcdef");
+        submissionRepository.save(submission);
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results");
+
+        assertThat(body.path("type").asText()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("exercise").path("course").path("instructorGroupName").isMissingNode()).isFalse();
+        assertThat(body.path("submissions")).isNotEmpty();
+        // the commit history matches the submissions against git hashes, so every submission needs its commit hash
+        assertThat(body.path("submissions").get(0).path("commitHash").asText()).isEqualTo("1234567890abcdef");
+        assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithAllResults_examMaskingDeletesNoRows() throws Exception {
+        var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        Set<Long> resultIdsBefore = resultIdsOfExercise();
+        assertThat(resultIdsBefore).isNotEmpty();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results");
+
+        assertThat(body.path("submissions").get(0).path("results")).isEmpty();
+        assertThat(resultIdsOfExercise()).isEqualTo(resultIdsBefore);
+    }
+
+    /**
+     * This route is annotated {@code @AllowedTools(ToolTokenType.SCORPIO)} and read by the out-of-repo IntelliJ
+     * plugin, so its payload must stay a superset of the entity payload it replaced. The key set is asserted rather
+     * than argued in a javadoc.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_keepsTheScorpioKeySet() throws Exception {
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks");
+
+        assertThat(body.path("id").asLong()).isEqualTo(result.getId());
+        // exerciseId is a non-nullable column with a plain getter, so it was on the entity wire for every result
+        assertThat(body.path("exerciseId").asLong()).isEqualTo(programmingExercise.getId());
+        assertThat(body.path("feedbacks")).isNotEmpty();
+        assertThat(body.path("assessmentType").asText()).isEqualTo(AssessmentType.AUTOMATIC.name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMigratedParticipationRoutes_stayWithinTheirQueryBudget() throws Exception {
+        startExercise();
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        assertThatDb(() -> request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, String.class))
+                .hasBeenCalledAtMostTimes(25);
+        assertThatDb(() -> request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, String.class))
+                .hasBeenCalledAtMostTimes(25);
+        assertThatDb(() -> request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, String.class)).hasBeenCalledAtMostTimes(25);
+    }
+
+    /**
+     * The participation routes reject a student while the exercise has not started yet, so the wire-shape tests move
+     * the release and start dates into the past first.
+     */
+    private void startExercise() {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(4));
+        programmingExercise.setStartDate(ZonedDateTime.now().minusDays(3));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private JsonNode getJson(String url) throws Exception {
+        return objectMapper.readTree(request.get(url, HttpStatus.OK, String.class));
+    }
+
+    private Set<Long> resultIdsOfExercise() {
+        return resultRepository.findAllBySubmissionParticipationExerciseId(programmingExercise.getId()).stream().map(DomainObject::getId).collect(Collectors.toSet());
+    }
+
+    private Set<Long> submissionIdsOfParticipation(long participationId) {
+        return submissionRepository.findAllByParticipationId(participationId).stream().map(DomainObject::getId).collect(Collectors.toSet());
     }
 
     @Test

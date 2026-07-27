@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * names are the kind of field a native client reconstructs a title/access-rights view from.
  *
  * @param id                  the result id
+ * @param exerciseId          the id of the exercise the result belongs to; a non-null column, so it is on today's wire
  * @param completionDate      when the result was completed
  * @param successful          whether the result is successful
  * @param score               the achieved score
@@ -47,9 +48,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * @param assessmentNote      the internal assessment note; same visibility rule as {@code assessor}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingParticipationLatestResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionRefDTO submission,
-        List<ResultDTO.FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
-        Integer codeIssueCount, UserNameDTO assessor, AssessmentNoteDTO assessmentNote) implements Serializable {
+public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated,
+        SubmissionRefDTO submission, List<ResultDTO.FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount,
+        Integer passedTestCaseCount, Integer codeIssueCount, UserNameDTO assessor, AssessmentNoteDTO assessmentNote) implements Serializable {
 
     /**
      * Converts a {@link Result} into a {@link ProgrammingParticipationLatestResultDTO}.
@@ -66,9 +67,9 @@ public record ProgrammingParticipationLatestResultDTO(Long id, ZonedDateTime com
         List<ResultDTO.FeedbackDTO> feedbackDTOs = Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks().stream().map(ResultDTO.FeedbackDTO::of).toList() : null;
         UserNameDTO assessor = Hibernate.isInitialized(result.getAssessor()) ? UserNameDTO.of(result.getAssessor()) : null;
         AssessmentNoteDTO assessmentNote = AssessmentNoteDTO.of(result.getAssessmentNote());
-        return new ProgrammingParticipationLatestResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
-                feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
-                result.getCodeIssueCount(), assessor, assessmentNote);
+        return new ProgrammingParticipationLatestResultDTO(result.getId(), result.getExerciseId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(),
+                result.isRated(), submissionDTO, feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
+                result.getPassedTestCaseCount(), result.getCodeIssueCount(), assessor, assessmentNote);
     }
 
     /**
