@@ -101,10 +101,13 @@ public final class BuildJobSpecs {
     /**
      * Free-text match against the repository name or the title of the owning course.
      * <p>
-     * {@code BuildJob.courseId} is a plain column rather than an association, so the course side is expressed as an {@code EXISTS} subquery. That also keeps the course out of the
-     * main {@code FROM} clause entirely when no search term is given, unlike the previous unconditional {@code LEFT JOIN Course}. Both sides use a leading wildcard, which no
-     * index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Case sensitivity is intentionally left as-is (the
-     * database collation decides, as before) so that this stays a pure performance change.
+     * {@code BuildJob.courseId} is a plain column rather than an association, so the course side is a subquery. It is deliberately <em>uncorrelated</em>: it selects the ids of
+     * all courses whose title matches, independently of the current row. MySQL then evaluates it once instead of per {@code build_job} row. A correlated {@code EXISTS} was
+     * measured at ~0.0016 ms per row over 229 439 rows (~380 ms) on production, whereas the uncorrelated form lets the optimizer drop the branch entirely when no course title
+     * matches — the common case when searching by repository name.
+     * <p>
+     * Both sides use a leading wildcard, which no index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Case
+     * sensitivity is intentionally left as-is (the database collation decides, as before) so that this stays a pure performance change.
      *
      * @param searchTerm the term to search for, or null/blank for no filter
      * @return specification matching the search term, or null
@@ -115,11 +118,10 @@ public final class BuildJobSpecs {
         }
         final String pattern = "%" + searchTerm + "%";
         return (root, query, cb) -> {
-            Subquery<Long> courseSubquery = query.subquery(Long.class);
-            Root<Course> course = courseSubquery.from(Course.class);
-            courseSubquery.select(course.get(DomainObject_.ID)).where(cb.equal(course.get(DomainObject_.ID), root.get(BuildJob_.COURSE_ID)),
-                    cb.like(course.get(Course_.TITLE), pattern));
-            return cb.or(cb.like(root.get(BuildJob_.REPOSITORY_NAME), pattern), cb.exists(courseSubquery));
+            Subquery<Long> matchingCourseIds = query.subquery(Long.class);
+            Root<Course> course = matchingCourseIds.from(Course.class);
+            matchingCourseIds.select(course.get(DomainObject_.ID)).where(cb.like(course.get(Course_.TITLE), pattern));
+            return cb.or(cb.like(root.get(BuildJob_.REPOSITORY_NAME), pattern), root.get(BuildJob_.COURSE_ID).in(matchingCourseIds));
         };
     }
 
