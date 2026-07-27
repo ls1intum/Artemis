@@ -8,7 +8,6 @@ import {
     faComment,
     faComments,
     faCube,
-    faFileLines,
     faFileUpload,
     faFont,
     faGraduationCap,
@@ -18,9 +17,7 @@ import {
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,27 +30,11 @@ import { SearchOverlayService } from 'app/core/navbar/global-search/services/sea
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
-// Number of fixed action buttons rendered above the search results.
-// Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
-// Increment this constant when adding a new action button.
-export const NAV_ACTION_COUNT = 1;
-
-/** Keyboard-navigation index of the lecture-search action button. */
-export const LECTURE_SEARCH_ACTION_INDEX = 0;
-
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        GlobalSearchActionItemComponent,
-        GlobalSearchIrisAnswerComponent,
-        FaIconComponent,
-        SearchableEntityItemComponent,
-        SearchResultItemComponent,
-        SkeletonModule,
-        ArtemisTranslatePipe,
-    ],
+    imports: [GlobalSearchIrisAnswerComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -91,28 +72,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    // Emits when an action button is activated (click or Enter); the modal navigates to that view.
-    readonly viewSelected = output<SearchView>();
     readonly entityClick = output<SearchableEntity>();
 
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
-
-    protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
-    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
     // True only when the Iris module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
     protected readonly irisEnabled = this.availability.contentSearchAvailable;
-    // Lecture search button is only visible when no filter is active
-    protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
-    // Number of action buttons currently visible (only the lecture search button now)
-    protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled()) return 0;
-        return this.showLectureButton() ? 1 : 0;
-    });
 
     constructor() {
         super();
@@ -200,19 +169,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     ];
 
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => {
-        const buttonCount = this.actionButtonCount();
-        if (this.showResults()) {
-            // When showing results, action buttons may be visible + results
-            return buttonCount + this.results().length;
-        } else {
-            // When showing entities, count action buttons + entities
-            return buttonCount + this.searchableEntities.length;
-        }
-    });
+    readonly itemCount = computed(() => (this.showResults() ? this.results().length : this.searchableEntities.length));
 
-    protected readonly SearchView = SearchView;
-    protected readonly faFileLines = faFileLines;
     protected readonly faHashtag = faHashtag;
 
     protected onEntityItemClick(entity: SearchableEntity) {
@@ -377,29 +335,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
         if (idx < 0) return;
-        const buttonCount = this.actionButtonCount();
-
-        // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Lecture);
-            return;
-        }
-
-        // Handle items after action buttons
-        const itemIndex = idx - buttonCount;
 
         if (this.showResults()) {
-            // When showing results
             event.preventDefault();
-            const result = this.results()[itemIndex];
+            const result = this.results()[idx];
             if (result) {
                 this.navigateToResult(result);
             }
         } else {
-            // When showing entities
             event.preventDefault();
-            const entity = this.searchableEntities[itemIndex];
+            const entity = this.searchableEntities[idx];
             if (entity && entity.enabled) {
                 this.entityClick.emit(entity);
             }
