@@ -478,6 +478,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
 
+                    // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
+                    // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
+                    // with a dead Finish button until the exam ends, which reads as if the submission had not gone through. This
+                    // signal write also re-renders the panel, which reads the (mutated) submitted flag above.
+                    this.handInEarly.set(false);
+
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
                         void this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);

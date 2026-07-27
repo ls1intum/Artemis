@@ -947,6 +947,24 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()?.submitted).toBe(true);
     });
 
+    it('should leave the hand-in-early view after a successful early submission so the confirmation panel can show', () => {
+        // Regression for the delayed-summary flow: after handing in early the student stayed on the hand-in-early cover with a
+        // disabled Finish button, because handInEarly was never reset. With a publication date in the future there is also no
+        // summary to navigate to, so nothing else moved the student off that screen.
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        const exam = new Exam();
+        exam.examSummaryPublicationDate = dayjs().add(1, 'day');
+        comp.exam.set(exam);
+        comp.handInEarly.set(true);
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+
+        comp.onExamEndConfirmed();
+
+        expect(comp.studentExam()?.submitted).toBe(true);
+        expect(comp.handInEarly()).toBe(false);
+    });
+
     it('should clear the failed-save flag once the exam is successfully submitted', () => {
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;
