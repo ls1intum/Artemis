@@ -457,8 +457,9 @@ public class ResultService {
      * @return a list of results as described above for the given exercise.
      */
     public List<Result> resultsForExercise(Set<StudentParticipation> participations, boolean withSubmissions) {
-        final List<Result> results = new ArrayList<>();
-
+        // First pass: pick the single relevant submission per participation. Note that the relevance filter may replace a submission's results
+        // (see SubmissionFilterService for programming submissions), so getLatestResult() must only be read after filtering.
+        final List<Submission> relevantSubmissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -469,12 +470,24 @@ public class ResultService {
             if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() == null) {
                 continue;
             }
-            var submission = optionalSubmission.get();
             participation.setSubmissionCount(participation.getSubmissions().size());
+            relevantSubmissions.add(optionalSubmission.get());
+        }
+
+        // Second pass: load feedbacks (and the assessor) for exactly the results selected above. The participations were loaded without feedbacks on purpose, because
+        // fetch-joining them for every result of the exercise multiplies the row count by the feedback fan-out and then discards most of it.
+        final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
+        final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
+                : resultRepository.findAllByIdInWithEagerFeedbacksAndAssessor(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+
+        final List<Result> results = new ArrayList<>();
+        for (Submission submission : relevantSubmissions) {
+            // Fall back to the un-hydrated result if it disappeared between the two queries; it then simply carries no feedbacks.
+            Result result = resultsWithFeedbacks.getOrDefault(submission.getLatestResult().getId(), submission.getLatestResult());
             if (withSubmissions) {
-                submission.getLatestResult().setSubmission(submission);
+                result.setSubmission(submission);
             }
-            results.add(submission.getLatestResult());
+            results.add(result);
         }
 
         if (withSubmissions) {

@@ -140,8 +140,7 @@ public class ResultResource {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        final Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(exerciseId,
-                false);
+        final Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(exerciseId, false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final List<Result> results = resultService.resultsForExercise(participations, withSubmissions);

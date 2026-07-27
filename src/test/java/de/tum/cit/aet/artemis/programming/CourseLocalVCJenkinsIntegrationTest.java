@@ -393,6 +393,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAssessmentDashboardStats_countsOnlyLockedAssessments() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_countsOnlyLockedAssessments();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withAssessments();
     }

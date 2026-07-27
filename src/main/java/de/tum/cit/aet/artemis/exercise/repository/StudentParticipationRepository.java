@@ -422,19 +422,30 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResult(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
+    /**
+     * Get all participations of an exercise with their submissions, the results of those submissions and the participant.
+     * <p>
+     * Deliberately does <em>not</em> fetch {@code r.feedbacks}: callers select a single relevant result per participation and would discard the feedbacks of every other result.
+     * Fetch-joining three collections ({@code submissions}, {@code results}, {@code feedbacks}) multiplies the row count by the feedback fan-out (~18x in production) for rows
+     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findAllByIdInWithEagerFeedbacksAndAssessor}.
+     * <p>
+     * {@code student} and {@code team} are fetched explicitly because they are {@code @ManyToOne} (i.e. eager) and would otherwise cost one extra select per participation.
+     *
+     * @param exerciseId the id of the exercise
+     * @param testRun    whether to return test run participations
+     * @return the participations with eagerly loaded submissions, results and participant
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.assessor
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = :testRun
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT DISTINCT p

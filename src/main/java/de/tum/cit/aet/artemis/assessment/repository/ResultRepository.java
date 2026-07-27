@@ -222,6 +222,27 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
 
     /**
+     * Batched variant of {@link #findByIdWithEagerFeedbacksAndAssessor(long)}.
+     * <p>
+     * Loads the given results together with their feedbacks, the test case of each feedback and the assessor, in a single query. This exists so that callers which first select a
+     * small set of relevant results (e.g. the latest result per participation) can hydrate exactly those, instead of fetch-joining the feedbacks of every result of an exercise
+     * and discarding most of them. Fetching the feedback collection here is what marks it initialized, which matters because {@code spring.jpa.open-in-view} is disabled and the
+     * returned entities are detached.
+     *
+     * @param resultIds the ids of the results to load; must not be empty
+     * @return the results with eagerly loaded feedbacks, feedback test cases and assessor
+     */
+    @Query("""
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.assessor
+            WHERE r.id IN :resultIds
+            """)
+    Set<Result> findAllByIdInWithEagerFeedbacksAndAssessor(@Param("resultIds") Set<Long> resultIds);
+
+    /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
      *
      * @param resultId the id of the result to load from the database
