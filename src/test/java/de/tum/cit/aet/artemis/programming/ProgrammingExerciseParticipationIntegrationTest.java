@@ -272,6 +272,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResult_testRunParticipationWithoutResult_returnsParticipationWithoutResults() throws Exception {
+        var participation = setupExamExerciseWithTestRunParticipation();
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).isEmpty();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -1292,15 +1301,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var workingTime = 120 * 60;
         programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
                 TEST_PREFIX + "student1", workingTime);
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
-        participation.setTestRun(true);
-        return programmingExerciseStudentParticipationRepository.save(participation);
+        return participationUtilService.addTestRunParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
     }
 
     private Result addTestRunParticipationResult() {
+        var now = ZonedDateTime.now();
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "instructor1");
-        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(30));
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(now.minusMinutes(30));
 
         return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }

@@ -343,6 +343,19 @@ public class ParticipationUtilService {
      * @param login    The login of the Participant the ProgrammingExerciseStudentParticipation belongs to
      * @return The created or existing ProgrammingExerciseStudentParticipation with eagerly loaded submissions, results and assessors
      */
+    /**
+     * Creates (or reuses) a programming participation for the given login and marks it as a test-run participation.
+     *
+     * @param exercise the programming exercise the participation belongs to
+     * @param login    the login of the user conducting the test run
+     * @return the persisted test-run participation
+     */
+    public ProgrammingExerciseStudentParticipation addTestRunParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+        var participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        participation.setTestRun(true);
+        return programmingExerciseStudentParticipationRepo.save(participation);
+    }
+
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
