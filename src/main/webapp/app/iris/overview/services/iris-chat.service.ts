@@ -20,7 +20,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisCommand, IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -582,9 +582,7 @@ export class IrisChatService implements OnDestroy {
                 this.websocketSessionSubscription?.unsubscribe();
                 this.websocketSessionSubscription = this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
                 this.websocketCommandSubscription?.unsubscribe();
-                this.websocketCommandSubscription = this.irisWebsocketService
-                    .subscribeToSessionCommands(this.sessionId)
-                    .subscribe((pointOut) => this.pointOutSubject.next(pointOut));
+                this.websocketCommandSubscription = this.irisWebsocketService.subscribeToSessionCommands(this.sessionId).subscribe((command) => this.handleCommand(command));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
@@ -1105,6 +1103,42 @@ export class IrisChatService implements OnDestroy {
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
         this.pointOutSubject.next(pointOut);
+    }
+
+    /**
+     * Carries out a command pushed by the server, dispatching on its type. Supporting a further type means adding a
+     * case here. Anything else — including a command whose parameters do not hold up — is acknowledged as not applied
+     * right away, so the waiting pipeline learns the outcome instead of running into its ack timeout.
+     * @param command the command pushed by the server
+     */
+    private handleCommand(command: IrisCommand): void {
+        switch (command.type) {
+            case 'pointOut': {
+                const pointOut = this.toPointOut(command);
+                if (pointOut) {
+                    // The combined view applies it and acknowledges once it has actually moved.
+                    this.pointOutSubject.next(pointOut);
+                    return;
+                }
+                break;
+            }
+        }
+        if (typeof command.correlationId === 'string') {
+            this.sendCommandAck(command.correlationId, false);
+        }
+    }
+
+    private toPointOut(command: IrisCommand): IrisPointOut | undefined {
+        const parameters = command.parameters;
+        if (parameters === undefined || typeof parameters['lectureUnitId'] !== 'number') {
+            return undefined;
+        }
+        const page = typeof parameters['page'] === 'number' ? parameters['page'] : undefined;
+        const timestamp = typeof parameters['timestamp'] === 'number' ? parameters['timestamp'] : undefined;
+        if (page === undefined && timestamp === undefined) {
+            return undefined;
+        }
+        return { type: 'pointOut', correlationId: command.correlationId, lectureUnitId: parameters['lectureUnitId'], page, timestamp };
     }
 
     /**

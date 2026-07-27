@@ -131,26 +131,24 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
 }
 
 /**
- * Extracts the point-out recorded on a COMMAND marker's JSON content, if it is a valid one
- * (it must name a lecture unit and at least one of page / timestamp).
- * @param content the message content to extract from
+ * Extracts the point-out recorded on a COMMAND marker, if it is a valid one (it must name a lecture
+ * unit and at least one of page / timestamp). The caller establishes the marker's command type; this
+ * only reads the parameters of a marker already known to be a point-out.
+ * @param marker the marker's JSON attributes, in the persisted {type, parameters} shape
  * @returns the point-out if valid, undefined otherwise
  */
-export function getPointOut(content: IrisMessageContent): IrisPointOut | undefined {
-    if (!isJsonContent(content)) {
+export function getPointOut(marker: Record<string, unknown>): IrisPointOut | undefined {
+    const parameters = marker['parameters'] as Record<string, unknown> | undefined;
+    if (typeof parameters?.['lectureUnitId'] !== 'number') {
         return undefined;
     }
-    const attrs = content.attributes;
-    if (attrs?.['type'] !== 'pointOut' || typeof attrs['lectureUnitId'] !== 'number') {
-        return undefined;
-    }
-    const page = typeof attrs['page'] === 'number' ? attrs['page'] : undefined;
-    const timestamp = typeof attrs['timestamp'] === 'number' ? attrs['timestamp'] : undefined;
+    const page = typeof parameters['page'] === 'number' ? parameters['page'] : undefined;
+    const timestamp = typeof parameters['timestamp'] === 'number' ? parameters['timestamp'] : undefined;
     if (page === undefined && timestamp === undefined) {
         return undefined;
     }
-    const lectureUnitName = typeof attrs['lectureUnitName'] === 'string' ? attrs['lectureUnitName'] : undefined;
-    return { type: 'pointOut', lectureUnitId: attrs['lectureUnitId'], page, timestamp, lectureUnitName };
+    const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
+    return { type: 'pointOut', lectureUnitId: parameters['lectureUnitId'], page, timestamp, lectureUnitName };
 }
 
 /**

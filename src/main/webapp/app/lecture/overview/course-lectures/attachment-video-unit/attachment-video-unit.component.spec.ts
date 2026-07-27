@@ -1128,5 +1128,48 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(goToPage).toHaveBeenCalledWith(3);
             expect(ackSpy).toHaveBeenCalledWith('c3', true);
         });
+
+        it('keeps a marker click pending while the combined view is still opening', () => {
+            // openFullscreen() does not set the fullscreen state synchronously: it goes through the layout,
+            // which reports back via onFullscreenChange. A forceOpen point-out therefore starts out with
+            // isFullscreen() === false and must survive until the view is actually up.
+            const goToPage = vi.fn();
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue({ goToPage }),
+                writable: true,
+                configurable: true,
+            });
+            component['fullscreenState'].set(false);
+            vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
+
+            component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 5, forceOpen: true }));
+            fixture.detectChanges();
+
+            // Still closed: nothing applied yet, but the target must not have been dropped.
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            // The layout reports the view as open; only now does the navigation run.
+            component['onFullscreenChange'](true);
+            fixture.detectChanges();
+
+            expect(goToPage).toHaveBeenCalledWith(5);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('drops a pending point-out when the combined view is closed before it could be applied', () => {
+            // No PDF viewer is available, so the target can never be applied and the request stays pending.
+            component['fullscreenState'].set(true);
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c4', page: 3 }));
+            fixture.detectChanges();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            component['onFullscreenChange'](false);
+
+            // Dropped, so a later unrelated reopen does not make the view jump. A pipeline still waiting on it
+            // is released by the server-side ack timeout, so nothing is acknowledged from here.
+            expect(component['pendingPointOut']()).toBeUndefined();
+            expect(ackSpy).not.toHaveBeenCalled();
+        });
     });
 });

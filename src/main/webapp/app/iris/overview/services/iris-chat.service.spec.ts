@@ -36,6 +36,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-point-out.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -620,6 +621,37 @@ describe('IrisChatService', () => {
         const navPromise = firstValueFrom(service.pointOut$);
         service.navigateToPointOut({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
         await expect(navPromise).resolves.toEqual({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
+    });
+
+    it('should forward incoming point-out commands to point-out navigation', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+
+        const navPromise = firstValueFrom(service.pointOut$);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
+
+        await expect(navPromise).resolves.toEqual({ type: 'pointOut', lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
+    });
+
+    it('should acknowledge unsupported incoming commands as not applied', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-2' });
+
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-2', applied: false });
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {

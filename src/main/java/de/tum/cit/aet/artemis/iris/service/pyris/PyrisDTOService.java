@@ -90,12 +90,15 @@ public class PyrisDTOService {
     /**
      * Helper method to convert a list of IrisMessages to a list of PyrisMessageDTOs.
      * This needs separate handling for the different types of message content.
+     * <p>
+     * Messages that end up without any content are left out: conversion drops content it cannot represent (e.g. a COMMAND marker Artemis has no wording for), and a message with an
+     * empty content list carries nothing for Pyris while being rejected by its message converter.
      *
      * @param messages the messages with contents to convert
      * @return the converted list of PyrisMessageDTOs
      */
     public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
-        return messages.stream().map(PyrisMessageDTO::of).toList();
+        return messages.stream().map(PyrisMessageDTO::of).filter(message -> !message.contents().isEmpty()).toList();
     }
 
     /**

@@ -9,35 +9,46 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Unit tests for {@link IrisCommandService#executeCommand}. Covers the point-out dispatch: the
  * short-circuit guards, the applied path (client navigated -> success + persisted COMMAND marker),
- * the not-applied path (client did nothing -> no marker), and the timeout/transport path.
+ * the not-applied path (client did nothing -> no marker), generic commands, and the timeout/transport path.
  */
 @ExtendWith(MockitoExtension.class)
 class IrisCommandServiceTest {
@@ -66,13 +77,16 @@ class IrisCommandServiceTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
     @Mock
     private IrisSession session;
+
+    @Mock
+    private LectureUnit lectureUnit;
 
     private IrisCommandService commandService;
 
@@ -83,6 +97,23 @@ class IrisCommandServiceTest {
         commandService = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository, userRepository,
                 new ObjectMapper(), Optional.of(lectureUnitRepositoryApi));
         job = new ChatJob("job-1", COURSE_ID, SESSION_ID, null, null, null, null);
+    }
+
+    /**
+     * Builds a point-out command the way Pyris sends it: type plus a parameters map, omitting the parameters that are not set.
+     */
+    private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page, @Nullable Double timestamp) {
+        var parameters = new LinkedHashMap<String, JsonNode>();
+        if (lectureUnitId != null) {
+            parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(lectureUnitId));
+        }
+        if (page != null) {
+            parameters.put("page", JsonNodeFactory.instance.numberNode(page));
+        }
+        if (timestamp != null) {
+            parameters.put("timestamp", JsonNodeFactory.instance.numberNode(timestamp));
+        }
+        return new PyrisCommandDTO("pointOut", parameters);
     }
 
     private void stubSessionAndUser() {
@@ -100,7 +131,7 @@ class IrisCommandServiceTest {
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isTrue();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -109,11 +140,71 @@ class IrisCommandServiceTest {
     }
 
     @Test
+    void executeCommand_persistsMarkerInTheSameShapeTheCommandArrivedIn() {
+        stubSessionAndUser();
+        when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
+        when(lectureUnitRepositoryApi.findByIdElseThrow(LECTURE_UNIT_ID)).thenReturn(lectureUnit);
+        when(lectureUnit.getName()).thenReturn("Sorting");
+        var savedMarker = ArgumentCaptor.forClass(IrisMessage.class);
+        when(irisMessageService.saveMessage(savedMarker.capture(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
+
+        // The marker mirrors the command's {type, parameters} shape so history readers parse it like a command,
+        // with Artemis-resolved display data (the unit name) added to the parameters.
+        var marker = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode();
+        assertThat(marker.get("type").asText()).isEqualTo("pointOut");
+        assertThat(marker.get("parameters").get("lectureUnitId").asLong()).isEqualTo(LECTURE_UNIT_ID);
+        assertThat(marker.get("parameters").get("page").asInt()).isEqualTo(3);
+        assertThat(marker.get("parameters").get("lectureUnitName").asText()).isEqualTo("Sorting");
+        assertThat(marker.has("lectureUnitId")).isFalse();
+    }
+
+    @Test
+    void commandResult_alwaysCarriesTheAppliedFlag() throws Exception {
+        // Pyris requires "applied" in the response body; NON_EMPTY must not drop the primitive false.
+        var serialized = new ObjectMapper().writeValueAsString(PyrisCommandResultDTO.notApplied());
+
+        assertThat(serialized).isEqualTo("{\"applied\":false}");
+    }
+
+    @Test
+    void commandRequest_carriesCorrelationIdTypeAndParametersToTheClient() throws Exception {
+        var parameters = Map.<String, JsonNode>of("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
+
+        var serialized = new ObjectMapper().writeValueAsString(new IrisCommandRequestWebsocketDTO("corr-1", "pointOut", parameters));
+
+        assertThat(serialized).isEqualTo("{\"correlationId\":\"corr-1\",\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42}}");
+    }
+
+    @Test
+    void executeCommand_unsupportedCommandTypeIsDroppedWithoutContactingTheClient() throws Exception {
+        var command = new ObjectMapper().readValue("""
+                {
+                    "type": "highlightTerm",
+                    "parameters": {
+                        "term": "quicksort"
+                    }
+                }
+                """, PyrisCommandDTO.class);
+
+        var result = commandService.executeCommand(job, command);
+
+        // Point-out is the only defined command type. Anything else must not reach the client at all, so the
+        // pipeline learns "not applied" immediately instead of waiting out the ack timeout for nobody.
+        assertThat(result.applied()).isFalse();
+        verify(coordinationService, never()).register(anyString(), anyString());
+        verify(irisWebsocketService, never()).send(any(), any(), any());
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
+    }
+
+    @Test
     void executeCommand_notAppliedDoesNotPersistMarker() {
         stubSessionAndUser();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(irisWebsocketService).send(eq("student1"), anyString(), any());
@@ -126,7 +217,7 @@ class IrisCommandServiceTest {
         stubSessionAndUser();
         when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.failedFuture(new TimeoutException("no ack")));
 
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, 3, null));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
@@ -134,7 +225,7 @@ class IrisCommandServiceTest {
 
     @Test
     void executeCommand_missingLectureUnitIdShortCircuitsWithoutContactingClient() {
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(null, 3, null));
+        var result = commandService.executeCommand(job, pointOutCommand(null, 3, null));
 
         assertThat(result.applied()).isFalse();
         verify(coordinationService, never()).register(anyString(), anyString());
@@ -143,7 +234,7 @@ class IrisCommandServiceTest {
 
     @Test
     void executeCommand_missingPageAndTimestampShortCircuitsWithoutContactingClient() {
-        var result = commandService.executeCommand(job, new PyrisPointOutCommandDTO(LECTURE_UNIT_ID, null, null));
+        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, null, null));
 
         assertThat(result.applied()).isFalse();
         verify(coordinationService, never()).register(anyString(), anyString());

@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { getPointOut } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContent, getPointOut, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -48,10 +48,31 @@ export class IrisPointOutMarkerComponent {
         // Read so the labels are rebuilt on a language switch.
         this.currentLanguage();
         return this.message()
-            .content.map(getPointOut)
-            .filter((data): data is IrisPointOut => data !== undefined)
-            .map((data) => ({ data, label: this.buildLabel(data) }));
+            .content.map((content) => this.toMarker(content))
+            .filter((marker): marker is PointOutMarker => marker !== undefined);
     });
+
+    /**
+     * Turns one COMMAND marker into the chip rendered for it, dispatching on the command type it recorded.
+     * Supporting a further type means adding a case here; a type without one renders nothing at all.
+     * @param content the marker's message content
+     * @returns the chip to render, or undefined if this marker has no representation
+     */
+    private toMarker(content: IrisMessageContent): PointOutMarker | undefined {
+        if (!isJsonContent(content)) {
+            return undefined;
+        }
+        // A marker stores the executed command in the same {type, parameters} shape it was sent in.
+        const marker = content.attributes;
+        switch (marker?.['type']) {
+            case 'pointOut': {
+                const data = getPointOut(marker);
+                return data ? { data, label: this.buildLabel(data) } : undefined;
+            }
+            default:
+                return undefined;
+        }
+    }
 
     protected readonly openTooltip = computed(() => {
         this.currentLanguage();

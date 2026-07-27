@@ -71,7 +71,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -224,7 +224,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage_forwardsCommandMarkerInChatHistoryToPyris() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
-        String markerJson = "{\"type\":\"pointOut\",\"lectureUnitId\":42,\"lectureUnitName\":\"Intro\",\"page\":3}";
+        String markerJson = "{\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42,\"lectureUnitName\":\"Intro\",\"page\":3}}";
         IrisMessage marker = new IrisMessage();
         IrisJsonMessageContent markerContent = new IrisJsonMessageContent();
         markerContent.setJsonContent(markerJson);
@@ -234,9 +234,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         mockChatResponse(dto -> {
             var commandMessage = dto.chatHistory().stream().filter(message -> message.sender() == IrisMessageSender.COMMAND).findFirst().orElseThrow();
             assertThat(commandMessage.contents()).hasSize(1);
-            // COMMAND markers are forwarded as a plain-text system note, never as JSON: Iris only consumes text.
-            assertThat(((PyrisTextMessageContentDTO) commandMessage.contents().getFirst()).textContent())
-                    .isEqualTo("Iris already pointed the student to page 3 of lecture unit 'Intro' (id 42) in the combined view.");
+            // COMMAND markers travel as the JSON they are stored as; Pyris builds the note the LLM reads from it.
+            assertThat(((PyrisJsonMessageContentDTO) commandMessage.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
             pipelineDone.set(true);
         });
 

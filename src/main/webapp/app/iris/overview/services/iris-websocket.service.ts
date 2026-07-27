@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command-ack-dto.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ export class IrisWebsocketService implements OnDestroy {
 
     private subscribedChannels: Map<number, SubscribedChannel<IrisChatWebsocketDTO>> = new Map();
 
-    private commandChannels: Map<number, SubscribedChannel<IrisPointOut>> = new Map();
+    private commandChannels: Map<number, SubscribedChannel<IrisCommand>> = new Map();
 
     /**
      * Cleans up resources before the service is destroyed.
@@ -44,7 +44,7 @@ export class IrisWebsocketService implements OnDestroy {
      * the pipeline is still running, expecting the client to carry them out and acknowledge via {@link sendCommandAck}.
      * @param sessionId The session ID to subscribe to.
      */
-    public subscribeToSessionCommands(sessionId: number): Observable<IrisPointOut> {
+    public subscribeToSessionCommands(sessionId: number): Observable<IrisCommand> {
         return this.subscribeToChannel(this.commandChannels, sessionId, COMMAND_TOPIC_SUFFIX);
     }
 

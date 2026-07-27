@@ -29,8 +29,13 @@ describe('IrisPointOutMarkerComponent', () => {
         return template.replace(/\{\{(\w+)}}/g, (_match, name) => String(params?.[name] ?? ''));
     };
 
-    function buildMessage(...attributes: Record<string, unknown>[]): IrisCommandMessage {
-        return { id: 1, content: attributes.map((attribute) => new IrisJsonMessageContent(attribute)), sender: IrisSender.COMMAND } as IrisCommandMessage;
+    /**
+     * Builds a COMMAND message from one marker per content entry. Each entry is given as a flat
+     * `{ type, ...parameters }` object and stored in the persisted marker shape, `{ type, parameters }`.
+     */
+    function buildMessage(...markers: Record<string, unknown>[]): IrisCommandMessage {
+        const content = markers.map(({ type, ...parameters }) => new IrisJsonMessageContent({ type, parameters }));
+        return { id: 1, content, sender: IrisSender.COMMAND } as IrisCommandMessage;
     }
 
     async function setMessage(message: IrisCommandMessage): Promise<void> {
