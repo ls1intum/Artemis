@@ -849,6 +849,73 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_changeWorkingTimeOfTestExam() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+        StudentExam studentExam = examUtilService.addStudentExam(testExam);
+        studentExam.setWorkingTime(testExam.getWorkingTime());
+        studentExamRepository.save(studentExam);
+
+        int originalWorkingTime = testExam.getWorkingTime();
+        int newWorkingTime = originalWorkingTime + 600;
+        ZonedDateTime originalEndDate = testExam.getEndDate();
+
+        testExam.setWorkingTime(newWorkingTime);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(testExam), Exam.class, HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate, within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(newWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testExam() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+        StudentExam studentExam = examUtilService.addStudentExam(testExam);
+        studentExam.setWorkingTime(testExam.getWorkingTime());
+        studentExamRepository.save(studentExam);
+
+        int workingTimeChange = 600;
+        ZonedDateTime originalEndDate = testExam.getEndDate();
+        int expectedWorkingTime = testExam.getWorkingTime() + workingTimeChange;
+
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, Exam.class,
+                HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate, within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_realExam() throws Exception {
+        Exam realExam = examRepository.findByIdElseThrow(exam1.getId());
+        StudentExam studentExam = examUtilService.addStudentExam(realExam);
+
+        int workingTimeChange = 600;
+        ZonedDateTime originalEndDate = realExam.getEndDate();
+        int expectedWorkingTime = realExam.getWorkingTime() + workingTimeChange;
+        ZonedDateTime expectedEndDate = originalEndDate.plusSeconds(workingTimeChange);
+
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + realExam.getId() + "/working-time", workingTimeChange, Exam.class,
+                HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(expectedEndDate, within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(studentExam.getWorkingTime() + workingTimeChange);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
         var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
