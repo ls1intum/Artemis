@@ -135,11 +135,11 @@
                             }
                         </div>
                         <div class="flex items-center gap-2">
-                            <p-toggleswitch
+                            <tum-ui-toggle-switch
                                 [ngModel]="featureInfo.isActive"
                                 [disabled]="pendingFeatures().has(featureInfo.feature)"
                                 [inputId]="'toggle-' + featureInfo.feature"
-                                (onChange)="onFeatureToggle(featureInfo)"
+                                (changed)="onFeatureToggle(featureInfo)"
                                 data-testid="feature-toggle-switch"
                                 [attr.aria-label]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
                             />
@@ -147,7 +147,9 @@
                     </div>
                     <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <p-message severity="warn" styleClass="w-full" data-testid="feature-warning">{{ getFeatureWarningKey(featureInfo.feature) | artemisTranslate }}</p-message>
+                        <tum-ui-message severity="warn" styleClass="w-full" data-testid="feature-warning">{{
+                            getFeatureWarningKey(featureInfo.feature) | artemisTranslate
+                        }}</tum-ui-message>
                     }
                 </div>
             }
