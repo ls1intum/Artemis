@@ -362,7 +362,8 @@ public class LocalCIResultProcessingService {
             // the next container of the same submission sees the appended feedback and the linked build job atomically.
             return transactionTemplate.execute(status -> {
                 int expectedContainerCount = determineExpectedContainerCount(participation);
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount);
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount,
+                        buildJob.containerName());
                 if (aggregatedResult == null) {
                     return null;
                 }

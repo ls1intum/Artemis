@@ -250,9 +250,11 @@ public class ProgrammingExerciseGradingService {
      * @param requestBody            the raw build result of the container
      * @param testsExpected          whether tests were expected for this container
      * @param expectedContainerCount the number of containers whose results are aggregated into the submission's result
+     * @param containerName          the name of the container that produced this result, used to label its build logs
      * @return the aggregated result with this container's feedback appended, or null if it could not be created
      */
-    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, int expectedContainerCount) {
+    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, int expectedContainerCount,
+            @Nullable String containerName) {
         try {
             ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
             var buildResult = ciResultService.convertBuildResult(requestBody);
@@ -278,8 +280,23 @@ public class ProgrammingExerciseGradingService {
             final boolean noTestFeedbacks = containerResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             final Integer exitCode = buildResult.buildScriptExitCode();
             final boolean scriptFailed = exitCode != null && exitCode != 0;
-            if (testsExpected ? noTestFeedbacks : scriptFailed) {
+            final boolean containerFailed = testsExpected ? noTestFeedbacks : scriptFailed;
+            if (containerFailed) {
                 submission.setBuildFailed(true);
+            }
+
+            // Preserve the build logs of a failed container, labeled by its name and appended to the logs of the other
+            // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
+            // logs are only kept when the build failed).
+            if (containerFailed && buildResult.hasLogs()) {
+                var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
+                buildLogs.forEach(buildLogEntry -> buildLogEntry.setContainerName(containerName));
+                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, submission);
+                // fetch the logs of the earlier containers eagerly (the submission's collection is lazy) and append this
+                // container's logs, so the build jobs of all containers keep their logs
+                var allBuildLogs = new ArrayList<>(buildLogService.getLatestBuildLogs(submission));
+                allBuildLogs.addAll(savedBuildLogs);
+                submission.setBuildLogEntries(allBuildLogs);
             }
 
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise);

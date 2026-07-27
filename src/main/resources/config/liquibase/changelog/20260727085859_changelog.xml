@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add the name of the build container that produced a build log entry. It is null for a submission built by a
+         single container (the common case) and only set when several containers build the same submission, so their
+         build logs can be attributed to the container they came from. -->
+    <changeSet id="20260727-01-add-container-name-to-build-log-entry" author="greinwald">
+        <addColumn tableName="build_log_entry">
+            <column name="container_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
