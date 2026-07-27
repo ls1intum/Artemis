@@ -12,14 +12,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
-import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -35,7 +33,7 @@ export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -52,8 +50,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
-    protected readonly currentView = signal(SearchView.Navigation);
-    protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<SearchEntityType[]>([]);
     protected readonly activeCourseId = signal<number | undefined>(undefined);
@@ -387,7 +383,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.hasSearched.set(false);
         this.isLoading.set(false);
         this.searchError.set(undefined);
-        this.currentView.set(SearchView.Navigation);
         this.placeholderCache.clear();
     }
 
@@ -410,11 +405,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         switch (event.key) {
             case 'Escape':
                 event.preventDefault();
-                if (this.currentView() !== SearchView.Navigation) {
-                    this.navigateTo(SearchView.Navigation);
-                } else {
-                    this.overlay.close();
-                }
+                this.overlay.close();
                 break;
             case 'ArrowDown':
                 event.preventDefault();
@@ -429,14 +420,5 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private isToggleShortcut(event: KeyboardEvent): boolean {
         return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
-    }
-
-    protected navigateTo(view: SearchView) {
-        if (view === SearchView.Lecture) {
-            // TODO lecture search should support filters aswell
-            this.removeCourseFilter();
-        }
-        this.currentView.set(view);
-        this.selectedIndex.set(-1);
     }
 }
