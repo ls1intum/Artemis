@@ -21,10 +21,7 @@ import {
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
@@ -61,8 +58,7 @@ export const LECTURE_SEARCH_ACTION_INDEX = 0;
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
-    private readonly profileService = inject(ProfileService);
-    private readonly accountService = inject(AccountService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -107,14 +103,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config.
-    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
-    protected readonly irisEnabled = computed(() => {
-        if (!this.irisModuleEnabled) return false;
-        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
-        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
-    });
+    // True only when the Iris module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = this.availability.contentSearchAvailable;
     // Lecture search button is only visible when no filter is active
     protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
     // Number of action buttons currently visible (only the lecture search button now)
