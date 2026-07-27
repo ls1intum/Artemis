@@ -233,6 +233,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE se.testRun = FALSE
             	AND se.exam.id = :examId
             	AND se.user.id = :userId
+            ORDER BY se.createdDate ASC
+            LIMIT 1
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
