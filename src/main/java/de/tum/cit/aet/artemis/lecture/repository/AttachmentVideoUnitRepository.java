@@ -83,6 +83,14 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             """)
     Optional<AttachmentVideoUnit> findWithLectureAndCourseAndAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
 
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT attachmentVideoUnit

@@ -78,47 +78,42 @@ public class SlideSplitterService {
     /**
      * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
      *
-     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
+     * @param job the immutable attachment revision and slide configuration to process
      * @return a future that completes after slide splitting finishes
      */
     @Async
     @Transactional
-    public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
-        lockAttachmentVideoUnit(attachmentVideoUnit);
+    public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob job) {
+        Optional<AttachmentVideoUnit> attachmentVideoUnitForUpdate = attachmentVideoUnitRepository.findByIdForUpdate(job.attachmentVideoUnitId());
+        if (attachmentVideoUnitForUpdate.isEmpty()) {
+            log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId())
+                .orElseThrow(() -> new IllegalStateException("Locked AttachmentVideoUnit disappeared before slide splitting " + job.attachmentVideoUnitId()));
+        if (!job.matches(attachmentVideoUnit.getAttachment())) {
+            log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
+                    job.attachmentVersion(), job.attachmentSha256Hash());
+            return CompletableFuture.completedFuture(null);
+        }
+
         Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
+            if (job.pageOrder() == null) {
+                splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
+            }
+            else {
+                splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
+            }
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
         return CompletableFuture.completedFuture(null);
-    }
-
-    /**
-     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
-     *
-     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
-     * @param hiddenPages         The hidden pages of the attachmentVideoUnit.
-     * @param pageOrder           The page order of the attachmentVideoUnit.
-     */
-    @Async
-    @Transactional
-    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
-        lockAttachmentVideoUnit(attachmentVideoUnit);
-        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
-        File file = attachmentPath.toFile();
-        try (PDDocument document = Loader.loadPDF(file)) {
-            String pdfFilename = file.getName();
-            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
-        }
-        catch (IOException e) {
-            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
-        }
     }
 
     /**

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -65,6 +67,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -886,8 +891,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         // Set an invalid link that doesn't point to an actual file
         testAttachmentVideoUnit.getAttachment().setLink("file:///nonexistent/path/file.pdf");
+        attachmentRepository.saveAndFlush(testAttachmentVideoUnit.getAttachment());
 
-        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, hiddenPagesList, pageOrderList));
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
@@ -911,19 +917,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Create a mock PDF file
-        Path tempDir = tempFileUtilService.createTempDirectory("test-slides");
-        Path tempPdfPath = tempDir.resolve("test-slides.pdf");
-        try (PDDocument doc = new PDDocument()) {
-            doc.addPage(new PDPage());
-            doc.save(tempPdfPath.toFile());
-        }
-
-        // Set a valid attachment link
-        testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
-
         // Act - call the async method
-        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, hiddenPagesList, pageOrderList)).join();
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
@@ -935,9 +930,36 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isEmpty();
 
-        // Clean up
-        Files.deleteIfExists(tempPdfPath);
-        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testObsoleteAttachmentRevisionIsIgnoredWhenSplitJobsExecuteInReverseOrder() {
+        List<Slide> originalSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        assertThat(originalSlides).hasSize(3);
+        slideRepository.deleteAll(originalSlides);
+
+        List<SlideOrderDTO> oldPageOrder = List.of(new SlideOrderDTO("temp_1", 3), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 1));
+        AttachmentVideoUnitSlideSplitJob oldJob = AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, List.of(), oldPageOrder);
+
+        Integer oldVersion = testAttachmentVideoUnit.getAttachment().getVersion();
+        testAttachmentVideoUnit.getAttachment().setVersion(oldVersion == null ? 1 : oldVersion + 1);
+        testAttachmentVideoUnit.getAttachment().setSha256Hash("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        attachmentRepository.saveAndFlush(testAttachmentVideoUnit.getAttachment());
+
+        ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
+        List<SlideOrderDTO> currentPageOrder = List.of(new SlideOrderDTO("temp_1", 1), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 3));
+        AttachmentVideoUnitSlideSplitJob currentJob = AttachmentVideoUnitSlideSplitJob.of(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO("temp_1", hiddenUntil, null)),
+                currentPageOrder);
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(currentJob).join();
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(oldJob).join();
+
+        List<Slide> resultingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        assertThat(resultingSlides).hasSize(3);
+        assertThat(resultingSlides).extracting(Slide::getSlideNumber).containsExactly(1, 2, 3);
+        assertThat(resultingSlides.getFirst().getHidden()).isCloseTo(hiddenUntil, within(1, ChronoUnit.MILLIS));
+        assertThat(resultingSlides.subList(1, resultingSlides.size())).allMatch(slide -> slide.getHidden() == null);
     }
 
     @Test
