@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -32,6 +33,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private Course course;
 
@@ -74,6 +78,22 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result.courseId()).isEqualTo(course.getId());
         PresentationAssessment storedAssessment = presentationAssessmentRepository.findWithStudentsByIdAndCourseId(result.id(), course.getId()).orElseThrow();
         assertThat(storedAssessment.getStudents()).extracting(User::getLogin).containsExactly(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createPresentationAssessment_withCourseExercise_shouldLinkExercise() throws Exception {
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7),
+                ZonedDateTime.now().plusDays(14));
+        PresentationAssessmentDTO dto = new PresentationAssessmentDTO(null, "Exercise presentation", "Presentation for an exercise", 30.0, null, null, course.getId(), List.of(),
+                exercise.getId(), null, List.of());
+
+        PresentationAssessmentDTO result = request.postWithResponseBody(getBaseUrl(course), dto, PresentationAssessmentDTO.class, HttpStatus.CREATED);
+
+        assertThat(result.exerciseId()).isEqualTo(exercise.getId());
+        assertThat(result.exerciseTitle()).isEqualTo(exercise.getTitle());
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdAndCourseId(result.id(), course.getId()).orElseThrow();
+        assertThat(storedAssessment.getExercise().getId()).isEqualTo(exercise.getId());
     }
 
     @Test

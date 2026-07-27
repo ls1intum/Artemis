@@ -15,6 +15,36 @@
             "resultPoints": "Result",
             "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
             "presentationDate": "Presentation date",
+            "presentation": "Presentation",
+            "presenter": "Presenter",
+            "score": "Score",
+            "overview": "Overview",
+            "grading": "Grading",
+            "byPresentation": "By presentation",
+            "byStudent": "By student",
+            "searchStudent": "Search for a student",
+            "noMatchingStudents": "No students match your search.",
+            "exercise": "Linked exercise",
+            "linkedExercise": "Linked exercise:",
+            "noExercise": "No exercise",
+            "exerciseNotInCourse": "The linked exercise must belong to this course.",
+            "instanceRequiresPresenter": "Select at least one presenter.",
+            "language": "Language",
+            "location": "Location",
+            "meetingLink": "Meeting link",
+            "mode": {
+                "label": "Mode",
+                "online": "Online",
+                "inPerson": "In person"
+            },
+            "filter": {
+                "all": "All",
+                "future": "Future"
+            },
+            "instance": {
+                "createLabel": "Add presentation instance",
+                "editLabel": "Edit presentation instance"
+            },
             "noExisting": "There are no presentation assessments for this course yet.",
             "delete": {
                 "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",

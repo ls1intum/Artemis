@@ -21,8 +21,10 @@ import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
 @Repository
 public interface PresentationAssessmentRepository extends ArtemisJpaRepository<PresentationAssessment, Long> {
 
+    @EntityGraph(attributePaths = { "students", "exercise", "instances", "instances.students" })
     List<PresentationAssessment> findAllByCourseId(long courseId);
 
+    @EntityGraph(attributePaths = { "students", "exercise", "instances", "instances.students" })
     Optional<PresentationAssessment> findByIdAndCourseId(long id, long courseId);
 
     @EntityGraph(attributePaths = "students")

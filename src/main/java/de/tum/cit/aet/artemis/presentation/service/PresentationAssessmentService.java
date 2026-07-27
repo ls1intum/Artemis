@@ -16,8 +16,13 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 
 /**
@@ -32,9 +37,16 @@ public class PresentationAssessmentService {
 
     private final UserRepository userRepository;
 
-    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
+    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
     }
 
     /**
@@ -113,6 +125,49 @@ public class PresentationAssessmentService {
         presentationAssessmentRepository.delete(presentationAssessment);
     }
 
+    public PresentationAssessmentInstance createInstance(Course course, long assessmentId, PresentationAssessmentInstanceDTO dto) {
+        if (dto.id() != null) {
+            throw new BadRequestAlertException("A new presentation instance cannot already have an ID", PresentationAssessmentInstance.ENTITY_NAME, "idExists");
+        }
+        PresentationAssessment assessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(assessment);
+        applyInstanceDto(course, assessment, instance, dto);
+        return presentationAssessmentInstanceRepository.save(instance);
+    }
+
+    public PresentationAssessmentInstance updateInstance(Course course, long assessmentId, long instanceId, PresentationAssessmentInstanceDTO dto) {
+        if (dto.id() == null || !dto.id().equals(instanceId)) {
+            throw new BadRequestAlertException("The path id and body id must match", PresentationAssessmentInstance.ENTITY_NAME, "idMismatch");
+        }
+        PresentationAssessmentInstance instance = findInstanceElseThrow(course.getId(), assessmentId, instanceId);
+        applyInstanceDto(course, instance.getPresentationAssessment(), instance, dto);
+        return presentationAssessmentInstanceRepository.save(instance);
+    }
+
+    public void deleteInstance(long courseId, long assessmentId, long instanceId) {
+        presentationAssessmentInstanceRepository.delete(findInstanceElseThrow(courseId, assessmentId, instanceId));
+    }
+
+    private PresentationAssessmentInstance findInstanceElseThrow(long courseId, long assessmentId, long instanceId) {
+        return presentationAssessmentInstanceRepository.findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(instanceId, assessmentId, courseId)
+                .orElseThrow(() -> new EntityNotFoundException(PresentationAssessmentInstance.ENTITY_NAME, instanceId));
+    }
+
+    private void applyInstanceDto(Course course, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceDTO dto) {
+        if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
+            throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
+                    "resultPointsExceedMaxPoints");
+        }
+        instance.setPresentationDate(dto.presentationDate());
+        instance.setResultPoints(dto.resultPoints());
+        instance.setStudents(findCourseStudentsByLogins(course, dto.studentLogins()));
+        instance.setLanguage(dto.language());
+        instance.setMode(dto.mode());
+        instance.setLocation(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
+        instance.setMeetingLink(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.ONLINE ? dto.meetingLink() : null);
+    }
+
     /**
      * Find all students assigned to a presentation assessment.
      *
@@ -169,6 +224,19 @@ public class PresentationAssessmentService {
         presentationAssessment.setMaxPoints(dto.maxPoints());
         presentationAssessment.setResultPoints(dto.resultPoints());
         presentationAssessment.setPresentationDate(dto.presentationDate());
+        presentationAssessment.setExercise(findCourseExercise(presentationAssessment.getCourse(), dto.exerciseId()));
+    }
+
+    private Exercise findCourseExercise(Course course, Long exerciseId) {
+        if (exerciseId == null) {
+            return null;
+        }
+        Exercise exercise = exerciseRepository.findByIdWithExerciseGroupExamAndCourse(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (exerciseCourse == null || !exerciseCourse.getId().equals(course.getId()) || exercise.getExerciseGroup() != null) {
+            throw new BadRequestAlertException("The exercise must belong directly to the course", PresentationAssessment.ENTITY_NAME, "exerciseNotInCourse");
+        }
+        return exercise;
     }
 
     private Set<User> findCourseStudentsByLogins(Course course, List<String> studentLogins) {

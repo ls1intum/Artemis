@@ -20,33 +20,18 @@
             }
         </div>
 
-        <div class="presentation-assessment-field">
-            <label for="presentation-assessment-result-points" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-            <p-inputnumber
-                inputId="presentation-assessment-result-points"
-                styleClass="presentation-assessment-number-input"
-                [min]="0"
-                [step]="0.5"
-                formControlName="resultPoints"
-            />
-            @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
-                <p-message severity="error" data-testid="presentation-result-points-error">
-                    <span jhiTranslate="entity.validation.min"></span>
-                </p-message>
-            }
-            @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
-                <p-message severity="error" data-testid="presentation-result-points-max-error">
-                    <span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span>
-                </p-message>
-            }
-        </div>
-
-        <div class="presentation-assessment-field presentation-assessment-date-field">
-            <jhi-date-time-picker
-                id="presentation-assessment-date"
-                labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
-                formControlName="presentationDate"
-                name="presentationDate"
+        <div class="presentation-assessment-field presentation-assessment-exercise-field">
+            <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
+            <p-select
+                inputId="presentation-assessment-exercise"
+                styleClass="w-full"
+                formControlName="exerciseId"
+                [options]="exercises()"
+                optionLabel="title"
+                optionValue="id"
+                [showClear]="true"
+                appendTo="body"
+                placeholder="{{ 'artemisApp.presentationAssessment.noExercise' | artemisTranslate }}"
             />
         </div>
 
@@ -55,32 +40,6 @@
             <textarea id="presentation-assessment-description" pTextarea rows="4" formControlName="description"></textarea>
         </div>
     </div>
-
-    @if (presentationStudentCourse()) {
-        <div class="presentation-assessment-students">
-            <jhi-course-group
-                [(allGroupUsers)]="assignedStudents"
-                [courseGroup]="studentsCourseGroup"
-                [isLoadingAllGroupUsers]="false"
-                [isAdmin]="false"
-                [course]="presentationStudentCourse()!"
-                [addUserToGroup]="addStudentToPresentation"
-                [removeUserFromGroup]="removeStudentFromPresentation"
-                [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
-                [exportFileName]="studentExportFilename()"
-                [userSearch]="studentSearch"
-            >
-                <span>
-                    <span>{{ studentSectionTitle() }} - </span>
-                    @if (filteredAssignedStudentsSize() < assignedStudents().length) {
-                        <span>{{ filteredAssignedStudentsSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
-                    }
-                    {{ assignedStudents().length }}
-                    <span jhiTranslate="artemisApp.course.students"></span>
-                </span>
-            </jhi-course-group>
-        </div>
-    }
 
     <div class="presentation-assessment-actions">
         <p-button severity="secondary" type="button" (onClick)="cancel()">

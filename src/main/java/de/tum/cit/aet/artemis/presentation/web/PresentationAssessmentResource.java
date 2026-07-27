@@ -29,7 +29,9 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
 import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
 
@@ -141,6 +143,35 @@ public class PresentationAssessmentResource {
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         presentationAssessmentService.delete(courseId, assessmentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<PresentationAssessmentInstanceDTO> createPresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
+            @Valid @RequestBody PresentationAssessmentInstanceDTO dto) throws URISyntaxException {
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        PresentationAssessmentInstance instance = presentationAssessmentService.createInstance(course, assessmentId, dto);
+        return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + assessmentId + "/instances/" + instance.getId()))
+                .body(PresentationAssessmentInstanceDTO.of(instance));
+    }
+
+    @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<PresentationAssessmentInstanceDTO> updatePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
+            @PathVariable long instanceId, @Valid @RequestBody PresentationAssessmentInstanceDTO dto) {
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return ResponseEntity.ok(PresentationAssessmentInstanceDTO.of(presentationAssessmentService.updateInstance(course, assessmentId, instanceId, dto)));
+    }
+
+    @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> deletePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable long instanceId) {
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        presentationAssessmentService.deleteInstance(courseId, assessmentId, instanceId);
         return ResponseEntity.noContent().build();
     }
 

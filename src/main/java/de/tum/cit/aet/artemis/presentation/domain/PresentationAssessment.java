@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * A course-level presentation assessment.
@@ -48,6 +51,12 @@ public class PresentationAssessment extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "presentationAssessments", allowSetters = true)
     private Course course;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Exercise exercise;
+
+    @OneToMany(mappedBy = "presentationAssessment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PresentationAssessmentInstance> instances = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "presentation_assessment_student", joinColumns = @JoinColumn(name = "presentation_assessment_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
@@ -99,6 +108,22 @@ public class PresentationAssessment extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public Set<PresentationAssessmentInstance> getInstances() {
+        return instances;
+    }
+
+    public void setInstances(Set<PresentationAssessmentInstance> instances) {
+        this.instances = instances;
     }
 
     public Set<User> getStudents() {

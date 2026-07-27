@@ -10,10 +10,10 @@ import { PresentationAssessmentService } from 'app/presentation/manage/presentat
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { User } from 'app/account/user/user.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -23,7 +23,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         create: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
         delete: ReturnType<typeof vi.fn>;
-        findStudents: ReturnType<typeof vi.fn>;
+        createInstance: ReturnType<typeof vi.fn>;
+        updateInstance: ReturnType<typeof vi.fn>;
+        deleteInstance: ReturnType<typeof vi.fn>;
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let dialogCloseSubject: Subject<PresentationAssessmentFormDialogResult | undefined>;
@@ -37,12 +39,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         title: 'Final presentation',
         description: 'Final project presentation',
         maxPoints: 20,
-        resultPoints: 18,
-        presentationDate,
         courseId,
+        instances: [{ id: 11, presentationDate, resultPoints: 18, studentLogins: ['student1', 'student2'] }],
     };
-    const student = { id: 1, login: 'student1' } as User;
-    const secondStudent = { id: 2, login: 'student2' } as User;
 
     beforeEach(async () => {
         dialogCloseSubject = new Subject<PresentationAssessmentFormDialogResult | undefined>();
@@ -51,7 +50,9 @@ describe('PresentationAssessmentManagementComponent', () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
-            findStudents: vi.fn().mockReturnValue(of(new HttpResponse({ body: [student] }))),
+            createInstance: vi.fn(),
+            updateInstance: vi.fn(),
+            deleteInstance: vi.fn(),
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
         dialogService = { open: vi.fn().mockReturnValue({ onClose: dialogCloseSubject.asObservable() }) };
@@ -63,6 +64,10 @@ describe('PresentationAssessmentManagementComponent', () => {
                 { provide: AlertService, useValue: alertService },
                 { provide: DialogService, useValue: dialogService },
                 { provide: TranslateService, useValue: { instant: (key: string) => key } },
+                {
+                    provide: CourseManagementService,
+                    useValue: { findWithExercises: vi.fn().mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } }))) },
+                },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -92,6 +97,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
+    it('should switch views and filter the student overview', () => {
+        component.setViewMode('students');
+        component.updateStudentSearch('STUDENT2');
+
+        expect(component.viewMode()).toBe('students');
+        expect(component.filteredStudentRows()).toEqual([{ studentLogin: 'student2', presentationAssessment, instance: presentationAssessment.instances![0] }]);
+    });
+
     it('should open the create dialog without persisting on cancel', () => {
         component.startCreate();
         dialogCloseSubject.next(undefined);
@@ -100,10 +113,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.create).not.toHaveBeenCalled();
     });
 
-    it('should open the edit dialog with assigned students', () => {
+    it('should open the parent edit dialog without instance data', () => {
         component.startEdit(presentationAssessment);
 
-        expect(presentationAssessmentService.findStudents).toHaveBeenCalledWith(courseId, presentationAssessment.id);
         expect(dialogService.open).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
@@ -111,21 +123,18 @@ describe('PresentationAssessmentManagementComponent', () => {
                     courseId,
                     course,
                     presentationAssessment,
-                    assignedStudents: [student],
                 }),
             }),
         );
     });
 
-    it('should create presentation with selected students after dialog save', () => {
+    it('should create a parent presentation after dialog save', () => {
         const savedAssessment: PresentationAssessment = { ...presentationAssessment, id: 43, title: 'New presentation' };
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
         component.startCreate();
 
         dialogCloseSubject.next({
-            presentationAssessment: { title: 'New presentation', description: 'Description', maxPoints: 25, resultPoints: 22, presentationDate, courseId },
-            assignedStudents: [student, student],
-            originalAssignedStudents: [],
+            presentationAssessment: { title: 'New presentation', description: 'Description', maxPoints: 25, courseId },
         });
 
         expect(presentationAssessmentService.create).toHaveBeenCalledWith(
@@ -134,24 +143,19 @@ describe('PresentationAssessmentManagementComponent', () => {
                 title: 'New presentation',
                 description: 'Description',
                 maxPoints: 25,
-                resultPoints: 22,
-                presentationDate,
                 courseId,
-                studentLogins: ['student1'],
             }),
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
     });
 
-    it('should update presentation with the selected students after dialog save', () => {
+    it('should update parent presentation data after dialog save', () => {
         presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: presentationAssessment })));
         component.startEdit(presentationAssessment);
 
         dialogCloseSubject.next({
             presentationAssessment: { ...presentationAssessment, title: 'Updated presentation' },
-            assignedStudents: [secondStudent],
-            originalAssignedStudents: [student],
         });
 
         expect(presentationAssessmentService.update).toHaveBeenCalledWith(
@@ -159,7 +163,6 @@ describe('PresentationAssessmentManagementComponent', () => {
             expect.objectContaining({
                 id: presentationAssessment.id,
                 title: 'Updated presentation',
-                studentLogins: ['student2'],
             }),
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.updated');
@@ -171,8 +174,6 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         dialogCloseSubject.next({
             presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
-            assignedStudents: [student],
-            originalAssignedStudents: [],
         });
 
         expect(presentationAssessmentService.create).toHaveBeenCalledOnce();

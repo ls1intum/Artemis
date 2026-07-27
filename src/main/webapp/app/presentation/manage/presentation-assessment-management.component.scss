@@ -1,0 +1,92 @@
+.presentation-header {
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-content-background);
+}
+
+.presentation-view-toggle {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-surface-100);
+}
+
+.presentation-master-detail {
+    display: grid;
+    grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.presentation-list {
+    overflow: hidden;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-content-background);
+}
+
+.presentation-list-item {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--p-content-border-color);
+    color: var(--p-text-color);
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--p-content-hover-background);
+    }
+
+    &.selected {
+        color: var(--p-primary-color);
+        background: var(--p-highlight-background);
+        font-weight: 600;
+    }
+}
+
+.presentation-detail {
+    min-width: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-content-background);
+}
+
+.presentation-description {
+    min-height: 5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-sm);
+    white-space: pre-wrap;
+}
+
+.student-search {
+    width: min(100%, 24rem);
+}
+
+.presentation-detail-row > td {
+    padding: 1rem 1.5rem;
+    background: var(--p-surface-50);
+}
+
+.instance-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+}
+
+@media (max-width: 48rem) {
+    .presentation-master-detail {
+        grid-template-columns: 1fr;
+    }
+
+    .presentation-header {
+        align-items: stretch;
+    }
+
+    .instance-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}

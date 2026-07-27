@@ -15,6 +15,36 @@
             "resultPoints": "Ergebnis",
             "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
             "presentationDate": "Präsentationstermin",
+            "presentation": "Präsentation",
+            "presenter": "Präsentierende Person",
+            "score": "Punkte",
+            "overview": "Übersicht",
+            "grading": "Bewertung",
+            "byPresentation": "Nach Präsentation",
+            "byStudent": "Nach Studierenden",
+            "searchStudent": "Studierende Person suchen",
+            "noMatchingStudents": "Keine Studierenden entsprechen der Suche.",
+            "exercise": "Verknüpfte Aufgabe",
+            "linkedExercise": "Verknüpfte Aufgabe:",
+            "noExercise": "Keine Aufgabe",
+            "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
+            "instanceRequiresPresenter": "Wähle mindestens eine präsentierende Person aus.",
+            "language": "Sprache",
+            "location": "Ort",
+            "meetingLink": "Meeting-Link",
+            "mode": {
+                "label": "Modus",
+                "online": "Online",
+                "inPerson": "Präsenz"
+            },
+            "filter": {
+                "all": "Alle",
+                "future": "Zukünftige"
+            },
+            "instance": {
+                "createLabel": "Präsentationsinstanz hinzufügen",
+                "editLabel": "Präsentationsinstanz bearbeiten"
+            },
             "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
             "delete": {
                 "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",

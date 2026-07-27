@@ -1,9 +1,5 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
-import dayjs from 'dayjs/esm';
-import { Observable, of } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -11,40 +7,25 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
-import { User } from 'app/account/user/user.model';
-import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-
-const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-    const maxPoints = control.get('maxPoints')?.value;
-    const resultPoints = control.get('resultPoints')?.value;
-
-    if (maxPoints === undefined || maxPoints === null || resultPoints === undefined || resultPoints === null) {
-        return null;
-    }
-
-    return Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
-};
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export interface PresentationAssessmentFormDialogData {
     courseId: number;
     course?: Course;
     presentationAssessment?: PresentationAssessment;
-    assignedStudents: User[];
+    exercises: Exercise[];
 }
 
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
-    assignedStudents: User[];
-    originalAssignedStudents: User[];
 }
 
 @Component({
@@ -59,10 +40,9 @@ export interface PresentationAssessmentFormDialogResult {
         InputNumberModule,
         MessageModule,
         TextareaModule,
+        SelectModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        FormDateTimePickerComponent,
-        CourseGroupComponent,
         FaIconComponent,
     ],
 })
@@ -70,66 +50,33 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     private readonly formBuilder = inject(FormBuilder);
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
-    private readonly courseManagementService = inject(CourseManagementService);
-    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly studentsCourseGroup = CourseGroup.STUDENTS;
-
-    readonly assignedStudents = signal<User[]>([]);
-    readonly filteredAssignedStudentsSize = signal(0);
+    readonly exercises = signal<Exercise[]>([]);
 
     private courseId = 0;
     private presentationAssessment?: PresentationAssessment;
-    private course?: Course;
-    private originalAssignedStudents: User[] = [];
 
-    readonly presentationStudentCourse = computed<Course | undefined>(() => {
-        if (!this.course) {
-            return undefined;
-        }
-        const presentationCourse: Course = Object.assign({}, this.course);
-        presentationCourse.isAtLeastInstructor = false;
-        return presentationCourse;
+    editForm = this.formBuilder.group({
+        title: ['', [Validators.required, Validators.maxLength(255)]],
+        description: ['', [Validators.maxLength(1000)]],
+        maxPoints: [0, [Validators.required, Validators.min(0.01)]],
+        exerciseId: [undefined as number | undefined],
     });
-
-    readonly studentExportFilename = computed(() => {
-        const title = this.presentationAssessment?.title?.trim();
-        return title ? `${title} Students` : 'Presentation Students';
-    });
-
-    editForm = this.formBuilder.group(
-        {
-            title: ['', [Validators.required, Validators.maxLength(255)]],
-            description: ['', [Validators.maxLength(1000)]],
-            maxPoints: [0, [Validators.required, Validators.min(0.01)]],
-            resultPoints: [undefined as number | undefined, [Validators.min(0)]],
-            presentationDate: [undefined as dayjs.Dayjs | undefined],
-        },
-        { validators: resultPointsDoNotExceedMaxPoints },
-    );
-
-    readonly currentTitle = signal('');
-    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment?.title?.trim() || 'New presentation');
 
     ngOnInit(): void {
         const data = this.dialogConfig.data as PresentationAssessmentFormDialogData;
         this.courseId = data.courseId;
-        this.course = data.course;
         this.presentationAssessment = data.presentationAssessment;
-        this.originalAssignedStudents = [...data.assignedStudents];
-        this.assignedStudents.set([...data.assignedStudents]);
+        this.exercises.set(data.exercises ?? []);
 
         this.editForm.reset({
             title: this.presentationAssessment?.title ?? '',
             description: this.presentationAssessment?.description ?? '',
             maxPoints: this.presentationAssessment?.maxPoints ?? 20,
-            resultPoints: this.presentationAssessment?.resultPoints,
-            presentationDate: this.presentationAssessment?.presentationDate,
+            exerciseId: this.presentationAssessment?.exerciseId,
         });
-        this.currentTitle.set(this.editForm.controls.title.value ?? '');
-        this.editForm.controls.title.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((title) => this.currentTitle.set(title ?? ''));
     }
 
     save(): void {
@@ -140,22 +87,12 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
 
         this.dialogRef.close({
             presentationAssessment: this.createFromForm(),
-            assignedStudents: this.assignedStudents(),
-            originalAssignedStudents: this.originalAssignedStudents,
         } satisfies PresentationAssessmentFormDialogResult);
     }
 
     cancel(): void {
         this.dialogRef.close();
     }
-
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId, loginOrName);
-
-    addStudentToPresentation = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
-
-    removeStudentFromPresentation = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
-
-    handleAssignedStudentsSizeChange = (filteredAssignedStudentsSize: number): void => this.filteredAssignedStudentsSize.set(filteredAssignedStudentsSize);
 
     private createFromForm(): PresentationAssessment {
         const formValue = this.editForm.getRawValue();
@@ -164,9 +101,8 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
             title: formValue.title?.trim(),
             description: formValue.description ?? undefined,
             maxPoints: formValue.maxPoints ?? undefined,
-            resultPoints: formValue.resultPoints ?? undefined,
-            presentationDate: formValue.presentationDate ? dayjs(formValue.presentationDate) : undefined,
             courseId: this.courseId,
+            exerciseId: formValue.exerciseId ?? undefined,
         };
     }
 }
