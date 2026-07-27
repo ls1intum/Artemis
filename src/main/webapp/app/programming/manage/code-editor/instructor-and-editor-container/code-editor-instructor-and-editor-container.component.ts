@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -95,6 +95,39 @@ interface AppliedGenerationRefresh {
     exerciseId: number;
     jobId: string;
 }
+
+/** Everything this editor accepts from the navigation that activated it, narrowed from the untyped router state bag. */
+interface ExerciseGenerationNavigationState {
+    /** Set by the exercise-creation wizard when the instructor asked for the exercise to be generated right away. */
+    autoStart: boolean;
+    /** The instructor's brief, carried over from the create form so the run is steered by what they actually asked for. */
+    prompt?: string;
+    /** Refresh marker persisted before a full page reload so the reload is not repeated for the same job. */
+    appliedRefresh?: AppliedGenerationRefresh;
+}
+
+function isAppliedGenerationRefresh(value: unknown): value is AppliedGenerationRefresh {
+    const candidate = value as AppliedGenerationRefresh | undefined;
+    return typeof candidate === 'object' && candidate !== null && typeof candidate.exerciseId === 'number' && typeof candidate.jobId === 'string';
+}
+
+/**
+ * Reads the navigation state handed to this editor.
+ *
+ * `Router.currentNavigation()` is populated while the activating navigation is still running, which includes the
+ * construction of the routed component. It also covers the reload case: on the initial navigation the router copies
+ * the persisted `history.state` of the restored entry into `Navigation.extras.state`.
+ */
+function readExerciseGenerationNavigationState(router: Router): ExerciseGenerationNavigationState {
+    const state = router.currentNavigation()?.extras.state;
+    const prompt: unknown = state?.[EXERCISE_GENERATION_PROMPT_STATE];
+    const appliedRefresh: unknown = state?.[APPLIED_GENERATION_REFRESH_STATE];
+    return {
+        autoStart: state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true,
+        prompt: typeof prompt === 'string' ? prompt : undefined,
+        appliedRefresh: isAppliedGenerationRefresh(appliedRefresh) ? appliedRefresh : undefined,
+    };
+}
 interface ConsistencyIssueNavigationIssue {
     threadId: number;
     targetType: CommentThreadLocationType;
@@ -139,6 +172,7 @@ interface ConsistencyIssueNavigationIssue {
         HyperionGenerationActivityComponent,
         ConfirmDialogModule,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     readonly resultComp = viewChild(UpdatingResultComponent);
@@ -204,11 +238,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private pendingGenerationRefreshJobId?: string;
     private activeAdaptDialogRef?: DynamicDialogRef<ReviewAdaptExerciseDialogComponent>;
     private readonly exerciseChanged = new Subject<void>();
-    private shouldAutoStartExerciseGeneration = window.history.state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true;
-
-    /** The instructor's brief carried over from the create form; sent as the generate request's prompt so the run is steered by what the instructor actually asked for. */
-    private autoStartGenerationPrompt: string | undefined =
-        typeof window.history.state?.[EXERCISE_GENERATION_PROMPT_STATE] === 'string' ? window.history.state[EXERCISE_GENERATION_PROMPT_STATE] : undefined;
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -234,6 +263,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generationService = inject(HyperionExerciseGenerationService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private reviewRouter = inject(Router);
+    /** Captured once during activation — `Router.currentNavigation()` is only populated while that navigation runs. */
+    private readonly navigationState = readExerciseGenerationNavigationState(this.reviewRouter);
+    private shouldAutoStartExerciseGeneration = this.navigationState.autoStart;
+    /** The instructor's brief carried over from the create form; sent as the generate request's prompt so the run is steered by what the instructor actually asked for. */
+    private autoStartGenerationPrompt: string | undefined = this.navigationState.prompt;
+    /** Which job's repository refresh has already been applied, so the resulting page reload is not repeated. */
+    private appliedGenerationRefresh: AppliedGenerationRefresh | undefined = this.navigationState.appliedRefresh;
     private readonly editorDestroyRef = inject(DestroyRef);
     private readonly reviewRequestsInFlight = new Set<string>();
     private readonly selectedAdaptFeedbackThreads = computed(() =>
@@ -250,7 +286,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         super();
         this.aiOps.setChangeHandler({
             onContentChanged: (content, exercise) => {
-                if (this.exercise?.id && exercise?.id && this.exercise.id !== exercise.id) {
+                const currentExerciseId = this.exercise()?.id;
+                if (currentExerciseId && exercise?.id && currentExerciseId !== exercise.id) {
                     return; // Ignore stale async results from a different exercise
                 }
                 this.onInstructionChanged(content);
@@ -278,13 +315,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             if (!this.shouldAutoStartExerciseGeneration) {
                 return;
             }
-            this.generationActivity()?.statusLoading();
-            this.maybeAutoStartExerciseGenerationFromNavigation();
+            // The activity panel probes the server for a run that is already in flight, and
+            // `isExerciseGenerationActionBlocked()` stays true for as long as that probe is loading. The first
+            // auto-start attempt is therefore always rejected, so this effect has to re-run once the probe settles —
+            // that is the only reason it reads `statusLoading()`, and it is the only dependency it needs. Everything
+            // the auto-start itself reads is deliberately untracked: it inspects a large amount of editor state
+            // (dirty flags, view children, the exercise) that must not turn into effect triggers.
+            const activityStatusLoading = this.generationActivity()?.statusLoading();
+            if (activityStatusLoading === true) {
+                return;
+            }
+            untracked(() => this.maybeAutoStartExerciseGenerationFromNavigation());
         });
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        if (this.exercise?.id !== undefined && this.exercise.id !== exerciseId) {
+        const currentExerciseId = this.exercise()?.id;
+        if (currentExerciseId !== undefined && currentExerciseId !== exerciseId) {
             this.invalidateHyperionLifecycleState();
         }
         return super.loadExercise(exerciseId).pipe(
@@ -371,8 +418,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.reviewBlockedByLocalEdits');
             return;
         }
-        const exerciseId = this.exercise?.id;
-        const courseId = this.exercise?.course?.id;
+        const exerciseId = this.exercise()?.id;
+        const courseId = this.exercise()?.course?.id;
         if (exerciseId === undefined || courseId === undefined) {
             this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable');
             return;
@@ -470,7 +517,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private refreshAfterHyperionRepositoryChange(): void {
-        const exerciseId = this.exercise?.id;
+        const exerciseId = this.exercise()?.id;
         if (exerciseId === undefined || this.generationRefreshPending()) {
             return;
         }
@@ -488,7 +535,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected retryHyperionRefresh(): void {
-        const exerciseId = this.exercise?.id;
+        const exerciseId = this.exercise()?.id;
         const jobId = this.pendingGenerationRefreshJobId;
         if (exerciseId === undefined || jobId === undefined || !this.generationRefreshFailed() || this.generationRefreshPending()) {
             return;
@@ -516,7 +563,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private reloadSavedExercise(exerciseId: number, jobId: string): void {
-        if (this.generationRefreshPending() || this.exercise?.id !== exerciseId || this.pendingGenerationRefreshJobId !== jobId) {
+        if (this.generationRefreshPending() || this.exercise()?.id !== exerciseId || this.pendingGenerationRefreshJobId !== jobId) {
             return;
         }
         this.generationRefreshFailed.set(false);
@@ -528,20 +575,35 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private wasGenerationRefreshApplied(jobId: string): boolean {
-        const applied = window.history.state?.[APPLIED_GENERATION_REFRESH_STATE] as AppliedGenerationRefresh | undefined;
-        return applied?.exerciseId === this.exercise?.id && applied?.jobId === jobId;
+        const applied = this.appliedGenerationRefresh;
+        return applied?.exerciseId === this.exercise()?.id && applied?.jobId === jobId;
     }
 
     private markGenerationRefreshApplied(exerciseId: number, jobId: string | undefined): void {
         if (jobId === undefined) {
             return;
         }
-        const historyState: Record<string, unknown> = Object.assign({}, window.history.state ?? {});
-        historyState[APPLIED_GENERATION_REFRESH_STATE] = { exerciseId, jobId };
-        window.history.replaceState(historyState, '');
+        this.appliedGenerationRefresh = { exerciseId, jobId };
+        this.persistNavigationStateEntry(APPLIED_GENERATION_REFRESH_STATE, this.appliedGenerationRefresh);
         if (this.pendingGenerationRefreshJobId === jobId) {
             this.pendingGenerationRefreshJobId = undefined;
         }
+    }
+
+    /**
+     * Patches a single key into the state of the *current* history entry.
+     *
+     * Both markers written here (the applied-refresh job and the consumed auto-start flag) exist for exactly one
+     * reason: to survive the full document reload performed by {@link reloadEditor}. They are read back through the
+     * Router — Angular copies the restored entry's state into `Navigation.extras.state` on the initial navigation —
+     * but they cannot be *written* through it. The Router's only public write path is a navigation, and a
+     * same-URL navigation runs the whole transition (guards included) and may be cancelled, which would silently
+     * drop the marker and leave the reload unguarded against repeating itself.
+     */
+    private persistNavigationStateEntry(key: string, value: unknown): void {
+        const historyState: Record<string, unknown> = Object.assign({}, window.history.state ?? {});
+        historyState[key] = value;
+        window.history.replaceState(historyState, '');
     }
 
     private canRefreshAfterHyperionRepositoryChange(): boolean {
@@ -555,7 +617,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected startGeneration(skipConfirmation = false): void {
-        const exerciseId = this.exercise?.id;
+        const exercise = this.exercise();
+        const exerciseId = exercise?.id;
         if (exerciseId === undefined || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
@@ -563,7 +626,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
-        if ((this.exercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH && (this.autoStartGenerationPrompt?.length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
+        if ((exercise!.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH && (this.autoStartGenerationPrompt?.length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
             this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
             return;
         }
@@ -588,7 +651,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private dispatchGeneration(exerciseId: number): void {
-        if (this.editorDestroyRef.destroyed || this.exercise?.id !== exerciseId || this.isExerciseGenerationActionBlocked()) {
+        if (this.editorDestroyRef.destroyed || this.exercise()?.id !== exerciseId || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -611,61 +674,60 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             )
             .subscribe({
                 next: ({ jobId }) => {
-                    if (requestSequence !== this.generationStartSequence || this.exercise?.id !== exerciseId) {
+                    if (requestSequence !== this.generationStartSequence || this.exercise()?.id !== exerciseId) {
                         return;
                     }
                     this.generationActivity()?.attachToJob(jobId, 'GENERATE');
                     this.openHyperionPanel();
                 },
                 error: () => {
-                    if (requestSequence === this.generationStartSequence && this.exercise?.id === exerciseId) {
+                    if (requestSequence === this.generationStartSequence && this.exercise()?.id === exerciseId) {
                         this.alertService.error('artemisApp.hyperion.generationActivity.startFailed');
                     }
                 },
             });
     }
 
-    protected canGenerateExercise(): boolean {
-        const exercise = this.exercise;
-        if (!supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType)) {
+    protected readonly canGenerateExercise = computed(() => {
+        const exercise = this.exercise();
+        if (!exercise || !supportsHyperionExerciseGeneration(exercise.programmingLanguage, exercise.projectType)) {
             return false;
         }
         const isReleased = exercise.releaseDate === undefined || !dayjs(exercise.releaseDate).isAfter(dayjs());
         const studentParticipationCount = Math.max(exercise.studentParticipations?.length ?? 0, exercise.numberOfParticipations ?? 0);
         return !isReleased && studentParticipationCount === 0;
-    }
+    });
 
-    protected isExerciseGenerationRunning(): boolean {
+    protected readonly showGenerationActivity = computed(() => {
+        const exercise = this.exercise();
+        return (
+            this.hyperionGenerationSupported &&
+            !!exercise?.id &&
+            (exercise?.isAtLeastEditor ?? false) &&
+            supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType)
+        );
+    });
+
+    protected readonly isExerciseGenerationRunning = computed(() => {
         const activity = this.generationActivity();
         return this.generationStartPending() || this.generationRefreshPending() || (this.showGenerationActivity() && (activity?.statusLoading() || activity?.running() || false));
-    }
+    });
 
-    protected isExerciseGenerationActionBlocked(): boolean {
+    protected readonly isExerciseGenerationActionBlocked = computed(() => {
         const activity = this.generationActivity();
         return this.isExerciseGenerationRunning() || this.generationRefreshFailed() || (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()));
-    }
+    });
 
-    protected isProblemStatementEditingLocked(): boolean {
+    protected readonly isProblemStatementEditingLocked = computed(() => {
         const activity = this.generationActivity();
         return (
             this.isExerciseGenerationRunning() ||
             this.generationRefreshBaselineUnknown() ||
             (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()))
         );
-    }
+    });
 
-    protected showGenerationActivity(): boolean {
-        return (
-            this.hyperionGenerationSupported &&
-            !!this.exercise?.id &&
-            (this.exercise?.isAtLeastEditor ?? false) &&
-            supportsHyperionExerciseGeneration(this.exercise?.programmingLanguage, this.exercise?.projectType)
-        );
-    }
-
-    protected canAdaptWithFeedback(): boolean {
-        return this.showGenerationActivity() && this.canGenerateExercise();
-    }
+    protected readonly canAdaptWithFeedback = computed(() => this.showGenerationActivity() && this.canGenerateExercise());
 
     protected adaptFromThread(threadId: number): void {
         if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
@@ -680,7 +742,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
-        const exerciseId = this.exercise?.id;
+        const exerciseId = this.exercise()?.id;
         if (exerciseId === undefined) {
             return;
         }
@@ -714,7 +776,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }),
             )
             .subscribe((result?: ReviewAdaptExerciseDialogResult) => {
-                if (this.exercise?.id !== exerciseId) {
+                if (this.exercise()?.id !== exerciseId) {
                     return;
                 }
                 if (!result) {
@@ -726,7 +788,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private startAdaptation(instructions?: string): void {
-        const exerciseId = this.exercise?.id;
+        const exerciseId = this.exercise()?.id;
         if (exerciseId === undefined || this.isExerciseGenerationActionBlocked()) {
             return;
         }
@@ -755,7 +817,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             )
             .subscribe({
                 next: ({ jobId }) => {
-                    if (requestSequence !== this.generationStartSequence || this.exercise?.id !== exerciseId) {
+                    if (requestSequence !== this.generationStartSequence || this.exercise()?.id !== exerciseId) {
                         return;
                     }
                     this.exerciseReviewCommentService.clearSelectedFeedback();
@@ -763,7 +825,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.openHyperionPanel();
                 },
                 error: () => {
-                    if (requestSequence === this.generationStartSequence && this.exercise?.id === exerciseId) {
+                    if (requestSequence === this.generationStartSequence && this.exercise()?.id === exerciseId) {
                         this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed');
                     }
                 },
@@ -801,7 +863,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private maybeAutoStartExerciseGenerationFromNavigation(): void {
-        if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
+        if (!this.shouldAutoStartExerciseGeneration || !this.exercise()?.id || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -809,9 +871,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.shouldAutoStartExerciseGeneration = false;
-        const updatedState = typeof window.history.state === 'object' && window.history.state !== null ? window.history.state : {};
-        updatedState[AUTO_START_EXERCISE_GENERATION_STATE] = false;
-        window.history.replaceState(updatedState, '');
+        this.persistNavigationStateEntry(AUTO_START_EXERCISE_GENERATION_STATE, false);
         this.startGeneration(true);
     }
 
@@ -950,14 +1010,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Syncs the reverted content back to the model.
      */
     revertAllRefinement(): void {
-        this.aiOps.revertAllChanges(this.exercise, this.editableInstructions());
+        this.aiOps.revertAllChanges(this.exercise(), this.editableInstructions());
     }
 
     /**
      * Closes the diff view after syncing the current editor content to the model.
      */
     closeDiff(): void {
-        this.aiOps.closeDiffView(this.exercise, this.editableInstructions());
+        this.aiOps.closeDiffView(this.exercise(), this.editableInstructions());
     }
 
     /**
@@ -986,10 +1046,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     submitRefinement(): void {
         if (this.isExerciseGenerationActionBlocked()) return;
         const prompt = this.refinementPrompt().trim();
-        if (!prompt || !this.exercise) return;
+        if (!prompt || !this.exercise()) return;
 
         this.refinementPopover()?.hide();
-        this.aiOps.handleProblemStatementAction(this.exercise, this.editableInstructions());
+        this.aiOps.handleProblemStatementAction(this.exercise(), this.editableInstructions());
     }
 
     /**
@@ -997,7 +1057,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onInlineRefinement(event: InlineRefinementEvent): void {
         if (this.isExerciseGenerationActionBlocked()) return;
-        this.aiOps.onInlineRefinement(this.exercise, this.editableInstructions(), event);
+        this.aiOps.onInlineRefinement(this.exercise(), this.editableInstructions(), event);
     }
 
     /**

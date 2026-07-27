@@ -56,6 +56,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 
 type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
@@ -353,7 +354,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
 
-        comp.exercise = createMockExercise();
+        comp.exercise.set(createMockExercise());
 
         setCodeEditorContainer(comp, createDefaultContainerStub());
         setEditableInstructions(comp, {
@@ -430,8 +431,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         secondLoad.next(createMockExercise({ id: 42, title: 'Current exercise' }));
         firstLoad.next(createMockExercise({ id: 41, title: 'Stale exercise' }));
 
-        expect(comp.exercise.id).toBe(42);
-        expect(comp.exercise.title).toBe('Current exercise');
+        expect(comp.exercise()!.id).toBe(42);
+        expect(comp.exercise()!.title).toBe('Current exercise');
     });
 
     describe('Consistency Checks', () => {
@@ -446,7 +447,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = vi.spyOn(alertService, 'success');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
             expect(artemisIntelligenceService.consistencyCheck).toHaveBeenCalledWith(42);
@@ -465,7 +466,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -486,7 +487,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 onLoaded?.();
             });
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -504,7 +505,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const successSpy = vi.spyOn(alertService, 'success');
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
@@ -520,7 +521,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = vi.spyOn(alertService, 'error');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
 
             expect(check1Spy).toHaveBeenCalledOnce();
@@ -867,7 +868,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             vi.spyOn(alertService, 'success');
 
-            comp.checkConsistencies(comp.exercise!);
+            comp.checkConsistencies(comp.exercise()!);
 
             expect(comp.showConsistencyIssuesToolbar()).toBe(false);
             expect(comp.selectedIssue()).toBeUndefined();
@@ -878,7 +879,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         setCodeEditorContainer(comp, undefined);
         vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(true);
         const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
-        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise];
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
 
         comp.saveChangesAndSelectDomain(domain);
 
@@ -900,7 +901,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         setCodeEditorContainer(comp, { actions: () => ({ onSave }) });
         vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(false);
         const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
-        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise];
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
 
         comp.saveChangesAndSelectDomain(domain);
 
@@ -918,7 +919,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({ problemStatement: 'Original' });
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original' }));
     });
 
     afterEach(() => {
@@ -982,7 +983,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original problem statement' }));
     });
 
     afterEach(() => {
@@ -997,7 +998,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
 
         expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(
-            comp.exercise,
+            comp.exercise(),
             'Original problem statement',
             expect.objectContaining({ instruction: 'Improve this' }),
             expect.any(Function),
@@ -1026,7 +1027,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.toggleRefinementPopover(new Event('click'));
         comp.submitRefinement();
         comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
-        comp.checkConsistencies(comp.exercise!);
+        comp.checkConsistencies(comp.exercise()!);
 
         expect(toggle).not.toHaveBeenCalled();
         expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
@@ -1044,7 +1045,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.submitRefinement();
 
-        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', expect.any(Function));
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise(), 'Original problem statement', 'Improve clarity', expect.any(Function));
         expect(comp.showDiff()).toBe(true);
     });
 
@@ -1071,7 +1072,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         await configureTestBed();
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise();
+        comp.exercise.set(createMockExercise());
     });
 
     afterEach(() => {
@@ -1366,12 +1367,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({
-            problemStatement: 'Implement the specified behavior and cover all required edge cases.',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            isAtLeastEditor: true,
-            releaseDate: dayjs().add(1, 'day'),
-        });
+        comp.exercise.set(
+            createMockExercise({
+                problemStatement: 'Implement the specified behavior and cover all required edge cases.',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                isAtLeastEditor: true,
+                releaseDate: dayjs().add(1, 'day'),
+            }),
+        );
 
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
@@ -1420,16 +1423,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
     it('auto-starts creation generation only after status loading and repository initialization finish', async () => {
         fixture.destroy();
-        window.history.replaceState({ [AUTO_START_EXERCISE_GENERATION_STATE]: true, exerciseGenerationUserPrompt: 'Original strategy exercise brief' }, '');
+        // The hand-over from the creation wizard arrives as router navigation state, which the component reads
+        // while the activating navigation is still running — i.e. during its own construction.
+        vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({
+            extras: { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [EXERCISE_GENERATION_PROMPT_STATE]: 'Original strategy exercise brief' } },
+        } as unknown as ReturnType<Router['currentNavigation']>);
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({
-            problemStatement: 'Implement the specified behavior and cover all required edge cases.',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            projectType: ProjectType.PLAIN_MAVEN,
-            isAtLeastEditor: true,
-            releaseDate: dayjs().add(1, 'day'),
-        });
+        comp.exercise.set(
+            createMockExercise({
+                problemStatement: 'Implement the specified behavior and cover all required edge cases.',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                projectType: ProjectType.PLAIN_MAVEN,
+                isAtLeastEditor: true,
+                releaseDate: dayjs().add(1, 'day'),
+            }),
+        );
         let repositoryClean = false;
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), hasCleanRepositoryState: () => repositoryClean });
         const activity = signal<any | undefined>(undefined);
@@ -1451,7 +1460,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it.each(['', '   ', 'x'.repeat(39), `  ${'x'.repeat(39)}  `])('blocks manual generation when the meaningful specification is %j', (problemStatement) => {
-        comp.exercise.problemStatement = problemStatement;
+        comp.exercise()!.problemStatement = problemStatement;
         const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
 
         (comp as any).startGeneration();
@@ -1462,7 +1471,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('allows manual generation at the 40-character meaningful specification boundary', () => {
-        comp.exercise.problemStatement = 'x'.repeat(40);
+        comp.exercise()!.problemStatement = 'x'.repeat(40);
 
         (comp as any).startGeneration();
 
@@ -1471,7 +1480,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('blocks creation auto-start when navigation state has no meaningful specification', () => {
-        comp.exercise.problemStatement = '';
+        comp.exercise()!.problemStatement = '';
         const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
 
         (comp as any).startGeneration(true);
@@ -1482,7 +1491,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN])('supports Java generation for project type %s', (projectType) => {
-        comp.exercise.projectType = projectType as ProjectType | undefined;
+        // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
+        // published through the always-notifying exercise signal.
+        comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
 
         expect((comp as any).canGenerateExercise()).toBe(true);
     });
@@ -1490,7 +1501,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it.each([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE, ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
         'blocks Java generation for unsupported project type %s',
         (projectType) => {
-            comp.exercise.projectType = projectType;
+            comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));
 
             expect((comp as any).canGenerateExercise()).toBe(false);
         },
@@ -1523,7 +1534,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         confirm.mockImplementation(() => undefined);
 
         (comp as any).startGeneration();
-        comp.exercise = createMockExercise({ id: 84 });
+        comp.exercise.set(createMockExercise({ id: 84 }));
         confirm.mock.calls[0][0].accept();
 
         expect(generationService.generate).not.toHaveBeenCalled();
@@ -1833,7 +1844,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 
         (comp as any).startGeneration();
-        comp.exercise = createMockExercise({ id: 84 });
+        comp.exercise.set(createMockExercise({ id: 84 }));
         pending.error(new Error('late failure'));
 
         expect(errorSpy).not.toHaveBeenCalled();
@@ -1912,7 +1923,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('startGeneration is blocked when local problem statement changes are unsaved', () => {
-        comp.exercise!.problemStatement = '';
+        comp.exercise()!.problemStatement = '';
         setCodeEditorContainer(comp, { canDeactivate: () => true });
         setEditableInstructions(comp, { unsavedChangesValue: () => false });
         (comp as any).onProblemStatementUnsavedChangesChanged(true);
@@ -2216,7 +2227,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).openAdaptDialog();
         (comp as any).invalidateHyperionLifecycleState();
-        comp.exercise = createMockExercise({ id: 84 });
+        comp.exercise.set(createMockExercise({ id: 84 }));
         dialogResult.next({ instructions: 'late adaptation' });
 
         expect(close).toHaveBeenCalledOnce();
@@ -2253,7 +2264,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         generationService.generate.mockReturnValue(pending);
 
         (comp as any).startAdaptation('tighten tests');
-        comp.exercise = createMockExercise({ id: 84 });
+        comp.exercise.set(createMockExercise({ id: 84 }));
         pending.next({ jobId: 'adapt-for-previous-exercise' });
         pending.complete();
 
@@ -2268,7 +2279,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 
         (comp as any).startAdaptation('tighten tests');
-        comp.exercise = createMockExercise({ id: 84 });
+        comp.exercise.set(createMockExercise({ id: 84 }));
         pending.error(new Error('late failure'));
 
         expect(errorSpy).not.toHaveBeenCalled();
@@ -2295,7 +2306,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         const jenkinsFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         const jenkinsComp = jenkinsFixture.componentInstance;
-        jenkinsComp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
+        jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true }));
         const jenkinsAttach = vi.fn();
         (jenkinsComp as any).generationActivity = () => ({ attachToJob: jenkinsAttach });
 
@@ -2315,23 +2326,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         vi.spyOn(localCiProfileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(localCiProfileService, 'isProfileActive').mockReturnValue(true);
 
-        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') });
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
         expect((comp as any).showGenerationActivity()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
-        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined });
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: undefined }));
         expect((comp as any).showGenerationActivity()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
-        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [{} as any] });
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [{} as any] }));
         expect((comp as any).showGenerationActivity()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
-        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, numberOfParticipations: 1 });
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, numberOfParticipations: 1 }));
         expect((comp as any).showGenerationActivity()).toBe(true);
         expect((comp as any).canGenerateExercise()).toBe(false);
 
-        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [], numberOfParticipations: 1 });
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, studentParticipations: [], numberOfParticipations: 1 }));
         expect((comp as any).canGenerateExercise()).toBe(false);
     });
 });

@@ -70,8 +70,17 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId/test -> Load exercise and select test repository
     paramSub?: Subscription;
 
-    // Contains all participations (template, solution, assignment)
-    exercise!: ProgrammingExercise; // set in ngOnInit() from the loadExercise() route flow
+    // Contains all participations (template, solution, assignment).
+    // Signal-backed because the whole editor template is gated on it and the subclass derives its Hyperion
+    // predicates from it. As a plain field, assigning it inside the route-flow `tap` scheduled no render under
+    // zoneless change detection: the page only updated because the unrelated `loadingState` signal happened to
+    // flip in the same subscription.
+    //
+    // The exercise object itself is still mutated in place by several flows (problem-statement edits,
+    // assignment-participation create/delete) and its identity is load-bearing (participations hold circular
+    // back-references to it), so it cannot be replaced with a fresh copy on every change. Instead the signal is
+    // configured to notify on every write and in-place mutations re-publish via `notifyExerciseChanged()`.
+    readonly exercise = signal<ProgrammingExercise | undefined>(undefined, { equal: () => false });
     course!: Course; // set in ngOnInit() from the loaded exercise
     // Can only be undefined when the test repository is selected.
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
@@ -107,8 +116,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     ngOnInit(): void {
         /** Initial render if we already have content */
-        if (this.exercise?.problemStatement != undefined) {
-            this.problemStatementChanges$.next(this.exercise.problemStatement);
+        const loadedExercise = this.exercise();
+        if (loadedExercise?.problemStatement != undefined) {
+            this.problemStatementChanges$.next(loadedExercise.problemStatement);
         }
         if (this.paramSub) {
             this.paramSub.unsubscribe();
@@ -128,7 +138,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                             return exercise;
                         }),
                         tap((exercise) => {
-                            this.exercise = exercise;
+                            this.exercise.set(exercise);
                             this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
                             if (exercise.id) {
                                 this.exerciseEditorSyncService.connect(exercise.id);
@@ -141,9 +151,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         // Set selected participation
                         tap(() => {
                             if (repositoryType === RepositoryType.TESTS) {
-                                this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
+                                this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise()!]);
                             } else if (repositoryType === RepositoryType.AUXILIARY) {
-                                const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
+                                const auxiliaryRepo = this.exercise()!.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
                                 if (auxiliaryRepo) {
                                     this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
                                     this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
@@ -179,15 +189,29 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             )
             .subscribe(() => {
                 this.loadingState.set(LOADING_STATE.CLEAR);
-                this.isCreateAssignmentRepoDisabled = isExamExercise(this.exercise);
+                this.isCreateAssignmentRepoDisabled = isExamExercise(this.exercise()!);
             });
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {
-        if (this.exercise) {
-            this.exercise.problemStatement = markdown;
+        const exercise = this.exercise();
+        if (exercise) {
+            exercise.problemStatement = markdown;
+            this.notifyExerciseChanged();
         }
         this.problemStatementChanges$.next(markdown);
+    }
+
+    /**
+     * Re-publishes the exercise signal after the exercise object was mutated in place.
+     *
+     * The signal holds a mutable object whose identity must stay stable (participations keep circular
+     * back-references to it), so mutations cannot be expressed as a replacing `set()`. It is created with an
+     * always-notify equality function, which makes re-setting the very same reference a valid change
+     * notification for template bindings and derived `computed()`s.
+     */
+    protected notifyExerciseChanged(): void {
+        this.exercise.update((exercise) => exercise);
     }
 
     /**
@@ -223,12 +247,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
         type ProgrammingParticipation = TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
+        const exercise = this.exercise()!;
         const availableParticipations = [
-            this.exercise.templateParticipation,
-            this.exercise.solutionParticipation,
-            this.exercise.studentParticipations && this.exercise.studentParticipations.length
-                ? (this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation)
-                : undefined,
+            exercise.templateParticipation,
+            exercise.solutionParticipation,
+            exercise.studentParticipations && exercise.studentParticipations.length ? (exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation) : undefined,
         ].filter((participation): participation is ProgrammingParticipation => participation != undefined);
         const selectedParticipation = availableParticipations.find(({ id }: ProgrammingParticipation) => id === preferredParticipationId);
         return [selectedParticipation, ...availableParticipations]
@@ -264,14 +287,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         } else if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id!);
         } else {
-            this.selectedParticipation = this.exercise.templateParticipation!;
+            this.selectedParticipation = this.exercise()!.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
         }
-        if (this.exercise?.id && this.selectedRepository) {
+        const exerciseId = this.exercise()?.id;
+        if (exerciseId && this.selectedRepository) {
             const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
             if (syncTarget) {
                 const auxId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
-                this.fileSyncService.init(this.exercise.id, syncTarget, auxId);
+                this.fileSyncService.init(exerciseId, syncTarget, auxId);
             }
         }
     }
@@ -282,18 +306,18 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      **/
     setSelectedParticipation(participationId: number) {
         // The result component needs a circular structure of participation -> exercise.
-        const exercise = this.exercise;
-        if (participationId === this.exercise.templateParticipation!.id) {
+        const exercise = this.exercise()!;
+        if (participationId === exercise.templateParticipation!.id) {
             this.selectedRepository = RepositoryType.TEMPLATE;
-            this.selectedParticipation = this.exercise.templateParticipation;
+            this.selectedParticipation = exercise.templateParticipation;
             (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
-        } else if (participationId === this.exercise.solutionParticipation!.id) {
+        } else if (participationId === exercise.solutionParticipation!.id) {
             this.selectedRepository = RepositoryType.SOLUTION;
-            this.selectedParticipation = this.exercise.solutionParticipation;
+            this.selectedParticipation = exercise.solutionParticipation;
             (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
-        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
+        } else if (exercise.studentParticipations?.length && participationId === exercise.studentParticipations[0].id) {
             this.selectedRepository = RepositoryType.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0];
+            this.selectedParticipation = exercise.studentParticipations[0];
             this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
@@ -310,8 +334,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Has the side effect, that if the exercise changes unrelated to the participations, the user has to reload the page to see the updates.
      */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        return this.exercise && this.exercise.id === exerciseId
-            ? of(this.exercise)
+        const exercise = this.exercise();
+        return exercise && exercise.id === exerciseId
+            ? of(exercise)
             : this.exerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
     }
 
@@ -320,15 +345,16 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     selectParticipationDomainById(participationId: number) {
-        if (participationId === this.exercise.templateParticipation!.id) {
-            this.exercise.templateParticipation!.programmingExercise = this.exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
-        } else if (participationId === this.exercise.solutionParticipation!.id) {
-            this.exercise.solutionParticipation!.programmingExercise = this.exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
-        } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
-            this.exercise.studentParticipations[0].exercise = this.exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
+        const exercise = this.exercise()!;
+        if (participationId === exercise.templateParticipation!.id) {
+            exercise.templateParticipation!.programmingExercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.templateParticipation!]);
+        } else if (participationId === exercise.solutionParticipation!.id) {
+            exercise.solutionParticipation!.programmingExercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+        } else if (exercise.studentParticipations?.length && participationId === exercise.studentParticipations[0].id) {
+            exercise.studentParticipations[0].exercise = exercise;
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
         } else {
             this.onError('participationNotFound');
         }
@@ -352,21 +378,21 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Select the template participation repository and navigate to it
      */
     selectTemplateParticipation() {
-        return this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise()!.templateParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the solution participation repository and navigate to it
      */
     selectSolutionParticipation() {
-        return this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise()!.solutionParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
     selectAssignmentParticipation() {
-        return this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.USER, this.exercise()!.studentParticipations![0].id], { relativeTo: this.route });
     }
 
     /**
@@ -390,11 +416,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     createAssignmentParticipation() {
         this.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
         return this.courseExerciseService
-            .startExercise(this.exercise.id!)
+            .startExercise(this.exercise()!.id!)
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
                 tap((participation) => {
-                    this.exercise.studentParticipations = [participation];
+                    this.exercise()!.studentParticipations = [participation];
+                    // Derived state (e.g. whether exercise generation may still be offered) reads the
+                    // participation list, so the in-place mutation has to be published.
+                    this.notifyExerciseChanged();
                     this.loadingState.set(LOADING_STATE.CLEAR);
                 }),
             )
@@ -412,8 +441,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
             void this.selectTemplateParticipation();
         }
-        const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
-        this.exercise.studentParticipations = [];
+        const assignmentParticipationId = this.exercise()!.studentParticipations![0].id!;
+        this.exercise()!.studentParticipations = [];
+        // See createAssignmentParticipation(): the participation list feeds derived state.
+        this.notifyExerciseChanged();
         this.participationService
             .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(

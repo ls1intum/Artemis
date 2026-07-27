@@ -268,7 +268,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
-        expect(comp.exercise).toEqual(exercise);
+        expect(comp.exercise()).toEqual(exercise);
         expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState()).toBe(comp.LOADING_STATE.CLEAR);
@@ -477,7 +477,7 @@ describe('CodeEditorInstructorIntegration', () => {
         } as ProgrammingExercise;
 
         beforeEach(() => {
-            comp.exercise = exercise;
+            comp.exercise.set(exercise);
         });
 
         it('should navigate to template participation repository from auxiliary repository', () => {

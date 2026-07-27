@@ -15,8 +15,9 @@
             }
         </div>
     </nav>
-}
-@if (exercise && loadingState() !== LOADING_STATE.INITIALIZING && loadingState() !== LOADING_STATE.FETCHING_FAILED) {
+} @else if (exercise(); as exercise) {
+    <!-- The @else branch already excludes the two loading states, and the alias narrows the exercise signal to a
+         non-null value for the whole block so the bindings below keep type-checking their optional participations. -->
     <div class="module-bg p-3 pt-1">
         <jhi-code-editor-container
             [participation]="selectedParticipation!"
