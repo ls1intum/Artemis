@@ -14,7 +14,6 @@ import { SearchOverlayService } from 'app/core/navbar/global-search/services/sea
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
@@ -46,7 +45,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
                 MockComponent(SearchableEntityItemComponent),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
