@@ -23,8 +23,10 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -52,6 +54,9 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Autowired
     private AttachmentRepository attachmentRepository;
 
+    @Autowired
+    private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
     private Course testCourse;
 
     private AttachmentVideoUnit testAttachmentVideoUnit;
@@ -64,6 +69,8 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         var lecture = lectureUtilService.createCourseWithLecture(true);
         testCourse = lecture.getCourse();
+        testCourse.setTestCourse(true);
+        courseRepository.saveAndFlush(testCourse);
         testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
     }
@@ -89,12 +96,13 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         updatedTextExercise.setTitle(originalExercise.getTitle());
         updatedTextExercise = exerciseRepository.save(updatedTextExercise);
 
-        expectVisibilityWebhook(newDueDate);
+        AtomicBoolean visibilityWebhookSeen = expectVisibilityWebhook(newDueDate);
         slideService.handleDueDateChange(originalExercise, updatedTextExercise);
 
         List<Slide> updatedSlides = slideRepository.findByExerciseId(originalExercise.getId());
         assertThat(updatedSlides).hasSize(1);
         assertThat(updatedSlides.getFirst().getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        awaitVisibilityWebhook(visibilityWebhookSeen);
         irisRequestMockProvider.verify();
     }
 
@@ -116,11 +124,12 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         testSlide.setExercise(originalExercise);
         Slide savedSlide = slideRepository.save(testSlide);
 
-        expectVisibilityWebhook(newDueDate);
+        AtomicBoolean visibilityWebhookSeen = expectVisibilityWebhook(newDueDate);
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        awaitVisibilityWebhook(visibilityWebhookSeen);
         irisRequestMockProvider.verify();
     }
 
@@ -144,14 +153,14 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         updatedExercise.setTitle(originalExercise.getTitle());
         updatedExercise = exerciseRepository.save(updatedExercise);
 
-        AtomicBoolean visibilityWebhookSeen = expectNullVisibilityWebhook();
+        AtomicBoolean visibilityWebhookSeen = expectVisibilityWebhook(null);
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden()).isNull();
         assertThat(attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion()).isNull();
         await().untilAsserted(() -> assertThat(oldStudentVersionPath).doesNotExist());
-        assertThat(visibilityWebhookSeen).isTrue();
+        awaitVisibilityWebhook(visibilityWebhookSeen);
         irisRequestMockProvider.verify();
     }
 
@@ -180,7 +189,8 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
     }
 
-    private void expectVisibilityWebhook(ZonedDateTime expectedHiddenUntil) {
+    private AtomicBoolean expectVisibilityWebhook(ZonedDateTime expectedHiddenUntil) {
+        AtomicBoolean visibilityWebhookSeen = new AtomicBoolean();
         irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
             assertThat(dto.lectureUnitId()).isEqualTo(testAttachmentVideoUnit.getId());
             assertThat(dto.slides()).anySatisfy(slide -> {
@@ -192,21 +202,17 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
                     assertThat(slide.hiddenUntil().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(expectedHiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
                 }
             });
+            visibilityWebhookSeen.set(true);
         }, ExpectedCount.once());
+        return visibilityWebhookSeen;
     }
 
-    private AtomicBoolean expectNullVisibilityWebhook() {
-        AtomicBoolean visibilityWebhookSeen = new AtomicBoolean();
-        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
-            if (!dto.lectureUnitId().equals(testAttachmentVideoUnit.getId())) {
-                return;
-            }
-            assertThat(dto.slides()).anySatisfy(slide -> {
-                assertThat(slide.slideNumber()).isEqualTo(testSlide.getSlideNumber());
-                assertThat(slide.hiddenUntil()).isNull();
-            });
-            visibilityWebhookSeen.set(true);
-        }, ExpectedCount.manyTimes());
-        return visibilityWebhookSeen;
+    private void awaitVisibilityWebhook(AtomicBoolean visibilityWebhookSeen) {
+        await().until(visibilityWebhookSeen::get);
+        await().untilAsserted(() -> {
+            IrisLectureUnitSyncState syncState = irisLectureUnitSyncStateRepository.findByLectureUnitId(testAttachmentVideoUnit.getId()).orElseThrow();
+            assertThat(syncState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
+            assertThat(syncState.getLastSyncedVisibilityHash()).isEqualTo(syncState.getVisibilityHash());
+        });
     }
 }
