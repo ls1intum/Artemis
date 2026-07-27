@@ -955,11 +955,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(currentJob).join();
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(oldJob).join();
 
-        List<Slide> resultingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
-        assertThat(resultingSlides).hasSize(3);
-        assertThat(resultingSlides).extracting(Slide::getSlideNumber).containsExactly(1, 2, 3);
-        assertThat(resultingSlides.getFirst().getHidden()).isCloseTo(hiddenUntil, within(1, ChronoUnit.MILLIS));
-        assertThat(resultingSlides.subList(1, resultingSlides.size())).allMatch(slide -> slide.getHidden() == null);
+        await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            List<Slide> resultingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+            assertThat(resultingSlides).hasSize(3);
+            assertThat(resultingSlides).extracting(Slide::getSlideNumber).containsExactly(1, 2, 3);
+            assertThat(resultingSlides.getFirst().getHidden()).isCloseTo(hiddenUntil, within(1, ChronoUnit.MILLIS));
+            assertThat(resultingSlides.subList(1, resultingSlides.size())).allMatch(slide -> slide.getHidden() == null);
+        });
     }
 
     @Test
