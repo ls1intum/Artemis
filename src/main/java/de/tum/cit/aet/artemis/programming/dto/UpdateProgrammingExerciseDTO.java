@@ -93,6 +93,9 @@ public record UpdateProgrammingExerciseDTO(
                     : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
         }
 
+        // The submission policy is a lazy one-to-one: on a detached exercise the proxy cannot be unproxied, so map an uninitialized policy to null.
+        SubmissionPolicyDTO submissionPolicyDTO = Hibernate.isInitialized(exercise.getSubmissionPolicy()) ? SubmissionPolicyDTO.of(exercise.getSubmissionPolicy()) : null;
+
         return new UpdateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
@@ -101,8 +104,7 @@ public record UpdateProgrammingExerciseDTO(
                 gradingCriterionDTOs, competencyLinkDTOs, exercise.getTestRepositoryUri(), exercise.getSolutionRepositoryUri(), auxiliaryRepositoryDTOs,
                 exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(), exercise.getShowTestNamesToStudents(),
-                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
-                SubmissionPolicyDTO.of(exercise.getSubmissionPolicy()), exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
-                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
+                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(), submissionPolicyDTO, exercise.getProjectType(),
+                exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(), UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
     }
 }
