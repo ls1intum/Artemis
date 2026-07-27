@@ -45,15 +45,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Service orchestrating AI-assisted structural and semantic consistency analysis for {@link ProgrammingExercise} instances.
+ * Finds contradictions between a {@link ProgrammingExercise}'s problem statement and its repositories.
  * <p>
- * Flow:
- * <ol>
- * <li>Refetch exercise with template & solution participations.</li>
- * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService} and append existing review-thread context.</li>
- * <li>Execute structural & semantic prompts concurrently using the Spring AI {@link ChatClient}.</li>
- * <li>Parse structured JSON into schema classes, normalize, aggregate, and expose as DTOs.</li>
- * </ol>
+ * A structural and a semantic check run concurrently over the same rendered snapshot of the exercise, then a third pass verifies their combined output: the two checkers are prone
+ * to false positives and to reporting the same contradiction twice, and neither can see the other's findings. Every step degrades to its input on failure, so a check reports
+ * fewer issues rather than none.
  */
 @Service
 @Lazy
@@ -89,19 +85,6 @@ public class HyperionConsistencyCheckService {
 
     private final ObjectMapper objectMapper;
 
-    /**
-     * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
-     *
-     * @param programmingExerciseRepository repository for loading programming exercises with participations
-     * @param chatClient                    configured Spring AI chat client
-     * @param templates                     prompt template renderer
-     * @param exerciseContextRenderer       renderer for exercise problem/repository context
-     * @param reviewCommentContextRenderer  renderer for existing review-thread prompt context
-     * @param observationRegistry           Micrometer observation registry
-     * @param llmTokenUsageService          service for persisting token usage
-     * @param userRepository                repository for resolving current user id
-     * @param objectMapper                  Spring-managed Jackson ObjectMapper
-     */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
             ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ObjectMapper objectMapper) {
@@ -116,13 +99,7 @@ public class HyperionConsistencyCheckService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Maps AI response usage metadata into an {@link LLMRequest} for token accounting.
-     *
-     * @param response   raw chat response with model metadata
-     * @param pipelineId logical pipeline identifier used for usage persistence
-     * @return mapped request, or {@code null} if usage metadata is missing
-     */
+    /** Returns {@code null} for a response whose provider reported no usage; the collector filters those out rather than accounting for zero tokens. */
     private LLMRequest buildRequestFromResponse(ChatResponse response, String pipelineId) {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return null;
@@ -133,11 +110,10 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Execute structural and semantic consistency checks with existing review-thread context included.
-     * Delegates to {@link #checkConsistency(long, boolean)} with {@code skipThreadContext = false}.
+     * Checks the exercise, with the findings of earlier checks in context.
      *
-     * @param exerciseId id of the programming exercise to check consistency for
-     * @return aggregated consistency issues, timing, token usage, and costs.
+     * @param exerciseId the programming exercise to check
+     * @return the issues found, with timing, token usage, and costs
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
@@ -145,14 +121,12 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Execute a three-phase consistency check pipeline: structural and semantic checks run concurrently,
-     * followed by an independent verification pass that removes false positives, deduplicates overlapping issues,
-     * and improves surviving issues. Any individual failure degrades gracefully; the aggregated response is always non-null.
+     * Checks the exercise for contradictions between its problem statement and its repositories.
      *
-     * @param exerciseId        id of the programming exercise to check consistency for
-     * @param skipThreadContext if {@code true}, passes empty thread context to the AI prompts (i.e., no prior findings exist).
-     *                              Intended for evaluation scripts that assess consistency check quality without prior thread state.
-     * @return aggregated consistency issues, timing, token usage, and costs.
+     * @param exerciseId        the programming exercise to check
+     * @param skipThreadContext hides the findings of earlier checks from the prompts, so a run can be judged on its own merits
+     * @return the issues found, with timing, token usage, and costs
+     * @throws InternalServerErrorAlertException if no chat client is configured
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId, boolean skipThreadContext) {
@@ -173,7 +147,7 @@ public class HyperionConsistencyCheckService {
         Map<String, String> input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads",
                 existingReviewThreads);
 
-        // Thread-safe collector for usage data from parallel checks
+        // Written from the two concurrent checks below as well as from this thread.
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
         Observation parentObs = observationRegistry.getCurrentObservation();
@@ -184,10 +158,9 @@ public class HyperionConsistencyCheckService {
         var structuralIssues = results != null ? results.getT1() : List.<ConsistencyIssue>of();
         var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
 
-        // issues = combined output of structural + semantic checks (always returned)
         final List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
 
-        // issues = verifier output; fallback to combined if verifier fails
+        // A verification pass that cannot run must not cost the instructor the findings; unverified issues are better than none.
         List<ConsistencyIssueDTO> issueDTOs;
         try {
             final String issuesJson = objectMapper.writeValueAsString(Map.of("issues", combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList()));
@@ -213,12 +186,10 @@ public class HyperionConsistencyCheckService {
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
-        // Timing
         Instant endTime = Instant.now();
         double durationSeconds = Duration.between(startTime, endTime).toMillis() / 1000.0;
         var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
 
-        // Aggregate token usage and costs from LLMRequest data
         long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
         long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
         double promptCost = validRequests.stream().mapToDouble(r -> r.numInputTokens() * r.costPerMillionInputToken() / 1_000_000.0).sum();
@@ -233,14 +204,7 @@ public class HyperionConsistencyCheckService {
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
 
-    /**
-     * Run the structural consistency prompt. Returns empty list on any exception.
-     *
-     * @param input          prompt variables (rendered_context, programming_language, existing_review_threads)
-     * @param parentObs      parent observation for tracing
-     * @param usageCollector thread-safe list to collect LLM request data
-     * @return structural issues (never null)
-     */
+    /** A failed structural check contributes nothing rather than failing the whole run: the semantic check's findings still stand on their own. */
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
@@ -257,7 +221,7 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(structuralIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
-            return toGenericConsistencyIssue(structuralIssuesResponse.entity());
+            return toConsistencyIssues(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             child.error(e);
@@ -269,14 +233,7 @@ public class HyperionConsistencyCheckService {
         }
     }
 
-    /**
-     * Run the semantic consistency prompt. Returns empty list on any exception.
-     *
-     * @param input          prompt variables (rendered_context, programming_language, existing_review_threads)
-     * @param parentObs      parent observation for tracing
-     * @param usageCollector thread-safe list to collect LLM request data
-     * @return semantic issues (never null)
-     */
+    /** A failed semantic check contributes nothing rather than failing the whole run: the structural check's findings still stand on their own. */
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
@@ -293,7 +250,7 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(semanticIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
-            return toGenericConsistencyIssue(semanticIssuesResponse.entity());
+            return toConsistencyIssues(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             child.error(e);
@@ -306,17 +263,9 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Run the verification prompt to filter false positives, deduplicate overlapping issues from the two checkers,
-     * and improve surviving issues (line numbers, descriptions, category corrections).
+     * Drops false positives, merges the two checkers' duplicates, and sharpens what survives. Handed no issues, it checks the exercise itself and may report its own.
      * <p>
-     * Returns {@code null} on any failure so the caller can fall back to pre-verification results.
-     * When the combined input list is empty, the verifier acts as a standalone consistency check
-     * using only the rendered exercise context.
-     *
-     * @param input          prompt variables (rendered_context, detected_issues_json)
-     * @param parentObs      parent observation for tracing
-     * @param usageCollector list to collect LLM request data
-     * @return verified immutable list of issues, or {@code null} if the call failed
+     * {@code null} distinguishes a failed call, where the caller keeps the unverified issues, from a successful call that rejected every issue.
      */
     private List<ConsistencyIssue> runVerificationCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.verification", observationRegistry).contextualName("verification check")
@@ -331,7 +280,7 @@ public class HyperionConsistencyCheckService {
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
             var entity = verificationResponse.entity();
-            return (entity == null || entity.issues == null) ? List.of() : List.copyOf(entity.issues);
+            return (entity == null || entity.issues() == null) ? List.of() : List.copyOf(entity.issues());
         }
         catch (RuntimeException e) {
             child.error(e);
@@ -343,12 +292,7 @@ public class HyperionConsistencyCheckService {
         }
     }
 
-    /**
-     * Convert an internal issue record into an outward-facing DTO.
-     *
-     * @param issue internal unified consistency issue
-     * @return DTO for API responses
-     */
+    /** Fills in defaults for the fields a model is free to leave out or spell freely, so that a partially answered issue still reaches the instructor. */
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
         Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
             case "LOW" -> Severity.LOW;
@@ -364,6 +308,7 @@ public class HyperionConsistencyCheckService {
 
     @Nullable
     private String normalizeSuggestedInlineFix(StructuredOutputSchema.ArtifactLocation location) {
+        // An empty replacement is how a deletion is expressed downstream, and is distinct from null, which means there is no inline fix to apply at all.
         if (location.inlineFixOperation() == StructuredOutputSchema.InlineFixOperation.DELETE) {
             return "";
         }
@@ -371,48 +316,33 @@ public class HyperionConsistencyCheckService {
         return suggestedInlineFix == null || suggestedInlineFix.isBlank() ? null : suggestedInlineFix;
     }
 
-    /**
-     * Normalize structural issue structured output schema to internal issue representations.
-     *
-     * @param structuralIssues parsed structural model output
-     * @return immutable list of issues
-     */
-    private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.StructuralConsistencyIssues structuralIssues) {
-        if (structuralIssues == null || structuralIssues.issues == null) {
+    private List<ConsistencyIssue> toConsistencyIssues(StructuredOutputSchema.StructuralConsistencyIssues structuralIssues) {
+        if (structuralIssues == null || structuralIssues.issues() == null) {
             return List.of();
         }
-        return structuralIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+        return structuralIssues.issues().stream().map(issue -> new ConsistencyIssue(issue.severity(),
                 issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
                 .toList();
     }
 
-    /**
-     * Normalize semantic issue structured output schema to internal issue representations.
-     *
-     * @param semanticIssues parsed semantic model output
-     * @return immutable list of issues
-     */
-    private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.SemanticConsistencyIssues semanticIssues) {
-        if (semanticIssues == null || semanticIssues.issues == null) {
+    private List<ConsistencyIssue> toConsistencyIssues(StructuredOutputSchema.SemanticConsistencyIssues semanticIssues) {
+        if (semanticIssues == null || semanticIssues.issues() == null) {
             return List.of();
         }
-        return semanticIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+        return semanticIssues.issues().stream().map(issue -> new ConsistencyIssue(issue.severity(),
                 issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
                 .toList();
     }
 
-    // Unified consistency issue used internally after parsing
+    /** The internal issue shape, and at the same time the schema the verifier answers in, so a field added here is a field the verifier may fill. */
     private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
     }
 
-    // TODO: try to use records instead of static classes
-    // Grouped structured output schema for parsing AI responses
+    /** The response schemas the models are held to. Each checker gets only the categories it is responsible for, so it cannot report outside its remit. */
     private static class StructuredOutputSchema {
 
-        private static class StructuralConsistencyIssues {
-
-            public List<StructuralConsistencyIssue> issues = List.of();
+        private record StructuralConsistencyIssues(List<StructuralConsistencyIssue> issues) {
         }
 
         private enum StructuralConsistencyIssueCategory {
@@ -423,9 +353,7 @@ public class HyperionConsistencyCheckService {
                 List<ArtifactLocation> relatedLocations) {
         }
 
-        private static class SemanticConsistencyIssues {
-
-            public List<SemanticConsistencyIssue> issues = List.of();
+        private record SemanticConsistencyIssues(List<SemanticConsistencyIssue> issues) {
         }
 
         private enum SemanticConsistencyIssueCategory {
@@ -436,10 +364,8 @@ public class HyperionConsistencyCheckService {
                 List<ArtifactLocation> relatedLocations) {
         }
 
-        /** Unified schema covering all 6 categories — used exclusively by the verifier. */
-        private static class UnifiedConsistencyIssues {
-
-            public List<ConsistencyIssue> issues = List.of();
+        /** The verifier judges both checkers' findings, so unlike them it may use any category. */
+        private record UnifiedConsistencyIssues(List<ConsistencyIssue> issues) {
         }
 
         private enum InlineFixOperation {

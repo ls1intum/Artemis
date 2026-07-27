@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion problem statement features (generation, refinement, rewrite, and consistency check).
+ * REST controller for the Hyperion problem statement features: generation, refinement, rewrite, checklist analysis, and consistency check.
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -94,13 +94,12 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/consistency-check: Check the consistency of a programming exercise.
-     * Returns a JSON body with the issues (can be empty list).
+     * POST programming-exercises/{exerciseId}/consistency-check : check the consistency of a programming exercise.
      *
      * @param exerciseId        the id of the programming exercise to check
-     * @param skipThreadContext if {@code true}, skips injecting existing review-thread context into the AI prompts
-     *                              and skips creating new review-comment threads after the check (default: {@code false})
-     * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
+     * @param skipThreadContext runs the check in isolation so it can be judged on its own merits: earlier findings stay out of the prompts, and this run's findings are not turned
+     *                              into review threads
+     * @return the issues found, possibly none
      */
     @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
@@ -124,11 +123,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/rewrite: Rewrite a problem statement for a course context.
+     * POST courses/{courseId}/problem-statements/rewrite : rewrite a problem statement in the context of the given course.
      *
-     * @param courseId the id of the course the problem statement belongs to
-     * @param request  the request containing the original problem statement text
-     * @return the ResponseEntity with status 200 (OK) and the rewritten problem statement or an error status
+     * @param courseId the course whose title and description frame the rewrite
+     * @param request  the original problem statement text
+     * @return the rewritten problem statement
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/rewrite")
@@ -140,11 +139,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise in the given course.
+     * POST courses/{courseId}/problem-statements/generate : generate a draft problem statement for a programming exercise in the given course.
      *
-     * @param courseId the id of the course the problem statement belongs to
-     * @param request  the request containing the user prompt
-     * @return the ResponseEntity with status 200 (OK) and the generated draft problem statement or an error status
+     * @param courseId the course whose title and description frame the draft
+     * @param request  the instructor's brief
+     * @return the draft problem statement together with any non-blocking hygiene warnings about it
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/generate")
@@ -157,13 +156,14 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
-     * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
-     * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
+     * POST courses/{courseId}/checklist-analysis : analyse a problem statement for competencies, difficulty, and quality.
+     * <p>
+     * The three analyses run as concurrent LLM calls inside the service; joining them on the request thread costs nothing because Artemis serves requests on virtual threads.
      *
-     * @param courseId the id of the course
-     * @param request  the request containing problem statement, metadata, and an optional exerciseId
-     * @return the checklist analysis result
+     * @param courseId the course the analysis is scoped to
+     * @param request  the problem statement and its metadata, plus the exercise it belongs to if it is already persisted
+     * @return the analysis of all three sections
+     * @throws BadRequestAlertException if the request names an exercise that belongs to a different course
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis")
@@ -176,13 +176,13 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist (competencies, difficulty, or quality).
-     * Blocking here is acceptable because Artemis runs on virtual threads.
+     * POST courses/{courseId}/checklist-analysis/sections/{section} : re-run a single section of the checklist analysis.
      *
-     * @param courseId the id of the course
-     * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
-     * @param request  the request containing problem statement and metadata
-     * @return the analysis response with only the requested section populated
+     * @param courseId the course the analysis is scoped to
+     * @param section  the section to analyse
+     * @param request  the problem statement and its metadata, plus the exercise it belongs to if it is already persisted
+     * @return the analysis with only the requested section populated
+     * @throws BadRequestAlertException if the request names an exercise that belongs to a different course
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-analysis/sections/{section}")
@@ -196,10 +196,8 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * Validates that the given exercise belongs to the specified course.
-     *
-     * @param exerciseId the id of the exercise (may be null, in which case no validation is performed)
-     * @param courseId   the id of the course
+     * The course is what the caller's editor rights were checked against, so an exercise id in the body may not point somewhere else. A null id means the problem statement is not
+     * persisted yet and there is nothing to cross-check.
      */
     private void validateExerciseBelongsToCourse(Long exerciseId, long courseId) {
         if (exerciseId != null) {
@@ -212,11 +210,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-actions: Apply an AI-powered checklist action to modify the problem statement.
+     * POST courses/{courseId}/checklist-actions : apply a checklist finding to the problem statement.
      *
-     * @param courseId the id of the course
-     * @param request  the action request containing the action type and context
-     * @return the response containing the updated problem statement
+     * @param courseId the course the action is scoped to
+     * @param request  the action to apply and the context it applies to
+     * @return the updated problem statement
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/checklist-actions")
@@ -228,11 +226,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/refine/global: Refine an existing problem statement using a global prompt.
+     * POST courses/{courseId}/problem-statements/refine/global : refine a whole problem statement against a free-text instruction.
      *
-     * @param courseId the id of the course the problem statement belongs to
-     * @param request  the request containing the original problem statement and user prompt
-     * @return the ResponseEntity with status 200 (OK) and the refined problem statement or an error status
+     * @param courseId the course whose title and description frame the refinement
+     * @param request  the original problem statement and what to change about it
+     * @return the refined problem statement, which is rejected as a bad request if it came back unchanged
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/refine/global")
@@ -245,11 +243,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/refine/targeted: Refine an existing problem statement using targeted instructions.
+     * POST courses/{courseId}/problem-statements/refine/targeted : refine one selected range of a problem statement.
      *
-     * @param courseId the id of the course the problem statement belongs to
-     * @param request  the request containing the original problem statement and inline comments
-     * @return the ResponseEntity with status 200 (OK) and the refined problem statement or an error status
+     * @param courseId the course whose title and description frame the refinement
+     * @param request  the original problem statement, the selected line/column range, and the instruction for it
+     * @return the refined problem statement, which is rejected as a bad request if the range is out of bounds or the text came back unchanged
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/refine/targeted")

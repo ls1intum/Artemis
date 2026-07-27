@@ -103,7 +103,8 @@ public class HyperionExerciseGenerationResource {
      *
      * @param exerciseId the programming exercise id
      * @param request    the request holding the explicit mode and the optional prompt / selected feedback threads
-     * @return 202 Accepted with the started job id the client uses to reattach and stream progress; 409 if a run is already active for the exercise
+     * @return 202 Accepted with the started job id the client uses to reattach and stream progress; 409 if a run is already active for the exercise; 503 if no build agent
+     *         currently has a free sandbox slot
      */
     @PostMapping("programming-exercises/{exerciseId}/generate-exercise")
     @EnforceAtLeastEditorInExercise
@@ -290,11 +291,7 @@ public class HyperionExerciseGenerationResource {
         return !exercise.isReleased() && !hasParticipations && !jobService.hasActiveJob(exercise.getId());
     }
 
-    /**
-     * Rejects a malformed set of selected review-comment thread ids early (the count is already capped by {@code @Size} on the DTO; this rejects null/non-positive ids).
-     *
-     * @param selectedFeedbackThreadIds the ids to validate (may be {@code null} / empty)
-     */
+    /** Complements the {@code @Size} cap on the DTO, which bounds how many ids may be sent but not what they may be. */
     private void validateSelectedFeedbackThreadIds(List<Long> selectedFeedbackThreadIds) {
         if (selectedFeedbackThreadIds == null) {
             return;

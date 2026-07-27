@@ -629,7 +629,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 </Callout>
 
-Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. Problem-statement-only generation and refinement are review-first: proposed changes appear in a diff before you apply them. Whole-exercise generation and adaptation use the automatic persistence workflow described below.
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. Every change they propose is shown in a diff view that you accept or discard, so nothing is applied without your approval. [Whole-exercise generation](#ai-assisted-exercise-generation) works differently and is described further below.
 
 The AI-assisted authoring features are organized into two areas:
 
@@ -678,7 +678,7 @@ To modify a specific portion of the problem statement, select a text region in t
 
 #### Diff View
 
-AI-assisted problem-statement refinements, quality fixes, and difficulty adaptations are presented in a diff view before application. Whole-exercise generation uses a separate informed confirmation, saves only after automated build and grading checks, and then offers exact saved-change review and undo actions in the editor. In the problem-statement diff, the left column shows deletions in red and the right column shows additions in green. You can accept, discard, or toggle between split and inline views.
+Problem statement generation, refinement, quality fixes, and difficulty adaptations are all presented in a diff view before they are applied. The left column shows the current problem statement with deletions highlighted in red, the right column shows the proposed revision with additions highlighted in green, and a summary bar reports the net change. You can accept, discard, or toggle between split and inline views.
 
 <Image
     src={hyperionDiffView}
@@ -735,25 +735,31 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 <Callout variant={CalloutVariant.info}>
 
-    This feature requires the administrator to enable both Hyperion (<code>artemis.hyperion.enabled=true</code>) and whole-exercise generation (<code>artemis.hyperion.exercise-generation.enabled=true</code>) on a Local CI/Local VC setup. It is not available with Jenkins. Starting a run requires at least the <strong>Editor</strong> role.
+    **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**, and only when the administrator has enabled both Hyperion (<code>artemis.hyperion.enabled=true</code>) and whole-exercise generation (<code>artemis.hyperion.exercise-generation.enabled=true</code>). Starting a run requires at least the <strong>Editor</strong> role within the course.
 
 </Callout>
 
-Hyperion can generate or adapt a complete Java Maven programming exercise: problem statement, template, solution, and tests. Output is saved to the exercise's normal repositories after mechanical verification. If automated quality review still finds concerns after the repair attempts, Artemis saves the mechanically valid exercise as **Needs review** instead of discarding the instructor's draft. Review every artifact before release; use review comments and **Adapt exercise** for follow-up changes.
+Hyperion can author a complete Java programming exercise for you — problem statement, template repository, solution repository, and tests — or adapt an existing draft. Unlike the problem statement features above, it does not propose a diff for you to accept. It writes the result into the exercise's own repositories, and only after the automated checks described below have passed.
 
-Because Hyperion writes directly to the repositories, the exercise must still be a draft that no student can reach. Both generation and adaptation require an exercise that:
+Nothing reaches students. Runs are only permitted on unreleased draft exercises, and a run never changes an exercise's dates or release state. What you get back is a draft that you review and release yourself.
 
-- uses **Java** with a **Maven** project type — Gradle and the other languages are not supported;
-- has **no auxiliary repositories**;
-- has **no student participations**; and
-- has a **release date in the future**. An exercise with no release date at all counts as live and is rejected, so set one before starting. For exam exercises the exam start date takes that role.
+#### Requirements
 
-If the exercise is already live, copy it or move its release date before asking Hyperion to rewrite it.
+Because Hyperion writes directly to the repositories, both generation and adaptation require an exercise that:
+
+- uses **Java** with a Maven project type. Other programming languages, Gradle, and the Maven Blackbox project type are not supported.
+- has **no auxiliary repositories**.
+- has **no student participations**.
+- is **not yet available to students**. Artemis looks at the date on which students could first start working: the exercise's start date if it has one, otherwise its release date; for exam exercises, the exam's start date. That date must be set and lie in the future — an exercise with no such date counts as already available and is rejected.
+
+If the exercise is already available to students, copy it or move that date into the future before asking Hyperion to rewrite it.
+
+#### Starting a run
 
 There are two entry points:
 
-- **During exercise creation:** For a new Java programming exercise, choose **Generate with AI**. Artemis creates the exercise and repositories, opens the online editor, and starts generation.
-- **From the online editor:** Describe the exercise requirements in the problem statement, then use **Artemis Intelligence** → **Generate exercise**. For an existing exercise, **Adapt exercise** can apply selected consistency-review feedback plus optional instructions.
+- **During exercise creation:** for a new Java programming exercise, choose **Generate with AI**. Artemis creates the exercise and its repositories, opens the online editor, and starts generation immediately.
+- **From the online editor:** describe the requirements in the problem statement (at least 40 characters), then use **Artemis Intelligence** → **Generate exercise**. For an exercise that already has content, **Adapt exercise…** applies selected review feedback together with any extra instructions you give it.
 
 <Image
     src={hyperionGenerateWithAi}
@@ -762,29 +768,61 @@ There are two entry points:
     caption="Generate with AI action during programming exercise creation"
 />
 
-#### Human Feedback Support
+Save or discard your unsaved editor changes first — a run cannot start on top of them. Artemis then asks you to confirm, restating that verified output is saved automatically. Only one run at a time is possible per exercise.
 
-Use **Apply with AI** on active consistency-review threads to include them in the next adaptation. Resolved, outdated, unrelated, and unauthorized threads are excluded. The adaptation dialog shows the selected findings and accepts additional instructions.
+While a run is in progress, the **AI activity** panel streams its progress and the paths of the files it changes. You can leave the page and come back; reloading reconnects to the running job. You can cancel while Hyperion is still authoring or checking the exercise. Once the automated checks have passed, Artemis finishes saving the verified work rather than discarding it.
+
+<Callout variant={CalloutVariant.warning}>
+
+    Do not edit or push to the exercise repositories while a run is in progress. Artemis makes the online editor read-only and rejects LocalVC pushes over both HTTP and SSH, along with the exercise changes it guards, until the run releases its lock. Do not work around this by changing the repository storage directly.
+
+</Callout>
+
+#### What the automated checks cover
+
+Hyperion only saves to the exercise after a verification run confirms that:
+
+- the reference solution passes the generated tests,
+- the template fails the tests it is meant to fail,
+- every task in the problem statement resolves to real test cases, and
+- the protected test-harness files are unchanged.
+
+These are mechanical checks: they establish that the exercise builds and grades coherently. They say nothing about whether it teaches what you intended, sits at the right difficulty, or covers everything you asked for. A separate automated quality review looks at those questions, but its findings are advisory — they never block a mechanically sound exercise from being saved.
+
+#### Reviewing and undoing the result
+
+A run that neither fails nor is cancelled finishes with one of three outcomes, shown in the activity panel.
+
+**Saved.** The exercise passed the mechanical checks and the quality review raised nothing that needs your attention. Review it before releasing it.
+
+**Needs review.** The exercise passed the same mechanical checks and was saved, but the quality review either raised concerns or could not run. This is a valid authoring candidate that needs your judgement — not a broken exercise. The findings are attached as review comments in the editor. Read them, then keep the exercise as it is, edit it yourself, or run **Adapt exercise…** against the findings. Artemis deliberately saves a mechanically valid exercise rather than discarding your draft over an advisory finding.
+
+**Not fully saved.** The run stopped part-way through saving, so some changes may already be in the exercise and others not. Inspect every repository and the problem statement before editing further. Undo is not available in this state.
+
+**Review saved changes** opens the exercise version history for the problem statement, or the exact commit Hyperion created for the solution, template, and tests repositories.
+
+A run that saved successfully offers **Undo generation** or **Undo adaptation**, which restores the problem statement and the repositories to the commits captured before the run started. Undo is one-way: you cannot get the generated version back afterwards. It is also temporary, and stops being offered once:
+
+- a repository has changed since the run — undo refuses to overwrite a commit that is no longer the one Hyperion created;
+- the next run starts writing;
+- a week has passed; or
+- the Artemis server that recorded it restarts, on a single-node deployment.
+
+So review the result promptly, and undo promptly if you are going to.
+
+#### Steering a run with review comments
+
+Use **Apply with AI** on an open [review comment](#review-comments) thread to include it in the next adaptation. The action is offered on consistency-review threads in the template, solution, and tests repositories; resolved and outdated threads, and threads on other exercises, are excluded.
 
 <Image src={hyperionApplyWithAi} alt="Apply with AI button in a review thread" size={ImageSize.large} caption="Apply with AI action in a review thread" />
+
+Selected threads are tagged, and the action changes to **Remove Selection**.
 
 <Image src={hyperionSelectionTag} alt="Review thread selected for exercise adaptation" size={ImageSize.large} caption="Selected review thread indicator" />
 
 <Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
 
-Before a manually started generation or adaptation, Artemis explains that mechanically verified output is saved automatically. The activity panel streams progress and changed-file paths. After persistence, **Review saved changes** opens the problem-statement version history or the exact Hyperion commit diff for each touched repository. A reload reconnects to the retained job state. You can cancel while Hyperion is authoring or checking the exercise; once mechanical verification has completed, Artemis finishes saving the verified work instead of discarding it.
-
-Hyperion saves generated content to the exercise's normal branch only after an authoritative mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness. Quality findings are shown as **Needs review**, but the mechanically valid result remains available in the exercise so the instructor can inspect it, leave review comments, adapt it again, or revert the generation.
-
-A `PARTIAL` result means the run stopped part-way through saving: some changes may already be live and others not. Inspect every repository and the problem statement before editing further, and expect undo to be unavailable.
-
-A successfully persisted generation or adaptation offers **Undo generation** or **Undo adaptation**, provided the repositories have not changed again — undo refuses to overwrite a commit that is no longer the one Hyperion created. Undo restores the captured pre-run commits and problem statement. The offer expires: it is dropped after a week, when the next run starts writing, and if the server that recorded it is restarted on a single-node deployment. Review and undo promptly when needed.
-
-<Callout variant={CalloutVariant.warning}>
-
-    Do not edit or push to the exercise repositories while generation is running. Artemis makes the online editor read-only and rejects LocalVC HTTP/SSH pushes and guarded programming-exercise mutations until the run releases its mutation slot. Do not bypass Artemis by changing repository storage directly.
-
-</Callout>
+**Adapt exercise…** then lists the selected findings and lets you add free-form instructions alongside them.
 
 ### Review Comments
 
