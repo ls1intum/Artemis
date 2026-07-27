@@ -2,14 +2,21 @@
     display: block;
 }
 
-/* Fill the panel; the table's own scroll container absorbs horizontal overflow. */
-/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-:host ::ng-deep .p-datatable-table {
-    width: 100%;
+/* Absorbs the horizontal overflow of a too-wide table so it scrolls inside its card rather than widening the page.
+   This replaces the scroll container p-table used to render; `tumUiTable` styles the table but adds no wrapper. */
+.table-scroll {
+    overflow-x: auto;
+}
+
+/* Two-weight separators: the header rule keeps the full content-border token (inherited from the table, see
+   tum-ui-table.directive.scss) while the row rules step back, so the header reads as the stronger divider.
+   Derived from the SAME token via color-mix rather than a lighter surface step, so it stays correct in both
+   themes — lowering the alpha always moves the line toward whatever surface sits behind it, light or dark. */
+tbody td {
+    border-bottom-color: color-mix(in srgb, var(--p-content-border-color) 55%, transparent);
 }
 
 /* Readable width that still shrinks on narrow viewports. */
-// Narrow fixed columns for the selection checkbox and the drag handle.
 .col-icon {
     width: 2.5rem;
 }
@@ -24,20 +31,10 @@
     min-width: 16rem;
 }
 
-/*
- * Actions column sizing. `width: 100%` makes it greedily take the table's leftover width (after the fixed title/dates
- * columns), so it is responsive: more space (wider viewport / zoomed out) ⇒ wider column ⇒ more buttons fit; less space
- * ⇒ narrower column ⇒ buttons collapse into the ellipsis. `max-width` caps it at the widest button set (a full quiz
- * row) so it never grows into pure whitespace. Buttons are an absolute overlay (exercise-actions.component) so they
- * never inflate the column; overflow:hidden clips anything past it.
- *
- * `min-width` keeps the always-visible part of the overlay on screen. By default that is just the ellipsis trigger
- * (`4rem`), so the column can collapse fully. When a row has quiz lifecycle buttons (which never fold into the ellipsis)
- * the component sets `--actions-min-width` to the widest measured quiz-button + ellipsis width across its rows, so the
- * column shrinks — collapsing every main button into the ellipsis — right down to that point and no further. The table
- * only starts scrolling horizontally (the p-table is [scrollable]) past it, keeping the quiz buttons reachable. The var
- * is left unset when no row has quiz buttons, so the `4rem` default applies and the ellipsis collapses completely.
- */
+// Actions column takes the table's leftover width (capped by max-width), so it widens/narrows responsively and the
+// buttons collapse into the ellipsis as it shrinks. min-width floors that shrinking: the 4rem default lets it collapse
+// to just the ellipsis, but for rows with quiz buttons (which never fold in) the component sets --actions-min-width to
+// the widest quiz-button + ellipsis width, so the table scrolls ([scrollable]) rather than clip them.
 th.col-actions,
 td.col-actions {
     width: 100%;
@@ -49,16 +46,6 @@ td.col-actions {
 
 .col-group-select {
     width: 10rem;
-}
-
-.sort-col {
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-
-    &:hover {
-        background-color: var(--surface-100);
-    }
 }
 
 .drag-handle {

@@ -12,30 +12,37 @@
     <ng-template titleBarActions>
         <!-- Create/import/export all route to editor-only workflows; hide them from tutors (who can reach this page). -->
         @if (course()?.isAtLeastEditor) {
-            <p-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (onClick)="openImportModal()">
+            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
-            </p-button>
-            <p-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (onClick)="openQuizExportDialog()">
+            </tum-ui-button>
+            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
                 <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
-            </p-button>
-            <p-button size="small" [attr.data-testid]="'create-exercise-button'" (onClick)="openCreateModal()">
+            </tum-ui-button>
+            <tum-ui-button size="small" [attr.data-testid]="'create-exercise-button'" (clicked)="openCreateModal()">
                 <fa-icon [icon]="faPlus" />
                 <span class="ms-1" jhiTranslate="global.generic.create"></span>
-            </p-button>
+            </tum-ui-button>
         }
     </ng-template>
 
     <ng-template titleBarToolbar>
         <!-- Controls row -->
         <div class="controls d-flex align-items-center gap-2">
-            <p-selectbutton size="small" [options]="viewOptions" [ngModel]="view()" (ngModelChange)="onViewChange($event)" optionValue="value" [allowEmpty]="false">
-                <ng-template #item let-item>
-                    <fa-icon [icon]="item.icon" />
-                    <span class="ms-1 d-none d-md-inline" [jhiTranslate]="item.labelKey"></span>
-                </ng-template>
-            </p-selectbutton>
+            <ng-template #viewItem let-item>
+                <fa-icon [icon]="item.icon" />
+                <span class="ms-1 d-none d-md-inline" [jhiTranslate]="item.labelKey"></span>
+            </ng-template>
+            <tum-ui-select-button
+                size="small"
+                [options]="viewOptions"
+                [ngModel]="view()"
+                (ngModelChange)="onViewChange($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+                [itemTemplate]="viewItem"
+            />
             <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
         </div>
 
@@ -46,7 +53,7 @@
                 <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
                     <div class="d-flex align-items-center gap-2">
                         <span class="text-muted-color small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
-                        <button pButton type="button" severity="secondary" [outlined]="true" size="small" (click)="clearSelection()">
+                        <button tumUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="clearSelection()">
                             <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
                         </button>
                     </div>
@@ -57,14 +64,14 @@
                                 @if (selectionHasGroupMember()) {
                                     <!-- A variant-group member shares the group's timeline; editing it here would desync it, so the
                                          timeline edit is disabled with an explanation. The other bulk actions below stay available. -->
-                                    <span [pTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tooltipPosition="top">
-                                        <button pButton type="button" severity="warn" size="small" [disabled]="true">
+                                    <span [tumUiTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tumUiTooltipPlacement="top">
+                                        <button tumUiButton type="button" severity="warn" size="small" [disabled]="true">
                                             <fa-icon [icon]="faWrench" />
                                             <span jhiTranslate="entity.action.editSelected"></span>
                                         </button>
                                     </span>
                                 } @else {
-                                    <button pButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
+                                    <button tumUiButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
                                         <fa-icon [icon]="faWrench" />
                                         <span jhiTranslate="entity.action.editSelected"></span>
                                     </button>
@@ -73,14 +80,14 @@
                                 @if (course()?.isAtLeastInstructor) {
                                     <jhi-exercise-scores-export-button [exercises]="selectedProgrammingExercises()" />
                                 }
-                                <button pButton type="button" severity="primary" [outlined]="true" size="small" (click)="consistencyCheckSelected()">
+                                <button tumUiButton type="button" severity="primary" variant="outlined" size="small" (click)="consistencyCheckSelected()">
                                     <fa-icon [icon]="faCheckDouble" />
                                     <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                                 </button>
                             }
                             @if (course()?.isAtLeastInstructor) {
                                 <button
-                                    pButton
+                                    tumUiButton
                                     type="button"
                                     severity="danger"
                                     size="small"
@@ -116,24 +123,22 @@
     </ng-template>
 
     @if (loaded() && cards().length === 0) {
-        <p-message severity="secondary">
+        <tum-ui-message severity="secondary">
             <span jhiTranslate="artemisApp.exerciseManagement.noExercisesMatch" [translateValues]="{ search: search() }"></span>
-        </p-message>
+        </tum-ui-message>
     }
     <div class="d-flex flex-column gap-3">
         @for (card of cards(); track card.id) {
             <div class="exercise-card-host">
-                <p-panel [toggleable]="true">
-                    <ng-template pTemplate="header">
-                        <div class="d-flex align-items-center gap-2 w-100">
-                            @if (isGroup() && card.group) {
-                                <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
-                            } @else if (card.icon) {
-                                <fa-icon [icon]="card.icon" [fixedWidth]="true" />
-                            }
-                            <span class="fw-semibold">{{ card.title }} ({{ card.exercises.length }})</span>
-                        </div>
-                    </ng-template>
+                <tum-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
+                    <div tumUiPanelHeader class="d-flex align-items-center gap-2 w-100">
+                        @if (isGroup() && card.group) {
+                            <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
+                        } @else if (card.icon) {
+                            <fa-icon [icon]="card.icon" [fixedWidth]="true" />
+                        }
+                        <span class="fw-semibold">{{ card.title }} ({{ card.exercises.length }})</span>
+                    </div>
 
                     @if (courseId() !== undefined) {
                         <jhi-exercise-table
@@ -203,26 +208,26 @@
                                     }
                                     <fa-icon
                                         [icon]="faCircleInfo"
-                                        [pTooltip]="'artemisApp.exerciseManagement.groupMeta.maxPointsTooltip' | artemisTranslate"
-                                        tooltipPosition="top"
+                                        [tumUiTooltip]="'artemisApp.exerciseManagement.groupMeta.maxPointsTooltip' | artemisTranslate"
+                                        tumUiTooltipPlacement="top"
                                     />
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <p-button severity="warn" [outlined]="true" size="small" (onClick)="openGroupEditModal(card.group.id!)">
+                                <tum-ui-button severity="warn" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
-                                </p-button>
+                                </tum-ui-button>
                                 @if (canDeleteGroups()) {
-                                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="confirmDeleteGroup(card.group)">
+                                    <tum-ui-button severity="danger" variant="outlined" size="small" (clicked)="confirmDeleteGroup(card.group)">
                                         <fa-icon [icon]="faTrash" />
                                         <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.delete"></span>
-                                    </p-button>
+                                    </tum-ui-button>
                                 }
                             </div>
                         </div>
                     }
-                </p-panel>
+                </tum-ui-panel>
             </div>
         }
     </div>
@@ -235,4 +240,15 @@
         (groupCreate)="onAddModalGroupCreate()"
         (exportRequested)="openQuizExportDialog()"
     />
+
+    <!-- Declarative modals (were opened programmatically via DialogService / NgbModal). Each is gated by its data
+         signal where its input is required, so it is only instantiated once the data exists. -->
+    @if (groupEditGroup(); as group) {
+        <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" (saved)="onGroupEditSaved($event)" />
+    }
+    <jhi-consistency-check [(visible)]="showConsistencyCheck" [exercisesToCheck]="consistencyExercises()" />
+    @if (courseId(); as id) {
+        <jhi-quiz-exercise-export [(visible)]="showQuizExport" [courseId]="id" (back)="onQuizExportBack()" />
+    }
+    <jhi-programming-exercise-edit-selected [(visible)]="showEditSelected" [selectedProgrammingExercises]="editSelectedData()" (saved)="onEditSelectedSaved()" />
 }

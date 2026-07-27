@@ -79,54 +79,68 @@
                         <div class="row mt-3">
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
-                                    <label for="difficulty" class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
-                                    <p-select
-                                        inputId="difficulty"
-                                        [options]="difficultyOptions()"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        [ngModel]="quizExercise().difficulty ?? null"
-                                        (ngModelChange)="quizExercise().difficulty = $event ?? undefined; cacheValidation()"
-                                        name="difficulty"
-                                        styleClass="w-100"
-                                        appendTo="body"
-                                    />
+                                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                                    <div class="quiz-toggle-group" role="group" [attr.aria-label]="'artemisApp.exercise.difficulty' | artemisTranslate">
+                                        @for (opt of difficultyOptions(); track opt.label) {
+                                            <button
+                                                type="button"
+                                                class="quiz-toggle-btn"
+                                                [class.quiz-toggle-btn--active]="(quizExercise().difficulty ?? null) === opt.value"
+                                                [class.quiz-toggle-btn--easy]="opt.colorClass === 'easy'"
+                                                [class.quiz-toggle-btn--medium]="opt.colorClass === 'medium'"
+                                                [class.quiz-toggle-btn--hard]="opt.colorClass === 'hard'"
+                                                [attr.aria-pressed]="(quizExercise().difficulty ?? null) === opt.value"
+                                                (click)="quizExercise().difficulty = opt.value ?? undefined; cacheValidation()"
+                                            >
+                                                {{ opt.label }}
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
                                     <label
-                                        for="includedInOverallScore"
-                                        class="form-control-label"
+                                        class="form-control-label label--truncate"
                                         jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}LabelShort"
                                     ></label>
-                                    <p-select
-                                        inputId="includedInOverallScore"
-                                        [options]="isExamMode() ? scoreOptionsExam() : scoreOptionsCourse()"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        [(ngModel)]="quizExercise().includedInOverallScore"
-                                        (ngModelChange)="includedInOverallScoreChange($event)"
-                                        name="includedInOverallScore"
-                                        styleClass="w-100"
-                                        appendTo="body"
-                                    />
+                                    <div
+                                        class="quiz-toggle-group"
+                                        role="group"
+                                        [attr.aria-label]="
+                                            'artemisApp.quizExercise.includedInOverallScore' + (quizExercise().course ? 'Course' : 'Exam') + 'LabelShort' | artemisTranslate
+                                        "
+                                    >
+                                        @for (opt of isExamMode() ? scoreOptionsExam() : scoreOptionsCourse(); track opt.label) {
+                                            <button
+                                                type="button"
+                                                class="quiz-toggle-btn"
+                                                [class.quiz-toggle-btn--active]="quizExercise().includedInOverallScore === opt.value"
+                                                [attr.aria-pressed]="quizExercise().includedInOverallScore === opt.value"
+                                                (click)="includedInOverallScoreChange(opt.value)"
+                                            >
+                                                {{ opt.label }}
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
-                                    <label for="randomizeOrder" class="form-control-label" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
-                                    <p-select
-                                        inputId="randomizeOrder"
-                                        [options]="randomizeOptions()"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        [(ngModel)]="quizExercise().randomizeQuestionOrder"
-                                        (ngModelChange)="cacheValidation()"
-                                        name="randomizeOrder"
-                                        styleClass="w-100"
-                                        appendTo="body"
-                                    />
+                                    <label class="form-control-label label--truncate" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
+                                    <div class="quiz-toggle-group" role="group" [attr.aria-label]="'artemisApp.quizExercise.randomizeQuestionOrder' | artemisTranslate">
+                                        @for (opt of randomizeOptions(); track opt.label) {
+                                            <button
+                                                type="button"
+                                                class="quiz-toggle-btn"
+                                                [class.quiz-toggle-btn--active]="quizExercise().randomizeQuestionOrder === opt.value"
+                                                [attr.aria-pressed]="quizExercise().randomizeQuestionOrder === opt.value"
+                                                (click)="quizExercise().randomizeQuestionOrder = opt.value; cacheValidation()"
+                                            >
+                                                {{ opt.label }}
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -17,26 +17,26 @@
         </span>
     }
     <button
-        pButton
+        tumUiButton
         type="button"
         severity="secondary"
+        variant="outlined"
         size="small"
-        [outlined]="true"
         class="action-more"
         [class.d-none]="!hasOverflow()"
-        (click)="toggleMenu($event)"
+        [tumUiPopoverTrigger]="menu"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>
-    <p-popover #menu appendTo="body">
+    <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
         <div class="action-menu d-flex flex-column gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
         </div>
-    </p-popover>
+    </tum-ui-popover>
 </div>
 
 <!-- Placement happens server-side in FINALIZING; (variantAdded) bubbles up to course-management-exercises,
@@ -52,14 +52,17 @@
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {
         @case ('delete') {
+            <!-- No tooltip on the disabled state here: a disabled native button swallows pointer events. The link
+                 branch below can show one because it keeps pointer-events enabled. -->
             <button
-                pButton
+                tumUiButton
                 jhiDeleteButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [renderButtonText]="false"
                 [renderButtonStyle]="false"
                 [severity]="action.severity"
                 size="small"
+                [disabled]="!!action.disabled"
                 [entityTitle]="exercise().title!"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                 [fetchEntitySummary]="deletionSummary()"
@@ -77,7 +80,7 @@
         }
         @case ('button') {
             <button
-                pButton
+                tumUiButton
                 type="button"
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [severity]="action.severity"
@@ -91,7 +94,7 @@
         }
         @default {
             <a
-                pButton
+                tumUiButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [routerLink]="action.disabled ? undefined : action.link"
                 [severity]="action.severity"
@@ -102,8 +105,8 @@
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [pTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
-                tooltipPosition="top"
+                [tumUiTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                tumUiTooltipPlacement="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >
                 <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>

@@ -13,21 +13,17 @@
     overflow-y: auto;
 }
 
-// Callout banner explaining the variant mechanic.
 .variant-callout {
     background-color: color-mix(in srgb, var(--info) 8%, transparent);
     border-left: 4px solid var(--info);
 }
 
-// Responsive grid: fills as many 480px columns as fit, collapsing to one on narrow viewports.
-// 480px chosen so cards are wide enough that PS prose doesn't need horizontal scrolling.
 .variant-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
     gap: 0.75rem;
 }
 
-// Variant card: exercise-header-like layout with a problem statement that expands on hover.
 .variant-card {
     display: flex;
     flex-direction: column;
@@ -38,7 +34,7 @@
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out;
 
-    // Difficulty colour stripe on the left edge; invisible when no difficulty is set.
+    // Difficulty colour stripe on the left edge
     &::before {
         content: '';
         position: absolute;
@@ -85,8 +81,6 @@
         text-decoration: none !important;
     }
 
-    // Problem statement: collapsed with no scrollbar by default; expands and reveals
-    // a scrollbar on card hover so long statements remain accessible without navigation.
     &__ps {
         position: relative;
         max-height: 9rem;
@@ -95,7 +89,6 @@
         transition: max-height 0.35s ease;
         font-size: 0.85rem;
 
-        // Fade-out gradient at the bottom of the PS area (not the full card).
         &::after {
             content: '';
             position: absolute;
@@ -121,8 +114,7 @@
     }
 }
 
-// Scale down heading sizes in the rendered problem statement.
-// ::ng-deep is needed because [innerHTML] content doesn't receive Angular's _ngcontent attributes.
+// Scale down heading sizes in the rendered problem statement
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 :host ::ng-deep .variant-card__ps {
     h1,

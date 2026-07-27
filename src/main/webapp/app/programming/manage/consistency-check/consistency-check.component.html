@@ -1,58 +1,60 @@
-<div class="justify-content-center p-1">
-    <span jhiTranslate="artemisApp.consistencyCheck.text"></span>
-    <br />
-    <small jhiTranslate="artemisApp.consistencyCheck.warning"></small>
-    @if (isLoading()) {
-        <div class="d-flex justify-content-center m-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
+<tum-ui-dialog [(visible)]="visible" [header]="'artemisApp.consistencyCheck.title' | artemisTranslate" [modal]="true" [closable]="true" [closeOnEscape]="true">
+    <div class="justify-content-center p-1">
+        <span jhiTranslate="artemisApp.consistencyCheck.text"></span>
+        <br />
+        <small jhiTranslate="artemisApp.consistencyCheck.warning"></small>
+        @if (isLoading()) {
+            <div class="d-flex justify-content-center m-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden" jhiTranslate="loading"></span>
+                </div>
             </div>
-        </div>
-    } @else {
-        <div class="mt-3 text-center">
-            @if (inconsistencies().length) {
-                <div>
-                    <span class="h1 text-danger"><fa-icon [icon]="faTimes" /></span>
-                    <br />
-                    <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound"></span>
-                </div>
-            } @else {
-                <div>
-                    <span class="h1 text-success"><fa-icon [icon]="faCheck" /></span>
-                    <br />
-                    <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies"></span>
-                </div>
-            }
-        </div>
-    }
-    @if (!isLoading() && inconsistencies().length) {
-        <div class="table-responsive p-1 my-5">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span></th>
-                        <th><span jhiTranslate="artemisApp.consistencyCheck.error.type"></span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (error of inconsistencies(); let index = $index; track index) {
+        } @else {
+            <div class="mt-3 text-center">
+                @if (inconsistencies().length) {
+                    <div>
+                        <span class="h1 text-danger"><fa-icon [icon]="faTimes" /></span>
+                        <br />
+                        <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound"></span>
+                    </div>
+                } @else {
+                    <div>
+                        <span class="h1 text-success"><fa-icon [icon]="faCheck" /></span>
+                        <br />
+                        <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies"></span>
+                    </div>
+                }
+            </div>
+        }
+        @if (!isLoading() && inconsistencies().length) {
+            <div class="table-responsive p-1 my-5">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>
-                                @if (error.programmingExerciseCourseId !== undefined) {
-                                    <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
-                                        <span>{{ error.programmingExercise!.title }}</span>
-                                    </a>
-                                } @else {
-                                    <span>{{ error.programmingExercise!.title }}</span>
-                                }
-                            </td>
-                            <td>
-                                <span [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></span>
-                            </td>
+                            <th><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span></th>
+                            <th><span jhiTranslate="artemisApp.consistencyCheck.error.type"></span></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+                    </thead>
+                    <tbody>
+                        @for (error of inconsistencies(); let index = $index; track index) {
+                            <tr>
+                                <td>
+                                    @if (error.programmingExerciseCourseId !== undefined) {
+                                        <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
+                                            <span>{{ error.programmingExercise!.title }}</span>
+                                        </a>
+                                    } @else {
+                                        <span>{{ error.programmingExercise!.title }}</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</tum-ui-dialog>

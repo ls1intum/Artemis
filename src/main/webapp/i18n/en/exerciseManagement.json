@@ -3,6 +3,7 @@
         "exerciseManagement": {
             "title": "Exercises",
             "moreActions": "More actions",
+            "programmingFeatureDisabled": "Programming exercises are currently disabled.",
             "action": {
                 "import": "Import",
                 "export": "Export",

@@ -318,7 +318,7 @@ export class CourseScoresComponent implements OnInit {
                 // only exercises marked as included_completely increase the maximum reachable number of points
                 .filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
 
-            // Non-variant exercises: summed up individually (unchanged by variant groups).
+            // Non-variant exercises are summed individually.
             const nonVariantMaxPoints = sum(includedExercisesOfType.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints!));
             // Exercise variants: each group contributes at most its configured maxPoints. Quirk for cross-type groups:
             // each type bucket caps at the full group cap, so the per-type columns can jointly exceed it. Only the
@@ -331,7 +331,7 @@ export class CourseScoresComponent implements OnInit {
         // The overall max caps each group as a whole across all types (summing the per-type maxima would not cap
         // cross-type groups), so compute it over all included exercises directly, mirroring the server-side total.
         const includedCompletelyExercises = includedExercises.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
-        // Non-variant exercises: summed up individually (unchanged by variant groups).
+        // Non-variant exercises are summed individually.
         const nonVariantOverallMaxPoints = sum(includedCompletelyExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints!));
         // Exercise variants: each group contributes at most its configured maxPoints (capped across all exercise types).
         const variantGroupOverallMaxPoints = this.variantGroupCappedPoints(includedCompletelyExercises.map((exercise) => ({ exercise, value: exercise.maxPoints! })));
@@ -527,7 +527,7 @@ export class CourseScoresComponent implements OnInit {
         const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
         for (const exerciseType of this.exerciseTypes) {
             const exercisesOfType = includedExercises.filter((exercise) => exercise.type === exerciseType && student.pointsPerExercise.has(exercise.id!));
-            // Non-variant exercises: summed up individually (unchanged by variant groups).
+            // Non-variant exercises are summed individually.
             const nonVariantPoints = sum(exercisesOfType.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
             // Exercise variants: capped per group at the group's configured maxPoints.
             const variantGroupPoints = this.variantGroupCappedPoints(exercisesOfType.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));
@@ -536,7 +536,7 @@ export class CourseScoresComponent implements OnInit {
         // The overall points cap each group as a whole across all types (summing the per-type sums would not cap
         // cross-type groups), so compute it over all included exercises directly, mirroring the server-side total.
         const overallExercises = includedExercises.filter((exercise) => student.pointsPerExercise.has(exercise.id!));
-        // Non-variant exercises: summed up individually (unchanged by variant groups).
+        // Non-variant exercises are summed individually.
         const nonVariantOverall = sum(overallExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
         // Exercise variants: capped per group (across all exercise types).
         const variantGroupOverall = this.variantGroupCappedPoints(overallExercises.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));
@@ -1139,7 +1139,7 @@ export class CourseScoresComponent implements OnInit {
         const achievedPointsTotal = statistics.map((student) => {
             const participatedExercises = allCourseExercises.filter((exercise) => exercise.id !== undefined && student.pointsPerExercise.has(exercise.id));
             const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
-            // Non-variant exercises: summed up individually (unchanged by variant groups).
+            // Non-variant exercises are summed individually.
             const nonVariantPoints = sum(participatedExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));
             // Exercise variants: capped per group.
             const variantGroupPoints = this.variantGroupCappedPoints(participatedExercises.map((exercise) => ({ exercise, value: pointsAchieved(exercise) })));

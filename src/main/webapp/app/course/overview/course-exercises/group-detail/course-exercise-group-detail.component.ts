@@ -7,9 +7,8 @@ import { faCircleInfo, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { DifficultyLevel, Exercise, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { forkJoin } from 'rxjs';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
@@ -25,7 +24,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',
@@ -40,7 +39,7 @@ import { TooltipModule } from 'primeng/tooltip';
         TranslateDirective,
         ExerciseHeadersInformationComponent,
         InformationBoxComponent,
-        TooltipModule,
+        TumUiTooltipDirective,
     ],
     /* preserveWhitespaces: false is required here because the global tsconfig sets preserveWhitespaces: true,
      * which inserts whitespace text nodes that break [contentComponent] slot matching in jhi-information-box. */
@@ -50,7 +49,7 @@ import { TooltipModule } from 'primeng/tooltip';
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
-    private readonly exerciseService = inject(ExerciseService);
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly plantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
@@ -72,7 +71,8 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly course = signal<Course | undefined>(undefined);
 
     private readonly problemStatements = signal<Map<number, string>>(new Map());
-    private readonly problemStatementsRequested = new Set<number>();
+    /** Groups whose member previews have already been requested, so revisiting a group does not re-fetch them. */
+    private readonly requestedGroupIds = new Set<number>();
 
     protected readonly renderedStatements = signal<Map<number, SafeHtml>>(new Map());
     private plantUmlCallbacks: Array<() => void> = [];
@@ -230,32 +230,36 @@ export class CourseExerciseGroupDetailComponent {
             });
 
         effect(() => {
-            const members = this.group()?.exercises ?? [];
-            const missing = members.filter(
-                (exercise): exercise is Exercise & { id: number } =>
-                    exercise.id !== undefined && exercise.problemStatement === undefined && !this.problemStatementsRequested.has(exercise.id),
-            );
-            if (missing.length === 0) {
+            const group = this.group();
+            const groupId = group?.id;
+            if (group === undefined || groupId === undefined || this.requestedGroupIds.has(groupId)) {
                 return;
             }
-            missing.forEach((exercise) => this.problemStatementsRequested.add(exercise.id));
-            forkJoin(missing.map((exercise) => this.exerciseService.getExerciseDetails(exercise.id)))
+            // The dashboard strips problem statements to stay small, so any member missing one needs the batch preview
+            // request. When every member already carries its statement (e.g. inlined by a caller), there is nothing to do.
+            const needsPreview = (group.exercises ?? []).some((exercise) => exercise.id !== undefined && exercise.problemStatement === undefined);
+            if (!needsPreview) {
+                return;
+            }
+            this.requestedGroupIds.add(groupId);
+            // One lightweight batch request for the whole group instead of one heavyweight exercise-details request per member.
+            this.exerciseVariantGroupService
+                .getProblemStatements(this.courseId, groupId)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
-                    next: (responses) => {
+                    next: (previews) => {
                         const next = new Map(this.problemStatements());
-                        for (const response of responses) {
-                            const exercise = response.body?.exercise;
-                            if (exercise?.id !== undefined && exercise.problemStatement !== undefined) {
-                                next.set(exercise.id, exercise.problemStatement);
+                        for (const preview of previews) {
+                            if (preview.problemStatement !== undefined) {
+                                next.set(preview.exerciseId, preview.problemStatement);
                             }
                         }
                         this.problemStatements.set(next);
                     },
                     error: () => {
-                        // The ids were optimistically marked as requested; release them again so a later change (or
-                        // revisit) can retry the batch instead of leaving the previews permanently blocked.
-                        missing.forEach((exercise) => this.problemStatementsRequested.delete(exercise.id));
+                        // The group was optimistically marked as requested; release it so a later change (or revisit)
+                        // can retry the batch instead of leaving the previews permanently blocked.
+                        this.requestedGroupIds.delete(groupId);
                     },
                 });
         });

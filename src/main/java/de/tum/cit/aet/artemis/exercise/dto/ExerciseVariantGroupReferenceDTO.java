@@ -17,8 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseVariantGroupReferenceDTO(Long id, String title, @Nullable Double maxPoints, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate) {
 
     /**
      * Maps an exercise's variant group for an exercise DTO, or {@code null} when the exercise has no group.
@@ -38,6 +37,6 @@ public record ExerciseVariantGroupReferenceDTO(Long id, String title, @Nullable 
             return null;
         }
         return new ExerciseVariantGroupReferenceDTO(group.getId(), group.getTitle(), group.getMaxPoints(), group.getReleaseDate(), group.getStartDate(), group.getDueDate(),
-                group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), group.getBuildAndTestStudentSubmissionsAfterDueDate());
+                group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate());
     }
 }

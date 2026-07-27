@@ -1,0 +1,21 @@
+// Cell separators. These CANNOT be left to the `[&_thead_th]:border-b` / `[&_tbody_td]:border-b` utilities in
+// the host class list: Bootstrap's Reboot ships an UNLAYERED
+//   thead, tbody, tfoot, tr, td, th { border-color: inherit; border-style: solid; border-width: 0 }
+// while Tailwind's utilities are imported into `@layer utilities` (see tailwind.css). Unlayered CSS always beats
+// layered CSS regardless of specificity, so Reboot's `border-width: 0` erased every separator. p-table was immune
+// because PrimeNG injects its component CSS unlayered. Declaring the width here — from this component's own
+// unlayered stylesheet — restores them, the same fix the generic tum-ui-table already carries in its SCSS.
+
+// Only WIDTH and STYLE live here. The COLOR is deliberately left off: Reboot's `border-color: inherit` resolves
+// up to the <table>, which Tailwind's `@layer base` rule paints `var(--p-content-border-color)` — exactly the
+// token Aura's `datatable.border.color` used, so the separators already match the p-table look.
+
+// Unlike the generic tum-ui-table, the last row keeps its bottom border: that grid drops it so it does not double
+// up with its paginator's top border, whereas this one has no paginator and p-table kept it.
+.tum-ui-table {
+    thead th,
+    tbody td {
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
+}

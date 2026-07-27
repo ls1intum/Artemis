@@ -39,7 +39,6 @@ public record CreateExerciseVariantGroupDTO(@NotBlank @Size(max = 255) String ti
         group.setDueDate(dueDate);
         group.setAssessmentDueDate(assessmentDueDate);
         group.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        group.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
         return group;
     }
 }

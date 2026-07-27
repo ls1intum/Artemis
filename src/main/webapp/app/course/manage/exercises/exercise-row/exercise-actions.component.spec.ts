@@ -5,8 +5,10 @@ import { NgTemplateOutlet } from '@angular/common';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PopoverModule } from 'primeng/popover';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -28,6 +30,8 @@ import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
@@ -67,6 +71,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -75,8 +80,10 @@ describe('ExerciseActionsComponent', () => {
                         RouterLink,
                         NgTemplateOutlet,
                         FaIconComponent,
-                        PopoverModule,
-                        TooltipModule,
+                        TumUiButtonDirective,
+                        TumUiPopoverComponent,
+                        TumUiPopoverTriggerDirective,
+                        TumUiTooltipDirective,
                         ArtemisTranslatePipe,
                         DeleteButtonDirective,
                         QuizLifecycleButtonsStubComponent,
@@ -129,12 +136,22 @@ describe('ExerciseActionsComponent', () => {
             expect(component.mainActions().map((a) => a.id)).not.toContain('re-evaluate');
         });
 
-        it('adds example submissions for modeling and text exercises', () => {
-            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.MODELING }));
+        it('adds example submissions for modeling and text exercises with editor rights', () => {
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.MODELING, isAtLeastEditor: true }));
             expect(component.mainActions().map((a) => a.id)).toContain('examples');
 
-            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING }));
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING, isAtLeastEditor: true }));
             expect(component.mainActions().map((a) => a.id)).not.toContain('examples');
+        });
+
+        it('hides example submissions from tutors but shows them to editors', () => {
+            for (const type of [ExerciseType.TEXT, ExerciseType.MODELING]) {
+                fixture.componentRef.setInput('exercise', textExercise({ type, isAtLeastEditor: false }));
+                expect(component.mainActions().map((a) => a.id)).not.toContain('examples');
+
+                fixture.componentRef.setInput('exercise', textExercise({ type, isAtLeastEditor: true }));
+                expect(component.mainActions().map((a) => a.id)).toContain('examples');
+            }
         });
 
         it('adds edit-in-editor only for programming exercises with editor rights', () => {
@@ -194,6 +211,34 @@ describe('ExerciseActionsComponent', () => {
 
             fixture.componentRef.setInput('exercise', textExercise({ isAtLeastInstructor: false }));
             expect(component.mainActions().map((a) => a.id)).not.toContain('delete');
+        });
+
+        it('disables edit-in-editor and delete while the ProgrammingExercises toggle is off', () => {
+            const featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+            fixture.componentRef.setInput('exercise', textExercise({ type: ExerciseType.PROGRAMMING, isAtLeastEditor: true, isAtLeastInstructor: true }));
+
+            const whileEnabled = component.mainActions();
+            expect(whileEnabled.find((a) => a.id === 'edit-in-editor')?.disabled).toBeUndefined();
+            expect(whileEnabled.find((a) => a.id === 'delete')?.disabled).toBeUndefined();
+
+            featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+
+            const whileDisabled = component.mainActions();
+            const editInEditor = whileDisabled.find((a) => a.id === 'edit-in-editor');
+            expect(editInEditor?.disabled).toBe(true);
+            expect(editInEditor?.disabledTooltip).toBe('artemisApp.exerciseManagement.programmingFeatureDisabled');
+            expect(whileDisabled.find((a) => a.id === 'delete')?.disabled).toBe(true);
+            // Both actions stay in the list rather than being filtered out, so the overflow measurement is unaffected.
+            expect(whileDisabled.map((a) => a.id)).toEqual(expect.arrayContaining(['edit-in-editor', 'delete']));
+        });
+
+        it('leaves non-programming exercises unaffected by the ProgrammingExercises toggle', () => {
+            const featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+            featureToggleService.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false);
+            fixture.componentRef.setInput('exercise', textExercise({ isAtLeastEditor: true, isAtLeastInstructor: true }));
+
+            expect(component.mainActions().find((a) => a.id === 'delete')?.disabled).toBeUndefined();
+            expect(component.mainActions().find((a) => a.id === 'edit')?.disabled).toBeUndefined();
         });
     });
 
@@ -313,8 +358,9 @@ describe('ExerciseActionsComponent', () => {
     });
 
     describe('menu interactions', () => {
-        it('toggleMenu, runAction and closeMenuIfOpen do not throw when the popover is not rendered', () => {
-            expect(() => component['toggleMenu']({} as Event)).not.toThrow();
+        it('runAction and closeMenuIfOpen do not throw when the popover is closed', () => {
+            // The popover renders but is never opened here (no width is measured, so hasOverflow() is false), so
+            // close() is a guarded no-op.
             const action = component.mainActions()[0];
             expect(() => component['runAction'](action)).not.toThrow();
             expect(() => component['closeMenuIfOpen'](true)).not.toThrow();

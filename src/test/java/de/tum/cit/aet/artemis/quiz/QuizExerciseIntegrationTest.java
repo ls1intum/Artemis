@@ -67,10 +67,12 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -153,6 +155,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
     private ExerciseIntegrationTestService exerciseIntegrationTestService;
@@ -514,6 +519,43 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * A variant group owns the shared timeline of its members, but this endpoint applies the request's dates straight onto
+     * the managed entity — so without a server-side guard a stale client or a direct request could desynchronize a member
+     * from its group and change when students can take the quiz. The dates are incidental among many other fields here, so
+     * the server overwrites them from the group rather than rejecting: the rest of the edit still lands.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizExerciseCannotChangeVariantGroupTimeline() throws Exception {
+        // Truncated to milliseconds: the database column's precision would otherwise round these differently than the
+        // in-memory values hold them, and the assertions below compare the two.
+        ZonedDateTime groupRelease = ZonedDateTime.now().plusHours(5).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime groupDue = ZonedDateTime.now().plusDays(2).truncatedTo(ChronoUnit.MILLIS);
+        // Only individual-mode quizzes can be variant group members.
+        QuizExercise quizExercise = createQuizOnServer(groupRelease, groupDue, QuizMode.INDIVIDUAL);
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setReleaseDate(groupRelease);
+        group.setDueDate(groupDue);
+        quizExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        quizExerciseTestRepository.save(quizExercise);
+
+        // Try to move the shared dates, alongside a change the group does not own.
+        quizExercise.setTitle("Renamed variant");
+        quizExercise.setReleaseDate(groupRelease.plusDays(1));
+        quizExercise.setDueDate(groupDue.plusDays(1));
+
+        QuizExercise updated = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        assertThat(updated.getReleaseDate().toInstant()).as("the group's release date wins over the request's").isEqualTo(groupRelease.toInstant());
+        assertThat(updated.getDueDate().toInstant()).as("the group's due date wins over the request's").isEqualTo(groupDue.toInstant());
+        assertThat(updated.getTitle()).as("the rest of the update still applies").isEqualTo("Renamed variant");
+    }
+
+    // The set-visible guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

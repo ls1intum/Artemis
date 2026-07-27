@@ -72,4 +72,21 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     default ExerciseVariantGroup findByIdAndCourseIdWithoutExercisesElseThrow(Long groupId, Long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdAndCourseIdWithoutExercises(groupId, courseId), groupId);
     }
+
+    /**
+     * Resolves the group owning the given exercise, or empty if the exercise is not a variant.
+     * <p>
+     * Navigating from {@code Exercise} in JPQL rather than reading {@link de.tum.cit.aet.artemis.exercise.domain.Exercise#getExerciseVariantGroup()}
+     * is deliberate: that association is {@code LAZY} and {@code spring.jpa.open-in-view} is disabled, so the exercise is
+     * already detached by the time an update resource needs the owning group's timeline.
+     *
+     * @param exerciseId the id of the (potential) member exercise
+     * @return the owning group, or empty if the exercise has none
+     */
+    @Query("""
+            SELECT e.exerciseVariantGroup
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ExerciseVariantGroup> findByExerciseId(@Param("exerciseId") long exerciseId);
 }

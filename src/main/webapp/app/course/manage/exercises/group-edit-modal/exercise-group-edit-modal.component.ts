@@ -1,36 +1,36 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { InputTextModule } from 'primeng/inputtext';
+import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
- * Content of the group-edit dialog, opened via PrimeNG's {@code DialogService} (see
- * {@code ExerciseGroupTimelineLockComponent.openModal} and {@code CourseManagementExercisesComponent.openGroupEditDialog}).
- * The edited group is passed in through the dialog's {@code inputValues.group}; saving closes the dialog with the updated
- * {@link CourseExerciseGroup} as result, cancelling closes it with {@code undefined}.
+ * Declarative group-edit dialog (rendered from {@code ExerciseGroupTimelineLockComponent} and
+ * {@code CourseManagementExercisesComponent}). The edited group is passed via the {@link group} input and shown while
+ * {@link visible} is true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling
+ * just closes (no event).
  */
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [
         FormsModule,
-        InputTextModule,
+        TumUiDialogComponent,
+        TumUiInputDirective,
         InputNumberModule,
-        ButtonModule,
-        MessageModule,
-        TooltipModule,
+        TumUiButtonComponent,
+        TumUiMessageComponent,
+        TumUiTooltipDirective,
         FaIconComponent,
         ExerciseTimelineComponent,
         ArtemisTranslatePipe,
@@ -40,12 +40,16 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faCircleXmark = faCircleXmark;
     protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
 
-    /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
+    /** Two-way visibility, driven by the parent. */
+    readonly visible = model<boolean>(false);
+    /** The group being edited, supplied by the parent. */
     readonly group = input.required<CourseExerciseGroup>();
-
-    private readonly dialogRef = inject(DynamicDialogRef);
+    /** Emits the edited group on save (only when something actually changed); cancel/close emit nothing. */
+    readonly saved = output<CourseExerciseGroup>();
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
@@ -54,20 +58,6 @@ export class ExerciseGroupEditModalComponent {
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
-    readonly draftBuildAndTestStudentSubmissionsAfterDueDate = signal<dayjs.Dayjs | undefined>(undefined);
-
-    /**
-     * The build-and-test date only exists on programming exercises, so it is offered only when it can matter: the group
-     * has a programming member, the date is already set, or the membership is unknown (the timeline-lock path opens this
-     * dialog with a group built from the embedded reference, which carries no member list — keep the field rather than
-     * hide one the group may need).
-     */
-    private readonly showBuildAndTestDate = computed(() => {
-        const g = this.group();
-        return (
-            g.exercises === undefined || g.exercises.some((exercise) => exercise.type === ExerciseType.PROGRAMMING) || g.buildAndTestStudentSubmissionsAfterDueDate !== undefined
-        );
-    });
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
@@ -76,9 +66,6 @@ export class ExerciseGroupEditModalComponent {
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
         ];
-        if (this.showBuildAndTestDate()) {
-            items.push({ kind: 'optional', labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate', date: this.draftBuildAndTestStudentSubmissionsAfterDueDate });
-        }
         items.push(
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
             {
@@ -114,7 +101,6 @@ export class ExerciseGroupEditModalComponent {
             this.draftDueDate.set(toDayjs(g.dueDate));
             this.draftAssessmentDueDate.set(toDayjs(g.assessmentDueDate));
             this.draftExampleSolutionPublicationDate.set(toDayjs(g.exampleSolutionPublicationDate));
-            this.draftBuildAndTestStudentSubmissionsAfterDueDate.set(toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate));
         });
     }
 
@@ -128,14 +114,16 @@ export class ExerciseGroupEditModalComponent {
             dueDate: this.draftDueDate(),
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
-            buildAndTestStudentSubmissionsAfterDueDate: this.draftBuildAndTestStudentSubmissionsAfterDueDate(),
         };
-        // Nothing edited: close with no result so the openers treat it as a cancel and skip the persistence call.
-        this.dialogRef.close(this.isUnchanged(updated) ? undefined : updated);
+        // Nothing edited: close without a `saved` event so the openers skip the persistence call, same as a cancel.
+        if (!this.isUnchanged(updated)) {
+            this.saved.emit(updated);
+        }
+        this.visible.set(false);
     }
 
     onCancel(): void {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 
     /** True when the drafted values match the original group (dates compared as dayjs, accounting for the string inputs). */
@@ -148,8 +136,7 @@ export class ExerciseGroupEditModalComponent {
             datesEqual(updated.startDate, toDayjs(g.startDate)) &&
             datesEqual(updated.dueDate, toDayjs(g.dueDate)) &&
             datesEqual(updated.assessmentDueDate, toDayjs(g.assessmentDueDate)) &&
-            datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate)) &&
-            datesEqual(updated.buildAndTestStudentSubmissionsAfterDueDate, toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate))
+            datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate))
         );
     }
 }

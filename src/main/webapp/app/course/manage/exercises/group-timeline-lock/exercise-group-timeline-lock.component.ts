@@ -1,24 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
-import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Exercise, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
-import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
- * Opens the {@link ExerciseGroupEditModalComponent} for an exercise that belongs to a variant group. The exercise edit
- * forms render their timeline date pickers as read-only "locked-to-group" fields (see {@code FormDateTimePickerComponent}):
- * clicking one calls {@link openModal}, which opens the group-edit dialog through PrimeNG's {@link DialogService}.
- * Saving persists the group's timeline via {@link ExerciseVariantGroupService} and re-emits the exercise with the
- * group's (now shared) dates applied so the form reflects them without a reload.
+ * Opens the {@link ExerciseGroupEditModalComponent} for a grouped exercise: the edit form renders its timeline pickers as
+ * read-only "locked-to-group" fields, and clicking one calls {@link openModal}. Saving persists the group's timeline via
+ * {@link ExerciseVariantGroupService} and re-emits the exercise with the shared dates applied, so the form refreshes without a reload.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
-    template: '',
+    template: `@if (locked()) {
+        <jhi-exercise-group-edit-modal [(visible)]="showModal" [group]="group()" (saved)="onSave($event)" />
+    }`,
+    imports: [ExerciseGroupEditModalComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupTimelineLockComponent {
@@ -30,7 +28,9 @@ export class ExerciseGroupTimelineLockComponent {
 
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
+
+    /** Visibility of the declarative group-edit modal rendered in this component's template. */
+    readonly showModal = signal(false);
 
     /** True when the exercise belongs to a (persisted) variant group, i.e. its timeline is group-governed. */
     readonly locked = computed(() => this.exercise()?.exerciseVariantGroup?.id !== undefined);
@@ -46,23 +46,7 @@ export class ExerciseGroupTimelineLockComponent {
         if (!this.locked()) {
             return;
         }
-        const dialogRef = this.dialogService.open(ExerciseGroupEditModalComponent, {
-            inputValues: { group: this.group() },
-            width: '780px',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            // Reactive title that re-translates on a language switch (a plain `header` string would not); see DialogTranslateHeaderComponent.
-            data: { headerKey: 'artemisApp.exerciseManagement.groupEdit.header' },
-            templates: { header: DialogTranslateHeaderComponent },
-        });
-        // The modal closes with the updated group on save, or `undefined` on cancel/dismiss.
-        dialogRef?.onClose.subscribe((updated?: CourseExerciseGroup) => {
-            if (updated) {
-                this.onSave(updated);
-            }
-        });
+        this.showModal.set(true);
     }
 
     onSave(updated: CourseExerciseGroup): void {
@@ -90,14 +74,13 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
         dueDate: reference?.dueDate,
         assessmentDueDate: reference?.assessmentDueDate,
         exampleSolutionPublicationDate: reference?.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: reference?.buildAndTestStudentSubmissionsAfterDueDate,
         exercises: [],
     };
 }
 
 /**
- * Returns a new exercise (preserving the prototype, so a fresh reference triggers the host's signal) with the saved
- * group's timeline applied — including unset dates, since a grouped exercise is fully governed by its group's timeline.
+ * Returns a new exercise (preserving the prototype, so a fresh reference triggers the host's signal) with the saved group's
+ * timeline applied, including unset dates, since a grouped exercise is fully governed by its group.
  */
 function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Exercise {
     const updated = Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise) as Exercise;
@@ -106,9 +89,8 @@ function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Ex
     updated.dueDate = dto.dueDate;
     updated.assessmentDueDate = dto.assessmentDueDate;
     updated.exampleSolutionPublicationDate = dto.exampleSolutionPublicationDate;
-    if (updated.type === ExerciseType.PROGRAMMING) {
-        (updated as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = dto.buildAndTestStudentSubmissionsAfterDueDate;
-    }
+    // The build-and-test date is not part of the shared timeline: the server re-derives it per programming exercise
+    // from the new due date, so it is left untouched here.
     updated.exerciseVariantGroup = {
         id: dto.id,
         title: dto.title,
@@ -118,7 +100,6 @@ function withGroupTimeline(exercise: Exercise, dto: ExerciseVariantGroupDTO): Ex
         dueDate: dto.dueDate,
         assessmentDueDate: dto.assessmentDueDate,
         exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
     };
     return updated;
 }

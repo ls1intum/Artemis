@@ -24,14 +24,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
@@ -62,17 +68,26 @@ public class ExerciseVariantGroupResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseRepository courseRepository;
+
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private final ExerciseRepository exerciseRepository;
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
-    public ExerciseVariantGroupResource(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public ExerciseVariantGroupResource(CourseRepository courseRepository, ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
+            ExerciseVariantGroupService exerciseVariantGroupService, UserRepository userRepository, AuthorizationCheckService authCheckService) {
+        this.courseRepository = courseRepository;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
+        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -114,8 +129,8 @@ public class ExerciseVariantGroupResource {
         updateDTO.applyTo(group);
         group.validateDates();
         exerciseVariantGroupService.saveWithTimelineAppliedToMembers(group);
-        // Build the response from the loaded entity (its exercises were fetched); save()'s re-merged return value has a
-        // lazy exercises collection that cannot initialize once the session closes (open-in-view is off).
+        // Respond from the loaded entity (its exercises were fetched); the re-merged save() result has a lazy exercises
+        // collection that cannot initialize once the session closes (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
     }
 
@@ -149,6 +164,37 @@ public class ExerciseVariantGroupResource {
     }
 
     /**
+     * GET /courses/:courseId/exercise-variant-groups/:groupId/problem-statements : Get the problem statements of a
+     * group's member exercises in a single request.
+     * <p>
+     * This student-facing endpoint exists so the group detail page can render member previews without issuing one
+     * heavyweight {@code /exercises/{id}/details} request per member (an unbounded fan-out, since group size is not
+     * bounded). Only members the requesting user is allowed to see are returned, mirroring the visibility guard of the
+     * details endpoint: exam exercises are excluded and each member is checked with
+     * {@link AuthorizationCheckService#isAllowedToSeeCourseExercise}, so an unreleased variant's statement is not leaked
+     * to students while teaching assistants and instructors still see it.
+     *
+     * @param groupId  the id of the group whose member problem statements to retrieve
+     * @param courseId the id of the course the group belongs to
+     * @return the ResponseEntity with status 200 (OK) and the list of {@code {exerciseId, problemStatement}} entries
+     */
+    @GetMapping("courses/{courseId}/exercise-variant-groups/{groupId}/problem-statements")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<ExerciseProblemStatementDTO>> getExerciseVariantGroupProblemStatements(@PathVariable Long groupId, @PathVariable Long courseId) {
+        log.debug("REST request to get problem statements of ExerciseVariantGroup {} in course {}", groupId, courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
+        // The members are fetched with a lazy course and open-in-view is off; set the known path course on each so the
+        // visibility check below resolves without a LazyInitializationException and without an extra per-exercise query.
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        group.getExercises().forEach(exercise -> exercise.setCourse(course));
+        List<ExerciseProblemStatementDTO> problemStatements = group.getExercises().stream()
+                .filter(exercise -> !exercise.isExamExercise() && authCheckService.isAllowedToSeeCourseExercise(exercise, user) && exercise.getProblemStatement() != null)
+                .map(exercise -> new ExerciseProblemStatementDTO(exercise.getId(), exercise.getProblemStatement())).toList();
+        return ResponseEntity.ok(problemStatements);
+    }
+
+    /**
      * DELETE /courses/:courseId/exercise-variant-groups/:groupId : Delete an exercise variant group. The aggregated
      * exercises survive and simply lose their group membership (the foreign key is set to null).
      *
@@ -160,9 +206,8 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteExerciseVariantGroup(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to delete ExerciseVariantGroup {} in course {}", groupId, courseId);
-        // Load the group without its members so the ON DELETE SET NULL foreign key (see the Liquibase changelog) can
-        // ungroup them; loading them would make Hibernate's flush fail because managed exercises still reference the
-        // removed group. The members survive, simply ungrouped.
+        // Load the group without its members so the ON DELETE SET NULL FK (see the Liquibase changelog) ungroups them;
+        // loading them would fail Hibernate's flush because managed exercises still reference the removed group. Members survive.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
         exerciseVariantGroupRepository.delete(group);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
@@ -170,12 +215,10 @@ public class ExerciseVariantGroupResource {
 
     /**
      * PUT /courses/:courseId/exercises/:exerciseId/variant-group : Assign an exercise to a variant group, or remove it
-     * from its current group. Membership is edited from the exercise side, so moving an exercise between groups is a
-     * single request.
+     * from its current group. Membership is edited from the exercise side, so moving between groups is a single request.
      * <p>
-     * A group may deliberately mix exercise types (the variants of one task can come in different formats, e.g. a text
-     * and a modeling version). Scoring caps such a group once across all types in the overall course score; only the
-     * per-exercise-type breakdown on the instructor scores page applies the cap per type bucket.
+     * A group may mix exercise types (the same task in different formats). Scoring caps such a group once across all types
+     * in the overall course score; only the per-type breakdown on the instructor scores page caps per type bucket.
      *
      * @param assignmentDTO the target group ({@code groupId == null} removes the exercise from its group)
      * @param exerciseId    the id of the exercise to (re-)assign
@@ -188,8 +231,8 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to assign exercise {} in course {} to variant group {}", exerciseId, courseId, assignmentDTO.groupId());
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
-            // An exam exercise reports its exam's course, so it would pass the ownership check below and be assigned to
-            // a course-owned group, later breaking group timeline updates. Reject it up front.
+            // An exam exercise reports its exam's course, so it would pass the ownership check below and later break group
+            // timeline updates. Reject it up front.
             throw new BadRequestAlertException("Exam exercises cannot be assigned to a variant group", ENTITY_NAME, "examExerciseNotAllowed");
         }
         Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -198,8 +241,8 @@ public class ExerciseVariantGroupResource {
         }
         ExerciseVariantGroup group = assignmentDTO.groupId() == null ? null : exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(assignmentDTO.groupId(), courseId);
         if (group != null && exercise instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
-            // Synchronized/batched quizzes have a single shared run and cannot reasonably share a group timeline with
-            // other variants, so only individual-mode quizzes (which already support per-student dates) may join a group.
+            // Synchronized/batched quizzes have a single shared run, so only individual-mode quizzes (which support
+            // per-student dates) can share a group timeline.
             throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
         }
         exerciseVariantGroupService.assignToGroup(exercise, group);

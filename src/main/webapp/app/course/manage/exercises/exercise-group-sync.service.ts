@@ -58,7 +58,6 @@ export class ExerciseGroupSyncService {
                 dueDate: dto.dueDate,
                 assessmentDueDate: dto.assessmentDueDate,
                 exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-                buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
             };
             for (const id of dto.exerciseIds ?? []) {
                 refByExerciseId.set(id, ref);

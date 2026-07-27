@@ -1,6 +1,4 @@
-// Overlay the (position: relative) actions cell instead of sitting in its flow, so the
-// buttons never contribute to the column's intrinsic width and cannot widen the table.
-// The cell clips us (overflow: hidden).
+// Overlay the (overflow-hidden) actions cell rather than sitting in its flow
 :host {
     position: absolute;
     inset: 0;
@@ -13,18 +11,14 @@
     display: inline-flex;
 }
 
-// Long labels ("Example Submissions", "Re-evaluate", …) must stay on one line. Beyond the visual glitch, the
-// overflow calculation measures each button's natural single-line width: a wrapped button reports a narrower
-// width and would be kept inline when it does not actually fit. Applies to the popover items too — the panel is
-// appended to the body but keeps this component's style encapsulation.
+// Labels stay on one line: the overflow calculation measures each button's single-line width
 button,
 a {
     white-space: nowrap;
 }
 
 // Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
-// Qualified with the element so it outranks PrimeNG's `.p-button` (same specificity, but PrimeNG injects its styles
-// lazily and would otherwise win the tie by order), and min/max-width pin it against the button's own sizing.
+// Qualified with the element so it outranks the kit button's padding utilities on the same host element.
 button.action-more {
     flex: none;
     justify-content: center;
@@ -34,14 +28,12 @@ button.action-more {
     padding-inline: 0;
 }
 
-// The overflow menu renders its panel in the document body (appendTo="body"), so this host never shows anything
-// inline — but as a flex child of the actions row it would still claim one `gap-1` (4px) that the overflow
-// calculation does not know about, eating into the margin that keeps the leftmost button from being clipped.
-p-popover {
+// The popover renders its panel in the overlay container, so this host shows nothing inline — but as a flex child it
+// would still claim a `gap-1` (4px) the overflow calculation doesn't account for, eating into the anti-clip margin.
+tum-ui-popover {
     display: none;
 }
 
-// Keeps the collapsed actions readable in the ellipsis overflow menu.
 .action-menu {
     min-width: 11rem;
 }

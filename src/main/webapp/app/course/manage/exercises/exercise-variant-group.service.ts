@@ -17,8 +17,13 @@ export interface ExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     exerciseIds?: number[];
+}
+
+/** Lightweight preview payload for a group member (mirrors the backend {@code ExerciseProblemStatementDTO}). */
+export interface ExerciseProblemStatementDTO {
+    exerciseId: number;
+    problemStatement?: string;
 }
 
 /** The date fields a group payload carries, as the client holds them. */
@@ -28,7 +33,6 @@ interface GroupDateFields {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 /** The same payload with its dates serialised to the ISO strings the server expects on the wire. */
@@ -43,7 +47,6 @@ export interface CreateExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
-    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 /**
@@ -60,6 +63,14 @@ export class ExerciseVariantGroupService {
 
     getGroupsForCourse(courseId: number): Observable<ExerciseVariantGroupDTO[]> {
         return this.http.get<ExerciseVariantGroupDTO[]>(this.resourceUrl(courseId)).pipe(map((groups) => groups.map((group) => this.convertDatesFromServer(group))));
+    }
+
+    /**
+     * Loads the problem statements of a group's visible members in a single request, so the student group-detail page
+     * can render previews without fanning out one heavyweight exercise-details request per member.
+     */
+    getProblemStatements(courseId: number, groupId: number): Observable<ExerciseProblemStatementDTO[]> {
+        return this.http.get<ExerciseProblemStatementDTO[]>(`${this.resourceUrl(courseId)}/${groupId}/problem-statements`);
     }
 
     createGroup(courseId: number, group: CreateExerciseVariantGroupDTO): Observable<ExerciseVariantGroupDTO> {
@@ -87,17 +98,12 @@ export class ExerciseVariantGroupService {
         group.dueDate = convertDateFromServer(group.dueDate);
         group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
         group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
-        group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
         return group;
     }
 
     /**
-     * Serialises the group's dates into the ISO strings the server expects.
-     *
-     * The result is a request body, not a `T`: `convertDateFromClient` returns a string, so the date fields are no
-     * longer `dayjs.Dayjs`. The previous implementation spread the group into an object literal and still declared `T`
-     * as the return type — TypeScript cannot check that through a generic spread, so the mismatch went unnoticed. The
-     * return type now says what the value actually is.
+     * Serialises the group's dates into the ISO strings the server expects. The result is a request body, not a `T`:
+     * `convertDateFromClient` returns strings, so the date fields are no longer `dayjs.Dayjs` — the return type says so.
      */
     private convertDatesToClient<T extends GroupDateFields>(group: T): WithSerialisedDates<T> {
         const body = Object.assign({}, group) as Record<string, unknown>;
@@ -106,7 +112,6 @@ export class ExerciseVariantGroupService {
         body.dueDate = convertDateFromClient(group.dueDate);
         body.assessmentDueDate = convertDateFromClient(group.assessmentDueDate);
         body.exampleSolutionPublicationDate = convertDateFromClient(group.exampleSolutionPublicationDate);
-        body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate);
         return body as WithSerialisedDates<T>;
     }
 }
@@ -133,7 +138,6 @@ export function toCreateGroupPayload(group: PersistableGroup): CreateExerciseVar
         dueDate: group.dueDate,
         assessmentDueDate: group.assessmentDueDate,
         exampleSolutionPublicationDate: group.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: group.buildAndTestStudentSubmissionsAfterDueDate,
     };
 }
 
@@ -159,7 +163,6 @@ export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesByI
         dueDate: dto.dueDate,
         assessmentDueDate: dto.assessmentDueDate,
         exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-        buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
         exercises: (dto.exerciseIds ?? []).map((id) => exercisesById.get(id)).filter((exercise): exercise is Exercise => exercise !== undefined),
     };
 }

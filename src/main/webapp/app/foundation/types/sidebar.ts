@@ -62,6 +62,13 @@ export interface SidebarCardElement {
      */
     id: string | number;
     /**
+     * Stable identity used as the `@for` tracking key when a card is rendered alongside cards of a different kind that
+     * may share the same numeric {@link id} (e.g. exercise cards vs. variant-group cards, whose ids come from
+     * independent DB sequences). Unlike {@link id}, this is never used for routing, so it can be type-prefixed to stay
+     * unique. Defaults to {@link id} when unset.
+     */
+    trackId?: string | number;
+    /**
      * The subroute under which the component should be rendered that is opened once this sidebar card element is clicked
      */
     targetComponentSubRoute?: string;

@@ -11,7 +11,7 @@ import { InformationBox } from 'app/shared-ui/information-box/information-box.co
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CourseExerciseGroupDetailComponent } from 'app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseProblemStatementDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -59,7 +59,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
         return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference, problemStatement: 'c' } as unknown as Exercise;
     }
 
-    async function setup(exercises: Exercise[], options?: { getExerciseDetails?: () => Observable<HttpResponse<{ exercise: Exercise }>> }): Promise<void> {
+    async function setup(exercises: Exercise[], options?: { getProblemStatements?: () => Observable<ExerciseProblemStatementDTO[]> }): Promise<void> {
         const course = { id: 1, exercises } as Course;
         const route = {
             params: of({ groupId: String(GROUP_ID) }),
@@ -71,7 +71,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(CourseManagementService, { findOneForDashboard: () => of(new HttpResponse({ body: course })) }),
-                MockProvider(ExerciseService, { getExerciseDetails: (options?.getExerciseDetails ?? (() => EMPTY)) as never }),
+                MockProvider(ExerciseVariantGroupService, { getProblemStatements: (options?.getProblemStatements ?? (() => EMPTY)) as never }),
                 MockProvider(EntityTitleService),
                 MockProvider(ProgrammingExercisePlantUmlExtensionWrapper, {
                     subscribeForInjectableElementsFound: () => EMPTY,
@@ -274,28 +274,43 @@ describe('CourseExerciseGroupDetailComponent', () => {
             expect(rendered.get(2)).toBeDefined();
         });
 
-        it('batch-loads missing problem statements from the exercise details endpoint', async () => {
+        it('batch-loads missing problem statements from the group preview endpoint', async () => {
             const reference = { id: GROUP_ID, title: 'Sorting variants' };
             const member = { id: 1, type: ExerciseType.TEXT, exerciseVariantGroup: reference } as unknown as Exercise;
-            const details = of(new HttpResponse({ body: { exercise: { id: 1, type: ExerciseType.TEXT, problemStatement: 'loaded **statement**' } as Exercise } }));
-            await setup([member], { getExerciseDetails: () => details });
+            const previews = of<ExerciseProblemStatementDTO[]>([{ exerciseId: 1, problemStatement: 'loaded **statement**' }]);
+            await setup([member], { getProblemStatements: () => previews });
             fixture.detectChanges();
             await fixture.whenStable();
 
             expect(comp().renderedStatements().get(1)).toBeDefined();
         });
 
-        it('releases requested ids on a failed batch so a retry is possible', async () => {
+        it('issues a single batch request for the whole group instead of one per member', async () => {
+            // The whole point of the endpoint: opening a group must not fan out one detail request per member.
             const reference = { id: GROUP_ID, title: 'Sorting variants' };
-            const member = { id: 1, type: ExerciseType.TEXT, exerciseVariantGroup: reference } as unknown as Exercise;
-            const detailsSpy = vi.fn(() => throwError(() => new Error('boom')));
-            await setup([member], { getExerciseDetails: detailsSpy });
+            const memberIds = [1, 2, 3];
+            const members = memberIds.map((id) => ({ id, type: ExerciseType.TEXT, exerciseVariantGroup: reference }) as unknown as Exercise);
+            const previewsSpy = vi.fn(() => of<ExerciseProblemStatementDTO[]>(memberIds.map((id) => ({ exerciseId: id, problemStatement: `statement ${id}` }))));
+            await setup(members, { getProblemStatements: previewsSpy });
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(detailsSpy).toHaveBeenCalled();
-            const requested = (fixture.componentInstance as unknown as { problemStatementsRequested: Set<number> })['problemStatementsRequested'];
-            expect(requested.has(1)).toBe(false);
+            expect(previewsSpy).toHaveBeenCalledTimes(1);
+            expect(previewsSpy).toHaveBeenCalledWith(1, GROUP_ID);
+            expect(comp().renderedStatements().size).toBe(3);
+        });
+
+        it('releases the requested group on a failed batch so a retry is possible', async () => {
+            const reference = { id: GROUP_ID, title: 'Sorting variants' };
+            const member = { id: 1, type: ExerciseType.TEXT, exerciseVariantGroup: reference } as unknown as Exercise;
+            const previewsSpy = vi.fn(() => throwError(() => new Error('boom')));
+            await setup([member], { getProblemStatements: previewsSpy });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(previewsSpy).toHaveBeenCalled();
+            const requested = (fixture.componentInstance as unknown as { requestedGroupIds: Set<number> })['requestedGroupIds'];
+            expect(requested.has(GROUP_ID)).toBe(false);
         });
     });
 

@@ -28,9 +28,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  * <li>{@link #maxPoints} – the cap on the points the group's variants contribute to the course score,</li>
  * <li>the date fields – a common timeline applied to every variant in the group.</li>
  * </ul>
- * It is owned directly by a {@code Course} (unidirectional {@code Course → ExerciseVariantGroup}); the owning side keeps
- * the {@code course_id} foreign key on this table. Aggregating the exercises is non-owning: the {@link Exercise}s keep
- * their own {@code Course} link and outlive the removal of the group.
+ * Owned directly by a {@code Course} (unidirectional, {@code course_id} FK on this table); the aggregated {@link Exercise}s
+ * are non-owning and outlive the group's removal.
+ * <p>
+ * A {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}'s "build and test student submissions after due
+ * date" is <em>not</em> shared: it is derived per exercise from the due date and build plan, so each member keeps its own.
  */
 @Entity
 @Table(name = "exercise_variant_group")
@@ -40,11 +42,7 @@ public class ExerciseVariantGroup extends DomainObject {
     @Column(name = "title", nullable = false)
     private String title;
 
-    /**
-     * The cap on the points the group contributes to the course score. The points of a student's variants are summed up
-     * and then capped at this value during grade calculation, i.e. the contribution is
-     * {@code min(sum(points of variants), maxPoints)}.
-     */
+    /** Cap on the group's contribution to the course score: {@code min(sum(points of variants), maxPoints)}. */
     @Nullable
     @Column(name = "max_points")
     private Double maxPoints;
@@ -68,14 +66,6 @@ public class ExerciseVariantGroup extends DomainObject {
     @Nullable
     @Column(name = "example_solution_publication_date")
     private ZonedDateTime exampleSolutionPublicationDate;
-
-    /**
-     * Only {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}s have this date; it stays null on
-     * groups containing other exercise types.
-     */
-    @Nullable
-    @Column(name = "build_and_test_student_submissions_after_due_date")
-    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     // Ignore "course" as well to break the Course -> exerciseVariantGroups -> group -> exercises -> exercise.course cycle,
     // mirroring the guard on Course.exercises.
@@ -145,15 +135,6 @@ public class ExerciseVariantGroup extends DomainObject {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
-    @Nullable
-    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
-        return buildAndTestStudentSubmissionsAfterDueDate;
-    }
-
-    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
-        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
-    }
-
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -173,14 +154,10 @@ public class ExerciseVariantGroup extends DomainObject {
     }
 
     /**
-     * Checks whether this group's own timeline fields are internally consistent, mirroring the ordering rules
-     * {@link Exercise#validateDates()} applies to a single exercise (release &lt;= start &lt;= due, assessment due date
-     * not before release or due). {@link #buildAndTestStudentSubmissionsAfterDueDate} is exempt, matching
-     * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}.
-     * <p>
-     * The example solution date only needs to not precede the release date: the group has no
-     * {@link de.tum.cit.aet.artemis.assessment.domain.IncludedInOverallScore}, so the stricter "not before due date" rule
-     * cannot be decided here and is instead enforced per member when the group timeline is applied.
+     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateDates()}
+     * (release &lt;= start &lt;= due, assessment due not before release or due). The example solution date only needs to
+     * follow the release date; the stricter "not before due date" rule depends on {@code IncludedInOverallScore}, which a
+     * group lacks, so it is enforced per member when the timeline is applied.
      *
      * @return {@code true} if the set dates do not contradict each other
      */
@@ -195,10 +172,7 @@ public class ExerciseVariantGroup extends DomainObject {
         //@formatter:on
     }
 
-    /**
-     * Same check as {@link #areDatesValid()}, but throws so callers that persist a group directly (create/update) reject
-     * an inconsistent timeline instead of silently saving a group that no future member exercise could validly join.
-     */
+    /** Like {@link #areDatesValid()}, but throws so create/update callers reject an inconsistent timeline instead of saving it. */
     public void validateDates() {
         if (!areDatesValid()) {
             throw new BadRequestAlertException("The group dates are not valid", "exerciseVariantGroup", "noValidDates");

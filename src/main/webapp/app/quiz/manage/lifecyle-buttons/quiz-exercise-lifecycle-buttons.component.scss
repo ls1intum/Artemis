@@ -1,5 +1,4 @@
-// Keep the lifecycle labels ("Start Quiz", "Set Visible", …) on one line; the actions row reserves a measured
-// width for these buttons, which a wrapped label would silently understate.
+// Keep the lifecycle labels ("Start Quiz", "Set Visible", …) on one line
 button {
     white-space: nowrap;
 }
@@ -7,22 +6,16 @@ button {
 .batch-menu {
     min-width: 15rem;
 
-    // Keeps a long batch list scrollable instead of growing the popover past the viewport.
     &__list {
         max-height: 16rem;
         overflow-y: auto;
     }
 }
 
-// The batch password is a literal value, so it reads as monospace.
 .batch-password {
     font-family: monospace;
 }
 
-// The batch-menu popover renders its panel in the document body (appendTo="body") and is positioned from the Batches
-// button's click event, so its host element is only a viewChild anchor and never shows anything inline. Take it out of
-// the flex flow so it does not sit between the Batches and End buttons and double the gap between them (the flex `gap`
-// would otherwise apply on both sides of this empty host).
-p-popover {
+tum-ui-popover {
     display: none;
 }

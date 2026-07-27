@@ -1,7 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { forkJoin } from 'rxjs';
 
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -12,56 +10,46 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
-
-/** Sentinel the export dialog closes with when the user presses "Back", so the caller can reopen the manage-exercises modal. */
-export const QUIZ_EXPORT_BACK = '__quiz_export_back__';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../../shared/quiz.scss'],
-    imports: [TranslateDirective, FormsModule, FaIconComponent, ButtonModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, ButtonModule, TumUiDialogComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class QuizExerciseExportComponent implements OnInit {
-    private route = inject(ActivatedRoute);
+export class QuizExerciseExportComponent {
     private quizExerciseService = inject(QuizExerciseService);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
-    // Optional injections: this component is opened both as a routed page and via PrimeNG DialogService (as a modal).
-    private dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    private dialogRef = inject(DynamicDialogRef, { optional: true });
+
+    /** Two-way visibility, driven by the parent. */
+    readonly visible = model<boolean>(false);
+    /** Course whose quizzes are offered for export, supplied by the parent. */
+    readonly courseId = input.required<number>();
+    /** Emitted when the user presses "Back", so the caller can reopen the manage-exercises modal. */
+    readonly back = output<void>();
 
     readonly questions = signal<QuizQuestion[]>([]);
-    courseId!: number; // set in ngOnInit() from route params
     readonly course = signal<Course | undefined>(undefined);
     readonly isLoading = signal(false);
 
     protected readonly faArrowLeft = faArrowLeft;
 
-    /** True when this component is shown inside a PrimeNG dialog (vs. as a routed page). */
-    get isDialog(): boolean {
-        return this.dialogRef !== null;
-    }
-
-    /**
-     * Load the quizzes of the course for export on init. The course id is taken from the dialog data when opened as a
-     * modal, otherwise from the route params.
-     */
-    ngOnInit() {
-        const dialogCourseId = this.dialogConfig?.data?.courseId;
-        if (dialogCourseId !== undefined) {
-            this.courseId = dialogCourseId;
-            this.loadForCourse(this.courseId);
-        } else {
-            this.route.params.subscribe((params) => {
-                this.courseId = params['courseId'];
-                this.loadForCourse(this.courseId);
-            });
-        }
+    constructor() {
+        // Load the course's quizzes each time the dialog opens (courseId is already bound by then; read untracked so a
+        // mid-open change doesn't re-trigger), matching the admin declarative-modal pattern.
+        effect(() => {
+            if (this.visible()) {
+                untracked(() => this.loadForCourse(this.courseId()));
+            }
+        });
     }
 
     /**
@@ -123,14 +111,15 @@ export class QuizExerciseExportComponent implements OnInit {
      */
     exportQuiz() {
         this.quizExerciseService.exportQuiz(this.questions(), false);
-        // When shown as a modal, close it once the export has been triggered.
-        this.dialogRef?.close();
+        // Close once the export has been triggered.
+        this.visible.set(false);
     }
 
     /**
-     * Closes the dialog with the {@link QUIZ_EXPORT_BACK} sentinel so the caller can reopen the manage-exercises modal.
+     * Emits {@link back} and closes, so the caller can reopen the manage-exercises modal.
      */
-    back() {
-        this.dialogRef?.close(QUIZ_EXPORT_BACK);
+    onBack() {
+        this.back.emit();
+        this.visible.set(false);
     }
 }

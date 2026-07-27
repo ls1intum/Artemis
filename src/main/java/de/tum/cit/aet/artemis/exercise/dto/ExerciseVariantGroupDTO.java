@@ -17,12 +17,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseVariantGroupDTO(Long id, String title, @Nullable Double maxPoints, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Set<Long> exerciseIds) {
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, Set<Long> exerciseIds) {
 
     public ExerciseVariantGroupDTO(ExerciseVariantGroup group) {
         this(group.getId(), group.getTitle(), group.getMaxPoints(), group.getReleaseDate(), group.getStartDate(), group.getDueDate(), group.getAssessmentDueDate(),
-                group.getExampleSolutionPublicationDate(), group.getBuildAndTestStudentSubmissionsAfterDueDate(),
-                group.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet()));
+                group.getExampleSolutionPublicationDate(), group.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet()));
     }
 }

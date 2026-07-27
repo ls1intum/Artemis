@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -21,7 +21,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 describe('ExerciseGroupEditModalComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupEditModalComponent>;
     let component: ExerciseGroupEditModalComponent;
-    let dialogRef: DynamicDialogRef;
 
     const buildGroup = (overrides?: Partial<CourseExerciseGroup>): CourseExerciseGroup => ({
         id: 1,
@@ -39,16 +38,18 @@ describe('ExerciseGroupEditModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseGroupEditModalComponent],
-            providers: [MockProvider(DynamicDialogRef), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(ExerciseGroupEditModalComponent, {
                 set: {
                     imports: [
                         FormsModule,
-                        InputTextModule,
+                        TumUiDialogComponent,
+                        TumUiInputDirective,
                         InputNumberModule,
-                        ButtonModule,
-                        TooltipModule,
+                        TumUiButtonComponent,
+                        TumUiMessageComponent,
+                        TumUiTooltipDirective,
                         FaIconComponent,
                         ArtemisTranslatePipe,
                         TranslateDirective,
@@ -60,7 +61,6 @@ describe('ExerciseGroupEditModalComponent', () => {
 
         fixture = TestBed.createComponent(ExerciseGroupEditModalComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
     });
 
     it('initializes the drafts from the input group', () => {
@@ -104,50 +104,53 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(component.isSaveDisabled()).toBe(false);
     });
 
-    it('includes the build-and-test date only when the group has a programming member', () => {
-        fixture.componentRef.setInput('group', buildGroup({ exercises: [{ id: 5, type: ExerciseType.TEXT } as Exercise] }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
-
-        fixture.componentRef.setInput('group', buildGroup({ exercises: [{ id: 6, type: ExerciseType.PROGRAMMING } as Exercise] }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
+    // The build-and-test date is derived per programming exercise from its own build plan, so no single group value can be
+    // correct for every member. It is therefore not part of the shared group timeline and must never be offered here.
+    it('never offers the build-and-test date, not even for a group with a programming member', () => {
+        for (const exercises of [[{ id: 5, type: ExerciseType.TEXT } as Exercise], [{ id: 6, type: ExerciseType.PROGRAMMING } as Exercise], undefined]) {
+            fixture.componentRef.setInput('group', buildGroup({ exercises }));
+            fixture.detectChanges();
+            expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        }
     });
 
-    it('includes the build-and-test date when membership is unknown', () => {
-        fixture.componentRef.setInput('group', buildGroup({ exercises: undefined }));
-        fixture.detectChanges();
-        expect(component.timelineItems().map((item) => item.labelStringKey)).toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
-    });
-
-    it('closes the dialog with undefined when saving without any changes', () => {
+    it('closes without emitting saved when saving without any changes', () => {
         fixture.componentRef.setInput('group', buildGroup());
+        fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
 
         component.onSave();
 
-        expect(closeSpy).toHaveBeenCalledWith(undefined);
+        expect(savedSpy).not.toHaveBeenCalled();
+        expect(component.visible()).toBe(false);
     });
 
-    it('closes the dialog with the updated group when a field changed', () => {
+    it('emits the updated group and closes when a field changed', () => {
         fixture.componentRef.setInput('group', buildGroup());
+        fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const saved: unknown[] = [];
+        component.saved.subscribe((group) => saved.push(group));
 
         component.draftTitle.set('Renamed group');
         component.onSave();
 
-        expect(closeSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Renamed group' }));
+        expect(saved).toEqual([expect.objectContaining({ title: 'Renamed group' })]);
+        expect(component.visible()).toBe(false);
     });
 
-    it('closes the dialog with no result on cancel', () => {
+    it('closes without emitting saved on cancel', () => {
         fixture.componentRef.setInput('group', buildGroup());
+        fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
 
         component.onCancel();
 
-        expect(closeSpy).toHaveBeenCalledWith();
+        expect(savedSpy).not.toHaveBeenCalled();
+        expect(component.visible()).toBe(false);
     });
 });

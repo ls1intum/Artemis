@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -26,7 +27,9 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -79,6 +82,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -538,6 +544,55 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
     }
+
+    /**
+     * A variant group owns the shared timeline of its members, but the general update endpoint applies the request's dates
+     * straight onto the managed entity — so without a server-side guard a stale client or a direct request could
+     * desynchronize a member from its group, changing student availability and build scheduling. The dates here are
+     * incidental among many other fields, so the server overwrites them from the group rather than rejecting the request:
+     * the unrelated part of the edit still lands, and the member's timeline self-heals.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExerciseCannotChangeVariantGroupTimeline() throws Exception {
+        addInstructorToCourse();
+        ZonedDateTime groupRelease = ZonedDateTime.now().plusDays(1);
+        ZonedDateTime groupDue = ZonedDateTime.now().plusDays(7);
+        ZonedDateTime groupAssessmentDue = ZonedDateTime.now().plusDays(14);
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setReleaseDate(groupRelease);
+        group.setDueDate(groupDue);
+        group.setAssessmentDueDate(groupAssessmentDue);
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        programmingExercise.setReleaseDate(groupRelease);
+        programmingExercise.setDueDate(groupDue);
+        programmingExercise.setAssessmentDueDate(groupAssessmentDue);
+        // Set explicitly so the update does not additionally exercise the build-and-test offset logic covered above.
+        // The group does not own this date, so it stays with the exercise.
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(groupDue.plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Try to move every shared date, alongside a change the group does not own.
+        programmingExercise.setTitle("Renamed variant");
+        programmingExercise.setReleaseDate(groupRelease.plusDays(2));
+        programmingExercise.setDueDate(groupDue.plusDays(2));
+        programmingExercise.setAssessmentDueDate(groupAssessmentDue.plusDays(2));
+
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+
+        var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(exerciseFromDb.getReleaseDate().toInstant()).as("the group's release date wins over the request's").isCloseTo(groupRelease.toInstant(), within(1, SECONDS));
+        assertThat(exerciseFromDb.getDueDate().toInstant()).as("the group's due date wins over the request's").isCloseTo(groupDue.toInstant(), within(1, SECONDS));
+        assertThat(exerciseFromDb.getAssessmentDueDate().toInstant()).as("the group's assessment due date wins over the request's").isCloseTo(groupAssessmentDue.toInstant(),
+                within(1, SECONDS));
+        assertThat(exerciseFromDb.getTitle()).as("the rest of the update still applies").isEqualTo("Renamed variant");
+    }
+
+    // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     private void addInstructorToCourse() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
@@ -62,9 +64,11 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -72,6 +76,7 @@ public class ProgrammingExercisePartialUpdateResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -91,6 +96,14 @@ public class ProgrammingExercisePartialUpdateResource {
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
+        // The whole point of this endpoint is changing dates, and a variant group owns its members' timeline. Silently
+        // discarding the request would return 200 while doing nothing, so reject it and point the caller at the group.
+        // The guard lives here rather than in updateTimeline(), because ExerciseVariantGroupService calls that service
+        // directly to propagate group dates onto programming members and must not be blocked by its own invariant.
+        if (exerciseVariantGroupService.findOwningGroup(timelineUpdateDTO.id()).isPresent()) {
+            throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
+                    "timelineManagedByVariantGroup");
+        }
         var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(timelineUpdateDTO, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);

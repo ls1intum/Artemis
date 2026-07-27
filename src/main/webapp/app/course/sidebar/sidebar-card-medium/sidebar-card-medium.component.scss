@@ -36,9 +36,8 @@
     border: 1px solid var(--border-color) !important;
 }
 
-// Inside a connected variant group the tiles read as one stack: the group container draws the single outline
-// (see sidebar-accordion), so each tile squares its corners and drops its own border. Owned here rather than
-// reached into from the accordion with ::ng-deep.
+// Inside a connected variant group the group container draws the single outline (see sidebar-accordion), so each tile
+// squares its corners and drops its own border
 :host-context(.sidebar-group--connected) {
     .rounded-3 {
         border-radius: 0 !important;
@@ -49,9 +48,8 @@
     }
 }
 
-// Header card of a connected variant group: a light purple tint marking it as an exercise with several
-// variants, and its 5px left difficulty-stripe slot is hidden so the header text aligns with the nested
-// variant tiles (which keep their own stripes). The purple top stripe lives on the group container.
+// Header card of a connected variant group: light purple tint marking a multi-variant exercise, with the left
+// difficulty-stripe slot hidden so the header text aligns with the nested variant tiles (which keep their stripes).
 .group-header {
     border-left-color: transparent !important;
     background-color: color-mix(in srgb, var(--purple) 4%, var(--module-bg)) !important;
