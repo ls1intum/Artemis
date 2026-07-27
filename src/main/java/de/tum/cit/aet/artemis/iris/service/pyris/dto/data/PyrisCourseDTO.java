@@ -16,8 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 public record PyrisCourseDTO(long id, String name, String description, @Nullable Instant startTime, @Nullable Instant endTime,
         @Nullable ProgrammingLanguage defaultProgrammingLanguage, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, @Nullable Integer maxComplaintTimeDays,
         @Nullable Integer maxRequestMoreFeedbackTimeDays, @Nullable Integer maxPoints, @Nullable Integer presentationScore,
-        @Nullable List<PyrisExerciseWithStudentSubmissionsDTO> exercises, @Nullable List<PyrisExamDTO> exams, @Nullable List<PyrisCompetencyDTO> competencies,
-        @Nullable Boolean studentAnalyticsDashboardEnabled) {
+        @Nullable List<PyrisExerciseWithStudentSubmissionsDTO> exercises, @Nullable List<PyrisExamDTO> exams, @Nullable List<PyrisCompetencyDTO> competencies) {
 
     /**
      * Create a basic PyrisCourseDTO with only id, name, and description.
@@ -25,7 +24,7 @@ public record PyrisCourseDTO(long id, String name, String description, @Nullable
      * @param course The course
      */
     public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription(), null, null, null, null, null, null, null, null, null, null, null, null, null);
+        this(course.getId(), course.getTitle(), course.getDescription(), null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -42,7 +41,6 @@ public record PyrisCourseDTO(long id, String name, String description, @Nullable
 
         return new PyrisCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
                 course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies,
-                course.getStudentCourseAnalyticsDashboardEnabled());
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies);
     }
 }

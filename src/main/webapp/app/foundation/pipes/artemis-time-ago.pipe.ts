@@ -24,7 +24,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
 
     format(date: dayjs.Dayjs) {
         // lastLocale is always assigned in transform() before format() runs; the fallback keeps the type sound for the (unreachable) unset case.
-        return date.locale(this.lastLocale ?? this.translateService.getCurrentLang()).from(this.serverDateService.now(), this.lastOmitSuffix);
+        return date.locale(this.lastLocale ?? this.translateService.getCurrentLang() ?? 'en').from(this.serverDateService.now(), this.lastOmitSuffix);
     }
 
     transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {
@@ -32,7 +32,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
             this.lastTime = getTime(value);
             this.lastValue = value;
             this.lastOmitSuffix = omitSuffix;
-            this.lastLocale = this.translateService.getCurrentLang();
+            this.lastLocale = this.translateService.getCurrentLang() ?? 'en';
             this.formatFn = formatFn || this.format.bind(this);
             this.removeTimer();
             this.createTimer();

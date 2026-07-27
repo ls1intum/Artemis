@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
@@ -7,10 +7,10 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { InputTextModule } from 'primeng/inputtext';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -18,8 +18,6 @@ import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/localci/shar
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -49,10 +47,10 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
     imports: [
         FontAwesomeModule,
         RouterModule,
-        ButtonModule,
-        TagModule,
-        MessageModule,
-        InputTextModule,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiMessageComponent,
+        TumUiInputDirective,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
@@ -63,6 +61,7 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
+        FinishedBuildsFilterModalComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -72,8 +71,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
@@ -158,6 +155,12 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(undefined!);
+
+    /** Controls the visibility of the finished-build-jobs filter dialog */
+    readonly filterModalVisible = signal(false);
+
+    /** Number of applied finished-build-job filters, defaulting to 0 while the filter is not yet initialized */
+    readonly appliedFilterCount = computed(() => this.finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0);
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
@@ -461,24 +464,16 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * When the modal closes with a result, applies the new filter and reloads data.
      */
     openFilterModal() {
-        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
-            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
-            width: '60rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-            data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter(),
-                finishedBuildJobs: this.finishedBuildJobs(),
-            },
-        });
-        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
-            if (result) {
-                this.finishedBuildJobFilter.set(result);
-                this.loadFinishedBuildJobs();
-            }
-        });
+        this.filterModalVisible.set(true);
+    }
+
+    /**
+     * Applies the filter edited in the filter modal and reloads the finished build jobs.
+     * @param result the edited filter returned by the modal
+     */
+    onFilterConfirmed(result: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilter.set(result);
+        this.loadFinishedBuildJobs();
     }
 
     /**

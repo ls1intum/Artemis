@@ -1,5 +1,12 @@
 @if (postingContentPart()?.contentBeforeReference) {
-    <span class="markdown-preview" [innerHTML]="processedContentBeforeReference() | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"></span>
+    <span
+        class="markdown-preview"
+        [jhiMarkdown]="processedContentBeforeReference()"
+        [markdownPosting]="true"
+        [markdownContentBeforeReference]="true"
+        [markdownAllowedTags]="allowedHtmlTags"
+        [markdownAllowedAttributes]="allowedHtmlAttributes"
+    ></span>
 }
 @if (postingContentPart()?.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart()?.linkToReference" [queryParams]="postingContentPart()?.queryParams">
@@ -73,6 +80,10 @@
     <span
         class="markdown-preview"
         style="white-space: pre-wrap"
-        [innerHTML]="processedContentAfterReference() | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"
+        [jhiMarkdown]="processedContentAfterReference()"
+        [markdownPosting]="true"
+        [markdownContentBeforeReference]="false"
+        [markdownAllowedTags]="allowedHtmlTags"
+        [markdownAllowedAttributes]="allowedHtmlAttributes"
     ></span>
 }

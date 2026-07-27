@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarAccordionComponent } from 'app/course/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -24,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SidebarAccordionComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarAccordionComponent;
     let localStorageService: LocalStorageService;
     let fixture: ComponentFixture<SidebarAccordionComponent>;

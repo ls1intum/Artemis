@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FinishedJobsTableComponent } from './finished-jobs-table.component';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
@@ -11,12 +10,10 @@ import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-in
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockComponent } from 'ng-mocks';
+import { ResultComponent } from 'app/exercise/result/result.component';
 
 describe('FinishedJobsTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FinishedJobsTableComponent;
     let fixture: ComponentFixture<FinishedJobsTableComponent>;
 
@@ -86,9 +83,13 @@ describe('FinishedJobsTableComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
-                { provide: DialogService, useClass: MockDialogService },
             ],
             schemas: [NO_ERRORS_SCHEMA],
+        }).overrideComponent(FinishedJobsTableComponent, {
+            // Replace the real ResultComponent (a shared component that injects the global DialogService)
+            // with a mock so this table spec renders without pulling in unrelated providers.
+            remove: { imports: [ResultComponent] },
+            add: { imports: [MockComponent(ResultComponent)] },
         });
 
         await TestBed.compileComponents();

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -14,8 +13,6 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: AttachmentService;
     const resourceUrl = 'api/lecture/attachments';

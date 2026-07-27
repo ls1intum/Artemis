@@ -18,7 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FileService } from 'app/foundation/service/file.service';
 
 export interface LectureAttachmentFormData {
@@ -44,7 +44,7 @@ export interface LectureAttachmentFormData {
         FormDateTimePickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class LectureAttachmentsComponent implements OnDestroy {
@@ -121,7 +121,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
-        this.attachmentToBeUpdatedOrCreated()!.version!++;
         this.attachmentToBeUpdatedOrCreated()!.uploadDate = dayjs();
         this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
         this.attachmentToBeUpdatedOrCreated()!.releaseDate = this.form.value.releaseDate ?? undefined;
@@ -232,10 +231,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return item.id;
     }
 
-    downloadAttachment(downloadName: string, downloadUrl: string): void {
+    downloadAttachment(downloadName: string, downloadUrl: string, version?: number): void {
         if (!this.isDownloadingAttachmentLink()) {
             this.isDownloadingAttachmentLink.set(downloadUrl);
-            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
+            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName, version);
             this.isDownloadingAttachmentLink.set(undefined);
         }
     }

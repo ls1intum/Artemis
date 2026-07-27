@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -35,8 +34,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('ExerciseHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
 
     const submitCallback = vi.fn();

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -15,8 +14,6 @@ import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 
 describe('AttachmentVideoUnitService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;

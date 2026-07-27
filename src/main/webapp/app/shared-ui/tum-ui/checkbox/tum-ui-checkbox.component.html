@@ -1,0 +1,16 @@
+<input
+    type="checkbox"
+    class="tum-ui-checkbox-input"
+    [id]="inputId()"
+    [attr.name]="name()"
+    [checked]="checked()"
+    [disabled]="isDisabled()"
+    [attr.aria-label]="ariaLabel()"
+    (change)="onInputChange($event)"
+    (blur)="onBlur()"
+/>
+<div class="tum-ui-checkbox-box" [class]="boxClasses()" aria-hidden="true">
+    @if (checked()) {
+        <fa-icon [icon]="faCheck" class="tum-ui-checkbox-icon" [class]="iconClasses()" />
+    }
+</div>

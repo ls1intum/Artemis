@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -81,8 +80,6 @@ class MockBreadcrumb {
 }
 
 describe('NavbarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;

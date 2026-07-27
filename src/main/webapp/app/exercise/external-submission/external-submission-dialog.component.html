@@ -6,7 +6,7 @@
         @if (exercise().gradingInstructions) {
             <div class="form-group">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions"></h3>
-                <span [innerHTML]="exercise().gradingInstructions | htmlForMarkdown"></span>
+                <span [jhiMarkdown]="exercise().gradingInstructions"></span>
             </div>
         }
         <div class="form-group">

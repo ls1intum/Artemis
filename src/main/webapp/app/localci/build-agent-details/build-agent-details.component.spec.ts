@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
@@ -19,7 +18,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,8 +25,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('BuildAgentDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildAgentDetailsComponent;
     let fixture: ComponentFixture<BuildAgentDetailsComponent>;
     let activatedRoute: MockActivatedRoute;
@@ -175,7 +171,6 @@ describe('BuildAgentDetailsComponent', () => {
 
     let alertService: AlertService;
     let alertServiceAddAlertStub: ReturnType<typeof vi.spyOn>;
-    let dialogService: DialogService;
     const mockBuildQueueService = {
         getFinishedBuildJobs: vi.fn(),
         getRunningBuildJobs: vi.fn(),
@@ -195,7 +190,6 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 provideHttpClient(),
@@ -208,7 +202,6 @@ describe('BuildAgentDetailsComponent', () => {
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
         activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-        dialogService = TestBed.inject(DialogService);
         router = TestBed.inject(Router) as unknown as MockRouter;
         activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);
@@ -394,20 +387,14 @@ describe('BuildAgentDetailsComponent', () => {
         }
     });
 
-    it('should correctly set filterModal values', () => {
-        const onClose = new Subject<FinishedBuildJobFilter | undefined>();
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+    it('should open the filter modal', () => {
         component.finishedBuildJobs.set(mockFinishedJobs);
         component.buildAgent.set(mockBuildAgent);
         component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
-        fixture.changeDetectorRef.detectChanges();
 
         component.openFilterModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        const dialogConfig = openSpy.mock.calls[0][1] as { data?: { finishedBuildJobFilter?: FinishedBuildJobFilter; finishedBuildJobs?: FinishedBuildJob[] } };
-        expect(dialogConfig?.data?.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
-        expect(dialogConfig?.data?.finishedBuildJobs).toEqual(component.finishedBuildJobs());
+        expect(component.filterModalVisible()).toBeTruthy();
     });
 
     it('should correctly open build log', () => {
@@ -640,32 +627,23 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should apply filter from modal result', () => {
         const newFilter = new FinishedBuildJobFilter('new-address');
-        const onClose = new Subject<FinishedBuildJobFilter | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.buildAgent.set(mockBuildAgent);
         component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
-        fixture.changeDetectorRef.detectChanges();
 
-        component.openFilterModal();
-        onClose.next(newFilter);
+        component.onFilterConfirmed(newFilter);
 
         expect(component.finishedBuildJobFilter()).toEqual(newFilter);
     });
 
     it('should handle modal dismissal gracefully', () => {
-        const onClose = new Subject<FinishedBuildJobFilter | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
         component.buildAgent.set(mockBuildAgent);
         component.finishedBuildJobFilter.set(new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!));
-        fixture.changeDetectorRef.detectChanges();
 
-        // Should not throw
+        // Dismissing the dialog (no confirmation) must leave the filter unchanged.
         component.openFilterModal();
-        onClose.next(undefined);
+        component.filterModalVisible.set(false);
 
-        // Filter should remain unchanged
         expect(component.finishedBuildJobFilter().buildAgentAddress).toBe(mockBuildAgent.buildAgent!.memberAddress);
     });
 
