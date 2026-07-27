@@ -5,14 +5,14 @@ $purple: #8b5cf6;
 .btn-ai-generate {
     background-color: $purple;
     border-color: $purple;
-    color: #fff;
+    color: var(--p-surface-0);
     padding: 0.375rem 1rem;
     border-radius: 0.375rem;
 
     &:hover:not(:disabled) {
-        background-color: #7c3aed;
-        border-color: #7c3aed;
-        color: #fff;
+        background-color: color-mix(in srgb, $purple 80%, black);
+        border-color: color-mix(in srgb, $purple 80%, black);
+        color: var(--p-surface-0);
     }
 
     &:disabled {
@@ -43,21 +43,21 @@ $purple: #8b5cf6;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 2px solid var(--bs-border-color);
+    border: 2px solid var(--p-content-border-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--bs-secondary-color);
-    background: var(--bs-body-bg);
+    color: var(--p-text-muted-color);
+    background: var(--p-content-background);
     transition: all 0.3s ease;
 }
 
 .wiz-step-label {
     margin-top: 0.45rem;
     font-size: 0.7rem;
-    color: var(--bs-secondary-color);
+    color: var(--p-text-muted-color);
     text-align: center;
     transition: color 0.3s ease;
 }
@@ -66,7 +66,7 @@ $purple: #8b5cf6;
     .wiz-step-circle {
         border-color: $purple;
         background: $purple;
-        color: #fff;
+        color: var(--p-surface-0);
         box-shadow: 0 0 0 4px rgba($purple, 0.15);
     }
 
@@ -92,7 +92,7 @@ $purple: #8b5cf6;
 .wiz-step-line {
     flex: 1;
     height: 2px;
-    background: var(--bs-border-color);
+    background: var(--p-content-border-color);
     margin-top: 17px;
     min-width: 20px;
     border-radius: 2px;
@@ -109,16 +109,17 @@ $purple: #8b5cf6;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--bs-tertiary-bg);
-    border: 1px solid var(--bs-border-color);
+    background: var(--p-content-hover-background);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.5rem;
     padding: 0.6rem 0.9rem;
     font-size: 0.875rem;
 
     &__icon {
-        color: #8b5cf6;
+        color: $purple;
         font-size: 1rem;
     }
+
     &__title {
         font-weight: 500;
         flex: 1;
@@ -138,8 +139,8 @@ $purple: #8b5cf6;
     border-radius: 999px;
     font-size: 0.7rem;
     font-weight: 500;
-    background: var(--bs-secondary-bg);
-    color: var(--bs-secondary-color);
+    background: var(--p-content-hover-background);
+    color: var(--p-text-muted-color);
     flex-shrink: 0;
 }
 
@@ -147,6 +148,7 @@ $purple: #8b5cf6;
 
 .option-cards {
     display: grid;
+
     // Four cards (Difficulty, Domain, Storytelling, Custom) in one row — the dialog is widened to 820px for this.
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
@@ -154,12 +156,12 @@ $purple: #8b5cf6;
 
 .option-card {
     position: relative;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     padding: 1.25rem 1rem;
     text-align: center;
     cursor: pointer;
-    background: var(--bs-body-bg);
+    background: var(--p-content-background);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     overflow: hidden;
@@ -208,9 +210,10 @@ $purple: #8b5cf6;
         font-size: 0.87rem;
         margin-bottom: 0.3rem;
     }
+
     p {
         font-size: 0.75rem;
-        color: var(--bs-secondary-color);
+        color: var(--p-text-muted-color);
         line-height: 1.35;
         margin: 0 0 0.75rem;
         flex: 1;
@@ -245,7 +248,7 @@ $purple: #8b5cf6;
 
     &--selected &__icon {
         background: $purple;
-        color: #fff;
+        color: var(--p-surface-0);
     }
 
     &__check {
@@ -256,7 +259,7 @@ $purple: #8b5cf6;
         height: 18px;
         border-radius: 50%;
         background: $purple;
-        color: #fff;
+        color: var(--p-surface-0);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -341,6 +344,7 @@ $purple: #8b5cf6;
     100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.08);
     }
@@ -352,6 +356,7 @@ $purple: #8b5cf6;
         transform: scale(1);
         opacity: 0.35;
     }
+
     50% {
         transform: scale(1.18);
         opacity: 0.1;
@@ -376,20 +381,20 @@ $purple: #8b5cf6;
     padding: 0.6rem 0.75rem;
     font-size: 0.75rem;
     line-height: 1.45;
-    color: var(--bs-secondary-color);
-    background: var(--bs-tertiary-bg);
-    border: 1px solid var(--bs-border-color);
+    color: var(--p-text-muted-color);
+    background: var(--p-content-hover-background);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.5rem;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 // "What the AI did" summary on the result step.
 .step-summary {
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     padding: 0.85rem 1rem;
-    background: var(--bs-body-bg);
+    background: var(--p-content-background);
     font-size: 0.8rem;
 
     &__title {
@@ -405,7 +410,7 @@ $purple: #8b5cf6;
         padding: 0.35rem 0;
 
         &:not(:last-child) {
-            border-bottom: 1px solid var(--bs-border-color-translucent);
+            border-bottom: 1px solid var(--p-content-border-color);
         }
     }
 }
@@ -413,7 +418,7 @@ $purple: #8b5cf6;
 // AI-generated failure post-mortem — plain text with line breaks preserved.
 .instructor-summary-text {
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
     font-size: 0.8rem;
     line-height: 1.5;
 }
@@ -424,7 +429,7 @@ $purple: #8b5cf6;
     gap: 0.75rem;
     padding: 0.45rem 0;
     font-size: 0.875rem;
-    color: var(--bs-secondary-color);
+    color: var(--p-text-muted-color);
     transition: color 0.3s ease;
 
     &__icon {
@@ -435,13 +440,16 @@ $purple: #8b5cf6;
         align-items: center;
         justify-content: center;
     }
+
     &--done {
         color: $purple;
     }
+
     &--active {
-        color: var(--bs-body-color);
+        color: var(--p-text-color);
         font-weight: 500;
     }
+
     &--pending {
         opacity: 0.45;
     }
@@ -467,7 +475,7 @@ $purple: #8b5cf6;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--bs-border-color);
+    background: var(--p-content-border-color);
 }
 
 @keyframes spin {
@@ -482,14 +490,14 @@ $purple: #8b5cf6;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--bs-success);
+    color: var(--success);
     font-weight: 500;
     font-size: 0.9rem;
 
     &__icon {
         width: 1.5rem;
         height: 1.5rem;
-        background: rgba(var(--bs-success-rgb), 0.12);
+        background: color-mix(in srgb, var(--success) 12%, transparent);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -503,16 +511,17 @@ $purple: #8b5cf6;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     padding: 0.7rem 1rem;
-    background: var(--bs-tertiary-bg);
+    background: var(--p-content-hover-background);
     font-size: 0.9rem;
 
     &__icon {
         color: $purple;
         flex-shrink: 0;
     }
+
     &__title {
         font-weight: 600;
         min-width: 0;
@@ -521,12 +530,14 @@ $purple: #8b5cf6;
             color: $purple;
         }
     }
+
     &__arrow {
         color: $purple;
         flex-shrink: 0;
     }
+
     &__pending {
-        color: var(--bs-secondary-color);
+        color: var(--p-text-muted-color);
         letter-spacing: 2px;
         animation: pulse-icon 1.4s ease-in-out infinite;
     }
@@ -543,7 +554,7 @@ $purple: #8b5cf6;
     align-items: flex-start;
     gap: 0.65rem;
     padding: 0.7rem 0.85rem;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.6rem;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -552,6 +563,7 @@ $purple: #8b5cf6;
         border-color: rgba($purple, 0.5);
         background: rgba($purple, 0.03);
     }
+
     &--selected {
         border-color: $purple;
         background: rgba($purple, 0.04);
@@ -562,13 +574,15 @@ $purple: #8b5cf6;
         flex-direction: column;
         gap: 0.15rem;
     }
+
     &__title {
         font-size: 0.875rem;
         font-weight: 500;
     }
+
     &__hint {
         font-size: 0.75rem;
-        color: var(--bs-secondary-color);
+        color: var(--p-text-muted-color);
     }
 }
 
@@ -577,7 +591,7 @@ $purple: #8b5cf6;
 .new-group-settings {
     &__label {
         font-size: 0.7rem;
-        color: var(--bs-secondary-color);
+        color: var(--p-text-muted-color);
         margin-bottom: 0.2rem;
     }
 
@@ -596,16 +610,16 @@ $purple: #8b5cf6;
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
-    background: rgba(var(--bs-warning-rgb), 0.08);
-    border: 1px solid rgba(var(--bs-warning-rgb), 0.3);
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
     border-radius: 0.5rem;
     padding: 0.6rem 0.75rem;
     font-size: 0.8rem;
-    color: var(--bs-body-color);
+    color: var(--p-text-color);
     line-height: 1.4;
 
     &__icon {
-        color: var(--bs-warning);
+        color: var(--warning);
         font-size: 0.85rem;
         flex-shrink: 0;
         margin-top: 0.1rem;
