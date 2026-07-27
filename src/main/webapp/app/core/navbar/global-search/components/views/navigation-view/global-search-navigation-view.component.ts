@@ -21,6 +21,7 @@ import {
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { IrisSearchAvailabilityService } from 'app/core/navbar/global-search/services/iris-search-availability.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
@@ -228,7 +229,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (normalizedBadge === 'quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
-        if (type === 'lecture' || type === 'lecture_unit') {
+        if (type === 'lecture' || type === 'lecture_unit' || type === LECTURE_CONTENT_TYPE) {
             return faBook;
         }
         if (type === 'channel') {

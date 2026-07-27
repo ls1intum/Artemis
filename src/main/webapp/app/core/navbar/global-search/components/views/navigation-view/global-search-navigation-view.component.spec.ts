@@ -200,6 +200,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should return correct icons for other types', () => {
                 expect(component['getIconForType']('lecture')).toBe(faBook);
                 expect(component['getIconForType']('lecture_unit')).toBe(faBook);
+                expect(component['getIconForType']('lecture_content')).toBe(faBook);
                 expect(component['getIconForType']('channel')).toBe(faHashtag);
                 expect(component['getIconForType']('faq')).toBe(faQuestionCircle);
                 expect(component['getIconForType']('exam')).toBe(faCalendarCheck);
