@@ -1,0 +1,53 @@
+// Structure matched to PrimeNG's p-toggleswitch (Aura). The track sizes / radius, the handle size, and the
+// slide come from the Aura `toggleswitch` tokens: track 2.5rem × 1.5rem, radius 30px, handle 1rem circle,
+// gap 0.25rem, slide 0.2s. Colors come from the semantic Tailwind token classes on the host / handle span
+// (see tum-ui-toggle-switch.component.ts); only what utilities can't express lives here.
+:host {
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: 2.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    border-radius: 30px;
+    cursor: pointer;
+    vertical-align: middle;
+    outline-color: transparent;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+}
+
+:host([aria-disabled='true']) {
+    cursor: default;
+}
+
+// Focus ring keyed to the brand var (Aura focus ring: 1px solid primary, offset 2px), same source the kit
+// button + primeng-artemis-theme.ts use.
+:host(:focus-visible) {
+    outline: 1px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.tum-ui-toggle-switch-handle {
+    position: absolute;
+    top: 50%;
+    width: 1rem;
+    height: 1rem;
+
+    // Center vertically (-handle.size / 2) and offset by the Aura gap (0.25rem) from the start edge.
+    margin-block-start: -0.5rem;
+    inset-inline-start: 0.25rem;
+    border-radius: 50%;
+    transition:
+        background-color 0.2s,
+        inset-inline-start 0.2s;
+}
+
+// Checked handle position = track.width - (handle.size + gap) = 2.5rem - (1rem + 0.25rem) = 1.25rem.
+:host([data-checked='true']) .tum-ui-toggle-switch-handle {
+    inset-inline-start: 1.25rem;
+}
