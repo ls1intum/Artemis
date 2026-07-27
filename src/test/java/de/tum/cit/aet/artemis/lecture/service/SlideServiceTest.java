@@ -34,6 +34,11 @@ class SlideServiceTest {
         firstSlide.setId(1L);
         var secondSlide = new Slide();
         secondSlide.setId(2L);
+        var attachment = new Attachment();
+        var attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setAttachment(attachment);
+        firstSlide.setAttachmentVideoUnit(attachmentVideoUnit);
+        secondSlide.setAttachmentVideoUnit(attachmentVideoUnit);
         var relatedSlides = List.of(firstSlide, secondSlide);
         when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(relatedSlides);
 
@@ -42,12 +47,12 @@ class SlideServiceTest {
         assertThat(firstSlide.getHidden()).isEqualTo(exercise.getDueDate());
         assertThat(secondSlide.getHidden()).isEqualTo(exercise.getDueDate());
 
-        var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService);
+        var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
         inOrder.verify(slideRepository).saveAll(relatedSlides);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(firstSlide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
         inOrder.verify(visibilitySyncService).markVisibilityDirtyForExercise(exercise);
-        verifyNoInteractions(attachmentService);
+        inOrder.verify(attachmentService).regenerateStudentVersion(attachment);
     }
 
     @Test

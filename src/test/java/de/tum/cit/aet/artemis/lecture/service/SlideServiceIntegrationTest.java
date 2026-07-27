@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.pdfbox.Loader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -108,7 +109,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testHandleDueDateChange_withNullOriginalDueDate() {
+    void testHandleDueDateChange_withNullOriginalDueDate() throws Exception {
         // Create an exercise with null due date
         Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
         originalExercise = exerciseRepository.save(originalExercise);
@@ -123,12 +124,24 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         // Create slides linked to this exercise
         testSlide.setExercise(originalExercise);
         Slide savedSlide = slideRepository.save(testSlide);
+        Path sourcePdfPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        int sourcePageCount;
+        try (var sourceDocument = Loader.loadPDF(sourcePdfPath.toFile())) {
+            sourcePageCount = sourceDocument.getNumberOfPages();
+        }
 
         AtomicBoolean visibilityWebhookSeen = expectVisibilityWebhook(newDueDate);
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        String studentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
+        assertThat(studentVersion).isNotBlank().contains("/student/");
+        Path studentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(studentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        assertThat(studentVersionPath).exists();
+        try (var studentDocument = Loader.loadPDF(studentVersionPath.toFile())) {
+            assertThat(studentDocument.getNumberOfPages()).isEqualTo(sourcePageCount - 1);
+        }
         awaitVisibilityWebhook(visibilityWebhookSeen);
         irisRequestMockProvider.verify();
     }

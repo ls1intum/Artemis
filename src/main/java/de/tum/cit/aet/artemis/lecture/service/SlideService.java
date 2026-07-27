@@ -88,10 +88,8 @@ public class SlideService {
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
         relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
-        if (newHiddenDate == null) {
-            relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).distinct().map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull)
-                    .forEach(attachmentService::regenerateStudentVersion);
-        }
         lectureUnitVisibilitySyncService.markVisibilityDirtyForExercise(exercise);
+        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).distinct().map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull)
+                .forEach(attachmentService::regenerateStudentVersion);
     }
 }
