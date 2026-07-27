@@ -21,7 +21,7 @@ describe('mapLectureContentResult', () => {
 
         const mapped = mapLectureContentResult(result);
 
-        expect(mapped.id).toBe('lecture-content-30-4');
+        expect(mapped.id).toBe('lecture-content-/courses/10/lectures/20/units/30?page=4&unit=30');
         expect(mapped.type).toBe(LECTURE_CONTENT_TYPE);
         expect(mapped.title).toBe('Introduction to Signals');
         expect(mapped.description).toBe('Signals are a reactive primitive...');
@@ -49,7 +49,7 @@ describe('mapLectureContentResult', () => {
                 link: '/courses/11/lectures/21/units/31',
                 pageNumber: -1,
                 sourceType: 'lecture_transcription',
-                queryParams: {},
+                queryParams: { unit: 31, timestamp: 221 },
                 displayMeta: '3:41',
             },
             snippet: 'A B-tree is a self-balancing search tree...',
@@ -57,9 +57,36 @@ describe('mapLectureContentResult', () => {
 
         const mapped = mapLectureContentResult(result);
 
-        expect(mapped.id).toBe('lecture-content-31--1');
+        // The id keys on the deep-link destination (path + query params carrying the timestamp).
+        expect(mapped.id).toBe('lecture-content-/courses/11/lectures/21/units/31?timestamp=221&unit=31');
         expect(mapped.metadata?.['pageNumber']).toBe(-1);
         expect(mapped.metadata?.['displayMeta']).toBe('3:41');
+    });
+
+    it('gives two video hits from the same unit distinct ids based on their location query params', () => {
+        const base = {
+            course: { id: 11, name: 'Databases' },
+            lecture: { id: 21, name: 'Indexing' },
+        };
+        const makeVideoHit = (queryParams: Record<string, string | number>, displayMeta: string): LectureSearchResult => ({
+            ...base,
+            lectureUnit: {
+                id: 31,
+                name: 'B-Trees Explained',
+                link: '/courses/11/lectures/21/units/31',
+                pageNumber: -1,
+                sourceType: 'lecture_transcription',
+                queryParams,
+                displayMeta,
+            },
+        });
+
+        const firstTimestamp = mapLectureContentResult(makeVideoHit({ unit: 31, timestamp: 0 }, '0:00'));
+        const secondTimestamp = mapLectureContentResult(makeVideoHit({ unit: 31, timestamp: 571 }, '9:31'));
+
+        expect(firstTimestamp.id).toBe('lecture-content-/courses/11/lectures/21/units/31?timestamp=0&unit=31');
+        expect(secondTimestamp.id).toBe('lecture-content-/courses/11/lectures/21/units/31?timestamp=571&unit=31');
+        expect(firstTimestamp.id).not.toBe(secondTimestamp.id);
     });
 
     it('leaves description undefined when the snippet is missing, without crashing', () => {
