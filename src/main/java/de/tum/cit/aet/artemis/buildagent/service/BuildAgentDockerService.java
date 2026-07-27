@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -412,6 +411,8 @@ public class BuildAgentDockerService {
      * Waits for a Docker image pull to finish, aborting it once {@code artemis.continuous-integration.image-pull-timeout-seconds} has elapsed.
      * <p>
      * Without a timeout a pull that stops making progress, for example because a configured registry mirror silently drops packets, blocks the build thread forever.
+     * The timed {@code awaitCompletion} keeps the error handling of the untimed one: it still calls {@code throwFirstError()}, so a pull that fails rather than stalls
+     * propagates its exception exactly as before, and it closes the callback itself, so the stalled pull is aborted rather than left running in the background.
      *
      * @param callback     the callback of the running pull command
      * @param imageName    the name of the Docker image being pulled
@@ -423,13 +424,6 @@ public class BuildAgentDockerService {
     private void awaitPullCompletion(PullImageResultCallback callback, String imageName, BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) throws InterruptedException {
         if (callback.awaitCompletion(imagePullTimeoutSeconds, TimeUnit.SECONDS)) {
             return;
-        }
-        // Close the callback so the underlying pull is aborted instead of continuing in the background.
-        try {
-            callback.close();
-        }
-        catch (IOException e) {
-            log.warn("Could not close the pull callback for image {} after the timeout: {}", imageName, e.getMessage());
         }
         String msg = "~~~~~~~~~~~~~~~~~~~~ Pulling docker image " + imageName + " timed out after " + imagePullTimeoutSeconds + " seconds ~~~~~~~~~~~~~~~~~~~~";
         log.error(msg);
