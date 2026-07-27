@@ -51,6 +51,13 @@ export const ASSIGNMENT_REPO_NAME = 'assignment';
 export const TEST_REPO_NAME = 'tests';
 
 export const MAX_PENALTY_PATTERN = '^([0-9]|([1-9][0-9])|100)$';
+
+/** Maximum allowed value for an exercise's points and bonus points fields. */
+export const MAX_EXERCISE_POINTS = 9999;
+/** Minimum allowed points value when an exercise is not included in the overall score, and the default minimum for bonus points. */
+export const MIN_EXERCISE_POINTS = 0;
+/** Minimum points value required when an exercise is included in the overall score. */
+export const MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE = 1;
 /**
  * Fallback maximum decimal places for points/bonus points, used until the exercise's course has loaded (programming
  * exercises use the course's `accuracyOfScores` setting instead once available).
