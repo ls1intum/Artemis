@@ -294,6 +294,10 @@
     }
 }
 
+:global([data-theme='dark']) .navbarTrigger {
+    color: #b8ccd8;
+}
+
 :global([data-theme='dark']) .heroTrigger {
     color: #b8ccd8;
     border-color: rgba(152, 198, 234, 0.28);
