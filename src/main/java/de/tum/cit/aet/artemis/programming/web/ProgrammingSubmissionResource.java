@@ -50,6 +50,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -266,8 +268,9 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/programming-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+    public ResponseEntity<List<ProgrammingSubmissionForAssessmentDTO>> getAllProgrammingSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean submittedOnly, @RequestParam(defaultValue = "false") boolean assessedByTutor,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
         Exercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
@@ -289,7 +292,10 @@ public class ProgrammingSubmissionResource {
         if (!examMode) {
             programmingSubmissions.forEach(Submission::removeNullResults);
         }
-        return ResponseEntity.ok().body(programmingSubmissions);
+        // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
+        // the service, which detaches it from the participations before returning them.
+        var submissionDTOs = programmingSubmissions.stream().map(submission -> ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission, null)).toList();
+        return ResponseEntity.ok().body(submissionDTOs);
     }
 
     /**
@@ -301,7 +307,7 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("programming-submissions/{submissionId}/lock")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
         var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
@@ -339,20 +345,16 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 
-        participation.setExercise(programmingExercise);
-        // prepare programming submission for response
+        // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
-        // remove automatic results before sending to client
+        // Only the manual result of the requested correction round belongs in the response. The automatic results are
+        // filtered in the mapper instead of by mutating the managed submission, whose result collection is mapped with
+        // orphanRemoval.
         var manualResults = programmingSubmission.getManualResults();
-        if (correctionRound >= manualResults.size()) {
-            programmingSubmission.setResults(List.of());
-        }
-        else {
-            programmingSubmission.setResults(List.of(manualResults.get(correctionRound)));
-        }
+        List<Result> resultsForResponse = correctionRound >= manualResults.size() ? List.of() : List.of(manualResults.get(correctionRound));
 
-        return ResponseEntity.ok(programmingSubmission);
+        return ResponseEntity.ok(ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse));
     }
 
     /**
@@ -365,7 +367,7 @@ public class ProgrammingSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
 
@@ -395,17 +397,20 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
         }
 
-        if (submission != null) {
-            if (lockSubmission) {
-                // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
-                submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
-            }
-            submission.getParticipation().setExercise(programmingExercise);
-            programmingSubmissionService.hideDetails(submission, user);
-            // remove automatic results before sending to client
-            submission.setResults(submission.getManualResults());
+        if (submission == null) {
+            // Keep the genuinely empty 200 body: the dashboard reads "no submission available" from it.
+            return ResponseEntity.ok().body(null);
         }
 
-        return ResponseEntity.ok().body(submission);
+        if (lockSubmission) {
+            // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
+        }
+        programmingSubmissionService.hideDetails(submission, user);
+        // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
+        // managed submission, whose result collection is mapped with orphanRemoval.
+        List<Result> manualResults = submission.getManualResults();
+
+        return ResponseEntity.ok().body(ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults));
     }
 }
