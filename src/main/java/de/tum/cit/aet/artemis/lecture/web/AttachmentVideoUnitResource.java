@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearc
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
@@ -164,6 +166,8 @@ public class AttachmentVideoUnitResource {
         }
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
+        validateAttachmentUpdateIntent(updateIntent, attachment, file);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -197,6 +201,19 @@ public class AttachmentVideoUnitResource {
         return ResponseEntity.ok(AttachmentVideoUnitDTO.of(savedAttachmentVideoUnit));
     }
 
+    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, AttachmentDTO attachment, MultipartFile file) {
+        boolean hasFile = file != null && !file.isEmpty();
+        if (updateIntent == null) {
+            throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
+        }
+        if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && file != null) {
+            throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
+        }
+        if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && (!hasFile || attachment == null)) {
+            throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
+        }
+    }
+
     /**
      * POST lectures/:lectureId/attachment-video-units : creates a new attachment video unit.
      *
@@ -224,6 +241,9 @@ public class AttachmentVideoUnitResource {
 
         if (attachment == null && attachmentVideoUnitDTO.videoSource() == null) {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
+        }
+        if (attachment != null && (file == null || file.isEmpty()) && !StringUtils.hasText(attachment.link())) {
+            throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
         }
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
