@@ -10,7 +10,7 @@ import { Commands } from '../../../support/commands';
 import { admin, instructor } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
 import { ProgrammingLanguage } from '../../../support/constants';
-import { fillDateTimePicker, generateUUID, newBrowserPage } from '../../../support/utils';
+import { escapeRegExp, fillDateTimePicker, generateUUID, newBrowserPage } from '../../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const course = { id: SEED_COURSES.programmingManagement.id } as any;
@@ -635,7 +635,7 @@ async function expectDraftDerivedPackageNamePrefill(page: Page, draft: string): 
 /** Every generated Java source must live in and declare the exercise's package — the invariant the agent is prompted with and the integrity gate enforces server-side. */
 function assertGeneratedSourcesUseExercisePackage(repositories: { selectedContent?: Record<string, Record<string, string>> }, packageName: string) {
     const packagePath = packageName.replace(/\./g, '/');
-    const packageDeclaration = new RegExp(`^\\s*package\\s+${packageName.replace(/\./g, '\\.')}\\s*;`, 'm');
+    const packageDeclaration = new RegExp(`^\\s*package\\s+${escapeRegExp(packageName)}\\s*;`, 'm');
     for (const repo of ['solution', 'template', 'tests'] as const) {
         const files = repositories.selectedContent?.[repo] ?? {};
         expect(Object.keys(files).length, `${repo} repository contains no Java sources`).toBeGreaterThan(0);

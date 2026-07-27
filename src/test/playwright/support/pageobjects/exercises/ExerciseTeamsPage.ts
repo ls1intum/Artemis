@@ -1,10 +1,7 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
 
-/** Escapes regex meta-characters in `value` so it can be used as a literal pattern. */
-function escapeRegExp(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+import { escapeRegExp } from '../../utils';
 
 /**
  * Page object for the exercise teams page.

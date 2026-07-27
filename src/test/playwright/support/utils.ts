@@ -159,6 +159,16 @@ export async function readResponseJson<T = any>(response: Response): Promise<T> 
 }
 
 /**
+ * Escapes every regular-expression metacharacter in a value so it matches literally.
+ *
+ * @param value the literal text to match
+ * @return the value with metacharacters escaped, safe to embed in a RegExp
+ */
+export function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Generates a unique identifier.
  */
 export function generateUUID() {
