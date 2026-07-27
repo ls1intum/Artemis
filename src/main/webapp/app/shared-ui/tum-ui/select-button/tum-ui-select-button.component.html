@@ -1,0 +1,19 @@
+@for (option of normalizedOptions(); track option.value; let i = $index) {
+    <button
+        #optionButton
+        type="button"
+        role="radio"
+        [class]="optionClasses(option.selected)"
+        [attr.aria-checked]="option.selected"
+        [attr.tabindex]="effectiveDisabled() ? -1 : i === focusableIndex() ? 0 : -1"
+        [disabled]="effectiveDisabled()"
+        (click)="select(option)"
+        (keydown)="onKeydown($event, i)"
+    >
+        @if (itemTemplate(); as template) {
+            <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: option.raw }" />
+        } @else {
+            {{ option.label }}
+        }
+    </button>
+}
