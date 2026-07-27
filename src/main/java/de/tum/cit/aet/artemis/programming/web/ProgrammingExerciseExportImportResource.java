@@ -71,7 +71,9 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -188,7 +190,7 @@ public class ProgrammingExerciseExportImportResource {
      *
      * @param sourceExerciseIdQuery               The ID of the original exercise which should get imported (provided as a query parameter; preferred)
      * @param sourceExerciseIdPath                The ID of the original exercise which should get imported (provided as a legacy path variable; deprecated)
-     * @param newExercise                         The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param newExerciseRequest                  The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @param recreateBuildPlans                  Option determining whether the build plans should be copied or re-created from scratch
      * @param updateTemplate                      Option determining whether the template files should be updated with the most recent template version
      * @param setTestCaseVisibilityToAfterDueDate Option determining whether the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
@@ -198,8 +200,8 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping({ "programming-exercises/import", "programming-exercises/import/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
-            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ProgrammingExercise newExercise,
+    public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ImportProgrammingExerciseRequestDTO newExerciseRequest,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate,
             @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
         long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
@@ -207,13 +209,14 @@ public class ProgrammingExerciseExportImportResource {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
         }
 
+        // Map the request onto a transient exercise at the boundary; everything below keeps working on entities.
+        // Competency links are deliberately not bound: they are not imported because competencies are course-specific,
+        // and binding them would produce detached entity errors for serialized competencies of the source instance.
+        ProgrammingExercise newExercise = newExerciseRequest.toEntity();
+
         // Valid exercises have set either a course or an exerciseGroup
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        // Clear competency links from the incoming exercise - they are not imported because competencies are course-specific
-        // This prevents detached entity errors when the exercise contains competency links with serialized competency entities
-        newExercise.setCompetencyLinks(new java.util.HashSet<>());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
@@ -222,6 +225,7 @@ public class ProgrammingExerciseExportImportResource {
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, course.getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Validate course settings
@@ -269,18 +273,13 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
                     recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
 
-            // remove certain properties which are not relevant for the client to keep the response small
-            importedProgrammingExercise.setTestCases(null);
-            importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
-            importedProgrammingExercise.setTemplateParticipation(null);
-            importedProgrammingExercise.setSolutionParticipation(null);
-            importedProgrammingExercise.setTasks(null);
-
+            // The response record carries neither test cases nor static code analysis categories nor tasks, so the
+            // response stays small without nulling those slots on the managed entity.
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
             exerciseVersionService.createExerciseVersion(importedProgrammingExercise, user);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
-                    .body(importedProgrammingExercise);
+                    .body(ProgrammingExerciseResponseDTO.of(importedProgrammingExercise));
 
         }
         catch (Exception exception) {
@@ -304,17 +303,20 @@ public class ProgrammingExerciseExportImportResource {
      * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
      * the content from the repositories of the zip file into the newly created repositories.
      *
-     * @param programmingExercise The exercise that should be imported
-     * @param zipFile             The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
-     * @param courseId            The id of the course the exercise should be imported into
+     * @param programmingExerciseRequest The exercise that should be imported
+     * @param zipFile                    The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
+     * @param courseId                   The id of the course the exercise should be imported into
      * @return The imported exercise (200)
      *         (403) if the user is not at least an editor in the target course.
      */
     @PostMapping("courses/{courseId}/programming-exercises/import-from-file")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
-            @RequestPart("programmingExercise") ProgrammingExercise programmingExercise, @RequestPart("file") MultipartFile zipFile) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExerciseFromFile(@PathVariable long courseId,
+            @RequestPart("programmingExercise") ImportProgrammingExerciseRequestDTO programmingExerciseRequest, @RequestPart("file") MultipartFile zipFile) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Legacy archives carry fields the current model no longer has; the request record ignores them while keeping
+        // the template and solution repository URIs the import needs.
+        ProgrammingExercise programmingExercise = programmingExerciseRequest.toEntity();
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var course = courseRepository.findByIdElseThrow(courseId);
@@ -322,7 +324,7 @@ public class ProgrammingExerciseExportImportResource {
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user);
             exerciseVersionService.createExerciseVersion(importedExercise, user);
-            return ResponseEntity.ok(importedExercise);
+            return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(importedExercise));
         }
         catch (IOException | URISyntaxException | GitAPIException e) {
             log.error(e.getMessage(), e);

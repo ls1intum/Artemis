@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -13,7 +16,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -106,6 +112,30 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Exercise archives exported by older Artemis versions carry fields the current model no longer has. The import
+     * request record ignores them, so the request must fail on the source exercise, never on the payload.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExercise_payloadWithUnknownFields_isTolerated() throws Exception {
+        ObjectNode body = objectMapper.valueToTree(createToBeImported());
+        body.put("removedLegacyProperty", "legacy value");
+        body.putArray("removedLegacyCollection").add("legacy element");
+        body.putObject("removedLegacyObject").put("nested", 1);
+        String rawBody = objectMapper.writeValueAsString(body);
+
+        // A payload the record could not parse would fail before any handler code runs and carry no error key.
+        request.performMvcRequest(post(BASE_RESOURCE + "/import").queryParam("sourceExerciseId", "-1").contentType(MediaType.APPLICATION_JSON).content(rawBody))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidSourceExerciseId"));
+
+        // The same payload binds far enough to pass every settings validation and to resolve the target course; only
+        // the source exercise is missing.
+        request.performMvcRequest(
+                post(BASE_RESOURCE + "/import").queryParam("sourceExerciseId", String.valueOf(Integer.MAX_VALUE)).contentType(MediaType.APPLICATION_JSON).content(rawBody))
+                .andExpect(status().isNotFound());
     }
 
     @Test
