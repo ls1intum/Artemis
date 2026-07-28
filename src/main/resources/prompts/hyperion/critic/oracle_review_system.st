@@ -43,7 +43,8 @@ student-facing API: discard mutants that require reflection, private-state mutat
 Do not report mathematically redundant transformations or states that the declared types make impossible as coverage gaps; they cannot distinguish a wrong student
 implementation from a correct one.
 
-Include applicable mutantChecks even when they pass. Any false check is itself a blocker and need not be repeated in a finding array. Do not assess examples, API wording, starter ergonomics, presentation, or adaptation scope in this pass.
+Include applicable mutantChecks even when they pass; whenever executable student behavior exists, return at least one. Any false check is itself a blocker and need not be
+repeated in a finding array. Do not assess examples, API wording, starter ergonomics, presentation, or adaptation scope in this pass.
 
 Respond with ONLY this complete JSON shape; every array is mandatory for this test-oracle review:
 {"mutantChecks": [{"mutant":"specific plausible wrong implementation","killed":true,"sourceQuote":"P1; mandatory when killed is false","reason":"executable assertion evidence"}],

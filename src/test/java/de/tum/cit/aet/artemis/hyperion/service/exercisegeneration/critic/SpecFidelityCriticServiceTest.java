@@ -1330,12 +1330,12 @@ class SpecFidelityCriticServiceTest {
         verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(1).getContents()).contains("PRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY",
                 "[P1] Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.");
-        assertThat(prompts.getAllValues().getLast().getContents()).contains("previous verdict cited at least one unknown PRIMARY SOURCE EVIDENCE ID", "INSTRUCTOR BRIEF",
-                "PRODUCED PROBLEM STATEMENT");
+        assertThat(prompts.getAllValues().getLast().getContents()).contains("previous verdict was incomplete, malformed, or cited an unknown PRIMARY SOURCE EVIDENCE ID",
+                "INSTRUCTOR BRIEF", "PRODUCED PROBLEM STATEMENT");
     }
 
     @Test
-    void oracleCorrectionMayReturnEmptyWhenTheOnlyInitialClaimWasUngrounded() {
+    void oracleCorrectionMustStillShowThatItReviewedAnExecutableTest() {
         ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"reject zero fuel","killed":false,
                     "sourceQuote":"R6 | fuel-consuming strategies reject zero fuel","reason":"no assertion covers it"}],
@@ -1345,10 +1345,26 @@ class SpecFidelityCriticServiceTest {
                 """));
         SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic, "Create a spacecraft navigation exercise.", "Use strategy objects.", List.of("navigates"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).isEmpty();
+        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(3)).call(prompts.capture());
-        assertThat(prompts.getAllValues().getLast().getContents()).contains("An empty mutantChecks/uncovered/weakOracle");
+        assertThat(prompts.getAllValues().getLast().getContents()).contains("mutantChecks must still contain at least one applicable passing or failing check");
+    }
+
+    @Test
+    void oracleReviewRetriesAnEmptyMutantAuditAndUsesTheCompleteCorrection() {
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
+                {"mutantChecks":[],"uncovered":[],"weakOracle":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"always return zero","killed":true,"reason":"navigates asserts the computed distance"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+
+        SpecFidelityReport report = critique(scripted.critic(), "Create a spacecraft navigation exercise.", "Use strategy objects.", List.of("navigates"), COMPLETE_ARTIFACTS,
+                null);
+
+        assertThat(report.findings()).isEmpty();
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test

@@ -74,9 +74,9 @@ public class SpecFidelityCriticService {
 
     private static final String ORACLE_REVIEW_CORRECTION = """
 
-            Your previous verdict cited at least one unknown PRIMARY SOURCE EVIDENCE ID. Adjudicate those claims against the same complete evidence and return a corrected JSON
-            verdict. Keep any grounded issue you can cite by its exact P ID; omit every unsupported claim. An empty mutantChecks/uncovered/weakOracle
-            verdict is valid when no grounded issue remains—the earlier response already established that the test suite itself was reviewed.
+            Your previous verdict was incomplete, malformed, or cited an unknown PRIMARY SOURCE EVIDENCE ID. Re-evaluate the same complete evidence and return a corrected JSON
+            verdict. Keep any grounded issue you can cite by its exact P ID; omit every unsupported claim. uncovered and weakOracle may be empty when no grounded issue remains,
+            but mutantChecks must still contain at least one applicable passing or failing check to establish that the executable test suite was reviewed.
             """;
 
     private static final String CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/contract_review_system.st";
@@ -386,11 +386,13 @@ public class SpecFidelityCriticService {
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
-        if (!cancelled.getAsBoolean() && oracleFindings != null && CriticVerdictParser.hasUngroundedOracleReview(oracleFindings)
-                && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
+        boolean oracleReviewInvalid = oracleFindings == null || CriticVerdictParser.hasUngroundedOracleReview(oracleFindings)
+                || oracleFindings.stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        if (!cancelled.getAsBoolean() && oracleReviewInvalid && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, false, Map.of(), usageSink);
-            if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)) {
+                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, Map.of(), usageSink);
+            if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)
+                    && correctedOracleFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
                 // The correction replaces the verdict rather than extending it: substring grounding proves provenance only, so keeping the initially grounded claims would leave
                 // the corrected response unable to retract a semantically false one.
                 oracleFindings = correctedOracleFindings;
