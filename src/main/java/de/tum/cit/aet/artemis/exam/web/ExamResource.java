@@ -638,7 +638,7 @@ public class ExamResource {
      * @param originalExamDuration the exam duration in seconds before this update
      */
     private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
-        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || !exam.getExamMode().isReal()) {
             return;
         }
         ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);

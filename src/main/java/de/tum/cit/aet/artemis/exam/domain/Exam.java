@@ -518,7 +518,7 @@ public class Exam extends DomainObject {
     @JsonIgnore
     public boolean isExamSummaryPublished() {
         // test exams are self-service practice with no shift concern; their summary is always available
-        if (isTestExam() || examSummaryPublicationDate == null) {
+        if (!examMode.isReal() || examSummaryPublicationDate == null) {
             return true;
         }
         return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
