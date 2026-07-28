@@ -82,6 +82,7 @@ describe('TumUiSelectComponent', () => {
         const onChangeCallback = vi.fn();
         component.registerOnChange(onChangeCallback);
         const emitSpy = vi.spyOn(component.onChange, 'emit');
+        triggerButton().focus();
         openPanel();
         optionElements()[1].click();
         fixture.detectChanges();
@@ -89,6 +90,7 @@ describe('TumUiSelectComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith('b');
         expect(labelText()).toBe('Bravo');
         expect(listbox()).toBeNull();
+        expect(document.activeElement).toBe(triggerButton());
     });
 
     it('emits the whole option object when optionValue is not set', () => {
@@ -163,8 +165,10 @@ describe('TumUiSelectComponent', () => {
         fixture.componentRef.setInput('emptyMessage', 'Nothing here');
         fixture.detectChanges();
         openPanel();
-        expect(optionElements()).toHaveLength(0);
-        expect(listbox().querySelector('[role="presentation"]')?.textContent?.trim()).toBe('Nothing here');
+        const emptyOption = optionElements()[0];
+        expect(emptyOption.textContent?.trim()).toBe('Nothing here');
+        expect(emptyOption.getAttribute('aria-disabled')).toBe('true');
+        expect(emptyOption.getAttribute('aria-selected')).toBe('false');
     });
 });
 

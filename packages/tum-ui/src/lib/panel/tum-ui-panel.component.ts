@@ -24,9 +24,11 @@ export class TumUiPanelComponent {
 
     readonly styleClass = input<string>('');
 
+    protected readonly headerId = `tum-ui-panel-header-${nextPanelId}`;
     protected readonly contentId = `tum-ui-panel-content-${nextPanelId++}`;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
+    protected readonly isCollapsed = computed(() => this.toggleable() && this.collapsed());
 
     protected readonly hostClasses = computed(() =>
         `tum-ui-panel tum:border tum:border-tum-ui-border tum:rounded-md tum:bg-tum-ui-content-background tum:text-tum-ui-text ${this.styleClass()}`.trim(),

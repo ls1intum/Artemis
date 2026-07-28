@@ -1,5 +1,6 @@
+import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect } from 'storybook/test';
+import { expect, fireEvent } from 'storybook/test';
 import { TumUiTableVirtualScrollComponent } from './tum-ui-table-virtual-scroll.component';
 
 const items = Array.from({ length: 1_000 }, (_, index) => ({
@@ -12,6 +13,7 @@ const meta = {
     title: 'Data Display/Virtual Scroll Table',
     component: TumUiTableVirtualScrollComponent<(typeof items)[number]>,
     args: {
+        ariaDescribedBy: 'participant-table-description',
         itemSize: 44,
         items,
         minWidth: '32rem',
@@ -19,17 +21,25 @@ const meta = {
         scrollHeight: '264px',
         striped: true,
     },
+    argTypes: {
+        rowTemplate: {
+            control: false,
+        },
+        size: {
+            control: 'inline-radio',
+            options: ['small', 'normal', 'large'],
+        },
+        trackBy: {
+            control: false,
+        },
+    },
     render: (args) => ({
         props: args,
         template: `
+            <p id="participant-table-description">Participant scores for the current course</p>
             <tum-ui-table-virtual-scroll
-                [itemSize]="itemSize"
-                [items]="items"
-                [minWidth]="minWidth"
-                [rowHover]="rowHover"
                 [rowTemplate]="row"
-                [scrollHeight]="scrollHeight"
-                [striped]="striped"
+                ${argsToTemplate(args, { exclude: ['rowTemplate', 'trackBy'] })}
             >
                 <div role="columnheader" style="width: 16rem;">Participant</div>
                 <div role="columnheader">Score</div>
@@ -52,9 +62,11 @@ type Story = StoryObj<TumUiTableVirtualScrollComponent<(typeof items)[number]>>;
 
 export const Default: Story = {
     play: async ({ canvas }) => {
-        await expect(canvas.getByRole('table')).toBeVisible();
-        const renderedRows = canvas.getAllByRole('row');
-        await expect(renderedRows.length).toBeGreaterThan(1);
-        await expect(renderedRows.length).toBeLessThan(items.length);
+        const table = canvas.getByRole('table');
+        await expect(table).toHaveAccessibleDescription('Participant scores for the current course');
+
+        const viewport = canvas.getByRole('rowgroup');
+        await fireEvent.scroll(viewport, { target: { scrollTop: 44 * 900 } });
+        await expect(await canvas.findByText('Participant 901')).toBeVisible();
     },
 };

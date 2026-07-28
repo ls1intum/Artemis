@@ -1,4 +1,6 @@
+import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { expect } from 'storybook/test';
 
 import { TumUiPanelComponent } from './tum-ui-panel.component';
 
@@ -21,7 +23,7 @@ const meta = {
     render: ({ content, ...args }) => ({
         props: { ...args, content },
         template: `
-            <tum-ui-panel [header]="header" [toggleable]="toggleable" [(collapsed)]="collapsed" style="display: block; width: 28rem;">
+            <tum-ui-panel [(collapsed)]="collapsed" ${argsToTemplate(args, { exclude: ['collapsed'] })} style="display: block; width: 28rem;">
                 <p style="margin: 0;">{{ content }}</p>
             </tum-ui-panel>
         `,
@@ -37,5 +39,11 @@ export const Default: Story = {};
 export const Toggleable: Story = {
     args: {
         toggleable: true,
+    },
+    play: async ({ canvas, userEvent }) => {
+        const toggle = canvas.getByRole('button', { name: 'Exercise details' });
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await userEvent.click(toggle);
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     },
 };

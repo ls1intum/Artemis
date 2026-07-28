@@ -85,6 +85,12 @@ describe('TumUiTableComponent', () => {
         expect(dataCells().every((cell, index) => (index % 2 === 1 ? cell.classList.contains('tum:md:table-cell') : !cell.classList.contains('tum:hidden')))).toBe(true);
     });
 
+    it('announces the table as busy while loading', () => {
+        fixture.componentRef.setInput('loading', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('table')).nativeElement.getAttribute('aria-busy')).toBe('true');
+    });
+
     it('emits one initial dataRequest after first render with defaults', async () => {
         const spy = vi.spyOn(component.dataRequest, 'emit');
         fixture.detectChanges();

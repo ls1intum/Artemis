@@ -4,6 +4,14 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { TumUiMessageComponent, TumUiMessageSeverity } from './tum-ui-message.component';
 
 const severities: TumUiMessageSeverity[] = ['info', 'success', 'warn', 'error', 'secondary', 'contrast'];
+const examples: { severity: TumUiMessageSeverity; text: string }[] = [
+    { severity: 'info', text: 'The exercise opens tomorrow.' },
+    { severity: 'success', text: 'Your changes have been saved.' },
+    { severity: 'warn', text: 'The submission deadline is approaching.' },
+    { severity: 'error', text: 'The submission could not be uploaded.' },
+    { severity: 'secondary', text: 'No assessment is available yet.' },
+    { severity: 'contrast', text: 'Maintenance starts at 22:00.' },
+];
 
 const meta = {
     title: 'Feedback/Message',
@@ -32,11 +40,11 @@ export const Default: Story = {};
 
 export const Severities: Story = {
     render: () => ({
-        props: { severities },
+        props: { examples },
         template: `
             <div style="display: grid; width: min(32rem, 100%); gap: 0.75rem;">
-                @for (severity of severities; track severity) {
-                    <tum-ui-message [severity]="severity" [text]="severity + ' message'" />
+                @for (example of examples; track example.severity) {
+                    <tum-ui-message [severity]="example.severity" [text]="example.text" />
                 }
             </div>
         `,

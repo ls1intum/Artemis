@@ -1,1 +1,13 @@
-<span [class]="handleClasses()"></span>
+<input
+    type="checkbox"
+    role="switch"
+    class="tum-ui-toggle-switch-input"
+    [id]="inputId()"
+    [checked]="checked()"
+    [disabled]="effectiveDisabled()"
+    [attr.aria-label]="effectiveAriaLabel()"
+    [attr.aria-labelledby]="effectiveAriaLabelledBy()"
+    (change)="onInputChange($event)"
+    (blur)="onInputBlur()"
+/>
+<span [class]="handleClasses()" aria-hidden="true"></span>

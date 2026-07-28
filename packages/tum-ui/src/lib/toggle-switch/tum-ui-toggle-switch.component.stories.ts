@@ -1,6 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 
 import { TumUiToggleSwitchComponent } from './tum-ui-toggle-switch.component';
 
@@ -31,7 +31,6 @@ const meta = {
                 inputId="notifications"
                 aria-labelledby="notification-label"
                 [(ngModel)]="enabled"
-                [ngModelOptions]="{ standalone: true }"
                 [disabled]="disabled"
                 (changed)="changed($event)"
             />
@@ -43,7 +42,14 @@ export default meta;
 
 type Story = StoryObj<ToggleSwitchStoryArgs>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    play: async ({ args, canvas, userEvent }) => {
+        const toggle = canvas.getByRole('switch', { name: 'Email notifications' });
+        await userEvent.click(toggle);
+        await expect(toggle).toBeChecked();
+        await expect(args.changed).toHaveBeenCalledWith(true);
+    },
+};
 
 export const On: Story = {
     args: {

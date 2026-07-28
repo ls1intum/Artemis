@@ -13,18 +13,21 @@ interface ButtonGroupStoryArgs {
 const meta = {
     title: 'Actions/Button Group',
     component: TumUiButtonGroupComponent,
+    subcomponents: {
+        Button: TumUiButtonComponent,
+    },
     decorators: [
         moduleMetadata({
             imports: [TumUiButtonComponent],
         }),
     ],
     args: {
-        firstLabel: 'Day',
-        secondLabel: 'Week',
-        thirdLabel: 'Month',
+        firstLabel: 'Previous',
+        secondLabel: 'Today',
+        thirdLabel: 'Next',
     },
-    render: ({ firstLabel, secondLabel, thirdLabel }) => ({
-        props: { firstLabel, secondLabel, thirdLabel },
+    render: (args) => ({
+        props: args,
         template: `
             <tum-ui-button-group>
                 <tum-ui-button severity="secondary">{{ firstLabel }}</tum-ui-button>

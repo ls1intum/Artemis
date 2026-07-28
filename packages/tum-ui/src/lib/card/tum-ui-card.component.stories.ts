@@ -1,3 +1,4 @@
+import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
 import { TumUiCardComponent } from './tum-ui-card.component';
@@ -18,10 +19,10 @@ const meta = {
         body: 'You completed 8 of 12 exercises.',
         footer: 'Updated a few seconds ago',
     },
-    render: ({ body, footer, ...args }) => ({
-        props: { ...args, body, footer },
+    render: ({ body, footer, ...componentArgs }) => ({
+        props: { ...componentArgs, body, footer },
         template: `
-            <tum-ui-card [header]="header" [subheader]="subheader" style="display: block; width: 24rem;">
+            <tum-ui-card ${argsToTemplate(componentArgs)} style="display: block; width: 24rem;">
                 <p style="margin: 0;">{{ body }}</p>
                 <small tumUiCardFooter style="color: var(--tum-ui-muted-color);">{{ footer }}</small>
             </tum-ui-card>

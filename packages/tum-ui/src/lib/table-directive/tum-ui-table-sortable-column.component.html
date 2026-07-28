@@ -1,2 +1,4 @@
-<ng-content />
-<fa-icon [icon]="sortIcon()" class="tum-ui-sort-icon tum:text-tum-ui-muted" />
+<button type="button" class="tum-ui-sort-button" [disabled]="disabled()" (click)="onActivate()">
+    <ng-content />
+    <fa-icon [icon]="sortIcon()" class="tum-ui-sort-icon tum:text-tum-ui-muted" aria-hidden="true" />
+</button>

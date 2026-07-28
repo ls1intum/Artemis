@@ -1,6 +1,7 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
+import storybookPlugin from 'eslint-plugin-storybook';
 import typescriptParser from '@typescript-eslint/parser';
 import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
@@ -98,6 +99,7 @@ export default tseslint.config(
         ],
     },
     eslint.configs.recommended,
+    ...storybookPlugin.configs['flat/recommended'],
     {
         files: ['packages/tum-ui/**/*.mjs'],
         languageOptions: {

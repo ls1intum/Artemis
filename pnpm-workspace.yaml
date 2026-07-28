@@ -39,6 +39,7 @@ catalog:
   concurrently: 10.0.4
   cross-env: 10.1.0
   dayjs: 1.11.21
+  eslint-plugin-storybook: 10.5.5
   jsdom: 30.0.1
   lodash-es: 4.18.1
   postcss: 8.5.25

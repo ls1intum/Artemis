@@ -27,10 +27,20 @@ export default definePreview({
     ],
     parameters: {
         a11y: {
+            options: {
+                runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
+            },
             test: 'error',
         },
         docs: {
             container: ThemedDocsContainer,
+            controls: {
+                sort: 'requiredFirst',
+            },
+            toc: true,
+        },
+        controls: {
+            sort: 'requiredFirst',
         },
         layout: 'centered',
     },

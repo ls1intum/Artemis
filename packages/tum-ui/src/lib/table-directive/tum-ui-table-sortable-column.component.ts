@@ -13,10 +13,6 @@ type TumUiSortDirection = 'asc' | 'desc' | 'none';
     host: {
         '[class]': 'hostClasses()',
         '[attr.aria-sort]': 'ariaSort()',
-        '[attr.tabindex]': 'disabled() ? null : "0"',
-        '(click)': 'onActivate()',
-        '(keydown.enter)': 'onKeyActivate($event)',
-        '(keydown.space)': 'onKeyActivate($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -62,16 +58,6 @@ export class TumUiTableSortableColumnComponent {
     protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tum:cursor-pointer tum:select-none tum:hover:bg-tum-ui-hover-background'));
 
     protected onActivate(): void {
-        if (!this.disabled()) {
-            this.table.requestSort(this.field());
-        }
-    }
-
-    protected onKeyActivate(event: Event): void {
-        if (this.disabled()) {
-            return;
-        }
-        event.preventDefault();
         this.table.requestSort(this.field());
     }
 }

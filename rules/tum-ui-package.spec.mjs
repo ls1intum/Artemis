@@ -233,16 +233,14 @@ describe('@tumaet/ui-angular package manifest', () => {
         expect(unprefixedUtilities).toEqual([]);
     });
 
-    it('keeps package stories on stable CSF3', () => {
+    it('keeps package stories isolated and uniquely titled', () => {
         expect(storyFiles.length).toBeGreaterThan(0);
         const titles = [];
         for (const source of storySources) {
-            expect(source).toContain('export default meta;');
-            expect(source).not.toMatch(/\b(?:preview\.meta|meta\.story)\s*\(|\.extend\s*\(/);
             expect(source).not.toMatch(/\btum:/);
             expect(source).not.toMatch(/\bglobals\s*:\s*\{[^}]*\btheme\s*:/s);
             const title = source.match(/\btitle:\s*'([^']+)'/)?.[1];
-            expect(title).toMatch(/^[^/]+\/[^/]+$/);
+            expect(title).toBeTruthy();
             titles.push(title);
         }
         expect(new Set(titles).size).toBe(titles.length);

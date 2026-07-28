@@ -17,13 +17,28 @@
         outline-color 0.2s;
 }
 
-:host([aria-disabled='true']) {
+:host([data-disabled='true']) {
     cursor: default;
 }
 
-:host(:focus-visible) {
+:host(:has(.tum-ui-toggle-switch-input:focus-visible)) {
     outline: 1px solid var(--tum-ui-primary);
     outline-offset: 2px;
+}
+
+.tum-ui-toggle-switch-input {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.tum-ui-toggle-switch-input:disabled {
+    cursor: default;
 }
 
 .tum-ui-toggle-switch-handle {

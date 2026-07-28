@@ -1,4 +1,7 @@
+import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { expect, fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
 
@@ -13,12 +16,14 @@ interface ButtonStoryArgs {
     disabled: boolean;
     rounded: boolean;
     loading: boolean;
+    clicked: (event: MouseEvent) => void;
 }
 
 const meta = {
     title: 'Actions/Button',
     component: TumUiButtonComponent,
     args: {
+        clicked: fn(),
         label: 'Continue',
         severity: 'primary',
         size: 'default',
@@ -44,14 +49,7 @@ const meta = {
     render: ({ label, ...args }) => ({
         props: { ...args, label },
         template: `
-            <tum-ui-button
-                [severity]="severity"
-                [size]="size"
-                [variant]="variant"
-                [disabled]="disabled"
-                [rounded]="rounded"
-                [loading]="loading"
-            >
+            <tum-ui-button ${argsToTemplate(args)}>
                 {{ label }}
             </tum-ui-button>
         `,
@@ -65,16 +63,26 @@ export default meta;
 
 type Story = StoryObj<ButtonStoryArgs>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    play: async ({ args, canvas, userEvent }) => {
+        const button = canvas.getByRole('button', { name: 'Continue' });
+        await userEvent.click(button);
+        await expect(args.clicked).toHaveBeenCalledOnce();
+    },
+};
 
 export const Variants: Story = {
     render: ({ label, size }) => ({
         props: { label, severities, size, variants },
         template: `
-            <div style="display: grid; grid-template-columns: auto repeat(7, minmax(6rem, auto)); align-items: center; gap: 0.75rem;">
+            <div style="display: grid; grid-template-columns: auto repeat(3, minmax(6rem, auto)); align-items: center; gap: 0.75rem;">
+                <span aria-hidden="true"></span>
                 @for (variant of variants; track variant) {
                     <strong style="text-transform: capitalize;">{{ variant }}</strong>
-                    @for (severity of severities; track severity) {
+                }
+                @for (severity of severities; track severity) {
+                    <strong style="text-transform: capitalize;">{{ severity }}</strong>
+                    @for (variant of variants; track variant) {
                         <tum-ui-button [severity]="severity" [size]="size" [variant]="variant">
                             {{ label }}
                         </tum-ui-button>
@@ -99,13 +107,24 @@ export const States: Story = {
                 <tum-ui-button [severity]="severity" [size]="size" [variant]="variant">Default</tum-ui-button>
                 <tum-ui-button [severity]="severity" [size]="size" [variant]="variant" disabled>Disabled</tum-ui-button>
                 <tum-ui-button [severity]="severity" [size]="size" [variant]="variant" loading>Loading</tum-ui-button>
-                <tum-ui-button [severity]="severity" [size]="size" [variant]="variant" rounded>Rounded</tum-ui-button>
             </div>
         `,
     }),
     parameters: {
         controls: {
             include: ['severity', 'size', 'variant'],
+        },
+    },
+};
+
+export const IconOnly: Story = {
+    render: () => ({
+        props: { faDownload },
+        template: '<tum-ui-button [icon]="faDownload" ariaLabel="Download results" rounded />',
+    }),
+    parameters: {
+        controls: {
+            disable: true,
         },
     },
 };

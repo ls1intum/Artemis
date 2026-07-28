@@ -9,16 +9,13 @@ describe('TumUiButtonComponent', () => {
     let component: TumUiButtonComponent;
     let fixture: ComponentFixture<TumUiButtonComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TumUiButtonComponent, FontAwesomeTestingModule],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TumUiButtonComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TumUiButtonComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     afterEach(() => {

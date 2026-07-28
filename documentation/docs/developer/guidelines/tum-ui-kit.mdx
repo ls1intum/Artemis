@@ -114,6 +114,7 @@ From the repository root:
 | `pnpm --dir packages/tum-ui run storybook:typecheck` | Type-check Storybook configuration and stories                            |
 | `pnpm --dir packages/tum-ui run storybook:test`      | Run stories and accessibility checks in Chromium                          |
 | `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
+| `pnpm --dir packages/tum-ui run storybook:docs:test` | Build Storybook and test AutoDocs themes and responsive viewports         |
 
 `pnpm start` performs the initial package build, starts the package watcher, and serves Artemis.
 Artemis-only changes use Angular HMR. Package changes rebuild incrementally and cause an application
@@ -131,6 +132,9 @@ pnpm run tum-ui:stylelint
 pnpm run tum-ui:pack:check
 pnpm run test:rules
 pnpm run compile:tests
+pnpm --dir packages/tum-ui run storybook:typecheck
+pnpm --dir packages/tum-ui run storybook:test
+pnpm --dir packages/tum-ui run storybook:docs:test
 ```
 
 `pnpm run test:rules` checks the package manifest against the canonical versions in

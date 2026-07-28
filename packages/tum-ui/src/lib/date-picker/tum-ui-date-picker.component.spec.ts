@@ -112,12 +112,15 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     it('opens the calendar overlay on trigger click and closes via Done', () => {
-        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
+        trigger.focus();
+        trigger.click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).not.toBeNull();
         (document.querySelector('[role="dialog"] tum-ui-button button') as HTMLElement).click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
+        expect(document.activeElement).toBe(trigger);
     });
 
     it('rejects trailing garbage on blur', () => {

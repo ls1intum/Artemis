@@ -16,7 +16,7 @@ interface SelectButtonStoryArgs {
     size: TumUiSelectButtonSize | undefined;
     allowEmpty: boolean;
     disabled: boolean;
-    changed: (value: unknown) => void;
+    changed: (value: string | undefined) => void;
 }
 
 const OPTIONS: readonly IntervalOption[] = [
@@ -53,7 +53,6 @@ const meta = {
                 [allowEmpty]="allowEmpty"
                 [disabled]="disabled"
                 [(ngModel)]="selected"
-                [ngModelOptions]="{ standalone: true }"
                 (changed)="changed($event)"
             />
         `,
@@ -80,7 +79,7 @@ export const Disabled: Story = {
 };
 
 export const KeyboardNavigation: Story = {
-    play: async ({ canvas, userEvent }) => {
+    play: async ({ args, canvas, userEvent }) => {
         const day = canvas.getByRole('radio', { name: 'Day' });
         const week = canvas.getByRole('radio', { name: 'Week' });
 
@@ -88,5 +87,6 @@ export const KeyboardNavigation: Story = {
         await expect(day).toHaveFocus();
         await userEvent.keyboard('{ArrowRight}');
         await expect(week).toBeChecked();
+        await expect(args.changed).toHaveBeenCalledWith('week');
     },
 };

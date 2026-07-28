@@ -38,6 +38,8 @@ describe('TumUiTableVirtualScrollComponent', () => {
         expect(table?.querySelector('[role="rowgroup"]')).not.toBeNull();
         expect(table?.querySelector('[role="row"]')?.textContent).toContain('Name');
         expect(table?.getAttribute('aria-describedby')).toBe('desc');
+        expect(table?.getAttribute('aria-rowcount')).toBe('51');
+        expect(table?.querySelector('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1');
     });
 
     it('forwards the fixed item size to the CDK fixed-size scroll strategy', () => {
@@ -55,5 +57,6 @@ describe('TumUiTableVirtualScrollComponent', () => {
         expect(rows.length).toBeLessThan(50);
         expect(rows[0].querySelector('.row-name')?.textContent).toContain('logger-0');
         expect((rows[0] as HTMLElement).style.height).toBe('40px');
+        expect(rows[0].getAttribute('aria-rowindex')).toBe('2');
     });
 });

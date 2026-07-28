@@ -1,5 +1,6 @@
+import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 
 import { TumUiCheckboxChangeEvent, TumUiCheckboxComponent } from './tum-ui-checkbox.component';
 
@@ -26,9 +27,8 @@ const meta = {
                 <tum-ui-checkbox
                     inputId="terms"
                     name="terms"
-                    [checked]="checked"
-                    [disabled]="disabled"
-                    (onChange)="onChange($event)"
+                    [(checked)]="checked"
+                    ${argsToTemplate(args, { exclude: ['checked', 'label'] })}
                 />
                 {{ label }}
             </label>
@@ -40,7 +40,14 @@ export default meta;
 
 type Story = StoryObj<CheckboxStoryArgs>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    play: async ({ args, canvas, userEvent }) => {
+        const checkbox = canvas.getByRole('checkbox', { name: 'Accept the terms and conditions' });
+        await userEvent.click(checkbox);
+        await expect(checkbox).toBeChecked();
+        await expect(args.onChange).toHaveBeenCalledWith(expect.objectContaining({ checked: true }));
+    },
+};
 
 export const Checked: Story = {
     args: {

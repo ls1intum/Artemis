@@ -21,6 +21,7 @@ export class TumUiPopoverComponent implements OnDestroy {
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
+    private restoreFocusElement?: HTMLElement;
     private readonly openState = signal(false);
 
     readonly isOpen = this.openState.asReadonly();
@@ -29,6 +30,7 @@ export class TumUiPopoverComponent implements OnDestroy {
         if (this.isOpen()) {
             return;
         }
+        this.restoreFocusElement = origin instanceof ElementRef ? origin.nativeElement : origin;
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, this.placement(), { hasBackdrop: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());
@@ -49,6 +51,10 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.overlayRef = undefined;
         this.openState.set(false);
         this.openChange.emit(false);
+        if (this.restoreFocusElement?.isConnected) {
+            this.restoreFocusElement.focus();
+        }
+        this.restoreFocusElement = undefined;
     }
 
     toggle(origin: ElementRef<HTMLElement> | HTMLElement): void {

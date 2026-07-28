@@ -25,11 +25,9 @@
 .tum-ui-progress-spinner-circle {
     stroke-dasharray: 89, 200;
     stroke-dashoffset: 0;
-    stroke: var(--tum-ui-state-danger);
+    stroke: var(--tum-ui-primary);
     stroke-linecap: round;
-    animation:
-        tum-ui-progress-spinner-dash 1.5s ease-in-out infinite,
-        tum-ui-progress-spinner-color 6s ease-in-out infinite;
+    animation: tum-ui-progress-spinner-dash 1.5s ease-in-out infinite;
 }
 
 @keyframes tum-ui-progress-spinner-rotate {
@@ -55,22 +53,9 @@
     }
 }
 
-@keyframes tum-ui-progress-spinner-color {
-    100%,
-    0% {
-        stroke: var(--tum-ui-state-danger);
-    }
-
-    40% {
-        stroke: var(--tum-ui-primary);
-    }
-
-    66% {
-        stroke: var(--tum-ui-state-success);
-    }
-
-    80%,
-    90% {
-        stroke: var(--tum-ui-state-warning);
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-progress-spinner-spin,
+    .tum-ui-progress-spinner-circle {
+        animation: none;
     }
 }

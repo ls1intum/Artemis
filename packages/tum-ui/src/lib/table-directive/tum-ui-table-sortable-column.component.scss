@@ -2,6 +2,23 @@
     white-space: nowrap;
 }
 
+.tum-ui-sort-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.tum-ui-sort-button:disabled {
+    cursor: default;
+}
+
 .tum-ui-sort-icon {
     display: inline-block;
     width: 0.875rem;

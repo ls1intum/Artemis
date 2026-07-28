@@ -38,7 +38,7 @@
         @if (showClear() && !disabled()) {
             <button
                 type="button"
-                class="tum:absolute tum:right-9 tum:appearance-none tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-text-hover"
+                class="tum:absolute tum:right-9 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-text-hover"
                 (click)="clear()"
                 [attr.aria-label]="'tumUi.datePicker.clear' | tumUiTranslate"
             >
@@ -47,7 +47,7 @@
         }
         <button
             type="button"
-            class="tum:absolute tum:right-2 tum:appearance-none tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+            class="tum:absolute tum:right-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
             [disabled]="disabled()"
             (click)="toggle()"
             [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"

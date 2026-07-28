@@ -6,15 +6,12 @@ import { TumUiTagComponent } from './tum-ui-tag.component';
 describe('TumUiTagComponent', () => {
     let fixture: ComponentFixture<TumUiTagComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TumUiTagComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TumUiTagComponent);
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TumUiTagComponent);
+        fixture.detectChanges();
     });
 
     afterEach(() => {

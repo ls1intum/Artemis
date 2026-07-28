@@ -95,18 +95,33 @@ Runtime and peer dependency versions are exact and synchronized with the workspa
 Tailwind and PostCSS are build-only development dependencies pinned through the same catalog.
 `rules/tum-ui-package.spec.mjs` rejects drift.
 
-Storybook configuration, stories, and their direct toolchain dependencies belong to this package.
-Shared dependency versions stay synchronized with Artemis through the workspace catalog. Unit
-tests and TypeScript configurations still use the workspace test runner and compiler policy while
-the package lives in this repository. Stories use stable CSF3 with `Meta`, `StoryObj`, and
-TypeScript's `satisfies` operator. The theme toolbar applies to component previews and AutoDocs;
-the manager remains independently themed by Storybook. Every story runs in both package themes,
-so theme-specific duplicate stories are unnecessary. Compodoc supplies AutoDocs API metadata;
-JSDoc should explain only non-obvious public behavior or constraints, never repeat names, types,
-or defaults. Compodoc metadata is generated when Storybook starts; restart Storybook after changing
-public API documentation. Storybook's Angular Vite integration is a preview feature, so its exact
-version stays pinned and upgrades require HMR verification, the package build, Chromium story tests,
-the static Storybook build, and the AutoDocs theme tests to pass.
+Storybook configuration, stories, and their runtime and test toolchain dependencies belong to this
+package. The Storybook ESLint plugin stays in the root lint infrastructure because the root
+configuration imports it. Shared dependency versions stay synchronized with Artemis through the
+workspace catalog. Unit tests and TypeScript configurations still use the workspace test runner and
+compiler policy while the package lives in this repository.
+
+Story authoring rules:
+
+- Prefer serializable args so controls remain shareable. Disable or map controls for values such as
+  dates that cannot cross Storybook's URL boundary. Use `argsToTemplate` for one-way bindings and
+  bind Angular `model()` inputs explicitly with `[()]`.
+- Use the play context's `userEvent`. Query the story through `canvas` and use `screen` only for
+  content rendered in a portal.
+- In interaction stories, assert user-visible state and any public output that belongs to the
+  interaction contract. Do not add steps that only prove the test spy itself.
+- Keep responsive states pinned with Storybook viewport globals. Validate manager-controlled iframe
+  sizing in the built Storybook Playwright suite, not in a component-test play function.
+- Do not duplicate stories by theme. Every story already runs in both package themes.
+
+Stories use stable CSF3 with `Meta`, `StoryObj`, and TypeScript's `satisfies` operator. The theme
+toolbar applies to component previews and AutoDocs; the manager remains independently themed by
+Storybook. Compodoc supplies AutoDocs API metadata; JSDoc should explain only non-obvious public
+behavior or constraints, never repeat names, types, or defaults. Compodoc metadata is generated when
+Storybook starts; restart Storybook after changing public API documentation. Storybook's Angular
+Vite integration is a preview feature, so its exact version stays pinned and upgrades require HMR
+verification, the package build, Chromium story tests, the static Storybook build, and the AutoDocs
+theme tests to pass.
 
 ## License
 

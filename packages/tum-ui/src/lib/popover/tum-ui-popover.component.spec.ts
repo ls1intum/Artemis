@@ -31,11 +31,13 @@ describe('TumUiPopoverComponent', () => {
     });
 
     it('closes: clears isOpen and emits openChange(false)', () => {
+        origin.focus();
         component.open(origin);
         const emitSpy = vi.spyOn(component.openChange, 'emit');
         component.close();
         expect(component.isOpen()).toBe(false);
         expect(emitSpy).toHaveBeenCalledWith(false);
+        expect(document.activeElement).toBe(origin);
     });
 
     it('toggle flips the open state', () => {

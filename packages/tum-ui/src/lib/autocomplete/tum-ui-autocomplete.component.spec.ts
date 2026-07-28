@@ -156,8 +156,10 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     it('shows the empty message when a search returns no suggestions', async () => {
         fixture.componentRef.setInput('emptyMessage', 'Nothing found');
         await search('zzz', []);
-        expect(options()).toHaveLength(0);
-        expect(listbox()?.querySelector('[role="presentation"]')?.textContent?.trim()).toBe('Nothing found');
+        const emptyOption = options()[0];
+        expect(emptyOption.textContent?.trim()).toBe('Nothing found');
+        expect(emptyOption.getAttribute('aria-disabled')).toBe('true');
+        expect(emptyOption.getAttribute('aria-selected')).toBe('false');
     });
 
     it('reads object option labels via optionLabel', async () => {
@@ -281,7 +283,8 @@ describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () =>
         fixture.detectChanges();
         const complete = vi.fn();
         component.completeMethod.subscribe(complete);
-        input.dispatchEvent(new Event('focus'));
-        expect(complete).toHaveBeenCalledWith(expect.objectContaining({ query: '' }));
+        const focusEvent = new FocusEvent('focus');
+        input.dispatchEvent(focusEvent);
+        expect(complete).toHaveBeenCalledWith({ originalEvent: focusEvent, query: '' });
     });
 });

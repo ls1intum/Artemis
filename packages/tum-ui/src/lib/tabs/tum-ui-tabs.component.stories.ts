@@ -1,6 +1,6 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiTabListComponent } from './tum-ui-tab-list.component';
 import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
 import { TumUiTabPanelsComponent } from './tum-ui-tab-panels.component';
@@ -10,6 +10,12 @@ import { TumUiTabsComponent } from './tum-ui-tabs.component';
 const meta = {
     title: 'Navigation/Tabs',
     component: TumUiTabsComponent,
+    subcomponents: {
+        TabList: TumUiTabListComponent,
+        Tab: TumUiTabComponent,
+        TabPanels: TumUiTabPanelsComponent,
+        TabPanel: TumUiTabPanelComponent,
+    },
     decorators: [
         moduleMetadata({
             imports: [TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabComponent],
@@ -45,15 +51,16 @@ export default meta;
 type Story = StoryObj<TumUiTabsComponent>;
 
 export const Default: Story = {
-    play: async ({ canvas }) => {
+    play: async ({ args, canvas, userEvent }) => {
         const overview = canvas.getByRole('tab', { name: 'Overview' });
-        await userEvent.click(overview);
+        await userEvent.tab();
         await userEvent.keyboard('{End}');
 
         const settings = canvas.getByRole('tab', { name: 'Settings' });
         await expect(settings).toHaveFocus();
         await expect(settings).toHaveAttribute('aria-selected', 'true');
         await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
+        await expect(args.valueChange).toHaveBeenCalledWith('settings');
 
         await userEvent.keyboard('{ArrowRight}');
         await expect(overview).toHaveFocus();

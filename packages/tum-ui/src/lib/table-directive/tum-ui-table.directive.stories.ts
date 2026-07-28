@@ -1,12 +1,25 @@
-import { moduleMetadata } from '@storybook/angular-vite';
+import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiTableSortableColumnComponent } from './tum-ui-table-sortable-column.component';
 import { TumUiTableDirective } from './tum-ui-table.directive';
 
 const meta = {
-    title: 'Data Display/Table Directive',
+    title: 'Data Display/Native Table',
     component: TumUiTableDirective,
+    subcomponents: {
+        SortableColumn: TumUiTableSortableColumnComponent,
+    },
+    argTypes: {
+        size: {
+            control: 'inline-radio',
+            options: ['small', 'normal', 'large'],
+        },
+        sortOrder: {
+            control: 'inline-radio',
+            options: [1, -1],
+        },
+    },
     decorators: [
         moduleMetadata({
             imports: [TumUiTableSortableColumnComponent],
@@ -25,12 +38,8 @@ const meta = {
         template: `
             <table
                 tumUiTable
-                [rowHover]="rowHover"
-                [size]="size"
-                [sortField]="sortField"
-                [sortOrder]="sortOrder"
-                [striped]="striped"
-                (sortChange)="sortChange($event)"
+                ${argsToTemplate(args, { exclude: ['sortChange'] })}
+                (sortChange)="sortField = $event.field; sortOrder = $event.order; sortChange($event)"
             >
                 <thead>
                     <tr>
@@ -57,13 +66,13 @@ export default meta;
 type Story = StoryObj<TumUiTableDirective>;
 
 export const Default: Story = {
-    play: async ({ args, canvas }) => {
+    play: async ({ args, canvas, userEvent }) => {
         const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
         await expect(participantHeader).toHaveAttribute('aria-sort', 'ascending');
 
-        participantHeader.focus();
-        await userEvent.keyboard('{Enter}');
+        await userEvent.click(canvas.getByRole('button', { name: /Participant/ }));
 
         await expect(args.sortChange).toHaveBeenCalledWith({ field: 'name', order: -1 });
+        await expect(participantHeader).toHaveAttribute('aria-sort', 'descending');
     },
 };

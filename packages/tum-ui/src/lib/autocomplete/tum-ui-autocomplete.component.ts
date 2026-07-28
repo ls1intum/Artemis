@@ -15,7 +15,6 @@ import {
     viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
@@ -43,7 +42,7 @@ let nextAutoCompleteId = 0;
     selector: 'tum-ui-autocomplete',
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
-    imports: [A11yModule, TumUiChipComponent, TumUiTranslatePipe],
+    imports: [TumUiChipComponent, TumUiTranslatePipe],
     host: {
         '[class]': 'styleClass()',
     },
@@ -183,10 +182,10 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         }
     }
 
-    protected onFocus(): void {
+    protected onFocus(event: FocusEvent): void {
         this.isFocused.set(true);
         if (this.completeOnFocus() && !this.isDisabled()) {
-            this.fireComplete(this.query());
+            this.fireComplete(this.query(), event);
         }
     }
 

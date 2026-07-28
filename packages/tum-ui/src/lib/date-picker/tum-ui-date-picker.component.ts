@@ -87,6 +87,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
     private overlayRef?: OverlayRef;
+    private restoreFocusElement?: HTMLElement;
 
     protected readonly showErrorBorder = computed(() => this.error() || !this.isInputValid());
     protected readonly showClear = computed(() => !!this.inputText());
@@ -221,6 +222,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         const anchor = this.value() ?? dayjs();
         this.activeMonth.set(anchor.startOf('month'));
         this.timeText.set(this.value()?.format('HH:mm') ?? '');
+        this.restoreFocusElement = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
         this.overlayRef = this.overlayService.createConnectedOverlay(this.triggerWrapper(), 'bottom', { hasBackdrop: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());
@@ -239,6 +241,10 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
         this.isOpen.set(false);
+        if (!this.disabled() && this.restoreFocusElement?.isConnected) {
+            this.restoreFocusElement.focus();
+        }
+        this.restoreFocusElement = undefined;
     }
 
     private commit(next: dayjs.Dayjs): void {

@@ -36,7 +36,6 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
 
 export type TumUiTranslationKey = keyof typeof TUM_UI_DEFAULT_TRANSLATIONS;
 
-/** Host adapter for package-owned translations. */
 export interface TumUiTranslator {
     /** Invalidates translated views when the active catalog changes. */
     readonly changes?: Signal<unknown>;

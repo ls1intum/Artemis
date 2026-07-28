@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostAttributeToken, computed, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -6,31 +6,32 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     templateUrl: './tum-ui-toggle-switch.component.html',
     styleUrl: './tum-ui-toggle-switch.component.scss',
     host: {
-        role: 'switch',
         '[class]': 'hostClasses()',
-        '[attr.id]': 'inputId() || null',
-        '[attr.aria-checked]': 'checked()',
-        '[attr.aria-disabled]': 'effectiveDisabled() || null',
-        '[attr.tabindex]': 'effectiveDisabled() ? -1 : 0',
         '[attr.data-checked]': 'checked()',
         '[attr.data-disabled]': 'effectiveDisabled() || null',
-        '(click)': 'onToggle()',
-        '(keydown)': 'onKeydown($event)',
-        '(blur)': 'onTouched()',
     },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiToggleSwitchComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiToggleSwitchComponent implements ControlValueAccessor {
+    private readonly hostAriaLabel = inject(new HostAttributeToken('aria-label'), { optional: true });
+    private readonly hostAriaLabelledBy = inject(new HostAttributeToken('aria-labelledby'), { optional: true });
+
     readonly disabled = input(false);
 
     readonly inputId = input<string>();
+
+    readonly ariaLabel = input<string>();
+
+    readonly ariaLabelledBy = input<string>();
 
     readonly changed = output<boolean>();
 
     protected readonly checked = signal(false);
     private readonly cvaDisabled = signal(false);
     protected readonly effectiveDisabled = computed(() => this.disabled() || this.cvaDisabled());
+    protected readonly effectiveAriaLabel = computed(() => this.ariaLabel() ?? this.hostAriaLabel);
+    protected readonly effectiveAriaLabelledBy = computed(() => this.ariaLabelledBy() ?? this.hostAriaLabelledBy);
 
     protected onChange: (value: boolean) => void = () => {};
     protected onTouched: () => void = () => {};
@@ -42,22 +43,16 @@ export class TumUiToggleSwitchComponent implements ControlValueAccessor {
 
     protected readonly handleClasses = computed(() => 'tum-ui-toggle-switch-handle tum:bg-tum-ui-content-background');
 
-    protected onToggle(): void {
-        if (this.effectiveDisabled()) {
-            return;
-        }
-        const next = !this.checked();
+    protected onInputChange(event: Event): void {
+        const next = (event.target as HTMLInputElement).checked;
         this.checked.set(next);
         this.onChange(next);
         this.onTouched();
         this.changed.emit(next);
     }
 
-    protected onKeydown(event: KeyboardEvent): void {
-        if (event.key === ' ' || event.key === 'Enter' || event.key === 'Spacebar') {
-            event.preventDefault();
-            this.onToggle();
-        }
+    protected onInputBlur(): void {
+        this.onTouched();
     }
 
     writeValue(value: boolean): void {

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { Component } from '@angular/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -15,10 +14,6 @@ describe('TumUiPanelComponent', () => {
         fixture = TestBed.createComponent(TumUiPanelComponent);
         fixture.componentRef.setInput('header', 'Configuration');
         fixture.detectChanges();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
     });
 
     function toggler(): HTMLButtonElement | null {
@@ -42,15 +37,22 @@ describe('TumUiPanelComponent', () => {
         expect(button.getAttribute('aria-expanded')).toBe('true');
         const controls = button.getAttribute('aria-controls');
         expect(controls).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('.tum-ui-panel-content-container')).nativeElement.id).toBe(controls);
+        const content = fixture.debugElement.query(By.css('.tum-ui-panel-content-container')).nativeElement as HTMLElement;
+        const title = fixture.debugElement.query(By.css('.tum-ui-panel-title')).nativeElement as HTMLElement;
+        expect(content.id).toBe(controls);
+        expect(content.getAttribute('role')).toBe('region');
+        expect(content.getAttribute('aria-labelledby')).toBe(title.id);
         expect(button.getAttribute('aria-label')).toBe('Configuration');
     });
 
-    it('honours an initial collapsed input and flips aria-expanded', () => {
+    it('removes collapsed content from interaction and the accessibility tree', () => {
         fixture.componentRef.setInput('toggleable', true);
         fixture.componentRef.setInput('collapsed', true);
         fixture.detectChanges();
         expect(toggler()!.getAttribute('aria-expanded')).toBe('false');
+        const content = fixture.debugElement.query(By.css('.tum-ui-panel-content-container')).nativeElement as HTMLElement;
+        expect(content.getAttribute('aria-hidden')).toBe('true');
+        expect(content.hasAttribute('inert')).toBe(true);
     });
 
     it('toggles collapsed on click and emits the two-way change', () => {
@@ -72,13 +74,17 @@ describe('TumUiPanelComponent', () => {
 });
 
 @Component({
-    template: `<tum-ui-panel header="Config"><pre class="projected">body</pre></tum-ui-panel>`,
+    template: `
+        <tum-ui-panel header="Config" [toggleable]="true" [collapsed]="true">
+            <button type="button" class="projected">Action</button>
+        </tum-ui-panel>
+    `,
     imports: [TumUiPanelComponent],
 })
 class PanelHostComponent {}
 
 describe('TumUiPanelComponent (projection)', () => {
-    it('projects body content into the panel content region', async () => {
+    it('keeps projected content under the inert collapsed region', async () => {
         await TestBed.configureTestingModule({
             imports: [PanelHostComponent, FontAwesomeTestingModule],
         }).compileComponents();
@@ -86,6 +92,9 @@ describe('TumUiPanelComponent (projection)', () => {
         fixture.detectChanges();
         const projected = fixture.debugElement.query(By.css('.tum-ui-panel-content .projected'));
         expect(projected).not.toBeNull();
-        expect(projected.nativeElement.textContent.trim()).toBe('body');
+        expect(projected.nativeElement.textContent.trim()).toBe('Action');
+        const content = fixture.debugElement.query(By.css('.tum-ui-panel-content-container')).nativeElement as HTMLElement;
+        expect(content.contains(projected.nativeElement)).toBe(true);
+        expect(content.hasAttribute('inert')).toBe(true);
     });
 });

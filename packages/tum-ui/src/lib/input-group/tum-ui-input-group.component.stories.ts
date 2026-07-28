@@ -14,6 +14,10 @@ interface InputGroupStoryArgs {
 const meta = {
     title: 'Forms/Input Group',
     component: TumUiInputGroupComponent,
+    subcomponents: {
+        Addon: TumUiInputGroupAddonComponent,
+        Input: TumUiInputDirective,
+    },
     args: {
         label: 'Budget',
         placeholder: '0',

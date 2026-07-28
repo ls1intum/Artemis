@@ -6,8 +6,8 @@ import { TumUiInputSize } from './tum-ui-input.variants';
 interface InputStoryArgs {
     label: string;
     placeholder: string;
-    size: TumUiInputSize | undefined;
-    invalid: boolean;
+    tumUiInputSize: TumUiInputSize | undefined;
+    tumUiInputInvalid: boolean;
     disabled: boolean;
 }
 
@@ -17,9 +17,15 @@ const meta = {
     args: {
         label: 'Course title',
         placeholder: 'Introduction to Computer Science',
-        size: undefined,
-        invalid: false,
+        tumUiInputSize: undefined,
+        tumUiInputInvalid: false,
         disabled: false,
+    },
+    argTypes: {
+        tumUiInputSize: {
+            control: 'inline-radio',
+            options: [undefined, 'small', 'large'],
+        },
     },
     render: (args) => ({
         props: args,
@@ -29,13 +35,13 @@ const meta = {
                 id="course-title"
                 tumUiInput
                 [placeholder]="placeholder"
-                [tumUiInputSize]="size"
-                [tumUiInputInvalid]="invalid"
+                [tumUiInputSize]="tumUiInputSize"
+                [tumUiInputInvalid]="tumUiInputInvalid"
                 [disabled]="disabled"
-                [attr.aria-invalid]="invalid || null"
-                [attr.aria-describedby]="invalid ? 'course-title-error' : null"
+                [attr.aria-invalid]="tumUiInputInvalid || null"
+                [attr.aria-describedby]="tumUiInputInvalid ? 'course-title-error' : null"
             />
-            @if (invalid) {
+            @if (tumUiInputInvalid) {
                 <div id="course-title-error">Enter a course title.</div>
             }
         `,
@@ -50,7 +56,7 @@ export const Default: Story = {};
 
 export const Invalid: Story = {
     args: {
-        invalid: true,
+        tumUiInputInvalid: true,
     },
 };
 
@@ -74,10 +80,15 @@ export const Multiline: Story = {
                 tumUiTextarea
                 rows="4"
                 [placeholder]="placeholder"
-                [tumUiInputSize]="size"
-                [tumUiInputInvalid]="invalid"
+                [tumUiInputSize]="tumUiInputSize"
+                [tumUiInputInvalid]="tumUiInputInvalid"
                 [disabled]="disabled"
+                [attr.aria-invalid]="tumUiInputInvalid || null"
+                [attr.aria-describedby]="tumUiInputInvalid ? 'course-description-error' : null"
             ></textarea>
+            @if (tumUiInputInvalid) {
+                <div id="course-description-error">Enter a course description.</div>
+            }
         `,
     }),
 };

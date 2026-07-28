@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiTableComponent } from './tum-ui-table.component';
 import { ColumnDef } from './tum-ui-table.types';
 
@@ -43,7 +43,7 @@ export default meta;
 type Story = StoryObj<TumUiTableComponent<Participant>>;
 
 export const Default: Story = {
-    play: async ({ args, canvas }) => {
+    play: async ({ args, canvas, userEvent }) => {
         await expect(canvas.getAllByRole('row')).toHaveLength(4);
 
         const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
@@ -70,5 +70,27 @@ export const Empty: Story = {
     args: {
         rows: [],
         totalRecords: 0,
+    },
+};
+
+export const CompactViewport: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                compact: {
+                    name: 'Compact',
+                    styles: {
+                        width: '360px',
+                        height: '640px',
+                    },
+                },
+            },
+        },
+    },
+    globals: {
+        viewport: {
+            value: 'compact',
+            isRotated: false,
+        },
     },
 };

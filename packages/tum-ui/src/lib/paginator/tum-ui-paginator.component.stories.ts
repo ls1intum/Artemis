@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiPaginatorComponent } from './tum-ui-paginator.component';
 
 const meta = {
@@ -22,7 +22,7 @@ export default meta;
 type Story = StoryObj<TumUiPaginatorComponent>;
 
 export const Default: Story = {
-    play: async ({ args, canvas }) => {
+    play: async ({ args, canvas, userEvent }) => {
         await expect(canvas.getByText('Showing 41 to 60 of 128')).toBeVisible();
         await expect(canvas.getByRole('button', { current: 'page' })).toHaveTextContent('3');
 

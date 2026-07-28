@@ -15,7 +15,6 @@ import {
     viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +35,7 @@ let nextSelectId = 0;
     selector: 'tum-ui-select',
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
-    imports: [A11yModule, FaIconComponent, TumUiTranslatePipe],
+    imports: [FaIconComponent, TumUiTranslatePipe],
     host: {
         '[class]': 'styleClass()',
     },
@@ -202,6 +201,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
         this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
+        this.overlayRef.overlayElement.querySelector<HTMLElement>('[role="listbox"]')?.focus();
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
             if (event.key === 'Escape') {
@@ -219,6 +219,9 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         this.overlayRef = undefined;
         this.isOpen.set(false);
         this.onTouchedCallback();
+        if (!this.isDisabled()) {
+            this.trigger().nativeElement.focus();
+        }
     }
 
     protected selectOption(option: unknown): void {

@@ -1,39 +1,66 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, waitForElementToBeRemoved } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
 
+interface TooltipStoryArgs {
+    tumUiTooltip: string;
+    tumUiTooltipPlacement: 'top' | 'right' | 'bottom' | 'left';
+    showDelay: number;
+    hideDelay: number;
+}
+
 const meta = {
     title: 'Overlays/Tooltip',
+    component: TumUiTooltipDirective,
+    args: {
+        tumUiTooltip: 'Downloads the current result as a CSV file',
+        tumUiTooltipPlacement: 'top',
+        showDelay: 150,
+        hideDelay: 100,
+    },
+    argTypes: {
+        tumUiTooltipPlacement: {
+            control: 'inline-radio',
+            options: ['top', 'right', 'bottom', 'left'],
+        },
+    },
     decorators: [
         moduleMetadata({
             imports: [TumUiButtonDirective, TumUiTooltipDirective],
         }),
     ],
-    render: () => ({
+    render: (args) => ({
+        props: { tooltip: args },
         template: `
-            <button tumUiButton tumUiTooltip="Downloads the current result as a CSV file" [showDelay]="0" [hideDelay]="0">
+            <button
+                tumUiButton
+                [tumUiTooltip]="tooltip.tumUiTooltip"
+                [tumUiTooltipPlacement]="tooltip.tumUiTooltipPlacement"
+                [showDelay]="tooltip.showDelay"
+                [hideDelay]="tooltip.hideDelay"
+            >
                 Export
             </button>
         `,
     }),
-} satisfies Meta;
+} satisfies Meta<TooltipStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<TooltipStoryArgs>;
 
 export const Default: Story = {
-    play: async ({ canvas }) => {
+    play: async ({ canvas, userEvent }) => {
         const trigger = canvas.getByRole('button', { name: 'Export' });
         await userEvent.tab();
 
-        const tooltip = await within(document.body).findByRole('tooltip');
-        await waitFor(() => expect(tooltip).toHaveTextContent('Downloads the current result as a CSV file'));
+        const tooltip = await screen.findByRole('tooltip', { name: 'Downloads the current result as a CSV file' });
         await expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
 
+        const tooltipRemoved = waitForElementToBeRemoved(tooltip);
         await userEvent.keyboard('{Escape}');
-        await waitFor(() => expect(tooltip).not.toBeInTheDocument());
+        await tooltipRemoved;
     },
 };

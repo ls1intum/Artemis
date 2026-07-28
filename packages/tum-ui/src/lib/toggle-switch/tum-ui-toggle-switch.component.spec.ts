@@ -19,63 +19,41 @@ describe('TumUiToggleSwitchComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    function press(key: string): void {
-        host.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
-        fixture.detectChanges();
+    function input(): HTMLInputElement {
+        return host.querySelector('input[type="checkbox"]')!;
     }
 
-    it('exposes the switch role and defaults to unchecked and focusable', () => {
-        expect(host.getAttribute('role')).toBe('switch');
-        expect(host.getAttribute('aria-checked')).toBe('false');
-        expect(host.getAttribute('tabindex')).toBe('0');
+    it('uses a native checkbox with switch semantics', () => {
+        expect(input().getAttribute('role')).toBe('switch');
+        expect(input().checked).toBe(false);
+        expect(input().disabled).toBe(false);
+        expect(host.getAttribute('role')).toBeNull();
     });
 
-    it('toggles on click, reflects aria-checked, and emits the new value', () => {
+    it('toggles on native input activation and emits the new value', () => {
         const changed = vi.fn();
         component.changed.subscribe(changed);
 
-        host.click();
+        input().click();
         fixture.detectChanges();
 
-        expect(host.getAttribute('aria-checked')).toBe('true');
+        expect(input().checked).toBe(true);
+        expect(host.getAttribute('data-checked')).toBe('true');
         expect(changed).toHaveBeenCalledWith(true);
 
-        host.click();
+        input().click();
         fixture.detectChanges();
-        expect(host.getAttribute('aria-checked')).toBe('false');
+        expect(input().checked).toBe(false);
         expect(changed).toHaveBeenLastCalledWith(false);
-    });
-
-    it.each([' ', 'Enter'])('toggles on the %s key and prevents default', (key) => {
-        const changed = vi.fn();
-        component.changed.subscribe(changed);
-        const event = new KeyboardEvent('keydown', { key, cancelable: true });
-        host.dispatchEvent(event);
-        fixture.detectChanges();
-        expect(host.getAttribute('aria-checked')).toBe('true');
-        expect(changed).toHaveBeenCalledWith(true);
-        expect(event.defaultPrevented).toBe(true);
-    });
-
-    it('ignores unrelated keys', () => {
-        const changed = vi.fn();
-        component.changed.subscribe(changed);
-        press('a');
-        expect(host.getAttribute('aria-checked')).toBe('false');
-        expect(changed).not.toHaveBeenCalled();
     });
 
     it('reflects the value written through the ControlValueAccessor', () => {
         component.writeValue(true);
         fixture.detectChanges();
-        expect(host.getAttribute('aria-checked')).toBe('true');
+        expect(input().checked).toBe(true);
         component.writeValue(false);
         fixture.detectChanges();
-        expect(host.getAttribute('aria-checked')).toBe('false');
+        expect(input().checked).toBe(false);
     });
 
     it('invokes the registered onChange / onTouched callbacks when toggled', () => {
@@ -83,7 +61,7 @@ describe('TumUiToggleSwitchComponent', () => {
         const onTouched = vi.fn();
         component.registerOnChange(onChange);
         component.registerOnTouched(onTouched);
-        host.click();
+        input().click();
         fixture.detectChanges();
         expect(onChange).toHaveBeenCalledWith(true);
         expect(onTouched).toHaveBeenCalled();
@@ -94,32 +72,38 @@ describe('TumUiToggleSwitchComponent', () => {
         component.changed.subscribe(changed);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        expect(host.getAttribute('aria-disabled')).toBe('true');
-        expect(host.getAttribute('tabindex')).toBe('-1');
+        expect(input().disabled).toBe(true);
+        expect(host.getAttribute('data-disabled')).toBe('true');
 
-        host.click();
-        press(' ');
-        expect(host.getAttribute('aria-checked')).toBe('false');
+        input().click();
+        expect(input().checked).toBe(false);
         expect(changed).not.toHaveBeenCalled();
     });
 
     it('respects the reactive-forms disabled state', () => {
         component.setDisabledState(true);
         fixture.detectChanges();
-        expect(host.getAttribute('aria-disabled')).toBe('true');
-        host.click();
-        expect(host.getAttribute('aria-checked')).toBe('false');
+        expect(input().disabled).toBe(true);
+        input().click();
+        expect(input().checked).toBe(false);
     });
 
-    it('forwards inputId onto the host id', () => {
+    it('forwards id and accessible-name attributes to the native input', () => {
         fixture.componentRef.setInput('inputId', 'toggle-feature-x');
+        fixture.componentRef.setInput('ariaLabel', 'Feature X');
+        fixture.componentRef.setInput('ariaLabelledBy', 'feature-x-label');
         fixture.detectChanges();
-        expect(host.getAttribute('id')).toBe('toggle-feature-x');
+        expect(input().id).toBe('toggle-feature-x');
+        expect(input().getAttribute('aria-label')).toBe('Feature X');
+        expect(input().getAttribute('aria-labelledby')).toBe('feature-x-label');
     });
 });
 
 @Component({
-    template: `<tum-ui-toggle-switch [formControl]="control" />`,
+    template: `
+        <label id="notifications-label" for="notifications">Email notifications</label>
+        <tum-ui-toggle-switch inputId="notifications" aria-labelledby="notifications-label" [formControl]="control" />
+    `,
     imports: [TumUiToggleSwitchComponent, ReactiveFormsModule],
 })
 class ReactiveHostComponent {
@@ -133,14 +117,18 @@ describe('TumUiToggleSwitchComponent (reactive forms)', () => {
         }).compileComponents();
         const fixture = TestBed.createComponent(ReactiveHostComponent);
         fixture.detectChanges();
-        const switchEl = fixture.nativeElement.querySelector('tum-ui-toggle-switch') as HTMLElement;
+        const switchInput = fixture.nativeElement.querySelector('input[role="switch"]') as HTMLInputElement;
+        const label = fixture.nativeElement.querySelector('label') as HTMLLabelElement;
 
-        switchEl.click();
+        label.click();
         fixture.detectChanges();
+        expect(label.htmlFor).toBe(switchInput.id);
+        expect(switchInput.getAttribute('aria-labelledby')).toBe(label.id);
+        expect(switchInput.checked).toBe(true);
         expect(fixture.componentInstance.control.value).toBe(true);
 
         fixture.componentInstance.control.disable();
         fixture.detectChanges();
-        expect(switchEl.getAttribute('aria-disabled')).toBe('true');
+        expect(switchInput.disabled).toBe(true);
     });
 });

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 
 import { TumUiRadioButtonClickEvent, TumUiRadioButtonComponent } from './tum-ui-radio-button.component';
 
@@ -59,7 +59,14 @@ export default meta;
 
 type Story = StoryObj<RadioButtonStoryArgs>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    play: async ({ args, canvas, userEvent }) => {
+        const daily = canvas.getByRole('radio', { name: 'Daily' });
+        await userEvent.click(daily);
+        await expect(daily).toBeChecked();
+        await expect(args.onClick).toHaveBeenCalledWith(expect.objectContaining({ value: 'daily' }));
+    },
+};
 
 export const Disabled: Story = {
     args: {

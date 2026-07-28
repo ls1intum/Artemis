@@ -38,6 +38,10 @@ describe('TumUiTableSortableColumnComponent', () => {
         return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('th')).find((element) => element.textContent?.includes(label))!;
     }
 
+    function button(label: string): HTMLButtonElement {
+        return th(label).querySelector('button')!;
+    }
+
     it('renders a sort icon after the projected header text', () => {
         const login = th('Login');
         expect(login.textContent).toContain('Login');
@@ -53,32 +57,25 @@ describe('TumUiTableSortableColumnComponent', () => {
         expect(th('Login').getAttribute('aria-sort')).toBe('descending');
     });
 
-    it('is focusable, except when disabled', () => {
-        expect(th('Login').getAttribute('tabindex')).toBe('0');
-        expect(th('Frozen').getAttribute('tabindex')).toBeNull();
+    it('uses native buttons for activation and disables them natively', () => {
+        expect(th('Login').getAttribute('tabindex')).toBeNull();
+        expect(button('Login').type).toBe('button');
+        expect(button('Login').disabled).toBe(false);
+        expect(button('Frozen').disabled).toBe(true);
     });
 
     it('toggles the active field on click (emits order -1)', () => {
-        th('Login').click();
+        button('Login').click();
         expect(host.events.at(-1)).toEqual({ field: 'login', order: -1 });
     });
 
     it('sorts a different field ascending on click (emits order 1)', () => {
-        th('Email').click();
+        button('Email').click();
         expect(host.events.at(-1)).toEqual({ field: 'email', order: 1 });
-    });
-
-    it('sorts on Enter / Space keyboard activation', () => {
-        th('Email').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-        expect(host.events.at(-1)).toEqual({ field: 'email', order: 1 });
-
-        th('Login').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-        expect(host.events.at(-1)).toEqual({ field: 'login', order: -1 });
     });
 
     it('does not sort when the column is disabled', () => {
-        th('Frozen').click();
-        th('Frozen').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        button('Frozen').click();
         expect(host.events).toHaveLength(0);
         expect(th('Frozen').getAttribute('aria-sort')).toBe('none');
     });
