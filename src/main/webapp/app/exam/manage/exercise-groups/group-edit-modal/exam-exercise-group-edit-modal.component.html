@@ -7,20 +7,20 @@
     [dismissableMask]="false"
     [style]="{ width: '480px' }"
 >
-    <div class="d-flex flex-column gap-3">
+    <div class="flex flex-col gap-4">
         <div>
-            <label class="fw-semibold d-block mb-1" for="exam-group-edit-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
+            <label class="font-semibold block mb-1" for="exam-group-edit-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
             <input
                 id="exam-group-edit-title"
                 tumUiInput
-                class="w-100"
+                class="w-full"
                 [attr.maxlength]="MAX_TITLE_LENGTH"
                 [ngModel]="draftTitle()"
                 (ngModelChange)="draftTitle.set($event)"
                 [tumUiInputInvalid]="!isTitleValid()"
             />
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="flex items-center gap-2">
             <tum-ui-checkbox inputId="exam-group-edit-mandatory" [binary]="true" [ngModel]="draftIsMandatory()" (ngModelChange)="draftIsMandatory.set($event)" />
             <label for="exam-group-edit-mandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>

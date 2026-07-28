@@ -7,7 +7,7 @@
     [dismissableMask]="false"
     [style]="{ width: '680px', maxWidth: '95vw' }"
 >
-    <div class="tab-bar mb-3">
+    <div class="tab-bar mb-4">
         <button
             class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('create')"
@@ -21,7 +21,7 @@
     </div>
 
     <p
-        class="text-muted small mb-3"
+        class="text-muted-color text-sm mb-4"
         [jhiTranslate]="activeTab() === 'import' ? 'artemisApp.exerciseManagement.addModal.importHint' : 'artemisApp.exerciseManagement.addModal.createHint'"
     ></p>
     <div class="exercise-grid">
@@ -41,7 +41,7 @@
                     <span
                         [jhiTranslate]="activeTab() === 'import' ? 'artemisApp.exerciseManagement.addModal.cta.select' : 'artemisApp.exerciseManagement.addModal.cta.create'"
                     ></span>
-                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    <fa-icon [icon]="faArrowRight" class="ml-1" />
                 </span>
             </button>
         }

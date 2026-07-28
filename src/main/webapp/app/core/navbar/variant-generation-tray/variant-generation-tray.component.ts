@@ -3,10 +3,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirm-dialog.component';
+import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
 import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -32,13 +33,14 @@ type TrayStatus = 'running' | 'success' | 'attention';
     templateUrl: './variant-generation-tray.component.html',
     styleUrl: './variant-generation-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [ConfirmationService],
+    providers: [TumUiConfirmationService],
     imports: [
         FaIconComponent,
         TumUiPopoverComponent,
         TumUiPopoverTriggerDirective,
         TumUiButtonComponent,
-        ConfirmDialogModule,
+        TumUiButtonDirective,
+        TumUiConfirmDialogComponent,
         ArtemisTranslatePipe,
         ExerciseVariantAiModalWizardComponent,
     ],
@@ -46,7 +48,7 @@ type TrayStatus = 'running' | 'success' | 'attention';
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
     private readonly accountService = inject(AccountService);
-    private readonly confirmationService = inject(ConfirmationService);
+    private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
     /**
@@ -135,8 +137,12 @@ export class VariantGenerationTrayComponent {
     cancelJob(job: VariantJob, event: Event): void {
         event.stopPropagation();
         this.confirmationService.confirm({
-            target: event.target as EventTarget,
+            header: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationHeader'),
             message: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmation'),
+            acceptLabel: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationAccept'),
+            rejectLabel: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationReject'),
+            acceptSeverity: 'danger',
+            icon: faTriangleExclamation,
             accept: () => {
                 if (job.jobId) {
                     this.variantGenerationService.cancelJob(job.jobId).subscribe({ error: () => {} });

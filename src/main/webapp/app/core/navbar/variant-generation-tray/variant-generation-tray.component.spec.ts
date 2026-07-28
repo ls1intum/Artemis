@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { computed, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
+import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 import { of } from 'rxjs';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -168,11 +168,8 @@ describe('VariantGenerationTrayComponent', () => {
     it('cancels a job only after the confirmation is accepted', () => {
         jobs.set([runningJob]);
         fixture.detectChanges();
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options) => {
-            options.accept?.();
-            return confirmationService;
-        });
+        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options) => options.accept());
 
         component.cancelJob(runningJob, new Event('click'));
 

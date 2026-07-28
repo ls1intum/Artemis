@@ -41,15 +41,15 @@
                         @if (hasAssessmentModeColumn()) {
                             <th jhiTranslate="artemisApp.assessmentMode"></th>
                         }
-                        <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
+                        <th class="text-right col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
                     </tr>
                 </thead>
                 <tbody id="exercises">
                     @for (exercise of exercises(); track exercise.id) {
                         <tr [attr.id]="'exercise-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
                             <div *cdkDragPreview class="exercise-drag-preview">
-                                <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
-                                <span class="fw-semibold">{{ exercise.title }}</span>
+                                <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted-color mr-1" />
+                                <span class="font-semibold">{{ exercise.title }}</span>
                             </div>
                             @if (showDragHandle()) {
                                 <td>
@@ -63,7 +63,7 @@
                                 <fa-icon [icon]="icon(exercise)" />
                             </td>
                             <td class="align-middle col-title">
-                                <a class="fw-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
+                                <a class="font-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
                             </td>
                             <td class="align-middle">{{ exercise.maxPoints }}</td>
                             <td class="align-middle">{{ exercise.bonusPoints }}</td>
@@ -128,7 +128,7 @@
                             }
                             <td class="col-actions">
                                 @if (isExerciseTypeDisabled(exercise)) {
-                                    <div class="d-flex justify-content-end align-items-center gap-2">
+                                    <div class="flex justify-end items-center gap-2">
                                         <span jhiTranslate="artemisApp.exercise.errors.deactivatedExerciseType.label"></span>
                                     </div>
                                 } @else if (exercise.id) {
@@ -149,6 +149,6 @@
             </table>
         </div>
     } @else {
-        <div class="text-muted small py-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExercises"></div>
+        <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExercises"></div>
     }
 </div>

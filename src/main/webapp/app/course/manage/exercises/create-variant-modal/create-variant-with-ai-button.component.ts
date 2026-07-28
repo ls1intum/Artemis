@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,7 +18,7 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
 @Component({
     selector: 'jhi-create-variant-with-ai-button',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ExerciseVariantAiModalWizardComponent],
+    imports: [FaIconComponent, TranslateDirective, TumUiButtonDirective, ExerciseVariantAiModalWizardComponent],
     // display: contents lets the button sit in the host's flex row / .btn-group as if it were written there
     // inline. Without it the component element becomes an extra flex item that stretches to the row height and
     // sizes the button differently from its siblings. Spacing utilities therefore go on `styleClass`, not on
@@ -37,7 +38,7 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
     `,
     template: `
         @if (supported()) {
-            <button type="button" class="btn btn-warning btn-sm {{ styleClass() }}" data-testid="create-variant-ai-button" (click)="modalVisible.set(true)">
+            <button type="button" tumUiButton severity="warn" size="small" class="{{ styleClass() }}" data-testid="create-variant-ai-button" (click)="modalVisible.set(true)">
                 <fa-icon [icon]="faRobot" />
                 <span jhiTranslate="artemisApp.exerciseManagement.action.createVariantWithAi"></span>
             </button>

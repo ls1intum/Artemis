@@ -2,6 +2,7 @@ import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/ent
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
+import { TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 
 export type PlacementChoice = 'existing-group' | 'new-group' | 'standalone';
 
@@ -78,16 +79,17 @@ export function adaptationChips(request: VariantGenerationRequest | undefined, t
     return items;
 }
 
-export function difficultyBadgeClass(d: DifficultyLevel | undefined): string {
+/** Severity of the `tum-ui-tag` showing an exercise's difficulty. */
+export function difficultySeverity(d: DifficultyLevel | undefined): TumUiTagSeverity {
     switch (d) {
         case DifficultyLevel.EASY:
-            return 'bg-success';
+            return 'success';
         case DifficultyLevel.MEDIUM:
-            return 'bg-warning';
+            return 'warn';
         case DifficultyLevel.HARD:
-            return 'bg-danger';
+            return 'danger';
         default:
-            return 'bg-secondary';
+            return 'secondary';
     }
 }
 

@@ -9,6 +9,8 @@ import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -35,6 +37,8 @@ export enum ExerciseRowType {
         RouterLink,
         FaIconComponent,
         NgbTooltip,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
         ExerciseCategoriesComponent,
         NgClass,
         TranslateDirective,

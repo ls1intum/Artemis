@@ -25,14 +25,16 @@ import {
     faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirm-dialog.component';
+import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -43,7 +45,7 @@ import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 
 import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } from 'app/openapi/model/variant-generation-request';
 import { VariantPlacement } from 'app/openapi/model/variant-placement';
 import { StepOutput } from 'app/openapi/model/step-output';
-import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyTranslationKey, durationDays, narrativeStyleTranslationKey } from './exercise-variant-ai-modal.utils';
+import { PlacementChoice, adaptationChips, difficultySeverity, difficultyTranslationKey, durationDays, narrativeStyleTranslationKey } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -80,14 +82,16 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     selector: 'jhi-exercise-variant-ai-modal-wizard',
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
-    providers: [ConfirmationService],
+    providers: [TumUiConfirmationService],
     imports: [
         TumUiDialogComponent,
         TumUiButtonComponent,
         TumUiRadioButtonComponent,
         TumUiInputDirective,
         TumUiTooltipDirective,
-        ConfirmDialogModule,
+        TumUiTagComponent,
+        TumUiMessageComponent,
+        TumUiConfirmDialogComponent,
         FormsModule,
         FaIconComponent,
         ArtemisTranslatePipe,
@@ -98,7 +102,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly variantGenerationService = inject(ExerciseVariantGenerationService);
     private readonly variantGroupService = inject(ExerciseVariantGroupService);
     private readonly exerciseService = inject(ExerciseService);
-    private readonly confirmationService = inject(ConfirmationService);
+    private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
 
@@ -308,7 +312,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly ExerciseType = ExerciseType;
     protected readonly getIcon = getIcon;
     protected readonly durationDays = durationDays;
-    protected readonly difficultyBadgeClass = difficultyBadgeClass;
+    protected readonly difficultySeverity = difficultySeverity;
     protected readonly difficultyTranslationKey = difficultyTranslationKey;
 
     private eventsSubscription?: Subscription;
@@ -459,8 +463,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         const jobId = this.jobId();
         if (!jobId) return;
         this.confirmationService.confirm({
-            target: event.target as EventTarget,
+            header: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationHeader'),
             message: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmation'),
+            acceptLabel: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationAccept'),
+            rejectLabel: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationReject'),
+            acceptSeverity: 'danger',
+            icon: faTriangleExclamation,
             accept: () => this.variantGenerationService.cancelJob(jobId).subscribe({ error: () => {} }),
         });
     }

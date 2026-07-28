@@ -1,7 +1,7 @@
-<div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
+<div #actionsRow class="flex gap-1 items-center justify-end flex-nowrap w-full">
     <!-- Reserved prefix content (e.g. quiz lifecycle buttons, an exam test-run warning) always stays visible; grouped
          so its reserved width can be measured. -->
-    <span #reservedGroup class="d-flex gap-1 align-items-center flex-nowrap">
+    <span #reservedGroup class="flex gap-1 items-center flex-nowrap">
         <ng-content select="[actionBarReserved]" />
         @if (hasReservedContent() && items().length > 0) {
             <div class="vr mx-1"></div>
@@ -30,7 +30,7 @@
         <fa-icon [icon]="faEllipsis" />
     </button>
     <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
-        <div class="action-menu d-flex flex-column gap-1">
+        <div class="action-menu flex flex-col gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
@@ -64,7 +64,7 @@
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <fa-icon [icon]="action.icon" /><span class="ml-1" [jhiTranslate]="action.labelKey"></span>
             </button>
         }
         @case ('button') {
@@ -78,7 +78,7 @@
                 [class.w-100]="inMenu"
                 (click)="runAction(action)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <fa-icon [icon]="action.icon" /><span class="ml-1" [jhiTranslate]="action.labelKey"></span>
             </button>
         }
         @default {
@@ -98,7 +98,7 @@
                 tumUiTooltipPlacement="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <fa-icon [icon]="action.icon" /><span class="ml-1" [jhiTranslate]="action.labelKey"></span>
             </a>
         }
     }

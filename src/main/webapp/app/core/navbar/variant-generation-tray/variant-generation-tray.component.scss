@@ -1,5 +1,4 @@
 // Visual language shared with the variant wizard (exercise-variant-ai-modal-wizard.component.scss).
-$purple: #8b5cf6;
 
 // ── Navbar button: base wand icon + notification-style status badge ──
 
@@ -33,7 +32,7 @@ $purple: #8b5cf6;
     pointer-events: none;
 
     &--running {
-        background: $purple;
+        background: var(--exercise-accent-group);
     }
 
     &--success {
@@ -56,7 +55,7 @@ $purple: #8b5cf6;
         font-size: 0.875rem;
 
         fa-icon {
-            color: $purple;
+            color: var(--exercise-accent-group);
         }
     }
 
@@ -89,8 +88,8 @@ $purple: #8b5cf6;
     transition: all 0.15s ease;
 
     &:hover {
-        border-color: rgba($purple, 0.5);
-        background: rgba($purple, 0.04);
+        border-color: color-mix(in srgb, var(--exercise-accent-group) 50%, transparent);
+        background: color-mix(in srgb, var(--exercise-accent-group) 4%, transparent);
     }
 
     &--attention {
@@ -100,17 +99,12 @@ $purple: #8b5cf6;
     // Purple accent like the modal's flow card (variant-flow-card__arrow / __title--target).
     &__arrow {
         font-size: 0.7rem;
-        color: $purple;
+        color: var(--exercise-accent-group);
     }
 
     &__target-title {
-        color: $purple;
+        color: var(--exercise-accent-group);
     }
-}
-
-// Allows the flexed title span to shrink so text-truncate works (utility not in Bootstrap).
-.min-width-0 {
-    min-width: 0;
 }
 
 // Same look as the modal's "what is being adapted" chips (exercise-variant-ai-modal-wizard.component.scss).
@@ -147,12 +141,12 @@ $purple: #8b5cf6;
         transition: background 0.3s ease;
 
         &--done {
-            background: $purple;
+            background: var(--exercise-accent-group);
         }
 
         &--active {
-            background: $purple;
-            box-shadow: 0 0 0 3px rgba($purple, 0.25);
+            background: var(--exercise-accent-group);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--exercise-accent-group) 25%, transparent);
             animation: variant-dot-pulse 1.2s ease-in-out infinite;
         }
     }
@@ -165,7 +159,7 @@ $purple: #8b5cf6;
         transition: background 0.3s ease;
 
         &--done {
-            background: $purple;
+            background: var(--exercise-accent-group);
         }
     }
 }
@@ -173,10 +167,10 @@ $purple: #8b5cf6;
 @keyframes variant-dot-pulse {
     0%,
     100% {
-        box-shadow: 0 0 0 3px rgba($purple, 0.25);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--exercise-accent-group) 25%, transparent);
     }
 
     50% {
-        box-shadow: 0 0 0 5px rgba($purple, 0.1);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--exercise-accent-group) 10%, transparent);
     }
 }

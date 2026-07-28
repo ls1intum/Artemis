@@ -8,6 +8,9 @@
                 "ariaLabel": "KI-Variantengenerierungs-Jobs",
                 "cancel": "Abbrechen",
                 "cancelConfirmation": "Diese Variantengenerierung abbrechen? Die bisherige Arbeit der KI wird verworfen und die angelegte Übungskopie gelöscht.",
+                "cancelConfirmationHeader": "Variantengenerierung abbrechen?",
+                "cancelConfirmationAccept": "Generierung abbrechen",
+                "cancelConfirmationReject": "Weiter generieren",
                 "attempt": "Versuch {{ attempt }}/{{ max }}"
             },
             "wizard": {

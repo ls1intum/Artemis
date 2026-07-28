@@ -8,6 +8,9 @@
                 "ariaLabel": "AI variant generation jobs",
                 "cancel": "Cancel",
                 "cancelConfirmation": "Cancel this variant generation? The AI's work so far will be discarded and the provisioned exercise copy deleted.",
+                "cancelConfirmationHeader": "Cancel variant generation?",
+                "cancelConfirmationAccept": "Cancel generation",
+                "cancelConfirmationReject": "Keep generating",
                 "attempt": "attempt {{ attempt }}/{{ max }}"
             },
             "wizard": {

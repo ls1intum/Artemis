@@ -10,7 +10,7 @@
 >
     <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3) ── -->
     @if (!isMonitorMode()) {
-        <div class="wizard-step-indicator mb-4" data-testid="variant-wizard-step-indicator">
+        <div class="wizard-step-indicator mb-6" data-testid="variant-wizard-step-indicator">
             @for (step of wizardSteps(); track step.step; let i = $index) {
                 <div
                     class="wiz-step-item"
@@ -36,16 +36,16 @@
             @if (displayExerciseType(); as type) {
                 <fa-icon [icon]="getIcon(type)" class="variant-flow-card__icon" />
             }
-            <span class="variant-flow-card__title text-truncate">{{ displaySourceTitle() }}</span>
+            <span class="variant-flow-card__title truncate">{{ displaySourceTitle() }}</span>
             <fa-icon [icon]="faArrowRight" class="variant-flow-card__arrow" />
             @if (displayVariantTitle(); as title) {
-                <span class="variant-flow-card__title variant-flow-card__title--target text-truncate" data-testid="variant-wizard-flow-target">{{ title }}</span>
+                <span class="variant-flow-card__title variant-flow-card__title--target truncate" data-testid="variant-wizard-flow-target">{{ title }}</span>
             } @else {
                 <span class="variant-flow-card__pending" data-testid="variant-wizard-flow-pending">•••</span>
             }
         </div>
         @if (adaptations().length > 0) {
-            <div class="d-flex flex-wrap gap-1 mb-3" data-testid="variant-wizard-adaptations">
+            <div class="flex flex-wrap gap-1 mb-4" data-testid="variant-wizard-adaptations">
                 @for (chip of adaptations(); track chip) {
                     <span class="info-chip">{{ chip }}</span>
                 }
@@ -57,11 +57,11 @@
          knowing which exercise it applies to, and steps 4/5 have the flow card above instead. ── -->
     @if (wizardStep() === 1 || wizardStep() === 2) {
         @if (sourceExercise(); as src) {
-            <div class="source-badge mb-4" data-testid="variant-wizard-source-badge">
+            <div class="source-badge mb-6" data-testid="variant-wizard-source-badge">
                 <fa-icon [icon]="getIcon(src.type)" class="source-badge__icon" />
                 <span class="source-badge__title">{{ src.title }}</span>
                 @if (src.difficulty) {
-                    <span class="badge {{ difficultyBadgeClass(src.difficulty) }}">{{ difficultyTranslationKey(src.difficulty) | artemisTranslate }}</span>
+                    <tum-ui-tag [severity]="difficultySeverity(src.difficulty)" [value]="difficultyTranslationKey(src.difficulty) | artemisTranslate" />
                 }
             </div>
         }
@@ -69,9 +69,9 @@
 
     <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
     @if (wizardStep() === 1) {
-        <p class="text-muted small mb-3">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
+        <p class="text-muted-color text-sm mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
 
-        <div class="option-cards mb-4">
+        <div class="option-cards mb-6">
             <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
                 @if (changeDifficulty()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
@@ -126,9 +126,9 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-end">
+        <div class="flex justify-end">
             <tum-ui-button severity="secondary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
-                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ms-1" />
+                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
             </tum-ui-button>
         </div>
     }
@@ -139,7 +139,7 @@
             @if (changeDifficulty()) {
                 <div class="field-group">
                     <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.targetDifficulty' | artemisTranslate }}</p>
-                    <div class="d-flex gap-3 flex-wrap">
+                    <div class="flex gap-4 flex-wrap">
                         @for (d of availableDifficulties(); track d.value) {
                             <div class="radio-item">
                                 <tum-ui-radio-button
@@ -160,7 +160,7 @@
                     <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.domain' | artemisTranslate }}</p>
                     <input
                         tumUiInput
-                        class="w-100"
+                        class="w-full"
                         [ngModel]="domainText()"
                         (ngModelChange)="domainText.set($event)"
                         [placeholder]="'artemisApp.exerciseVariantGeneration.wizard.configure.domainPlaceholder' | artemisTranslate"
@@ -170,7 +170,7 @@
             @if (changeNarrative()) {
                 <div class="field-group">
                     <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.narrative' | artemisTranslate }}</p>
-                    <div class="d-flex gap-3 flex-wrap">
+                    <div class="flex gap-4 flex-wrap">
                         @for (style of narrativeStyles; track style.value) {
                             <div
                                 class="radio-item"
@@ -197,7 +197,7 @@
                     <textarea
                         tumUiTextarea
                         rows="4"
-                        class="w-100"
+                        class="w-full"
                         style="resize: vertical"
                         [ngModel]="additionalInstructions()"
                         (ngModelChange)="additionalInstructions.set($event)"
@@ -207,12 +207,12 @@
             }
         </div>
 
-        <div class="d-flex justify-content-between mt-4">
+        <div class="flex justify-between mt-6">
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()">
-                <fa-icon [icon]="faArrowLeft" class="me-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
+                <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
             </tum-ui-button>
             <tum-ui-button severity="secondary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
-                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ms-1" />
+                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
             </tum-ui-button>
         </div>
     }
@@ -220,7 +220,7 @@
     <!-- ── Step 3: Placement ──────────────────────────────────────────────────── -->
     @if (wizardStep() === 3) {
         <div class="placement-section">
-            <p class="small fw-semibold mb-2">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.question' | artemisTranslate }}</p>
+            <p class="text-sm font-semibold mb-2">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.question' | artemisTranslate }}</p>
             <div class="placement-options">
                 @if (sourceGroup(); as group) {
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'existing-group'">
@@ -257,10 +257,10 @@
                             <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroupHint' | artemisTranslate }}</span>
                             @if (placementChoice() === 'new-group') {
                                 <div class="new-group-settings" (click)="$event.stopPropagation()">
-                                    <div class="d-flex flex-wrap gap-2 align-items-end mt-2">
-                                        <div class="flex-grow-1" style="min-width: 120px">
+                                    <div class="flex flex-wrap gap-2 items-end mt-2">
+                                        <div class="grow" style="min-width: 120px">
                                             <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.groupTitle' | artemisTranslate }}</div>
-                                            <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" class="form-control form-control-sm" />
+                                            <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" tumUiInput tumUiInputSize="small" />
                                         </div>
                                         <div>
                                             <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate }}</div>
@@ -268,18 +268,22 @@
                                                 type="number"
                                                 [ngModel]="newGroupMaxPoints()"
                                                 (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
-                                                class="form-control form-control-sm new-group-settings__pts"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="new-group-settings__pts"
                                             />
                                         </div>
                                     </div>
-                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <div class="flex flex-wrap gap-2 mt-2">
                                         <div>
                                             <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.release' | artemisTranslate }}</div>
                                             <input
                                                 type="datetime-local"
                                                 [ngModel]="newGroupReleaseDate()"
                                                 (ngModelChange)="newGroupReleaseDate.set($event)"
-                                                class="form-control form-control-sm new-group-settings__date"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="new-group-settings__date"
                                             />
                                         </div>
                                         <div>
@@ -288,7 +292,9 @@
                                                 type="datetime-local"
                                                 [ngModel]="newGroupStartDate()"
                                                 (ngModelChange)="newGroupStartDate.set($event)"
-                                                class="form-control form-control-sm new-group-settings__date"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="new-group-settings__date"
                                             />
                                         </div>
                                         <div>
@@ -297,7 +303,9 @@
                                                 type="datetime-local"
                                                 [ngModel]="newGroupDueDate()"
                                                 (ngModelChange)="newGroupDueDate.set($event)"
-                                                class="form-control form-control-sm new-group-settings__date"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="new-group-settings__date"
                                             />
                                         </div>
                                         <div>
@@ -308,7 +316,9 @@
                                                 type="datetime-local"
                                                 [ngModel]="newGroupAssessmentDueDate()"
                                                 (ngModelChange)="newGroupAssessmentDueDate.set($event)"
-                                                class="form-control form-control-sm new-group-settings__date"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="new-group-settings__date"
                                             />
                                         </div>
                                     </div>
@@ -333,12 +343,12 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between mt-4">
+        <div class="flex justify-between mt-6">
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()">
-                <fa-icon [icon]="faArrowLeft" class="me-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
+                <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
             </tum-ui-button>
-            <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
-                <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
+            <button type="button" class="btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
+                <fa-icon [icon]="faWandMagicSparkles" class="mr-2" />
                 {{ 'artemisApp.exerciseVariantGeneration.wizard.generate' | artemisTranslate }}
             </button>
         </div>
@@ -351,7 +361,7 @@
                 <fa-icon [icon]="faRobot" class="generating-icon" />
                 <div class="generating-ring"></div>
             </div>
-            <h6 class="fw-semibold mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
+            <h6 class="font-semibold mb-6">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
             <ol class="generation-steps">
                 @for (phase of generationPhases; track phase; let i = $index) {
                     <li
@@ -370,10 +380,10 @@
                                 <span class="pending-dot"></span>
                             }
                         </span>
-                        <span class="flex-grow-1">
+                        <span class="grow">
                             {{ stepLabelKey(phase) | artemisTranslate }}
                             @if (i === currentPhaseIndex() && activeStepDetail(); as detail) {
-                                <span class="d-block text-muted small" data-testid="variant-wizard-step-detail">{{ detail }}</span>
+                                <span class="block text-muted-color text-sm" data-testid="variant-wizard-step-detail">{{ detail }}</span>
                             }
                             @if (stepOutputs()[phase]; as outputs) {
                                 <!-- Expandable only once at least one full log detail arrived — an arrow with an
@@ -382,38 +392,38 @@
                                      field, oldest first (latest at the bottom) — earlier attempt errors stay
                                      inspectable after a later attempt succeeded. -->
                                 @if (hasAnyDetail(outputs)) {
-                                    <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
-                                        <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
+                                    <a class="block text-sm text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
+                                        <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                         {{ outputs[outputs.length - 1].summary }}
                                     </a>
                                     @if (expandedPhases()[phase]) {
                                         @for (stepOutput of outputs; track $index) {
                                             @if (stepOutput.detail) {
-                                                <div class="small text-muted mt-1">{{ stepOutput.summary }}</div>
+                                                <div class="text-sm text-muted-color mt-1">{{ stepOutput.summary }}</div>
                                                 <pre class="step-output-detail" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
                                             }
                                         }
                                     }
                                 } @else {
-                                    <span class="d-block small text-muted">{{ outputs[outputs.length - 1].summary }}</span>
+                                    <span class="block text-sm text-muted-color">{{ outputs[outputs.length - 1].summary }}</span>
                                 }
                             }
                         </span>
                     </li>
                 }
             </ol>
-            <div class="alert alert-info mt-3 mb-0 small" data-testid="variant-wizard-background-hint">
-                <fa-icon [icon]="faInfoCircle" class="me-1" />
+            <tum-ui-message severity="info" styleClass="mt-4 mb-0 text-sm" data-testid="variant-wizard-background-hint">
+                <fa-icon [icon]="faInfoCircle" class="mr-1" />
                 <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</span>
-            </div>
+            </tum-ui-message>
             @if (isRunning()) {
-                <div class="d-flex justify-content-end gap-2 mt-3">
+                <div class="flex justify-end gap-2 mt-4">
                     <tum-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
-                        <fa-icon [icon]="faBan" class="me-1" />
+                        <fa-icon [icon]="faBan" class="mr-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
                     </tum-ui-button>
-                    <button type="button" class="btn btn-sm btn-ai-generate" (click)="onClose(false)" data-testid="variant-wizard-run-in-background">
-                        <fa-icon [icon]="faWandMagicSparkles" class="me-1" />
+                    <button type="button" class="btn-ai-generate" (click)="onClose(false)" data-testid="variant-wizard-run-in-background">
+                        <fa-icon [icon]="faWandMagicSparkles" class="mr-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' | artemisTranslate }}
                     </button>
                 </div>
@@ -424,40 +434,40 @@
     <!-- ── Step 5: Result ───────────────────────────── -->
     @if (wizardStep() === 5) {
         @if (jobPhase() === 'FAILED') {
-            <div class="ai-warning mb-3" data-testid="variant-wizard-failed">
+            <div class="ai-warning mb-4" data-testid="variant-wizard-failed">
                 <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                 <div>
-                    <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.failedTitle' | artemisTranslate }}</div>
+                    <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.failedTitle' | artemisTranslate }}</div>
                     @if (failurePhase(); as phase) {
-                        <div class="small">
+                        <div class="text-sm">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.failedInPhase' | artemisTranslate }}
                             {{ 'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate }}
                         </div>
                     }
                     @if (failureDetail(); as detail) {
-                        <div class="small text-muted">{{ detail }}</div>
+                        <div class="text-sm text-muted-color">{{ detail }}</div>
                     }
                 </div>
             </div>
             <ng-container *ngTemplateOutlet="nextSteps" />
             <ng-container *ngTemplateOutlet="stepSummary" />
-            <div class="d-flex justify-content-end gap-2">
+            <div class="flex justify-end gap-2">
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
                 @if (generatedVariant()) {
-                    <button type="button" class="btn btn-sm btn-ai-generate" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
-                        <fa-icon [icon]="faPenToSquare" class="me-1" />
+                    <button type="button" class="btn-ai-generate" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <fa-icon [icon]="faPenToSquare" class="mr-1" />
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                     </button>
                 }
             </div>
         } @else if (jobPhase() === 'CANCELLED') {
-            <div class="ai-warning mb-3" data-testid="variant-wizard-cancelled">
+            <div class="ai-warning mb-4" data-testid="variant-wizard-cancelled">
                 <fa-icon [icon]="faBan" class="ai-warning__icon" />
                 <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
             </div>
-            <div class="d-flex justify-content-end">
+            <div class="flex justify-end">
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
@@ -465,12 +475,12 @@
         } @else {
             <!-- Title/type live in the flow card above; this row only adds the variant's key facts. -->
             @if (generatedVariant(); as variant) {
-                <div class="d-flex flex-wrap align-items-center gap-1 mb-3" data-testid="variant-wizard-result">
+                <div class="flex flex-wrap items-center gap-1 mb-4" data-testid="variant-wizard-result">
                     @if (variant.maxPoints) {
                         <span class="info-chip">{{ 'artemisApp.exerciseVariantGeneration.wizard.points' | artemisTranslate: { points: variant.maxPoints } }}</span>
                     }
                     @if (variant.difficulty) {
-                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ difficultyTranslationKey(variant.difficulty) | artemisTranslate }}</span>
+                        <tum-ui-tag [severity]="difficultySeverity(variant.difficulty)" [value]="difficultyTranslationKey(variant.difficulty) | artemisTranslate" />
                     }
                 </div>
             }
@@ -478,13 +488,13 @@
                  AI post-mortem explains how to continue, and the raw gate messages stay one click away
                  instead of dominating the dialog as an unreadable wall of yellow. -->
             @if (jobPhase() === 'DRAFT_WITH_WARNINGS') {
-                <div class="ai-warning mb-3" data-testid="variant-wizard-warnings">
+                <div class="ai-warning mb-4" data-testid="variant-wizard-warnings">
                     <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                     <div class="min-width-0">
-                        <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
+                        <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
                         @if (warnings().length > 0) {
-                            <a class="d-block small text-decoration-none pointer" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
-                                <fa-icon [icon]="warningsExpanded() ? faChevronDown : faChevronRight" class="me-1" />
+                            <a class="block text-sm text-decoration-none pointer" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
+                                <fa-icon [icon]="warningsExpanded() ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ 'artemisApp.exerciseVariantGeneration.wizard.warningDetails' | artemisTranslate: { count: warnings().length } }}
                             </a>
                             @if (warningsExpanded()) {
@@ -498,17 +508,17 @@
                 <ng-container *ngTemplateOutlet="nextSteps" />
             }
             <ng-container *ngTemplateOutlet="stepSummary" />
-            <div class="ai-warning mt-3">
+            <div class="ai-warning mt-4">
                 <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                 <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.aiDisclaimer' | artemisTranslate }}</span>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
+            <div class="flex justify-end gap-2 mt-4">
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
-                <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!generatedVariant()" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
-                    <fa-icon [icon]="faPenToSquare" class="me-1" />
+                <button type="button" class="btn-ai-generate" [disabled]="!generatedVariant()" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                    <fa-icon [icon]="faPenToSquare" class="mr-1" />
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                 </button>
             </div>
@@ -519,23 +529,23 @@
          guidance for that outcome. ── -->
     <ng-template #nextSteps>
         @if (instructorSummary(); as summary) {
-            <div class="step-summary mb-3" data-testid="variant-wizard-instructor-summary">
+            <div class="step-summary mb-4" data-testid="variant-wizard-instructor-summary">
                 <div class="step-summary__title">
-                    <fa-icon [icon]="faRobot" class="me-1" />
+                    <fa-icon [icon]="faRobot" class="mr-1" />
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.nextStepsTitle' | artemisTranslate }}
                 </div>
                 <div class="instructor-summary-text">{{ summary }}</div>
             </div>
         } @else {
-            <p class="small text-muted mb-3" data-testid="variant-wizard-failed-guidance">{{ fallbackGuidanceKey() | artemisTranslate }}</p>
+            <p class="text-sm text-muted-color mb-4" data-testid="variant-wizard-failed-guidance">{{ fallbackGuidanceKey() | artemisTranslate }}</p>
         }
     </ng-template>
 
     <!-- ── "What the AI did" summary — shared by the failed and result views ── -->
     <ng-template #stepSummary>
         @if (recordedStepOutputs().length > 0) {
-            <div class="step-summary mb-3" data-testid="variant-wizard-summary">
-                <div class="d-flex align-items-center justify-content-between">
+            <div class="step-summary mb-4" data-testid="variant-wizard-summary">
+                <div class="flex items-center justify-between">
                     <div class="step-summary__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.summaryTitle' | artemisTranslate }}</div>
                     @if (totalTokensUsed(); as tokens) {
                         <span class="info-chip" data-testid="variant-wizard-tokens-used">{{
@@ -545,29 +555,29 @@
                 </div>
                 @for (entry of recordedStepOutputs(); track entry.phase) {
                     <div class="step-summary__entry">
-                        <span class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.phase.' + entry.phase | artemisTranslate }}</span>
+                        <span class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.phase.' + entry.phase | artemisTranslate }}</span>
                         <!-- Collapsed: the latest message's summary. Expanded: the phase's FULL history, each
                              message in its own scrollable code field, latest at the bottom. -->
                         @if (hasAnyDetail(entry.outputs)) {
-                            <a class="d-block text-decoration-none pointer" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
-                                <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="me-1" />
+                            <a class="block text-decoration-none pointer" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
+                                <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ entry.outputs[entry.outputs.length - 1].summary }}
                             </a>
                             @if (expandedPhases()[entry.phase]) {
                                 @for (stepOutput of entry.outputs; track $index) {
                                     @if (stepOutput.detail) {
-                                        <div class="text-muted mt-1">{{ stepOutput.summary }}</div>
+                                        <div class="text-muted-color mt-1">{{ stepOutput.summary }}</div>
                                         <pre class="step-output-detail" data-testid="variant-wizard-summary-detail">{{ stepOutput.detail }}</pre>
                                     }
                                 }
                             }
                         } @else {
-                            <span class="d-block text-muted">{{ entry.outputs[entry.outputs.length - 1].summary }}</span>
+                            <span class="block text-muted-color">{{ entry.outputs[entry.outputs.length - 1].summary }}</span>
                         }
                     </div>
                 }
             </div>
         }
     </ng-template>
-    <p-confirmdialog />
+    <tum-ui-confirm-dialog />
 </tum-ui-dialog>
