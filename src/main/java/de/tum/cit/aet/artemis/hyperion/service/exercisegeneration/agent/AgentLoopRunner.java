@@ -9,9 +9,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -63,10 +60,6 @@ public class AgentLoopRunner {
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
     private static final String SUBMIT_TOOL_NAME = "submit";
-
-    private static final int MAX_PROGRESS_PATH_CHARS = 160;
-
-    private static final Pattern UNSAFE_PROGRESS_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]");
 
     // --- Context-window management ---
 
@@ -162,7 +155,7 @@ public class AgentLoopRunner {
      * @param contextWindowTokens the model's usable context window in tokens (override per deployment)
      */
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
-        this(chatModels, contextWindowTokens, providerHardFailureCooldown, providerFailureCooldown, new AgentCheckpointManager(new ObjectMapper(), "", "", 0, false));
+        this(chatModels, contextWindowTokens, providerHardFailureCooldown, providerFailureCooldown, new AgentCheckpointManager(new ObjectMapper(), "", "", 0, false, ""));
     }
 
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
@@ -313,6 +306,9 @@ public class AgentLoopRunner {
                 turnAware.onTurn(turn);
             }
 
+            // Check the complete carried prompt before checkpointing it. Tool observations can introduce secret material after the initial system/user checks; persisting first
+            // would leak content that the provider boundary correctly rejects below.
+            requirePromptSafe(prompt);
             AgentCheckpointManager.TurnHandle checkpoint = checkpointsEnabled ? checkpointManager.beforeTurn(turn, maxTurns, checkpointProviderContract, toolContract, conversation,
                     new AgentCheckpointManager.LoopCursor(lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall)) : null;
             if (checkpoint != null && checkpoint.replayed()) {
@@ -328,6 +324,16 @@ public class AgentLoopRunner {
                 }
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
                 continue;
+            }
+            if (checkpoint != null && checkpoint.prepared()) {
+                AgentCheckpointManager.CheckpointState prepared = checkpoint.before();
+                conversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(prepared.conversation()));
+                lastAssistantText = prepared.cursor().lastAssistantText();
+                consecutiveToolFailures = prepared.cursor().consecutiveToolFailures();
+                lastPromptTokens = prepared.cursor().lastPromptTokens();
+                messagesAtLastCall = prepared.cursor().messagesAtLastCall();
+                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                requirePromptSafe(prompt);
             }
 
             messagesAtLastCall = conversation.size();
@@ -386,7 +392,7 @@ public class AgentLoopRunner {
 
             for (AssistantMessage.ToolCall toolCall : toolCalls) {
                 if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
-                    emit(stepListener, describeToolProgress(toolCall));
+                    emit(stepListener, AgentToolProgress.describe(toolCall));
                 }
             }
             boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
@@ -415,7 +421,7 @@ public class AgentLoopRunner {
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
                 // Tool names are model-chosen identifiers, not user content, so naming them here is safe; arguments and paths are not (see sanitizeProgressPath).
-                emit(stepListener, "The agent tried an unavailable action (" + attemptedToolNames(response) + ") and is correcting it.");
+                emit(stepListener, "The agent tried an unavailable action (" + AgentToolProgress.attemptedNames(response) + ") and is correcting it.");
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
                 // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
@@ -547,61 +553,6 @@ public class AgentLoopRunner {
         }
         // Everything before the first control token is the real tool name; the rest is leakage.
         return name.substring(0, name.indexOf("<|")).strip();
-    }
-
-    /** Builds instructor-facing progress without exposing raw commands or model-generated arguments. */
-    private static String describeToolProgress(AssistantMessage.ToolCall toolCall) {
-        String path = sanitizeProgressPath(extractJsonStringValue(toolCall.arguments() == null ? "" : toolCall.arguments(), "path"));
-        return switch (toolCall.name()) {
-            case "read_file" -> path == null ? "Reviewing an exercise file." : "Reviewing " + path + ".";
-            case "write_file", "edit_file" -> path == null ? "Working on an exercise file." : "Working on " + path + ".";
-            case "bash" -> "Running a workspace command.";
-            case "verify" -> "Checking the exercise.";
-            case "delete_file" -> path == null ? "Removing an exercise file." : "Removing " + path + ".";
-            case "submit" -> "Submitting the current work for checking.";
-            default -> "Continuing the exercise update.";
-        };
-    }
-
-    @Nullable
-    private static String attemptedToolNames(ChatResponse response) {
-        try {
-            String names = response.getResult().getOutput().getToolCalls().stream().map(AssistantMessage.ToolCall::name)
-                    .map(name -> UNSAFE_PROGRESS_CHARACTERS.matcher(name == null ? "" : name).replaceAll("")).filter(name -> !name.isBlank()).distinct()
-                    .collect(Collectors.joining(", "));
-            return names.isBlank() ? "unknown" : names.length() > 80 ? names.substring(0, 80) : names;
-        }
-        catch (RuntimeException e) {
-            return "unknown";
-        }
-    }
-
-    private static String sanitizeProgressPath(@Nullable String path) {
-        if (path == null) {
-            return null;
-        }
-        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
-        if (!assessment.isSafe()) {
-            return assessment.safePath();
-        }
-        String sanitized = UNSAFE_PROGRESS_CHARACTERS.matcher(path).replaceAll(" ").replaceAll("\\s+", " ").strip();
-        if (sanitized.isEmpty()) {
-            return null;
-        }
-        if (sanitized.codePointCount(0, sanitized.length()) <= MAX_PROGRESS_PATH_CHARS) {
-            return sanitized;
-        }
-        int end = sanitized.offsetByCodePoints(0, MAX_PROGRESS_PATH_CHARS - 1);
-        return sanitized.substring(0, end) + "…";
-    }
-
-    @Nullable
-    private static String extractJsonStringValue(String json, String key) {
-        Matcher matcher = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").matcher(json);
-        if (!matcher.find()) {
-            return null;
-        }
-        return matcher.group(1).replace("\\\"", "\"").replace("\\/", "/").replace("\\\\", "\\");
     }
 
     void setEmptyResponseRetryTimingForTests(long baseMillis, long capMillis) {

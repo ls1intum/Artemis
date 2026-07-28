@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointMessageCodec.RecordedMessage;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.WorkspaceArchive;
@@ -62,6 +65,8 @@ public class AgentCheckpointManager {
 
     private static final List<String> SNAPSHOT_ROOTS = List.of("/workspace", "/tmp/hyperion", "/opt/hyperion", "/opt/hyperion-readiness-fixture");
 
+    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
+
     private final ObjectMapper objectMapper;
 
     private final String checkpointDirectory;
@@ -72,22 +77,30 @@ public class AgentCheckpointManager {
 
     private final boolean strict;
 
+    private final String forkInstruction;
+
     private final ThreadLocal<RunScope> currentRun = new ThreadLocal<>();
 
     public AgentCheckpointManager(ObjectMapper objectMapper, @Value("${artemis.hyperion.agent.checkpoint-dir:}") String checkpointDirectory,
             @Value("${artemis.hyperion.agent.checkpoint-replay-from:}") String replaySource, @Value("${artemis.hyperion.agent.checkpoint-fork-at:0}") int forkAt,
-            @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict) {
+            @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict, @Value("${artemis.hyperion.agent.checkpoint-fork-instruction:}") String forkInstruction) {
         this.objectMapper = objectMapper;
         this.checkpointDirectory = strip(checkpointDirectory);
         this.replaySource = strip(replaySource);
         this.forkAt = forkAt;
         this.strict = strict;
+        this.forkInstruction = strip(forkInstruction);
         if (forkAt < 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.checkpoint-fork-at cannot be negative");
         }
         if (forkAt > 0 && this.replaySource.isBlank()) {
             throw new IllegalArgumentException("checkpoint-fork-at requires checkpoint-replay-from");
         }
+        if (!this.forkInstruction.isBlank() && forkAt == 0) {
+            throw new IllegalArgumentException("checkpoint-fork-instruction requires checkpoint-fork-at");
+        }
+        SECRET_MATERIAL_POLICY.requireSafe("checkpoint/fork-instruction", this.forkInstruction.getBytes(StandardCharsets.UTF_8),
+                HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
     }
 
     public boolean enabled() {
@@ -197,6 +210,7 @@ public class AgentCheckpointManager {
                 handleTurnFailure(run, "Could not checkpoint reviewer call " + ordinal, e);
                 return null;
             }
+            persistReviewerRecord(run, source);
             if (source.errorClass() != null) {
                 throw new RecordedReviewerException(source.errorClass() + ": " + source.errorMessage());
             }
@@ -216,14 +230,18 @@ public class AgentCheckpointManager {
 
     private void persistReviewer(RunScope run, int ordinal, String systemPrompt, String userPrompt, String contract, @Nullable String response,
             @Nullable RuntimeException failure) {
+        persistReviewerRecord(run, new ReviewerRecord(SCHEMA_VERSION, ordinal, systemPrompt, userPrompt, contract, response, failure == null ? null : failure.getClass().getName(),
+                failure == null ? null : failure.getMessage()));
+    }
+
+    private void persistReviewerRecord(RunScope run, ReviewerRecord record) {
         try {
             if (run.outputDirectory != null) {
-                writeReviewerAtomic(reviewerPath(run.outputDirectory, ordinal), new ReviewerRecord(SCHEMA_VERSION, ordinal, systemPrompt, userPrompt, contract, response,
-                        failure == null ? null : failure.getClass().getName(), failure == null ? null : failure.getMessage()));
+                writeReviewerAtomic(reviewerPath(run.outputDirectory, record.ordinal()), record);
             }
         }
         catch (IOException | RuntimeException e) {
-            handleTurnFailure(run, "Could not checkpoint reviewer call " + ordinal, e);
+            handleTurnFailure(run, "Could not checkpoint reviewer call " + record.ordinal(), e);
         }
     }
 
@@ -255,6 +273,7 @@ public class AgentCheckpointManager {
         int ordinal = ++run.ordinal;
         try {
             CheckpointState current = captureState(run, conversation, cursor);
+            boolean prepared = false;
             if (run.sourceDirectory != null && (forkAt == 0 || ordinal <= forkAt)) {
                 TurnRecord sourceTurn = readTurn(run.sourceDirectory, ordinal);
                 requireCompatible(sourceTurn, current, providerContract, toolContract, localTurn, maxTurns, ordinal, ordinal == forkAt);
@@ -262,15 +281,24 @@ public class AgentCheckpointManager {
                     if (sourceTurn.after() == null) {
                         throw new IllegalStateException("Checkpoint call " + ordinal + " has no committed post-state.");
                     }
+                    persistReplayedTurn(run, sourceTurn);
                     restoreState(run, sourceTurn.after());
                     return TurnHandle.replayed(ordinal, sourceTurn);
                 }
                 if (ordinal == forkAt) {
                     restoreState(run, sourceTurn.before());
-                    current = captureState(run, conversation, cursor);
+                    if (!forkInstruction.isBlank()) {
+                        List<Message> preparedConversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(sourceTurn.before().conversation()));
+                        preparedConversation.add(new UserMessage("CHECKPOINT FORK EXPERIMENT INSTRUCTION (applies from this call onward):\n" + forkInstruction));
+                        current = captureState(run, preparedConversation, sourceTurn.before().cursor());
+                        prepared = true;
+                    }
+                    else {
+                        current = captureState(run, conversation, cursor);
+                    }
                 }
             }
-            return new TurnHandle(true, false, ordinal, providerContract, toolContract, localTurn, maxTurns, current, null);
+            return new TurnHandle(true, false, prepared, ordinal, providerContract, toolContract, localTurn, maxTurns, current, null);
         }
         catch (IOException | RuntimeException e) {
             return handleTurnFailure(run, "Could not prepare checkpoint call " + ordinal, e);
@@ -438,6 +466,25 @@ public class AgentCheckpointManager {
         Path blob = run.outputDirectory.resolve("blobs").resolve(digest);
         if (!Files.exists(blob)) {
             writeAtomicBytes(blob, bytes);
+        }
+    }
+
+    private void persistReplayedTurn(RunScope run, TurnRecord sourceTurn) throws IOException {
+        if (run.outputDirectory == null) {
+            return;
+        }
+        copyStateBlobs(run, sourceTurn.before());
+        if (sourceTurn.after() != null) {
+            copyStateBlobs(run, sourceTurn.after());
+        }
+        writeTurnAtomic(callPath(run.outputDirectory, sourceTurn.ordinal()), sourceTurn);
+    }
+
+    private void copyStateBlobs(RunScope run, CheckpointState state) throws IOException {
+        for (RootSnapshot root : state.roots().values()) {
+            for (SnapshotFile file : root.files()) {
+                writeBlob(run, file.sha256(), readBlob(run, file.sha256()));
+            }
         }
     }
 
@@ -616,15 +663,15 @@ public class AgentCheckpointManager {
             @Nullable String parent, int forkAt, boolean completed) {
     }
 
-    record TurnHandle(boolean enabled, boolean replayed, int ordinal, String providerContract, String toolContract, int localTurn, int maxTurns, @Nullable CheckpointState before,
-            @Nullable TurnRecord source) {
+    record TurnHandle(boolean enabled, boolean replayed, boolean prepared, int ordinal, String providerContract, String toolContract, int localTurn, int maxTurns,
+            @Nullable CheckpointState before, @Nullable TurnRecord source) {
 
         static TurnHandle disabled() {
-            return new TurnHandle(false, false, 0, "", "", 0, 0, null, null);
+            return new TurnHandle(false, false, false, 0, "", "", 0, 0, null, null);
         }
 
         static TurnHandle replayed(int ordinal, TurnRecord source) {
-            return new TurnHandle(true, true, ordinal, source.providerContract(), source.toolContract(), source.localTurn(), source.maxTurns(), source.before(), source);
+            return new TurnHandle(true, true, false, ordinal, source.providerContract(), source.toolContract(), source.localTurn(), source.maxTurns(), source.before(), source);
         }
 
         CheckpointState replayedAfter() {

@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import time
@@ -20,6 +21,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_STORE = ROOT / ".e2e-local" / "hyperion-checkpoints"
+SERVER_PID_FILE = ROOT / ".e2e-local" / "checkpoint-server.pid"
 PLAYWRIGHT = ROOT / "src/test/playwright"
 LIVE_SPEC = "e2e/exercise/programming/HyperionLiveLlmUI.spec.ts"
 
@@ -181,6 +183,31 @@ def compare_runs(left: Path, right: Path) -> None:
     for label, records in (("left", left_calls), ("right", right_calls)):
         terminal = next((call for call in reversed(records) if call.get("terminalStatus")), None)
         print(f"{label} terminal: {terminal.get('terminalStatus') if terminal else 'budget/unfinished'} at call {terminal.get('ordinal') if terminal else len(records)}")
+    for label, run in (("left", left), ("right", right)):
+        evaluation = run / "evaluation.json"
+        if not evaluation.is_file():
+            print(f"{label} outcome: no live evaluation sidecar")
+            continue
+        report = read_json(evaluation)
+        assessment = report.get("generatedAssessment") or {}
+        repositories = (report.get("repositories") or {}).get("selectedContent") or {}
+        artifact_hash = hashlib.sha256(
+            json.dumps(
+                {
+                    "statement": report.get("candidateProblemStatement"),
+                    "spec": report.get("specDocument"),
+                    "repositories": repositories,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()[:12]
+        events = (report.get("terminalStatus") or {}).get("events") or []
+        final_event = events[-1].get("message") if events else "missing"
+        print(
+            f"{label} outcome: artifact={artifact_hash} tests={assessment.get('testCount', '?')} solutionPassed={assessment.get('solutionPassed', '?')} "
+            f"templateFailed={assessment.get('templateFailed', '?')} terminal={final_event}"
+        )
 
 
 def load_local_env() -> dict[str, str]:
@@ -216,6 +243,27 @@ def stop_port(port: int) -> None:
             pass
 
 
+def stop_managed_server() -> None:
+    if not SERVER_PID_FILE.is_file():
+        return
+    try:
+        process_group = int(SERVER_PID_FILE.read_text(encoding="utf-8").strip())
+        os.killpg(process_group, signal.SIGTERM)
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            try:
+                os.killpg(process_group, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.25)
+        else:
+            os.killpg(process_group, signal.SIGKILL)
+    except (ProcessLookupError, ValueError):
+        pass
+    finally:
+        SERVER_PID_FILE.unlink(missing_ok=True)
+
+
 def healthy(url: str) -> bool:
     try:
         with urllib.request.urlopen(url, timeout=2) as response:
@@ -227,14 +275,27 @@ def healthy(url: str) -> bool:
 def start_stack(env: dict[str, str]) -> None:
     log_dir = ROOT / ".e2e-local"
     log_dir.mkdir(parents=True, exist_ok=True)
+    stop_managed_server()
     stop_port(8080)
     server_log = (log_dir / "checkpoint-server.log").open("wb")
-    subprocess.Popen(["./gradlew", "bootRun", "-x", "webapp", "--console=plain"], cwd=ROOT, env=env, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True)
+    server = subprocess.Popen(
+        ["./gradlew", "bootRun", "-x", "webapp", "--console=plain"],
+        cwd=ROOT,
+        env=env,
+        stdout=server_log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    SERVER_PID_FILE.write_text(f"{server.pid}\n", encoding="utf-8")
     for _ in range(240):
+        if server.poll() is not None:
+            SERVER_PID_FILE.unlink(missing_ok=True)
+            raise SystemExit(f"Artemis exited with code {server.returncode}; inspect {server_log.name}")
         if healthy("http://localhost:8080/management/health"):
             break
         time.sleep(1)
     else:
+        stop_managed_server()
         raise SystemExit(f"Artemis did not become healthy; inspect {server_log.name}")
     if not healthy("http://localhost:9000/"):
         client_log = (log_dir / "checkpoint-client.log").open("wb")
@@ -247,7 +308,7 @@ def start_stack(env: dict[str, str]) -> None:
             raise SystemExit(f"Angular did not become healthy; inspect {client_log.name}")
 
 
-def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fork_at: int, repeats: int) -> None:
+def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fork_at: int, repeats: int, fork_instruction: str = "") -> None:
     output.mkdir(parents=True, exist_ok=True)
     metadata = {"scenario": scenario, "name": name, "parent": str(replay) if replay else None, "forkAt": fork_at}
     (output / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
@@ -268,6 +329,8 @@ def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fo
         if replay:
             env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_REPLAY_FROM"] = str(replay)
             env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_AT"] = str(fork_at)
+            if fork_instruction:
+                env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_INSTRUCTION"] = fork_instruction
             source_manifest = read_json(replay / "run.json")
             env["HYPERION_CHECKPOINT_EXERCISE_TITLE"] = source_manifest["exerciseTitle"]
             env["HYPERION_CHECKPOINT_EXERCISE_SHORT_NAME"] = source_manifest["exerciseShortName"]
@@ -278,6 +341,10 @@ def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fo
         command = ["npx", "playwright", "test", LIVE_SPEC, "--project=slow-tests", "--max-failures=1"]
         subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=True)
         latest = resolve_run(str(output), output.parent)
+        report = ROOT / ".e2e-local" / "hyperion-live" / f"{name}-{repeat}" / f"{scenario}.json"
+        if not report.is_file():
+            raise SystemExit(f"Playwright completed without its qualitative report: {report}")
+        shutil.copy2(report, latest / "evaluation.json")
         print(f"recorded repeat {repeat}: {latest}")
 
 
@@ -308,6 +375,7 @@ def main() -> None:
     fork.add_argument("--scenario")
     fork.add_argument("--name", required=True)
     fork.add_argument("--repeat", type=int, default=1)
+    fork.add_argument("--instruction-file", type=Path, help="append this targeted experiment instruction at the selected call")
     compare = sub.add_parser("compare")
     compare.add_argument("left")
     compare.add_argument("right")
@@ -338,7 +406,8 @@ def main() -> None:
             raise SystemExit("Expected RUN@CALL, for example elevator-base@42")
         source = resolve_run(run_name, store)
         scenario = args.scenario or parent_scenario(source)
-        run_scenario(scenario, args.name, store / args.name, source, int(ordinal), args.repeat)
+        instruction = args.instruction_file.read_text(encoding="utf-8").strip() if args.instruction_file else ""
+        run_scenario(scenario, args.name, store / args.name, source, int(ordinal), args.repeat, instruction)
     elif args.command == "compare":
         compare_runs(resolve_run(args.left, store), resolve_run(args.right, store))
 

@@ -185,7 +185,7 @@ public class SpecFidelityCriticService {
     SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions,
-                new AgentCheckpointManager(objectMapper, "", "", 0, false));
+                new AgentCheckpointManager(objectMapper, "", "", 0, false, ""));
     }
 
     private SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,

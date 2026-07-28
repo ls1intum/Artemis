@@ -52,7 +52,7 @@ class AgentCheckpointManagerTest {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         InMemorySandbox recordedSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "before".getBytes())));
         SandboxAgentTools recordedTools = new SandboxAgentTools(recordedSandbox, "recorded");
-        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true);
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
         recorder.beginRun("job-record", exercise, recordedTools, approvedSpecs);
         List<Message> prompt = List.of(new SystemMessage("system"), new UserMessage("author"));
         AgentCheckpointManager.LoopCursor beforeCursor = new AgentCheckpointManager.LoopCursor("", 0, 0, 0);
@@ -66,7 +66,7 @@ class AgentCheckpointManagerTest {
         Path recordedRun = Files.list(tempDirectory).filter(Files::isDirectory).findFirst().orElseThrow();
         InMemorySandbox replaySandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "before".getBytes())));
         SandboxAgentTools replayTools = new SandboxAgentTools(replaySandbox, "replay");
-        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true);
+        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true, "");
         replayer.beginRun("job-replay", exercise, replayTools, new ApprovedSpecRegistry());
 
         AgentCheckpointManager.TurnHandle replay = replayer.beforeTurn(1, 5, "", "tools-v1", prompt, beforeCursor);
@@ -78,7 +78,7 @@ class AgentCheckpointManagerTest {
         replayer.endRun();
 
         Files.writeString(recordedRun.resolve("calls/000001.json"), "\n", java.nio.file.StandardOpenOption.APPEND);
-        AgentCheckpointManager tampered = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true);
+        AgentCheckpointManager tampered = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true, "");
         tampered.beginRun("job-tampered", exercise, new SandboxAgentTools(replaySandbox, "tampered"), new ApprovedSpecRegistry());
         assertThatThrownBy(() -> tampered.beforeTurn(1, 5, "", "tools-v1", prompt, beforeCursor)).isInstanceOf(IllegalStateException.class).hasMessageContaining("integrity check");
         tampered.endRun();
@@ -95,7 +95,7 @@ class AgentCheckpointManagerTest {
         InMemorySandbox recordingSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "spec".getBytes())));
         SandboxAgentTools recordingTools = new SandboxAgentTools(recordingSandbox, "record");
         Path recordRoot = tempDirectory.resolve("loop");
-        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true);
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
         AgentLoopRunner recordingRunner = new AgentLoopRunner(List.of(recordingModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), recorder);
         recordingRunner.beginCheckpointRun("loop-record", exercise, recordingTools, new ApprovedSpecRegistry());
 
@@ -105,7 +105,8 @@ class AgentCheckpointManagerTest {
 
         InMemorySandbox replaySandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "spec".getBytes())));
         SandboxAgentTools replayTools = new SandboxAgentTools(replaySandbox, "replay");
-        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true);
+        Path replayRoot = tempDirectory.resolve("loop-replay");
+        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, replayRoot.toString(), recordedRun.toString(), 0, true, "");
         AgentLoopRunner replayRunner = new AgentLoopRunner(List.of(), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), replayer);
         replayRunner.beginCheckpointRun("loop-replay", exercise, replayTools, new ApprovedSpecRegistry());
 
@@ -113,6 +114,14 @@ class AgentCheckpointManagerTest {
         replayRunner.endCheckpointRun();
 
         assertThat(replayed).isEqualTo(recorded);
+
+        Path selfContainedReplay = Files.list(replayRoot).filter(Files::isDirectory).findFirst().orElseThrow();
+        AgentCheckpointManager secondReplayer = new AgentCheckpointManager(mapper, "", selfContainedReplay.toString(), 0, true, "");
+        AgentLoopRunner secondReplayRunner = new AgentLoopRunner(List.of(), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), secondReplayer);
+        SandboxAgentTools secondReplayTools = new SandboxAgentTools(replaySandbox, "replay-again");
+        secondReplayRunner.beginCheckpointRun("loop-replay-again", exercise, secondReplayTools, new ApprovedSpecRegistry());
+        assertThat(secondReplayRunner.run("system", "author", secondReplayTools, 3, () -> false, null, null)).isEqualTo(recorded);
+        secondReplayRunner.endCheckpointRun();
     }
 
     @Test
@@ -122,7 +131,7 @@ class AgentCheckpointManagerTest {
         when(exercise.getId()).thenReturn(9L);
         when(exercise.getTitle()).thenReturn("Review replay");
         Path recordRoot = tempDirectory.resolve("reviews");
-        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true);
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
         recorder.beginRun("review-record", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "record"), new ApprovedSpecRegistry());
 
         assertThat(recorder.reviewerCall("system", "candidate", "model-v1", () -> "accepted")).isEqualTo("accepted");
@@ -134,7 +143,7 @@ class AgentCheckpointManagerTest {
         Path source = Files.list(recordRoot).filter(Files::isDirectory).findFirst().orElseThrow();
 
         AtomicBoolean providerCalled = new AtomicBoolean();
-        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", source.toString(), 0, true);
+        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", source.toString(), 0, true, "");
         replayer.beginRun("review-replay", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "replay"), new ApprovedSpecRegistry());
 
         assertThat(replayer.reviewerCall("system", "candidate", "model-v1", () -> {
@@ -167,7 +176,7 @@ class AgentCheckpointManagerTest {
         Path recordRoot = tempDirectory.resolve("failure-source");
         InMemorySandbox recordingSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "spec".getBytes())));
         SandboxAgentTools recordingTools = new SandboxAgentTools(recordingSandbox, "record");
-        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true);
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
         AgentLoopRunner recordingRunner = new AgentLoopRunner(List.of(recordingModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), recorder);
         recordingRunner.beginCheckpointRun("failure-source", exercise, recordingTools, new ApprovedSpecRegistry());
         assertThat(recordingRunner.run("system", "author", recordingTools, 6, () -> false, null, null).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
@@ -178,7 +187,7 @@ class AgentCheckpointManagerTest {
         when(forkModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(unknownTool);
         InMemorySandbox forkSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "spec".getBytes())));
         SandboxAgentTools forkTools = new SandboxAgentTools(forkSandbox, "fork");
-        AgentCheckpointManager forkManager = new AgentCheckpointManager(mapper, tempDirectory.resolve("failure-fork").toString(), source.toString(), 5, true);
+        AgentCheckpointManager forkManager = new AgentCheckpointManager(mapper, tempDirectory.resolve("failure-fork").toString(), source.toString(), 5, true, "");
         AgentLoopRunner forkRunner = new AgentLoopRunner(List.of(forkModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), forkManager);
         forkRunner.beginCheckpointRun("failure-fork", exercise, forkTools, new ApprovedSpecRegistry());
 
@@ -202,7 +211,7 @@ class AgentCheckpointManagerTest {
         ChatModel sourceModel = mock(ChatModel.class);
         when(sourceModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(toolCall("search"),
                 new ChatResponse(List.of(new Generation(new AssistantMessage("source completion")))));
-        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true);
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
         AgentLoopRunner sourceRunner = new AgentLoopRunner(List.of(sourceModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), recorder);
         sourceRunner.beginCheckpointRun("divergence-source", exercise, sourceTools, new ApprovedSpecRegistry());
         assertThat(sourceRunner.run("system", "author", sourceTools, 3, () -> false, null, null).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
@@ -213,7 +222,8 @@ class AgentCheckpointManagerTest {
         when(branchModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(toolCall("browse"),
                 new ChatResponse(List.of(new Generation(new AssistantMessage("branch completion")))));
         SandboxAgentTools branchTools = new SandboxAgentTools(new InMemorySandbox(Map.of()), "branch");
-        AgentCheckpointManager branchManager = new AgentCheckpointManager(mapper, tempDirectory.resolve("divergence-branch").toString(), source.toString(), 1, true);
+        AgentCheckpointManager branchManager = new AgentCheckpointManager(mapper, tempDirectory.resolve("divergence-branch").toString(), source.toString(), 1, true,
+                "Do not call unavailable tools; finish with the available workspace evidence.");
         AgentLoopRunner branchRunner = new AgentLoopRunner(List.of(branchModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), branchManager);
         branchRunner.beginCheckpointRun("divergence-branch", exercise, branchTools, new ApprovedSpecRegistry());
 
@@ -223,6 +233,8 @@ class AgentCheckpointManagerTest {
         assertThat(branch.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(branch.finalMessage()).isEqualTo("branch completion");
         verify(branchModel, org.mockito.Mockito.times(2)).call(org.mockito.ArgumentMatchers.any(Prompt.class));
+        verify(branchModel, org.mockito.Mockito.times(2)).call(org.mockito.ArgumentMatchers.<Prompt>argThat(prompt -> prompt.getInstructions().stream()
+                .anyMatch(message -> message.getText() != null && message.getText().contains("CHECKPOINT FORK EXPERIMENT INSTRUCTION"))));
     }
 
     private static ChatResponse toolCall(String name) {

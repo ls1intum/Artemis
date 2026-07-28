@@ -1,7 +1,8 @@
 # Hyperion turn checkpoints
 
-This development-only recorder makes every authoring model call a restorable point. It captures the exact prompt (including tool-call IDs and results), loop budget/failure state,
-stage and verification authority, the approved specification, and the mutable sandbox roots. Production does nothing unless a checkpoint directory or replay source is configured.
+This development-only recorder makes every effectful authoring turn a restorable point. It captures the exact prompt (including tool-call IDs and results), loop
+budget/failure state, stage and verification authority, the approved specification, and the mutable sandbox roots. Production does nothing unless a checkpoint directory or
+replay source is configured.
 
 ```bash
 # Provider credentials/config can live in the ignored .env.hyperion.local file.
@@ -15,6 +16,9 @@ supporting_scripts/hyperion/checkpoint replay elevator-base
 
 # Restore call 42's pre-state, sample live from there, and continue through the pipeline.
 supporting_scripts/hyperion/checkpoint fork elevator-base@42 --name prompt-v2 --repeat 5
+
+# Change only the selected late call while preserving the recorded prefix.
+supporting_scripts/hyperion/checkpoint fork elevator-base@42 --name prompt-v3 --instruction-file /tmp/experiment.txt --repeat 5
 supporting_scripts/hyperion/checkpoint compare elevator-base prompt-v2
 ```
 
@@ -26,6 +30,12 @@ Replay is deterministic and needs no configured AI provider: every authoring cal
 return their recorded verdict. Deterministic orchestration between calls (stage gates and differential verification) runs normally, which validates restored state and returns a
 fork to the correct pipeline continuation. A fork begins live sampling at the selected author call, including later reviewers, and therefore requires the same provider
 model/options as its source. Forks are fresh samples, not controlled deterministic experiments; use `--repeat` and compare distributions when the provider has no seed.
+`--instruction-file` appends a clearly labelled user instruction only at the selected call, so a late-stage experiment does not invalidate or rerun the prefix.
+
+The unit is deliberately the **effectful agent turn**, not a transport request: an empty-response retry has no new state to restore, and an internal context-compaction request is
+part of preparing that turn's next recorded prompt. Every point where an assistant response can execute tools or alter orchestration state is independently addressable.
+Wall-clock deadlines are safety controls rather than replayed state; compare live suffix work (turns, tools, tokens, verification and outcome), and do not use a deadline-censored
+source for causal fork comparisons.
 
 Safety rules:
 

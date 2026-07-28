@@ -394,6 +394,7 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     const generation = await createAndGenerateExerciseViaUi(
                         page,
                         () => waitForConcurrentStart(scenario.id),
+                        Boolean(scenario.seedProblemStatement || process.env.HYPERION_CHECKPOINT_EXERCISE_STATEMENT !== undefined),
                         async (createdExercise) => {
                             exercise = createdExercise;
                             report.createdExercise = {
@@ -413,6 +414,9 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     report.title = generatedExercise.title;
                     report.setupRequest = generation.setupRequest;
                     report.generationRequest = generation.request;
+                    if (scenario.seedProblemStatement || process.env.HYPERION_CHECKPOINT_EXERCISE_STATEMENT !== undefined) {
+                        expect(generation.request.prompt?.trim() ?? '', 'A prepared statement must reach generation without a competing source brief').toBe('');
+                    }
                     await assertConcurrentJobsOverlap(page, scenario.id, generatedExercise.id!, jobId);
                     await expect(page.getByTestId('hyperion-generation-activity')).toBeVisible({ timeout: 60_000 });
                     await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy', { timeout: 60_000 });
@@ -654,7 +658,12 @@ function assertGeneratedSourcesUseExercisePackage(repositories: { selectedConten
     }
 }
 
-async function createAndGenerateExerciseViaUi(page: Page, beforeStart: () => Promise<void>, onExerciseCreated: (exercise: ProgrammingExercise) => Promise<void>) {
+async function createAndGenerateExerciseViaUi(
+    page: Page,
+    beforeStart: () => Promise<void>,
+    statementIsAuthoritative: boolean,
+    onExerciseCreated: (exercise: ProgrammingExercise) => Promise<void>,
+) {
     await beforeStart();
     await expect(page.locator('#generate-with-ai')).toBeEnabled({ timeout: 30_000 });
     const setupResponsePromise = page.waitForResponse(
@@ -665,6 +674,17 @@ async function createAndGenerateExerciseViaUi(page: Page, beforeStart: () => Pro
         (response) => response.request().method() === 'POST' && /\/api\/hyperion\/programming-exercises\/\d+\/generate-exercise$/.test(response.url()),
         { timeout: liveLlmTimeoutMs },
     );
+    const generationEndpoint = '**/api/hyperion/programming-exercises/*/generate-exercise';
+    if (statementIsAuthoritative) {
+        // The prepared statement is injected through the real draft UI so Angular creates the same exercise state as a user-authored statement. That UI also remembers its
+        // fixture-only draft trigger as a source brief. Strip only that transport artifact: a nonblank brief deliberately enables concept/SPEC generation and would be allowed
+        // to replace the prepared statement, defeating what this scenario is meant to exercise.
+        await page.route(generationEndpoint, async (route) => {
+            const request = route.request();
+            const body = request.postDataJSON() as { mode: string; prompt?: string };
+            await route.continue({ postData: JSON.stringify({ ...body, prompt: '' }) });
+        });
+    }
     await page.locator('#generate-with-ai').click();
     const setupResponse = await setupResponsePromise;
     expect(setupResponse.ok()).toBeTruthy();
@@ -674,6 +694,9 @@ async function createAndGenerateExerciseViaUi(page: Page, beforeStart: () => Pro
     await onExerciseCreated(exercise);
     await expect(page).toHaveURL(new RegExp(`/programming-exercises/${exercise.id}/code-editor/TEMPLATE/${exercise.templateParticipation!.id}`));
     const startResponse = await startResponsePromise;
+    if (statementIsAuthoritative) {
+        await page.unroute(generationEndpoint);
+    }
     expect(startResponse.status()).toBe(202);
     const body = (await startResponse.json()) as { jobId?: string };
     expect(body.jobId).toBeTruthy();
