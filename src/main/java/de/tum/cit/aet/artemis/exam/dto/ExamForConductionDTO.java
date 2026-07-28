@@ -8,13 +8,14 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /**
  * Rich exam projection nested inside {@link StudentExamForConductionDTO}, returned by the own-student-exam fetch
  * ({@code GET courses/{courseId}/exams/{examId}/own-student-exam},
  * {@link de.tum.cit.aet.artemis.exam.web.ExamResource#getOwnStudentExam}) that starts exam conduction.
  * <p>
- * This is deliberately richer than the management-side {@link ExamForStudentExamDTO} (id/title/testExam/workingTime/course):
+ * This is deliberately richer than the management-side {@link ExamForStudentExamDTO} (id/title/examMode/workingTime/course):
  * the exam-conduction entry screen (exam-participation-cover + exam-start-information components) and the exam navbar read
  * the full cover metadata off this exam — the markdown start/end/confirmation texts, the visible/start/end dates, the grace
  * period and default working time, the attendance-check flag, and the exam-start information box fields
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  *
  * @param id                      the id of the exam
  * @param title                   the title shown on the exam cover
- * @param testExam                whether this is a test exam (drives the test-exam conduction branch)
+ * @param examMode                the mode of the exam (drives the test-exam conduction branch)
  * @param examWithAttendanceCheck whether an attendance check is enabled (the cover renders the attendance confirmation)
  * @param visibleDate             the date the exam becomes visible
  * @param startDate               the exam start date (individual end date + waiting-for-start are computed from it)
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * @param course                  the slim student-facing course projection (only {@code id} is read)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForConductionDTO(long id, @Nullable String title, boolean testExam, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
+public record ExamForConductionDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, int examMaxPoints, @Nullable Integer numberOfExercisesInExam, @Nullable String examiner,
         @Nullable String moduleNumber, @Nullable String courseName, @Nullable CourseForStudentExamDTO course) {
@@ -67,7 +68,7 @@ public record ExamForConductionDTO(long id, @Nullable String title, boolean test
         // detached lazy proxy never forces a load outside the transaction.
         var course = exam.getCourse();
         CourseForStudentExamDTO courseDTO = Hibernate.isInitialized(course) ? CourseForStudentExamDTO.of(course) : null;
-        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
+        return new ExamForConductionDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(),
                 exam.getEndDate(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(),
                 exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getNumberOfExercisesInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
                 courseDTO);

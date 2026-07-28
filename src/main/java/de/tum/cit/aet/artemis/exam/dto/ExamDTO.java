@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /**
  * Response DTO for the scalar "core" of an {@link Exam}.
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  *
  * @param id                             the id of the exam
  * @param title                          the title of the exam
- * @param testExam                       whether this is a test exam (immutable after creation; must round-trip exactly)
+ * @param examMode                       the mode of the exam (immutable after creation; must round-trip exactly)
  * @param examWithAttendanceCheck        whether an attendance check is enabled
  * @param visibleDate                    the date the exam becomes visible
  * @param startDate                      the exam start date
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * @param examArchivePath                the archive path; the archive button reads it (after a re-fetch) to enable download / cleanup
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamDTO(long id, @Nullable String title, boolean testExam, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate, @Nullable ZonedDateTime startDate,
+public record ExamDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate, @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart, @Nullable ZonedDateTime examStudentReviewEnd,
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
         @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam,
@@ -72,7 +73,7 @@ public record ExamDTO(long id, @Nullable String title, boolean testExam, boolean
      * @return the scalar-core DTO
      */
     public static ExamDTO of(Exam exam) {
-        return new ExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
+        return new ExamDTO(exam.getId(), exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
