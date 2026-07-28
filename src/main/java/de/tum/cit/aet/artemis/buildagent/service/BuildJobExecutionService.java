@@ -205,7 +205,8 @@ public class BuildJobExecutionService {
 
         // get the local repository paths for assignment, tests, auxiliary and solution
         LocalVCRepositoryUri assignmentRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri());
-        LocalVCRepositoryUri testsRepoUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri());
+        // A container scoped to exclude the test repository has a null test URI; it is then neither cloned nor mounted.
+        LocalVCRepositoryUri testsRepoUri = buildJob.repositoryInfo().testRepositoryUri() != null ? new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri()) : null;
 
         // retrieve last commit hash from repositories
         String assignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
@@ -220,7 +221,7 @@ public class BuildJobExecutionService {
             }
         }
         String testCommitHash = buildJob.buildConfig().testCommitHash();
-        if (testCommitHash == null) {
+        if (testCommitHash == null && testsRepoUri != null) {
             try {
                 testCommitHash = buildJobGitService.getLastCommitHash(testsRepoUri);
             }
@@ -260,7 +261,8 @@ public class BuildJobExecutionService {
 
         // Test, solution, and auxiliary repositories always use the default branch.
         // They don't have specific commit hashes tracked in BuildConfig, so we pass null for commitHash.
-        Path testsRepositoryPath = cloneRepository(testsRepoUri, null, false, buildJob.id());
+        // A container scoped to exclude the test repository has no test URI, so there is nothing to clone.
+        Path testsRepositoryPath = testsRepoUri != null ? cloneRepository(testsRepoUri, null, false, buildJob.id()) : null;
 
         LocalVCRepositoryUri solutionRepoUri = null;
         Path solutionRepositoryPath = null;
@@ -327,9 +329,9 @@ public class BuildJobExecutionService {
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, LocalVCRepositoryUri assignmentRepositoryUri,
-            LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
-            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash) {
+            @Nullable LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
+            Path assignmentRepositoryPath, @Nullable Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths,
+            @Nullable String assignmentRepoCommitHash, @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
         TarArchiveInputStream testResultsTarInputStream = null;
@@ -431,7 +433,10 @@ public class BuildJobExecutionService {
              * delete the entire buildJobId directory at the end.
              */
             deleteCloneRepo(assignmentRepositoryUri, buildJob.id(), assignmentRepositoryPath);
-            deleteCloneRepo(testRepositoryUri, buildJob.id(), testsRepositoryPath);
+            // Skip test repo deletion if the container was scoped to exclude it (no test repo was cloned)
+            if (testRepositoryUri != null) {
+                deleteCloneRepo(testRepositoryUri, buildJob.id(), testsRepositoryPath);
+            }
             // Skip solution repo deletion if it doesn't exist or shares the same path as assignment repo
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
                 deleteCloneRepo(solutionRepositoryUri, buildJob.id(), solutionRepositoryPath);

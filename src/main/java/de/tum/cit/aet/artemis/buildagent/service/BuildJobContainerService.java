@@ -568,9 +568,12 @@ public class BuildJobContainerService {
         // Make sure the working directory and all subdirectories are accessible
         executeDockerCommand(buildJobContainerId, null, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR);
 
-        // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
-        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + testCheckoutPath,
-                buildJobId);
+        // Copy the test repository to the container and move it to the test checkout path (may be the working directory).
+        // A container scoped to exclude the test repository has no test path, so nothing is copied into it.
+        if (testRepositoryPath != null) {
+            addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath,
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + testCheckoutPath, buildJobId);
+        }
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, assignmentRepositoryPath,
                 LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + TESTING_DIR + "/" + assignmentCheckoutPath, buildJobId);

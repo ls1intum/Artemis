@@ -20,13 +20,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * @param name         the name of the container, unique within the build plan
  * @param dockerImage  the Docker image the container runs, or null to use the default image of the exercise
- * @param repositories the repositories checked out into the container, or null to check out the repositories
- *                         configured on the exercise, as a build plan without containers does
+ * @param repositories the repositories checked out into the container. Null means the container is not scoped and checks
+ *                         out the repositories configured on the exercise, as a build plan without containers does; an
+ *                         empty list means the container is scoped and receives only the assignment repository. The
+ *                         empty list is kept during serialization (unlike the record default) so that this "scoped to
+ *                         nothing" state is not silently turned back into the unscoped state.
  * @param phases       the build phases executed inside the container, in order
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildContainerDTO(@NotBlank @Pattern(regexp = BuildContainerDTO.BUILD_CONTAINER_NAME_REGEX) String name, String dockerImage,
-        List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) List<@Valid BuildContainerRepositoryDTO> repositories, @NotEmpty List<@Valid BuildPhaseDTO> phases) {
 
     /**
      * Creates a container that checks out the repositories configured on the exercise, i.e. one that does not scope its

@@ -52,10 +52,12 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -559,6 +561,36 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
             assertThat(jobs).hasSize(1);
             assertThat(jobs.getFirst().containerName()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerRepositoriesAreScopedPerContainer() throws Exception {
+            // The instructor container lists the test repository; the student container is scoped to exclude it, which is
+            // what keeps untrusted student code from receiving the instructor's test files.
+            BuildPhaseDTO phase = new BuildPhaseDTO("phase", "echo build", BuildPhaseCondition.ALWAYS, false, List.of("results/*.xml"));
+            BuildContainerDTO instructorContainer = new BuildContainerDTO("instructor_tests", "image-a:1", List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),
+                    List.of(phase));
+            BuildContainerDTO studentContainer = new BuildContainerDTO("student_tests", "image-b:2", List.of(), List.of(phase));
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(instructorContainer, studentContainer)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
+
+            List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
+            BuildJobQueueItem instructorJob = jobs.stream().filter(job -> "instructor_tests".equals(job.containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem studentJob = jobs.stream().filter(job -> "student_tests".equals(job.containerName())).findFirst().orElseThrow();
+
+            // both containers build the student's own submission, so both keep the assignment repository
+            assertThat(instructorJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
+            assertThat(studentJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
+            // only the instructor container receives the test repository
+            assertThat(instructorJob.repositoryInfo().testRepositoryUri()).isNotNull();
+            assertThat(studentJob.repositoryInfo().testRepositoryUri()).isNull();
         }
 
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {

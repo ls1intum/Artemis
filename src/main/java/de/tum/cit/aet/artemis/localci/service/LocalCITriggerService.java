@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -282,6 +284,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             BuildConfig buildConfig = containerBuild.buildConfig();
             String containerName = containerBuild.containerName();
 
+            // Provision only the repositories this container lists into it. This is what isolates untrusted student code
+            // from the instructor's test files: a container that does not list the test repository never receives it.
+            RepositoryInfo scopedRepositoryInfo = scopeRepositoryInfo(repositoryInfo, containerBuild.container());
+
             // Each container needs its own build job id; a single-container plan keeps the historical id unchanged.
             String jobId = containerName == null ? buildJobId : buildJobId + "-" + containerIndex;
 
@@ -293,7 +299,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             // submissionId stays null: the containers of one commit are grouped at merge time via participation and
             // commit hash (the submission does not exist yet when the build is triggered).
             BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(jobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                    programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, containerName, cloneToken);
+                    programmingExercise.getId(), retryCount, priority, null, scopedRepositoryInfo, jobTimingInfo, buildConfig, null, null, containerName, cloneToken);
 
             // Save the build job before adding it to the queue to ensure it exists in the database.
             // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
@@ -318,10 +324,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     /**
-     * A build job to schedule for one container of a build plan, pairing the container's identity (its name, or null for
-     * a single-container plan) with the {@link BuildConfig} that will be executed for it.
+     * A build job to schedule for one container of a build plan: its identity (name, or null for a single-container
+     * plan), the {@link BuildConfig} that will be executed for it, and the container itself (or null for the exercise
+     * default), which selects the repositories that are provisioned into it.
      */
-    private record ContainerBuild(@Nullable String containerName, BuildConfig buildConfig) {
+    private record ContainerBuild(@Nullable String containerName, BuildConfig buildConfig, @Nullable BuildContainerDTO container) {
     }
 
     // -------Helper methods for triggerBuild()-------
@@ -390,6 +397,31 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     /**
+     * Restricts the repositories that are provisioned into a container to the ones it lists. A container with no explicit
+     * repository selection (its list is null, which is the exercise default and the single-container case) receives every
+     * repository, exactly as before. The participation's own repository is always provided, because a container cannot
+     * build the code it does not have; the test, solution, and auxiliary repositories are only provided when the container
+     * lists them. This is the mechanism that keeps untrusted student code from receiving the instructor's test files.
+     *
+     * @param full      the full repository information of the participation
+     * @param container the container to scope for, or null for the exercise default (no scoping)
+     * @return the repository information restricted to what the container lists
+     */
+    private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, @Nullable BuildContainerDTO container) {
+        if (container == null || container.repositories() == null) {
+            return full;
+        }
+        Set<RepositoryType> types = container.repositories().stream().map(BuildContainerRepositoryDTO::type).collect(Collectors.toSet());
+        String testRepositoryUri = types.contains(RepositoryType.TESTS) ? full.testRepositoryUri() : null;
+        String solutionRepositoryUri = types.contains(RepositoryType.SOLUTION) ? full.solutionRepositoryUri() : null;
+        boolean includeAuxiliary = types.contains(RepositoryType.AUXILIARY);
+        String[] auxiliaryRepositoryUris = includeAuxiliary ? full.auxiliaryRepositoryUris() : new String[0];
+        String[] auxiliaryRepositoryCheckoutDirectories = includeAuxiliary ? full.auxiliaryRepositoryCheckoutDirectories() : new String[0];
+        return new RepositoryInfo(full.repositoryName(), full.repositoryType(), full.triggeredByPushTo(), full.assignmentRepositoryUri(), testRepositoryUri, solutionRepositoryUri,
+                auxiliaryRepositoryUris, auxiliaryRepositoryCheckoutDirectories);
+    }
+
+    /**
      * Resolves the containers of the build plan into the build jobs that should be scheduled for the participation.
      * A plan with several containers yields one {@link ContainerBuild} per container (identified by its name), each with
      * its own build script and Docker image. A plan with at most one container yields a single build job whose container
@@ -420,14 +452,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (containers.size() <= 1) {
             final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
             BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
-            return List.of(new ContainerBuild(null, config));
+            return List.of(new ContainerBuild(null, config, container));
         }
 
         // Several containers are each scheduled as an independent build job, identified by the container name.
         List<ContainerBuild> containerBuilds = new ArrayList<>(containers.size());
         for (BuildContainerDTO container : containers) {
             BuildConfig config = buildConfigForContainer(participation, container, buildPlanPhasesDTO, commitHashToBuild, assignmentCommitHash, testCommitHash, buildConfig);
-            containerBuilds.add(new ContainerBuild(container.name(), config));
+            containerBuilds.add(new ContainerBuild(container.name(), config, container));
         }
         return containerBuilds;
     }
