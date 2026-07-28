@@ -42,6 +42,8 @@ artemis:
             enabled: false # Set this to true to enable LDAP-based user synchronization (artemis.user-management.ldap.url etc.)
         saml2:
             enabled: false # Set this to true to enable SAML2 single sign-on; requires the saml2 and spring.security.saml2 blocks (see application-saml2.yml.example)
+        oidc:
+            enabled: false # Set this to true to enable OIDC single sign-on;
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features

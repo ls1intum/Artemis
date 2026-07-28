@@ -14,20 +14,29 @@ autoInstallPeers: true
 overrides:
     '@babel/core': '7.29.7'
     '@babel/plugin-transform-modules-systemjs': '7.29.4'
-    fast-uri: '3.1.2'
+    # Kept on the 1.x line (docs' express 4 stack requires ^1).
+    body-parser: '1.20.6'
+    # Kept on the 3.x line (consumers require ^3).
+    fast-uri: '3.1.4'
     follow-redirects: '1.16.0'
     http-proxy-middleware: '3.0.7'
     joi: '17.13.4'
-    js-yaml: '4.2.0'
+    # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
+    js-yaml: '4.3.0'
     launch-editor: '2.14.1'
     minimatch: '10.2.5'
+    postcss: '8.5.18'
     qs: '6.15.2'
     serialize-javascript: '7.0.5'
-    shell-quote: '1.8.4'
+    shell-quote: '1.10.0'
+    # Kept on the 3.x line (docs' SVG toolchain requires ^3).
+    svgo: '3.3.4'
     undici: '7.28.0'
     uuid: '14.0.0'
     webpack: '5.106.2'
-    webpack-dev-server: '5.2.5'
+    # Kept on the 5.x line (docs' webpack tooling requires ^5; 6.x is an API break).
+    webpack-dev-server: '5.2.6'
+    websocket-driver: '0.7.5'
     'ws@>=7.0.0 <7.5.11': '7.5.11'
     'ws@>=8.0.0 <8.21.0': '8.21.0'
 

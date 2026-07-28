@@ -22,6 +22,7 @@ import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -36,7 +37,6 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -76,6 +76,8 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,
+        TumUiDialogComponent,
+        OrganizationSelectorComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -88,7 +90,6 @@ export class CourseUpdateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
@@ -140,6 +141,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly requestMoreFeedbackEnabled = signal(true);
     readonly customizeGroupNames = signal(false);
     readonly courseOrganizations = signal<Organization[]>(undefined!);
+    /** Controls visibility of the declarative organization-selector dialog. */
+    readonly orgSelectorVisible = signal(false);
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
@@ -647,21 +650,15 @@ export class CourseUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
-            width: '80vw',
-            modal: true,
-            closable: true,
-            dismissableMask: true,
-            data: {
-                organizations: this.courseOrganizations(),
-            },
-        });
-        dialogRef?.onClose.subscribe((organization) => {
-            if (organization !== undefined) {
-                this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
-            }
-        });
+        this.orgSelectorVisible.set(true);
+    }
+
+    /**
+     * Adds the organization chosen in the selector dialog to the course.
+     * @param organization the organization selected in the dialog
+     */
+    onOrgSelected(organization: Organization) {
+        this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
     }
 
     /**
