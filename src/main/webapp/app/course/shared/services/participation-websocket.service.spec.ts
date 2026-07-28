@@ -14,6 +14,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: WebsocketService;
@@ -178,6 +179,70 @@ describe('ParticipationWebsocketService', () => {
         const cached = participationWebsocketService.cachedParticipations.get(participation.id!);
         expect(cached).toBeDefined();
         expect(cached!.id).toBe(participation.id);
+    });
+
+    it('should replace unfinished Athena placeholder when persisted Athena result arrives through websocket', () => {
+        const participationWithPlaceholder: StudentParticipation = { id: 91, exercise: exercise1 } as StudentParticipation;
+        const submission: Submission = { id: 91, participation: participationWithPlaceholder } as Submission;
+        const previousResult: Result = { id: 90, score: 60, submission } as Result;
+        const placeholderResult: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission,
+        } as Result;
+        submission.results = [previousResult, placeholderResult];
+        participationWithPlaceholder.submissions = [submission];
+        const persistedAthenaResult: Result = {
+            id: 92,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholder.id!);
+        const cachedResults = cached?.submissions?.[0].results ?? [];
+        expect(cachedResults).toHaveLength(2);
+        expect(cachedResults.map((result) => result.id).sort()).toEqual([90, 92]);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should remove stale failed Athena placeholders when a later persisted Athena result arrives for another submission', () => {
+        const participationWithFailedPlaceholder: StudentParticipation = { id: 93, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 93, participation: participationWithFailedPlaceholder } as Submission;
+        const secondSubmission: Submission = { id: 94, participation: participationWithFailedPlaceholder } as Submission;
+        const failedPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [failedPlaceholder];
+        participationWithFailedPlaceholder.submissions = [firstSubmission, secondSubmission];
+        const persistedAthenaResult: Result = {
+            id: 95,
+            score: 80,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithFailedPlaceholder.id!, true);
+        participationWebsocketService.addParticipation(participationWithFailedPlaceholder);
+
+        receiveResultForParticipationSubject.next(persistedAthenaResult);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithFailedPlaceholder.id!);
+        const cachedResults = cached?.submissions?.flatMap((submission) => submission.results ?? []) ?? [];
+        expect(cachedResults).toHaveLength(1);
+        expect(cachedResults[0].id).toBe(95);
+        expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {

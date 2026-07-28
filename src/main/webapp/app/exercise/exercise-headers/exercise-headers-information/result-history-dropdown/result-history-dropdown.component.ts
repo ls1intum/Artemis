@@ -161,31 +161,46 @@ export class ResultHistoryDropdownComponent {
         }
     }
 
-    getResultIcon(result: Result): IconProp {
-        const participation = result.submission?.participation;
-        if (!participation) {
-            return faQuestionCircle;
-        }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
-        return getResultIconClass(result, participation, templateStatus);
-    }
-
-    getResultIconAnimation(result: Result): AnimationProp | undefined {
+    private getResultTemplateStatus(result: Result): ResultTemplateStatus | undefined {
         const participation = result.submission?.participation;
         if (!participation) {
             return undefined;
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
-        return templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
+        return evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
+    }
+
+    getResultIcon(result: Result): IconProp {
+        const participation = result.submission?.participation;
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
+            return faQuestionCircle;
+        }
+        return getResultIconClass(result, participation, templateStatus);
+    }
+
+    getResultIconAnimation(result: Result): AnimationProp | undefined {
+        return this.getResultTemplateStatus(result) === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
     }
 
     getResultColorClass(result: Result): string {
         const participation = result.submission?.participation;
-        if (!participation) {
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
             return 'text-muted-color';
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getTextColorClass(result, participation, templateStatus);
+    }
+
+    private isUnfinishedAthenaFeedback(result: Result): boolean {
+        return isAthenaAIResult(result) && result.successful !== true;
+    }
+
+    shouldShowResultScore(result: Result): boolean {
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+    }
+
+    shouldShowResultMetadata(result: Result): boolean {
+        return !this.isUnfinishedAthenaFeedback(result);
     }
 
     getResultText(result: Result): string {
@@ -210,6 +225,18 @@ export class ResultHistoryDropdownComponent {
     }
 
     getResultFeedbackMessage(result: Result): string {
+        if (isAthenaAIResult(result)) {
+            if (isAIResultAndFailed(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            }
+            if (isAIResultAndTimedOut(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            }
+            if (result.successful === undefined) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            }
+        }
+
         const submission = result.submission;
         if (submission && (submission as ProgrammingSubmission).buildFailed) {
             return this.translateService.instant('artemisApp.result.progressString.buildFailed');
@@ -244,9 +271,10 @@ export class ResultHistoryDropdownComponent {
         return ResultService.evaluateBadge(participation, result);
     }
 
-    isRowClickable(): boolean {
+    isRowClickable(result?: Result): boolean {
         const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
     }
 
     navigateToSubmission(result: Result, event: Event) {

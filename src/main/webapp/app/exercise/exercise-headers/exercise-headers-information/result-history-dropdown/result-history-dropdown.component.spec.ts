@@ -51,8 +51,11 @@ describe('ResultHistoryDropdownComponent', () => {
                     artemisApp: {
                         result: {
                             resultString: {
+                                automaticAIFeedbackInProgress: 'AI feedback request is being processed',
                                 automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
+                                automaticAIFeedbackFailed: 'AI feedback generation failed.',
                                 automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
+                                automaticAIFeedbackTimedOut: 'AI feedback generation timed out.',
                                 automaticAIFeedbackInProgressTooltip: 'AI feedback is being generated.',
                             },
                         },
@@ -205,6 +208,30 @@ describe('ResultHistoryDropdownComponent', () => {
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
+
+        it('should show in-progress AI feedback message instead of score progress for unfinished Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback request is being processed');
+        });
+
+        it('should show failed AI feedback message instead of score progress for failed Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback generation failed.');
+        });
+
+        it('should show timed out AI feedback message instead of score progress for timed out Athena results', () => {
+            const result = {
+                id: 1,
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            } as Result;
+
+            expect(component.getResultFeedbackMessage(result)).toBe('AI feedback generation timed out.');
+        });
     });
 
     describe('AI feedback indicator', () => {
@@ -315,6 +342,29 @@ describe('ResultHistoryDropdownComponent', () => {
         });
     });
 
+    describe('pending Athena feedback display', () => {
+        it('should hide score and metadata for unfinished Athena results', () => {
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(false);
+            expect(component.shouldShowResultMetadata(result)).toBe(false);
+        });
+
+        it('should show score and metadata for completed Athena results', () => {
+            const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(true);
+            expect(component.shouldShowResultMetadata(result)).toBe(true);
+        });
+
+        it('should hide score when a result has no score', () => {
+            const result = { id: 1, score: undefined, assessmentType: AssessmentType.AUTOMATIC } as Result;
+
+            expect(component.shouldShowResultScore(result)).toBe(false);
+            expect(component.shouldShowResultMetadata(result)).toBe(true);
+        });
+    });
+
     describe('getResultText', () => {
         it('should return empty string when no participation', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
@@ -342,6 +392,24 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.detectChanges();
 
             expect(component.isRowClickable()).toBe(true);
+        });
+
+        it('should return false for unfinished Athena feedback placeholders', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);
+            fixture.detectChanges();
+
+            const result = { score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
+
+            expect(component.isRowClickable(result)).toBe(false);
+        });
+
+        it('should return true for persisted completed text results', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);
+            fixture.detectChanges();
+
+            const result = { id: 1, score: 75, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+            expect(component.isRowClickable(result)).toBe(true);
         });
 
         it('should return false for PROGRAMMING exercises', () => {
@@ -482,6 +550,31 @@ describe('ResultHistoryDropdownComponent', () => {
             const compiled = fixture.nativeElement as HTMLElement;
             const arrow = compiled.querySelector('fa-icon');
             expect(arrow).toBeTruthy();
+        });
+
+        it('should render unfinished Athena feedback as pending instead of a scored result', () => {
+            const exercise = { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise;
+            const participation = { id: 1, exercise } as Participation;
+            const result = {
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                submission: { id: 1, participation },
+            } as unknown as Result;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
+            expect(row?.textContent).toContain('AI feedback request is being processed');
+            expect(row?.textContent).not.toContain('0%');
+            expect(row?.textContent).not.toContain('artemisApp.result.progressString.stuck');
+            expect(row?.querySelector('p-tag')).toBeNull();
+            expect(row?.getAttribute('role')).toBeNull();
         });
     });
 });
