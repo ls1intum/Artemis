@@ -576,7 +576,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
         Exam examG = ExamFactory.generateExam(course1);
         examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
-        return List.of(examA, examB, examC, examD, examE, examF, examG);
+        // Test for bad request, when examSummaryPublicationDate is before the endDate
+        Exam examH = ExamFactory.generateExam(course1);
+        examH.setExamSummaryPublicationDate(examH.getEndDate().minusMinutes(5));
+        // Test for bad request, when examSummaryPublicationDate is after the publishResultsDate
+        Exam examI = ExamFactory.generateExam(course1);
+        examI.setPublishResultsDate(examI.getEndDate().plusMinutes(30));
+        examI.setExamSummaryPublicationDate(examI.getEndDate().plusMinutes(60));
+        return List.of(examA, examB, examC, examD, examE, examF, examG, examH, examI);
     }
 
     @ParameterizedTest
@@ -584,6 +591,42 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithInvalidDates(Exam exam) throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_withValidExamSummaryPublicationDate() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examSummaryDate");
+        exam.setPublishResultsDate(exam.getEndDate().plusHours(2));
+        // summary publication date after the end date and no later than the publish results date is valid
+        exam.setExamSummaryPublicationDate(exam.getEndDate().plusHours(1));
+
+        Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.CREATED);
+
+        assertThat(savedExam.getExamSummaryPublicationDate()).isNotNull();
+        assertThat(savedExam.getExamSummaryPublicationDate()).isCloseTo(exam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
+
+        // update path (applyTo): changing the date persists
+        savedExam.setExamSummaryPublicationDate(savedExam.getEndDate().plusMinutes(90));
+        Exam updatedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(savedExam), Exam.class, HttpStatus.OK);
+        assertThat(updatedExam.getExamSummaryPublicationDate()).isCloseTo(savedExam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_failsIfExtendedPastSummaryPublicationDate() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examSummaryWorkingTime");
+        // the submission overview becomes visible shortly after the end date
+        exam.setExamSummaryPublicationDate(exam.getEndDate().plusMinutes(30));
+        Exam createdExam = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.CREATED);
+
+        // extending the working time so the new end date would reach/pass the publication date must be rejected (it would let the summary publish while the exam still runs)
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + createdExam.getId() + "/working-time", 3600, HttpStatus.BAD_REQUEST);
+
+        // a smaller extension that keeps the end date before the publication date is allowed
+        Exam updatedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + createdExam.getId() + "/working-time", 600, Exam.class,
+                HttpStatus.OK);
+        assertThat(updatedExam.getEndDate()).isBefore(updatedExam.getExamSummaryPublicationDate());
     }
 
     @Test
@@ -1026,13 +1069,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         ExamDTO loaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
         assertThat(loaded.channelName()).isEqualTo("scientific-channel-name");
+        assertThat(loaded.examSummaryPublicationDate()).isNotNull();
 
         // Build the request the way the client's toExamUpdateDTO does: from the loaded response fields only.
         ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.testExam(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
                 loaded.endDate(), loaded.publishResultsDate(), loaded.examStudentReviewStart(), loaded.examStudentReviewEnd(), loaded.gracePeriod(), loaded.workingTime(),
                 loaded.startText(), loaded.endText(), loaded.confirmationStartText(), loaded.confirmationEndText(), loaded.examMaxPoints(), loaded.randomizeExerciseOrder(),
                 loaded.numberOfExercisesInExam(), loaded.numberOfCorrectionRoundsInExam(), loaded.examiner(), loaded.moduleNumber(), loaded.courseName(),
-                loaded.exampleSolutionPublicationDate(), loaded.channelName());
+                loaded.exampleSolutionPublicationDate(), loaded.examSummaryPublicationDate(), loaded.channelName());
         request.put("/api/exam/courses/" + course1.getId() + "/exams", clientRequest, HttpStatus.OK);
 
         // Re-load through the plain path and assert the round-tripped fields survived, channel name in particular.
@@ -1051,6 +1095,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(reloaded.confirmationEndText()).isEqualTo(loaded.confirmationEndText());
         assertThat(reloaded.startDate()).isEqualTo(loaded.startDate());
         assertThat(reloaded.endDate()).isEqualTo(loaded.endDate());
+        assertThat(reloaded.examSummaryPublicationDate()).isEqualTo(loaded.examSummaryPublicationDate());
     }
 
     @Test
@@ -2034,6 +2079,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam.setEndDate(baseTime.plusHours(1));
         exam.setExamStudentReviewStart(baseTime.plusHours(12));
         exam.setExamStudentReviewEnd(baseTime.plusDays(1));
+        exam.setExamSummaryPublicationDate(baseTime.plusHours(6));
         exam.setWorkingTime(60 * 60);
         exam.setExaminer("Prof. Dr. Stephan Krusche");
         exam.setStartText("Start Text");
@@ -2074,6 +2120,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(ChronoUnit.MILLIS.between(actualExam.getEndDate(), expectedExam.getEndDate())).isLessThan(1);
         assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewStart(), expectedExam.getExamStudentReviewStart())).isLessThan(1);
         assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewEnd(), expectedExam.getExamStudentReviewEnd())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getExamSummaryPublicationDate(), expectedExam.getExamSummaryPublicationDate())).isLessThan(1);
 
         assertThat(actualExam.getId()).isNotNull();
     }
