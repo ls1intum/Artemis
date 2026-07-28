@@ -566,6 +566,11 @@ public final class Constants {
     public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
 
     /**
+     * The name of the property used to enable or disable OIDC-based single sign-on.
+     */
+    public static final String OIDC_ENABLED_PROPERTY_NAME = "artemis.user-management.oidc.enabled";
+
+    /**
      * The name of the property used to enable or disable Theia functionality.
      */
     public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
