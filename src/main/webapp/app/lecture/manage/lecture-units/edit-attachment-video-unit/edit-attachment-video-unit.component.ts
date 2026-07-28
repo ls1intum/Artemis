@@ -4,7 +4,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -113,18 +113,20 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             attachmentType: AttachmentType.FILE,
         });
 
+        const hasUpload = !!file && file.size > 0;
         const updatedUnit = Object.assign(new AttachmentVideoUnit(), currentUnit, {
             name,
             description,
             releaseDate,
             competencyLinks,
             videoSource,
+            attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
         this.isLoading.set(true);
 
         const formData = new FormData();
-        if (file) {
+        if (hasUpload) {
             formData.append('file', file, fileName);
         }
         formData.append('attachment', objectToJsonBlob(updatedAttachment));
