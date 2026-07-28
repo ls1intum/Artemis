@@ -129,31 +129,45 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         IrisChatSession session = irisChatSessionRepository.save(new IrisChatSession(course, user));
 
+        // First exchange: user -> COMMAND marker (written mid-pipeline) -> the actual answer.
         IrisMessage userMessage = new IrisMessage();
         userMessage.addContent(new IrisTextMessageContent("Where did you explain this?"));
         IrisMessage savedUserMessage = irisMessageService.saveMessage(userMessage, session, IrisMessageSender.USER);
 
+        irisMessageService.saveMessage(pointOutMarker(), session, IrisMessageSender.COMMAND);
+
+        IrisMessage answer = new IrisMessage();
+        answer.addContent(new IrisTextMessageContent("On slide 3, as highlighted."));
+        irisMessageService.saveMessage(answer, session, IrisMessageSender.LLM);
+
+        // Second exchange: user -> COMMAND marker, but no answer ever follows.
         IrisMessage unansweredMessage = new IrisMessage();
         unansweredMessage.addContent(new IrisTextMessageContent("And what about this?"));
         IrisMessage savedUnansweredMessage = irisMessageService.saveMessage(unansweredMessage, session, IrisMessageSender.USER);
 
-        // Marker written mid-pipeline for the second user message, which never receives an answer.
-        IrisMessage marker = new IrisMessage();
-        marker.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().createObjectNode().put("type", "pointOut").put("lectureUnitId", 1L).put("page", 3)));
-        irisMessageService.saveMessage(marker, session, IrisMessageSender.COMMAND);
+        irisMessageService.saveMessage(pointOutMarker(), session, IrisMessageSender.COMMAND);
 
         Instant from = Instant.now().minus(Duration.ofHours(1));
         Instant to = Instant.now().plus(Duration.ofHours(1));
         List<Object[]> rows = dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to);
 
-        // The first user message is followed by the second user message, so the COMMAND marker never masks an answer here.
         Object[] answeredRow = rows.stream().filter(row -> ((Number) row[0]).longValue() == savedUserMessage.getId()).findFirst().orElseThrow();
-        assertThat(answeredRow[3]).isEqualTo(IrisMessageSender.USER.name());
+        // nextSender (index 3) skips the COMMAND marker sitting in between and reports the answer behind it.
+        assertThat(answeredRow[3]).isEqualTo(IrisMessageSender.LLM.name());
+        // hasAssistantResponse (index 6) must be 1: the marker did not mask the answer that followed it.
+        assertThat(((Number) answeredRow[6]).intValue()).isEqualTo(1);
 
         Object[] unansweredRow = rows.stream().filter(row -> ((Number) row[0]).longValue() == savedUnansweredMessage.getId()).findFirst().orElseThrow();
         // nextSender (index 3) skips the COMMAND marker, so there is no following non-marker message.
         assertThat(unansweredRow[3]).isNull();
-        // hasAssistantResponse (index 6) must be 0: the COMMAND marker is not an assistant response.
+        // hasAssistantResponse (index 6) must be 0: the COMMAND marker is not an assistant response, and the earlier
+        // answer sits before this message rather than after it.
         assertThat(((Number) unansweredRow[6]).intValue()).isEqualTo(0);
+    }
+
+    private static IrisMessage pointOutMarker() {
+        IrisMessage marker = new IrisMessage();
+        marker.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().createObjectNode().put("type", "pointOut").put("lectureUnitId", 1L).put("page", 3)));
+        return marker;
     }
 }

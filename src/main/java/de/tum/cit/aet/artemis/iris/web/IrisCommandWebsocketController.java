@@ -38,6 +38,11 @@ public class IrisCommandWebsocketController {
      */
     @MessageMapping("topic/iris/command-ack")
     public void acknowledgeCommand(@Payload IrisCommandAckDTO ack, Principal principal) {
+        if (ack == null || ack.correlationId() == null) {
+            // Without a correlation id the ack cannot be matched to a pending command; drop it before it reaches the coordination service.
+            log.warn("Ignoring malformed Iris command ack without a correlation id");
+            return;
+        }
         if (principal == null) {
             // Without an authenticated principal the ack cannot be attributed to the user awaiting it; drop it.
             log.warn("Ignoring Iris command ack {} without an authenticated principal", ack.correlationId());

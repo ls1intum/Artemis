@@ -367,7 +367,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
             this.openFullscreen();
         }
+        this.acknowledgeAsDropped(this.pendingPointOut());
         this.pendingPointOut.set(pointOut);
+    }
+
+    /**
+     * Acknowledges a pending point-out that is being dropped as not applied. The client knows at that moment that the
+     * target will never be reached, so reporting it right away releases a waiting Iris pipeline instead of making it
+     * sit out the server-side ack timeout. Marker clicks carry no correlation id and have nobody waiting on them.
+     * @param pointOut the point-out being dropped, if any
+     */
+    private acknowledgeAsDropped(pointOut: IrisPointOut | undefined): void {
+        if (pointOut?.correlationId) {
+            this.chatService.sendCommandAck(pointOut.correlationId, false);
+        }
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
@@ -604,8 +617,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         } else {
             // The view was closed before a point-out could be applied, so its target is now unreachable.
             // Dropping it here (on the close transition, not on the closed state, which a marker click starts
-            // out in) keeps it from being applied on a later, unrelated reopen. A pipeline still waiting on it
-            // is released by the server-side ack timeout.
+            // out in) keeps it from being applied on a later, unrelated reopen.
+            this.acknowledgeAsDropped(this.pendingPointOut());
             this.pendingPointOut.set(undefined);
         }
     }

@@ -1166,9 +1166,33 @@ describe('AttachmentVideoUnitComponent', () => {
 
             component['onFullscreenChange'](false);
 
-            // Dropped, so a later unrelated reopen does not make the view jump. A pipeline still waiting on it
-            // is released by the server-side ack timeout, so nothing is acknowledged from here.
+            // Dropped, so a later unrelated reopen does not make the view jump. The target is now known to be
+            // unreachable, so the waiting pipeline is released right away instead of sitting out the ack timeout.
             expect(component['pendingPointOut']()).toBeUndefined();
+            expect(ackSpy).toHaveBeenCalledWith('c4', false);
+        });
+
+        it('acknowledges a superseded point-out when a newer one replaces it', () => {
+            // No PDF viewer is available, so the first request stays pending and is still unacknowledged when the
+            // second arrives — without releasing it here, its pipeline would wait out the full server-side timeout.
+            component['fullscreenState'].set(true);
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c5', page: 3 }));
+            fixture.detectChanges();
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c6', page: 7 }));
+
+            expect(ackSpy).toHaveBeenCalledWith('c5', false);
+            expect(ackSpy).not.toHaveBeenCalledWith('c6', false);
+            expect(component['pendingPointOut']()?.correlationId).toBe('c6');
+        });
+
+        it('does not acknowledge a superseded marker click, which has nobody waiting on it', () => {
+            component['fullscreenState'].set(true);
+            component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 3 }));
+            fixture.detectChanges();
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c7', page: 7 }));
+
             expect(ackSpy).not.toHaveBeenCalled();
         });
     });

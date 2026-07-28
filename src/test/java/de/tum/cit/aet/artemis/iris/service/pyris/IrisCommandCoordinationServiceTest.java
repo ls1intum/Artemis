@@ -97,13 +97,15 @@ class IrisCommandCoordinationServiceTest {
     }
 
     @Test
-    void register_removesPendingEntryAfterCompletionSoDuplicateAckIsNoop() throws Exception {
+    void handleAck_duplicateAckDoesNotOverwriteTheAlreadyReportedResult() throws Exception {
         var correlationId = UUID.randomUUID().toString();
         CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
         coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "student1");
         future.get(1, TimeUnit.SECONDS);
 
-        // A duplicate ack after the pending entry was cleaned up must not flip or fail the result.
+        // A second ack for the same command — a duplicate, or one racing the timeout — must not flip or fail the
+        // result the pipeline already acted on. Note this pins the outcome, not the mechanism: the entry is gone by
+        // now, but even if it were not, completing an already-completed future is a no-op.
         coordinationService.handleAck(new IrisCommandAckDTO(correlationId, false), "student1");
         assertThat(future.get(1, TimeUnit.SECONDS).applied()).isTrue();
     }

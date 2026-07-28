@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Executes commands that Iris performs on the client mid-pipeline (before its answer). A command is pushed to the user's browser over WebSocket and this service blocks until the
@@ -119,6 +122,11 @@ public class IrisCommandService {
         if (!isValidPointOut(command.parameters())) {
             return PyrisCommandResultDTO.notApplied();
         }
+        // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and numeric.
+        var lectureUnit = resolveLectureUnitInCourse(command.parameters().get("lectureUnitId").asLong(), job.courseId());
+        if (lectureUnit == null) {
+            return PyrisCommandResultDTO.notApplied();
+        }
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (!dispatchToClient(session, command)) {
             return PyrisCommandResultDTO.notApplied();
@@ -127,7 +135,7 @@ public class IrisCommandService {
         // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
         // history marker is best-effort: a failure here must not turn into a 500 for Pyris.
         try {
-            persistAndPushMarker(session, buildPointOutMarkerContent(command));
+            persistAndPushMarker(session, buildPointOutMarkerContent(command, lectureUnit.getName()));
         }
         catch (Exception e) {
             log.error("Point-out command was applied on the client but persisting its marker failed", e);
@@ -145,6 +153,9 @@ public class IrisCommandService {
     private boolean dispatchToClient(IrisSession session, PyrisCommandDTO command) {
         var userLogin = userRepository.findByIdElseThrow(session.getUserId()).getLogin();
         var correlationId = UUID.randomUUID().toString();
+        // Registered before the send so an ack cannot arrive before there is a future to complete. The registration is
+        // cleaned up by that future settling, which the ack or the timeout below always does — IrisWebsocketService#send
+        // reports delivery failures through its own future rather than throwing, so it cannot skip past them.
         var ackFuture = coordinationService.register(correlationId, userLogin);
 
         var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters());
@@ -199,32 +210,49 @@ public class IrisCommandService {
      * Builds a point-out marker's JSON content: the executed command in the same {@code {type, parameters}} shape it arrived in — so readers of the chat history parse markers
      * exactly like commands rather than a second, flattened format — plus the lecture unit's name, which only Artemis can resolve and which the chip needs as a label.
      *
-     * @param command the applied point-out command
+     * @param command         the applied point-out command
+     * @param lectureUnitName the display name of the unit the command points into, used as the chip's label
      * @return the marker content to persist
      */
-    private ObjectNode buildPointOutMarkerContent(PyrisCommandDTO command) {
+    private ObjectNode buildPointOutMarkerContent(PyrisCommandDTO command, @Nullable String lectureUnitName) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("type", command.type());
         ObjectNode parameters = node.putObject("parameters");
         command.parameters().forEach(parameters::set);
-        // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and numeric.
-        var name = resolveLectureUnitName(command.parameters().get("lectureUnitId").asLong());
-        if (name != null && !name.isBlank()) {
-            parameters.put("lectureUnitName", name);
+        if (lectureUnitName != null && !lectureUnitName.isBlank()) {
+            parameters.put("lectureUnitName", lectureUnitName);
         }
         return node;
     }
 
     /**
-     * Resolves the lecture unit's display name for the marker, or {@code null} if it cannot be resolved. The name is only a label, so a lookup failure must not cost us the marker.
+     * Resolves the lecture unit a command points into, scoped to the course the chat belongs to, or {@code null} if it does not exist there.
+     * <p>
+     * The id is model-generated, so it is not trusted: a unit from another course must neither be dispatched to the client nor have its name persisted into this chat's history.
+     * Scoping here also spares the pipeline the full ack timeout when Iris hallucinates an id — no client would ever navigate to it, so waiting for an ack that cannot come only
+     * stalls the answer.
+     *
+     * @param lectureUnitId the unit id named by the command
+     * @param courseId      the course of the chat job the command belongs to
+     * @return the lecture unit, or {@code null} if it does not exist or belongs to another course
      */
-    private @Nullable String resolveLectureUnitName(long lectureUnitId) {
-        try {
-            return lectureUnitRepositoryApi.map(api -> api.findByIdElseThrow(lectureUnitId).getName()).orElse(null);
-        }
-        catch (Exception e) {
-            log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", lectureUnitId);
+    private @Nullable LectureUnit resolveLectureUnitInCourse(long lectureUnitId, long courseId) {
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            // Without the lecture module there are no units to point into.
             return null;
         }
+        // The join fetch carries the lecture, and with it the course the unit is scoped by. A missing id yields an
+        // empty result rather than an exception, and the inner join means a returned unit always has its lecture.
+        var lectureUnit = lectureUnitRepositoryApi.get().findAllByIdsWithLecture(List.of(lectureUnitId)).stream().findFirst().orElse(null);
+        if (lectureUnit == null) {
+            log.debug("Ignoring point-out command for unknown lecture unit {}", lectureUnitId);
+            return null;
+        }
+        var course = lectureUnit.getLecture().getCourse();
+        if (course == null || !Objects.equals(course.getId(), courseId)) {
+            log.warn("Ignoring point-out command for lecture unit {}, which does not belong to course {}", lectureUnitId, courseId);
+            return null;
+        }
+        return lectureUnit;
     }
 }
