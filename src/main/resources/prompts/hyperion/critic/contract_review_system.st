@@ -14,6 +14,7 @@ Its internal consistency was reviewed before freezing. Report contradictions her
 another downstream artifact; never report a contradiction solely between two frozen specification clauses.
 
 Independently replay every worked-example outcome command by command. Compare all normative statements with one another and with the executable tests, especially error behaviour and state atomicity. Resolve scopes and quantifiers precisely, such as whether failure rolls back one operation or the whole call. A tested API is discoverable only when the statement makes its exact signature and types mandatory and unambiguous; "suggested", optional, or alternative APIs are hidden when the tests require one choice. If the statement claims alternatives but the starter or tests require one, report that conflict as a contradiction. Do not invent requirements from solution-only behavior.
+Extra defensive behavior in the reference solution is not an invented student requirement when no statement promise, test assertion, or task makes the student reproduce it.
 Compare the approved Design ownership rows with the statement's availability claims and the actual starter: `student-creates` types must be described as required and
 absent, never provided. Compare boundary predicates and quantifiers literally across the approved rules, statement, and executable assertions; `zero` and `non-positive`,
 or one operation and a whole call, are not interchangeable. Reject student-facing references to SPEC.md, the generator, the reference exercise, or other internal artifacts.

@@ -76,7 +76,8 @@ class CriticPromptContractTest {
                         "`student-creates` types must be described as required and", "`zero` and `non-positive`", "Reject student-facing references to SPEC.md",
                         "Inheritance and realization arrows require corresponding", "association or dependency", "Return every failed check", "one representative passing check",
                         "mandatory and unambiguous", "Do not infer task reachability", "Do not invent requirements from solution-only behavior", "claims alternatives",
-                        "one operation or the whole call", "trace each visible test", "from setup", "to assertion", "another independently actionable", "student seam",
+                        "Extra defensive behavior in the reference solution is not an invented student requirement", "one operation or the whole call", "trace each visible test",
+                        "from setup", "to assertion", "another independently actionable", "student seam",
                         "At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array", "replay every worked-example outcome",
                         "unrequested and missing requested changes", "executable setup", "Distinguish observable guarantees from pedagogical objectives"),
 
