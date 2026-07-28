@@ -214,9 +214,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
                 baseRepositories.solutionRepository());
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
-        // Sanitizer-based test cases (especially in the GCC variant) can flake intermittently
-        // in Docker due to ASLR / sanitizer interactions on CI runners. Retry the build once
-        // before failing — a real configuration regression will fail twice.
+        // Retry the build once before failing — a real configuration regression fails twice.
+        // The GCC variant used to flake here with `TestOutputASan [FAIL]: timeout`, which was not a
+        // load or ASLR effect: AddressSanitizer runs LeakSanitizer at exit, that scan stops the world
+        // via ptrace, and the build containers deliberately have no CAP_SYS_PTRACE (they run untrusted
+        // student code), so a correct `asan.out` stalled instead of exiting. The C template now sets
+        // ASAN_OPTIONS=detect_leaks=0 for the tester's child processes, so the stall is gone at the
+        // source. This retry is kept as cheap insurance and can be dropped once that has held.
         AssertionError lastFailure = null;
         for (int attempt = 1; attempt <= MAX_BUILD_ATTEMPTS; attempt++) {
             String triggerFileName = "trigger-attempt-" + attempt + ".txt";
