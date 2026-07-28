@@ -116,6 +116,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                         this.sidebarItems.set(this.getSidebarItems());
                         this.courseActionItems.set(this.getCourseActionItems());
                     },
+                    error: () => this.handleLoadCourseError(),
                 });
             }
         });
@@ -176,6 +177,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     message: errorMessage,
                     disableTranslation: true,
                 });
+                // The success path clears this in `map`, so without resetting it here a failed load would leave the
+                // refresh spinner running forever.
+                this.refreshingCourse.set(false);
                 return throwError(() => error);
             }),
         );
@@ -185,10 +189,23 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe({
                 next: () => this.sidebarItems.set(this.getSidebarItems()),
+                error: () => this.handleLoadCourseError(),
             });
             this.calendarService.reloadEvents();
         }
         return observable;
+    }
+
+    /**
+     * Terminal error observer for `loadCourse()`.
+     * <p>
+     * `loadCourse()` deliberately rethrows every non-403 error after alerting the user, so each subscriber has to
+     * provide an error observer — otherwise RxJS reports it as an unhandled error and it surfaces through the global
+     * error handler. The user-facing alert and the spinner reset already happen inside the pipe, so there is nothing
+     * left to do here beyond terminating the stream cleanly.
+     */
+    private handleLoadCourseError(): void {
+        // intentionally empty: the alert and the refreshing-state reset are handled in loadCourse()'s catchError
     }
 
     protected getHasSidebar(): boolean {

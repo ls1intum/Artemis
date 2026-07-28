@@ -4,7 +4,7 @@ import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/cour
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -490,6 +490,18 @@ describe('CourseOverviewComponent', () => {
     it('should fetch the course content exactly once when navigating into the course', async () => {
         await component.ngOnInit();
         expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should reset the refresh spinner when a course refresh fails', async () => {
+        // loadCourse(true) turns the refresh overlay on and only clears it on the success path, so a failed refresh
+        // used to leave the spinner running forever. The subscriber on that path also needs an error observer:
+        // loadCourse rethrows every non-403 error, and without one RxJS reports it as unhandled.
+        await component.ngOnInit();
+        findOneForDashboardStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500, headers: new HttpHeaders() })));
+
+        component.loadCourse(true).subscribe({ next: () => {}, error: () => {} });
+
+        expect(component.refreshingCourse()).toBe(false);
     });
 
     it('should not re-check tab access itself when switching in place to another course', async () => {
