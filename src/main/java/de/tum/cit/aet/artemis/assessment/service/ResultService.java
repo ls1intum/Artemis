@@ -487,8 +487,12 @@ public class ResultService {
 
         final List<Result> results = new ArrayList<>();
         for (Submission submission : relevantSubmissions) {
-            // Fall back to the un-hydrated result if it disappeared between the two queries; it then simply carries no feedbacks.
-            Result result = resultsWithFeedbacks.getOrDefault(submission.getLatestResult().getId(), submission.getLatestResult());
+            // Skip results that disappeared between the two queries (e.g. a concurrent assessment deletion). The first-pass result must not be used as a fallback: it comes from
+            // a closed session with an uninitialized feedbacks collection, so reading it would throw a LazyInitializationException in the callers that sum up the feedbacks.
+            Result result = resultsWithFeedbacks.get(submission.getLatestResult().getId());
+            if (result == null) {
+                continue;
+            }
             if (withSubmissions) {
                 result.setSubmission(submission);
             }

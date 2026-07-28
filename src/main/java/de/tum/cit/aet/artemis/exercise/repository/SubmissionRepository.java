@@ -170,8 +170,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     long countLockedSubmissionsByUserIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
-     * assessments.
+     * Get the number of currently locked submissions across the given exercises (used for both a course and an exam). These are all submissions for which some tutor started an
+     * assessment, but has not yet finished it, i.e. an assessor is set while the completion date is still missing.
+     * <p>
+     * Counts via the denormalized {@code result.exerciseId} so no join through submission → participation → exercise is needed. Submissions without any result are not locked and
+     * are therefore not counted.
      *
      * @param exerciseIds the ids of the exercises
      * @return the number of currently locked submissions across the given exercises

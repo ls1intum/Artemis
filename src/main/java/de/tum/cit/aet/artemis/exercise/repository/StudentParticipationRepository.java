@@ -427,7 +427,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <p>
      * Deliberately does <em>not</em> fetch {@code r.feedbacks}: callers select a single relevant result per participation and would discard the feedbacks of every other result.
      * Fetch-joining three collections ({@code submissions}, {@code results}, {@code feedbacks}) multiplies the row count by the feedback fan-out (~18x in production) for rows
-     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findAllByIdInWithEagerFeedbacksAndAssessor}.
+     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksTestCaseAndAssessorByIdIn}.
      * <p>
      * {@code student} and {@code team} are fetched explicitly because they are {@code @ManyToOne} (i.e. eager) and would otherwise cost one extra select per participation.
      *
