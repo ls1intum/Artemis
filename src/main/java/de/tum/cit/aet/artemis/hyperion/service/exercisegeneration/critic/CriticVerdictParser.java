@@ -38,6 +38,10 @@ class CriticVerdictParser {
 
     private static final Pattern NULL_WORD = Pattern.compile("\\bnull\\b", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern MUTABILITY_WORD = Pattern.compile("\\b(?:immutable|immutability|mutable|mutability|unmodifiable)\\b", Pattern.CASE_INSENSITIVE);
+
+    private static final List<Pattern> EXPLICIT_SOURCE_TERMS = List.of(NULL_WORD, MUTABILITY_WORD);
+
     /** The structured shape the full-artifact review parses the model JSON into. */
     private record CriticResponse(@Nullable List<ExampleCheckItem> exampleChecks, @Nullable List<ApiCheckItem> apiChecks, @Nullable List<TemplateCheckItem> templateChecks,
             @Nullable List<MutantCheckItem> mutantChecks, @Nullable List<RequirementFindingItem> uncovered, @Nullable List<RequirementFindingItem> contradictions,
@@ -182,8 +186,8 @@ class CriticVerdictParser {
                 if (item.killed() || findings.size() >= MAX_REVIEW_FINDINGS) {
                     continue;
                 }
-                if (unsupportedNullRequirement(item.mutant(), item.sourceQuote(), authoritativeSource)) {
-                    log.info("Critic abstained on an oracle mutant that inferred null handling from a source passage that does not mention null: {}", item.mutant());
+                if (unsupportedSourceRequirement(item.mutant(), item.sourceQuote(), authoritativeSource)) {
+                    log.info("Critic abstained on an oracle mutant that added a contract term absent from its cited source passage: {}", item.mutant());
                     continue;
                 }
                 if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
@@ -204,8 +208,8 @@ class CriticVerdictParser {
                 if (item == null || item.requirement() == null || item.requirement().isBlank()) {
                     continue;
                 }
-                if (unsupportedNullRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
-                    log.info("Critic abstained on an uncovered null requirement whose source passage does not mention null: {}", item.requirement());
+                if (unsupportedSourceRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
+                    log.info("Critic abstained on an uncovered requirement that added a contract term absent from its cited source passage: {}", item.requirement());
                     continue;
                 }
                 if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
@@ -362,8 +366,8 @@ class CriticVerdictParser {
             if (item == null || item.requirement() == null || item.requirement().isBlank()) {
                 continue;
             }
-            if (unsupportedNullRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
-                log.info("Critic abstained on a weak null oracle whose source passage does not mention null: {}", item.requirement());
+            if (unsupportedSourceRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
+                log.info("Critic abstained on a weak oracle that added a contract term absent from its cited source passage: {}", item.requirement());
                 continue;
             }
             if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
@@ -374,16 +378,20 @@ class CriticVerdictParser {
         }
     }
 
-    private static boolean unsupportedNullRequirement(String requirement, @Nullable String sourceQuote, String authoritativeSource) {
-        if (!NULL_WORD.matcher(requirement).find() || sourceQuote == null) {
+    private static boolean unsupportedSourceRequirement(String requirement, @Nullable String sourceQuote, String authoritativeSource) {
+        if (sourceQuote == null) {
             return false;
         }
         String evidenceId = sourceQuote.strip().replaceFirst("^\\[", "").replaceFirst("]$", "");
+        String citedPassage = sourceQuote;
         if (evidenceId.matches("P[1-9][0-9]*")) {
-            String passage = EvidenceSource.from("P", authoritativeSource).passages().get(evidenceId);
-            return passage != null && !NULL_WORD.matcher(passage).find();
+            citedPassage = EvidenceSource.from("P", authoritativeSource).passages().get(evidenceId);
+            if (citedPassage == null) {
+                return false;
+            }
         }
-        return !NULL_WORD.matcher(sourceQuote).find();
+        String passage = citedPassage;
+        return EXPLICIT_SOURCE_TERMS.stream().anyMatch(term -> term.matcher(requirement).find() && !term.matcher(passage).find());
     }
 
     /**

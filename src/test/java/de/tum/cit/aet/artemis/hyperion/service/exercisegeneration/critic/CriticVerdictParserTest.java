@@ -107,4 +107,44 @@ class CriticVerdictParserTest {
 
         assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
     }
+
+    @Test
+    void fixedListDoesNotAuthorizeAnUnmodifiableViewRequirement() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "mutantChecks": [{
+                    "mutant": "forward a mutable list instead of an unmodifiable view",
+                    "killed": false,
+                    "sourceQuote": "P1",
+                    "reason": "the collaborator can mutate it"
+                  }],
+                  "uncovered": [],
+                  "weakOracle": [{
+                    "requirement": "the dispatcher must pass an unmodifiable list",
+                    "sourceQuote": "P1",
+                    "reason": "the test only compares contents"
+                  }]
+                }
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The building has a fixed list of elevators.", "", false, false, false, true, Map.of());
+
+        assertThat(findings).isEmpty();
+    }
+
+    @Test
+    void explicitUnmodifiableContractRemainsActionable() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "mutantChecks": [{
+                    "mutant": "forward a mutable list instead of an unmodifiable view",
+                    "killed": false,
+                    "sourceQuote": "P1",
+                    "reason": "the collaborator can mutate it"
+                  }],
+                  "uncovered": [],
+                  "weakOracle": []
+                }
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The strategy receives an unmodifiable view.", "", false, false, false, true, Map.of());
+
+        assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
+    }
 }

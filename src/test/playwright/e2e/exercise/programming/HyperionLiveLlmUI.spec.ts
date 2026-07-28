@@ -471,8 +471,13 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     await expect(page.getByTestId('hyperion-generation-revert')).toBeVisible();
                     await expect(page.getByTestId('hyperion-generation-run-again')).toHaveCount(0);
                     await page.getByTestId('hyperion-generation-details-toggle').click();
-                    await expect(page.getByTestId('hyperion-changed-files')).toBeVisible();
-                    expect(await page.getByTestId('hyperion-generation-file').count()).toBeGreaterThan(0);
+                    // A development checkpoint branch deliberately replays its prefix without re-emitting historical file-change notifications. The persisted repositories
+                    // above remain the authoritative outcome assertion; the activity panel contains only changes made by the live suffix, which can legitimately be empty for
+                    // reviewer-only forks.
+                    if (process.env.HYPERION_CHECKPOINT_EXERCISE_TITLE === undefined) {
+                        await expect(page.getByTestId('hyperion-changed-files')).toBeVisible();
+                        expect(await page.getByTestId('hyperion-generation-file').count()).toBeGreaterThan(0);
+                    }
                     await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled({ timeout: 60_000 });
                     jobId = undefined;
                     if (process.env.HYPERION_LIVE_ALLOW_QUALITY_FINDINGS !== 'true') {
