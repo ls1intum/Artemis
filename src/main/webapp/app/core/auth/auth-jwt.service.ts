@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { Location } from '@angular/common';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Observable, of } from 'rxjs';
 
@@ -15,6 +16,7 @@ export class Credentials {
 export interface IAuthServerProvider {
     login: (credentials: Credentials) => Observable<object>;
     loginSAML2: (rememberMe: boolean) => Observable<object>;
+    loginOIDC: (rememberMe: boolean) => Observable<object>;
     logout: () => Observable<object>;
     clearCaches: () => Observable<undefined>;
 }
@@ -24,6 +26,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     private http = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
+    private location = inject(Location);
 
     login(credentials: Credentials): Observable<object> {
         return this.http.post('api/core/public/authenticate', credentials);
@@ -31,6 +34,12 @@ export class AuthServerProvider implements IAuthServerProvider {
 
     loginSAML2(rememberMe: boolean): Observable<object> {
         return this.http.post('api/core/public/saml2', rememberMe.toString());
+    }
+
+    loginOIDC(rememberMe: boolean): Observable<object> {
+        const isRememberMeEnabled = rememberMe === true ? 'true' : 'false';
+        window.location.href = window.location.origin + this.location.prepareExternalUrl(`/oauth2/authorization/oidc?rememberMe=${isRememberMeEnabled}`);
+        return of({});
     }
 
     logout(): Observable<object> {
