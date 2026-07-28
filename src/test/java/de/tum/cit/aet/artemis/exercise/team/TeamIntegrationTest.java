@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.team;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -158,6 +160,45 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         // Try to create team with a student that is already assigned to another team
         Team team2 = new Team().name(TEST_PREFIX + "Team 2").shortName(TEST_PREFIX + "team2").exercise(exercise).students(students);
         request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team2), Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * The invariant "a student belongs to at most one team per exercise" spans two tables, because
+     * exercise_id lives on team rather than on team_student. TeamRepository.save(Exercise, Team)
+     * checks it in application code, but that check is a read followed by a write in a separate
+     * transaction, so two concurrent requests can both pass it. The schema therefore enforces the
+     * invariant with a unique constraint on the denormalised team_student.exercise_id.
+     * <p>
+     * This test deliberately bypasses the application-level check by using the plain repository save,
+     * so it fails if only the application check remains.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testDatabaseRejectsStudentInTwoTeamsOfSameExercise() {
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        teamRepo.save(new Team().name(TEST_PREFIX + "Team A").shortName(TEST_PREFIX + "teama").exercise(exercise).students(Set.of(student)));
+
+        Team conflicting = new Team().name(TEST_PREFIX + "Team B").shortName(TEST_PREFIX + "teamb").exercise(exercise).students(Set.of(student));
+        assertThatExceptionOfType(DataIntegrityViolationException.class).as("Database enforces one team per student per exercise")
+                .isThrownBy(() -> teamRepo.saveAndFlush(conflicting));
+    }
+
+    /**
+     * The same student in two teams of two <i>different</i> exercises is legitimate and must stay
+     * allowed, so the unique constraint has to be on (exercise_id, student_id) rather than student_id.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testDatabaseAllowsStudentInTeamsOfDifferentExercises() {
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Exercise otherExercise = textExerciseUtilService.createIndividualTextExercise(course, null, null, null);
+        otherExercise.setMode(ExerciseMode.TEAM);
+        otherExercise = exerciseRepository.save(otherExercise);
+
+        teamRepo.save(new Team().name(TEST_PREFIX + "Team C").shortName(TEST_PREFIX + "teamc").exercise(exercise).students(Set.of(student)));
+        Team inOtherExercise = new Team().name(TEST_PREFIX + "Team D").shortName(TEST_PREFIX + "teamd").exercise(otherExercise).students(Set.of(student));
+
+        assertThat(teamRepo.saveAndFlush(inOtherExercise).getId()).as("Student may join a team in a different exercise").isNotNull();
     }
 
     @Test

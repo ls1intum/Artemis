@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Enforce "a student may belong to at most one team per exercise" in the schema.
+
+    The invariant spans two tables (exercise_id lives on team, not team_student), so it cannot be
+    expressed as a plain unique index. Production historically enforced it with a BEFORE INSERT
+    trigger that was dropped from the changelogs by ed4696bcb3 (PostgreSQL support). That trigger is
+    NOT race-safe: its lookup is a non-locking snapshot read, so two concurrent transactions both
+    pass and both commit.
+
+    Instead we denormalise exercise_id onto team_student and let a real unique index enforce the
+    invariant. A BEFORE INSERT trigger populates the column, which is permitted because modifying
+    NEW.* on the trigger's own table is not a prohibited self-update. Hibernate keeps inserting only
+    (team_id, student_id), so the @ManyToMany @JoinTable mapping on Team.students is unchanged.
+    -->
+
+    <changeSet id="20260728221528-1-add-exercise-id-to-team-student" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="team_student" columnName="exercise_id"/></not>
+        </preConditions>
+        <addColumn tableName="team_student">
+            <column name="exercise_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Correlated subquery form works identically on MySQL and PostgreSQL. -->
+    <changeSet id="20260728221528-2-backfill-exercise-id" author="krusche">
+        <update tableName="team_student">
+            <column name="exercise_id"
+                    valueComputed="(SELECT t.exercise_id FROM team t WHERE t.id = team_student.team_id)"/>
+            <where>exercise_id IS NULL</where>
+        </update>
+        <!-- UpdateDataChange has no automatic inverse; rolling back changeset -1 drops the column
+             and with it the backfilled data, so an empty rollback is correct here. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260728221528-3-exercise-id-not-null" author="krusche">
+        <addNotNullConstraint tableName="team_student" columnName="exercise_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <!-- The actual guarantee. Fails loudly if any installation already violates the invariant. -->
+    <changeSet id="20260728221528-4-unique-exercise-student" author="krusche">
+        <addUniqueConstraint tableName="team_student" columnNames="exercise_id, student_id"
+                             constraintName="uk_team_student_exercise_student"/>
+    </changeSet>
+
+    <!-- Keep exercise_id populated for inserts issued by Hibernate, which only writes two columns.
+         splitStatements=false is required: the body contains semicolons. Note there is deliberately
+         no DELIMITER directive - that is a mysql client feature and is invalid over JDBC. -->
+    <changeSet id="20260728221528-5-set-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_set_exercise_id
+BEFORE INSERT ON team_student
+FOR EACH ROW
+BEGIN
+    IF NEW.exercise_id IS NULL THEN
+        SET NEW.exercise_id = (SELECT t.exercise_id FROM team t WHERE t.id = NEW.team_id);
+    END IF;
+END
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_set_exercise_id</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-6-set-exercise-id-function-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE OR REPLACE FUNCTION team_student_set_exercise_id() RETURNS TRIGGER AS $$
+DECLARE
+    v_exercise_id BIGINT;
+BEGIN
+    IF NEW.exercise_id IS NULL THEN
+        SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
+        NEW.exercise_id := v_exercise_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql
+        ]]></sql>
+        <rollback>
+            <sql>DROP FUNCTION IF EXISTS team_student_set_exercise_id()</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-7-set-exercise-id-trigger-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_set_exercise_id
+BEFORE INSERT ON team_student
+FOR EACH ROW EXECUTE FUNCTION team_student_set_exercise_id()
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_set_exercise_id ON team_student</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- The legacy advisory trigger is now redundant: the unique index enforces the invariant
+         properly. Only ever existed on long-lived MySQL installations. -->
+    <changeSet id="20260728221528-8-drop-legacy-team-student-trigger" author="krusche" dbms="mysql">
+        <sql>DROP TRIGGER IF EXISTS uc_team_student_exercise_id_and_student_id</sql>
+        <!-- RawSQLChange has no automatic inverse. Restore the legacy trigger so a rollback really
+             returns to the previous state. Note it is only advisory (a non-locking snapshot read),
+             which is why the unique index above replaces it. -->
+        <rollback>
+            <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER uc_team_student_exercise_id_and_student_id
+BEFORE INSERT ON team_student
+FOR EACH ROW
+BEGIN
+    DECLARE v_exercise_id BIGINT;
+    DECLARE v_conflict_team_id BIGINT;
+    SELECT t.exercise_id INTO v_exercise_id FROM team t WHERE t.id = NEW.team_id;
+    SELECT ts.team_id INTO v_conflict_team_id
+    FROM team t JOIN team_student ts ON ts.team_id = t.id
+    WHERE t.exercise_id = v_exercise_id AND ts.team_id <> NEW.team_id AND ts.student_id = NEW.student_id
+    LIMIT 1;
+    IF v_conflict_team_id IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Student is already part of another team for this exercise';
+    END IF;
+END
+            ]]></sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
