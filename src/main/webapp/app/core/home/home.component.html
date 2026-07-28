@@ -106,22 +106,40 @@
                                 </button>
                             </div>
                         </form>
-                        @if (isPasskeyEnabled()) {
+                        @if (isPasskeyEnabled() || isOidcEnabled()) {
                             <div class="d-flex align-items-center my-3">
                                 <div class="flex-grow-1 border-top"></div>
                                 <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
                                 <div class="flex-grow-1 border-top"></div>
                             </div>
-                            <jhi-button
-                                class="d-flex"
-                                id="passkey-login-button"
-                                [btnType]="ButtonType.PRIMARY_OUTLINE"
-                                [fullWidth]="true"
-                                [icon]="faKey"
-                                title="global.menu.account.loginWithPasskey"
-                                type="button"
-                                (onClick)="loginWithPasskey()"
-                            />
+
+                            <div class="d-flex flex-column gap-2">
+                                @if (isOidcEnabled()) {
+                                    <jhi-button
+                                        class="d-block w-100"
+                                        id="oidc-login-button"
+                                        [btnType]="ButtonType.PRIMARY"
+                                        [fullWidth]="true"
+                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
+                                        title="global.menu.account.loginWithOidc"
+                                        type="button"
+                                        (onClick)="loginWithOidc()"
+                                    />
+                                }
+
+                                @if (isPasskeyEnabled()) {
+                                    <jhi-button
+                                        class="d-block w-100"
+                                        id="passkey-login-button"
+                                        [btnType]="ButtonType.PRIMARY_OUTLINE"
+                                        [fullWidth]="true"
+                                        [icon]="faKey"
+                                        title="global.menu.account.loginWithPasskey"
+                                        type="button"
+                                        (onClick)="loginWithPasskey()"
+                                    />
+                                }
+                            </div>
                         }
                     </div>
                     <div class="text-center">

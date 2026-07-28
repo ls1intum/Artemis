@@ -5,8 +5,8 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Confirmation, ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumUiConfirmationRequest, TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
+import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirm-dialog.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -19,7 +19,6 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
 import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 
@@ -54,8 +53,8 @@ describe('TutorialCreateOrEditComponent', () => {
             ],
         })
             .overrideComponent(TutorialCreateOrEditComponent, {
-                remove: { imports: [ConfirmDialogModule, TutorialEditLanguagesInputComponent] },
-                add: { imports: [PrimeNgConfirmDialogStubComponent, MockComponent(TutorialEditLanguagesInputComponent)] },
+                remove: { imports: [TumUiConfirmDialogComponent, TutorialEditLanguagesInputComponent] },
+                add: { imports: [MockComponent(TumUiConfirmDialogComponent), MockComponent(TutorialEditLanguagesInputComponent)] },
             })
             .compileComponents();
     });
@@ -461,10 +460,9 @@ describe('TutorialCreateOrEditComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
-            confirmation.accept?.();
-            return confirmationService;
+        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((request: TumUiConfirmationRequest) => {
+            request.accept();
         });
 
         component.location.set('Room 202');
