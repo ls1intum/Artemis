@@ -149,13 +149,14 @@
     overflow: hidden;
     color: var(--home-ink);
     text-decoration: none;
-    border: 1px solid rgba(0, 60, 105, 0.16);
+    border: 1px solid rgba(0, 82, 147, 0.2);
     border-radius: 0.65rem;
-    background: rgba(255, 255, 255, 0.92);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(239, 248, 253, 0.68));
     box-shadow:
-        0 4px 10px rgba(0, 60, 105, 0.12),
-        0 18px 38px rgba(0, 60, 105, 0.16);
-    backdrop-filter: blur(13px);
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 6px 16px rgba(0, 60, 105, 0.13),
+        0 24px 50px rgba(0, 60, 105, 0.18);
+    backdrop-filter: blur(16px) saturate(1.12);
     transition:
         transform 180ms ease,
         box-shadow 180ms ease,
@@ -347,8 +348,9 @@
     .audienceCard:hover {
         border-color: rgba(0, 101, 189, 0.34);
         box-shadow:
-            0 6px 14px rgba(0, 60, 105, 0.14),
-            0 22px 44px rgba(0, 60, 105, 0.2);
+            inset 0 1px 0 rgba(255, 255, 255, 0.94),
+            0 8px 20px rgba(0, 60, 105, 0.15),
+            0 28px 56px rgba(0, 60, 105, 0.21);
         transform: translateY(-4px);
     }
 
@@ -489,6 +491,7 @@
     box-shadow:
         0 4px 10px rgba(0, 0, 0, 0.28),
         0 18px 38px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(13px);
 }
 
 :global([data-theme='dark']) .audienceCard:hover {
