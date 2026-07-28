@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -115,8 +116,10 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -125,6 +128,7 @@ import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -135,6 +139,7 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
@@ -145,6 +150,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseRepository;
+
+    @Autowired
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -2780,6 +2794,54 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 }
             }
         }
+
+        // Grading criteria and assessment type were previously unverified on this path. Grading criteria are lazy and
+        // not serialized in the response, so reload each imported exercise and assert they were preserved from the source.
+        for (ExerciseGroup group : exerciseGroups) {
+            for (Exercise importedExercise : group.getExercises()) {
+                Exercise reloaded = reloadWithGradingCriteria(importedExercise);
+                if (!(reloaded instanceof QuizExercise)) {
+                    assertThat(reloaded.getGradingCriteria()).as("grading criteria preserved for " + reloaded.getTitle()).isNotEmpty();
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroupsToExistingExam_preservesAllContent() throws Exception {
+        // Regression guard for the import-exercise-group path (which binds full request entities), where a quiz previously
+        // failed to import because of a detached QuizPointStatistic. Verify every exercise type preserves its content here.
+        Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        Exam targetExam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(targetExam, "import-eg-content");
+
+        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                sourceExam.getExerciseGroups(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
+
+        List<Exercise> importedExercises = importedGroups.stream().filter(group -> !group.getExercises().isEmpty()).flatMap(group -> group.getExercises().stream()).toList();
+        assertThat(importedExercises).as("all four non-empty exercise groups imported an exercise").hasSize(4);
+
+        Map<ExerciseType, Exercise> sourceByType = sourceExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .collect(Collectors.toMap(Exercise::getExerciseType, exercise -> exercise));
+        for (Exercise imported : importedExercises) {
+            Exercise source = sourceByType.get(imported.getExerciseType());
+            ImportedExerciseAssertions.assertContentPreserved(reloadWithGradingCriteria(source), reloadWithGradingCriteria(imported));
+        }
+    }
+
+    /**
+     * Reloads an exercise from the database with its grading criteria (and type-specific associations) initialized, so
+     * the shared content assertions can inspect the lazy collections that the REST response does not serialize.
+     */
+    private Exercise reloadWithGradingCriteria(Exercise exercise) {
+        return switch (exercise) {
+            case TextExercise text -> textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(text.getId());
+            case ModelingExercise modeling -> modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(modeling.getId());
+            case FileUploadExercise fileUpload -> fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(fileUpload.getId());
+            case QuizExercise quiz -> quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quiz.getId());
+            default -> exercise;
+        };
     }
 
     @Test
