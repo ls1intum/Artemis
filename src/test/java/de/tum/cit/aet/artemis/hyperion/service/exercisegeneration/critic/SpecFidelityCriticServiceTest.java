@@ -1049,17 +1049,14 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void contractReviewRejectsTemplateGapsWithoutArtifactEvidence() {
+    void contractReviewAbstainsOnTemplateGapsWithoutArtifactEvidence() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"templateChecks\":[{\"ownerType\":\"FixtureType\",\"test\":\"imagined prerequisite\",\"targetReached\":false,\"reason\":\"another task blocks it\",\"evidenceQuote\":\"a line that is not in any artifact\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
 
         SpecFidelityReport report = critique(scripted.critic(), "Create an exercise.", "Implement the fixture.", List.of("fixture"), COMPLETE_ARTIFACTS, null);
 
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
-            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
-            assertThat(finding.detail()).contains("contract reviewer returned no verdict");
-        });
+        assertThat(report.findings()).isEmpty();
     }
 
     @Test

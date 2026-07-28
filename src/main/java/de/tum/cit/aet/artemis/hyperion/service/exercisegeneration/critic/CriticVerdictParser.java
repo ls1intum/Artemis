@@ -108,11 +108,6 @@ class CriticVerdictParser {
                 .map(item -> item.ownerType().strip().replace("`", "")).anyMatch(owner -> !owner.equals("shared scaffold") && !templateStatuses.containsKey(owner))) {
             return null;
         }
-        if (pass == ReviewPass.CONTRACT && parsed.templateChecks().stream()
-                .anyMatch(item -> !item.targetReached() && !"student-creates".equals(templateStatuses.get(item.ownerType().strip().replace("`", "")))
-                        && !sourceQuoteIsGrounded(item.evidenceQuote(), repairableDownstreamSource))) {
-            return null;
-        }
         boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         // Scope violations require instructor attention, so retain them before advisory findings consume the shared defensive cap.
@@ -157,6 +152,10 @@ class CriticVerdictParser {
                     if ("student-creates".equals(templateStatuses.get(ownerType))) {
                         log.info("Critic abstained on a template-gap finding for student-created type {} because the approved Design contract requires it to be absent.",
                                 ownerType);
+                        continue;
+                    }
+                    if (!sourceQuoteIsGrounded(item.evidenceQuote(), repairableDownstreamSource)) {
+                        abstainUngroundedFinding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, item.test());
                         continue;
                     }
                     // The contract reviewer reports only directly evidenced scaffold defects here (contract docs, TODO anchors, provided-code failures, or non-student diffs).
@@ -287,10 +286,8 @@ class CriticVerdictParser {
     }
 
     private static boolean malformedTemplateChecks(List<TemplateCheckItem> items) {
-        return items.stream()
-                .anyMatch(item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null
-                        || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank() || item.evidenceQuote() == null || item.evidenceQuote().isBlank())
-                        || item.reason() == null || item.reason().isBlank());
+        return items.stream().anyMatch(item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null
+                || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank()) || item.reason() == null || item.reason().isBlank());
     }
 
     private static String scalarText(JsonNode node) {
