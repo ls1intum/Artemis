@@ -166,12 +166,11 @@
                     /></a>
                 }
                 @if (course().isAtLeastEditor && supportsAiVariantGeneration(details())) {
+                    <!-- Bootstrap like its sibling row actions; migrate the whole row at once. -->
                     <button
                         type="button"
-                        tumUiButton
-                        severity="warn"
-                        class="mr-1 mb-1"
-                        [tumUiTooltip]="'artemisApp.exerciseManagement.action.createVariantWithAi' | artemisTranslate"
+                        class="btn btn-warning me-1 mb-1"
+                        [ngbTooltip]="'artemisApp.exerciseManagement.action.createVariantWithAi' | artemisTranslate"
                         (click)="aiVariantModalVisible.set(true)"
                     >
                         <fa-icon [icon]="faRobot" />
