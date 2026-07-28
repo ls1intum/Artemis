@@ -1138,7 +1138,7 @@ export class IrisChatService implements OnDestroy {
         if (page === undefined && timestamp === undefined) {
             return undefined;
         }
-        return { type: 'pointOut', correlationId: command.correlationId, lectureUnitId: parameters['lectureUnitId'], page, timestamp };
+        return { correlationId: command.correlationId, lectureUnitId: parameters['lectureUnitId'], page, timestamp };
     }
 
     /**

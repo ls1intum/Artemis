@@ -16,17 +16,15 @@ export interface IrisCommand {
 }
 
 /**
- * A point-out resolved into the navigation the combined view performs. This is no longer a command: an
- * incoming {@link IrisCommand} of type "pointOut" is validated and converted into this shape once, so the
- * position is read from typed fields instead of the untyped parameter bag.
+ * A point-out resolved into the navigation the combined view performs. An {@link IrisCommand} of type
+ * "pointOut" is validated and converted into this shape once, so the position is read from typed fields
+ * instead of the untyped parameter bag.
  *
- * It also covers the two point-outs that never were commands: one read back from a COMMAND marker in the
- * history (then {@link lectureUnitName} is set) and one raised by clicking such a marker (then
- * {@link forceOpen} is set).
+ * The same shape covers the two point-outs that arrive without a command: one read back from a COMMAND
+ * marker in the history (then {@link lectureUnitName} is set) and one raised by clicking such a marker
+ * (then {@link forceOpen} is set).
  */
 export interface IrisPointOut {
-    /** Command type discriminator; always "pointOut". */
-    type: 'pointOut';
     lectureUnitId: number;
     /** Slide page to display, counted from the start of the deck. */
     page?: number;

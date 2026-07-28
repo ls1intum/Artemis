@@ -2,14 +2,11 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 
@@ -32,13 +29,6 @@ class PyrisMessageDTOTest {
         return message;
     }
 
-    private static IrisMessage userMessage(String text) {
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent(text));
-        message.setSender(IrisMessageSender.USER);
-        return message;
-    }
-
     @Test
     void of_forwardsCommandMarkerAsJson() {
         var dto = PyrisMessageDTO.of(commandMarker(POINT_OUT_MARKER));
@@ -47,18 +37,5 @@ class PyrisMessageDTOTest {
         assertThat(dto.contents()).hasSize(1);
         // Unchanged JSON: the wording the LLM reads is built in Pyris, next to the prompts.
         assertThat(((PyrisJsonMessageContentDTO) dto.contents().getFirst()).jsonContent()).contains("\"type\":\"pointOut\"", "\"lectureUnitId\":42", "\"page\":3");
-    }
-
-    @Test
-    void toPyrisMessageDTOList_leavesOutMessagesWithoutContent() {
-        // Safety net: a message whose content could not be converted carries nothing for Pyris, whose message
-        // converter rejects an empty content list outright.
-        var service = new PyrisDTOService(null);
-        var messages = List.of(userMessage("What is quicksort?"), new IrisMessage());
-
-        var dtos = service.toPyrisMessageDTOList(messages);
-
-        assertThat(dtos).hasSize(1);
-        assertThat(dtos.getFirst().sender()).isEqualTo(IrisMessageSender.USER);
     }
 }

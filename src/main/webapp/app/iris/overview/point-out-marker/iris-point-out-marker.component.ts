@@ -84,7 +84,7 @@ export class IrisPointOutMarkerComponent {
      * @param data the point-out target recorded on the marker
      */
     protected onMarkerClick(data: IrisPointOut): void {
-        this.chatService.navigateToPointOut({ type: data.type, lectureUnitId: data.lectureUnitId, page: data.page, timestamp: data.timestamp, forceOpen: true });
+        this.chatService.navigateToPointOut({ lectureUnitId: data.lectureUnitId, page: data.page, timestamp: data.timestamp, forceOpen: true });
     }
 
     /**

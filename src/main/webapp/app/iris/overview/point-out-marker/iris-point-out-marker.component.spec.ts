@@ -114,7 +114,7 @@ describe('IrisPointOutMarkerComponent', () => {
 
         buttons[0].click();
 
-        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ type: 'pointOut', lectureUnitId: 42, page: 3, timestamp: 150, forceOpen: true });
+        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3, timestamp: 150, forceOpen: true });
     });
 
     it('should describe the button with a tooltip rather than overriding its accessible name', async () => {

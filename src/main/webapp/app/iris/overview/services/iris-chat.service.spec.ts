@@ -619,8 +619,8 @@ describe('IrisChatService', () => {
 
     it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {
         const navPromise = firstValueFrom(service.pointOut$);
-        service.navigateToPointOut({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
-        await expect(navPromise).resolves.toEqual({ type: 'pointOut', lectureUnitId: 7, page: 2, forceOpen: true });
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+        await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
     });
 
     it('should forward incoming point-out commands to point-out navigation', async () => {
@@ -636,7 +636,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
 
-        await expect(navPromise).resolves.toEqual({ type: 'pointOut', lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
+        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
     });
 
     it('should acknowledge unsupported incoming commands as not applied', async () => {

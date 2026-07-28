@@ -1084,7 +1084,7 @@ describe('AttachmentVideoUnitComponent', () => {
         let ackSpy: ReturnType<typeof vi.spyOn>;
 
         function pointOutRequest(overrides: Partial<IrisPointOut>): IrisPointOut {
-            return { correlationId: 'corr', type: 'pointOut', lectureUnitId: 1, ...overrides } as IrisPointOut;
+            return { correlationId: 'corr', lectureUnitId: 1, ...overrides } as IrisPointOut;
         }
 
         beforeEach(() => {

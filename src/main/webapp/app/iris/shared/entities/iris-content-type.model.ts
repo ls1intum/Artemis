@@ -148,7 +148,7 @@ export function getPointOut(marker: Record<string, unknown>): IrisPointOut | und
         return undefined;
     }
     const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
-    return { type: 'pointOut', lectureUnitId: parameters['lectureUnitId'], page, timestamp, lectureUnitName };
+    return { lectureUnitId: parameters['lectureUnitId'], page, timestamp, lectureUnitName };
 }
 
 /**
