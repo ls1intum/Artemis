@@ -7,7 +7,6 @@ import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog
 import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
 import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -39,7 +38,6 @@ type TrayStatus = 'running' | 'success' | 'attention';
         TumUiPopoverComponent,
         TumUiPopoverTriggerDirective,
         TumUiButtonComponent,
-        TumUiButtonDirective,
         TumUiConfirmDialogComponent,
         ArtemisTranslatePipe,
         ExerciseVariantAiModalWizardComponent,

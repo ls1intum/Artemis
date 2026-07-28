@@ -2,11 +2,25 @@
 
 // ── Navbar button: base wand icon + notification-style status badge ──
 
+// Owns the whole control: it used to be a Bootstrap `.btn.btn-link.nav-link`, and the navbar's own nav-link
+// styles are component-scoped, so they never reached in here. Uses the navbar tokens the sibling links use.
 .variant-tray-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     white-space: nowrap;
+    padding: 0.5rem 1rem;
+    border: 0;
+    background: none;
+    color: var(--navbar-dark-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--navbar-dark-hover-color);
+    }
 
     // Anchors the status badge to the label's top-right corner.
     &__label {
