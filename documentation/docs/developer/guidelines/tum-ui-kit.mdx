@@ -108,8 +108,14 @@ apps in the fleet mirror the same concepts with their own primitive stack.
 - **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens)).
   Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
 - **Native `class`, not `styleClass`** — a component styles its own host via a `host` `class` / `[class]`
-  binding, and Angular merges that with whatever `class` the consumer writes on the element. So pass extra
-  classes with plain `class="w-full"`; do not add a PrimeNG-style `styleClass` input to a new component.
+  binding, and Angular merges that with whatever `class` the consumer writes on the element. Both the static
+  form (`class="w-full"`) and a bound one (`[class]="extraClasses()"`) merge, and a bound value can change
+  freely without dropping the component's own classes. So pass extra classes natively; do not add a
+  PrimeNG-style `styleClass` input to a new component.
+  The exception is a component that wraps a **native element it cannot hoist onto the host** — `tum-ui-button`
+  (inner `<button>`) and `tum-ui-input-number` (inner `<input>`). There the host is a custom element, a
+  consumer `class` lands on the wrapper rather than the control, and a targeted `styleClass` /
+  `inputStyleClass` input is the correct design, not a shim.
 - **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
   management, all verified in tests.
 - **`@angular/cdk` is the only UI _component-library_ dependency** — no PrimeNG / Bootstrap /

@@ -13,7 +13,8 @@ import { TumUiTableDirective, TumUiTableSize, TumUiTableSortEvent } from 'app/sh
             [striped]="striped()"
             [scrollable]="scrollable()"
             [rowHover]="rowHover()"
-            class="mt-3 shadow"
+            class="mt-3"
+            [class]="extraClasses()"
             [sortField]="sortField()"
             [sortOrder]="sortOrder()"
             (sortChange)="events.push($event)"
@@ -37,6 +38,7 @@ class HostComponent {
     readonly striped = signal(false);
     readonly scrollable = signal(false);
     readonly rowHover = signal(false);
+    readonly extraClasses = signal('shadow');
     readonly sortField = signal<string | undefined>(undefined);
     readonly sortOrder = signal(1);
     events: TumUiTableSortEvent[] = [];
@@ -112,9 +114,18 @@ describe('TumUiTableDirective', () => {
         expect(tableClass()).toContain('[&_tbody_tr:hover]:bg-surface-100');
     });
 
-    it('merges the consumer static class with its own host classes', () => {
+    it('merges both a static and a bound consumer class with its own host classes', () => {
         expect(tableClass()).toContain('mt-3');
         expect(tableClass()).toContain('shadow');
+        expect(tableClass()).toContain('tum-ui-table');
+    });
+
+    it('keeps its own host classes when a bound consumer class changes', () => {
+        host.extraClasses.set('ring-2');
+        fixture.detectChanges();
+        expect(tableClass()).toContain('ring-2');
+        expect(tableClass()).not.toContain('shadow');
+        expect(tableClass()).toContain('mt-3');
         expect(tableClass()).toContain('tum-ui-table');
     });
 
