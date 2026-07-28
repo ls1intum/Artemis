@@ -403,6 +403,16 @@ public class StageCheckService {
         return designTableRows(spec).stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
     }
 
+    /**
+     * The type names SPEC.md's '## Design' table marks {@code stubbed} — the ones the template must declare, because a stubbed type is the student's starting point. Only
+     * enforceable bare names count. The specification gate demands a bare name of {@code student-creates} rows only, so a stubbed row may legitimately read {@code Stack<T>}; the
+     * declaration probe matches the bare {@code Stack} a Java source actually declares, and searching for the generic cell verbatim would find nothing and reject a sound
+     * exercise. The {@code given} arm of this contract already fails open on the same input.
+     */
+    static List<String> specStubbedTypes(String spec) {
+        return designTableRows(spec).stream().filter(row -> "stubbed".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
+    }
+
     private static List<String> givenTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
         Set<String> givenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
         Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());

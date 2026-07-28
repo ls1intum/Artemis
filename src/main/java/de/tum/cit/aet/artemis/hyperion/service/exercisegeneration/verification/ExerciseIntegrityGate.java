@@ -216,6 +216,7 @@ public final class ExerciseIntegrityGate {
         if (approvedSpec == null || approvedSpec.isBlank()) {
             return List.of();
         }
+        List<StageCheckService.DesignRow> designRows = StageCheckService.designTableRows(approvedSpec);
         List<String> studentCreatedTypes = StageCheckService.specStudentCreatedTypes(approvedSpec);
         List<String> reasons = new ArrayList<>();
         List<String> missingFromSolution = studentCreatedTypes.stream().filter(type -> !repositoryDeclaresType(producedSolutionFiles, type)).toList();
@@ -231,19 +232,20 @@ public final class ExerciseIntegrityGate {
         }
         // An all-student-creates design defeats the differential itself: the empty template "compiles" (no sources) and "fails every test" (none run), so the degenerate candidate
         // satisfies the very checks meant to reject it. Duplicated from the stage gate because repair attempts do not re-run the staged gates but do reach acceptance.
-        if (StageCheckService.designTableRows(approvedSpec).stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
+        // Requires at least one parsed row: with none there is no evidence of a design at all, and an unparseable or absent '## Design' table would otherwise be rejected as if it
+        // had marked every type 'student-creates' — a claim the specification never made. Doubt on read-back leaves this contract inert, as it does for a blank specification.
+        if (!designRows.isEmpty() && designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
             reasons.add("the approved specification marks every type 'student-creates', so the template ships no starting scaffold and students would clone an empty project. "
                     + "Supply at least one type as 'given' or 'stubbed' so the exercise has a teaching scaffold the differential can actually discriminate.");
         }
-        List<String> missingStubbedTypes = StageCheckService.designTableRows(approvedSpec).stream().filter(row -> "stubbed".equals(row.status()))
-                .map(StageCheckService.DesignRow::type).filter(type -> !repositoryDeclaresType(producedTemplateFiles, type)).toList();
+        List<String> missingStubbedTypes = StageCheckService.specStubbedTypes(approvedSpec).stream().filter(type -> !repositoryDeclaresType(producedTemplateFiles, type)).toList();
         if (!missingStubbedTypes.isEmpty()) {
             reasons.add("the approved specification marks these types 'stubbed', but the template does not declare them: " + missingStubbedTypes
                     + ". A stubbed type ships in the template as the real signatures with TODO bodies, so the student has something to complete and the graded tests can name "
                     + "it; restore them instead of deleting the tests that need them.");
         }
-        List<String> divergentGivenTypes = StageCheckService.designTableRows(approvedSpec).stream().filter(row -> "given".equals(row.status()))
-                .map(StageCheckService.DesignRow::type).filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
+        List<String> divergentGivenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(StageCheckService.DesignRow::type)
+                .filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
         if (!divergentGivenTypes.isEmpty()) {
             reasons.add("the approved specification marks these as given types, but their canonical Java source is not byte-for-byte identical in the solution and template: "
                     + divergentGivenTypes

@@ -418,6 +418,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void wallClockBudgetStopsBeforeStartingAnotherPhase() {
+        // At the shipped PT30M deadline the budget is 22 minutes, so 23 minutes stops the phase — unchanged from when that ceiling was a constant.
         AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             firstPhaseCompleted.set(true);
@@ -430,6 +431,44 @@ class StagedGenerationRunnerTest {
 
         assertThat(result.turns()).isEqualTo(2);
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void raisingTheConfiguredJobDeadlineExtendsThePhaseThatWouldOtherwiseStop() {
+        // The companion of the test above, differing only in the configured deadline: at PT30M the phase stops after one stage at 23 minutes, so nothing but a budget genuinely
+        // derived from artemis.hyperion.agent.max-job-duration can let the same run reach all three. Reintroducing any private wall-clock ceiling at or below 23 minutes — the
+        // defect this replaced — fails here while leaving the default-deadline test green.
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, null, null, "FRESH",
+                Duration.ofMinutes(60));
+        AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            firstPhaseCompleted.set(true);
+            return completed(2, "phase");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        Instant start = Instant.parse("2026-07-23T10:00:00Z");
+        runner.setClockForTests(() -> firstPhaseCompleted.get() ? start.plus(Duration.ofMinutes(23)) : start);
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void theAuthoringBudgetReservesAFixedTailOfTheConfiguredJobDeadline() {
+        // The shipped default must keep behaving exactly as the previous hardcoded ceiling did.
+        assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(30))).isEqualTo(Duration.ofMinutes(22));
+        // The reserve protects one differential verification pass, which costs the same however long a job may run, so a raised deadline is passed through in full.
+        assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(60))).isEqualTo(Duration.ofMinutes(52));
+        assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(20))).isEqualTo(Duration.ofMinutes(12));
+        // Below twice the reserve, holding the whole tail back would leave less authoring time than tail; half the deadline is kept instead of none.
+        assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(10))).isEqualTo(Duration.ofMinutes(5));
+        assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(1))).isEqualTo(Duration.ofSeconds(30));
+        assertThatThrownBy(() -> StagedGenerationRunner.authoringBudget(Duration.ZERO)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("max-job-duration must be positive");
+        assertThatThrownBy(() -> StagedGenerationRunner.authoringBudget(Duration.ofMinutes(-1))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

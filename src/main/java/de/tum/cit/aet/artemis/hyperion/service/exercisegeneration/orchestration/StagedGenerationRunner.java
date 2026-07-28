@@ -103,8 +103,18 @@ public class StagedGenerationRunner {
     private static final List<String> STAGE_PROGRESS_LABELS = List.of("Phase 1/3: specifying the exercise",
             "Phase 2/3: building executable learning increments across solution, template, and tests", "Phase 3/3: polishing the problem statement");
 
-    /** Once the run has spent this long, no further stage is started; final (post-loop) verification decides the outcome of whatever was produced. */
-    private static final Duration WALL_CLOCK_BUDGET = Duration.ofMinutes(22);
+    /**
+     * How much of the configured job deadline is held back for everything that runs after this authoring phase. The phase is only ever the run's first attempt, and the deadline
+     * ({@code artemis.hyperion.agent.max-job-duration}) cancels mid-flight without preserving unverified work, so the load-bearing item to protect is the first differential
+     * verification pass: artifact capture plus the pristine solution and template builds. Reaching it is what turns "the deadline fired and nothing was produced" into a
+     * mechanically verified checkpoint the deadline branch is allowed to keep and save. Calibrated against Java Maven builds, which is the only shape this phase runs for. Repair
+     * rounds and the fidelity review share the same remainder but need no guarantee: they are bounded by {@code cancelled}, and a checkpoint already in hand survives them.
+     * Persistence and CI synchronization are deliberately excluded — the task service cancels the deadline timer before them.
+     */
+    private static final Duration POST_AUTHORING_RESERVE = Duration.ofMinutes(8);
+
+    /** Mirrors the shipped {@code artemis.hyperion.agent.max-job-duration} default; used only by the test constructors, which have no property source to read it from. */
+    private static final Duration DEFAULT_MAX_JOB_DURATION = Duration.ofMinutes(30);
 
     /** Bound on the gate-failure progress line (the full report still goes to the info log and the returned final message). */
     private static final int MAX_GATE_PROGRESS_CHARS = 140;
@@ -126,6 +136,9 @@ public class StagedGenerationRunner {
     private final AgentTranscriptWriter transcriptWriter;
 
     private final StagedContext stagedContext;
+
+    /** Derived from the configured job deadline; see {@link #authoringBudget(Duration)}. Never a private ceiling that could outrank an operator who changed that deadline. */
+    private final Duration authoringBudget;
 
     /** Test hook so a wall-clock test can advance time deterministically instead of sleeping; production always uses the real clock. */
     private Supplier<Instant> clock = Instant::now;
@@ -155,7 +168,8 @@ public class StagedGenerationRunner {
     @Autowired
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer, ExerciseConceptSelector conceptSelector,
-            @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext) {
+            @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext,
+            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
@@ -164,22 +178,50 @@ public class StagedGenerationRunner {
         this.specificationReviewer = specificationReviewer;
         this.conceptSelector = conceptSelector;
         this.stagedContext = StagedContext.parse(stagedContext);
+        this.authoringBudget = authoringBudget(maxJobDuration);
+    }
+
+    /**
+     * How long this phase may keep starting model work, derived from the run's own deadline so it can never contradict it. The deadline cancels mid-flight; this budget is the
+     * complementary "start nothing further" rule that leaves the deadline enough room to be reached with a verified candidate in hand rather than mid-authoring. The reserve is
+     * absolute rather than proportional because what it protects — one differential verification pass — costs the same regardless of how long an operator lets a job run. It is
+     * capped at half the deadline so a short configured deadline yields a small authoring phase instead of no authoring at all; below that point, protecting the tail would cost
+     * more than the work it exists to salvage.
+     *
+     * @param maxJobDuration the configured {@code artemis.hyperion.agent.max-job-duration}
+     * @return the wall-clock budget for this authoring phase
+     */
+    static Duration authoringBudget(Duration maxJobDuration) {
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            // GenerationJobService and GenerationTaskService already refuse to start on a non-positive deadline, so this is unreachable in a booting application; it exists so a
+            // partially wired context cannot turn a misconfiguration into a negative budget that silently disables the whole phase.
+            throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
+        }
+        Duration reserve = POST_AUTHORING_RESERVE.compareTo(maxJobDuration.dividedBy(2)) <= 0 ? POST_AUTHORING_RESERVE : maxJobDuration.dividedBy(2);
+        return maxJobDuration.minus(reserve);
     }
 
     /** Test constructor: an isolated registry, so a staged run under test publishes its approved specification without a Spring context. */
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, null, stagedContext);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
     }
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, null, null, stagedContext);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, null, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
     }
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, null, stagedContext);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
+    }
+
+    StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer, ExerciseConceptSelector conceptSelector,
+            String stagedContext) {
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, stagedContext,
+                DEFAULT_MAX_JOB_DURATION);
     }
 
     /**
@@ -203,8 +245,9 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Runs the enforced stages in order, honouring a shared turn-budget pool, a wall-clock ceiling, and cooperative cancellation between stages, with the raw source brief kept
-     * separate from the authoring context for the pre-freeze semantic review. Every shorter overload delegates here.
+     * Runs the enforced stages in order, honouring a shared turn-budget pool, the wall-clock budget derived from the configured job deadline (see {@link #authoringBudget}), and
+     * cooperative cancellation between stages, with the raw source brief kept separate from the authoring context for the pre-freeze semantic review. Every shorter overload
+     * delegates here.
      *
      * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
      * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
@@ -286,8 +329,9 @@ public class StagedGenerationRunner {
             if (cancelled.getAsBoolean()) {
                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
             }
-            if (Duration.between(startedAt, clock.get()).compareTo(WALL_CLOCK_BUDGET) > 0) {
-                log.info("Staged generation wall-clock budget exceeded before stage {} for exercise {}; stopping with {} stage(s) completed", stage, exercise.getId(), index);
+            if (wallClockExceeded(startedAt)) {
+                log.info("Staged generation wall-clock budget of {} exceeded before stage {} for exercise {}; stopping with {} stage(s) completed", authoringBudget, stage,
+                        exercise.getId(), index);
                 break;
             }
             if (remainingPool < MIN_STAGE_BUDGET) {
@@ -797,7 +841,7 @@ public class StagedGenerationRunner {
     }
 
     private boolean wallClockExceeded(Instant startedAt) {
-        return Duration.between(startedAt, clock.get()).compareTo(WALL_CLOCK_BUDGET) > 0;
+        return Duration.between(startedAt, clock.get()).compareTo(authoringBudget) > 0;
     }
 
     /**

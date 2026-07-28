@@ -9,9 +9,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
@@ -672,6 +675,68 @@ class ExerciseIntegrityGateTest {
 
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("every type 'student-creates'", "clone an empty project", "'given' or 'stubbed'"));
+    }
+
+    /**
+     * The template scaffold-presence matrix. A template legitimately ships stubs rather than implementations, so presence cannot be inferred from file counts or from the
+     * template merely differing from the solution: the frozen '## Design' table is the authority on which types must be there ({@code given}, {@code stubbed}) and which must not
+     * ({@code student-creates}). This gate rejects, and a rejected candidate is discarded without an instructor ever seeing it, so every doubt-on-read-back row must stay inert.
+     */
+    private static Stream<Arguments> scaffoldPresenceCases() {
+        String stubbedPlayer = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Player` | context students complete | stubbed |
+                """;
+        String genericStack = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Stack<T>` | generic container students complete | stubbed |
+                """;
+        String givenAndCreated = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Track` | supplied data type | given |
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                """;
+        String track = "public record Track(String title) {}";
+        Map<String, String> playerSolution = map("src/Player.java", "public class Player { int score() { return 1; } }");
+        return Stream.of(
+                // A stub is the correct shape for a template, so a declared-but-unimplemented type must pass.
+                Arguments.of("stubbed type present as an unimplemented stub", stubbedPlayer,
+                        map("src/Player.java", "public class Player { int score() { throw new UnsupportedOperationException(); } }"), playerSolution, null),
+                Arguments.of("stubbed type absent from the template", stubbedPlayer, map("src/Other.java", "class Other {}"), playerSolution, "Player"),
+                // The specification gate demands a bare type name of student-creates rows only, so a generic cell reaches this gate. Searching for "Stack<T>" verbatim finds
+                // nothing in a source that declares "class Stack<T>", which rejected a sound exercise; the given arm already fails open on the same input.
+                Arguments.of("generic stubbed cell whose template declaration is sound", genericStack, map("src/Stack.java", "public class Stack<T> { void push(T item) {} }"),
+                        map("src/Stack.java", "public class Stack<T> { void push(T item) { store.add(item); } }"), null),
+                // The trap: a student-created type is REQUIRED to be absent from the template, so its absence must never be read as a missing scaffold.
+                Arguments.of("student-creates type absent from the template", givenAndCreated, map("src/Track.java", track),
+                        map("src/Track.java", track, "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}"), null),
+                // A given type is supplied complete; absent from the template it is not a starting point at all.
+                Arguments.of("given type absent from the template", givenAndCreated, map("src/Unrelated.java", "class Unrelated {}"),
+                        map("src/Track.java", track, "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}"), "Track"),
+                // Fail-open rows: no readable contract means no evidence, and this gate must not manufacture a rejection from doubt.
+                Arguments.of("no approved specification", "", map("src/Anything.java", "class Anything {}"), map("src/Anything.java", "class Anything {}"), null),
+                Arguments.of("specification without a Design section", "## Rules\n1. Sort ascending.\n", Map.of(), Map.of(), null),
+                Arguments.of("Design section whose table has no parseable data rows", "## Design\n\nSee the table above.\n", Map.of(), Map.of(), null));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("scaffoldPresenceCases")
+    void approvedSpecification_enforcesTheTemplateScaffoldOnlyWhereTheContractSaysSo(String description, String spec, Map<String, String> template, Map<String, String> solution,
+            String expectedRejectedType) {
+        List<String> reasons = ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution);
+
+        if (expectedRejectedType == null) {
+            assertThat(reasons).isEmpty();
+        }
+        else {
+            assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains(expectedRejectedType).contains("template"));
+        }
     }
 
     @Test
