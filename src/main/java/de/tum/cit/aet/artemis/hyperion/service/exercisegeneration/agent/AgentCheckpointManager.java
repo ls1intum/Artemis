@@ -130,10 +130,10 @@ public class AgentCheckpointManager {
                 Files.createDirectories(output.resolve("reviews"));
                 Files.createDirectories(output.resolve("blobs"));
                 writeAtomic(output.resolve("run.json"), new RunManifest(SCHEMA_VERSION, jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(),
-                        exercise.getPackageName(), exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
+                        exercise.getPackageName(), exercise.getProblemStatement(), exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
                         exercise.getProjectType() == null ? null : exercise.getProjectType().name(), Instant.now(), source == null ? null : source.toString(), forkAt, false));
             }
-            currentRun.set(new RunScope(jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(),
+            currentRun.set(new RunScope(jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(), exercise.getProblemStatement(),
                     exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
                     exercise.getProjectType() == null ? null : exercise.getProjectType().name(), tools, approvedSpecs, source, output));
             log.info("Hyperion agent checkpoints enabled for job {} ({})", jobId, output == null ? "replay only" : output);
@@ -152,8 +152,8 @@ public class AgentCheckpointManager {
         }
         try {
             writeAtomic(run.outputDirectory.resolve("run.json"),
-                    new RunManifest(SCHEMA_VERSION, run.jobId, run.exerciseId, run.exerciseTitle, run.exerciseShortName, run.exercisePackageName, run.programmingLanguage,
-                            run.projectType, run.startedAt, run.sourceDirectory == null ? null : run.sourceDirectory.toString(), forkAt, true));
+                    new RunManifest(SCHEMA_VERSION, run.jobId, run.exerciseId, run.exerciseTitle, run.exerciseShortName, run.exercisePackageName, run.exerciseProblemStatement,
+                            run.programmingLanguage, run.projectType, run.startedAt, run.sourceDirectory == null ? null : run.sourceDirectory.toString(), forkAt, true));
         }
         catch (IOException | RuntimeException e) {
             handleFailure("Could not complete the checkpoint run", e);
@@ -239,7 +239,8 @@ public class AgentCheckpointManager {
             throw new IllegalStateException("Checkpoint source is incomplete or uses an incompatible schema.");
         }
         if (!Objects.equals(manifest.exerciseTitle(), exercise.getTitle()) || !Objects.equals(manifest.exerciseShortName(), exercise.getShortName())
-                || !Objects.equals(manifest.exercisePackageName(), exercise.getPackageName()) || !Objects.equals(manifest.programmingLanguage(), language)
+                || !Objects.equals(manifest.exercisePackageName(), exercise.getPackageName())
+                || !Objects.equals(manifest.exerciseProblemStatement(), exercise.getProblemStatement()) || !Objects.equals(manifest.programmingLanguage(), language)
                 || !Objects.equals(manifest.projectType(), projectType)) {
             throw new IllegalStateException("Checkpoint exercise setup differs from the resumed exercise. Recreate it with the title, short name, package, language, and project "
                     + "type recorded in run.json.");
@@ -611,8 +612,8 @@ public class AgentCheckpointManager {
     }
 
     record RunManifest(int schemaVersion, String jobId, @Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseShortName,
-            @Nullable String exercisePackageName, @Nullable String programmingLanguage, @Nullable String projectType, Instant startedAt, @Nullable String parent, int forkAt,
-            boolean completed) {
+            @Nullable String exercisePackageName, @Nullable String exerciseProblemStatement, @Nullable String programmingLanguage, @Nullable String projectType, Instant startedAt,
+            @Nullable String parent, int forkAt, boolean completed) {
     }
 
     record TurnHandle(boolean enabled, boolean replayed, int ordinal, String providerContract, String toolContract, int localTurn, int maxTurns, @Nullable CheckpointState before,
@@ -655,6 +656,9 @@ public class AgentCheckpointManager {
         private final String exercisePackageName;
 
         @Nullable
+        private final String exerciseProblemStatement;
+
+        @Nullable
         private final String programmingLanguage;
 
         @Nullable
@@ -681,13 +685,14 @@ public class AgentCheckpointManager {
         private boolean failed;
 
         private RunScope(String jobId, @Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseShortName, @Nullable String exercisePackageName,
-                @Nullable String programmingLanguage, @Nullable String projectType, SandboxAgentTools tools, ApprovedSpecRegistry approvedSpecs, @Nullable Path sourceDirectory,
-                @Nullable Path outputDirectory) {
+                @Nullable String exerciseProblemStatement, @Nullable String programmingLanguage, @Nullable String projectType, SandboxAgentTools tools,
+                ApprovedSpecRegistry approvedSpecs, @Nullable Path sourceDirectory, @Nullable Path outputDirectory) {
             this.jobId = jobId;
             this.exerciseId = exerciseId;
             this.exerciseTitle = exerciseTitle;
             this.exerciseShortName = exerciseShortName;
             this.exercisePackageName = exercisePackageName;
+            this.exerciseProblemStatement = exerciseProblemStatement;
             this.programmingLanguage = programmingLanguage;
             this.projectType = projectType;
             this.tools = tools;

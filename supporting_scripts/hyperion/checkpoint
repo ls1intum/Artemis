@@ -272,6 +272,8 @@ def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fo
             env["HYPERION_CHECKPOINT_EXERCISE_TITLE"] = source_manifest["exerciseTitle"]
             env["HYPERION_CHECKPOINT_EXERCISE_SHORT_NAME"] = source_manifest["exerciseShortName"]
             env["HYPERION_CHECKPOINT_EXERCISE_PACKAGE"] = source_manifest["exercisePackageName"]
+            if source_manifest.get("exerciseProblemStatement") is not None:
+                env["HYPERION_CHECKPOINT_EXERCISE_STATEMENT"] = source_manifest["exerciseProblemStatement"]
         start_stack(env)
         command = ["npx", "playwright", "test", LIVE_SPEC, "--project=slow-tests", "--max-failures=1"]
         subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=True)

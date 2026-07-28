@@ -356,7 +356,11 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                 await fillDateTimePicker(page.getByLabel('Release Date', { exact: true }), dayjs().add(2, 'days'));
                 await programmingExerciseCreation.setDueDate(dayjs().add(3, 'days'));
 
-                if (scenario.noDraft) {
+                if (process.env.HYPERION_CHECKPOINT_EXERCISE_STATEMENT !== undefined) {
+                    const seeded = await seedProblemStatementViaUi(page, process.env.HYPERION_CHECKPOINT_EXERCISE_STATEMENT);
+                    report.draftProblemStatement = seeded;
+                    report.checkpointProblemStatement = true;
+                } else if (scenario.noDraft) {
                     // No draft, no seed: the statement stays blank so the server's SPEC stage owns the content decision. The brief goes through the same #userPrompt
                     // field the generate request reads; the package is set manually because the prefill only fires off a draft response.
                     await expect(page.locator('#userPrompt')).toBeVisible({ timeout: 90_000 });
