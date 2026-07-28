@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
@@ -169,15 +170,29 @@ public class SpecFidelityCriticService {
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
             @Value("${spring.ai.openai.chat.model:}") String configuredModel,
             @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
-            @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens, Collection<ChatModel> chatModels) {
+            @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens, Collection<ChatModel> chatModels, AgentCheckpointManager checkpointManager) {
+        this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels),
+                checkpointManager);
+    }
+
+    /** Full-control constructor that keeps non-Spring probes independent from development checkpoint configuration. */
+    public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
+            Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, Collection<ChatModel> chatModels) {
         this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels));
     }
 
     /** Full-control constructor for tests: the provider options a running server reads from its {@link ChatModel} bean are passed in directly. */
     SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
+        this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions,
+                new AgentCheckpointManager(objectMapper, "", "", 0, false));
+    }
+
+    private SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
+            Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions,
+            AgentCheckpointManager checkpointManager) {
         this.reviewer = new ReviewerClient(chatClient, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens,
-                configuredOptions);
+                configuredOptions, checkpointManager);
         this.verdictParser = new CriticVerdictParser(objectMapper);
         this.conceptCritic = new ConceptSelectionCritic(reviewer, objectMapper);
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);

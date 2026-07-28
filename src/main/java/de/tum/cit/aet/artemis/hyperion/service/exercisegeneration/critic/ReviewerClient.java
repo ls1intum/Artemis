@@ -15,6 +15,7 @@ import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 
 /**
@@ -53,17 +54,20 @@ final class ReviewerClient {
 
     private final boolean usesLegacyMaxTokens;
 
+    private final AgentCheckpointManager checkpointManager;
+
     @Nullable
     private final Integer configuredMaxOutputTokens;
 
     ReviewerClient(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, @Nullable String configuredModel, Duration providerHardFailureCooldown,
-            ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
+            ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions, AgentCheckpointManager checkpointManager) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.configuredModel = configuredModel == null || configuredModel.isBlank() ? null : configuredModel;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
         this.contextWindowTokens = contextWindowTokens;
+        this.checkpointManager = checkpointManager;
         Integer maxCompletionTokens = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.getMaxCompletionTokens() : null;
         this.usesLegacyMaxTokens = maxCompletionTokens == null && configuredOptions != null && configuredOptions.getMaxTokens() != null;
         this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
@@ -71,7 +75,7 @@ final class ReviewerClient {
 
     /** Whether an AI reviewer is configured at all; a blocking pass returns an explicit unavailable verdict rather than an empty one when it is not. */
     boolean configured() {
-        return chatClient != null;
+        return chatClient != null || checkpointManager.replaysAllAuthoringCalls();
     }
 
     /** One output-capped, tool-free reviewer call; transport retry behavior is bounded by the configured OpenAI SDK client. */
@@ -98,13 +102,16 @@ final class ReviewerClient {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        // The critic is advisory, so a thrown call must never escalate through the usage sink's uncertainty path and stop the whole generation job.
-        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
-                () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
-        if (usageSink != null) {
-            usageSink.accept(response);
-        }
-        return LLMTokenUsageService.extractResponseText(response);
+        String contract = (configuredModel == null ? "<default>" : configuredModel) + "\n" + (usesLegacyMaxTokens ? "maxTokens=" : "maxCompletionTokens=") + outputTokens;
+        return checkpointManager.reviewerCall(systemPrompt, userPrompt, contract, () -> {
+            // The critic is advisory, so a thrown call must never escalate through the usage sink's uncertainty path and stop the whole generation job.
+            ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
+                    () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
+            if (usageSink != null) {
+                usageSink.accept(response);
+            }
+            return LLMTokenUsageService.extractResponseText(response);
+        });
     }
 
     private int reviewerOutputTokens(String systemPrompt, String userPrompt, int maxOutputTokens) {

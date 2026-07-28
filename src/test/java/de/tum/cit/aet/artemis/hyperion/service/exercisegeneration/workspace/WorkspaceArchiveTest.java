@@ -65,6 +65,20 @@ class WorkspaceArchiveTest {
     }
 
     @Test
+    void checkpointRoundTripPreservesBinaryModesAndEmptyDirectories() throws Exception {
+        byte[] binary = { 0, 1, (byte) 0xFF };
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(
+                WorkspaceArchive.buildBinaryFilesTarStream(Map.of("bin/tool", binary), Map.of("bin/tool", 0751), Map.of("bin", 0750, "empty", 0700)))) {
+            WorkspaceArchive.BinaryArchiveContents read = WorkspaceArchive.readBinaryTarContents(tar, "");
+
+            assertThat(read.files()).containsKey("bin/tool");
+            assertThat(read.files().get("bin/tool")).containsExactly(binary);
+            assertThat(read.modes()).containsEntry("bin/tool", 0751);
+            assertThat(read.directories()).containsEntry("bin", 0750).containsEntry("empty", 0700);
+        }
+    }
+
+    @Test
     void readTar_excludesBinaryFilesButRoundTripsText() throws Exception {
         // The read-back is the boundary where a binary would otherwise be decoded into a lossy UTF-8 String and later re-written mangled. A binary entry (gradle-wrapper.jar bytes:
         // a NUL + non-UTF-8 sequence) must be DROPPED from the produced text map (persist preserves the scaffolded original byte-exact); a text file (build.gradle) must still

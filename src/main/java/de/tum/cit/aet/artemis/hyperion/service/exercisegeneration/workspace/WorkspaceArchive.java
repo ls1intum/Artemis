@@ -86,7 +86,13 @@ public final class WorkspaceArchive {
         return new ByteArrayInputStream(build(textFiles, directoryTrees, executableTextFiles));
     }
 
-    static InputStream buildFilesTarStream(Map<String, String> textFiles, Map<String, byte[]> binaryFiles, Set<String> executableFiles) {
+    /**
+     * @param textFiles       text files to archive
+     * @param binaryFiles     binary files to archive
+     * @param executableFiles paths that need an executable mode
+     * @return a bounded tar stream
+     */
+    public static InputStream buildFilesTarStream(Map<String, String> textFiles, Map<String, byte[]> binaryFiles, Set<String> executableFiles) {
         BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
@@ -104,6 +110,50 @@ public final class WorkspaceArchive {
                 rejectSecretMaterial(entry.getKey(), entry.getValue(), HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
                 total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), entry.getValue(), executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
+            }
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    /**
+     * @param files binary files to archive
+     * @param modes exact file modes by path
+     * @return a bounded tar stream for checkpoint restore
+     */
+    public static InputStream buildBinaryFilesTarStream(Map<String, byte[]> files, Map<String, Integer> modes) {
+        return buildBinaryFilesTarStream(files, modes, Map.of());
+    }
+
+    /**
+     * @param files       binary files to archive
+     * @param modes       exact file modes by path
+     * @param directories exact directory modes by path, including empty directories
+     * @return a bounded tar stream for checkpoint restore
+     */
+    public static InputStream buildBinaryFilesTarStream(Map<String, byte[]> files, Map<String, Integer> modes, Map<String, Integer> directories) {
+        BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            long total = 0;
+            int[] entryCount = { 0 };
+            for (Map.Entry<String, Integer> directory : directories.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+                incrementEntryCount(entryCount);
+                validateSeedEntryName(directory.getKey());
+                TarArchiveEntry tarEntry = new TarArchiveEntry(directory.getKey() + "/");
+                tarEntry.setMode(directory.getValue() & 0777);
+                tarEntry.setSize(0);
+                tar.putArchiveEntry(tarEntry);
+                tar.closeArchiveEntry();
+            }
+            for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                incrementEntryCount(entryCount);
+                rejectSecretMaterial(entry.getKey(), entry.getValue(), HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
+                int mode = modes.getOrDefault(entry.getKey(), MODE_FILE) & 0777;
+                writeFileEntry(tar, entry.getKey(), entry.getValue(), mode);
             }
         }
         catch (IOException e) {
@@ -292,6 +342,62 @@ public final class WorkspaceArchive {
             }
         }
         return new ArchiveContents(textFiles, binaryDigests, executableFiles);
+    }
+
+    /**
+     * Reads a bounded copy-out archive without converting file contents to text. This is used only by the opt-in development checkpoint recorder, which must preserve generated
+     * binaries and executable bits exactly.
+     *
+     * @param tar           sandbox copy-out archive
+     * @param prefixToStrip expected root prefix
+     * @return exact files, file modes, and directory modes
+     */
+    public static BinaryArchiveContents readBinaryTarContents(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
+        Map<String, byte[]> files = new LinkedHashMap<>();
+        Map<String, Integer> modes = new LinkedHashMap<>();
+        Map<String, Integer> directories = new LinkedHashMap<>();
+        TarArchiveEntry entry;
+        String normalizedPrefix = prefixToStrip.isEmpty() || prefixToStrip.endsWith("/") ? prefixToStrip : prefixToStrip + "/";
+        long total = 0;
+        int[] entryCount = { 0 };
+        while ((entry = tar.getNextEntry()) != null) {
+            incrementEntryCount(entryCount);
+            if (!entry.isDirectory()
+                    && (!entry.isFile() || entry.isSymbolicLink() || entry.isLink() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice() || entry.isSparse())) {
+                throw new RejectedWorkspaceEntryException("Development checkpoints do not support non-regular sandbox entries: " + safePath(entry.getName()));
+            }
+            String name = entry.getName();
+            if (name.startsWith("./")) {
+                name = name.substring(2);
+            }
+            if (!normalizedPrefix.isEmpty() && !name.startsWith(normalizedPrefix)) {
+                throw new RejectedWorkspaceEntryException("Refusing a checkpoint entry outside the expected archive prefix: " + safePath(entry.getName()));
+            }
+            if (!normalizedPrefix.isEmpty()) {
+                name = name.substring(normalizedPrefix.length());
+            }
+            if (entry.isDirectory()) {
+                name = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
+                if (!name.isEmpty()) {
+                    validateSeedEntryName(name);
+                    directories.put(name, entry.getMode() & 0777);
+                }
+                continue;
+            }
+            validateSeedEntryName(name);
+            byte[] bytes = readEntryBytes(tar, entry.getName());
+            total += bytes.length;
+            if (total > MAX_TOTAL_BYTES) {
+                throw new RejectedWorkspaceEntryException("Refusing to read a checkpoint root larger than " + MAX_TOTAL_BYTES + " bytes");
+            }
+            rejectSecretMaterial(name, bytes, HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
+            files.put(name, bytes);
+            modes.put(name, entry.getMode() & 0777);
+        }
+        return new BinaryArchiveContents(Map.copyOf(files), Map.copyOf(modes), Map.copyOf(directories));
+    }
+
+    public record BinaryArchiveContents(Map<String, byte[]> files, Map<String, Integer> modes, Map<String, Integer> directories) {
     }
 
     static String sha256(byte[] bytes) {

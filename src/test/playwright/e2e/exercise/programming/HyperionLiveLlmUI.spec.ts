@@ -349,8 +349,8 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                 // from the AI draft's title, and this test asserts that proposal end-to-end (field prefill below,
                 // generated source packages after generation). The title/short name stay unique per run because
                 // Artemis requires course-unique values and failed runs may leave exercises behind.
-                await programmingExerciseCreation.setTitle(`hyp-live-${generateUUID()}`);
-                await programmingExerciseCreation.setShortName(`hyplive${generateUUID()}`);
+                await programmingExerciseCreation.setTitle(process.env.HYPERION_CHECKPOINT_EXERCISE_TITLE ?? `hyp-live-${generateUUID()}`);
+                await programmingExerciseCreation.setShortName(process.env.HYPERION_CHECKPOINT_EXERCISE_SHORT_NAME ?? `hyplive${generateUUID()}`);
                 await programmingExerciseCreation.setPoints(100);
                 await page.locator('#field_bonusPoints').fill('0');
                 await fillDateTimePicker(page.getByLabel('Release Date', { exact: true }), dayjs().add(2, 'days'));
@@ -380,6 +380,10 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     if (process.env.HYPERION_LIVE_ALLOW_QUALITY_FINDINGS !== 'true') {
                         assertDraftQuality(report.draftAssessment as ProblemStatementAssessment, scenario.requirements);
                     }
+                }
+                if (process.env.HYPERION_CHECKPOINT_EXERCISE_PACKAGE) {
+                    await programmingExerciseCreation.setPackageName(process.env.HYPERION_CHECKPOINT_EXERCISE_PACKAGE);
+                    report.proposedPackageName = process.env.HYPERION_CHECKPOINT_EXERCISE_PACKAGE;
                 }
 
                 if (scenario.runWholeExercise) {

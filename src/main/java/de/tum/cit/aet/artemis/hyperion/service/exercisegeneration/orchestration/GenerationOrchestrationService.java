@@ -109,6 +109,8 @@ public class GenerationOrchestrationService {
 
     private final DifferentialVerificationService verifier;
 
+    private final AgentLoopRunner agentLoopRunner;
+
     /** The per-session specification the spec gate approved; dropped when the session is destroyed so the registry never outlives its runs. */
     private final ApprovedSpecRegistry approvedSpecs;
 
@@ -128,6 +130,7 @@ public class GenerationOrchestrationService {
         }
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
+        this.agentLoopRunner = agentLoopRunner;
         this.verifier = verifier;
         this.systemPromptService = systemPromptService;
         this.structuralOracleSeeder = structuralOracleSeeder;
@@ -193,6 +196,7 @@ public class GenerationOrchestrationService {
         Map<String, String> placeholderReplacements = Map.of();
         Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
         GenerationAttemptLoop attemptLoop = null;
+        boolean checkpointRunStarted = false;
         SandboxSessionSpecDTO sessionSpec = workspace.sessionSpec(exercise,
                 new SandboxSessionContextDTO(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
         try {
@@ -235,6 +239,8 @@ public class GenerationOrchestrationService {
             // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
             // identical tool set either way.
             Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
+            agentLoopRunner.beginCheckpointRun(jobId, exercise, baseTools, approvedSpecs);
+            checkpointRunStarted = true;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.
@@ -298,6 +304,9 @@ public class GenerationOrchestrationService {
             throw e;
         }
         finally {
+            if (checkpointRunStarted) {
+                agentLoopRunner.endCheckpointRun();
+            }
             jobService.deregisterCancelHook(jobId);
         }
     }

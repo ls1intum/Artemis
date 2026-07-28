@@ -139,6 +139,15 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Nullable
     private volatile AgentVerifyReport lastTestsReport;
 
+    /**
+     * Serializable continuation state for a development turn checkpoint. Constructor dependencies and {@link #structuralOracleRefresh} deliberately stay bound to the live run;
+     * restoring a callback captured from another sandbox would target the wrong session.
+     */
+    public record CheckpointState(int bashSequence, boolean sandboxSessionTerminated, @Nullable GenerationStage currentStage, @Nullable Set<String> repairWritableRoots,
+            Set<String> seededStructuralTestNames, boolean structuralOracleRefreshConfigured, boolean submitVetoed, boolean dirtySinceLastPassingCheck,
+            @Nullable GenerationStage cachedPassingCheckStage, @Nullable StageCheckResult cachedPassingCheck, @Nullable AgentVerifyReport lastTestsReport) {
+    }
+
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise) {
         this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
     }
@@ -161,6 +170,36 @@ public class SandboxAgentTools implements SubmitVetoAware {
     /** Verify-free constructor for unit tests of the file and shell tools alone. */
     SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
         this(sandbox, sessionId, null, null, Map.of(), false, null);
+    }
+
+    InteractiveSandbox checkpointSandbox() {
+        return sandbox;
+    }
+
+    String checkpointSessionId() {
+        return sessionId;
+    }
+
+    CheckpointState checkpointState() {
+        return new CheckpointState(bashSequence, sandboxSessionTerminated, currentStage, repairWritableRoots == null ? null : Set.copyOf(repairWritableRoots),
+                Set.copyOf(seededStructuralTestNames), structuralOracleRefresh != null, submitVetoed, dirtySinceLastPassingCheck, cachedPassingCheckStage, cachedPassingCheck,
+                lastTestsReport);
+    }
+
+    void restoreCheckpointState(CheckpointState state) {
+        if (state.structuralOracleRefreshConfigured() && structuralOracleRefresh == null) {
+            throw new IllegalStateException("The checkpoint requires a structural-oracle refresh callback, but the resumed run did not configure one.");
+        }
+        bashSequence = state.bashSequence();
+        sandboxSessionTerminated = state.sandboxSessionTerminated();
+        currentStage = state.currentStage();
+        repairWritableRoots = state.repairWritableRoots() == null ? null : Set.copyOf(state.repairWritableRoots());
+        seededStructuralTestNames = Set.copyOf(state.seededStructuralTestNames());
+        submitVetoed = state.submitVetoed();
+        dirtySinceLastPassingCheck = state.dirtySinceLastPassingCheck();
+        cachedPassingCheckStage = state.cachedPassingCheckStage();
+        cachedPassingCheck = state.cachedPassingCheck();
+        lastTestsReport = state.lastTestsReport();
     }
 
     String readFile(String path) {
