@@ -11,9 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestSuiteDTO;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
@@ -28,7 +27,7 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
         @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<HadesLogEntryDTO> logs, @JsonProperty("passed") int passed) implements BuildResultNotification {
 
     public static HadesTestResultsDTO convert(Object responseBody) {
-        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(responseBody, HadesTestResultsDTO.class);
+        return JsonObjectMapper.get().convertValue(responseBody, HadesTestResultsDTO.class);
     }
 
     @Override
