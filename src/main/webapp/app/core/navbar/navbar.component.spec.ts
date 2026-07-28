@@ -255,7 +255,7 @@ describe('NavbarComponent', () => {
             ['/courses/123/learning-path', ['/course-management', '123', 'learning-path-management']],
             ['/courses/123/competencies', ['/course-management', '123', 'competency-management']],
             ['/courses/123/faq', ['/course-management', '123', 'faqs']],
-            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups-checklist']],
+            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups']],
             ['/courses/123/statistics', ['/course-management', '123', 'course-statistics']],
         ])('should link from student route %s to corresponding management route', (url, expectedLink) => {
             router.setUrl(url);
@@ -285,7 +285,7 @@ describe('NavbarComponent', () => {
             currentCourseContextService.setCourse({ ...course, isAtLeastInstructor: false, tutorialGroupsConfiguration: {} });
             router.setUrl('/courses/123/tutorial-groups');
 
-            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups']);
         });
 
         it('should omit the course id from base perspective links when no current course is available', () => {
@@ -1058,11 +1058,11 @@ describe('NavbarComponent', () => {
             { url: '/course-management/123/competencies', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'competency-management'] },
             { url: '/course-management/123/faq', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'faqs'] },
             { url: '/course-management/123/statistics', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'course-statistics'] },
-            { url: '/course-management/123/tutorial-groups', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'tutorial-groups-checklist'] },
+            { url: '/course-management/123/tutorial-groups', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'tutorial-groups'] },
             {
                 url: '/course-management/123/tutorial-groups',
                 course: { id: 123, tutorialGroupsConfiguration: {} },
-                expected: ['/course-management', '123', 'tutorial-groups-checklist'],
+                expected: ['/course-management', '123', 'tutorial-groups'],
             },
             { url: '/courses/123/settings', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123'] },
         ])('should compute the correct management view link for $url', ({ url, course, expected }) => {

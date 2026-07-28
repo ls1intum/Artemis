@@ -885,7 +885,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {

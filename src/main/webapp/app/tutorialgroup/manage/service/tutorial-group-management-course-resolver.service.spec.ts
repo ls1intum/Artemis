@@ -12,10 +12,12 @@ import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 
 describe('TutorialGroupManagementResolve', () => {
     let resolver: TutorialGroupManagementCourseResolver;
     let service: CourseManagementService;
+    let configurationService: TutorialGroupsConfigurationService;
     let router: Router;
 
     beforeEach(() => {
@@ -31,11 +33,14 @@ describe('TutorialGroupManagementResolve', () => {
                     useClass: MockTranslateService,
                 },
                 MockProvider(CourseManagementService),
+                MockProvider(TutorialGroupsConfigurationService),
             ],
         });
         resolver = TestBed.inject(TutorialGroupManagementCourseResolver);
         service = TestBed.inject(CourseManagementService);
+        configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         router = TestBed.inject(Router);
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: null })));
     });
 
     it('should navigate to tutorial-groups-checklist if course has no tutorialGroupsConfiguration', () => {
@@ -55,6 +60,21 @@ describe('TutorialGroupManagementResolve', () => {
         vi.spyOn(router, 'navigate');
         resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+    });
+
+    it('should not navigate to tutorial-groups-checklist if only the configuration endpoint knows the configuration', () => {
+        const course: Course = new Course();
+        course.id = 1;
+        course.timeZone = 'Europe/Berlin';
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: { id: 5 } })));
+        vi.spyOn(router, 'navigate');
+        let resolvedCourse: Course | undefined;
+        resolver
+            .resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot)
+            .subscribe((course: Course) => (resolvedCourse = course));
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(resolvedCourse?.tutorialGroupsConfiguration?.id).toBe(5);
     });
 
     it('should not navigate to tutorial-groups-checklist if state url matches edit configuration url', () => {
