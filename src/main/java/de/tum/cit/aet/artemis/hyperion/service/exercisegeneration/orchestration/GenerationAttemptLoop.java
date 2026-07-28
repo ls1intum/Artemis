@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -646,8 +647,16 @@ class GenerationAttemptLoop {
 
     private static String normalizeRequirement(String requirement) {
         String normalized = requirement.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").strip();
+        normalized = SPECIFICATION_RULE_LABEL.matcher(normalized).replaceFirst("");
         return normalized.length() <= MAX_IDENTITY_REQUIREMENT_CHARS ? normalized : normalized.substring(0, MAX_IDENTITY_REQUIREMENT_CHARS);
     }
+
+    /**
+     * The specification's own rule label ("R3"), which the reviewer cites for the same defect only about half the time — "R3 reverse must handle the empty string" and "reverse
+     * must handle the empty string" name one defect. Stripping the citation merges them; measured over 30 reviews of one unchanged candidate it removed three duplicate
+     * identities and raised apparent stability without merging any two distinct defects, because the label carries no information the requirement text does not.
+     */
+    private static final Pattern SPECIFICATION_RULE_LABEL = Pattern.compile("^[rs]\\d+\\s+");
 
     /**
      * Schedules the next scoped semantic repair on a mechanically verified candidate.

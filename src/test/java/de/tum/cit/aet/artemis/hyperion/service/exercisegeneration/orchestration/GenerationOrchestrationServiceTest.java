@@ -1664,6 +1664,26 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
+    void aRequirementCitingItsSpecificationRuleLabel_isTheSameFindingAsOneWithout() {
+        acceptedCandidateReviewedAs(reportWith("R3 reverse must handle the empty string"), reportWith("reverse must handle the empty string"), SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
+        assertThat(rounds.get(1).fresh()).isZero();
+    }
+
+    @Test
+    void aRequirementWhoseTextMerelyStartsWithALetterAndDigits_keepsItsOwnIdentity() {
+        acceptedCandidateReviewedAs(reportWith("r2d2 identifiers are rejected"), reportWith("identifiers are rejected"), SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds.get(1).carriedOver()).isZero();
+        assertThat(rounds.get(1).fresh()).isEqualTo(1);
+    }
+
+    @Test
     void aFindingUnderADifferentKind_isNotTheSameFinding() {
         acceptedCandidateReviewedAs(reportWith("delegation is not proven"),
                 new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "delegation is not proven", "a wrong forwarder passes"))),
