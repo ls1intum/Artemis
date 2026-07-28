@@ -7,7 +7,7 @@
     <!-- Add an explicit is_test_user flag on jhi_user to replace the non-sargable "login NOT LIKE '%test%'" heuristic
          used in usage statistics. The value is managed explicitly: backfilled here for existing logins containing
          "test", and settable via the user CSV import. -->
-    <changeSet id="20260718130000-01-add-is-test-user-column" author="krusche">
+    <changeSet id="20260728120000-01-add-is-test-user-column" author="krusche">
         <addColumn tableName="jhi_user">
             <column name="is_test_user" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
@@ -17,7 +17,7 @@
 
     <!-- Backfill: mark existing accounts whose login contains "test" (case-insensitive), preserving the previous
          NOT LIKE '%test%' behaviour. Standard SQL, so a single portable <update> works on MySQL and PostgreSQL. -->
-    <changeSet id="20260718130000-02-backfill-is-test-user" author="krusche">
+    <changeSet id="20260728120000-02-backfill-is-test-user" author="krusche">
         <update tableName="jhi_user">
             <column name="is_test_user" valueBoolean="true"/>
             <where>LOWER(login) LIKE '%test%'</where>
@@ -31,7 +31,7 @@
          their paired drops so the covering index always exists before the redundant prefix index is removed. -->
 
     <!-- Admin "logged-in users" statistics: make it covering by adding event_type to (principal, event_date). -->
-    <changeSet id="20260718130000-03-create-idx-audit-principal-date-type" author="krusche">
+    <changeSet id="20260728120000-03-create-idx-audit-principal-date-type" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists indexName="idx_persistent_audit_event_principal_date_type" tableName="jhi_persistent_audit_event"/>
@@ -45,7 +45,7 @@
     </changeSet>
 
     <!-- Drop the now-redundant prefix index (principal, event_date); superseded by the covering index above. -->
-    <changeSet id="20260718130000-04-drop-idx-audit-principal-date" author="krusche">
+    <changeSet id="20260728120000-04-drop-idx-audit-principal-date" author="krusche">
         <preConditions onFail="MARK_RAN">
             <indexExists indexName="idx_persistent_audit_event" tableName="jhi_persistent_audit_event"/>
         </preConditions>
@@ -53,7 +53,7 @@
     </changeSet>
 
     <!-- Nightly VCS access log cleanup does a full scan on timestamp (no index today). -->
-    <changeSet id="20260718130000-05-create-idx-vcs-access-log-timestamp" author="krusche">
+    <changeSet id="20260728120000-05-create-idx-vcs-access-log-timestamp" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists indexName="idx_vcs_access_log_timestamp" tableName="vcs_access_log"/>
@@ -65,7 +65,7 @@
     </changeSet>
 
     <!-- Build-job average-duration statistics: covering index so AVG(timestampdiff(...)) needs no row lookups. -->
-    <changeSet id="20260718130000-06-create-idx-build-job-exercise-result-dates" author="krusche">
+    <changeSet id="20260728120000-06-create-idx-build-job-exercise-result-dates" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists indexName="idx_build_job_exercise_result_dates" tableName="build_job"/>
@@ -80,7 +80,7 @@
     </changeSet>
 
     <!-- Drop the now-redundant prefix index (exercise_id, build_job_result); superseded by the covering index above. -->
-    <changeSet id="20260718130000-07-drop-idx-exercise-result" author="krusche">
+    <changeSet id="20260728120000-07-drop-idx-exercise-result" author="krusche">
         <preConditions onFail="MARK_RAN">
             <indexExists indexName="idx_exercise_result" tableName="build_job"/>
         </preConditions>
@@ -88,7 +88,7 @@
     </changeSet>
 
     <!-- Startup scheduler scans all participations for future individual due dates (no index today). -->
-    <changeSet id="20260718130000-08-create-idx-participation-individual-due-date" author="krusche">
+    <changeSet id="20260728120000-08-create-idx-participation-individual-due-date" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists indexName="idx_participation_individual_due_date" tableName="participation"/>
@@ -101,7 +101,7 @@
 
     <!-- LLM cost-per-course sum: covering index so the SUM over the token/cost columns needs no row lookups.
          The FK-backing index on (trace_id) is intentionally kept. -->
-    <changeSet id="20260718130000-09-create-idx-llm-token-usage-request-trace-cost" author="krusche">
+    <changeSet id="20260728120000-09-create-idx-llm-token-usage-request-trace-cost" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists indexName="idx_llm_token_usage_request_trace_cost" tableName="llm_token_usage_request"/>
@@ -125,7 +125,7 @@
          Every JPQL predicate on testRun is paired with an exercise or participation id, which fk_participation_exercise_id
          already serves, so no query loses an access path. This also frees ~48 MB on a table that already carries
          904 MB of indexes against only 342 MB of data. -->
-    <changeSet id="20260718130000-10-drop-idx-participation-test-run" author="krusche">
+    <changeSet id="20260728120000-10-drop-idx-participation-test-run" author="krusche">
         <preConditions onFail="MARK_RAN">
             <indexExists indexName="participation_test_run" tableName="participation"/>
         </preConditions>
