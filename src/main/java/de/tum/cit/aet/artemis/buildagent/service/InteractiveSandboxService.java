@@ -84,6 +84,13 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private static final Duration COPY_TIMEOUT = Duration.ofMinutes(2);
 
+    /**
+     * Grace Docker gives PID 1 to exit on SIGTERM before escalating to SIGKILL while {@link #resetSession} restarts the container. With Docker's init as PID 1 the stop completes
+     * in well under a second, so this only bounds the cost if that signal path ever regresses (a PID 1 that ignores SIGTERM burns the whole grace, twice per verification pass).
+     * It is deliberately short because SIGKILL is safe here: every writable path is a tmpfs the reset discards anyway, and PID 1 holds no state worth flushing.
+     */
+    static final int SESSION_RESET_STOP_GRACE_SECONDS = 5;
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildAgentDockerService buildAgentDockerService;
@@ -326,7 +333,10 @@ public class InteractiveSandboxService implements InteractiveSandbox {
      * <li>disables auto-remove — the container is torn down explicitly by {@link #destroySession}; auto-remove would race that and could delete it under an in-flight exec;</li>
      * <li>adds {@code no-new-privileges} so no exec inside the container can gain privileges via setuid binaries;</li>
      * <li>drops all Linux capabilities; the Java toolchain does not require privileged kernel operations.</li>
-     * <li>makes the image filesystem read-only and puts every required writable path on a bounded tmpfs so a runaway build cannot exhaust the build-agent host disk.</li>
+     * <li>makes the image filesystem read-only and puts every required writable path on a bounded tmpfs so a runaway build cannot exhaust the build-agent host disk;</li>
+     * <li>runs Docker's init (tini) as PID 1. The container command is a bare shell loop, and the kernel discards signals a PID 1 has no handler for, so a shell PID 1 would
+     * ignore the SIGTERM {@link #resetSession} sends and every reset would burn the full stop grace before Docker escalated to SIGKILL. Init forwards the signal to the shell,
+     * which exits immediately, and it reaps processes orphaned by exec'd builds that would otherwise accumulate against the container PID limit over a long session.</li>
      * </ul>
      */
     private HostConfig hardenedHostConfig(DockerClient dockerClient, String immutableImageId) {
@@ -348,7 +358,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         HostConfig hostConfig = buildAgentConfiguration.hostConfig();
         requireResourceLimits(hostConfig);
         return hostConfig.withAutoRemove(false).withNetworkMode("none").withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.ALL).withReadonlyRootfs(true)
-                .withTmpFs(Map.copyOf(tmpFs));
+                .withTmpFs(Map.copyOf(tmpFs)).withInit(true);
     }
 
     private static boolean isUnsafeImageVolume(String path) {
@@ -656,7 +666,10 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             if (!sessionStates.containsKey(sessionId)) {
                 throw new LocalCIException("Interactive sandbox session " + sessionId + " is not active on this build agent");
             }
-            try (var restartCommand = buildAgentConfiguration.getDockerClient().restartContainerCmd(sessionId).withTimeout(30)) {
+            // A restart is what makes the reset authoritative: stopping the container tears down its mount and PID namespaces, so the kernel discards every writable tmpfs and
+            // SIGKILLs every process the agent left behind, including ones that ignore SIGTERM. Clearing paths and killing processes from inside the container could not offer
+            // that guarantee, and a path missed there would silently feed a stale candidate into the pristine verification build.
+            try (var restartCommand = buildAgentConfiguration.getDockerClient().restartContainerCmd(sessionId).withTimeout(SESSION_RESET_STOP_GRACE_SECONDS)) {
                 restartCommand.exec();
             }
             markActive(sessionId);

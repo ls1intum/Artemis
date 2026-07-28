@@ -122,6 +122,20 @@ class InteractiveSandboxServiceHostConfigTest {
         assertThat(hostConfig.getReadonlyRootfs()).isTrue();
     }
 
+    /**
+     * The container command is a bare shell loop, and the kernel discards signals a PID 1 has no handler for. Without Docker's init forwarding it, the SIGTERM that
+     * {@link InteractiveSandboxService#resetSession} sends is ignored and every reset waits out the whole stop grace before Docker escalates to SIGKILL.
+     */
+    @Test
+    void createSessionRunsAnInitProcessAsPidOneSoTheContainerStopsOnSignal() {
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
+
+        service.createSession(new SandboxSessionSpecDTO(IMAGE, null));
+
+        verify(createContainerCmd).withHostConfig(hostConfigCaptor.capture());
+        assertThat(hostConfigCaptor.getValue().getInit()).isTrue();
+    }
+
     @Test
     void createSession_defaultsToNoNetworkWhenRunConfigIsAbsent() {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
@@ -248,13 +262,13 @@ class InteractiveSandboxServiceHostConfigTest {
     void resetSessionRestartsTheExistingContainer() {
         RestartContainerCmd restartContainerCmd = mock(RestartContainerCmd.class);
         when(dockerClient.restartContainerCmd("container-1")).thenReturn(restartContainerCmd);
-        when(restartContainerCmd.withTimeout(30)).thenReturn(restartContainerCmd);
+        when(restartContainerCmd.withTimeout(InteractiveSandboxService.SESSION_RESET_STOP_GRACE_SECONDS)).thenReturn(restartContainerCmd);
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
         service.markActive("container-1");
 
         service.resetSession("container-1");
 
-        verify(restartContainerCmd).withTimeout(30);
+        verify(restartContainerCmd).withTimeout(InteractiveSandboxService.SESSION_RESET_STOP_GRACE_SECONDS);
         verify(restartContainerCmd).exec();
         assertThat(service.lastActivity("container-1")).isPresent();
     }
