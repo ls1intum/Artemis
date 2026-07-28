@@ -33,7 +33,7 @@ class CriticVerdictParserTest {
                   "unrequestedChanges": [],
                   "missingRequestedChanges": []
                 }
-                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO: implement", false, false, true, false, Map.of("Graphemes", "stubbed"));
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO: implement", "", false, false, true, false, Map.of("Graphemes", "stubbed"));
 
         assertThat(findings).isEmpty();
     }
@@ -58,7 +58,7 @@ class CriticVerdictParserTest {
                   "unrequestedChanges": [],
                   "missingRequestedChanges": []
                 }
-                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO is in a different method", false, false, true, false,
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO is in a different method", "", false, false, true, false,
                 Map.of("Graphemes", "stubbed"));
 
         assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
@@ -85,7 +85,7 @@ class CriticVerdictParserTest {
                     "reason": "no null assertion exists"
                   }]
                 }
-                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The dispatcher holds a list and an active strategy.", "", false, false, false, true, Map.of());
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The dispatcher holds a list and an active strategy.", "", "", false, false, false, true, Map.of());
 
         assertThat(findings).isEmpty();
     }
@@ -103,7 +103,7 @@ class CriticVerdictParserTest {
                   "uncovered": [],
                   "weakOracle": []
                 }
-                """, CriticVerdictParser.ReviewPass.ORACLE, false, "A null list is rejected.", "", false, false, false, true, Map.of());
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "A null list is rejected.", "", "", false, false, false, true, Map.of());
 
         assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
     }
@@ -125,7 +125,7 @@ class CriticVerdictParserTest {
                     "reason": "the test only compares contents"
                   }]
                 }
-                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The building has a fixed list of elevators.", "", false, false, false, true, Map.of());
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The building has a fixed list of elevators.", "", "", false, false, false, true, Map.of());
 
         assertThat(findings).isEmpty();
     }
@@ -143,8 +143,63 @@ class CriticVerdictParserTest {
                   "uncovered": [],
                   "weakOracle": []
                 }
-                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The strategy receives an unmodifiable view.", "", false, false, false, true, Map.of());
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The strategy receives an unmodifiable view.", "", "", false, false, false, true, Map.of());
 
         assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
+    }
+
+    @Test
+    void explicitExceptionMessageIsNotReportedAsHidden() {
+        String verdict = """
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [],
+                  "contradictions": [],
+                  "hiddenRequirements": [{
+                    "requirement": "IllegalArgumentException must have message \\"Elevator list is empty\\"",
+                    "sourceQuote": "assertEquals(\\"Elevator list is empty\\", exception.getMessage())",
+                    "reason": "the message is not stated"
+                  }],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """;
+        String testSource = "assertEquals(\"Elevator list is empty\", exception.getMessage())";
+        String statement = "If the list is empty, throw IllegalArgumentException with the message \"Elevator list is empty\".";
+
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique(verdict, CriticVerdictParser.ReviewPass.CONTRACT, false, testSource, testSource, statement, false, false,
+                false, false, Map.of());
+
+        assertThat(findings).isEmpty();
+    }
+
+    @Test
+    void unstatedExceptionMessageRemainsHidden() {
+        String verdict = """
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [],
+                  "contradictions": [],
+                  "hiddenRequirements": [{
+                    "requirement": "IllegalArgumentException must have message \\"Elevator list is empty\\"",
+                    "sourceQuote": "assertEquals(\\"Elevator list is empty\\", exception.getMessage())",
+                    "reason": "the message is not stated"
+                  }],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """;
+        String testSource = "assertEquals(\"Elevator list is empty\", exception.getMessage())";
+
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique(verdict, CriticVerdictParser.ReviewPass.CONTRACT, false, testSource, testSource,
+                "If the list is empty, throw IllegalArgumentException.", false, false, false, false, Map.of());
+
+        assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT);
     }
 }

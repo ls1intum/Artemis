@@ -40,6 +40,10 @@ class CriticVerdictParser {
 
     private static final Pattern MUTABILITY_WORD = Pattern.compile("\\b(?:immutable|immutability|mutable|mutability|unmodifiable)\\b", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern QUOTED_CONTRACT_TERM = Pattern.compile("[\"`]([^\"`]{3,})[\"`]");
+
+    private static final Pattern EXCEPTION_TYPE = Pattern.compile("\\b[A-Z][A-Za-z0-9]*(?:Exception|Error)\\b");
+
     private static final List<Pattern> EXPLICIT_SOURCE_TERMS = List.of(NULL_WORD, MUTABILITY_WORD);
 
     /** The structured shape the full-artifact review parses the model JSON into. */
@@ -99,7 +103,8 @@ class CriticVerdictParser {
      */
     @Nullable
     List<SpecFidelityReport.Finding> parseCritique(String text, ReviewPass pass, boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource,
-            boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses) {
+            String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks,
+            Map<String, String> templateStatuses) {
         CriticResponse parsed;
         try {
             parsed = objectMapper.readValue(extractJsonPayload(text), CriticResponse.class);
@@ -178,8 +183,7 @@ class CriticVerdictParser {
             }
             appendGroundedBlockingFindings(findings, parsed.contradictions(), authoritativeSource, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                     "The generated artifacts contradict this contract: ");
-            appendGroundedBlockingFindings(findings, parsed.hiddenRequirements(), authoritativeSource, SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT,
-                    "The grader requires behaviour or API that is not discoverable to the student: ");
+            appendGroundedHiddenRequirements(findings, parsed.hiddenRequirements(), authoritativeSource, candidateProblemStatement);
         }
         else {
             for (MutantCheckItem item : parsed.mutantChecks()) {
@@ -355,6 +359,38 @@ class CriticVerdictParser {
             }
             findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
         }
+    }
+
+    private static void appendGroundedHiddenRequirements(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
+            String candidateProblemStatement) {
+        for (RequirementFindingItem item : items) {
+            if (findings.size() >= MAX_REVIEW_FINDINGS) {
+                return;
+            }
+            if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                continue;
+            }
+            if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                abstainUngroundedFinding(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, item.requirement());
+                continue;
+            }
+            if (exactExceptionMessageIsDiscoverable(item.requirement(), candidateProblemStatement)) {
+                log.info("Critic abstained on a hidden-requirement finding whose exact exception contract is present in the problem statement: {}", item.requirement());
+                continue;
+            }
+            findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, truncate(item.requirement().strip()),
+                    "The grader requires behaviour or API that is not discoverable to the student: " + item.reason().strip()));
+        }
+    }
+
+    private static boolean exactExceptionMessageIsDiscoverable(String requirement, String candidateProblemStatement) {
+        if (candidateProblemStatement.isBlank() || !requirement.toLowerCase(Locale.ROOT).contains("message")) {
+            return false;
+        }
+        List<String> quotedTerms = QUOTED_CONTRACT_TERM.matcher(requirement).results().map(match -> match.group(1)).toList();
+        List<String> exceptionTypes = EXCEPTION_TYPE.matcher(requirement).results().map(match -> match.group()).toList();
+        return !quotedTerms.isEmpty() && !exceptionTypes.isEmpty() && quotedTerms.stream().allMatch(candidateProblemStatement::contains)
+                && exceptionTypes.stream().allMatch(candidateProblemStatement::contains);
     }
 
     private static void appendGroundedOracleFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,

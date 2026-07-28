@@ -376,20 +376,20 @@ public class SpecFidelityCriticService {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt,
-                adaptationChanges != null, contractGroundingSource, repairableDownstreamSource, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses,
-                usageSink);
+                adaptationChanges != null, contractGroundingSource, repairableDownstreamSource, problemStatement == null ? "" : problemStatement, expectExampleChecks,
+                expectApiChecks, expectTestChecks, false, templateStatuses, usageSink);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, false,
-                authoritativeSource, authoritativeSource, false, false, false, expectTestChecks, Map.of(), usageSink);
+                authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, Map.of(), usageSink);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         if (!cancelled.getAsBoolean() && oracleFindings != null && CriticVerdictParser.hasUngroundedOracleReview(oracleFindings)
                 && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, false, false, false, false, Map.of(), usageSink);
+                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, false, Map.of(), usageSink);
             if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)) {
                 // The correction replaces the verdict rather than extending it: substring grounding proves provenance only, so keeping the initially grounded claims would leave
                 // the corrected response unable to retract a semantically false one.
@@ -430,11 +430,11 @@ public class SpecFidelityCriticService {
     }
 
     private @Nullable List<SpecFidelityReport.Finding> callReviewerSafely(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
-            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, boolean expectExampleChecks, boolean expectApiChecks,
-            boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
+            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, String candidateProblemStatement, boolean expectExampleChecks,
+            boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
         try {
-            return callReviewer(pass, systemPromptTemplate, userPrompt, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, expectExampleChecks, expectApiChecks,
-                    expectTemplateChecks, expectMutantChecks, templateStatuses, usageSink);
+            return callReviewer(pass, systemPromptTemplate, userPrompt, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, candidateProblemStatement,
+                    expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses, usageSink);
         }
         catch (RuntimeException e) {
             log.warn("{} exercise review failed: {}", pass, e.getMessage());
@@ -443,12 +443,12 @@ public class SpecFidelityCriticService {
     }
 
     private @Nullable List<SpecFidelityReport.Finding> callReviewer(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
-            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, boolean expectExampleChecks, boolean expectApiChecks,
-            boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
+            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, String candidateProblemStatement, boolean expectExampleChecks,
+            boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
         String text = reviewer.call(systemPromptTemplate, userPrompt, usageSink);
         return text == null || text.isBlank() ? null
-                : verdictParser.parseCritique(text, pass, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, expectExampleChecks, expectApiChecks,
-                        expectTemplateChecks, expectMutantChecks, templateStatuses);
+                : verdictParser.parseCritique(text, pass, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, candidateProblemStatement, expectExampleChecks,
+                        expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses);
     }
 
     private static List<SpecFidelityReport.Finding> reviewUnavailable(@Nullable String adaptationChanges, String detail) {
