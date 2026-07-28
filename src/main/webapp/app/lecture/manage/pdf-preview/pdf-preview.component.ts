@@ -489,17 +489,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
             const { instructorBytes, studentBytes } = await this.applyOperations(true);
+            const needsPdfContentUpdate = this.attachment() !== undefined || this.hasPdfContentChanges();
+            const instructorPdfFile = needsPdfContentUpdate ? this.bytesToFile(instructorBytes, pdfName) : undefined;
 
-            const instructorPdfFile = this.bytesToFile(instructorBytes, pdfName);
-
-            if (instructorPdfFile.size > MAX_FILE_SIZE) {
+            if (instructorPdfFile && instructorPdfFile.size > MAX_FILE_SIZE) {
                 this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
                 this.isSaving.set(false);
                 return;
             }
 
             if (this.attachment()) {
-                await this.updateAttachment(instructorPdfFile);
+                await this.updateAttachment(instructorPdfFile!);
             } else if (this.attachmentVideoUnit()) {
                 const hiddenPages = this.getHiddenPages();
                 await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
@@ -544,37 +544,38 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Updates an attachment video unit
      */
-    private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
+    private async updateAttachmentVideoUnit(instructorPdfFile: File | undefined, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
-            formData.append('file', instructorPdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), this.attachmentVideoUnit()!, {
-                attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
+                attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
             });
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
 
-            void this.getFinalPageOrder().then((finalPageOrder) => {
-                formData.append(
-                    'pageOrder',
-                    new Blob(
-                        [
-                            JSON.stringify(
-                                finalPageOrder.map((page) => ({
-                                    slideId: page.slideId,
-                                    order: page.order,
-                                })),
-                            ),
-                        ],
-                        { type: 'application/json' },
-                    ),
-                );
-
-                if (hiddenPages.length > 0) {
-                    formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
+            const submitUpdate = (finalPageOrder?: OrderedPage[]) => {
+                if (instructorPdfFile) {
+                    formData.append('file', instructorPdfFile);
+                }
+                if (finalPageOrder) {
+                    formData.append(
+                        'pageOrder',
+                        new Blob(
+                            [
+                                JSON.stringify(
+                                    finalPageOrder.map((page) => ({
+                                        slideId: page.slideId,
+                                        order: page.order,
+                                    })),
+                                ),
+                            ],
+                            { type: 'application/json' },
+                        ),
+                    );
                 }
 
                 this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
@@ -585,8 +586,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         reject(error);
                     },
                 });
-            });
+            };
+
+            if (instructorPdfFile) {
+                void this.getFinalPageOrder().then((finalPageOrder) => {
+                    submitUpdate(finalPageOrder);
+                });
+            } else {
+                submitUpdate();
+            }
         });
+    }
+
+    private hasPdfContentChanges(): boolean {
+        return (
+            this.isFileChanged() ||
+            this.pageOrderChanged() ||
+            !this.hasCompletePersistedSlideSet() ||
+            this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER')
+        );
+    }
+
+    private hasCompletePersistedSlideSet(): boolean {
+        return this.pageOrder().length === this.totalPages() && this.pageOrder().every((page) => !page.slideId.startsWith('temp_'));
     }
 
     /**
