@@ -9,10 +9,19 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -59,9 +68,11 @@ class ExerciseImportServiceTest {
     @Test
     void backfillsEveryContentFieldFromSourceWhenNewExerciseIsAnEmptySkeleton() {
         TextExercise source = sourceWithContent();
-        // A bulk-import skeleton: only the destination is set, everything else is a fresh default.
+        // A bulk-import skeleton: only the destination is set, everything else is a fresh default. Bulk callers null the
+        // grading criteria to request the deep copy from the source (see ExerciseImportService#copyExerciseBasis).
         TextExercise newExercise = new TextExercise();
         newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        newExercise.setGradingCriteria(null);
 
         service.copyBasis(newExercise, source);
 
@@ -94,14 +105,112 @@ class ExerciseImportServiceTest {
     }
 
     @Test
+    void keepsAnEmptyGradingCriteriaCollectionTheCallerOwns() {
+        TextExercise source = sourceWithContent();
+        // A standalone import whose form had every grading criterion deleted: the caller's (initialized) empty collection
+        // must win, otherwise the deleted criteria silently reappear on the imported exercise.
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        newExercise.setGradingCriteria(new HashSet<>());
+
+        service.copyBasis(newExercise, source);
+
+        assertThat(newExercise.getGradingCriteria()).isEmpty();
+    }
+
+    @Test
+    void clearsTheTeamAssignmentConfigUnlessTheExerciseIsATeamCourseExercise() {
+        TextExercise source = sourceWithContent();
+        // A client-supplied body may carry a team assignment config that must not be cascaded onto an individual exercise.
+        TextExercise individualExercise = new TextExercise();
+        individualExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        individualExercise.setMode(ExerciseMode.INDIVIDUAL);
+        individualExercise.setTeamAssignmentConfig(teamAssignmentConfigWithId());
+
+        service.copyBasis(individualExercise, source);
+
+        assertThat(individualExercise.getTeamAssignmentConfig()).isNull();
+
+        // The same holds for an exam exercise, which is always individual.
+        TextExercise examExercise = new TextExercise();
+        examExercise.setExerciseGroup(new ExerciseGroup());
+        examExercise.setMode(ExerciseMode.TEAM);
+        examExercise.setTeamAssignmentConfig(teamAssignmentConfigWithId());
+
+        service.copyBasis(examExercise, source);
+
+        assertThat(examExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(examExercise.getTeamAssignmentConfig()).isNull();
+    }
+
+    @Test
+    void copiesTheTeamAssignmentConfigAsAFreshEntityForTeamCourseExercises() {
+        TextExercise source = sourceWithContent();
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        newExercise.setMode(ExerciseMode.TEAM);
+        TeamAssignmentConfig callerConfig = teamAssignmentConfigWithId();
+        newExercise.setTeamAssignmentConfig(callerConfig);
+
+        service.copyBasis(newExercise, source);
+
+        assertThat(newExercise.getTeamAssignmentConfig()).isNotNull().isNotSameAs(callerConfig);
+        assertThat(newExercise.getTeamAssignmentConfig().getId()).as("the copy must not reuse the caller's id").isNull();
+        assertThat(newExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+    }
+
+    @Test
     void prepareNewExerciseForImportClearsIdAndParticipationState() {
         TextExercise newExercise = new TextExercise();
         newExercise.setId(42L);
+        // Pre-populate every collection the helper has to reset, so the assertions below cannot pass vacuously on the
+        // empty collections a fresh entity already carries.
+        newExercise.setStudentParticipations(new HashSet<>(Set.of(new StudentParticipation())));
+        newExercise.setTutorParticipations(new HashSet<>(Set.of(new TutorParticipation())));
+        newExercise.setExampleSubmissions(new HashSet<>(Set.of(new ExampleSubmission())));
+        newExercise.setAttachments(new HashSet<>(Set.of(new Attachment())));
+        newExercise.setPlagiarismCases(new HashSet<>(Set.of(new PlagiarismCase())));
+        newExercise.setTeams(new HashSet<>(Set.of(new Team())));
 
         ExerciseImportService.prepareNewExerciseForImport(newExercise);
 
         assertThat(newExercise.getId()).isNull();
         assertThat(newExercise.getStudentParticipations()).isEmpty();
+        assertThat(newExercise.getTutorParticipations()).isEmpty();
         assertThat(newExercise.getExampleSubmissions()).isEmpty();
+        assertThat(newExercise.getAttachments()).isEmpty();
+        assertThat(newExercise.getPlagiarismCases()).isEmpty();
+        // teams has orphanRemoval enabled, so a carried-over team would fail to persist under the new owner.
+        assertThat(newExercise.getTeams()).isEmpty();
+    }
+
+    @Test
+    void keepsTheEditableFlagsTheCallerSubmitted() {
+        TextExercise source = sourceWithContent();
+        source.setSecondCorrectionEnabled(false);
+        source.setFeedbackSuggestionModule("module-of-the-source");
+        // The standalone import form owns these fields; develop reset them to the entity defaults because the new exercise
+        // was built from scratch. They must survive the backfill unchanged.
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        newExercise.setSecondCorrectionEnabled(true);
+        newExercise.setAllowComplaintsForAutomaticAssessments(true);
+        newExercise.setAllowFeedbackRequests(true);
+        newExercise.setFeedbackSuggestionModule("module-chosen-during-import");
+
+        service.copyBasis(newExercise, source);
+
+        assertThat(newExercise.getSecondCorrectionEnabled()).isTrue();
+        assertThat(newExercise.getAllowComplaintsForAutomaticAssessments()).isTrue();
+        assertThat(newExercise.getAllowFeedbackRequests()).isTrue();
+        assertThat(newExercise.getFeedbackSuggestionModule()).isEqualTo("module-chosen-during-import");
+    }
+
+    private static TeamAssignmentConfig teamAssignmentConfigWithId() {
+        TeamAssignmentConfig config = new TeamAssignmentConfig();
+        config.setId(77L);
+        config.setMinTeamSize(2);
+        config.setMaxTeamSize(4);
+        return config;
     }
 }
