@@ -1286,6 +1286,17 @@ class DifferentialVerificationServiceTest {
         }
 
         @Test
+        void rejectsTaskBindingSyntaxRenderedAsInlineCode() {
+            List<String> names = List.of("calculatesCost");
+            String statement = "`[task][Calculate the cost](calculatesCost)`\nImplement the calculation.";
+
+            AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
+
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("no Artemis task bindings"));
+        }
+
+        @Test
         void reportsAcceptedWhenSolutionPassesAndTemplateFailsSameTests() {
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);

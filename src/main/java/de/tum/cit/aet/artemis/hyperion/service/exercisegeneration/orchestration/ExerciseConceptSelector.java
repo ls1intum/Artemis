@@ -62,6 +62,8 @@ public class ExerciseConceptSelector {
             Observable substitution:
             Likely supplied support:
 
+            A concept chooses a qualitative domain interaction, not its specification. Unless the brief already supplies them, do not include numeric literals, enum-member lists,
+            exact transition tables, class or member names, exception types, return sentinels, or required implementation constructs; the later SPEC stage owns those decisions.
             Keep each field concise. Student-owned objective is exhaustive: name every consequential behavior students implement, including concrete policies when students own
             them. Student-owned reasoning must state the concrete qualitative control flow or data transformation that remains after signatures and routine wiring are removed,
             without prematurely fixing exact formulas or constants. Generic phrases such as `distinct rules`, `processes the input`, or `computes a result` do not count.

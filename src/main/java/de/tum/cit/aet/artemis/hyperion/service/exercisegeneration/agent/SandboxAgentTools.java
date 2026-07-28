@@ -241,9 +241,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Finds exact text in one workspace file without allowing shell expansion or changing checkpoint state.
+     * Finds exact text in a workspace file or directory without allowing shell expansion or changing checkpoint state.
      *
-     * @param path  the workspace-relative file path
+     * @param path  the workspace-relative file or directory path
      * @param query the single-line text fragment
      * @return numbered matching lines, or an actionable error
      */
@@ -260,30 +260,38 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "grep", "-RInFH", "--exclude-dir=.git", "--exclude-dir=target",
+                "--exclude-dir=build", "--exclude-dir=node_modules", "--", query, WORKSPACE + "/" + safe);
+        if (result.exitCode() == 1 && result.stdout().isBlank()) {
+            return "No matches in " + safe + ".";
+        }
         if (!result.isSuccess()) {
             return screenObservation(safe, "ERROR: could not search '" + safe + "': " + result.combinedOutput());
         }
-        String screened = screenObservation(safe, result.stdout());
-        if (!screened.equals(result.stdout())) {
-            return screened;
-        }
-        StringBuilder matches = new StringBuilder();
-        String[] lines = result.stdout().split("\n", -1);
-        for (int index = 0; index < lines.length; index++) {
-            if (!lines[index].contains(query)) {
+        StringBuilder safeMatches = new StringBuilder();
+        for (String line : result.stdout().replace(WORKSPACE + "/", "").lines().toList()) {
+            int pathEnd = line.indexOf(':');
+            if (pathEnd < 1 || !SECRET_MATERIAL_POLICY.assess(line.substring(0, pathEnd), new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION).isSafe()) {
                 continue;
             }
-            String match = (index + 1) + ":" + lines[index];
-            if (matches.length() + match.length() + 1 > READ_INLINE_MAX_CHARS) {
-                return matches + "\n[More matches omitted. Narrow the query.]";
+            if (!safeMatches.isEmpty()) {
+                safeMatches.append('\n');
             }
-            if (!matches.isEmpty()) {
-                matches.append('\n');
-            }
-            matches.append(match);
+            safeMatches.append(line);
         }
-        return matches.isEmpty() ? "No matches in " + safe + "." : matches.toString();
+        if (safeMatches.isEmpty()) {
+            return "No safe matches in " + safe + ".";
+        }
+        String output = safeMatches.toString();
+        String screened = screenObservation(safe, output);
+        if (!screened.equals(output)) {
+            return screened;
+        }
+        if (screened.length() <= READ_INLINE_MAX_CHARS) {
+            return screened.stripTrailing();
+        }
+        int lastLine = screened.lastIndexOf('\n', READ_INLINE_MAX_CHARS);
+        return screened.substring(0, Math.max(0, lastLine)).stripTrailing() + "\n[More matches omitted. Narrow the query or path.]";
     }
 
     /** Cuts only on line boundaries, so a page never hands the model half a line it would then have to guess the rest of. */

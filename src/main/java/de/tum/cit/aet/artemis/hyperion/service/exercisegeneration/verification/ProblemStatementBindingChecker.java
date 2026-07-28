@@ -22,6 +22,9 @@ final class ProblemStatementBindingChecker {
      */
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task\\]\\[[^\\]]*\\]\\((.*)\\)");
 
+    /** Production rendering masks code before expanding task bindings, so code examples must not count as executable Artemis tasks here either. */
+    private static final Pattern MARKDOWN_CODE = Pattern.compile("```[\\s\\S]*?```|`[^`\\n]+`");
+
     /**
      * A line shaped like a task binding, capturing its keyword so a near-miss such as {@code [tasks]} or {@code [Task]} is caught: only the literal lowercase {@code [task]} binds
      * tests, and any other keyword renders as plain text, silently dropping a graded requirement while leaking the raw test name.
@@ -62,8 +65,8 @@ final class ProblemStatementBindingChecker {
 
     /** A title names one seam, so a repeat means tests were split one-per-task instead of grouped. */
     static List<String> duplicateTaskTitles(String problemStatement) {
-        return TASK_TITLE.matcher(problemStatement).results().map(match -> match.group(1).strip()).collect(Collectors.groupingBy(title -> title)).entrySet().stream()
-                .filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
+        return TASK_TITLE.matcher(withoutMarkdownCode(problemStatement)).results().map(match -> match.group(1).strip()).collect(Collectors.groupingBy(title -> title)).entrySet()
+                .stream().filter(entry -> entry.getValue().size() > 1).map(Map.Entry::getKey).sorted().toList();
     }
 
     /** A {@code testsColor} name matching no test is a silently dead interactive diagram link. */
@@ -171,13 +174,13 @@ final class ProblemStatementBindingChecker {
     }
 
     static boolean hasTaskBindings(String problemStatement) {
-        return TASK_BINDING.matcher(problemStatement).find();
+        return TASK_BINDING.matcher(withoutMarkdownCode(problemStatement)).find();
     }
 
     /** In encounter order, preserving duplicates so the duplicate-binding gate can see them. */
     static List<String> boundTestNames(String problemStatement) {
         List<String> names = new ArrayList<>();
-        Matcher matcher = TASK_BINDING.matcher(problemStatement);
+        Matcher matcher = TASK_BINDING.matcher(withoutMarkdownCode(problemStatement));
         while (matcher.find()) {
             for (String rawName : matcher.group(1).split(",")) {
                 String name = rawName.trim();
@@ -191,7 +194,7 @@ final class ProblemStatementBindingChecker {
 
     static List<List<String>> boundTestGroups(String problemStatement) {
         List<List<String>> groups = new ArrayList<>();
-        Matcher matcher = TASK_BINDING.matcher(problemStatement);
+        Matcher matcher = TASK_BINDING.matcher(withoutMarkdownCode(problemStatement));
         while (matcher.find()) {
             List<String> names = new ArrayList<>();
             for (String rawName : matcher.group(1).split(",")) {
@@ -256,7 +259,7 @@ final class ProblemStatementBindingChecker {
 
     /** See {@link #TASK_LIKE_BINDING}. */
     static List<String> malformedTaskKeywords(String problemStatement) {
-        Matcher matcher = TASK_LIKE_BINDING.matcher(problemStatement);
+        Matcher matcher = TASK_LIKE_BINDING.matcher(withoutMarkdownCode(problemStatement));
         List<String> wrongKeywords = new ArrayList<>();
         while (matcher.find()) {
             String keyword = matcher.group(1);
@@ -385,5 +388,9 @@ final class ProblemStatementBindingChecker {
     /** Whitespace only: production task extraction matches test names exactly after trimming the comma-separated binding entries. */
     static String normalizeTestName(String name) {
         return name.trim();
+    }
+
+    private static String withoutMarkdownCode(String problemStatement) {
+        return MARKDOWN_CODE.matcher(problemStatement).replaceAll("");
     }
 }

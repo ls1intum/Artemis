@@ -732,6 +732,7 @@ public final class ExerciseIntegrityGate {
                     + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**"
                     + "(?<![-\\w])(?:recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?)\\**\\b"
                     + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}(?<![-\\w])(?:recursion|loops?|iteration)\\b" + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
+                    + "|must\\**\\s+be\\s+implemented\\s+as\\s+(?:a\\s+)?[^.|\\n]{0,30}\\bif\\p{Pd}?else\\b"
                     + "|(?<![-\\w])(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed"
                     + "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))",
             Pattern.CASE_INSENSITIVE);
@@ -744,7 +745,7 @@ public final class ExerciseIntegrityGate {
      * "recursive" somewhere, and "the recursive helper's base case is untested" is an ordinary repairable gap that must keep its repair round.
      */
     private static final Pattern TECHNIQUE_CLAIM = Pattern
-            .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?)\\b"
+            .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?|if\\p{Pd}?else)\\b"
                     + "|\\b(?:iterativ\\w*|recursiv\\w*|non-recursive|loop-based|stack-based)\\s+(?:implementation|version|solution|approach|variant)"
                     + "|(?:uses?|using|written\\s+with|replaces?\\s+\\w+\\s+with)\\s+(?:an?\\s+|the\\s+)?(?:for|while|do-while)\\s+loops?"
                     + "|(?:is|be|being)\\s+(?:actually\\s+)?(?:implemented\\s+)?(?:recursiv\\w*|iterativ\\w*)\\b", Pattern.CASE_INSENSITIVE);

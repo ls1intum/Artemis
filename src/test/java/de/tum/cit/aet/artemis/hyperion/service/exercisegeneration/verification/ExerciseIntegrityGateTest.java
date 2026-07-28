@@ -1217,14 +1217,16 @@ class ExerciseIntegrityGateTest {
     @ValueSource(strings = { "`sum` must be implemented **recursively**.", "The implementation must not use loops.", "The transformation must use the Stream API.",
             "Loops are not allowed; solve this with recursion.", "Recursion is not allowed.", "Implement `sum` recursively without any loop.",
             "Do not use loops or iteration in your implementation.", "The method should be implemented recursively.", "The implementation must avoid loops entirely.",
-            "Iterative constructs are not allowed.", "The solution must use recursion, not iteration." })
+            "Iterative constructs are not allowed.", "The solution must use recursion, not iteration.",
+            "The `grade(int)` method **must** be implemented as a single `if‑else` chain." })
     void techniqueMandates_fireOnRulesNoAssertionCanObserve(String rule) {
         assertThat(ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + rule)).isNotEmpty();
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "an implementation that uses a for loop instead of recursion", "an iterative implementation using an explicit stack",
-            "a version that computes the result with a while loop rather than recursively", "the tests do not check that the implementation is recursive" })
+            "a version that computes the result with a while loop rather than recursively", "the tests do not check that the implementation is recursive",
+            "a lookup table instead of a single if-else chain" })
     void techniqueClaims_recogniseTheCriticsOwnPhrasing(String finding) {
         // Findings are written in the critic's voice, not the specification's: a weak-oracle finding carries the surviving mutant's description and never says "must".
         assertThat(ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding)).isTrue();

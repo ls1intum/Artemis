@@ -35,6 +35,12 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
+    void hasTaskBindings_falseWhenBindingSyntaxIsInsideMarkdownCode() {
+        assertThat(ProblemStatementBindingChecker.hasTaskBindings("`[task][Sort an array](testSorts)`\n")).isFalse();
+        assertThat(ProblemStatementBindingChecker.hasTaskBindings("```\n[task][Sort an array](testSorts)\n```\n")).isFalse();
+    }
+
+    @Test
     void hasTaskBindings_falseForABareTaskMarkerThatIsNotABinding() {
         assertThat(ProblemStatementBindingChecker.hasTaskBindings("## [tasks]\nImplement the sort method.\n")).isFalse();
     }

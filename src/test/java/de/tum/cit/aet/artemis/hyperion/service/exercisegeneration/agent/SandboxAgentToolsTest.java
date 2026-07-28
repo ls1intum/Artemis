@@ -80,13 +80,22 @@ class SandboxAgentToolsTest {
 
     @Test
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
-        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        sandbox.files().put("/workspace/problem-statement.md", "first\nElevator list is empty\nlast Elevator list is empty");
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
+                "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         boolean dirtyBefore = tools.checkpointState().dirtySinceLastPassingCheck();
 
-        assertThat(tools.search("problem-statement.md", "Elevator list is empty")).isEqualTo("2:Elevator list is empty\n3:last Elevator list is empty");
+        assertThat(tools.search("problem-statement.md", "Elevator list is empty"))
+                .isEqualTo("problem-statement.md:2:Elevator list is empty\nproblem-statement.md:3:last Elevator list is empty");
         assertThat(tools.checkpointState().dirtySinceLastPassingCheck()).isEqualTo(dirtyBefore);
+    }
+
+    @Test
+    void search_acceptsADirectoryPath() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
+                "/workspace/reference/.env.production:1:@WhitelistPath(\"secret\")\n/workspace/reference/tests/Example.java:4:@WhitelistPath(\"target\")\n", "", false));
+
+        assertThat(new SandboxAgentTools(sandbox, "s").search("reference/tests", "@WhitelistPath")).isEqualTo("reference/tests/Example.java:4:@WhitelistPath(\"target\")");
     }
 
     @Test
