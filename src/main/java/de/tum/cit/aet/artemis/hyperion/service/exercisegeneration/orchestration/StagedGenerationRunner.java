@@ -88,6 +88,9 @@ public class StagedGenerationRunner {
      */
     private static final int POOL_HARD_CAP = 83;
 
+    /** The final statement pass is cheap and prevents expensive verifier attempts from rediscovering task-binding defects. Earlier stages may not consume this reserve. */
+    private static final int STATEMENT_TURN_RESERVE = STAGE_BASE_BUDGETS[2];
+
     /** The smallest turn budget a stage can usefully run with; below this remaining pool, no further stage or re-entry is started. */
     private static final int MIN_STAGE_BUDGET = 3;
 
@@ -332,11 +335,13 @@ public class StagedGenerationRunner {
             if (wallClockExceeded(startedAt)) {
                 log.info("Staged generation wall-clock budget of {} exceeded before stage {} for exercise {}; stopping with {} stage(s) completed", authoringBudget, stage,
                         exercise.getId(), index);
+                emit(progress, "Phase " + (index + 1) + "/" + STAGE_ORDER.size() + " was skipped because the authoring time budget was exhausted.");
                 break;
             }
-            if (remainingPool < MIN_STAGE_BUDGET) {
+            if (allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
                 // The pool is the hard turn ceiling: starting another stage with the floor budget would silently exceed it, so stop here and let post-loop verification decide.
                 log.info("Staged generation turn pool exhausted before stage {} for exercise {}; stopping with {} stage(s) completed", stage, exercise.getId(), index);
+                emit(progress, "Phase " + (index + 1) + "/" + STAGE_ORDER.size() + " was skipped because the shared agent-turn budget was exhausted.");
                 break;
             }
             if (continuous && stage == GenerationStage.STATEMENT && conversation != null) {
@@ -344,7 +349,7 @@ public class StagedGenerationRunner {
                 conversation = null;
             }
 
-            int allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, remainingPool);
+            int allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
             emit(progress, STAGE_PROGRESS_LABELS.get(index));
             baseTools.enterStage(stage);
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
@@ -533,7 +538,7 @@ public class StagedGenerationRunner {
                                     freshSemanticSpecAttempt = true;
                                 }
                                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
-                                allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, remainingPool);
+                                allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
                                 continue;
                             }
                             else if (!review.accepted()) {
@@ -579,7 +584,7 @@ public class StagedGenerationRunner {
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.getId(), gate.observation());
                 if (stage == GenerationStage.SPEC) {
-                    if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || remainingPool < MIN_STAGE_BUDGET) {
+                    if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
                         return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), archivedConversation,
                                 conversation);
                     }
@@ -587,11 +592,11 @@ public class StagedGenerationRunner {
                     gateFeedback = semanticSpecFeedback == null ? gate.observation() : semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
                     semanticSpecFeedback = null;
                     emit(progress, "Phase " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after its review or consistency check");
-                    allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, remainingPool);
+                    allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
                     continue;
                 }
                 boolean stageCanReenter = stageReentriesUsed == 0 && reentriesRemaining > 0;
-                if (!stageCanReenter || remainingPool < MIN_STAGE_BUDGET) {
+                if (!stageCanReenter || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
                     // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
                     // but it cannot reconstruct a specification that was never approved, so only that case fails closed.
                     AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
@@ -605,7 +610,7 @@ public class StagedGenerationRunner {
                 reentriesRemaining--;
                 gateFeedback = gate.observation();
                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": retrying after gate feedback");
-                allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, remainingPool);
+                allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, allocatablePool(stage, remainingPool));
             }
 
         }
@@ -725,6 +730,10 @@ public class StagedGenerationRunner {
      */
     static int allocateStageBudget(int base, int rollover, int remainingPool) {
         return Math.max(MIN_STAGE_BUDGET, Math.min(base + rollover, remainingPool));
+    }
+
+    static int allocatablePool(GenerationStage stage, int remainingPool) {
+        return stage == GenerationStage.STATEMENT ? remainingPool : Math.max(0, remainingPool - STATEMENT_TURN_RESERVE);
     }
 
     private record GateEvaluation(StageCheckResult result, boolean reused) {

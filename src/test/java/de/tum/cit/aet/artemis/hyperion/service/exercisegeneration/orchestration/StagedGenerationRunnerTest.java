@@ -462,6 +462,13 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void earlierStagesCannotConsumeTheStatementPass() {
+        assertThat(StagedGenerationRunner.allocatablePool(GenerationStage.TESTS, 21)).isEqualTo(14);
+        assertThat(StagedGenerationRunner.allocatablePool(GenerationStage.SPEC, 7)).isZero();
+        assertThat(StagedGenerationRunner.allocatablePool(GenerationStage.STATEMENT, 7)).isEqualTo(7);
+    }
+
+    @Test
     void rejectsUnknownConversationMode() {
         assertThatThrownBy(() -> new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), "sideways"))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("CONTINUOUS or FRESH");
