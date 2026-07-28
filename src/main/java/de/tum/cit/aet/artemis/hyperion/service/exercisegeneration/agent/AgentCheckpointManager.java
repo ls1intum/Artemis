@@ -437,9 +437,9 @@ public class AgentCheckpointManager {
                     + localTurn + "/" + maxTurns + ").");
         }
         if (!forking) {
-            String expectedPrompt = sha256(uncheckedJson(source.before().conversation()));
-            String actualPrompt = sha256(uncheckedJson(current.conversation()));
-            if (!expectedPrompt.equals(actualPrompt)) {
+            // RecordedMessage is the canonical provider contract. Compare it structurally: metadata maps are unordered, so hashing their incidental JSON key order creates
+            // false drift after an encode/decode replay cycle.
+            if (!objectMapper.valueToTree(source.before().conversation()).equals(objectMapper.valueToTree(current.conversation()))) {
                 throw new IllegalStateException("Prompt drift before replayed checkpoint call " + ordinal + ". Use a fork at the first intentionally changed call.");
             }
             Map<String, String> expectedRoots = rootHashes(source.before());
@@ -451,15 +451,6 @@ public class AgentCheckpointManager {
                 throw new IllegalStateException(
                         "Sandbox state drift before replayed checkpoint call " + ordinal + " in " + changedRoots + "; refusing to hide a non-deterministic prefix.");
             }
-        }
-    }
-
-    private byte[] uncheckedJson(Object value) {
-        try {
-            return objectMapper.writeValueAsBytes(value);
-        }
-        catch (IOException e) {
-            throw new IllegalStateException("Could not encode checkpoint state", e);
         }
     }
 
