@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,18 @@ public class AttachmentVideoUnit extends LectureUnit {
 
     public void setSlides(List<Slide> slides) {
         this.slides = slides;
+    }
+
+    /**
+     * Resolves the effective release date used for visibility synchronization.
+     *
+     * @return the unit release date, or the attachment release date when the unit date is absent
+     */
+    public ZonedDateTime resolveReleaseDate() {
+        if (getReleaseDate() != null) {
+            return getReleaseDate();
+        }
+        return attachment != null ? attachment.getReleaseDate() : null;
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java

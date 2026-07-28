@@ -5,7 +5,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip } from 'primeng/tooltip';
+import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -13,7 +14,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
-import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
+import {
+    MissingResultInformation,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAIResultAndFailed,
+    isAIResultAndTimedOut,
+    isAthenaAIResult,
+} from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +39,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
     styleUrls: ['./result-history-dropdown.component.scss'],
-    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, Tooltip],
 })
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
@@ -42,7 +51,9 @@ export class ResultHistoryDropdownComponent {
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
+    readonly faRobot = faRobot;
     readonly ExerciseType = ExerciseType;
+    readonly isAthenaAIResult = isAthenaAIResult;
 
     exercise = input.required<Exercise>();
     sortedHistoryResults = input.required<Result[]>();
@@ -175,6 +186,19 @@ export class ResultHistoryDropdownComponent {
         return this.resultService.getResultString(result, this.exercise(), participation, false);
     }
 
+    getAthenaFeedbackTooltip(result: Result): string {
+        if (isAIResultAndFailed(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+        }
+        if (isAIResultAndTimedOut(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+        }
+        if (result.successful === undefined) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+        }
+        return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
+    }
+
     getResultFeedbackMessage(result: Result): string {
         const submission = result.submission;
         if (submission && (submission as ProgrammingSubmission).buildFailed) {
@@ -260,8 +284,6 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return;
         }
-        this.selectedResultId.set(result.id);
-
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
