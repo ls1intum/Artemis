@@ -582,7 +582,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(importedExercise.getId()).isNotEqualTo(sourceExerciseId);
-        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerCompetenciesByIdElseThrow(importedExercise.getId());
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.getId());
         assertThat(reloaded.getCompetencyLinks()).hasSize(1);
         assertThat(reloaded.getCompetencyLinks().iterator().next().getCompetency().getId()).isEqualTo(targetCompetency.getId());
     }
