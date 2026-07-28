@@ -38,7 +38,10 @@ revert-after-first-call mutant. Do not move the goalpost to a later call count m
 
 Every failed mutant, uncovered finding, or weak-oracle finding must identify the exact student-facing promise it assesses. If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation, omit it instead of reporting missing coverage. Never report a finding whose own reason says the specification does not require it.
 
-A valid mutant must differ from the correct behavior for at least one input permitted by the declared contract and artifact types. Do not report mathematically redundant transformations or states that the declared types make impossible as coverage gaps; they cannot distinguish a wrong student implementation from a correct one.
+A valid mutant must differ from the correct behavior for at least one input permitted by the declared contract and artifact types. It must be reachable through the
+student-facing API: discard mutants that require reflection, private-state mutation, or bypassing a constructor precondition to create an otherwise impossible state.
+Do not report mathematically redundant transformations or states that the declared types make impossible as coverage gaps; they cannot distinguish a wrong student
+implementation from a correct one.
 
 Include applicable mutantChecks even when they pass. Any false check is itself a blocker and need not be repeated in a finding array. Do not assess examples, API wording, starter ergonomics, presentation, or adaptation scope in this pass.
 
