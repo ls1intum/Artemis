@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -739,7 +740,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      */
     private File writeMavenSettingsUsingMirror(Path directory) throws IOException {
         Path settingsFile = directory.resolve("artemis-test-settings.xml");
-        Files.writeString(settingsFile, """
+        FileUtils.writeStringToFile(settingsFile.toFile(), """
                 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
                     <mirrors>
                         <mirror>
@@ -750,7 +751,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                         </mirror>
                     </mirrors>
                 </settings>
-                """.formatted(MAVEN_CENTRAL_MIRROR_URL));
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
         return settingsFile.toFile();
     }
 
@@ -770,7 +771,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
      */
     private File writeGradleInitScriptUsingMirror(Path directory) throws IOException {
         Path initScript = directory.resolve("artemis-test-mirror-init.gradle");
-        Files.writeString(initScript, """
+        FileUtils.writeStringToFile(initScript.toFile(), """
                 beforeSettings { settings ->
                     settings.pluginManagement.repositories {
                         maven { url = uri("%1$s") }
@@ -785,7 +786,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                         }
                     }
                 }
-                """.formatted(MAVEN_CENTRAL_MIRROR_URL));
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
         return initScript.toFile();
     }
 
