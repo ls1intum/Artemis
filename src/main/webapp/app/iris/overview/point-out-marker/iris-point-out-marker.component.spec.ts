@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisPointOutMarkerComponent } from './iris-point-out-marker.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -117,15 +115,12 @@ describe('IrisPointOutMarkerComponent', () => {
         expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3, timestamp: 150, forceOpen: true });
     });
 
-    it('should describe the button with a tooltip rather than overriding its accessible name', async () => {
+    it('should let the visible label be the accessible name', async () => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3 }));
 
-        // The visible label is the accessible name; the hint is a tooltip, so no aria-label may shadow it.
+        // The visible label is the accessible name, so no aria-label may shadow it.
         const button = fixture.nativeElement.querySelector('button[tumUiButton]');
         expect(button.getAttribute('aria-label')).toBeNull();
-
-        const tooltip = fixture.debugElement.query(By.directive(TumUiTooltipDirective));
-        expect(tooltip.injector.get(TumUiTooltipDirective).content()).toBe('artemisApp.iris.pointOut.openTooltip');
     });
 
     it('should rebuild labels when the language changes', async () => {

@@ -5,7 +5,6 @@ import { faLocationArrow } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { IrisMessageContent, getPointOut, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -27,7 +26,7 @@ interface PointOutMarker {
     selector: 'jhi-iris-point-out-marker',
     templateUrl: './iris-point-out-marker.component.html',
     styleUrl: './iris-point-out-marker.component.scss',
-    imports: [TumUiButtonDirective, TumUiTooltipDirective, FaIconComponent],
+    imports: [TumUiButtonDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisPointOutMarkerComponent {
@@ -73,11 +72,6 @@ export class IrisPointOutMarkerComponent {
                 return undefined;
         }
     }
-
-    protected readonly openTooltip = computed(() => {
-        this.currentLanguage();
-        return this.translateService.instant('artemisApp.iris.pointOut.openTooltip');
-    });
 
     /**
      * Navigates back to a marker's position, forcing the combined view open if the student closed it.

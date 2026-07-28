@@ -1,6 +1,6 @@
 @for (marker of markers(); track $index) {
     <div class="marker-row">
-        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" [tumUiTooltip]="openTooltip()" (click)="onMarkerClick(marker.data)">
+        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="onMarkerClick(marker.data)">
             <fa-icon [icon]="faLocationArrow" />
             <span>{{ marker.label }}</span>
         </button>

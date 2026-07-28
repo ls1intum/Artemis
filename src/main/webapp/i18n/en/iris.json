@@ -307,8 +307,7 @@
                 "labelNoUnit": "Navigated to {{target}}",
                 "page": "page {{page}}",
                 "timestamp": "timestamp {{time}}",
-                "and": " and ",
-                "openTooltip": "Open this in the lecture view"
+                "and": " and "
             },
             "chatHistory": {
                 "title": "Chats",

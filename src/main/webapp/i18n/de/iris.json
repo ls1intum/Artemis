@@ -307,8 +307,7 @@
                 "labelNoUnit": "Zu {{target}} gesprungen",
                 "page": "Seite {{page}}",
                 "timestamp": "Zeitpunkt {{time}}",
-                "and": " und ",
-                "openTooltip": "In der Vorlesungsansicht öffnen"
+                "and": " und "
             },
             "chatHistory": {
                 "title": "Chats",
