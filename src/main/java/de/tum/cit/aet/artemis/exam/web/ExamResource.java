@@ -401,6 +401,21 @@ public class ExamResource {
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+
+        // Validate the resulting working time for real exams
+        if (!exam.isTestExam()) {
+            if (exam.getWorkingTime() <= 0) {
+                throw new BadRequestAlertException("The working time of a real exam must be positive.", ENTITY_NAME, "examWorkingTimeInvalid");
+            }
+            final int maxWorkingTimeSeconds = 2_592_000;
+            if (exam.getWorkingTime() > maxWorkingTimeSeconds) {
+                throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
+            }
+            if (!exam.getEndDate().isAfter(exam.getStartDate())) {
+                throw new BadRequestAlertException("The end date must be after the start date.", ENTITY_NAME, "examTimes");
+            }
+        }
+
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
