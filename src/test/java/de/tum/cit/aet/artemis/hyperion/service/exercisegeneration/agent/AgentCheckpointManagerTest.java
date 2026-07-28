@@ -316,7 +316,7 @@ class AgentCheckpointManagerTest {
         when(exercise.getId()).thenReturn(8L);
         when(exercise.getTitle()).thenReturn("Failure cursor");
         ChatModel recordingModel = mock(ChatModel.class);
-        ChatResponse unknownTool = toolCall("search");
+        ChatResponse unknownTool = toolCall("missing_tool");
         when(recordingModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(unknownTool, unknownTool, unknownTool, unknownTool,
                 new ChatResponse(List.of(new Generation(new AssistantMessage("recorded completion")))));
         Path recordRoot = tempDirectory.resolve("failure-source");
@@ -355,7 +355,7 @@ class AgentCheckpointManagerTest {
         InMemorySandbox sourceSandbox = new InMemorySandbox(Map.of());
         SandboxAgentTools sourceTools = new SandboxAgentTools(sourceSandbox, "source");
         ChatModel sourceModel = mock(ChatModel.class);
-        when(sourceModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(toolCall("search"),
+        when(sourceModel.call(org.mockito.ArgumentMatchers.any(Prompt.class))).thenReturn(toolCall("missing_tool"),
                 new ChatResponse(List.of(new Generation(new AssistantMessage("source completion")))));
         AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
         AgentLoopRunner sourceRunner = new AgentLoopRunner(List.of(sourceModel), 128_000, Duration.ofMinutes(5), new TestProviderFailureCooldown(), recorder);

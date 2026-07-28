@@ -240,6 +240,52 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return pageFileContent(safe, result.stdout(), offset, limit);
     }
 
+    /**
+     * Finds exact text in one workspace file without allowing shell expansion or changing checkpoint state.
+     *
+     * @param path  the workspace-relative file path
+     * @param query the single-line text fragment
+     * @return numbered matching lines, or an actionable error
+     */
+    @Tool(name = "search", description = AgentToolDescriptions.SEARCH)
+    public String search(@ToolParam(description = AgentToolDescriptions.SEARCH_PATH) String path, @ToolParam(description = AgentToolDescriptions.SEARCH_QUERY) String query) {
+        String safe = workspaceRelativePath(path);
+        if (safe == null) {
+            return invalidPathError(path);
+        }
+        if (query == null || query.isBlank() || query.contains("\n") || query.contains("\r")) {
+            return "ERROR: query must be non-empty text from a single line.";
+        }
+        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        if (!pathAssessment.isSafe()) {
+            return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
+        }
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
+        if (!result.isSuccess()) {
+            return screenObservation(safe, "ERROR: could not search '" + safe + "': " + result.combinedOutput());
+        }
+        String screened = screenObservation(safe, result.stdout());
+        if (!screened.equals(result.stdout())) {
+            return screened;
+        }
+        StringBuilder matches = new StringBuilder();
+        String[] lines = result.stdout().split("\n", -1);
+        for (int index = 0; index < lines.length; index++) {
+            if (!lines[index].contains(query)) {
+                continue;
+            }
+            String match = (index + 1) + ":" + lines[index];
+            if (matches.length() + match.length() + 1 > READ_INLINE_MAX_CHARS) {
+                return matches + "\n[More matches omitted. Narrow the query.]";
+            }
+            if (!matches.isEmpty()) {
+                matches.append('\n');
+            }
+            matches.append(match);
+        }
+        return matches.isEmpty() ? "No matches in " + safe + "." : matches.toString();
+    }
+
     /** Cuts only on line boundaries, so a page never hands the model half a line it would then have to guess the rest of. */
     private static String pageFileContent(String safe, String content, @Nullable Integer offset, @Nullable Integer limit) {
         String[] allLines = content.split("\n", -1);

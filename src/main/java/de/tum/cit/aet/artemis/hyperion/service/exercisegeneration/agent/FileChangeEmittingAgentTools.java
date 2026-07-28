@@ -44,6 +44,11 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
         return delegate.readFile(path, offset, limit);
     }
 
+    @Tool(name = "search", description = AgentToolDescriptions.SEARCH)
+    public String search(@ToolParam(description = AgentToolDescriptions.SEARCH_PATH) String path, @ToolParam(description = AgentToolDescriptions.SEARCH_QUERY) String query) {
+        return delegate.search(path, query);
+    }
+
     /**
      * Emits a file-change notification when the delegate reports success.
      *

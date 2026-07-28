@@ -16,6 +16,12 @@ final class AgentToolDescriptions {
 
     static final String READ_FILE_LIMIT = "maximum number of lines to return (omit to read to the output limit)";
 
+    static final String SEARCH = "Search one UTF-8 workspace file for an exact text fragment. Returns matching line numbers and lines without changing the workspace. Use this instead of bash/grep when you know the file and text.";
+
+    static final String SEARCH_PATH = "workspace-relative file path to search";
+
+    static final String SEARCH_QUERY = "exact non-empty text fragment to find on a line";
+
     static final String WRITE_FILE = "Write the full content of a workspace file, creating it (and any parent directories) or overwriting it if it exists. Use only for new files or complete rewrites; for small changes to an existing file use edit_file. The path is workspace-relative.";
 
     static final String WRITE_FILE_PATH = "workspace-relative path to write, e.g. 'solution/palindrome.py'";

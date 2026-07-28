@@ -79,6 +79,27 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        sandbox.files().put("/workspace/problem-statement.md", "first\nElevator list is empty\nlast Elevator list is empty");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        boolean dirtyBefore = tools.checkpointState().dirtySinceLastPassingCheck();
+
+        assertThat(tools.search("problem-statement.md", "Elevator list is empty")).isEqualTo("2:Elevator list is empty\n3:last Elevator list is empty");
+        assertThat(tools.checkpointState().dirtySinceLastPassingCheck()).isEqualTo(dirtyBefore);
+    }
+
+    @Test
+    void search_rejectsUnsafePathsAndMultilineQueries() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.search("../secret", "token")).startsWith("ERROR: invalid path");
+        assertThat(tools.search("problem-statement.md", "one\ntwo")).isEqualTo("ERROR: query must be non-empty text from a single line.");
+        assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
     void editFile_rejectsAmbiguousMatch() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         sandbox.files().put("/workspace/solution/A.java", "x x x");

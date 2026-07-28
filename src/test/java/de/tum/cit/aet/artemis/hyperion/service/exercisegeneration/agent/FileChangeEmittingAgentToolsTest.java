@@ -97,13 +97,15 @@ class FileChangeEmittingAgentToolsTest {
     }
 
     @Test
-    void readBashVerifyAndSubmitRemainPureDelegations() {
+    void readSearchBashVerifyAndSubmitRemainPureDelegations() {
         when(delegate.readFile("solution/A.java", null, null)).thenReturn("content");
+        when(delegate.search("problem-statement.md", "empty")).thenReturn("3:empty");
         when(delegate.bash("ls")).thenReturn("out");
         when(delegate.verify()).thenReturn("verified");
         when(delegate.submit("done")).thenReturn("submitted");
 
         assertThat(tools.readFile("solution/A.java", null, null)).isEqualTo("content");
+        assertThat(tools.search("problem-statement.md", "empty")).isEqualTo("3:empty");
         assertThat(tools.bash("ls")).isEqualTo("out");
         assertThat(tools.verify()).isEqualTo("verified");
         assertThat(tools.submit("done")).isEqualTo("submitted");
