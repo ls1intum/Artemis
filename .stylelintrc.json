@@ -43,7 +43,7 @@
             "customSyntax": "postcss-scss",
             "rules": {
                 "color-no-hex": true,
-                "declaration-property-value-disallowed-list": { "/.+/": ["/--bs-/"] }
+                "declaration-property-value-disallowed-list": { "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"] }
             }
         }
     ],

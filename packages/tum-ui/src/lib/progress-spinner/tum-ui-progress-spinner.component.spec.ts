@@ -27,7 +27,6 @@ describe('TumUiProgressSpinnerComponent', () => {
     it('exposes a status role and busy state for assistive tech', () => {
         expect(host.getAttribute('role')).toBe('status');
         expect(host.getAttribute('aria-busy')).toBe('true');
-        expect(host.className).toContain('tum-ui-progress-spinner');
     });
 
     it('renders the rotating svg with the animated circle', () => {
@@ -55,12 +54,5 @@ describe('TumUiProgressSpinnerComponent', () => {
         fixture.detectChanges();
         const spin = fixture.debugElement.query(By.css('.tum-ui-progress-spinner-spin')).nativeElement as SVGElement;
         expect(spin.style.animationDuration).toBe('1s');
-    });
-
-    it('forwards styleClass onto the spinner', () => {
-        fixture.componentRef.setInput('styleClass', 'w-8 h-8');
-        fixture.detectChanges();
-        expect(host.className).toContain('w-8');
-        expect(host.className).toContain('h-8');
     });
 });

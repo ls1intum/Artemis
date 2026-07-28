@@ -6,8 +6,6 @@
 packages:
   - 'packages/*'
 
-# Canonical runtime versions shared by Artemis and in-repository packages.
-# rules/tum-ui-package.spec.mjs rejects drift in the publishable manifest.
 catalog:
   '@angular/cdk': 22.1.0
   '@angular/common': 22.1.0

@@ -4,14 +4,6 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 
-/**
- * Popover on Angular CDK overlay.
- *
- * The medium "showcase" component of the experiment: a content-projected panel opened via
- * {@link TumUiPopoverTriggerDirective}. Rides the shared overlay substrate for collision-aware
- * positioning, closes on backdrop click + Escape, and traps/restores focus (cdkTrapFocus). Renders
- * nothing inline; its projected content is captured in an ng-template and portaled on open.
- */
 @Component({
     selector: 'tum-ui-popover',
     templateUrl: './tum-ui-popover.component.html',
@@ -23,17 +15,16 @@ export class TumUiPopoverComponent implements OnDestroy {
     private readonly viewContainerRef = inject(ViewContainerRef);
 
     readonly placement = input<TumUiOverlayPlacement>('bottom');
-    /** Accessible name announced for the role="dialog" panel. Required: a dialog must have a name. */
+
     readonly ariaLabel = input.required<string>();
     readonly openChange = output<boolean>();
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
     private readonly openState = signal(false);
-    /** Whether the popover is currently open. Read-only: drive it through open() / close() / toggle(). */
+
     readonly isOpen = this.openState.asReadonly();
 
-    /** Open the popover anchored to `origin`. No-op if already open. */
     open(origin: ElementRef<HTMLElement> | HTMLElement): void {
         if (this.isOpen()) {
             return;
@@ -50,7 +41,6 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.openChange.emit(true);
     }
 
-    /** Close the popover and dispose its overlay. No-op if already closed. */
     close(): void {
         if (!this.isOpen()) {
             return;
@@ -61,7 +51,6 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.openChange.emit(false);
     }
 
-    /** Open the popover if closed, or close it if open. */
     toggle(origin: ElementRef<HTMLElement> | HTMLElement): void {
         if (this.isOpen()) {
             this.close();

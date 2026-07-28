@@ -20,18 +20,18 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiChipComponent } from '../chip/tum-ui-chip.component';
+import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
-/** Emitted when the debounced typed query is ready. */
 export interface TumUiAutoCompleteCompleteEvent {
     originalEvent?: Event;
     query: string;
 }
-/** Emitted when a suggestion is chosen. */
+
 export interface TumUiAutoCompleteSelectEvent {
     originalEvent?: Event;
     value: unknown;
 }
-/** Emitted when a selected value (chip) is removed. */
+
 export interface TumUiAutoCompleteUnselectEvent {
     originalEvent?: Event;
     value: unknown;
@@ -39,24 +39,11 @@ export interface TumUiAutoCompleteUnselectEvent {
 
 let nextAutoCompleteId = 0;
 
-/**
- * Autocomplete / combobox built on the Angular CDK overlay.
- *
- * Supports single-select and multi-select-with-chips: a `role="combobox"` text input inside a bordered field, the
- * selected values rendered as removable {@link TumUiChipComponent}s in front of it, and a CDK-overlay
- * `role="listbox"` of suggestions. No third-party UI dependency; rides the shared {@link TumUiOverlayService}.
- *
- * The parent drives suggestions asynchronously: typing (debounced by `delay`, gated by `minLength`) emits
- * {@link completeMethod} with `{ query }`; the parent filters and pushes the result into `[suggestions]`. Choosing a
- * suggestion appends a chip, writes the value through the {@link ControlValueAccessor}, and emits {@link onSelect}
- * with `{ value }`; removing a chip (remove button, or Backspace on an empty input) emits {@link onUnselect} with
- * `{ value }`. Works with `[(ngModel)]` and reactive `formControlName`.
- */
 @Component({
     selector: 'tum-ui-autocomplete',
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
-    imports: [A11yModule, TumUiChipComponent],
+    imports: [A11yModule, TumUiChipComponent, TumUiTranslatePipe],
     host: {
         '[class]': 'styleClass()',
     },
@@ -68,43 +55,32 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
 
-    /** The async result list the parent fills in response to {@link completeMethod}. Objects or bare primitives. */
     readonly suggestions = input<readonly unknown[]>([]);
-    /** Property name to read each option's display label from. Omit for primitive options (the option itself is shown). */
-    readonly optionLabel = input<string>();
-    /** `p-autocomplete` alias for {@link optionLabel}; `optionLabel` wins when both are set. */
-    readonly field = input<string>();
-    /** Multi-select mode: renders selected values as chips and binds an array (the admin group / organization picker). */
-    readonly multiple = input(false);
-    /** Placeholder shown in the text input when it is empty (and, in multiple mode, no chip is selected). */
-    readonly placeholder = input<string>();
-    /** Disables the control (merged with a reactive-forms `setDisabledState`). */
-    readonly disabled = input(false);
-    /** Minimum number of typed characters before {@link completeMethod} fires (parity with `p-autocomplete [minLength]`). */
-    readonly minLength = input(1);
-    /** Debounce in milliseconds before {@link completeMethod} fires (parity with `p-autocomplete [delay]`). */
-    readonly delay = input(300);
-    /** Fire {@link completeMethod} on focus (even with an empty query) and open the panel, so all options show
-     *  when the field is focused (parity with `p-autocomplete [completeOnFocus]`). */
-    readonly completeOnFocus = input(false);
-    /** `id` of the text input (the target of an external `<label for>`). Defaults to a unique per-instance id. */
-    readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
-    /** Forwarded onto the input for template-driven-form parity; the CVA itself does not need it. */
-    readonly name = input<string>();
-    /** Accessible name for the input, forwarded as `aria-label` (use when there is no visible `<label>`). */
-    readonly ariaLabel = input<string>();
-    /** Accessible name for each chip's remove button; overridable for i18n. */
-    readonly removeAriaLabel = input<string>('Remove');
-    /** Extra classes forwarded onto the host (drop-in for `p-autocomplete styleClass`, e.g. `w-full`). */
-    readonly styleClass = input<string>('');
-    /** Text shown in the panel when a search returned no suggestions. */
-    readonly emptyMessage = input<string>('No results found');
 
-    /** Emits the debounced typed query so the parent can fetch + set `[suggestions]`. Parity with `(completeMethod)`. */
+    readonly optionLabel = input<string>();
+
+    readonly field = input<string>();
+
+    readonly multiple = input(false);
+
+    readonly placeholder = input<string>();
+
+    readonly disabled = input(false);
+
+    readonly minLength = input(1);
+
+    readonly delay = input(300);
+
+    readonly completeOnFocus = input(false);
+
+    readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
+    readonly name = input<string>();
+    readonly ariaLabel = input<string>();
+    readonly removeAriaLabel = input<string>();
+    readonly styleClass = input<string>('');
+    readonly emptyMessage = input<string>();
     readonly completeMethod = output<TumUiAutoCompleteCompleteEvent>();
-    /** Emits the chosen suggestion. Parity with `(onSelect)` — `{ value }` matches the admin handler. */
     readonly onSelect = output<TumUiAutoCompleteSelectEvent>();
-    /** Emits the removed value. Parity with `(onUnselect)` — `{ value }` matches the admin handler. */
     readonly onUnselect = output<TumUiAutoCompleteUnselectEvent>();
 
     protected readonly listboxId = `tum-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
@@ -118,7 +94,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     private readonly singleValue = signal<unknown>(undefined);
     protected readonly query = signal('');
     protected readonly isFocused = signal(false);
-    /** True once a debounced search has fired for the current query; gates the panel so it never flashes empty on focus. */
     private readonly hasSearched = signal(false);
     protected readonly activeIndex = signal(-1);
     private readonly disabledByForm = signal(false);
@@ -129,14 +104,10 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
     private readonly labelKey = computed(() => this.optionLabel() ?? this.field());
-
-    /** The panel is shown while focused, once a search has fired for a query that meets `minLength` — or for any
-     *  query length when `completeOnFocus` is on (so focusing an empty field can show all options). */
     protected readonly panelVisible = computed(
         () => this.isFocused() && this.hasSearched() && !this.isDisabled() && (this.query().length >= this.minLength() || this.completeOnFocus()),
     );
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
-    /** Placeholder is suppressed once a chip is selected in multiple mode, matching `p-autocomplete`. */
     protected readonly inputPlaceholder = computed(() => (this.multiple() && this.selectedValues().length > 0 ? undefined : this.placeholder()));
 
     constructor() {
@@ -175,8 +146,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void {
         this.disabledByForm.set(isDisabled);
     }
-
-    /** Display text for a value: its `optionLabel` / `field` property, or the primitive itself. */
     protected valueLabel(value: unknown): string {
         const key = this.labelKey();
         const raw = key && value !== null && typeof value === 'object' ? (value as Record<string, unknown>)[key] : value;
@@ -246,8 +215,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
             this.hasSearched.set(false);
         }
     }
-
-    /** Emit the complete request for `query` and mark that a search has run (so the panel may open). */
     private fireComplete(query: string, originalEvent?: Event): void {
         this.completeMethod.emit({ originalEvent, query });
         this.hasSearched.set(true);
@@ -333,8 +300,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         this.hasSearched.set(false);
         this.activeIndex.set(-1);
     }
-
-    /** Single mode shows the selected value's label as the input text; keep the uncontrolled input in sync. */
     private syncSingleInputText(): void {
         if (this.multiple()) {
             return;
@@ -363,8 +328,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
     }
-
-    /** Full class string for one option row (base layout + Aura hover / active / selected state colors). */
     protected optionClasses(option: unknown, index: number): string {
         const base = 'tum-ui-autocomplete-option flex cursor-pointer items-center px-3 py-2';
         const active = this.activeIndex() === index;
@@ -374,8 +337,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         const activeState = active ? ' bg-tum-ui-surface-100 text-tum-ui-surface-800 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0' : '';
         return `${base} text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 hover:text-tum-ui-surface-800 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-800${activeState}`;
     }
-
-    /** Full class string for the multi-container field (base layout + Aura border / focus / disabled state). */
     protected containerClasses(): string {
         const padding = this.multiple() && this.selectedValues().length > 0 ? 'p-1' : 'py-1 px-3';
         const base = `tum-ui-autocomplete-container flex w-full cursor-text flex-wrap items-center gap-1 rounded-md border text-base transition-colors ${padding}`;

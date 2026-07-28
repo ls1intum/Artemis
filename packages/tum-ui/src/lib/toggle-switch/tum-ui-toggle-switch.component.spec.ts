@@ -32,11 +32,9 @@ describe('TumUiToggleSwitchComponent', () => {
         expect(host.getAttribute('role')).toBe('switch');
         expect(host.getAttribute('aria-checked')).toBe('false');
         expect(host.getAttribute('tabindex')).toBe('0');
-        expect(host.className).toContain('tum-ui-toggle-switch');
-        expect(host.className).toContain('bg-tum-ui-surface-300');
     });
 
-    it('toggles on click, reflects aria-checked, turns the track primary, and emits the new value', () => {
+    it('toggles on click, reflects aria-checked, and emits the new value', () => {
         const changed = vi.fn();
         component.changed.subscribe(changed);
 
@@ -44,8 +42,6 @@ describe('TumUiToggleSwitchComponent', () => {
         fixture.detectChanges();
 
         expect(host.getAttribute('aria-checked')).toBe('true');
-        expect(host.getAttribute('data-checked')).toBe('true');
-        expect(host.className).toContain('bg-tum-ui-primary');
         expect(changed).toHaveBeenCalledWith(true);
 
         host.click();
@@ -100,7 +96,6 @@ describe('TumUiToggleSwitchComponent', () => {
         fixture.detectChanges();
         expect(host.getAttribute('aria-disabled')).toBe('true');
         expect(host.getAttribute('tabindex')).toBe('-1');
-        expect(host.className).toContain('opacity-60');
 
         host.click();
         press(' ');

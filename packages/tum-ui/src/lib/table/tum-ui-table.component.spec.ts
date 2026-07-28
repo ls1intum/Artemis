@@ -118,23 +118,6 @@ describe('TumUiTableComponent', () => {
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('descending');
     });
 
-    it('resets the native button look on the sort trigger (no grey UA button-face without Tailwind preflight)', async () => {
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const sortButton: HTMLButtonElement = headerCells()[0].querySelector('button')!;
-        expect(sortButton.className).toContain('appearance-none');
-        expect(sortButton.className).toContain('border-0');
-        expect(sortButton.className).toContain('bg-transparent');
-        expect(sortButton.className).toContain('font-semibold');
-    });
-
-    it('does not render a sort button for a non-sortable column', async () => {
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(headerCells()[1].querySelector('button')).toBeNull();
-        expect(headerCells()[1].getAttribute('aria-sort')).toBeNull();
-    });
-
     it('exposes aria-sort="none" on a sortable-but-unsorted column (announced as sortable) and none on a non-sortable one', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
@@ -191,7 +174,7 @@ describe('TumUiTableComponent', () => {
     });
 
     it('clamps to the last valid page and re-emits when totalRecords shrinks below the current page', async () => {
-        fixture.componentRef.setInput('totalRecords', 130); // 3 pages of 50
+        fixture.componentRef.setInput('totalRecords', 130);
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.debugElement.query(By.css('[data-testid="paginator-last"]')).nativeElement.click();

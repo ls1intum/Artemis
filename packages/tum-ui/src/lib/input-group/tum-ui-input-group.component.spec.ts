@@ -7,7 +7,7 @@ import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 
 @Component({
     template: `
-        <tum-ui-input-group class="w-auto">
+        <tum-ui-input-group>
             <tum-ui-input-group-addon>From</tum-ui-input-group-addon>
             <input tumUiInput type="text" />
         </tum-ui-input-group>
@@ -28,11 +28,6 @@ describe('TumUiInputGroupComponent', () => {
     function group(): HTMLElement {
         return fixture.debugElement.query(By.css('tum-ui-input-group')).nativeElement;
     }
-
-    it('keeps consumer width classes (width is consumer-controlled, unlike p-inputgroup)', () => {
-        expect(group().className).toContain('tum-ui-input-group');
-        expect(group().className).toContain('w-auto');
-    });
 
     it('projects the addon and the field in order', () => {
         const children = Array.from(group().children).map((c) => c.tagName.toLowerCase());

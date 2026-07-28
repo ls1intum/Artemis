@@ -55,7 +55,7 @@ describe('TumUiSelectButtonComponent', () => {
         expect(rendered.map((b) => b.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
     });
 
-    it('selects on click: updates aria-checked, highlights bg-tum-ui-primary, sets the CVA value, and emits', () => {
+    it('selects on click, updates the CVA value, and emits', () => {
         const changed = vi.fn();
         const onChange = vi.fn();
         component.changed.subscribe(changed);
@@ -65,7 +65,6 @@ describe('TumUiSelectButtonComponent', () => {
         fixture.detectChanges();
 
         expect(buttons().map((b) => b.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
-        expect(buttons()[1].className).toContain('bg-tum-ui-primary');
         expect(changed).toHaveBeenCalledWith('WEEK');
         expect(onChange).toHaveBeenCalledWith('WEEK');
         expect(buttons().map((b) => b.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
@@ -131,13 +130,6 @@ describe('TumUiSelectButtonComponent', () => {
         fixture.detectChanges();
         expect(buttons().every((b) => b.getAttribute('aria-checked') === 'false')).toBe(true);
         expect(changed).not.toHaveBeenCalled();
-    });
-
-    it('scales the label font with the size input', () => {
-        expect(buttons()[0].className).toContain('text-base');
-        fixture.componentRef.setInput('size', 'small');
-        fixture.detectChanges();
-        expect(buttons()[0].className).toContain('text-sm');
     });
 });
 

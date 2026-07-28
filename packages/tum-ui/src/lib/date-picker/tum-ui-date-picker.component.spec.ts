@@ -59,7 +59,7 @@ describe('TumUiDatePickerComponent', () => {
         input().dispatchEvent(new Event('input'));
         expect(component.isValid()).toBe(false);
         expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 08:30');
-        expect(input().value).toBe('13.06.2026 08:30xx'); // typed text preserved, not cleared
+        expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
     it('clears the value and the displayed text', () => {
@@ -93,10 +93,10 @@ describe('TumUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
-    it('shows the error border and is invalid when [error] is set', () => {
+    it('exposes an external error to assistive technology and is invalid', () => {
         fixture.componentRef.setInput('error', true);
         fixture.detectChanges();
-        expect(input().classList).toContain('border-tum-ui-state-danger');
+        expect(input().getAttribute('aria-invalid')).toBe('true');
         expect(component.isValid()).toBe(false);
     });
 
@@ -104,8 +104,8 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.componentRef.setInput('error', true);
         fixture.detectChanges();
-        expect(component.isValid()).toBe(false); // combined validity reflects the external error
-        expect(component.hasValidInput()).toBe(true); // but the typed date still parses
+        expect(component.isValid()).toBe(false);
+        expect(component.hasValidInput()).toBe(true);
         input().value = 'not a date';
         input().dispatchEvent(new Event('input'));
         expect(component.hasValidInput()).toBe(false);
@@ -216,7 +216,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
         openPanel();
         const hour = timeField('tum-ui-date-picker-hour');
-        hour.value = '10'; // typed but not yet committed (no 'change' dispatched)
+        hour.value = '10';
         hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
         expect(component.value()?.format('HH:mm')).toBe('11:30');
         expect(hour.value).toBe('11');
@@ -295,11 +295,11 @@ describe('TumUiDatePickerComponent', () => {
             host.componentInstance.value = dayjs('2026-06-13T08:30');
             host.detectChanges();
             const inp = hostInput(host);
-            inp.value = '13.06.2026 08:3'; // incomplete -> unparseable
+            inp.value = '13.06.2026 08:3';
             inp.dispatchEvent(new Event('input'));
             host.detectChanges();
-            expect(inp.value).toBe('13.06.2026 08:3'); // text preserved
-            expect(host.componentInstance.value?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 08:30'); // value untouched
+            expect(inp.value).toBe('13.06.2026 08:3');
+            expect(host.componentInstance.value?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 08:30');
         });
     });
 });

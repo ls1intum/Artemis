@@ -124,6 +124,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Test TUM UI in Isolation
+        run: pnpm run tum-ui:test
+        if: ${{ !cancelled() }}
       - name: Validate TUM UI Package Artifact
         run: pnpm run tum-ui:pack:check
         if: ${{ !cancelled() }}

@@ -13,7 +13,7 @@ export { TumUiCheckboxComponent, type TumUiCheckboxChangeEvent } from './lib/che
 export { TumUiChipComponent, type TumUiChipSize } from './lib/chip/tum-ui-chip.component';
 export { TumUiDatePickerComponent } from './lib/date-picker/tum-ui-date-picker.component';
 export { TumUiDialogComponent } from './lib/dialog/tum-ui-dialog.component';
-export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';
+export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationKey, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';
 export { TumUiIconFieldComponent, type TumUiIconFieldPosition } from './lib/icon-field/tum-ui-icon-field.component';
 export { TumUiInputGroupAddonComponent } from './lib/input-group/tum-ui-input-group-addon.component';
 export { TumUiInputGroupComponent } from './lib/input-group/tum-ui-input-group.component';

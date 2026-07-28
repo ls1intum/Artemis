@@ -27,7 +27,7 @@
             type="text"
             [value]="inputText()"
             [disabled]="disabled()"
-            placeholder="dd.mm.yyyy hh:mm"
+            [placeholder]="'tumUi.datePicker.placeholder' | tumUiTranslate"
             [attr.aria-invalid]="showErrorBorder()"
             [attr.aria-label]="ariaLabel()"
             [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
@@ -79,9 +79,6 @@
         [cdkTrapFocusAutoCapture]="true"
     >
         <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
-        <!-- 24h hour:minute spinner (chevron up / editable field / chevron down per unit), matching the legacy
-             PrimeNG time picker. Fixed 24h format regardless of locale; a native <input type="time"> would show a
-             12h AM/PM field in en-US locales and unstylable browser chrome. -->
         <div class="mt-3 flex items-center justify-center gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate" data-testid="tum-ui-date-picker-time">
             <div class="flex flex-col items-center">
                 <button

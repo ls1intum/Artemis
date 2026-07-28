@@ -68,31 +68,26 @@ Key principles:
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
-**UI Component Library: PrimeNG**
+### UI components
 
-<Callout variant={CalloutVariant.danger}>
-    New UI uses PrimeNG components with Tailwind utilities, as specified in `CLAUDE.md`. The private [tum-ui package](/developer/guidelines/tum-ui-kit) is an extraction boundary
-    for existing Artemis-owned components; it does not replace this policy. Do not create a custom widget when PrimeNG, Angular CDK, Angular Aria, or native HTML already provides
-    the required behavior. Never introduce new Bootstrap.
-</Callout>
+PrimeNG is the component library for new Artemis UI. Use Tailwind utilities for layout, spacing, and
+semantic color. Use native HTML where no component abstraction is needed. If PrimeNG has no
+applicable component, document the gap before introducing Angular CDK or Angular Aria behavior. Do
+not implement custom keyboard, focus, overlay, or selection behavior when a maintained library
+supplies it.
 
-<Callout variant={CalloutVariant.danger}>
-    **`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new
-    code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently
-    fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
-</Callout>
+The private [TUM UI package](/developer/guidelines/tum-ui-kit) isolates existing reusable components.
+It does not change the PrimeNG policy, and adding a new Artemis component to that package requires an
+explicit reusable-package need.
 
-<Callout variant={CalloutVariant.info}>
-    **We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use
-    PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is
-    migrated module by module.
-</Callout>
+For dialogs, use PrimeNG `DialogService` from `primeng/dynamicdialog`. Pass inputs through its `data`
+configuration instead of assigning `componentInstance` fields.
 
-- Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
-- For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
-- Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
-- In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
-- Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
+Do not add Bootstrap classes, Bootstrap components, or `@ng-bootstrap/ng-bootstrap` APIs. When
+working in a module that still uses Bootstrap, follow the module-level migration process in
+[Styling](#styling) instead of mixing frameworks within a component.
+
+See the [PrimeNG documentation](https://primeng.org/) for component APIs.
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**

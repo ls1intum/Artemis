@@ -97,8 +97,8 @@ describe('TumUiTooltipDirective', () => {
         appRef.tick();
         expect(bubble()?.textContent).toContain('Help text');
         fixture.componentInstance.text.set('Updated help text');
-        appRef.tick(); // propagate the input + flush the sync effect (setInput on the content component)
-        appRef.tick(); // render the content view with the pushed text
+        appRef.tick();
+        appRef.tick();
         expect(bubble()?.textContent).toContain('Updated help text');
     });
 

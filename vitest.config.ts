@@ -21,6 +21,7 @@ export default defineConfig({
     logLevel: 'error',
     resolve: {
         alias: {
+            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-ui/src/public-api.ts'),
             'monaco-editor': path.resolve(__dirname, 'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts'),
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
@@ -40,10 +41,7 @@ export default defineConfig({
     },
     // JIT mode required for ng-mocks compatibility; fastCompile is required under Angular 22 so the
     // plugin inlines external templateUrl/styleUrl (the two-pass JIT path's compiler markers are gone).
-    plugins: [
-        angular({ jit: true, fastCompile: true }),
-        tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json', 'packages/tum-ui/tsconfig.lib.json', 'packages/tum-ui/tsconfig.spec.json'] }),
-    ],
+    plugins: [angular({ jit: true, fastCompile: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
         globals: true,
         pool: 'forks',
@@ -51,7 +49,6 @@ export default defineConfig({
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/**/*.spec.ts', // entire Angular client runs on Vitest
-            'packages/tum-ui/src/**/*.spec.ts', // independently publishable TUM UI package
             'src/test/javascript/spec/integration/code-editor/**/*.spec.ts', // code-editor integration specs (mock Monaco)
         ],
         // The Monaco editor integration specs need the real Monaco package; they run in vitest.monaco.config.ts.
@@ -68,7 +65,7 @@ export default defineConfig({
             provider: 'istanbul',
             reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
-            include: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts'],
+            include: ['src/main/webapp/app/**/*.ts'],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
                 '**/*.spec.ts', // exclude test specification files

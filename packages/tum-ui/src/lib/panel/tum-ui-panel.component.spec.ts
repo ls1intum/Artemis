@@ -7,14 +7,12 @@ import { TumUiPanelComponent } from './tum-ui-panel.component';
 
 describe('TumUiPanelComponent', () => {
     let fixture: ComponentFixture<TumUiPanelComponent>;
-    let host: HTMLElement;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TumUiPanelComponent, FontAwesomeTestingModule],
         }).compileComponents();
         fixture = TestBed.createComponent(TumUiPanelComponent);
-        host = fixture.nativeElement as HTMLElement;
         fixture.componentRef.setInput('header', 'Configuration');
         fixture.detectChanges();
     });
@@ -28,15 +26,12 @@ describe('TumUiPanelComponent', () => {
         return el ? (el.nativeElement as HTMLButtonElement) : null;
     }
 
-    it('renders the panel surface and header title', () => {
-        expect(host.className).toContain('tum-ui-panel');
-        expect(host.className).toContain('border-tum-ui-border');
+    it('renders the header title', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-panel-title')).nativeElement.textContent.trim()).toBe('Configuration');
     });
 
     it('is not toggleable by default: no toggle button and no collapsed marker', () => {
         expect(toggler()).toBeNull();
-        expect(host.getAttribute('data-collapsed')).toBe('false');
     });
 
     it('renders a toggle button with expanded/controls wiring when toggleable', () => {
@@ -55,7 +50,6 @@ describe('TumUiPanelComponent', () => {
         fixture.componentRef.setInput('toggleable', true);
         fixture.componentRef.setInput('collapsed', true);
         fixture.detectChanges();
-        expect(host.getAttribute('data-collapsed')).toBe('true');
         expect(toggler()!.getAttribute('aria-expanded')).toBe('false');
     });
 
@@ -68,7 +62,6 @@ describe('TumUiPanelComponent', () => {
         toggler()!.click();
         fixture.detectChanges();
         expect(fixture.componentInstance.collapsed()).toBe(true);
-        expect(host.getAttribute('data-collapsed')).toBe('true');
         expect(toggler()!.getAttribute('aria-expanded')).toBe('false');
 
         toggler()!.click();

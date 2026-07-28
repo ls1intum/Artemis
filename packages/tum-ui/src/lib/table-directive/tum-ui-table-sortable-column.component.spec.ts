@@ -8,7 +8,7 @@ import { TumUiTableSortableColumnComponent } from './tum-ui-table-sortable-colum
         <table tumUiTable [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="events.push($event)">
             <thead>
                 <tr>
-                    <th tumUiSortableColumn="login" class="w-2/5" data-testid="login-col">Login</th>
+                    <th tumUiSortableColumn="login" data-testid="login-col">Login</th>
                     <th tumUiSortableColumn="email" data-testid="email-col">Email</th>
                     <th tumUiSortableColumn="frozen" [disabled]="true" data-testid="frozen-col">Frozen</th>
                 </tr>
@@ -38,29 +38,19 @@ describe('TumUiTableSortableColumnComponent', () => {
         return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testid}"]`)!;
     }
 
-    it('appends the sort-icon SVG after the projected header text', () => {
+    it('renders a sort icon after the projected header text', () => {
         const login = th('login-col');
         expect(login.textContent).toContain('Login');
-        const svg = login.querySelector('svg.tum-ui-sort-icon');
-        expect(svg).not.toBeNull();
+        expect(login.querySelector('fa-icon.tum-ui-sort-icon')).not.toBeNull();
     });
 
-    it('reflects the controlled sort state via aria-sort and the icon paths', () => {
+    it('reflects the controlled sort state via aria-sort', () => {
         expect(th('login-col').getAttribute('aria-sort')).toBe('ascending');
-        expect(th('login-col').querySelectorAll('svg.tum-ui-sort-icon path').length).toBe(1);
         expect(th('email-col').getAttribute('aria-sort')).toBe('none');
-        expect(th('email-col').querySelectorAll('svg.tum-ui-sort-icon path').length).toBe(4);
 
         host.sortOrder.set(-1);
         fixture.detectChanges();
         expect(th('login-col').getAttribute('aria-sort')).toBe('descending');
-        expect(th('login-col').querySelectorAll('svg.tum-ui-sort-icon path').length).toBe(1);
-    });
-
-    it('preserves the consumer static class alongside its own host classes (e.g. width utilities)', () => {
-        const login = th('login-col');
-        expect(login.classList.contains('w-2/5')).toBe(true);
-        expect(login.classList.contains('cursor-pointer')).toBe(true);
     });
 
     it('is focusable, except when disabled', () => {

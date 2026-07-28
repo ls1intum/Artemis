@@ -2,13 +2,6 @@ import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, cont
 import { TumUiTabsService } from './tum-ui-tabs.service';
 import { TumUiTabComponent } from './tum-ui-tab.component';
 
-/**
- * The `role="tablist"` bar. Drop-in replacement for PrimeNG's `p-tablist`.
- *
- * Projects the `<tum-ui-tab>` children, draws the Aura active-bar (a primary underline that slides to the
- * active tab), and owns the roving-tabindex keyboard navigation (Arrow/Home/End with automatic activation,
- * skipping disabled tabs), matching the WAI-ARIA tabs pattern and PrimeNG's behavior.
- */
 @Component({
     selector: 'tum-ui-tab-list',
     template: `

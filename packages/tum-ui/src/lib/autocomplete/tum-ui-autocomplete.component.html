@@ -5,7 +5,7 @@
                 size="small"
                 [label]="valueLabel(value)"
                 [removable]="!isDisabled()"
-                [removeAriaLabel]="removeAriaLabel()"
+                [removeAriaLabel]="removeAriaLabel() ?? ('tumUi.autocomplete.remove' | tumUiTranslate)"
                 (onRemove)="removeAt(i, $event)"
                 data-testid="tum-ui-autocomplete-chip"
             />
@@ -59,7 +59,9 @@
                     <span class="flex-1 truncate">{{ valueLabel(option) }}</span>
                 </li>
             } @empty {
-                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">{{ emptyMessage() }}</li>
+                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">
+                    {{ emptyMessage() ?? ('tumUi.autocomplete.empty' | tumUiTranslate) }}
+                </li>
             }
         </ul>
     </div>

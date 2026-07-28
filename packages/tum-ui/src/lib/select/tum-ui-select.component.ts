@@ -21,8 +21,8 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
+import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
-/** Trigger padding + font per size, matching the Aura `select` sm / (default) / lg form-field tokens. */
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
     small: 'min-h-8 py-1.5 pl-2.5 pr-10 text-sm',
@@ -32,25 +32,11 @@ const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
 
 let nextSelectId = 0;
 
-/**
- * Single-select dropdown on Angular CDK overlay.
- *
- * Drop-in replacement for PrimeNG's `p-select`: a `role="button"` trigger + a CDK-overlay `role="listbox"`
- * panel, styled from the exact Aura `select` tokens (trigger border / height / padding, primary focus border,
- * chevron, panel shadow / radius, option hover / selected / focus states) so it renders like the widget it
- * replaces, dark-mode-correct for free. No PrimeNG / Bootstrap dependency; rides the shared
- * {@link TumUiOverlayService}.
- *
- * Unlike {@link TumUiDatePickerComponent} (Signal Forms), this is a classic {@link ControlValueAccessor} so it
- * works unchanged with BOTH `[(ngModel)]` and reactive `formControlName` — the two binding styles the admin
- * screens use. `optionValue` selects a primitive value out of each option object (e.g. `id`); omit it and the
- * whole option object becomes the value (reference-compared), matching `p-select`.
- */
 @Component({
     selector: 'tum-ui-select',
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
-    imports: [A11yModule, FaIconComponent],
+    imports: [A11yModule, FaIconComponent, TumUiTranslatePipe],
     host: {
         '[class]': 'styleClass()',
     },
@@ -62,38 +48,27 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
 
-    /** The selectable options. Objects (read via `optionLabel` / `optionValue`) or bare primitives. */
     readonly options = input<readonly unknown[]>([]);
-    /** Property name to read each option's display label from. Omit for primitive options (the option itself is shown). */
-    readonly optionLabel = input<string>();
-    /** Property name to read each option's bound value from. Omit to bind the whole option object (like `p-select`). */
-    readonly optionValue = input<string>();
-    /** Text shown on the trigger when nothing is selected. */
-    readonly placeholder = input<string>();
-    /** Disables the control (merged with a reactive-forms `setDisabledState`). */
-    readonly disabled = input(false);
-    /** Renders a clear (×) button on the trigger once a value is selected (parity with `p-select [showClear]`). */
-    readonly showClear = input(false);
-    /** `small` / `large`, matching the Aura form-field sizes; omit for the default size. */
-    readonly size = input<TumUiSelectSize>();
-    /** Extra classes forwarded onto the host (drop-in for `p-select styleClass`, e.g. `w-full` / `w-auto`). */
-    readonly styleClass = input<string>('');
-    /** `id` of the trigger `<button>` (the target of an external `<label for>`). Defaults to a unique per-instance id. */
-    readonly inputId = input(`tum-ui-select-${nextSelectId++}`);
-    /** Forwarded onto the trigger for template-driven-form parity; the CVA itself does not need it. */
-    readonly name = input<string>();
-    /** Accessible name for the trigger, forwarded as `aria-label` (use when there is no visible `<label>`). */
-    readonly ariaLabel = input<string>();
-    /** Accessible name for the clear button; overridable for i18n. */
-    readonly clearAriaLabel = input<string>('Clear selection');
-    /** Text shown in the panel when there are no options. */
-    readonly emptyMessage = input<string>('No available options');
 
-    /**
-     * Emits the newly-selected value (the resolved `optionValue`, or the whole option when `optionValue` is unset;
-     * `undefined` on clear). Drop-in for `p-select (onChange)` for the no-argument handlers the admin screens use;
-     * the payload is the value itself rather than PrimeNG's `{ originalEvent, value }` wrapper.
-     */
+    readonly optionLabel = input<string>();
+
+    readonly optionValue = input<string>();
+
+    readonly placeholder = input<string>();
+
+    readonly disabled = input(false);
+
+    readonly showClear = input(false);
+
+    readonly size = input<TumUiSelectSize>();
+
+    readonly styleClass = input<string>('');
+
+    readonly inputId = input(`tum-ui-select-${nextSelectId++}`);
+    readonly name = input<string>();
+    readonly ariaLabel = input<string>();
+    readonly clearAriaLabel = input<string>();
+    readonly emptyMessage = input<string>();
     readonly onChange = output<unknown>();
 
     protected readonly faChevronDown = faChevronDown;
@@ -118,8 +93,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private typeaheadTimer?: ReturnType<typeof setTimeout>;
 
     protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
-
-    /** The option whose bound value equals the current model value, or undefined if none matches (→ placeholder). */
     protected readonly selectedOption = computed(() => {
         const current = this.selectedValue();
         if (current === undefined || current === null) {
@@ -166,8 +139,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     setDisabledState(isDisabled: boolean): void {
         this.disabledByForm.set(isDisabled);
     }
-
-    /** Display text for an option: its `optionLabel` property, or the primitive itself. */
     protected label(option: unknown): string {
         const key = this.optionLabel();
         const raw = key && option !== null && typeof option === 'object' ? (option as Record<string, unknown>)[key] : option;
@@ -186,8 +157,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
                 return '';
         }
     }
-
-    /** Bound value for an option: its `optionValue` property, or the whole option when `optionValue` is unset. */
     private resolveValue(option: unknown): unknown {
         const key = this.optionValue();
         if (key && option !== null && typeof option === 'object') {
@@ -360,8 +329,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         }
         return `${base} ${size} ${state}`;
     }
-
-    /** Full class string for one option row (base layout + Aura hover / active / selected state colors). */
     protected optionClasses(option: unknown, index: number): string {
         const base = 'tum-ui-select-option flex cursor-pointer items-center px-3 py-2';
         const active = this.activeIndex() === index;

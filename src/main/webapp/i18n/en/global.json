@@ -335,6 +335,7 @@
             "rowsPerPage": "Rows per page"
         },
         "datePicker": {
+            "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Open calendar",
             "previousMonth": "Previous month: {{ month }}",
             "nextMonth": "Next month: {{ month }}",

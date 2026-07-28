@@ -45,9 +45,7 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme.
-   `.tum-ui-btn` is excluded alongside `.btn`: anchor-form tum-ui buttons (`<a tumUiButton>`) are buttons, not links, so the
-   link-blue hover color must not override their own token text color (it made solid buttons render blue-on-blue). */
+/* Increase link contrast without overriding button-styled anchors. */
 a,
 a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
     color: $link-color;

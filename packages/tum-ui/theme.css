@@ -1,10 +1,3 @@
-/*
- * Tailwind CSS v4 integration for @tumaet/ui-angular.
- *
- * Import this file from the host application's Tailwind entrypoint. The source directive makes
- * Tailwind scan the compiled Angular package; the namespaced theme entries generate only the color
- * utilities used by this package. The host owns the referenced --tum-ui-* values.
- */
 @source './fesm2022';
 
 @theme inline {

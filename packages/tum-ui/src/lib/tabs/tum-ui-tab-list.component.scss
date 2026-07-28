@@ -1,8 +1,8 @@
 .tum-ui-tab-list-active-bar {
     position: absolute;
-    inset-block-end: -1px; // activeBar.bottom
+    inset-block-end: -1px;
     inset-inline-start: 0;
-    height: 1px; // activeBar.height
+    height: 1px;
     width: 0;
     opacity: 0;
     transition:

@@ -30,10 +30,6 @@ describe('TumUiIconFieldComponent', () => {
         await fixture.whenStable();
     });
 
-    function wrapper(): HTMLElement {
-        return fixture.debugElement.query(By.css('tum-ui-icon-field')).nativeElement;
-    }
-
     function field(): HTMLInputElement {
         return fixture.debugElement.query(By.css('input')).nativeElement;
     }
@@ -43,32 +39,10 @@ describe('TumUiIconFieldComponent', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-input-icon'))).not.toBeNull();
     });
 
-    it('reflects the icon side via data-position (drives the edge placement in the stylesheet)', () => {
-        expect(wrapper().getAttribute('data-position')).toBe('left');
-        fixture.componentInstance.position.set('right');
-        fixture.detectChanges();
-        expect(wrapper().getAttribute('data-position')).toBe('right');
-    });
-
-    it('pads the leading side of the field so text clears the icon', async () => {
-        await fixture.whenStable();
-        expect(field().style.getPropertyValue('padding-inline-start')).toBe('2.5rem');
-        expect(field().style.getPropertyValue('padding-inline-end')).toBe('');
-    });
-
-    it('pads the trailing side instead when the icon is on the right', async () => {
-        fixture.componentInstance.position.set('right');
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(field().style.getPropertyValue('padding-inline-end')).toBe('2.5rem');
-        expect(field().style.getPropertyValue('padding-inline-start')).toBe('');
-    });
-
-    it('applies no padding and renders no icon when icon is unset', async () => {
+    it('removes the icon when the input is cleared', async () => {
         fixture.componentInstance.icon.set(undefined);
         fixture.detectChanges();
         await fixture.whenStable();
         expect(fixture.debugElement.query(By.css('.tum-ui-input-icon'))).toBeNull();
-        expect(field().style.getPropertyValue('padding-inline-start')).toBe('');
     });
 });

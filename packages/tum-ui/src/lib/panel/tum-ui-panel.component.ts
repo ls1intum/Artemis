@@ -4,17 +4,6 @@ import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
 let nextPanelId = 0;
 
-/**
- * Titled content panel.
- *
- * Drop-in replacement for PrimeNG's `p-panel`: same bordered container (content background, content border,
- * 6px radius) with a title header and an optional collapse toggle, reproduced from the Aura `panel` tokens +
- * base style. When `toggleable` is set, the header renders a real `<button>` with `aria-expanded` and
- * `aria-controls` wiring the collapsible region, and `collapsed` is a two-way `model` so callers can bind
- * `[collapsed]` (as the Iris dashboard does) or `[(collapsed)]`. The collapse uses the Aura grid-rows
- * animation. Body content projects via the default slot; an optional `[tumUiPanelFooter]` slot mirrors
- * p-card/p-panel footers.
- */
 @Component({
     selector: 'tum-ui-panel',
     templateUrl: './tum-ui-panel.component.html',
@@ -27,16 +16,14 @@ let nextPanelId = 0;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPanelComponent {
-    /** Header title text (parity with p-panel `[header]`). */
     readonly header = input<string>('');
-    /** Whether the panel can be collapsed via the header toggle (parity with p-panel `[toggleable]`). */
+
     readonly toggleable = input(false);
-    /** Collapsed state; two-way so `[collapsed]` and `[(collapsed)]` both work (parity with p-panel `[(collapsed)]`). */
+
     readonly collapsed = model(false);
-    /** Extra classes forwarded onto the panel root (drop-in for p-panel `styleClass`). */
+
     readonly styleClass = input<string>('');
 
-    /** Stable id linking the toggle's `aria-controls` to the collapsible region. */
     protected readonly contentId = `tum-ui-panel-content-${nextPanelId++}`;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;

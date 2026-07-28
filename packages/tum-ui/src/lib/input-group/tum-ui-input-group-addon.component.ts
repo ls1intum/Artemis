@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-/**
- * Input-group addon.
- *
- * Fixed label or icon segment in a {@link TumUiInputGroupComponent}. Outer edges use logical
- * properties so the group also works in right-to-left layouts.
- */
 @Component({
     selector: 'tum-ui-input-group-addon',
     template: '<ng-content />',

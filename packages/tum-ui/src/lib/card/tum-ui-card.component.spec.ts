@@ -6,14 +6,12 @@ import { TumUiCardComponent } from './tum-ui-card.component';
 
 describe('TumUiCardComponent', () => {
     let fixture: ComponentFixture<TumUiCardComponent>;
-    let host: HTMLElement;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TumUiCardComponent],
         }).compileComponents();
         fixture = TestBed.createComponent(TumUiCardComponent);
-        host = fixture.nativeElement as HTMLElement;
         fixture.detectChanges();
     });
 
@@ -21,9 +19,7 @@ describe('TumUiCardComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('renders the card surface with a body', () => {
-        expect(host.className).toContain('tum-ui-card');
-        expect(host.className).toContain('bg-tum-ui-surface-0');
+    it('renders the card body', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-card-body'))).not.toBeNull();
     });
 
@@ -38,19 +34,12 @@ describe('TumUiCardComponent', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-card-title')).nativeElement.textContent.trim()).toBe('Total tokens');
         const subtitle = fixture.debugElement.query(By.css('.tum-ui-card-subtitle')).nativeElement as HTMLElement;
         expect(subtitle.textContent?.trim()).toBe('last 30 days');
-        expect(subtitle.className).toContain('text-tum-ui-muted');
-    });
-
-    it('forwards styleClass onto the card root', () => {
-        fixture.componentRef.setInput('styleClass', 'iris-kpi-card');
-        fixture.detectChanges();
-        expect(host.className).toContain('iris-kpi-card');
     });
 });
 
 @Component({
     template: `
-        <tum-ui-card styleClass="iris-kpi-card">
+        <tum-ui-card>
             <div tumUiCardHeader class="header-slot">Header</div>
             <span class="body-slot">Body content</span>
             <div tumUiCardFooter class="footer-slot">Footer</div>

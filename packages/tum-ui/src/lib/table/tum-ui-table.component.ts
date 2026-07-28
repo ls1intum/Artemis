@@ -18,7 +18,8 @@ import {
 } from '@angular/core';
 import { get } from 'lodash-es';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faMagnifyingGlass, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { TumUiPaginatorComponent } from '../paginator/tum-ui-paginator.component';
 import { CellRendererParams, ColumnDef, TumUiSortDirection, TumUiSortState, TumUiTableQueryEvent } from './tum-ui-table.types';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
@@ -26,8 +27,6 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 const ACTIONS_COLUMN = '__tum_ui_actions__';
 const SEARCH_DEBOUNCE_MS = 300;
 
-// Full literal class strings (not interpolated) so Tailwind, which scans .ts via @source, generates these responsive utilities.
-// `hidden` collapses the cell by default; the breakpoint-prefixed `table-cell` restores it from that breakpoint up.
 const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, string> = {
     sm: 'hidden sm:table-cell',
     md: 'hidden md:table-cell',
@@ -36,14 +35,6 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     '2xl': 'hidden 2xl:table-cell',
 };
 
-/**
- * Data table on Angular CDK (@angular/cdk/table).
- *
- * Signal-based, PrimeNG-free. Renders dynamic columns from a {@link ColumnDef} array, supports
- * single-column server-side sort, a debounced global search, and pagination (via tum-ui-paginator),
- * emitting a {@link TumUiTableQueryEvent} the caller feeds into its server query. Styled with Artemis
- * token utilities only.
- */
 @Component({
     selector: 'tum-ui-table',
     templateUrl: './tum-ui-table.component.html',
@@ -57,11 +48,7 @@ export class TumUiTableComponent<T> {
     readonly totalRecords = input(0);
     readonly loading = input(false);
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
-    /**
-     * Row identity for CDK diffing. Without it a server reload hands CDK a fresh array of new objects and it
-     * rebuilds every row (losing DOM state / focus); pass a stable-id function (e.g. `(_, row) => row.id`) so
-     * unchanged rows are reused. Defaults to CDK's object-identity tracking when omitted.
-     */
+
     readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
     readonly striped = input(false);
     readonly scrollable = input(false);
@@ -71,10 +58,9 @@ export class TumUiTableComponent<T> {
     readonly emptyMessage = input('tumUi.table.noResults');
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
-    /** Forwarded to the embedded paginator. Set false to hide the rows-per-page select (e.g. the legacy
-     *  table-view `hidePageSizeOptions`) so a fixed-page-size table shows no pointless single-option dropdown. */
+
     readonly showRowsPerPage = input(true);
-    /** Forwarded to the embedded paginator's "Showing X to Y of Z" report. */
+
     readonly showCurrentPageReport = input(true);
     readonly initialSortField = input<string | undefined>(undefined);
     readonly initialSortDirection = input<TumUiSortDirection>('asc');
@@ -83,6 +69,9 @@ export class TumUiTableComponent<T> {
 
     protected readonly ACTIONS_COLUMN = ACTIONS_COLUMN;
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
+    protected readonly faSort = faSort;
+    protected readonly faSortDown = faSortDown;
+    protected readonly faSortUp = faSortUp;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly cdkTable = viewChild(CdkTable);
@@ -163,14 +152,23 @@ export class TumUiTableComponent<T> {
         }
         return sort.direction === 'asc' ? 'ascending' : 'descending';
     }
-
-    /** Current sort direction for a column, driving the inline sort-icon SVG (matches PrimeNG's p-sortIcon). */
     protected sortDirection(col: ColumnDef<T>): 'none' | TumUiSortDirection {
         const sort = this.sortState();
         if (!sort || sort.field !== col.field) {
             return 'none';
         }
         return sort.direction;
+    }
+
+    protected sortIcon(col: ColumnDef<T>): IconDefinition {
+        switch (this.sortDirection(col)) {
+            case 'asc':
+                return this.faSortUp;
+            case 'desc':
+                return this.faSortDown;
+            default:
+                return this.faSort;
+        }
     }
 
     protected onSortClick(col: ColumnDef<T>): void {

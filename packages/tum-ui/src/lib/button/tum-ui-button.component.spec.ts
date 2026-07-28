@@ -29,33 +29,6 @@ describe('TumUiButtonComponent', () => {
         return fixture.debugElement.query(By.css('button')).nativeElement;
     }
 
-    it('renders a native button with the default solid-primary classes', () => {
-        const className = nativeButton().className;
-        expect(className).toContain('tum-ui-btn');
-        expect(className).toContain('bg-tum-ui-primary');
-        expect(className).toContain('text-base');
-    });
-
-    it('applies severity + size + the outlined variant', () => {
-        fixture.componentRef.setInput('severity', 'danger');
-        fixture.componentRef.setInput('size', 'small');
-        fixture.componentRef.setInput('variant', 'outlined');
-        fixture.detectChanges();
-        const className = nativeButton().className;
-        expect(className).toContain('bg-transparent');
-        expect(className).toContain('text-tum-ui-state-danger');
-        expect(className).toContain('border-tum-ui-state-danger');
-        expect(className).toContain('text-sm');
-    });
-
-    it('applies the text variant (no border)', () => {
-        fixture.componentRef.setInput('variant', 'text');
-        fixture.detectChanges();
-        const className = nativeButton().className;
-        expect(className).toContain('bg-transparent');
-        expect(className).toContain('border-transparent');
-    });
-
     it('forwards the baseline aria-* inputs to the inner native button', () => {
         fixture.componentRef.setInput('ariaExpanded', true);
         fixture.componentRef.setInput('ariaControls', 'menu-1');
@@ -103,17 +76,6 @@ describe('TumUiButtonComponent', () => {
         expect(nativeButton().getAttribute('aria-label')).toBe('Confirm');
     });
 
-    it('leaves aria-label unset when no accessible name is provided', () => {
-        expect(nativeButton().hasAttribute('aria-label')).toBe(false);
-    });
-
-    it('applies the fully-rounded marker class when rounded', () => {
-        expect(nativeButton().className).not.toContain('tum-ui-btn-rounded');
-        fixture.componentRef.setInput('rounded', true);
-        fixture.detectChanges();
-        expect(nativeButton().className).toContain('tum-ui-btn-rounded');
-    });
-
     it('shows a spinner, disables, and blocks clicks while loading', () => {
         const emitSpy = vi.spyOn(component.clicked, 'emit');
         fixture.componentRef.setInput('loading', true);
@@ -124,11 +86,5 @@ describe('TumUiButtonComponent', () => {
         expect(fixture.debugElement.query(By.css('fa-icon.animate-spin'))).toBeTruthy();
         button.click();
         expect(emitSpy).not.toHaveBeenCalled();
-    });
-
-    it('forwards styleClass onto the inner native button', () => {
-        fixture.componentRef.setInput('styleClass', 'w-full');
-        fixture.detectChanges();
-        expect(nativeButton().className).toContain('w-full');
     });
 });

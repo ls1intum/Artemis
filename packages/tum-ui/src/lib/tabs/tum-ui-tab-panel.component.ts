@@ -1,13 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TumUiTabsService } from './tum-ui-tabs.service';
 
-/**
- * A single tab panel. Drop-in replacement for PrimeNG's `p-tabpanel`.
- *
- * Renders a `role="tabpanel"` whose content is projected only while its `value` equals the group's active
- * value (inactive panels are unmounted and `hidden`, matching PrimeNG's lazy behavior). Its `id` and
- * `aria-labelledby` are wired to the owning `<tum-ui-tab>` through the shared {@link TumUiTabsService}.
- */
 @Component({
     selector: 'tum-ui-tab-panel',
     template: '@if (active()) { <ng-content /> }',
@@ -24,7 +17,6 @@ import { TumUiTabsService } from './tum-ui-tabs.service';
 export class TumUiTabPanelComponent {
     private readonly tabsService = inject(TumUiTabsService);
 
-    /** This panel's key; must match a `<tum-ui-tab>`'s `value`. Numbers and strings are both supported. */
     readonly value = input.required<number | string>();
 
     protected readonly active = computed(() => this.tabsService.active() === this.value());

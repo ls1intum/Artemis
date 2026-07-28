@@ -5,11 +5,6 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import { buildMonthMatrix } from './tum-ui-date-picker.util';
 import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
 
-/**
- * Hand-built month calendar grid for {@link TumUiDatePickerComponent}.
- * Angular has no CDK calendar, so the 6×7 Monday-first grid is built with dayjs. Day cells are native
- * buttons with roving-tabindex keyboard navigation (arrows/Home/End/PageUp-Down/Enter). Styled with tokens.
- */
 @Component({
     selector: 'tum-ui-calendar',
     templateUrl: './tum-ui-calendar.component.html',
@@ -71,7 +66,6 @@ export class TumUiCalendarComponent {
         });
     }
 
-    /** Full class list for a day cell: exactly one text color per state so no two color utilities collide. */
     protected dayButtonClasses(day: dayjs.Dayjs): string {
         const base =
             'appearance-none border-0 h-8 w-8 rounded-full hover:bg-tum-ui-surface-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-tum-ui-primary dark:hover:bg-tum-ui-surface-700';

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CdkFixedSizeVirtualScroll, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -10,7 +10,7 @@ interface Row {
 
 @Component({
     template: `
-        <tum-ui-table-virtual-scroll [items]="items" [itemSize]="40" [rowTemplate]="rowTpl" [striped]="striped()" scrollHeight="20rem" minWidth="30rem" ariaDescribedBy="desc">
+        <tum-ui-table-virtual-scroll [items]="items" [itemSize]="40" [rowTemplate]="rowTpl" scrollHeight="20rem" minWidth="30rem" ariaDescribedBy="desc">
             <div class="flex-1" data-testid="header-name">Name</div>
         </tum-ui-table-virtual-scroll>
         <ng-template #rowTpl let-row
@@ -21,7 +21,6 @@ interface Row {
 })
 class HostComponent {
     items: Row[] = Array.from({ length: 50 }, (_, i) => ({ name: `logger-${i}` }));
-    readonly striped = signal(false);
 }
 
 describe('TumUiTableVirtualScrollComponent', () => {
@@ -59,29 +58,5 @@ describe('TumUiTableVirtualScrollComponent', () => {
         expect(rows.length).toBeLessThan(50);
         expect(rows[0].querySelector('.row-name')?.textContent).toContain('logger-0');
         expect((rows[0] as HTMLElement).style.height).toBe('40px');
-    });
-
-    it('applies the p-table-matched header + row styling tokens', () => {
-        const component = fixture.debugElement.query(By.directive(TumUiTableVirtualScrollComponent)).componentInstance as TumUiTableVirtualScrollComponent<Row>;
-        const headerClasses = (component as unknown as { headerClasses: () => string }).headerClasses();
-        const rowClasses = (component as unknown as { rowClasses: () => string }).rowClasses();
-        expect(headerClasses).toContain('font-semibold');
-        expect(headerClasses).toContain('bg-tum-ui-surface-0');
-        expect(headerClasses).toContain('border-b');
-        expect(headerClasses).toContain('px-4');
-        expect(rowClasses).toContain('border-b');
-        expect(rowClasses).toContain('px-4');
-        expect(rowClasses).not.toContain('odd:bg-tum-ui-surface-50');
-    });
-
-    it('stripes even-index rows only when striped (index-based, not :nth-child, so it survives CDK recycling)', () => {
-        const component = fixture.debugElement.query(By.directive(TumUiTableVirtualScrollComponent)).componentInstance as TumUiTableVirtualScrollComponent<Row>;
-        const stripeClass = (i: number) => (component as unknown as { stripeClass: (i: number) => string }).stripeClass(i);
-        expect(stripeClass(0)).toBe('');
-        fixture.componentInstance.striped.set(true);
-        fixture.detectChanges();
-        expect(stripeClass(0)).toContain('bg-tum-ui-surface-50');
-        expect(stripeClass(0)).toContain('dark:bg-tum-ui-surface-950');
-        expect(stripeClass(1)).toBe('');
     });
 });

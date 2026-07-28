@@ -475,8 +475,7 @@ export default tseslint.config(
                     patterns: [
                         {
                             group: ['app', 'app/**', 'test', 'test/**', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message:
-                                'The publishable TUM UI package must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-ui-integration.',
+                            message: 'TUM UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-ui-integration.',
                         },
                     ],
                 },

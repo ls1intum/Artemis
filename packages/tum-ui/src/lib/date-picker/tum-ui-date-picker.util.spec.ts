@@ -23,7 +23,7 @@ describe('tum-ui-date-picker util', () => {
         const weeks = buildMonthMatrix(dayjs('2026-06-15'));
         expect(weeks).toHaveLength(6);
         expect(weeks.every((week) => week.length === 7)).toBe(true);
-        expect(weeks[0][0].day()).toBe(1); // Monday
+        expect(weeks[0][0].day()).toBe(1);
         const flat = weeks.flat();
         expect(flat.some((day) => day.month() === 5 && day.date() === 1)).toBe(true);
         expect(flat.some((day) => day.month() === 5 && day.date() === 30)).toBe(true);

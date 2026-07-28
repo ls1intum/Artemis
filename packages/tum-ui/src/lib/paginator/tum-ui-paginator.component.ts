@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
@@ -7,15 +8,10 @@ const PAGE_LINK_SIZE = 5;
 const NAV_BUTTON_CLASSES =
     'inline-flex h-[35px] w-[35px] shrink-0 cursor-pointer appearance-none items-center justify-center rounded-full border-0 bg-transparent text-sm text-tum-ui-muted transition-colors hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800 disabled:pointer-events-none disabled:opacity-50';
 
-/**
- * Paginator for {@link TumUiTableComponent}.
- * Signal-based, PrimeNG-free. Matches PrimeNG's p-paginator: a centered row with a "Showing X to Y of Z"
- * report, circular first/prev/page-number/next/last controls, and a rows-per-page select. Pages are 0-based.
- */
 @Component({
     selector: 'tum-ui-paginator',
     templateUrl: './tum-ui-paginator.component.html',
-    imports: [FaIconComponent, TumUiTranslatePipe],
+    imports: [FaIconComponent, FormsModule, TumUiTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPaginatorComponent {
@@ -24,13 +20,9 @@ export class TumUiPaginatorComponent {
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
     readonly disabled = input(false);
-    /**
-     * Show the "Showing X to Y of Z" report. Default true (the smart-table look). Set false when replacing a
-     * bare PrimeNG `p-paginator` that rendered navigation only — or where a separate `jhi-item-count` already
-     * shows the count — so the migrated view stays visually identical.
-     */
+
     readonly showCurrentPageReport = input(true);
-    /** Show the rows-per-page `<select>`. Default true. Set false when the original `p-paginator` had no `rowsPerPageOptions`. */
+
     readonly showRowsPerPage = input(true);
 
     readonly pageChange = output<number>();
@@ -51,7 +43,6 @@ export class TumUiPaginatorComponent {
     protected readonly rangeBegin = computed(() => (this.totalRecords() === 0 ? 0 : this.clampedPage() * this.pageSize() + 1));
     protected readonly rangeEnd = computed(() => Math.min(this.totalRecords(), (this.clampedPage() + 1) * this.pageSize()));
 
-    /** 0-based page indices to render as page-number buttons, windowed around the current page (like PrimeNG). */
     protected readonly visiblePages = computed(() => {
         const total = this.totalPages();
         const size = Math.min(PAGE_LINK_SIZE, total);
@@ -91,7 +82,7 @@ export class TumUiPaginatorComponent {
         }
     }
 
-    protected onPageSizeChange(value: string): void {
-        this.pageSizeChange.emit(Number(value));
+    protected onPageSizeChange(value: number): void {
+        this.pageSizeChange.emit(value);
     }
 }

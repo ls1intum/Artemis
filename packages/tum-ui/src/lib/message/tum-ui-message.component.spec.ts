@@ -29,22 +29,12 @@ describe('TumUiMessageComponent', () => {
 
     it('defaults to the info severity', () => {
         expect(host.getAttribute('data-severity')).toBe('info');
-        expect(host.className).toContain('tum-ui-message');
     });
 
-    it('reflects the severity via data-severity (drives the p-message-matched colors in the stylesheet)', () => {
+    it('reflects the severity state', () => {
         fixture.componentRef.setInput('severity', 'error');
         fixture.detectChanges();
         expect(host.getAttribute('data-severity')).toBe('error');
-    });
-
-    it('rides the surface ramp for secondary/contrast', () => {
-        fixture.componentRef.setInput('severity', 'secondary');
-        fixture.detectChanges();
-        expect(host.className).toContain('bg-tum-ui-surface-100');
-        fixture.componentRef.setInput('severity', 'contrast');
-        fixture.detectChanges();
-        expect(host.className).toContain('bg-tum-ui-surface-900');
     });
 
     it('renders the text input', () => {
@@ -52,14 +42,6 @@ describe('TumUiMessageComponent', () => {
         fixture.detectChanges();
         expect(text().textContent?.trim()).toBe('Something went wrong');
     });
-
-    it('forwards styleClass onto the message box', () => {
-        fixture.componentRef.setInput('styleClass', 'mb-3 w-full');
-        fixture.detectChanges();
-        expect(host.className).toContain('mb-3');
-        expect(host.className).toContain('w-full');
-    });
-
     it('renders a leading icon only when one is provided', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-message-icon'))).toBeNull();
         fixture.componentRef.setInput('icon', faCircleInfo);

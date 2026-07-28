@@ -3,16 +3,16 @@
     align-items: center;
     position: relative;
     flex-shrink: 0;
-    gap: 0.5rem; // tab.gap
-    padding: 1rem 1.125rem; // tab.padding
-    margin: 0 0 -1px; // tab.margin — overlap the tab list's bottom border
-    font-weight: 600; // tab.font.weight
+    gap: 0.5rem;
+    padding: 1rem 1.125rem;
+    margin: 0 0 -1px;
+    font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
     background: transparent;
     border-style: solid;
-    border-width: 0 0 1px; // tab.border.width — bottom edge only; color from the Tailwind base layer
+    border-width: 0 0 1px;
     outline-color: transparent;
     transition:
         color 0.2s,

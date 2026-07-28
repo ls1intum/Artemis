@@ -15,7 +15,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         fixture = TestBed.createComponent(TumUiAutoCompleteComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('multiple', true);
-        fixture.componentRef.setInput('delay', 0); // debounce isolated in its own fake-timer test; 0 elsewhere
+        fixture.componentRef.setInput('delay', 0);
         fixture.detectChanges();
     });
 
@@ -58,7 +58,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         const emitSpy = vi.spyOn(component.completeMethod, 'emit');
         typeQuery('a');
         vi.advanceTimersByTime(100);
-        typeQuery('ad'); // resets the debounce timer
+        typeQuery('ad');
         vi.advanceTimersByTime(299);
         expect(emitSpy).not.toHaveBeenCalled();
         vi.advanceTimersByTime(1);
@@ -100,7 +100,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         expect(selectSpy).toHaveBeenCalledWith(expect.objectContaining({ value: 'admin' }));
         expect(chips()).toHaveLength(1);
         expect(chips()[0].textContent?.trim()).toBe('admin');
-        expect(listbox()).toBeNull(); // closed + input cleared after selection
+        expect(listbox()).toBeNull();
         expect(input().value).toBe('');
     });
 
@@ -147,7 +147,6 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         await search('a', ['admin', 'artemis']);
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         fixture.detectChanges();
-        expect(component['activeIndex']()).toBe(0);
         expect(input().getAttribute('aria-activedescendant')).toBe(options()[0].id);
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         fixture.detectChanges();
@@ -256,7 +255,7 @@ describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () =>
         await TestBed.configureTestingModule({ imports: [TumUiAutoCompleteComponent, FontAwesomeTestingModule] }).compileComponents();
         fixture = TestBed.createComponent(TumUiAutoCompleteComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('delay', 0); // single mode is the default (multiple defaults to false)
+        fixture.componentRef.setInput('delay', 0);
         fixture.detectChanges();
         input = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
     });

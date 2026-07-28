@@ -10,12 +10,6 @@ const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
     right: 'top-1/2 right-full -translate-y-1/2 translate-x-1/2',
 };
 
-/**
- * The tooltip bubble rendered inside the CDK overlay by {@link TumUiTooltipDirective}: a small dark
- * surface with a directional caret, styled with Artemis token utilities. The caret sits on the edge
- * facing the trigger; the directive keeps {@link placement} in sync with the overlay's actually-applied
- * position, so it stays correct even when CDK flips the overlay to the opposite side at a viewport edge.
- */
 @Component({
     selector: 'tum-ui-tooltip-content',
     template: `{{ text() }}<span aria-hidden="true" [class]="arrowClasses()"></span>`,

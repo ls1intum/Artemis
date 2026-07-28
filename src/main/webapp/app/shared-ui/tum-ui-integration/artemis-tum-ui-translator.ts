@@ -1,10 +1,13 @@
 import { Signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiTranslationParams, TumUiTranslator, provideTumUiTranslator } from '@tumaet/ui-angular';
+import { TumUiTranslationKey, TumUiTranslationParams, TumUiTranslator, provideTumUiTranslator } from '@tumaet/ui-angular';
 import { map, merge } from 'rxjs';
 
-const ARTEMIS_TRANSLATION_KEYS: Readonly<Record<string, string>> = {
+const ARTEMIS_TRANSLATION_KEYS = {
+    'tumUi.autocomplete.empty': 'global.search.noResultsFound',
+    'tumUi.autocomplete.remove': 'entity.action.remove',
+    'tumUi.chip.remove': 'entity.action.remove',
     'tumUi.datePicker.clear': 'global.datePicker.clear',
     'tumUi.datePicker.decrementHour': 'global.datePicker.decrementHour',
     'tumUi.datePicker.decrementMinute': 'global.datePicker.decrementMinute',
@@ -15,19 +18,23 @@ const ARTEMIS_TRANSLATION_KEYS: Readonly<Record<string, string>> = {
     'tumUi.datePicker.invalid': 'global.datePicker.invalid',
     'tumUi.datePicker.minute': 'global.datePicker.minute',
     'tumUi.datePicker.open': 'global.datePicker.open',
+    'tumUi.datePicker.placeholder': 'global.datePicker.placeholder',
     'tumUi.datePicker.nextMonth': 'global.datePicker.nextMonth',
     'tumUi.datePicker.previousMonth': 'global.datePicker.previousMonth',
     'tumUi.datePicker.time': 'global.datePicker.time',
     'tumUi.datePicker.timeZoneWarning': 'entity.timeZoneWarning',
+    'tumUi.dialog.close': 'entity.action.close',
     'tumUi.paginator.currentPageReport': 'global.item-count',
     'tumUi.paginator.first': 'global.paginator.first',
     'tumUi.paginator.last': 'global.paginator.last',
     'tumUi.paginator.next': 'global.paginator.next',
     'tumUi.paginator.previous': 'global.paginator.previous',
     'tumUi.paginator.rowsPerPage': 'global.paginator.rowsPerPage',
+    'tumUi.select.clear': 'entity.action.clear',
+    'tumUi.select.empty': 'global.generic.emptyList',
     'tumUi.table.noResults': 'artemisApp.dataTable.search.noResults',
     'tumUi.table.searchPlaceholder': 'artemisApp.course.exercise.search.searchPlaceholder',
-};
+} as const satisfies Readonly<Record<TumUiTranslationKey, string>>;
 
 class ArtemisTumUiTranslator implements TumUiTranslator {
     private readonly translateService = inject(TranslateService);
@@ -40,12 +47,12 @@ class ArtemisTumUiTranslator implements TumUiTranslator {
     });
 
     translate(key: string, params?: TumUiTranslationParams): string {
-        const translation = this.translateService.instant(ARTEMIS_TRANSLATION_KEYS[key] ?? key, params);
+        const mappedKey = key in ARTEMIS_TRANSLATION_KEYS ? ARTEMIS_TRANSLATION_KEYS[key as TumUiTranslationKey] : key;
+        const translation = this.translateService.instant(mappedKey, params);
         return typeof translation === 'string' ? translation : key;
     }
 }
 
-/** Connects the framework-neutral TUM UI translation contract to Artemis' ngx-translate service. */
 export function provideArtemisTumUiTranslator() {
     return provideTumUiTranslator(ArtemisTumUiTranslator);
 }

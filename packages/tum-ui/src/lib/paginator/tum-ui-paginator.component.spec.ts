@@ -37,15 +37,8 @@ describe('TumUiPaginatorComponent', () => {
         expect(navButton('paginator-last').disabled).toBe(false);
     });
 
-    it('highlights the selected page with a single, non-transparent background', () => {
-        setInputs(130, 1); // 3 pages (0..2); index 1 is the current/selected page
-        const selected = fixture.debugElement.query(By.css('[data-testid="paginator-page"][aria-current="page"]')).nativeElement as HTMLElement;
-        const backgroundUtilities = Array.from(selected.classList).filter((token) => token.startsWith('bg-'));
-        expect(backgroundUtilities).toEqual(['bg-tum-ui-primary/15']);
-    });
-
     it('disables next/last on the last page', () => {
-        setInputs(130, 2); // ceil(130/50)=3 pages -> last index 2
+        setInputs(130, 2);
         expect(navButton('paginator-next').disabled).toBe(true);
         expect(navButton('paginator-last').disabled).toBe(true);
         expect(navButton('paginator-first').disabled).toBe(false);
@@ -64,11 +57,14 @@ describe('TumUiPaginatorComponent', () => {
         expect(spy).toHaveBeenLastCalledWith(0);
     });
 
-    it('emits pageSizeChange from the rows-per-page select', () => {
+    it('emits pageSizeChange from the rows-per-page select', async () => {
         const spy = vi.spyOn(component.pageSizeChange, 'emit');
         setInputs(130, 0, 50);
+        await fixture.whenStable();
+        fixture.detectChanges();
         const select: HTMLSelectElement = fixture.debugElement.query(By.css('[data-testid="paginator-page-size"]')).nativeElement;
-        select.value = '20';
+        expect(select.selectedOptions[0].textContent).toBe('50');
+        select.value = Array.from(select.options).find((option) => option.textContent === '20')!.value;
         select.dispatchEvent(new Event('change'));
         expect(spy).toHaveBeenCalledWith(20);
     });
@@ -79,27 +75,27 @@ describe('TumUiPaginatorComponent', () => {
     });
 
     it('renders windowed page-number buttons (max 5) and marks the current page', () => {
-        setInputs(500, 4, 50); // 10 pages, current index 4
+        setInputs(500, 4, 50);
         const pageButtons = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
-        expect(pageButtons.length).toBe(5); // PAGE_LINK_SIZE window
+        expect(pageButtons.length).toBe(5);
         const current = pageButtons.find((b) => b.nativeElement.getAttribute('aria-current') === 'page');
-        expect(current?.nativeElement.textContent.trim()).toBe('5'); // page index 4 -> label 5
+        expect(current?.nativeElement.textContent.trim()).toBe('5');
     });
 
     it('emits pageChange when a page-number button is clicked', () => {
         const spy = vi.spyOn(component.pageChange, 'emit');
         setInputs(500, 4, 50);
         const pageButtons = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
-        pageButtons[0].nativeElement.click(); // first visible page (index 2 for a window centered on 4)
+        pageButtons[0].nativeElement.click();
         expect(spy).toHaveBeenCalledWith(2);
     });
 
     it('clamps the display when the page input exceeds the last valid page (no stranded/empty state)', () => {
-        setInputs(30, 5, 50); // 30 records, pageSize 50 -> 1 page; page=5 is out of range
+        setInputs(30, 5, 50);
         expect(navButton('paginator-next').disabled).toBe(true);
         expect(navButton('paginator-last').disabled).toBe(true);
         const pages = fixture.debugElement.queryAll(By.css('[data-testid="paginator-page"]'));
         expect(pages.length).toBe(1);
-        expect(pages[0].nativeElement.getAttribute('aria-current')).toBe('page'); // clamped to page 0, still marked active
+        expect(pages[0].nativeElement.getAttribute('aria-current')).toBe('page');
     });
 });

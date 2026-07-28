@@ -3,18 +3,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 
-/**
- * Icon-in-input wrapper.
- *
- * Wraps a projected `<input tumUiInput>` (or `<textarea tumUiInput>`) and overlays a FontAwesome icon inside the
- * field, on the leading (default) or trailing side. The icon sits at `inset-inline-<side>: 0.75rem`, vertically
- * centered, in the muted icon color; the field gains matching padding on the icon side so text never runs under it.
- *
- * Usage:
- *   <tum-ui-icon-field [icon]="faSearch">
- *       <input tumUiInput type="text" class="w-full" [ngModel]="..." (ngModelChange)="..." />
- *   </tum-ui-icon-field>
- */
 export type TumUiIconFieldPosition = 'left' | 'right';
 
 @Component({
@@ -29,19 +17,13 @@ export type TumUiIconFieldPosition = 'left' | 'right';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiIconFieldComponent {
-    /** Leading/trailing FontAwesome icon. No icon (and no field padding) is applied unless this is set. */
     readonly icon = input<IconProp>();
     readonly iconPosition = input<TumUiIconFieldPosition>('left');
 
     private readonly renderer = inject(Renderer2);
 
-    /** The projected field. A content query, so it tracks the projected `tumUiInput` element reactively. */
     private readonly field = contentChild(TumUiInputDirective, { read: ElementRef });
 
-    /**
-     * Which side to reserve room on, and how much, so text clears the icon: `2 * field padding.x + icon size`
-     * (`2 * 0.75rem + 1rem = 2.5rem`). `undefined` while no icon is set, so no padding is applied.
-     */
     private readonly iconSidePadding = computed<{ side: 'padding-inline-start' | 'padding-inline-end'; value: string } | undefined>(() =>
         this.icon() ? { side: this.iconPosition() === 'right' ? 'padding-inline-end' : 'padding-inline-start', value: '2.5rem' } : undefined,
     );

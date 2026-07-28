@@ -4,19 +4,11 @@ import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import { TumUiDialogComponent } from './tum-ui-dialog.component';
 
-/** Host exercising the string-header path plus the projected body and `#footer` template. */
 @Component({
     selector: 'tum-ui-dialog-string-host',
     imports: [TumUiDialogComponent],
     template: `
-        <tum-ui-dialog
-            [(visible)]="open"
-            [header]="header()"
-            [closable]="closable()"
-            [closeOnEscape]="closeOnEscape()"
-            [dismissableMask]="dismissableMask()"
-            [style]="{ width: '50dvw' }"
-        >
+        <tum-ui-dialog [(visible)]="open" [header]="header()" [closable]="closable()" [closeOnEscape]="closeOnEscape()" [dismissableMask]="dismissableMask()">
             <p class="body-content">Body text</p>
             @if (withFooter()) {
                 <ng-template #footer>
@@ -35,7 +27,6 @@ class StringHeaderHostComponent {
     readonly withFooter = signal(true);
 }
 
-/** Host exercising the projected `#header` template path. */
 @Component({
     selector: 'tum-ui-dialog-template-host',
     imports: [TumUiDialogComponent],
@@ -51,6 +42,18 @@ class StringHeaderHostComponent {
 class TemplateHeaderHostComponent {
     readonly open = signal(false);
 }
+
+@Component({
+    imports: [TumUiDialogComponent],
+    template: `<tum-ui-dialog [visible]="true" header="Initially open">Body</tum-ui-dialog>`,
+})
+class InitiallyVisibleHostComponent {}
+
+@Component({
+    imports: [TumUiDialogComponent],
+    template: `<tum-ui-dialog [visible]="true">Body</tum-ui-dialog>`,
+})
+class UnnamedHostComponent {}
 
 function panel(): HTMLElement | null {
     return document.querySelector('.tum-ui-dialog');
@@ -170,12 +173,6 @@ describe('TumUiDialogComponent', () => {
         expect(document.querySelector('[data-testid="tum-ui-dialog-close"]')).toBeNull();
     });
 
-    it('applies the [style] width record to the panel', () => {
-        host.open.set(true);
-        fixture.detectChanges();
-        expect(panel()?.style.width).toBe('50dvw');
-    });
-
     it('uses the CDK modal backdrop', () => {
         host.open.set(true);
         fixture.detectChanges();
@@ -243,5 +240,29 @@ describe('TumUiDialogComponent projected #header template', () => {
 
         const title = document.querySelector('.tum-ui-dialog-title');
         expect(container()?.getAttribute('aria-labelledby')).toBe(title?.id);
+    });
+});
+
+describe('TumUiDialogComponent accessible name contract', () => {
+    afterEach(() => {
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
+    });
+
+    it('opens when initially visible and named', () => {
+        TestBed.configureTestingModule({ imports: [InitiallyVisibleHostComponent] });
+        const fixture = TestBed.createComponent(InitiallyVisibleHostComponent);
+        fixture.detectChanges();
+
+        expect(panel()).not.toBeNull();
+        expect(container()?.getAttribute('aria-labelledby')).toBeTruthy();
+        fixture.destroy();
+    });
+
+    it('rejects an unnamed dialog', () => {
+        TestBed.configureTestingModule({ imports: [UnnamedHostComponent] });
+        const fixture = TestBed.createComponent(UnnamedHostComponent);
+
+        expect(() => fixture.detectChanges()).toThrow(/requires a visible header, a header template, or ariaLabel/);
+        fixture.destroy();
     });
 });

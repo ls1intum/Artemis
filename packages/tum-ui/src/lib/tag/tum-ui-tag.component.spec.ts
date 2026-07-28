@@ -27,11 +27,9 @@ describe('TumUiTagComponent', () => {
 
     it('defaults to the secondary severity', () => {
         expect(tag().getAttribute('data-severity')).toBe('secondary');
-        expect(tag().className).toContain('bg-tum-ui-surface-200');
-        expect(tag().className).toContain('rounded-md');
     });
 
-    it('exposes the severity via data-severity (drives the p-tag-matched colors in the stylesheet)', () => {
+    it('reflects the severity state', () => {
         fixture.componentRef.setInput('severity', 'success');
         fixture.detectChanges();
         expect(tag().getAttribute('data-severity')).toBe('success');
@@ -41,18 +39,5 @@ describe('TumUiTagComponent', () => {
         fixture.componentRef.setInput('value', 'Active');
         fixture.detectChanges();
         expect(tag().textContent?.trim()).toBe('Active');
-    });
-
-    it('uses a full radius when rounded', () => {
-        fixture.componentRef.setInput('rounded', true);
-        fixture.detectChanges();
-        expect(tag().className).toContain('rounded-full');
-    });
-
-    it('forwards styleClass onto the tag pill', () => {
-        fixture.componentRef.setInput('styleClass', 'break whitespace-nowrap');
-        fixture.detectChanges();
-        expect(tag().className).toContain('break');
-        expect(tag().className).toContain('whitespace-nowrap');
     });
 });

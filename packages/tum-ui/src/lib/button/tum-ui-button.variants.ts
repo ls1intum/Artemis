@@ -1,15 +1,6 @@
-/**
- * Variant -> Tailwind-utility-class map for {@link TumUiButtonComponent}.
- *
- * This reimplements the spartan-ng / class-variance-authority "variants" pattern as a tiny local
- * function so the kit needs no extra npm dependency. The class strings reference only sanctioned
- * Artemis token utilities (bg-tum-ui-primary / text-tum-ui-surface-* / bg-state-* / border-*), never raw Tailwind
- * palette colors or PrimeNG --p-* primitives, so the button matches the current PrimeNG Aura look
- * and stays dark-mode-correct for free.
- */
 export type TumUiButtonSeverity = 'primary' | 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast';
 export type TumUiButtonSize = 'small' | 'default' | 'large';
-/** Fill style. A single input avoids the `outlined` + `text` two-boolean ambiguity (PR #13226 review). */
+
 export type TumUiButtonVariant = 'solid' | 'outlined' | 'text';
 
 export interface TumUiButtonVariantOptions {
@@ -59,9 +50,6 @@ const SIZE: Record<TumUiButtonSize, string> = {
 
 const VARIANTS: Record<TumUiButtonVariant, Record<TumUiButtonSeverity, string>> = { solid: SOLID, outlined: OUTLINED, text: TEXT };
 
-/**
- * Compose the full class string for a button from its variant options.
- */
 export function tumUiButtonClasses(options: TumUiButtonVariantOptions): string {
     return `${BASE} ${VARIANTS[options.variant][options.severity]} ${SIZE[options.size]}`;
 }

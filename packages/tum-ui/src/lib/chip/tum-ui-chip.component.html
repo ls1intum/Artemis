@@ -8,7 +8,7 @@
         <button
             type="button"
             class="tum-ui-chip-remove inline-flex shrink-0 cursor-pointer appearance-none items-center justify-center border-0 bg-transparent p-0 leading-none text-inherit"
-            [attr.aria-label]="removeAriaLabel()"
+            [attr.aria-label]="removeAriaLabel() ?? ('tumUi.chip.remove' | tumUiTranslate)"
             (click)="remove($event)"
             (keydown)="onRemoveKeydown($event)"
             data-testid="tum-ui-chip-remove"

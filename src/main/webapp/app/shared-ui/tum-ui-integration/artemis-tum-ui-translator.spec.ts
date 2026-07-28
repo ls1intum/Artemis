@@ -14,6 +14,7 @@ describe('provideArtemisTumUiTranslator', () => {
         const translateService = TestBed.inject(TranslateService);
 
         expect(translator.translate('tumUi.paginator.next')).toBe('global.paginator.next');
+        expect(translator.translate('tumUi.dialog.close')).toBe('entity.action.close');
         expect(translator.changes?.()).toBeUndefined();
 
         translateService.use('de');

@@ -27,22 +27,16 @@ describe('TumUiRadioButtonComponent', () => {
         return fixture.debugElement.query(By.css('input[type="radio"]')).nativeElement;
     }
 
-    function box(): HTMLElement {
-        return fixture.debugElement.query(By.css('.tum-ui-radio-button-box')).nativeElement;
-    }
-
     it('renders a native radio, unchecked when the selected value differs from its value', () => {
         expect(input()).not.toBeNull();
         expect(input().type).toBe('radio');
         expect(input().checked).toBe(false);
-        expect(box().className).toContain('bg-tum-ui-surface-0');
     });
 
-    it('renders checked (primary fill) when the bound modelValue equals its value', () => {
+    it('renders checked when the bound modelValue equals its value', () => {
         fixture.componentRef.setInput('modelValue', 'a');
         fixture.detectChanges();
         expect(input().checked).toBe(true);
-        expect(box().className).toContain('bg-tum-ui-primary');
     });
 
     it('treats an undefined selected value as unchecked (the admin value-or-undefined pattern)', () => {
@@ -81,7 +75,7 @@ describe('TumUiRadioButtonComponent', () => {
         fixture.detectChanges();
 
         expect(input().disabled).toBe(true);
-        component['onInputClick'](new MouseEvent('click'));
+        input().click();
         expect(onClickSpy).not.toHaveBeenCalled();
     });
 });
@@ -153,11 +147,8 @@ describe('TumUiRadioButtonComponent (two-way [(ngModel)] group via CVA)', () => 
         fixture.detectChanges();
 
         const inputs = fixture.debugElement.queryAll(By.css('input[type="radio"]')).map((d) => d.nativeElement as HTMLInputElement);
-        const boxes = fixture.debugElement.queryAll(By.css('.tum-ui-radio-button-box')).map((d) => d.nativeElement as HTMLElement);
         expect(inputs[0].checked).toBe(true);
         expect(inputs[1].checked).toBe(false);
-        expect(boxes[0].className).toContain('bg-tum-ui-primary');
-        expect(boxes[1].className).not.toContain('bg-tum-ui-primary');
 
         inputs[1].click();
         fixture.detectChanges();
@@ -167,8 +158,6 @@ describe('TumUiRadioButtonComponent (two-way [(ngModel)] group via CVA)', () => 
         expect(host.executeNow).toBe(true);
         expect(inputs[0].checked).toBe(false);
         expect(inputs[1].checked).toBe(true);
-        expect(boxes[1].className).toContain('bg-tum-ui-primary');
-        expect(boxes[0].className).not.toContain('bg-tum-ui-primary');
     });
 });
 

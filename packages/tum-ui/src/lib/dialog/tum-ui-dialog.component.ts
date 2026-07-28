@@ -17,14 +17,14 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Dialog, DialogRef, DialogRole } from '@angular/cdk/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 let nextDialogId = 0;
 
-/** Declarative modal dialog backed by Angular CDK Dialog. */
 @Component({
     selector: 'tum-ui-dialog',
     templateUrl: './tum-ui-dialog.component.html',
-    imports: [NgTemplateOutlet, FaIconComponent],
+    imports: [NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiDialogComponent implements OnDestroy {
@@ -40,7 +40,7 @@ export class TumUiDialogComponent implements OnDestroy {
     readonly style = input<Record<string, string>>({});
     readonly contentStyle = input<Record<string, string>>({});
     readonly ariaLabel = input<string>();
-    readonly closeButtonAriaLabel = input('Close');
+    readonly closeButtonAriaLabel = input<string>();
     readonly role = input<DialogRole>('dialog');
     readonly ariaDescribedBy = input<string>();
 
@@ -53,7 +53,7 @@ export class TumUiDialogComponent implements OnDestroy {
 
     protected readonly titleId = `tum-ui-dialog-title-${nextDialogId++}`;
     protected readonly faXmark = faXmark;
-    protected readonly labelledBy = computed(() => (this.showHeader() && (this.header() || this.headerTemplate()) ? this.titleId : undefined));
+    protected readonly labelledBy = computed(() => (this.showHeader() && (this.header()?.trim() || this.headerTemplate()) ? this.titleId : undefined));
 
     private dialogRef?: DialogRef;
 
@@ -73,6 +73,11 @@ export class TumUiDialogComponent implements OnDestroy {
         if (this.dialogRef) {
             return;
         }
+        const ariaLabel = this.ariaLabel()?.trim();
+        const labelledBy = this.labelledBy();
+        if (!ariaLabel && !labelledBy) {
+            throw new Error('tum-ui-dialog requires a visible header, a header template, or ariaLabel');
+        }
         const ref = this.dialog.open(this.panel(), {
             viewContainerRef: this.viewContainerRef,
             hasBackdrop: true,
@@ -80,8 +85,8 @@ export class TumUiDialogComponent implements OnDestroy {
             disableClose: true,
             ariaModal: true,
             role: this.role(),
-            ariaLabel: this.ariaLabel() ?? null,
-            ariaLabelledBy: this.labelledBy() ?? null,
+            ariaLabel: ariaLabel ?? null,
+            ariaLabelledBy: labelledBy ?? null,
             ariaDescribedBy: this.ariaDescribedBy() ?? null,
             autoFocus: 'dialog',
             restoreFocus: true,

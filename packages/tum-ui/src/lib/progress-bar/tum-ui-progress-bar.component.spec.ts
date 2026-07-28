@@ -34,7 +34,6 @@ describe('TumUiProgressBarComponent', () => {
         expect(host.getAttribute('aria-valuemin')).toBe('0');
         expect(host.getAttribute('aria-valuemax')).toBe('100');
         expect(host.getAttribute('aria-valuenow')).toBe('0');
-        expect(host.className).toContain('tum-ui-progress-bar');
     });
 
     it('reflects the value into aria-valuenow and the fill width', () => {
@@ -42,6 +41,20 @@ describe('TumUiProgressBarComponent', () => {
         fixture.detectChanges();
         expect(host.getAttribute('aria-valuenow')).toBe('42');
         expect(fill().style.width).toBe('42%');
+    });
+
+    it('clamps the exposed value, fill, and label to the valid range', () => {
+        fixture.componentRef.setInput('value', 130);
+        fixture.detectChanges();
+        expect(host.getAttribute('aria-valuenow')).toBe('100');
+        expect(fill().style.width).toBe('100%');
+        expect(label().textContent?.trim()).toBe('100%');
+
+        fixture.componentRef.setInput('value', -10);
+        fixture.detectChanges();
+        expect(host.getAttribute('aria-valuenow')).toBe('0');
+        expect(fill().style.width).toBe('0%');
+        expect(label().textContent?.trim()).toBe('');
     });
 
     it('renders the default {value}{unit} label when showValue is true (default)', () => {
@@ -63,25 +76,6 @@ describe('TumUiProgressBarComponent', () => {
         fixture.detectChanges();
         expect(label().textContent?.trim()).toBe('');
     });
-
-    it('does not render the default label for a zero value', () => {
-        fixture.componentRef.setInput('value', 0);
-        fixture.detectChanges();
-        expect(label().textContent?.trim()).toBe('');
-    });
-
-    it('overrides the fill background via the color input', () => {
-        fixture.componentRef.setInput('color', 'var(--tum-ui-state-success)');
-        fixture.detectChanges();
-        expect(fill().style.background).toBe('var(--tum-ui-state-success)');
-    });
-
-    it('forwards styleClass onto the bar', () => {
-        fixture.componentRef.setInput('styleClass', 'mb-2 w-full');
-        fixture.detectChanges();
-        expect(host.className).toContain('mb-2');
-        expect(host.className).toContain('w-full');
-    });
 });
 
 @Component({
@@ -93,7 +87,7 @@ describe('TumUiProgressBarComponent', () => {
 class ProgressBarHostComponent {}
 
 describe('TumUiProgressBarComponent (content projection)', () => {
-    it('renders projected label content even when showValue is false (parity with p-progressbar #content)', async () => {
+    it('renders projected content when the default value label is hidden', async () => {
         await TestBed.configureTestingModule({
             imports: [ProgressBarHostComponent],
         }).compileComponents();

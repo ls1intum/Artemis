@@ -54,13 +54,5 @@
         }
     },
     "include": ["src/main/webapp/app"],
-    "exclude": ["node_modules", "src/main/resources", "src/main/webapp/app/**/*.spec.ts"],
-    "references": [
-        {
-            "path": "./packages/tum-ui/tsconfig.lib.json"
-        },
-        {
-            "path": "./packages/tum-ui/tsconfig.spec.json"
-        }
-    ]
+    "exclude": ["node_modules", "src/main/resources", "src/main/webapp/app/**/*.spec.ts"]
 }

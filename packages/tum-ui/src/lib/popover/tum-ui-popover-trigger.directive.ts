@@ -1,12 +1,6 @@
 import { Directive, ElementRef, inject, input } from '@angular/core';
 import { TumUiPopoverComponent } from './tum-ui-popover.component';
 
-/**
- * Wires a trigger element to a {@link TumUiPopoverComponent}: click toggles the popover anchored to
- * the trigger, and the trigger reflects `aria-haspopup`/`aria-expanded` for accessibility.
- *
- * Usage: `<button [tumUiPopoverTrigger]="pop">Details</button> <tum-ui-popover #pop>...</tum-ui-popover>`
- */
 @Directive({
     selector: '[tumUiPopoverTrigger]',
     host: {

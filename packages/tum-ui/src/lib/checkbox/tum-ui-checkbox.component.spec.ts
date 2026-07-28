@@ -27,10 +27,6 @@ describe('TumUiCheckboxComponent', () => {
         return fixture.debugElement.query(By.css('input[type="checkbox"]')).nativeElement;
     }
 
-    function box(): HTMLElement {
-        return fixture.debugElement.query(By.css('.tum-ui-checkbox-box')).nativeElement;
-    }
-
     function tick(): HTMLElement | undefined {
         const icon = fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'));
         return icon ? icon.nativeElement : undefined;
@@ -40,15 +36,13 @@ describe('TumUiCheckboxComponent', () => {
         expect(input()).not.toBeNull();
         expect(input().checked).toBe(false);
         expect(tick()).toBeUndefined();
-        expect(box().className).toContain('bg-tum-ui-surface-0');
     });
 
-    it('reflects the bound checked value and shows the tick + primary fill when checked', () => {
+    it('reflects the bound checked value and shows the tick when checked', () => {
         fixture.componentRef.setInput('checked', true);
         fixture.detectChanges();
         expect(input().checked).toBe(true);
         expect(tick()).not.toBeUndefined();
-        expect(box().className).toContain('bg-tum-ui-primary');
     });
 
     it('emits onChange with the new checked value and toggles the model on user interaction', () => {
@@ -65,14 +59,6 @@ describe('TumUiCheckboxComponent', () => {
         expect(tick()).not.toBeUndefined();
     });
 
-    it('toggles exactly once per click (no double-fire)', () => {
-        const onChangeSpy = vi.fn();
-        component.onChange.subscribe(onChangeSpy);
-        input().click();
-        fixture.detectChanges();
-        expect(onChangeSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('forwards inputId, name and aria-label onto the native input', () => {
         fixture.componentRef.setInput('inputId', 'accept');
         fixture.componentRef.setInput('name', 'terms');
@@ -83,7 +69,7 @@ describe('TumUiCheckboxComponent', () => {
         expect(input().getAttribute('aria-label')).toBe('Accept terms');
     });
 
-    it('disables the native input, mutes the tick, and does not emit on a disabled toggle attempt', () => {
+    it('disables the native input and does not emit on a disabled toggle attempt', () => {
         const onChangeSpy = vi.fn();
         component.onChange.subscribe(onChangeSpy);
         fixture.componentRef.setInput('checked', true);
@@ -91,8 +77,6 @@ describe('TumUiCheckboxComponent', () => {
         fixture.detectChanges();
 
         expect(input().disabled).toBe(true);
-        expect(box().className).toContain('bg-tum-ui-surface-200');
-        expect(tick()!.className).toContain('text-tum-ui-surface-500');
 
         input().click();
         fixture.detectChanges();

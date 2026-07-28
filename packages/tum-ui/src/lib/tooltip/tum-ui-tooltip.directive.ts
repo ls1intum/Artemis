@@ -7,13 +7,6 @@ import { TumUiTooltipContentComponent } from './tum-ui-tooltip-content.component
 
 let nextTooltipId = 0;
 
-/**
- * Tooltip directive on Angular CDK overlay.
- *
- * Drop-in replacement for PrimeNG `pTooltip`: hover + focus triggers with show/hide delays, viewport
- * collision handling (via the shared overlay substrate), and `aria-describedby` wiring so the bubble
- * is announced. Delays default to the PrimeNG-like values so the swap feels identical.
- */
 @Directive({
     selector: '[tumUiTooltip]',
     host: {
@@ -73,8 +66,6 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.focused = false;
         this.scheduleHideIfInactive();
     }
-
-    /** Schedule a hide only once neither hover nor keyboard focus keeps the tooltip alive. */
     private scheduleHideIfInactive(): void {
         if (this.hovered || this.focused) {
             return;
@@ -125,8 +116,6 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.contentRef.setInput('placement', appliedPlacement);
         this.addDescribedBy();
     }
-
-    /** Append our tooltip id to the host's aria-describedby, preserving any existing tokens. */
     private addDescribedBy(): void {
         const host = this.elementRef.nativeElement;
         const tokens = (host.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
@@ -135,8 +124,6 @@ export class TumUiTooltipDirective implements OnDestroy {
         }
         host.setAttribute('aria-describedby', tokens.join(' '));
     }
-
-    /** Remove only our tooltip id from the host's aria-describedby, leaving any other tokens intact. */
     private removeDescribedBy(): void {
         const host = this.elementRef.nativeElement;
         const tokens = (host.getAttribute('aria-describedby') ?? '').split(' ').filter((token) => token && token !== this.tooltipId);

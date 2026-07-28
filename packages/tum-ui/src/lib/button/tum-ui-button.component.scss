@@ -12,7 +12,7 @@
     line-height: 1.25;
     cursor: pointer;
     white-space: nowrap;
-    border-radius: var(--radius-md);
+    border-radius: 0.375rem;
 
     &::after {
         content: '';
@@ -25,7 +25,7 @@
     }
 
     &:hover:not(:disabled)::after {
-        background-color: rgb(0 0 0 / 0.045);
+        background-color: color-mix(in srgb, var(--tum-ui-text-color) 5%, transparent);
     }
 
     &:focus-visible {
@@ -38,8 +38,4 @@
     &:disabled {
         cursor: default;
     }
-}
-
-:host-context(html[data-theme='dark']) .tum-ui-btn:hover:not(:disabled)::after {
-    background-color: rgb(255 255 255 / 0.06);
 }

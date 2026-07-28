@@ -150,8 +150,7 @@ await esbuild.build({
     outdir: 'node_modules/monaco-editor/bundles',
 });
 
-// Artemis consumes the ng-packagr output, rather than the library's TypeScript sources. This keeps
-// local and CI builds on the same Angular Package Format boundary that an extracted npm package uses.
+// Build the Angular Package Format artifact consumed by the application.
 const tumUiConfiguration = developFlag ? 'development' : 'production';
 const pnpmExecutable = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 await new Promise((resolve, reject) => {

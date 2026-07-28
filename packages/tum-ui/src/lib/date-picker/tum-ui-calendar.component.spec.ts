@@ -33,7 +33,6 @@ describe('TumUiCalendarComponent', () => {
         return dayButtons().find((button) => button.getAttribute('aria-label') === label)!;
     }
 
-    /** Dispatch a keydown on whichever day cell currently holds DOM focus (the roving cursor). */
     function pressOnFocused(key: string): void {
         (document.activeElement as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key }));
     }
@@ -54,7 +53,7 @@ describe('TumUiCalendarComponent', () => {
         const spy = vi.spyOn(component.monthChange, 'emit');
         fixture.debugElement.query(By.css('[data-testid="calendar-next"]')).nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
-        expect((spy.mock.calls[0][0] as dayjs.Dayjs).month()).toBe(6); // July
+        expect((spy.mock.calls[0][0] as dayjs.Dayjs).month()).toBe(6);
     });
 
     it('marks the selected day with aria-selected', () => {
@@ -95,27 +94,6 @@ describe('TumUiCalendarComponent', () => {
         expect(spy).toHaveBeenCalledTimes(3);
     });
 
-    it('mutes days from adjacent months', () => {
-        expect(dayButtons().some((button) => button.classList.contains('text-tum-ui-surface-400'))).toBe(true);
-    });
-
-    it('rings today when the active month contains it', () => {
-        fixture.componentRef.setInput('activeMonth', dayjs().startOf('month'));
-        fixture.detectChanges();
-        expect(dayButtons().some((button) => button.classList.contains('ring-tum-ui-primary'))).toBe(true);
-    });
-
-    it('applies exactly one text color per state (selected wins over the base color)', () => {
-        fixture.componentRef.setInput('selected', dayjs('2026-06-15'));
-        fixture.detectChanges();
-        const selected = dayButtons().find((b) => b.textContent?.trim() === '15')!;
-        expect(selected.classList).toContain('bg-tum-ui-primary');
-        expect(selected.classList).toContain('text-tum-ui-surface-0');
-        expect(selected.classList).not.toContain('text-tum-ui-surface-900');
-        const other = dayButtons().find((b) => b.classList.contains('text-tum-ui-surface-400'))!;
-        expect(other.classList).not.toContain('text-tum-ui-surface-900');
-    });
-
     it('restores roving focus to the grid after a keyboard month change (PageDown)', () => {
         const buttons = dayButtons();
         buttons[10].focus();
@@ -128,19 +106,19 @@ describe('TumUiCalendarComponent', () => {
 
     it('preserves the focused day-of-month across PageDown (arrow to June 11 → July 11, not July 1)', () => {
         dayButtons()[0].focus();
-        pressOnFocused('ArrowDown'); // June 8
-        pressOnFocused('ArrowRight'); // June 9
-        pressOnFocused('ArrowRight'); // June 10
-        pressOnFocused('ArrowRight'); // June 11
+        pressOnFocused('ArrowDown');
+        pressOnFocused('ArrowRight');
+        pressOnFocused('ArrowRight');
+        pressOnFocused('ArrowRight');
         expect(document.activeElement).toBe(dayButton('2026-06-11'));
         pressOnFocused('PageDown');
-        fixture.componentRef.setInput('activeMonth', dayjs('2026-07-01')); // parent applies the emitted month
+        fixture.componentRef.setInput('activeMonth', dayjs('2026-07-01'));
         fixture.detectChanges();
         expect(document.activeElement).toBe(dayButton('2026-07-11'));
     });
 
     it('preserves the focused day-of-month across PageUp (June 11 → May 11)', () => {
-        fixture.componentRef.setInput('selected', dayjs('2026-06-11')); // seed the cursor on June 11
+        fixture.componentRef.setInput('selected', dayjs('2026-06-11'));
         fixture.detectChanges();
         dayButton('2026-06-11').dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }));
         fixture.componentRef.setInput('activeMonth', dayjs('2026-05-01'));
@@ -150,7 +128,7 @@ describe('TumUiCalendarComponent', () => {
 
     it('clamps the preserved day into a shorter month on PageDown (Jan 31 → Feb 28)', () => {
         fixture.componentRef.setInput('activeMonth', dayjs('2026-01-01'));
-        fixture.componentRef.setInput('selected', dayjs('2026-01-31')); // seed the cursor on Jan 31
+        fixture.componentRef.setInput('selected', dayjs('2026-01-31'));
         fixture.detectChanges();
         dayButton('2026-01-31').dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }));
         fixture.componentRef.setInput('activeMonth', dayjs('2026-02-01'));

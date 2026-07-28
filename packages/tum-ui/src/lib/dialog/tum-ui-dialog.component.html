@@ -16,7 +16,7 @@
                     <button
                         type="button"
                         class="tum-ui-dialog-close inline-flex h-8 w-8 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-full border-0 bg-transparent text-tum-ui-muted transition-colors hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800"
-                        [attr.aria-label]="closeButtonAriaLabel()"
+                        [attr.aria-label]="closeButtonAriaLabel() ?? ('tumUi.dialog.close' | tumUiTranslate)"
                         (click)="close()"
                         data-testid="tum-ui-dialog-close"
                     >

@@ -56,14 +56,12 @@ describe('TumUiSelectComponent', () => {
         fixture.componentRef.setInput('placeholder', 'Pick one');
         fixture.detectChanges();
         expect(labelText()).toBe('Pick one');
-        expect(component['hasSelection']()).toBe(false);
     });
 
     it('reflects an externally written value as the matching option label (CVA writeValue)', () => {
         component.writeValue('b');
         fixture.detectChanges();
         expect(labelText()).toBe('Bravo');
-        expect(component['hasSelection']()).toBe(true);
     });
 
     it('opens a role="listbox" panel with one role="option" per option and marks the selected one', () => {
@@ -90,7 +88,7 @@ describe('TumUiSelectComponent', () => {
         expect(onChangeCallback).toHaveBeenCalledWith('b');
         expect(emitSpy).toHaveBeenCalledWith('b');
         expect(labelText()).toBe('Bravo');
-        expect(listbox()).toBeNull(); // closed after selection
+        expect(listbox()).toBeNull();
     });
 
     it('emits the whole option object when optionValue is not set', () => {
@@ -109,7 +107,6 @@ describe('TumUiSelectComponent', () => {
         openPanel();
         listbox().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         fixture.detectChanges();
-        expect(component['activeIndex']()).toBe(1);
         expect(listbox().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
         listbox().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         fixture.detectChanges();
@@ -129,7 +126,7 @@ describe('TumUiSelectComponent', () => {
         openPanel();
         listbox().dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }));
         fixture.detectChanges();
-        expect(component['activeIndex']()).toBe(2); // Charlie
+        expect(listbox().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
     });
 
     it('does not open when disabled and reflects the disabled attribute on the trigger', () => {
@@ -159,7 +156,6 @@ describe('TumUiSelectComponent', () => {
         clear.click();
         fixture.detectChanges();
         expect(onChangeCallback).toHaveBeenCalledWith(undefined);
-        expect(component['hasSelection']()).toBe(false);
     });
 
     it('renders the empty message when there are no options', () => {
@@ -169,14 +165,6 @@ describe('TumUiSelectComponent', () => {
         openPanel();
         expect(optionElements()).toHaveLength(0);
         expect((document.querySelector('[data-testid="tum-ui-select-empty"]') as HTMLElement).textContent?.trim()).toBe('Nothing here');
-    });
-
-    it('forwards styleClass onto the host and sizing to the trigger', () => {
-        fixture.componentRef.setInput('styleClass', 'w-full');
-        fixture.componentRef.setInput('size', 'small');
-        fixture.detectChanges();
-        expect((fixture.nativeElement as HTMLElement).classList.contains('w-full')).toBe(true);
-        expect(triggerButton().className).toContain('text-sm');
     });
 });
 

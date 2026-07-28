@@ -7,53 +7,27 @@ function event(overrides: Partial<TumUiTableQueryEvent> = {}): TumUiTableQueryEv
 }
 
 describe('buildDbQueryFromTableEvent', () => {
-    describe('page', () => {
-        it('passes the 0-based page through unchanged', () => {
-            expect(buildDbQueryFromTableEvent(event({ page: 0 })).page).toBe(0);
-            expect(buildDbQueryFromTableEvent(event({ page: 4 })).page).toBe(4);
+    it('maps a complete table event', () => {
+        expect(buildDbQueryFromTableEvent(event({ page: 4, pageSize: 20, sort: { field: 'name', direction: 'desc' }, searchTerm: '  alice  ' }))).toEqual({
+            page: 4,
+            pageSize: 20,
+            sortedColumn: 'name',
+            sortingOrder: SortingOrder.DESCENDING,
+            searchTerm: 'alice',
         });
     });
 
-    describe('page size', () => {
-        it('uses the event page size', () => {
-            expect(buildDbQueryFromTableEvent(event({ pageSize: 20 })).pageSize).toBe(20);
-        });
-
-        it('falls back to the provided default, then 50, for a falsy page size', () => {
-            expect(buildDbQueryFromTableEvent(event({ pageSize: 0 }), { pageSize: 30 }).pageSize).toBe(30);
-            expect(buildDbQueryFromTableEvent(event({ pageSize: 0 })).pageSize).toBe(50);
-        });
-    });
-
-    describe('sort', () => {
-        it('passes a concrete sort field and direction through', () => {
-            const query = buildDbQueryFromTableEvent(event({ sort: { field: 'name', direction: 'asc' } }));
-            expect(query.sortedColumn).toBe('name');
-            expect(query.sortingOrder).toBe(SortingOrder.ASCENDING);
-        });
-
-        it('maps "desc" to DESCENDING', () => {
-            expect(buildDbQueryFromTableEvent(event({ sort: { field: 'name', direction: 'desc' } })).sortingOrder).toBe(SortingOrder.DESCENDING);
-        });
-
-        it('defaults the column to "id" and the order to ASCENDING when unsorted', () => {
-            const query = buildDbQueryFromTableEvent(event({ sort: undefined }));
-            expect(query.sortedColumn).toBe('id');
-            expect(query.sortingOrder).toBe(SortingOrder.ASCENDING);
-        });
-
-        it('defaults a blank sort field to "id"', () => {
-            expect(buildDbQueryFromTableEvent(event({ sort: { field: '   ', direction: 'asc' } })).sortedColumn).toBe('id');
+    it('normalizes an incomplete table event', () => {
+        expect(buildDbQueryFromTableEvent(event({ pageSize: 0, sort: { field: '   ', direction: 'asc' } }))).toEqual({
+            page: 0,
+            pageSize: 50,
+            sortedColumn: 'id',
+            sortingOrder: SortingOrder.ASCENDING,
+            searchTerm: '',
         });
     });
 
-    describe('search term', () => {
-        it('trims the term', () => {
-            expect(buildDbQueryFromTableEvent(event({ searchTerm: '  alice  ' })).searchTerm).toBe('alice');
-        });
-
-        it('produces an empty string when absent', () => {
-            expect(buildDbQueryFromTableEvent(event({ searchTerm: undefined })).searchTerm).toBe('');
-        });
+    it('accepts a consumer page-size default', () => {
+        expect(buildDbQueryFromTableEvent(event({ pageSize: 0 }), { pageSize: 30 }).pageSize).toBe(30);
     });
 });

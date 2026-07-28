@@ -16,8 +16,6 @@
     >
         <span class="flex-1 truncate" [class.text-tum-ui-muted]="!hasSelection()" data-testid="tum-ui-select-label">{{ displayLabel() }}</span>
     </button>
-
-    <!-- Dropdown chevron: fills the reserved 2.5rem (pr-10) zone, non-interactive so clicks fall through to the trigger. -->
     <span class="pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-center text-tum-ui-muted">
         <fa-icon [icon]="faChevronDown" />
     </span>
@@ -27,7 +25,7 @@
             type="button"
             class="absolute inset-y-0 right-10 flex appearance-none items-center border-0 bg-transparent p-0 text-tum-ui-muted hover:text-tum-ui-surface-900 dark:hover:text-tum-ui-surface-0"
             (click)="clear($event)"
-            [attr.aria-label]="clearAriaLabel()"
+            [attr.aria-label]="clearAriaLabel() ?? ('tumUi.select.clear' | tumUiTranslate)"
             data-testid="tum-ui-select-clear"
         >
             <fa-icon [icon]="faXmark" />
@@ -67,7 +65,9 @@
                     }
                 </li>
             } @empty {
-                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-select-empty">{{ emptyMessage() }}</li>
+                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-select-empty">
+                    {{ emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate) }}
+                </li>
             }
         </ul>
     </div>

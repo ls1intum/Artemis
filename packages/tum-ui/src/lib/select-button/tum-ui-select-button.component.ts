@@ -2,40 +2,20 @@ import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, computed, 
 import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-/** One entry of the {@link TumUiSelectButtonComponent} `options` list; objects or primitives are both accepted. */
 export type TumUiSelectButtonOption = unknown;
 
-/** Optional size scale, matching p-selectbutton's `size` (default = normal). */
 export type TumUiSelectButtonSize = 'small' | 'large';
 
 interface NormalizedOption {
-    /** The original option object / primitive — passed as `$implicit` to a custom item template. */
     readonly raw: TumUiSelectButtonOption;
-    /** The model value the option contributes (via `optionValue`, else the raw option). */
+
     readonly value: unknown;
-    /** The visible text (via `optionLabel`, else the raw option stringified). */
+
     readonly label: string;
-    /** Whether this option is the currently selected one. */
+
     readonly selected: boolean;
 }
 
-/**
- * Segmented single-select control.
- *
- * Drop-in replacement for PrimeNG's single-select `p-selectbutton`: a row of joined buttons built from
- * `options`, with `optionLabel` / `optionValue` accessors and an optional custom item template (the
- * equivalent of p-selectbutton's `#item` / `pTemplate("item")`). Structure / sizing come from the Aura
- * `togglebutton` tokens (0.5rem × 1rem padding, joined borders, `--radius-md` first/last corners); the
- * selected segment is highlighted with `bg-tum-ui-primary` per the kit house style, dark-mode-correct for free.
- *
- * Semantics follow the WAI-ARIA radio-group pattern: the host is a `role="radiogroup"`, each option a
- * `role="radio"` button, arrow keys roam + select, and Space / Enter activate (native to `<button>`).
- * Implements `ControlValueAccessor`, so `[(ngModel)]`, one-way `[ngModel]` + `(ngModelChange)`, and
- * reactive `formControlName` all work.
- *
- * Multiple selection is intentionally out of scope: no admin usage needs it (grep of `p-selectbutton`),
- * and it would require a different aria model (aria-pressed toggle buttons rather than a radiogroup).
- */
 @Component({
     selector: 'tum-ui-select-button',
     templateUrl: './tum-ui-select-button.component.html',
@@ -51,17 +31,17 @@ interface NormalizedOption {
 })
 export class TumUiSelectButtonComponent implements ControlValueAccessor {
     readonly options = input<readonly TumUiSelectButtonOption[]>([]);
-    /** Object property to read the visible label from (parity with p-selectbutton `optionLabel`). */
+
     readonly optionLabel = input<string>();
-    /** Object property to read the model value from (parity with p-selectbutton `optionValue`). */
+
     readonly optionValue = input<string>();
     readonly size = input<TumUiSelectButtonSize>();
-    /** When false, clicking the selected option keeps it selected (parity with `[allowEmpty]="false"`). */
+
     readonly allowEmpty = input(true);
     readonly disabled = input(false);
-    /** Custom per-option template; receives the raw option as `$implicit` (equivalent to p-selectbutton `#item`). */
+
     readonly itemTemplate = input<TemplateRef<{ $implicit: TumUiSelectButtonOption }>>();
-    /** Fires with the new value whenever the selection changes (parity with p-selectbutton `(onChange)`). */
+
     readonly changed = output<unknown>();
 
     private readonly optionButtons = viewChildren<ElementRef<HTMLButtonElement>>('optionButton');

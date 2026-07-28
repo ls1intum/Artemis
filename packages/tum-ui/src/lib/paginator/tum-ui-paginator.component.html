@@ -65,16 +65,15 @@
 
     @if (showRowsPerPage()) {
         <select
-            #sizeSelect
             class="ml-1 cursor-pointer rounded-md border border-tum-ui-surface-300 bg-tum-ui-surface-0 px-2.5 py-1.5 text-sm text-tum-ui-surface-900 dark:border-tum-ui-surface-600 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0"
+            [ngModel]="pageSize()"
             [disabled]="disabled()"
-            (change)="onPageSizeChange(sizeSelect.value)"
+            (ngModelChange)="onPageSizeChange($event)"
             [attr.aria-label]="'tumUi.paginator.rowsPerPage' | tumUiTranslate"
             data-testid="paginator-page-size"
         >
             @for (option of pageSizeOptions(); track option) {
-                <!-- [selected] (not [value] on the select) so the current size sticks even though options render after binding. -->
-                <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
+                <option [ngValue]="option">{{ option }}</option>
             }
         </select>
     }

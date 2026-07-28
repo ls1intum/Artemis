@@ -100,10 +100,7 @@
 /* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/*
- * Host adapter for @tumaet/ui-angular's package-owned theme contract. The package uses only these
- * namespaced variables; Artemis decides how they map to its PrimeNG and brand tokens.
- */
+/* Map the TUM UI theme contract to Artemis tokens. */
 :root {
     --tum-ui-primary: var(--p-primary-color);
     --tum-ui-border-color: var(--p-content-border-color);
