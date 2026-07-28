@@ -90,7 +90,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             copyQuizBatches(sourceExercise, newExercise);
         }
 
-        // save() and uploadNewFilesToNewImportedQuiz() both mutate newExercise in place (id, statistic, file paths), so we
+        // The first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself), so we
         // keep operating on the single newExercise reference instead of juggling the returned instances.
         quizExerciseService.save(newExercise);
 
@@ -98,7 +98,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
         if (files != null) {
-            quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
+            // This save operates on a detached entity and therefore merges into a new instance, which carries the file
+            // paths and the ids generated for the uploaded files, so it has to be returned instead of newExercise.
+            return quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
         }
 
         return newExercise;

@@ -98,18 +98,23 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        textExerciseRepository.save(newExercise);
+        // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The
+        // second save operates on a detached entity and therefore merges into a new instance, so its result must be used:
+        // otherwise the freshly added competency links keep their unset embedded id on the returned graph.
+        TextExercise savedExercise = textExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
-            textExerciseRepository.save(newExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = textExerciseRepository.save(savedExercise);
         }
+        final TextExercise persistedExercise = savedExercise;
 
-        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, newExercise, gradingInstructionCopyTracker));
+        // The channel name is transient, so it is only present on the caller's object and not on a merged copy.
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(newExercise.getChannelName()));
+        persistedExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, persistedExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedExercise));
 
-        return newExercise;
+        return persistedExercise;
     }
 
     /**

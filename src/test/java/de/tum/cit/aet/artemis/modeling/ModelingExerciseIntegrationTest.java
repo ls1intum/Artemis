@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -552,6 +553,38 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
 
         assertModelingExerciseExistsInWeaviate(weaviateService, importedExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseWithCompetencyLinkOfTheTargetCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(course2);
+        // The competency belongs to the TARGET course, so the link really is created for the imported exercise (a link to a
+        // competency of another course is skipped, which is why importModelingExerciseFromCourseToCourse cannot reach this
+        // code). Creating the link forces a second save of a detached exercise, and the import has to keep working on the
+        // instance that save returned - otherwise the link's derived id stays unset and the resource's follow-up save
+        // fails with a duplicate-key error.
+        Competency targetCompetency = competencyUtilService.createCompetency(course2);
+
+        ModelingExercise exerciseToImport = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
+        modelingExerciseTestRepository.save(exerciseToImport);
+        long sourceExerciseId = exerciseToImport.getId();
+        exerciseToImport.setCourse(course2);
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        exerciseToImport.setChannelName(uniqueChannelName);
+        exerciseToImport.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(targetCompetency, exerciseToImport, 1))));
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId, exerciseToImport,
+                ModelingExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getId()).isNotEqualTo(sourceExerciseId);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerCompetenciesByIdElseThrow(importedExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).hasSize(1);
+        assertThat(reloaded.getCompetencyLinks().iterator().next().getCompetency().getId()).isEqualTo(targetCompetency.getId());
     }
 
     @Test

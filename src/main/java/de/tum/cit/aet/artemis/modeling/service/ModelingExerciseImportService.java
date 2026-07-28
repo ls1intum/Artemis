@@ -74,18 +74,23 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         copyModelingExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
-        modelingExerciseRepository.save(newExercise);
+        // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The
+        // second save operates on a detached entity and therefore merges into a new instance, so its result must be used:
+        // otherwise the freshly added competency links keep their unset embedded id on the returned graph.
+        ModelingExercise savedExercise = modelingExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
-            modelingExerciseRepository.save(newExercise);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = modelingExerciseRepository.save(savedExercise);
         }
+        final ModelingExercise persistedExercise = savedExercise;
 
-        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, newExercise, gradingInstructionCopyTracker));
+        // The channel name is transient, so it is only present on the caller's object and not on a merged copy.
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(newExercise.getChannelName()));
+        persistedExercise.setExampleSubmissions(copyExampleSubmission(sourceExercise, persistedExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedExercise));
 
-        return newExercise;
+        return persistedExercise;
     }
 
     /**
