@@ -16,9 +16,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -443,7 +445,9 @@ public class AgentCheckpointManager {
             Map<String, String> expectedRoots = rootHashes(source.before());
             Map<String, String> actualRoots = rootHashes(current);
             if (!expectedRoots.equals(actualRoots)) {
-                List<String> changedRoots = expectedRoots.keySet().stream().filter(root -> !Objects.equals(expectedRoots.get(root), actualRoots.get(root))).toList();
+                Set<String> roots = new LinkedHashSet<>(expectedRoots.keySet());
+                roots.addAll(actualRoots.keySet());
+                List<String> changedRoots = roots.stream().filter(root -> !Objects.equals(expectedRoots.get(root), actualRoots.get(root))).toList();
                 throw new IllegalStateException(
                         "Sandbox state drift before replayed checkpoint call " + ordinal + " in " + changedRoots + "; refusing to hide a non-deterministic prefix.");
             }
@@ -463,7 +467,8 @@ public class AgentCheckpointManager {
         Map<String, String> hashes = new LinkedHashMap<>();
         SNAPSHOT_ROOTS.forEach(root -> {
             RootSnapshot snapshot = state.roots().get(root);
-            if (snapshot != null) {
+            // Old recordings omitted roots that did not exist yet; a restored empty directory is the same authoring state.
+            if (snapshot != null && (!snapshot.files().isEmpty() || !snapshot.directories().isEmpty())) {
                 hashes.put(root, snapshot.sha256());
             }
         });

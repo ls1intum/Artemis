@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Duration;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
@@ -82,6 +85,36 @@ class AgentCheckpointManagerTest {
         tampered.beginRun("job-tampered", exercise, new SandboxAgentTools(replaySandbox, "tampered"), new ApprovedSpecRegistry());
         assertThatThrownBy(() -> tampered.beforeTurn(1, 5, "", "tools-v1", prompt, beforeCursor)).isInstanceOf(IllegalStateException.class).hasMessageContaining("integrity check");
         tampered.endRun();
+    }
+
+    @Test
+    void replayTreatsAnAbsentLegacyRootLikeAnEmptyDirectory() throws Exception {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(43L);
+        when(exercise.getTitle()).thenReturn("Legacy checkpoint");
+        InMemorySandbox sandbox = new InMemorySandbox(Map.of("/workspace", Map.of("SPEC.md", "spec".getBytes())));
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
+        recorder.beginRun("legacy-record", exercise, new SandboxAgentTools(sandbox, "record"), new ApprovedSpecRegistry());
+        List<Message> prompt = List.of(new SystemMessage("system"), new UserMessage("author"));
+        AgentCheckpointManager.LoopCursor cursor = new AgentCheckpointManager.LoopCursor("", 0, 0, 0);
+        AgentCheckpointManager.TurnHandle handle = recorder.beforeTurn(1, 1, "provider", "tools", prompt, cursor);
+        recorder.finishTurn(handle, prompt, cursor, AgentLoopResult.Status.COMPLETED);
+        recorder.endRun();
+
+        Path run = Files.list(tempDirectory).filter(Files::isDirectory).findFirst().orElseThrow();
+        Path call = run.resolve("calls/000001.json");
+        ObjectNode record = (ObjectNode) mapper.readTree(call.toFile());
+        ((ObjectNode) record.path("before").path("roots")).remove("/tmp/hyperion");
+        ((ObjectNode) record.path("after").path("roots")).remove("/tmp/hyperion");
+        byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(record);
+        Files.write(call, bytes);
+        Files.writeString(call.resolveSibling("000001.json.sha256"), HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)) + "\n");
+
+        AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", run.toString(), 0, true, "");
+        replayer.beginRun("legacy-replay", exercise, new SandboxAgentTools(sandbox, "replay"), new ApprovedSpecRegistry());
+        assertThat(replayer.beforeTurn(1, 1, "", "tools", prompt, cursor).replayed()).isTrue();
+        replayer.endRun();
     }
 
     @Test
