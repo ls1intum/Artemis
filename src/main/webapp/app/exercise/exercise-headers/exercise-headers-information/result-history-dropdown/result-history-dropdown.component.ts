@@ -277,6 +277,14 @@ export class ResultHistoryDropdownComponent {
         return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
     }
 
+    handleRowSpaceKeydown(result: Result, event: Event) {
+        if (!this.isRowClickable(result)) {
+            return;
+        }
+        event.preventDefault();
+        this.navigateToSubmission(result, event);
+    }
+
     navigateToSubmission(result: Result, event: Event) {
         event.stopPropagation();
         const participation = result.submission?.participation;

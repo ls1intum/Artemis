@@ -425,6 +425,33 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('navigateToSubmission', () => {
+        it('should prevent default page scrolling when activating a clickable row with space', () => {
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.TEXT, course: { id: 5 } } as Exercise);
+            fixture.detectChanges();
+
+            const participation: Participation = { id: 2 } as Participation;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
+            const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
+
+            component.handleRowSpaceKeydown(result, event);
+
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+            expect(event.stopPropagation).toHaveBeenCalledOnce();
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'text-exercises', 10, 'participate', 2, 'submission', 7, 'result', 1]);
+        });
+
+        it('should not prevent default page scrolling when space is pressed on a non-clickable row', () => {
+            const participation: Participation = { id: 2 } as Participation;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
+            const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
+
+            component.handleRowSpaceKeydown(result, event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
+
         it('should not navigate when result has no participation', () => {
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
             const event = new Event('click');

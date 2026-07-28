@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -243,6 +243,68 @@ describe('ParticipationWebsocketService', () => {
         expect(cachedResults).toHaveLength(1);
         expect(cachedResults[0].id).toBe(95);
         expect(cachedResults.some((result) => result.id === undefined && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)).toBe(false);
+    });
+
+    it('should keep Athena placeholders when an incoming Athena websocket update is not persisted', () => {
+        const participationWithPlaceholders: StudentParticipation = { id: 96, exercise: exercise1 } as StudentParticipation;
+        const firstSubmission: Submission = { id: 96, participation: participationWithPlaceholders } as Submission;
+        const secondSubmission: Submission = { id: 97, participation: participationWithPlaceholders } as Submission;
+        const existingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: undefined,
+            submission: firstSubmission,
+        } as Result;
+        firstSubmission.results = [existingPlaceholder];
+        participationWithPlaceholders.submissions = [firstSubmission, secondSubmission];
+        const incomingPlaceholder: Result = {
+            score: 0,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: false,
+            submission: secondSubmission,
+        } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithPlaceholders.id!, true);
+        participationWebsocketService.addParticipation(participationWithPlaceholders);
+
+        receiveResultForParticipationSubject.next(incomingPlaceholder);
+
+        const cached = participationWebsocketService.cachedParticipations.get(participationWithPlaceholders.id!);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === firstSubmission.id)?.results?.[0].successful).toBeUndefined();
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results).toHaveLength(1);
+        expect(cached?.submissions?.find((submission) => submission.id === secondSubmission.id)?.results?.[0].successful).toBe(false);
+    });
+
+    it('should propagate participation initialization state from a websocket result payload', () => {
+        const cachedParticipation: StudentParticipation = {
+            id: 98,
+            exercise: exercise1,
+            initializationState: InitializationState.INITIALIZED,
+        } as StudentParticipation;
+        const cachedSubmission: Submission = { id: 98, participation: cachedParticipation, results: [] } as Submission;
+        cachedParticipation.submissions = [cachedSubmission];
+        const finishedParticipation: StudentParticipation = {
+            id: cachedParticipation.id,
+            exercise: exercise1,
+            initializationState: InitializationState.FINISHED,
+        } as StudentParticipation;
+        const incomingSubmission: Submission = { id: cachedSubmission.id, participation: finishedParticipation } as Submission;
+        const incomingResult: Result = { id: 99, score: 80, submission: incomingSubmission } as Result;
+
+        participationWebsocketService.subscribeForLatestResultOfParticipation(cachedParticipation.id!, true);
+        participationWebsocketService.addParticipation(cachedParticipation);
+        const participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        const participationSpy = vi.spyOn(participationObservable, 'next');
+        participationWebsocketService.participationObservable = participationObservable;
+
+        receiveResultForParticipationSubject.next(incomingResult);
+
+        expect(participationSpy).toHaveBeenCalledOnce();
+        const emittedParticipation = participationSpy.mock.calls[0][0] as StudentParticipation;
+        expect(emittedParticipation.initializationState).toBe(InitializationState.FINISHED);
+        expect(emittedParticipation.submissions?.[0].results?.map((result) => result.id)).toEqual([99]);
+        expect(participationWebsocketService.cachedParticipations.get(cachedParticipation.id!)?.initializationState).toBe(InitializationState.FINISHED);
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {

@@ -25,7 +25,7 @@
                 [attr.tabindex]="isRowClickable(result) ? 0 : undefined"
                 (click)="isRowClickable(result) && navigateToSubmission(result, $event)"
                 (keydown.enter)="isRowClickable(result) && navigateToSubmission(result, $event)"
-                (keydown.space)="isRowClickable(result) && navigateToSubmission(result, $event)"
+                (keydown.space)="handleRowSpaceKeydown(result, $event)"
             >
                 <div class="rounded-pill align-self-stretch" [class.bg-primary]="result.id === activeResultId()" style="width: 3px"></div>
                 <fa-icon

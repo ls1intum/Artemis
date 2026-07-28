@@ -409,6 +409,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         const appendedOrUpdatedSubmission = hasMatchingSubmission ? updatedSubmissions : this.appendNewSubmission(updatedSubmissions, cachedParticipation, result);
 
         const updatedParticipation = deepClone(cachedParticipation);
+        if (result.submission?.participation?.initializationState !== undefined) {
+            updatedParticipation.initializationState = result.submission.participation.initializationState;
+        }
         updatedParticipation.submissions = appendedOrUpdatedSubmission;
         this.cachedParticipations.set(participationId, updatedParticipation);
     };
@@ -458,7 +461,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     }
 
     private removeStaleAthenaPlaceholders(submissions: Submission[], incomingResult: Result): Submission[] {
-        if (incomingResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+        if (!this.isPersistedAthenaResult(incomingResult)) {
             return submissions;
         }
 
