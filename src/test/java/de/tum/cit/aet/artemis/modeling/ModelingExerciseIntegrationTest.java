@@ -557,6 +557,68 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExercisePreservesTheGradingCriteriaTheClientSubmits() throws Exception {
+        // The import form is pre-filled from the source, so the client posts the source's grading criteria back. They must
+        // be deep-copied onto the imported exercise (new entities, same titles).
+        ModelingExercise source = createSourceExerciseWithGradingCriteria();
+        Set<GradingCriterion> sourceCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId());
+        assertThat(sourceCriteria).as("precondition: the source has grading criteria").isNotEmpty();
+
+        ModelingExercise body = importBodyFor(source);
+        body.setGradingCriteria(sourceCriteria);
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId());
+        assertThat(importedCriteria).hasSameSizeAs(sourceCriteria);
+        assertThat(importedCriteria).extracting(GradingCriterion::getTitle).containsExactlyInAnyOrderElementsOf(sourceCriteria.stream().map(GradingCriterion::getTitle).toList());
+        assertThat(importedCriteria).extracting(GradingCriterion::getId).doesNotContainAnyElementsOf(sourceCriteria.stream().map(GradingCriterion::getId).toList());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseWithoutGradingCriteriaImportsNone() throws Exception {
+        // An instructor who deletes every grading criterion in the import form posts an empty collection. That is the
+        // caller's own content and must win over the source, instead of the source's criteria being silently restored.
+        ModelingExercise source = createSourceExerciseWithGradingCriteria();
+        Set<GradingCriterion> sourceCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId());
+        assertThat(sourceCriteria).as("precondition: the source has grading criteria").isNotEmpty();
+
+        ModelingExercise body = importBodyFor(source);
+        body.setGradingCriteria(new HashSet<>());
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId())).isEmpty();
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId())).as("the source keeps its own criteria").hasSameSizeAs(sourceCriteria);
+    }
+
+    private ModelingExercise createSourceExerciseWithGradingCriteria() {
+        var now = ZonedDateTime.now();
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        ModelingExercise source = modelingExerciseTestRepository
+                .save(ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, sourceCourse));
+        exerciseUtilService.addGradingInstructionsToExercise(source);
+        return modelingExerciseTestRepository.save(source);
+    }
+
+    /**
+     * Builds the request body of a standalone import: a copy of the source pointing at a fresh target course, mirroring
+     * what the client posts from the (pre-filled) import form.
+     */
+    private ModelingExercise importBodyFor(ModelingExercise source) {
+        Course targetCourse = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(targetCourse);
+        ModelingExercise body = ModelingExerciseFactory.generateModelingExercise(source.getReleaseDate(), source.getDueDate(), source.getAssessmentDueDate(),
+                source.getDiagramType(), targetCourse);
+        body.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+        return body;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseWithCompetencyLinkOfTheTargetCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();

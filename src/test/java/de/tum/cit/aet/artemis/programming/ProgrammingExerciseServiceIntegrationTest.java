@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -12,9 +15,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -34,6 +39,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @BeforeEach
     void setUp() {
@@ -243,6 +251,54 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
         assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findForCreationById_assemblesTheCompleteGraphFromItsSeparateQueries() {
+        // findForCreationById combines three queries: the main graph plus one each for the grading criteria (with their
+        // structured instructions) and the competency links, which would otherwise multiply the main query's result set.
+        // Creation and import return its result without an open session, so every part has to be initialized here -
+        // dropping one of the extra lookups makes the corresponding assertion fail with a LazyInitializationException.
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(programmingExercise));
+        var expectedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(expectedCriteria).as("precondition: the exercise has grading criteria").isNotEmpty();
+        assertThat(expectedCriteria).as("precondition: the criteria carry structured instructions").anyMatch(criterion -> !criterion.getStructuredGradingInstructions().isEmpty());
+
+        var loaded = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+
+        assertThat(loaded.getGradingCriteria()).hasSameSizeAs(expectedCriteria);
+        assertThat(loaded.getGradingCriteria()).as("the nested grading instructions are initialized as well")
+                .anyMatch(criterion -> !criterion.getStructuredGradingInstructions().isEmpty());
+        // The Atlas competency import adds to this collection after the import returns, so it must be readable.
+        assertThat(loaded.getCompetencyLinks()).isNotNull();
+        // The main graph is still part of the same result.
+        assertThat(loaded.getBuildConfig()).isNotNull();
+        assertThat(loaded.getTemplateParticipation()).isNotNull();
+        assertThat(loaded.getSolutionParticipation()).isNotNull();
+        assertThat(loaded.getCategories()).isNotNull();
+        assertThat(loaded.getAuxiliaryRepositories()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseBasis_doesNotRollBackWhenItFailsPartway() {
+        // The import deliberately runs without a surrounding transaction, so a failure partway does NOT roll back what was
+        // already written - the caller (e.g. ExamImportService) reports such an exercise as incomplete instead. Pin that
+        // documented trade-off: re-introducing @Transactional would roll the exercise back and fail this test, forcing a
+        // conscious decision rather than a silent behavior change.
+        doThrow(new RuntimeException("simulated failure while setting up the solution participation")).when(programmingExerciseParticipationService)
+                .setupInitialSolutionParticipation(any());
+
+        final var toBeImported = createToBeImported();
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported))
+                .withMessageContaining("simulated failure");
+
+        // The exercise is persisted before the participations are set up, so it survives the failure.
+        assertThat(toBeImported.getId()).as("the new exercise was persisted before the failure").isNotNull();
+        assertThat(programmingExerciseRepository.findById(toBeImported.getId())).as("the partially imported exercise is not rolled back").isPresent();
+        // The source exercise must not be affected by the failed import.
+        assertThat(programmingExerciseRepository.findById(programmingExercise.getId())).isPresent();
     }
 
     private ProgrammingExercise importExerciseBase() {

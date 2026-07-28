@@ -206,8 +206,8 @@ public class ProgrammingExerciseImportBasicService {
         // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
-        // Restore the transient channel name on the re-fetched exercise, so the response and the exercise version snapshot
-        // built from it report the channel the caller asked for.
+        // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
+        // channel the caller asked for.
         newExercise.setChannelName(channelName);
 
         channelService.createExerciseChannel(newExercise, Optional.ofNullable(channelName));
