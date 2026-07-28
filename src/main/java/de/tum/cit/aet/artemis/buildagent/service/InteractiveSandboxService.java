@@ -569,7 +569,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     public TarArchiveInputStream copyOut(String sessionId, String path) {
         try (OperationLease ignored = beginOperation(sessionId)) {
             DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-            String copyCommand = "parent=${1%/*}; name=${1##*/}; [ \"$parent\" != \"$1\" ] || parent=.; tar -cf - -C \"$parent\" \"$name\"";
+            String copyCommand = "parent=${1%/*}; name=${1##*/}; [ -n \"$parent\" ] || parent=/; [ \"$parent\" != \"$1\" ] || parent=.; tar -cf - -C \"$parent\" \"$name\"";
             try (final var createCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "-c", copyCommand, "sandbox-copy-out",
                     path)) {
                 String execId = createCommand.exec().getId();

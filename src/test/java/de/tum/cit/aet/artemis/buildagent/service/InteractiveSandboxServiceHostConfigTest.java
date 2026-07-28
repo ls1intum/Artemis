@@ -323,15 +323,15 @@ class InteractiveSandboxServiceHostConfigTest {
         InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration, buildAgentDockerService);
         service.markActive("container-1");
 
-        try (var archive = service.copyOut("container-1", "/workspace/out")) {
+        try (var archive = service.copyOut("container-1", "/workspace")) {
             assertThat(archive.getNextEntry().getName()).isEqualTo("out/result.bin");
             assertThat(archive.readAllBytes()).containsExactly(content);
         }
 
         ArgumentCaptor<String[]> command = ArgumentCaptor.forClass(String[].class);
         verify(execCreateCmd).withCmd(command.capture());
-        assertThat(command.getValue()).endsWith("sandbox-copy-out", "/workspace/out");
-        assertThat(command.getValue()[2]).doesNotContain("/workspace/out");
+        assertThat(command.getValue()).endsWith("sandbox-copy-out", "/workspace");
+        assertThat(command.getValue()[2]).contains("[ -n \"$parent\" ] || parent=/").doesNotContain("/workspace");
     }
 
     @Test
