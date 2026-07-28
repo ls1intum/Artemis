@@ -6,7 +6,7 @@
 
     <!-- Add an explicit is_test_user flag on jhi_user to replace the non-sargable "login NOT LIKE '%test%'" heuristic
          used in usage statistics. The value is managed explicitly: backfilled here for existing logins containing
-         "test", and settable via the user CSV import. -->
+         "test", and afterwards settable in Admin -> User Management or via the user CSV import. -->
     <changeSet id="20260728120000-01-add-is-test-user-column" author="krusche">
         <addColumn tableName="jhi_user">
             <column name="is_test_user" type="boolean" defaultValueBoolean="false">

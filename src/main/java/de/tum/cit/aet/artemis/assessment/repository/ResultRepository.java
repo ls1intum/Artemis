@@ -134,7 +134,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "assessor", "submission" })
     List<Result> findResultsWithFeedbacksTestCaseAndAssessorByIdIn(Collection<Long> ids);
 
     /**

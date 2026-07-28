@@ -201,6 +201,16 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+            expect(component.editForm.controls['isTestUser']).toBeDefined();
+        });
+
+        it('should patch the isTestUser flag from the loaded user so the checkbox reflects the persisted value', () => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+            component.user.set({ ...component.user(), id: 42, isTestUser: true });
+
+            component.ngOnInit();
+
+            expect(component.editForm.get('isTestUser')?.value).toBeTrue();
         });
 
         it('should include SUPER_ADMIN authority when current user is a super admin', () => {

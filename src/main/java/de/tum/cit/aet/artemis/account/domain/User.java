@@ -132,7 +132,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean internal = true;          // default value
 
     // Marks accounts used only for testing/load-testing (e.g. QA or synthetic users). These are excluded from usage statistics.
-    // The value is managed explicitly (backfilled by migration for existing logins containing "test", and settable via the user CSV import), not derived at runtime.
+    // The value is managed explicitly, not derived at runtime: it is backfilled by the migration for existing logins containing "test", and can afterwards be set or cleared in
+    // Admin -> User Management (create/edit form) or via the user CSV import.
     @Column(name = "is_test_user", nullable = false)
     private boolean isTestUser = false;       // default value
 

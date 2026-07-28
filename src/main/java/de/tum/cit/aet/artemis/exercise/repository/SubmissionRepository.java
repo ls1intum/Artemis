@@ -174,7 +174,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * assessment, but has not yet finished it, i.e. an assessor is set while the completion date is still missing.
      * <p>
      * Counts via the denormalized {@code result.exerciseId} so no join through submission → participation → exercise is needed. Submissions without any result are not locked and
-     * are therefore not counted.
+     * are therefore not counted. Example results are excluded explicitly, because the join this replaced went through the participation and example submissions have none.
      *
      * @param exerciseIds the ids of the exercises
      * @return the number of currently locked submissions across the given exercises
@@ -185,6 +185,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
                 AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     long countLockedSubmissionsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
