@@ -212,8 +212,9 @@ describe('PdfPreviewComponent', () => {
         expect(alertService.success).toHaveBeenCalled();
     });
 
-    it('should save an attachment video unit with both instructor and student versions', async () => {
+    it('should save slide visibility without replacing the instructor PDF', async () => {
         await loadOriginal(2);
+        component.pageOrder.update((pages) => pages.map((page, index) => ({ ...page, slideId: String(index + 11) })));
         component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
         const hidden = component.pageOrder()[0];
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
@@ -223,11 +224,47 @@ describe('PdfPreviewComponent', () => {
         expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
         const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
-            attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
+        expect(updateFormData.has('file')).toBe(false);
+        expect(updateFormData.has('pageOrder')).toBe(false);
+        expect(updateFormData.has('hiddenPages')).toBe(true);
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
         expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
         expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should replace the instructor PDF when slide splitting has not created stable slide IDs yet', async () => {
+        await loadOriginal(2);
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        const hidden = component.pageOrder()[0];
+        expect(hidden.slideId).toMatch(/^temp_/);
+        component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+
+        await component.updateAttachmentWithFile();
+
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
+        });
+        expect(updateFormData.has('file')).toBe(true);
+        expect(updateFormData.has('pageOrder')).toBe(true);
+    });
+
+    it('should replace the instructor PDF when its page content changes', async () => {
+        await loadOriginal(2);
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.selectedPages.set(new Set([component.pageOrder()[0]]));
+        component.deleteSelectedSlides();
+
+        await component.updateAttachmentWithFile();
+
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
+        });
+        expect(updateFormData.has('file')).toBe(true);
+        expect(updateFormData.has('pageOrder')).toBe(true);
     });
 
     it('should abort saving when a hidden page has a past release date', async () => {
@@ -564,6 +601,7 @@ describe('PdfPreviewComponent', () => {
         it('should send the final page order (with slideId/order) to the video unit update endpoint', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.onPageOrderChange([...component.pageOrder()].reverse().map((page, index) => ({ ...page, order: index + 1 })));
 
             await component.updateAttachmentWithFile();
 

@@ -54,6 +54,10 @@ import TumuiProgressSpinnerLight from './assets/tumui-progress-spinner-light.png
 import TumuiProgressSpinnerDark from './assets/tumui-progress-spinner-dark.png';
 import TumuiNativeTableLight from './assets/tumui-native-table-light.png';
 import TumuiNativeTableDark from './assets/tumui-native-table-dark.png';
+import TumuiInputNumberLight from './assets/tumui-input-number-light.png';
+import TumuiInputNumberDark from './assets/tumui-input-number-dark.png';
+import TumuiConfirmDialogLight from './assets/tumui-confirm-dialog-light.png';
+import TumuiConfirmDialogDark from './assets/tumui-confirm-dialog-dark.png';
 
 export const Shots = ({ light, dark, alt }) => (
     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', margin: '1rem 0' }}>
@@ -560,6 +564,49 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 />
 ```
 
+### Input number — `tum-ui-input-number`
+
+A numeric input — the drop-in for `p-inputnumber` (integer values). A token-styled field showing a locale-formatted number (optional digit grouping, optional prefix / suffix) with an optional stacked stepper. The value binds as a plain `number | undefined` through a `ControlValueAccessor`, so `[(ngModel)]`, `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work; empty input clears to `undefined`, and the value is clamped to `[min, max]` on blur and on every step. It builds on `[tumUiInput]`, so it shares the kit's input styling; compose it inside a `tum-ui-input-group` for a leading addon. The input carries WAI-ARIA `spinbutton` semantics (its value and range are announced, and Arrow Up / Down adjust it), so the stepper is fully keyboard- and screen-reader-operable even though the visible ▲/▼ buttons are mouse-only affordances.
+
+<Shots light={TumuiInputNumberLight} dark={TumuiInputNumberDark} alt="tum-ui-input-number: plain, with stepper, with a leading addon, and with prefix/suffix" />
+
+| Input / Output       | Type         | Default             | Notes                                                                                                               |
+| -------------------- | ------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                     |
+| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                       |
+| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                              |
+| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                            |
+| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                             |
+| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it. |
+| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                      |
+| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                      |
+| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                          |
+| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                   |
+| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
+| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
+| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
+| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
+| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
+| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
+
+Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
+
+```html
+<!-- Two-way binding with a stepper, clamped 1..5000 -->
+<tum-ui-input-number [(ngModel)]="capacity" [min]="1" [max]="5000" [showButtons]="true" />
+
+<!-- Prefix / suffix, rendered inside the field ("every 2 week(s)") -->
+<tum-ui-input-number [(ngModel)]="frequency" [min]="1" [max]="48" [showButtons]="true" prefix="every " suffix=" week(s)" />
+
+<!-- Reactive form, full width -->
+<tum-ui-input-number formControlName="score" [min]="0" [max]="100" [fluid]="true" />
+```
+
+<Callout variant={CalloutVariant.info}>
+    Scope: **integer** values (every Artemis usage is an integer). Decimal / currency / fraction-digit modes are not implemented — add them to the component if a consumer needs
+    them.
+</Callout>
+
 ### Checkbox — `tum-ui-checkbox`
 
 A binary (boolean) checkbox — the drop-in for a binary `p-checkbox`. Built on a visually hidden native `<input type="checkbox">` overlaying a token-styled box, so keyboard (Space), `<label for>` association, and screen-reader semantics come for free. Works with `[(ngModel)]`, one-way `[ngModel]` + `(onChange)`, and `formControlName`.
@@ -819,6 +866,58 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
     imperative `DialogService.open(...)` and is signal-input-friendly (unlike ng-bootstrap's `componentInstance.X = Y`).
 </Callout>
 
+### Confirm dialog — `tum-ui-confirm-dialog` + `TumUiConfirmationService`
+
+The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback. The dialog is exposed as an `alertdialog` with `aria-describedby` pointing at the message, so a screen reader announces the question (not just the header).
+
+<Shots light={TumuiConfirmDialogLight} dark={TumuiConfirmDialogDark} alt="tum-ui-confirm-dialog" />
+
+`TumUiConfirmationService.confirm(request)` — the request shape (a normalized subset of PrimeNG's `Confirmation`):
+
+| Option                              | Type                    | Default                     | Notes                                                                                               |
+| ----------------------------------- | ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| `header`                            | `string`                | –                           | Dialog title.                                                                                       |
+| `message`                           | `string`                | –                           | Body text shown next to the optional icon.                                                          |
+| `accept`                            | `() => void`            | –                           | Invoked when the user confirms.                                                                     |
+| `reject`                            | `() => void`            | –                           | Invoked on cancel / dismiss (optional).                                                             |
+| `acceptLabel` / `rejectLabel`       | `string` (**required**) | –                           | Button labels. Required so the caller always passes a localized string (the kit has no i18n layer). |
+| `acceptSeverity` / `rejectSeverity` | `TumUiButtonSeverity`   | `'primary'` / `'secondary'` | Button severities (e.g. `'danger'` for a destructive confirm).                                      |
+| `icon`                              | `IconProp`              | –                           | Optional leading icon before the message.                                                           |
+| `key`                               | `string`                | –                           | Scopes the request to a `<tum-ui-confirm-dialog [key]>` with the same key.                          |
+
+The `<tum-ui-confirm-dialog>` component takes a single optional `key` input, used to match scoped `confirm({ key })` calls when several confirm dialogs live on one page.
+
+```typescript
+@Component({
+    /* … */
+    providers: [TumUiConfirmationService],
+})
+export class MyComponent {
+    private readonly confirmationService = inject(TumUiConfirmationService);
+
+    confirmDelete(): void {
+        this.confirmationService.confirm({
+            header: this.translate('…deleteHeader'),
+            message: this.translate('…deleteQuestion'),
+            acceptLabel: this.translate('entity.action.delete'),
+            rejectLabel: this.translate('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            rejectSeverity: 'secondary',
+            accept: () => this.delete(),
+        });
+    }
+}
+```
+
+```html
+<!-- Placed once in the component's template; renders whatever confirm() opens -->
+<tum-ui-confirm-dialog />
+```
+
+<Callout variant={CalloutVariant.info}>
+    Mirror PrimeNG's wiring: provide `TumUiConfirmationService` in the component's `providers` and place exactly one `<tum-ui-confirm-dialog>` in its template. When a page needs several independent confirm dialogs, give each a `[key]` and pass the matching `key` in the `confirm({ key })` call.
+</Callout>
+
 ### Progress bar — `tum-ui-progress-bar`
 
 A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` fill animates to `value` percent over the track. Projected content renders inside the fill and always shows regardless of `showValue`.
@@ -946,6 +1045,8 @@ so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-s
 | `<jhi-table-view>` / `<p-table>` (data-driven)                               | `<tum-ui-table>` (+ `buildDbQueryFromTableEvent`)                                                                           |
 | `<p-table>` (hand-templated) + `pSortableColumn` / `p-sortIcon` / `(onSort)` | native `<table tumUiTable>` + `[tumUiSortableColumn]` + `(sortChange)`; `tum-ui-table-virtual-scroll` for `[virtualScroll]` |
 | `<jhi-date-time-picker>` / `<p-datepicker>`                                  | `<tum-ui-date-picker>`                                                                                                      |
+| `<p-inputnumber>`                                                            | `<tum-ui-input-number>`                                                                                                     |
+| `<p-confirmdialog>` + `ConfirmationService`                                  | `<tum-ui-confirm-dialog>` + `TumUiConfirmationService`                                                                      |
 
 The severity-color house rule: `tum-ui` maps `severity` to the four Artemis semantic state tokens
 (`--info` = cyan, `--success`, `--warning` = yellow, `--danger`), not Aura's blue / sky / orange primitives,

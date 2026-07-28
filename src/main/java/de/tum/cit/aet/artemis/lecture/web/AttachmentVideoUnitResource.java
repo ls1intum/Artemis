@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
+import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitSlideSplitJob;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -167,7 +168,7 @@ public class AttachmentVideoUnitResource {
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
-        validateAttachmentUpdateIntent(updateIntent, attachment, file);
+        validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -201,17 +202,31 @@ public class AttachmentVideoUnitResource {
         return ResponseEntity.ok(AttachmentVideoUnitDTO.of(savedAttachmentVideoUnit));
     }
 
-    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, AttachmentDTO attachment, MultipartFile file) {
+    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, MultipartFile file, AttachmentVideoUnit existingAttachmentVideoUnit,
+            AttachmentDTO attachment) {
         boolean hasFile = file != null && !file.isEmpty();
         if (updateIntent == null) {
             throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
         }
+        boolean isFileChange = updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
+        if (isFileChange && attachment == null) {
+            throw new BadRequestAlertException("File update requests must include attachment metadata", ENTITY_NAME, "attachmentRequiredForFileChange");
+        }
+        if (isStaleAttachmentPartWithoutFile(updateIntent, file, existingAttachmentVideoUnit, attachment)) {
+            throw new BadRequestAlertException("Creating an attachment requires a file", ENTITY_NAME, "fileRequiredForNewAttachment");
+        }
         if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && file != null) {
             throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
         }
-        if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && (!hasFile || attachment == null)) {
+        if (isFileChange && !hasFile) {
             throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
         }
+    }
+
+    private static boolean isStaleAttachmentPartWithoutFile(AttachmentUpdateIntent updateIntent, MultipartFile file, AttachmentVideoUnit existingAttachmentVideoUnit,
+            AttachmentDTO attachment) {
+        boolean hasFile = file != null && !file.isEmpty();
+        return existingAttachmentVideoUnit.getAttachment() == null && attachment != null && updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && !hasFile;
     }
 
     /**
@@ -269,7 +284,7 @@ public class AttachmentVideoUnitResource {
                 file, keepFilename);
         // Split PDF into slides asynchronously (non-blocking for user request)
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(persistedUnit, null, null));
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
