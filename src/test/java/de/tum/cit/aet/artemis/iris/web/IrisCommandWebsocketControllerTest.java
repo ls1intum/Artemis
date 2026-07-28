@@ -35,7 +35,7 @@ class IrisCommandWebsocketControllerTest {
 
     @Test
     void acknowledgeCommand_forwardsWellFormedAck() {
-        var ack = new IrisCommandAckDTO(UUID.randomUUID().toString(), true);
+        var ack = new IrisCommandAckDTO(UUID.fromString("00000000-0000-0000-0000-000000000001").toString(), true);
         when(principal.getName()).thenReturn("student1");
 
         controller.acknowledgeCommand(ack, principal);
