@@ -112,10 +112,14 @@ apps in the fleet mirror the same concepts with their own primitive stack.
   form (`class="w-full"`) and a bound one (`[class]="extraClasses()"`) merge, and a bound value can change
   freely without dropping the component's own classes. So pass extra classes natively; do not add a
   PrimeNG-style `styleClass` input to a new component.
-  The exception is a component that wraps a **native element it cannot hoist onto the host** — `tum-ui-button`
-  (inner `<button>`) and `tum-ui-input-number` (inner `<input>`). There the host is a custom element, a
-  consumer `class` lands on the wrapper rather than the control, and a targeted `styleClass` /
-  `inputStyleClass` input is the correct design, not a shim.
+  The one exception is a component that wraps a **native element it cannot hoist onto the host**, because the
+  host is a custom element and a consumer `class` would land on the wrapper rather than the control.
+  `tum-ui-button` is that case: it keeps a `styleClass` input targeting its inner `<button>`, and that is the
+  correct design there, not a shim. (`<button tumUiButton>` — the attribute form — has no such input, because
+  its host _is_ the button.) `tum-ui-tag` also still has one; its pill is a plain inner `<span>` that _could_
+  be hoisted onto the host, but its severity styling is keyed to `:host span[data-severity=…]` selectors, so
+  the move is deferred rather than structurally required. Only add a targeted class input when a consumer
+  actually needs to reach such an inner element; do not add one pre-emptively.
 - **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
   management, all verified in tests.
 - **`@angular/cdk` is the only UI _component-library_ dependency** — no PrimeNG / Bootstrap /
@@ -592,7 +596,6 @@ A numeric input — the drop-in for `p-inputnumber` (integer values). A token-st
 | `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
 | `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
 | `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
-| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
 | `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
 
 Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
@@ -720,7 +723,6 @@ A rounded pill with a text `[label]` (or projected content) and an optional keyb
 | `removable`         | `boolean` | `false`    | Renders the accessible remove (×) button.                                                |
 | `size`              | `'small'` | –          | `'small'` renders the compact in-field chip; omit for the default size.                  |
 | `removeAriaLabel`   | `string`  | `'Remove'` | Accessible name for the remove button; override for i18n.                                |
-| `styleClass`        | `string`  | `''`       | Classes forwarded onto the pill.                                                         |
 | `onRemove` (output) | `Event`   | –          | The remove control was activated (click, Enter/Space, or Backspace/Delete when focused). |
 
 ```html

@@ -81,13 +81,6 @@ describe('TumUiChipComponent', () => {
         expect(chip.className).toContain('text-sm');
         expect(chip.className).toContain('px-2');
     });
-
-    it('forwards styleClass onto the pill', () => {
-        fixture.componentRef.setInput('styleClass', 'mr-2');
-        fixture.detectChanges();
-        const chip = fixture.debugElement.query(By.css('[data-testid="tum-ui-chip"]')).nativeElement as HTMLElement;
-        expect(chip.className).toContain('mr-2');
-    });
 });
 
 @Component({

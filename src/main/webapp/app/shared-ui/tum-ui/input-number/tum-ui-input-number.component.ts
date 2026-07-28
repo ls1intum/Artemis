@@ -60,8 +60,6 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly name = input<string>();
     /** Accessible name for the inner `<input>` when there is no visible `<label>`. */
     readonly ariaLabel = input<string>();
-    /** Extra classes forwarded onto the inner `<input>` (drop-in for `inputStyleClass`). */
-    readonly inputStyleClass = input('');
 
     /** Fires on the inner input's blur, after the value is clamped / reformatted (parity with `(onBlur)`). */
     readonly onBlur = output<FocusEvent>();

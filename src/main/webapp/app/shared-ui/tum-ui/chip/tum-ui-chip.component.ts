@@ -34,8 +34,6 @@ export class TumUiChipComponent {
     readonly size = input<TumUiChipSize>();
     /** Accessible name for the remove button; overridable for i18n. */
     readonly removeAriaLabel = input<string>('Remove');
-    /** Extra classes forwarded onto the pill (drop-in for `p-chip styleClass`). */
-    readonly styleClass = input<string>('');
 
     /** Emitted when the remove control is activated (mouse / Enter / Space / Backspace). Parity with `p-chip (onRemove)`. */
     readonly onRemove = output<Event>();
@@ -48,7 +46,7 @@ export class TumUiChipComponent {
         // Aura `chip:has(.p-chip-remove-icon)` shrinks the trailing padding to `paddingY`; keep the leading padding.
         const padding = small ? (this.removable() ? 'py-1 pl-2 pr-1' : 'px-2 py-1') : this.removable() ? 'py-2 pl-3 pr-2' : 'px-3 py-2';
         const base = 'inline-flex items-center rounded-2xl bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-0';
-        return `${base} ${type} ${padding} ${this.styleClass()}`.trim();
+        return `${base} ${type} ${padding}`;
     });
 
     protected remove(event: Event): void {
