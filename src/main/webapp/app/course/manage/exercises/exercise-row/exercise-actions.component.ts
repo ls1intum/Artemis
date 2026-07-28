@@ -1,57 +1,17 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    DestroyRef,
-    ElementRef,
-    afterNextRender,
-    afterRenderEffect,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    viewChild,
-    viewChildren,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { RouterLink } from '@angular/router';
-import { NgTemplateOutlet } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import {
-    faChartBar,
-    faClipboardList,
-    faEllipsis,
-    faEye,
-    faLightbulb,
-    faListAlt,
-    faPencilAlt,
-    faRedo,
-    faRobot,
-    faTable,
-    faTrash,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
-import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
+import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -65,71 +25,15 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
-/** The kit button severities the action buttons use (a subset of `TumUiButtonSeverity`). */
-type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
-
-/** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
-interface ActionItem {
-    id: string;
-    /** i18n key for the button label, resolved via the `artemisTranslate` pipe. */
-    labelKey: string;
-    icon: IconProp;
-    severity: ActionSeverity;
-    kind: 'link' | 'button' | 'delete';
-    link?: (string | number)[];
-    onClick?: () => void;
-    /** When true the action is rendered greyed-out and non-interactive (links become non-navigable, buttons disabled). */
-    disabled?: boolean;
-    /** i18n key for the tooltip shown on a disabled action. */
-    disabledTooltip?: string;
-}
-
-// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
-// safety margin so a button is always collapsed slightly before it would be clipped — never shown partially.
-const GAP_PX = 4;
-const ELLIPSIS_WIDTH_PX = 40;
-const SAFETY_MARGIN_PX = 8;
-
 /**
- * Keep-priority per action id when the row runs out of width: a lower number stays inline longer, a higher number
- * collapses into the ellipsis menu first. Delete, Edit and Scores rank highest so every exercise type keeps the same
- * three buttons inline; the type-specific extras (Preview, Solution, Statistics, Participations, …) all share
- * {@link EXTRA_ACTION_PRIORITY} and therefore overflow first, in their original display order (the sort is stable).
+ * Builds the course-exercise `ActionItem[]` (routes, role gates, delete wiring) and renders it through the shared
+ * {@link ExerciseActionBarComponent}, which owns the collapsible-row/ellipsis-menu mechanics. Only the always-visible
+ * quiz lifecycle buttons stay here, projected into the bar's reserved-content slot.
  */
-const ACTION_KEEP_PRIORITY: Readonly<Record<string, number>> = { delete: 0, edit: 1, scores: 2 };
-const EXTRA_ACTION_PRIORITY = 3;
-
-function keepPriorityOf(action: ActionItem): number {
-    return ACTION_KEEP_PRIORITY[action.id] ?? EXTRA_ACTION_PRIORITY;
-}
-
-/**
- * Element width in fractional CSS pixels. Unlike `offsetWidth`/`clientWidth`, `getBoundingClientRect` keeps the
- * fraction, so summing many button widths stays exact at non-100% zoom and never understates the total enough to clip
- * the leftmost button.
- */
-function widthOf(element: HTMLElement): number {
-    return element.getBoundingClientRect().width;
-}
-
 @Component({
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
-    styleUrl: './exercise-actions.component.scss',
-    imports: [
-        RouterLink,
-        NgTemplateOutlet,
-        FaIconComponent,
-        TumUiButtonDirective,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiTooltipDirective,
-        ArtemisTranslatePipe,
-        TranslateDirective,
-        DeleteButtonDirective,
-        QuizExerciseLifecycleButtonsComponent,
-        ExerciseVariantAiModalWizardComponent,
-    ],
+    imports: [ExerciseActionBarComponent, QuizExerciseLifecycleButtonsComponent, ExerciseVariantAiModalWizardComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
@@ -139,8 +43,6 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
-    /** A generated AI variant was confirmed in the wizard — the host refreshes the exercise/group view. */
-    readonly variantAdded = output<Exercise>();
     /**
      * Width (px) the actions column must reserve to keep this row's always-visible quiz buttons plus the ellipsis
      * trigger on screen; 0 for non-quiz rows. The table floors the shared column at the max reported across its rows
@@ -149,13 +51,11 @@ export class ExerciseActionsComponent {
     readonly quizActionsMinWidth = output<number>();
 
     protected readonly ExerciseType = ExerciseType;
-    protected readonly faEllipsis = faEllipsis;
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
     protected readonly aiVariantModalVisible = signal(false);
 
     private readonly destroyRef = inject(DestroyRef);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly quizExerciseService = inject(QuizExerciseService);
@@ -175,27 +75,6 @@ export class ExerciseActionsComponent {
      */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
-    private readonly menu = viewChild<TumUiPopoverComponent>('menu');
-    /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
-    private readonly actionsRow = viewChild<ElementRef<HTMLElement>>('actionsRow');
-    /** The always-visible quiz lifecycle buttons; their width is reserved up front. */
-    private readonly quizGroup = viewChild<ElementRef<HTMLElement>>('quizGroup');
-    /** The inline main-button wrappers, read once per distinct button to learn its natural width. */
-    private readonly inlineItems = viewChildren<ElementRef<HTMLElement>>('inlineItem');
-
-    /** Full row width (updated by a ResizeObserver) and the reserved width of the always-visible quiz buttons. */
-    private readonly rowWidth = signal(0);
-    private readonly quizWidth = signal(0);
-    /** Width available for the collapsible main buttons: the row minus the quiz buttons. */
-    private readonly availableWidth = computed<number>(() => this.rowWidth() - this.quizWidth());
-    /** Natural width per button, keyed by a signature (id + label) so changing labels (e.g. `Batches (n)`) re-measure. */
-    private readonly buttonWidths = signal<ReadonlyMap<string, number>>(new Map());
-    /** Bumped on a language change so the (signal-unaware) translated measurements recompute. */
-    private readonly languageVersion = signal(0);
-
-    /** Watches the inline buttons so {@link buttonWidths} tracks their real rendered width (see the constructor). */
-    private readonly buttonObserver = new ResizeObserver((entries) => this.onButtonsResized(entries));
-
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -205,8 +84,8 @@ export class ExerciseActionsComponent {
         return ex.type === ExerciseType.QUIZ ? ex : undefined;
     });
 
-    /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */
-    readonly hasQuizButtons = computed<boolean>(() => {
+    /** True when the lifecycle buttons component will render at least one button. Drives the bar's reserved-content separator. */
+    protected readonly hasQuizButtons = computed<boolean>(() => {
         const quiz = this.quizExercise();
         if (!quiz) return false;
         const showVisible = quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
@@ -216,6 +95,32 @@ export class ExerciseActionsComponent {
         const showEnd =
             (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded;
         return showVisible || showStart || showBatches || showEnd;
+    });
+
+    readonly deletionSummary = computed(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    /**
+     * Cleanup checkboxes for the delete dialog. Programming exercises on external CI expose an opt-out for deleting
+     * the base/student repositories and build plans; under LocalCI the checks stay hidden so the server applies its
+     * defaults (the flags are then undefined and the delete request omits the query parameters).
+     */
+    private readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
+
+    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
+    private readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
+        const course = this.course();
+        return {
+            courseTitle: course?.title,
+            courseType: this.translateService.instant(course?.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
+        };
     });
 
     /** Regular actions in display order: Teams → Participations → Scores → type-specific → Create Variant with AI → Edit → Delete. */
@@ -374,206 +279,21 @@ export class ExerciseActionsComponent {
                 kind: 'delete',
                 disabled: programmingDisabled || undefined,
                 disabledTooltip: programmingDisabled ? 'artemisApp.exerciseManagement.programmingFeatureDisabled' : undefined,
+                delete: {
+                    entityTitle: ex.title ?? '',
+                    entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
+                    fetchEntitySummary: this.deletionSummary(),
+                    deleteQuestion: 'artemisApp.exercise.delete.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    translateValues: this.deleteTranslateValues(),
+                    additionalChecks: this.deleteAdditionalChecks(),
+                    dialogError: this.dialogError$,
+                    onDelete: (event) => this.onDelete(event),
+                },
             });
         }
         return items;
     });
-
-    /** Signature that determines a button's rendered width: same signature ⇒ same width. Uses the translated label so a
-     * language switch or a changed batch count re-measures. */
-    protected signatureOf(action: ActionItem): string {
-        return `${action.id}|${this.translateService.instant(action.labelKey)}`;
-    }
-
-    /**
-     * Ids of the main actions that do not fit and are collapsed into the ellipsis menu. Computed from the cached button
-     * widths and the available width — the DOM stays stable, only the buttons' `display` toggles, so resizing never
-     * recreates button elements. Collapses from the left so Delete (rightmost) stays visible longest.
-     */
-    readonly hiddenIds = computed<ReadonlySet<string>>(() => {
-        const actions = this.mainActions();
-        const widths = this.buttonWidths();
-        const available = this.availableWidth() - SAFETY_MARGIN_PX;
-        // Not yet measured (or sized): show everything until widths/width are known.
-        if (available <= 0 || actions.some((action) => !widths.has(this.signatureOf(action)))) {
-            return new Set();
-        }
-        const widthOf = (action: ActionItem) => widths.get(this.signatureOf(action)) ?? 0;
-        // N buttons laid out with N-1 gaps between them.
-        const widthForCount = (count: number) => (count <= 0 ? 0 : (count - 1) * GAP_PX);
-
-        // Everything fits inline: no ellipsis, no hiding.
-        const totalAll = actions.reduce((sum, action) => sum + widthOf(action), 0) + widthForCount(actions.length);
-        if (totalAll <= available) {
-            return new Set();
-        }
-
-        // Collapsing: reserve the ellipsis (plus the gap before it) and keep buttons in priority order (Delete, Edit,
-        // Scores first, then the type-specific extras), stopping at the first that no longer fits. Keeping by priority
-        // rather than by position makes every exercise type keep the same core buttons inline; the template still
-        // renders the kept buttons in their original display order (only their `display` toggles).
-        const budget = available - ELLIPSIS_WIDTH_PX - GAP_PX;
-        const byPriority = [...actions].sort((a, b) => keepPriorityOf(a) - keepPriorityOf(b));
-        const keptIds = new Set<string>();
-        let used = 0;
-        for (const action of byPriority) {
-            const addition = widthOf(action) + (keptIds.size > 0 ? GAP_PX : 0);
-            if (used + addition <= budget) {
-                used += addition;
-                keptIds.add(action.id);
-            } else {
-                break;
-            }
-        }
-        return new Set(actions.filter((action) => !keptIds.has(action.id)).map((action) => action.id));
-    });
-
-    /**
-     * The inline main buttons with their per-item render state precomputed, so the template reads plain fields instead of
-     * calling `signatureOf(...)` and `hiddenIds().has(...)` on every change-detection cycle. `context` is built here too
-     * so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
-     */
-    protected readonly inlineActions = computed(() => {
-        // The signature embeds a translated label, so re-derive it on a language switch.
-        this.languageVersion();
-        const hidden = this.hiddenIds();
-        return this.mainActions().map((action) => ({
-            action,
-            signature: this.signatureOf(action),
-            hidden: hidden.has(action.id),
-            context: { $implicit: action, inMenu: false },
-        }));
-    });
-
-    readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
-
-    /** The collapsed actions, shown in the ellipsis menu. */
-    readonly hiddenActions = computed<ActionItem[]>(() => this.mainActions().filter((action) => this.hiddenIds().has(action.id)));
-
-    readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
-
-    /**
-     * Cleanup checkboxes for the delete dialog. Programming exercises on external CI expose an opt-out for deleting
-     * the base/student repositories and build plans; under LocalCI the checks stay hidden so the server applies its
-     * defaults (the flags are then undefined and the delete request omits the query parameters).
-     */
-    readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
-        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
-            return {};
-        }
-        return {
-            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
-        };
-    });
-
-    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
-    readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
-        const course = this.course();
-        return {
-            courseTitle: course?.title,
-            courseType: this.translateService.instant(course?.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
-        };
-    });
-
-    constructor() {
-        this.destroyRef.onDestroy(() => this.buttonObserver.disconnect());
-
-        // Measurements use TranslateService.instant (not a signal), so on a language change drop the cached widths to
-        // re-measure and bump the version the width effects watch.
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.buttonWidths.set(new Map());
-            this.languageVersion.update((version) => version + 1);
-        });
-
-        // Observe (not read once) the row width and the reserved quiz-button width: the quiz lifecycle buttons are still
-        // PrimeNG with lazily-injected CSS, so a single measurement can catch them unstyled and too narrow, and the
-        // observer also tracks the quiz group appearing/disappearing and label-width changes. Change detection is flushed synchronously
-        // in the callback (after layout, before paint) so the show/hide lands on the same frame.
-        afterNextRender(() => {
-            const rowEl = this.actionsRow()?.nativeElement;
-            const quizEl = this.quizGroup()?.nativeElement;
-            const measure = () => {
-                if (rowEl) {
-                    this.rowWidth.set(widthOf(rowEl));
-                }
-                this.quizWidth.set(quizEl ? widthOf(quizEl) : 0);
-            };
-
-            const observer = new ResizeObserver(() => {
-                measure();
-                this.changeDetectorRef.detectChanges();
-            });
-            if (rowEl) {
-                observer.observe(rowEl);
-            }
-            if (quizEl) {
-                observer.observe(quizEl);
-            }
-            this.destroyRef.onDestroy(() => observer.disconnect());
-            measure();
-        });
-
-        // Keep each distinct button's natural width up to date: a web font, a longer label, or the quiz buttons'
-        // lazily-injected PrimeNG CSS can change a width after the first layout, so a one-shot measurement would cache
-        // a too-narrow width and the overflow calculation would keep a button inline that then gets clipped.
-        afterRenderEffect(() => {
-            // Re-observe whenever the buttons or their labels change. Observing always emits an initial callback, so this
-            // also seeds a brand-new signature after a language switch. The elements persist across a collapse (only
-            // their `display` toggles), so this does not re-run on every resize.
-            this.languageVersion();
-            this.mainActions();
-            const items = this.inlineItems();
-            this.buttonObserver.disconnect();
-            for (const ref of items) {
-                this.buttonObserver.observe(ref.nativeElement);
-            }
-        });
-
-        // Report the width this row's actions column must reserve: the quiz buttons (their measured width already
-        // includes the trailing separator) plus the gap, the ellipsis trigger, and a safety margin against sub-pixel
-        // clipping. Quiz-button widths don't depend on the column width, so this never feeds back. Non-quiz rows report 0.
-        effect(() => {
-            const quizWidth = this.quizWidth();
-            this.quizActionsMinWidth.emit(quizWidth > 0 ? quizWidth + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
-        });
-    }
-
-    /**
-     * Caches the measured width of every button that is currently laid out. Collapsed buttons are `display: none` and
-     * measure 0 — their last known width is kept, since that is exactly the width the overflow calculation needs in
-     * order to decide whether they could be shown again. Writes only on a real change, so toggling a button's
-     * visibility settles instead of feeding back into itself.
-     */
-    private onButtonsResized(entries: ResizeObserverEntry[]): void {
-        const current = this.buttonWidths();
-        let next: Map<string, number> | undefined;
-        for (const entry of entries) {
-            const element = entry.target as HTMLElement;
-            const signature = element.getAttribute('data-signature');
-            const width = widthOf(element);
-            if (signature && width > 0 && current.get(signature) !== width) {
-                next ??= new Map(current);
-                next.set(signature, width);
-            }
-        }
-        if (next) {
-            this.buttonWidths.set(next);
-            // Land the show/hide on this frame (the callback runs after layout, before paint), as the row observer does.
-            this.changeDetectorRef.detectChanges();
-        }
-    }
-
-    protected runAction(item: ActionItem): void {
-        item.onClick?.();
-        this.menu()?.close();
-    }
-
-    protected closeMenuIfOpen(inMenu: boolean): void {
-        if (inMenu) {
-            this.menu()?.close();
-        }
-    }
 
     /**
      * Relays an optimistic quiz update from the lifecycle component to the parent. The client-derived `status` /
@@ -612,7 +332,7 @@ export class ExerciseActionsComponent {
             });
     }
 
-    protected onDelete(event: { [key: string]: boolean }): void {
+    private onDelete(event: { [key: string]: boolean }): void {
         const exercise = this.exercise();
         const exerciseId = exercise.id;
         if (exerciseId === undefined) {

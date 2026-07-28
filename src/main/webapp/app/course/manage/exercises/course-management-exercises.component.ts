@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, catchError, forkJoin, map, of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -193,7 +193,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly selectedProgrammingExercises = computed(() => this.selectedExercises().filter((exercise) => exercise.type === ExerciseType.PROGRAMMING) as ProgrammingExercise[]);
 
     private readonly route = inject(ActivatedRoute);
-    private readonly router = inject(Router);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -483,20 +482,6 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedIds.set(remaining);
         }
         this.rebuildCards();
-    }
-
-    /**
-     * The wizard's "Open in Editor" button confirmed a generated AI variant. Navigate to the variant's type-aware
-     * edit route (same behavior as the navbar tray) so the instructor lands directly in its editor; returning to
-     * this list re-fetches, so the newly created variant shows up then. Without this the modal only closed.
-     */
-    onVariantAdded(exercise: Exercise): void {
-        const courseId = exercise.course?.id ?? this.courseId();
-        if (courseId === undefined || exercise.id === undefined) {
-            return;
-        }
-        const typeSegment = `${exercise.type ?? ExerciseType.PROGRAMMING}-exercises`;
-        void this.router.navigate(['/course-management', courseId, typeSegment, exercise.id, 'edit']);
     }
 
     /** Rebuilds the view's panels for the current view mode, exercises, groups and search term. */

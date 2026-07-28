@@ -1,21 +1,13 @@
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterLink, provideRouter } from '@angular/router';
-import { NgTemplateOutlet } from '@angular/common';
+import { provideRouter } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
-import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -34,11 +26,27 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
+@Component({ selector: 'jhi-exercise-action-bar', template: '' })
+class ExerciseActionBarStubComponent {
+    items = input.required();
+    hasReservedContent = input(false);
+    keepPriorityIds = input<string[]>([]);
+    columnMinWidthChange = output<number>();
+}
+
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
+}
+
+@Component({ selector: 'jhi-exercise-variant-ai-modal-wizard', template: '' })
+class AiVariantModalWizardStubComponent {
+    visible = input(false);
+    visibleChange = output<boolean>();
+    sourceExercise = input.required<Exercise>();
+    courseId = input.required<number>();
 }
 
 describe('ExerciseActionsComponent', () => {
@@ -75,20 +83,7 @@ describe('ExerciseActionsComponent', () => {
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
-                set: {
-                    imports: [
-                        RouterLink,
-                        NgTemplateOutlet,
-                        FaIconComponent,
-                        TumUiButtonDirective,
-                        TumUiPopoverComponent,
-                        TumUiPopoverTriggerDirective,
-                        TumUiTooltipDirective,
-                        ArtemisTranslatePipe,
-                        DeleteButtonDirective,
-                        QuizLifecycleButtonsStubComponent,
-                    ],
-                },
+                set: { imports: [ExerciseActionBarStubComponent, QuizLifecycleButtonsStubComponent, AiVariantModalWizardStubComponent] },
             })
             .compileComponents();
 
@@ -205,9 +200,12 @@ describe('ExerciseActionsComponent', () => {
             expect(edit?.disabled).toBeUndefined();
         });
 
-        it('adds delete only for instructors', () => {
+        it('adds delete only for instructors, with the delete config embedded on the item', () => {
             fixture.componentRef.setInput('exercise', textExercise({ isAtLeastInstructor: true }));
-            expect(component.mainActions().map((a) => a.id)).toContain('delete');
+            const deleteAction = component.mainActions().find((a) => a.id === 'delete');
+            expect(deleteAction).toBeDefined();
+            expect(deleteAction?.delete?.entityTitle).toBe('Text');
+            expect(deleteAction?.delete?.deleteQuestion).toBe('artemisApp.exercise.delete.question');
 
             fixture.componentRef.setInput('exercise', textExercise({ isAtLeastInstructor: false }));
             expect(component.mainActions().map((a) => a.id)).not.toContain('delete');
@@ -292,52 +290,6 @@ describe('ExerciseActionsComponent', () => {
         });
     });
 
-    describe('hiddenIds / hasOverflow', () => {
-        it('shows nothing hidden before the row width is measured', () => {
-            expect(component.hiddenIds().size).toBe(0);
-            expect(component.hasOverflow()).toBe(false);
-            expect(component.hiddenActions()).toEqual([]);
-        });
-
-        /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
-        const seedEqualWidths = (buttonWidth: number): void => {
-            const widths = new Map<string, number>();
-            for (const action of component.mainActions()) {
-                widths.set(component['signatureOf'](action), buttonWidth);
-            }
-            component['buttonWidths'].set(widths);
-        };
-
-        it('keeps scores, edit and delete inline and overflows the type-specific quiz actions first', () => {
-            // Editor+instructor quiz: participations, scores, statistics, preview, solution, edit, delete.
-            const quiz = { id: 2, type: ExerciseType.QUIZ, title: 'Quiz', isAtLeastEditor: true, isAtLeastInstructor: true } as QuizExercise;
-            fixture.componentRef.setInput('exercise', quiz);
-
-            // Each button 100px wide. With a 360px row (available 352 after the safety margin, budget 308 after the
-            // ellipsis + gap) exactly three 100px buttons plus their gaps fit.
-            seedEqualWidths(100);
-            component['quizWidth'].set(0);
-            component['rowWidth'].set(360);
-
-            const hidden = component.hiddenActions().map((a) => a.id);
-            expect(component.hasOverflow()).toBe(true);
-            // The three highest-priority actions stay inline regardless of their display position.
-            expect(hidden).not.toContain('scores');
-            expect(hidden).not.toContain('edit');
-            expect(hidden).not.toContain('delete');
-            // The type-specific extras collapse into the ellipsis menu.
-            expect(hidden).toEqual(expect.arrayContaining(['participations', 'statistics', 'preview', 'solution']));
-        });
-
-        it('hides nothing when every button fits', () => {
-            seedEqualWidths(50);
-            component['quizWidth'].set(0);
-            component['rowWidth'].set(2000);
-            expect(component.hiddenIds().size).toBe(0);
-            expect(component.hasOverflow()).toBe(false);
-        });
-    });
-
     describe('deletionSummary / deleteTranslateValues', () => {
         it('delegates to the exercise service for the deletion summary', () => {
             component.deletionSummary();
@@ -345,32 +297,15 @@ describe('ExerciseActionsComponent', () => {
         });
 
         it('resolves the course type translation for the delete confirmation', () => {
-            const values = component.deleteTranslateValues();
+            const values = component['deleteTranslateValues']();
             expect(values.courseTitle).toBe('Course');
             expect(values.courseType).toBe('artemisApp.exercise.delete.realCourse');
         });
 
         it('uses the test-course translation for test courses', () => {
             fixture.componentRef.setInput('course', { ...course, testCourse: true });
-            const values = component.deleteTranslateValues();
+            const values = component['deleteTranslateValues']();
             expect(values.courseType).toBe('artemisApp.exercise.delete.testCourse');
-        });
-    });
-
-    describe('menu interactions', () => {
-        it('runAction and closeMenuIfOpen do not throw when the popover is closed', () => {
-            // The popover renders but is never opened here (no width is measured, so hasOverflow() is false), so
-            // close() is a guarded no-op.
-            const action = component.mainActions()[0];
-            expect(() => component['runAction'](action)).not.toThrow();
-            expect(() => component['closeMenuIfOpen'](true)).not.toThrow();
-            expect(() => component['closeMenuIfOpen'](false)).not.toThrow();
-        });
-
-        it('runAction invokes the action onClick callback', () => {
-            const onClick = vi.fn();
-            component['runAction']({ id: 'x', labelKey: 'k', icon: 'trash' as never, severity: 'primary', kind: 'button', onClick });
-            expect(onClick).toHaveBeenCalledOnce();
         });
     });
 
@@ -422,14 +357,7 @@ describe('ExerciseActionsComponent', () => {
         });
     });
 
-    describe('onDelete', () => {
-        it('does nothing when the exercise has no id', () => {
-            fixture.componentRef.setInput('exercise', textExercise({ id: undefined }));
-            const deleteSpy = vi.spyOn(textExerciseService, 'delete');
-            component['onDelete']({});
-            expect(deleteSpy).not.toHaveBeenCalled();
-        });
-
+    describe('delete wiring (via the embedded ActionItem.delete config)', () => {
         it.each([
             [ExerciseType.TEXT, 'textExerciseListModification'],
             [ExerciseType.FILE_UPLOAD, 'fileUploadExerciseListModification'],
@@ -445,12 +373,15 @@ describe('ExerciseActionsComponent', () => {
             const service = services[type] as { delete: (id: number) => unknown };
             const deleteSpy = vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
-            const exercise = textExercise({ id: 3, type });
+            const exercise = textExercise({ id: 3, type, isAtLeastInstructor: true });
             fixture.componentRef.setInput('exercise', exercise);
             const deleted: Exercise[] = [];
             component.exerciseDeleted.subscribe((e) => deleted.push(e));
 
-            component['onDelete']({});
+            component
+                .mainActions()
+                .find((a) => a.id === 'delete')!
+                .delete!.onDelete({});
 
             expect(deleteSpy).toHaveBeenCalledWith(3);
             expect(broadcastSpy).toHaveBeenCalledWith({ name: eventName, content: 'Deleted an exercise' });
@@ -459,17 +390,20 @@ describe('ExerciseActionsComponent', () => {
 
         it('deletes a programming exercise with the repo/build-plan flags', () => {
             const deleteSpy = vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
-            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }));
 
-            component['onDelete']({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+            component
+                .mainActions()
+                .find((a) => a.id === 'delete')!
+                .delete!.onDelete({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
 
             expect(deleteSpy).toHaveBeenCalledWith(4, true, false);
         });
 
         it('offers the repo/build-plan cleanup checks for programming exercises when LocalCI is inactive', () => {
-            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }));
 
-            expect(component.deleteAdditionalChecks()).toEqual({
+            expect(component.mainActions().find((a) => a.id === 'delete')!.delete!.additionalChecks).toEqual({
                 deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
                 deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
             });
@@ -479,26 +413,29 @@ describe('ExerciseActionsComponent', () => {
             const profileService = TestBed.inject(ProfileService);
             vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
             const localCIFixture = TestBed.createComponent(ExerciseActionsComponent);
-            localCIFixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
+            localCIFixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }));
             localCIFixture.componentRef.setInput('courseId', 1);
             localCIFixture.componentRef.setInput('course', course);
 
-            expect(localCIFixture.componentInstance.deleteAdditionalChecks()).toEqual({});
+            expect(localCIFixture.componentInstance.mainActions().find((a) => a.id === 'delete')!.delete!.additionalChecks).toEqual({});
         });
 
         it('offers no cleanup checks for non-programming exercises', () => {
-            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT, isAtLeastInstructor: true }));
 
-            expect(component.deleteAdditionalChecks()).toEqual({});
+            expect(component.mainActions().find((a) => a.id === 'delete')!.delete!.additionalChecks).toEqual({});
         });
 
         it('surfaces an error via dialogError$ when deletion fails', () => {
             vi.spyOn(textExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
-            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT, isAtLeastInstructor: true }));
             const errors: string[] = [];
             component.dialogError$.subscribe((e) => errors.push(e));
 
-            component['onDelete']({});
+            component
+                .mainActions()
+                .find((a) => a.id === 'delete')!
+                .delete!.onDelete({});
 
             expect(errors).toHaveLength(1);
         });

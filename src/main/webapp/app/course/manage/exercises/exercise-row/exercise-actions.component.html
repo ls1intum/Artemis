@@ -1,116 +1,15 @@
-<div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
-    <!-- Quiz lifecycle buttons always stay visible; grouped so their reserved width can be measured. -->
-    <span #quizGroup class="d-flex gap-1 align-items-center flex-nowrap">
+<jhi-exercise-action-bar [items]="mainActions()" [hasReservedContent]="hasQuizButtons()" (columnMinWidthChange)="quizActionsMinWidth.emit($event)">
+    <ng-container actionBarReserved>
         @if (quizExercise(); as quiz) {
             <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
-            @if (hasQuizButtons() && mainActions().length > 0) {
-                <div class="vr mx-1"></div>
-            }
         }
-    </span>
+    </ng-container>
+</jhi-exercise-action-bar>
 
-    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
-         resizing only toggles that class, it never recreates buttons. -->
-    @for (item of inlineActions(); track item.action.id) {
-        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.d-none]="item.hidden">
-            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="item.context" />
-        </span>
-    }
-    <button
-        tumUiButton
-        type="button"
-        severity="secondary"
-        variant="outlined"
-        size="small"
-        class="action-more"
-        [class.d-none]="!hasOverflow()"
-        [tumUiPopoverTrigger]="menu"
-        [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
-        [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
-    >
-        <fa-icon [icon]="faEllipsis" />
-    </button>
-    <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
-        <div class="action-menu d-flex flex-column gap-1">
-            @for (action of hiddenActions(); track action.id) {
-                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
-            }
-        </div>
-    </tum-ui-popover>
-</div>
-
-<!-- Placement happens server-side in FINALIZING; (variantAdded) bubbles up to course-management-exercises,
-     which refreshes the exercise/group view. -->
+<!-- Placement happens server-side in FINALIZING; the wizard's "Open in Editor" navigates on its own. -->
 <jhi-exercise-variant-ai-modal-wizard
     [visible]="aiVariantModalVisible()"
     (visibleChange)="aiVariantModalVisible.set($event)"
     [sourceExercise]="exercise()"
     [courseId]="courseId()"
-    (variantAdded)="variantAdded.emit($event)"
 />
-
-<ng-template #actionTpl let-action let-inMenu="inMenu">
-    @switch (action.kind) {
-        @case ('delete') {
-            <!-- No tooltip on the disabled state here: a disabled native button swallows pointer events. The link
-                 branch below can show one because it keeps pointer-events enabled. -->
-            <button
-                tumUiButton
-                jhiDeleteButton
-                [attr.data-testid]="'exercise-action-' + action.id"
-                [renderButtonText]="false"
-                [renderButtonStyle]="false"
-                [severity]="action.severity"
-                size="small"
-                [disabled]="!!action.disabled"
-                [entityTitle]="exercise().title!"
-                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="deletionSummary()"
-                deleteQuestion="artemisApp.exercise.delete.question"
-                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                [translateValues]="deleteTranslateValues()"
-                [additionalChecks]="deleteAdditionalChecks()"
-                (delete)="onDelete($event)"
-                [dialogError]="dialogError$"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
-            >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
-            </button>
-        }
-        @case ('button') {
-            <button
-                tumUiButton
-                type="button"
-                [attr.data-testid]="'exercise-action-' + action.id"
-                [severity]="action.severity"
-                size="small"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
-                (click)="runAction(action)"
-            >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
-            </button>
-        }
-        @default {
-            <a
-                tumUiButton
-                [attr.data-testid]="'exercise-action-' + action.id"
-                [routerLink]="action.disabled ? undefined : action.link"
-                [severity]="action.severity"
-                size="small"
-                [class.disabled]="action.disabled"
-                [class.text-start]="inMenu"
-                [class.w-100]="inMenu"
-                [attr.aria-disabled]="action.disabled || undefined"
-                [attr.tabindex]="action.disabled ? -1 : undefined"
-                [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [tumUiTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
-                tumUiTooltipPlacement="top"
-                (click)="closeMenuIfOpen(inMenu)"
-            >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
-            </a>
-        }
-    }
-</ng-template>

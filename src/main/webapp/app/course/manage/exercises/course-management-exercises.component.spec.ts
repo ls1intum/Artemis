@@ -602,13 +602,5 @@ describe('Course Management Exercises Component', () => {
             expect(comp.groups()[0].exercises).toHaveLength(0);
             expect(comp.selectedIds().has(1)).toBe(false);
         });
-
-        it('navigates to the generated variant’s type-aware editor when the wizard confirms it', () => {
-            const variant = { id: 4711, type: ExerciseType.QUIZ, course: { id: 7 } } as Exercise;
-
-            comp.onVariantAdded(variant);
-
-            expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'quiz-exercises', 4711, 'edit']);
-        });
     });
 });

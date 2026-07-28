@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
@@ -50,9 +50,6 @@ export class CourseManagementExerciseRowComponent {
     readonly details = input.required<Exercise>();
     readonly statistic = input<CourseManagementOverviewExerciseStatisticsDTO>();
     readonly rowType = input.required<ExerciseRowType>();
-
-    /** A generated AI variant was confirmed in the wizard — the host may want to refresh the exercise list. */
-    readonly variantAdded = output<Exercise>();
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
     readonly aiVariantModalVisible = signal(false);

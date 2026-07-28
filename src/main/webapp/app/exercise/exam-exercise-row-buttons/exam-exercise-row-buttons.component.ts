@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { Subject } from 'rxjs';
+import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
+import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
@@ -13,40 +14,30 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import {
-    faBook,
-    faExclamationTriangle,
-    faEye,
-    faFileExport,
-    faFileSignature,
-    faPencilAlt,
-    faRobot,
-    faSignal,
-    faTable,
-    faTrash,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
+/**
+ * Builds the exam-exercise `ActionItem[]` (exam-scoped routes, exam-specific role/lifecycle gates, delete wiring) and
+ * renders it through the shared {@link ExerciseActionBarComponent} — the same collapsible-row/ellipsis-menu bar the
+ * course-exercise table uses, so both look and behave identically, including collapsing on small screens. The
+ * test-run-participations warning is the only always-visible content, projected into the bar's reserved-content slot.
+ */
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
+    imports: [ExerciseActionBarComponent, FaIconComponent, TumUiTooltipDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
-export class ExamExerciseRowButtonsComponent implements OnInit {
+export class ExamExerciseRowButtonsComponent {
     private textExerciseService = inject(TextExerciseService);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -62,51 +53,202 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     readonly exerciseGroupId = input.required<number>();
     readonly latestIndividualEndDate = input<dayjs.Dayjs>();
     readonly onDeleteExercise = output<void>();
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
-    exerciseType = ExerciseType;
+    /**
+     * Width (px) the actions column must reserve to keep the always-visible test-run warning plus the ellipsis
+     * trigger on screen; 0 when there is none. Mirrors `ExerciseActionsComponent.quizActionsMinWidth` so a shared
+     * table column can floor its width the same way.
+     */
+    readonly actionsMinWidth = output<number>();
 
-    // Icons
-    faTrash = faTrash;
-    faBook = faBook;
-    faEye = faEye;
-    faWrench = faWrench;
-    faUsers = faUsers;
-    faTable = faTable;
-    faExclamationTriangle = faExclamationTriangle;
-    faSignal = faSignal;
-    faPencilAlt = faPencilAlt;
-    faFileExport = faFileExport;
-    faFileSignature = faFileSignature;
-    farListAlt = faListAlt;
-    faRobot = faRobot;
-    /** Gates the "Create Variant with AI" button — only programming and non-drag-and-drop quizzes are supported. */
-    protected readonly supportsAiVariantGeneration = supportsAiVariantGeneration;
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
+
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
-    readonly aiVariantModalVisible = signal(false);
+    protected readonly aiVariantModalVisible = signal(false);
 
-    readonly localCIEnabled = signal(true);
-
-    ngOnInit(): void {
-        this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
-    }
+    private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
     /**
-     * Checks whether the exam is over using the latestIndividualEndDate
+     * Whether the exam is over (using the latest individual end date), gating the quiz re-evaluate action and
+     * whether the quiz edit action is shown at all.
      */
-    isExamOver() {
+    isExamOver(): boolean {
         const latestIndividualEndDate = this.latestIndividualEndDate();
         return latestIndividualEndDate ? latestIndividualEndDate.isBefore(dayjs()) : false;
     }
 
-    /**
-     * Checks whether the exam has started
-     */
-    hasExamStarted() {
+    /** Whether the exam has started, disabling the quiz edit action (students may already be working on it). */
+    hasExamStarted(): boolean {
         const exam = this.exam();
         return exam.startDate ? exam.startDate.isBefore(dayjs()) : false;
     }
+
+    /** The always-visible test-run warning shown next to the quiz edit action, before the exam ends. */
+    protected readonly showTestRunWarning = computed(() => this.exercise().type === ExerciseType.QUIZ && !!this.exercise().testRunParticipationsExist && !this.isExamOver());
+
+    private readonly deletionSummary = computed(() => this.exerciseService.getDeletionSummary(this.exercise()));
+
+    private readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled()) {
+            return {};
+        }
+        return {
+            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+        };
+    });
+
+    private readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
+        const course = this.course();
+        return { courseTitle: course.title, courseType: course.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse' };
+    });
+
+    readonly mainActions = computed<ActionItem[]>(() => {
+        const ex = this.exercise();
+        const course = this.course();
+        const cid = course.id!;
+        const exam = this.exam();
+        const groupId = this.exerciseGroupId();
+        const groupSeg = ['/course-management', cid, 'exams', exam.id!, 'exercise-groups', groupId] as (string | number)[];
+        const typeSeg = [...groupSeg, `${ex.type}-exercises`, ex.id!];
+        const items: ActionItem[] = [];
+
+        if (course.isAtLeastInstructor) {
+            items.push({
+                id: 'participations',
+                labelKey: 'artemisApp.exercise.participations',
+                icon: faListAlt,
+                severity: 'primary',
+                kind: 'link',
+                link: [...typeSeg, 'participations'],
+            });
+            items.push({ id: 'scores', labelKey: 'entity.action.scores', icon: faTable, severity: 'info', kind: 'link', link: [...typeSeg, 'scores'] });
+        }
+        if (course.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                severity: 'warn',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {
+            items.push({
+                id: 'grading',
+                labelKey: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+                icon: faFileSignature,
+                severity: 'warn',
+                kind: 'link',
+                link: [...groupSeg, 'programming-exercises', ex.id!, 'grading', 'test-cases'],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type !== ExerciseType.QUIZ && ex.type !== ExerciseType.PROGRAMMING && ex.type !== ExerciseType.FILE_UPLOAD) {
+            items.push({
+                id: 'examples',
+                labelKey: 'entity.action.exampleSubmissions',
+                icon: faBook,
+                severity: 'success',
+                kind: 'link',
+                link: [...typeSeg, 'example-submissions'],
+            });
+        }
+        if (course.isAtLeastInstructor && ex.type === ExerciseType.QUIZ) {
+            items.push({
+                id: 'statistics',
+                labelKey: 'artemisApp.quizExercise.statistics',
+                icon: faSignal,
+                severity: 'info',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'quiz-point-statistic'],
+            });
+        }
+        if (course.isAtLeastInstructor && ex.teamMode) {
+            items.push({
+                id: 'teams',
+                labelKey: 'artemisApp.exercise.teams',
+                icon: faUsers,
+                severity: 'primary',
+                kind: 'link',
+                link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {
+            items.push({
+                id: 'edit-in-editor',
+                labelKey: 'entity.action.editInEditor',
+                icon: faPencilAlt,
+                severity: 'warn',
+                kind: 'link',
+                link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
+            });
+        }
+        if (course.isAtLeastEditor && ex.type === ExerciseType.QUIZ) {
+            items.push({
+                id: 'preview',
+                labelKey: 'artemisApp.quizExercise.preview',
+                icon: faEye,
+                severity: 'success',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'preview'],
+            });
+            items.push({
+                id: 'solution',
+                labelKey: 'artemisApp.quizExercise.solution',
+                icon: faEye,
+                severity: 'success',
+                kind: 'link',
+                link: [...groupSeg, 'quiz-exercises', ex.id!, 'solution'],
+            });
+            if (this.isExamOver() && course.isAtLeastInstructor) {
+                items.push({
+                    id: 're-evaluate',
+                    labelKey: 'entity.action.re-evaluate',
+                    icon: faWrench,
+                    severity: 'warn',
+                    kind: 'link',
+                    link: [...groupSeg, 'quiz-exercises', ex.id!, 're-evaluate'],
+                });
+            }
+            if (!this.isExamOver()) {
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faWrench,
+                    severity: 'warn',
+                    kind: 'link',
+                    link: [...typeSeg, 'edit'],
+                    disabled: this.hasExamStarted() || undefined,
+                });
+            }
+        } else if (course.isAtLeastEditor) {
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+        }
+        if (course.isAtLeastInstructor) {
+            items.push({
+                id: 'delete',
+                labelKey: 'entity.action.delete',
+                icon: faTrash,
+                severity: 'danger',
+                kind: 'delete',
+                delete: {
+                    entityTitle: ex.title ?? '',
+                    entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
+                    fetchEntitySummary: this.deletionSummary(),
+                    deleteQuestion: ex.type === ExerciseType.PROGRAMMING ? 'artemisApp.programmingExercise.delete.question' : 'artemisApp.exercise.delete.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    translateValues: this.deleteTranslateValues(),
+                    additionalChecks: this.deleteAdditionalChecks(),
+                    dialogError: this.dialogError$,
+                    onDelete: (event) => (ex.type === ExerciseType.PROGRAMMING ? this.deleteProgrammingExercise(event) : this.deleteExercise()),
+                },
+            });
+        }
+        return items;
+    });
 
     /**
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
@@ -131,12 +273,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private deleteTextExercise() {
         this.textExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted a textExercise',
-                });
+                this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'Deleted a textExercise' });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -146,12 +284,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private deleteModelingExercise() {
         this.modelingExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'modelingExerciseListModification',
-                    content: 'Deleted a modelingExercise',
-                });
+                this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'Deleted a modelingExercise' });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -161,12 +295,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private deleteFileUploadExercise() {
         this.fileUploadExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted a fileUploadExercise',
-                });
+                this.eventManager.broadcast({ name: 'fileUploadExerciseListModification', content: 'Deleted a fileUploadExercise' });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -176,12 +306,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private deleteQuizExercise() {
         this.quizExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted a quiz',
-                });
+                this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Deleted a quiz' });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -191,20 +317,12 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
         this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'programmingExerciseListModification',
-                    content: 'Deleted a programming exercise',
-                });
+                this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Deleted a programming exercise' });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
-    }
-
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(this.exercise());
     }
 
     /**
@@ -217,6 +335,4 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
-
-    protected readonly RepositoryType = RepositoryType;
 }
