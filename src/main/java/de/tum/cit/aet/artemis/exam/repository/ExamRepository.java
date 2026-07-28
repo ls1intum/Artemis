@@ -128,7 +128,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
-                e.id, e.title, e.startDate, e.endDate, (e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL), e.course.id, e.course.title
+                e.id, e.title, e.startDate, e.endDate, e.examMode, e.course.id, e.course.title
             )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate

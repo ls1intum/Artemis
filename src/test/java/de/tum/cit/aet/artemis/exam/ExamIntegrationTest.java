@@ -1175,7 +1175,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(loaded.channelName()).isEqualTo("scientific-channel-name");
 
         // Build the request the way the client's toExamUpdateDTO does: from the loaded response fields only.
-        ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.testExam(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
+        ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.examMode(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
                 loaded.endDate(), loaded.publishResultsDate(), loaded.examStudentReviewStart(), loaded.examStudentReviewEnd(), loaded.gracePeriod(), loaded.workingTime(),
                 loaded.startText(), loaded.endText(), loaded.confirmationStartText(), loaded.confirmationEndText(), loaded.examMaxPoints(), loaded.randomizeExerciseOrder(),
                 loaded.numberOfExercisesInExam(), loaded.numberOfCorrectionRoundsInExam(), loaded.examiner(), loaded.moduleNumber(), loaded.courseName(),
@@ -1185,7 +1185,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Re-load through the plain path and assert the round-tripped fields survived, channel name in particular.
         ExamDTO reloaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
         assertThat(reloaded.channelName()).isEqualTo("scientific-channel-name");
-        assertThat(reloaded.testExam()).isFalse();
+        assertThat(reloaded.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(reloaded.title()).isEqualTo(loaded.title());
         assertThat(reloaded.examiner()).isEqualTo(loaded.examiner());
         assertThat(reloaded.courseName()).isEqualTo(loaded.courseName());
@@ -1673,7 +1673,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamForConductionDTO examDTO = response.exam();
         assertThat(examDTO).isNotNull();
         assertThat(examDTO.id()).isEqualTo(exam.getId());
-        assertThat(examDTO.testExam()).isFalse();
+        assertThat(examDTO.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(examDTO.startDate()).isNotNull();
         assertThat(examDTO.startText()).isEqualTo("please-start-carefully");
         assertThat(examDTO.endText()).isEqualTo("please-review-before-submitting");
@@ -2522,7 +2522,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamWithExerciseGroupsDTO received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class);
         assertThat(received.id()).isEqualTo(exam2.getId());
         assertThat(received.title()).isEqualTo(exam2.getTitle());
-        assertThat(received.testExam()).isEqualTo(exam2.isTestExam());
+        assertThat(received.examMode()).isEqualTo(exam2.getExamMode());
         // exam-import.component reads exam.course to decide isImportInSameCourse
         assertThat(received.course()).isNotNull();
         assertThat(received.course().id()).isEqualTo(course1.getId());
@@ -2622,7 +2622,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Pin the exact fields the exam-import table renders off each paged row: id, title, course.title and testExam.
         Exam foundExam = result.getResultsOnPage().getFirst();
         assertThat(foundExam.getTitle()).isEqualTo(title);
-        assertThat(foundExam.isTestExam()).isEqualTo(exam.isTestExam());
+        assertThat(foundExam.getExamMode()).isEqualTo(exam.getExamMode());
         assertThat(foundExam.getCourse()).isNotNull();
         assertThat(foundExam.getCourse().getTitle()).isEqualTo(course1.getTitle());
     }
