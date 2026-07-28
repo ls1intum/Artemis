@@ -79,6 +79,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -770,9 +771,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        // generate individual student exams (the response masks the nested exam; re-fetch managed entities to modify them)
+        request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
+                HttpStatus.OK);
+        List<StudentExam> studentExams = new ArrayList<>(studentExamRepository.findByExamId(exam.getId()));
 
         // Modify working times
 
@@ -3106,15 +3108,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             exam1.setExamMaxPoints(19);
             exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
 
-            // Generate student exam
-            List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
-                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            // Generate student exam (the response masks the nested exam/user; re-fetch the single managed entity below)
+            List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
             assertThat(studentExams).hasSize(exam1.getExamUsers().size());
             assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
 
             // Prepare student exam
             ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-            StudentExam studentExam = studentExams.getFirst();
+            StudentExam studentExam = studentExamRepository.findByExamId(exam1.getId()).iterator().next();
             userUtilService.changeUser(studentExam.getUser().getLogin());
             studentExamForConduction = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);
