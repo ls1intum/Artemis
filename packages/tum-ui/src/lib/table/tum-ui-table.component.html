@@ -8,8 +8,7 @@
                 [placeholder]="searchPlaceholder() | tumUiTranslate"
                 [attr.aria-label]="searchPlaceholder() | tumUiTranslate"
                 (input)="onSearchInput(searchInput.value)"
-                class="tum:w-full tum:rounded-md tum:border tum:border-tum-ui-surface-300 tum:bg-tum-ui-surface-0 tum:py-1.5 tum:pl-10 tum:pr-3 tum:text-sm tum:text-tum-ui-surface-900 tum:dark:border-tum-ui-surface-600 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0"
-                data-testid="tum-ui-table-search"
+                class="tum:w-full tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:py-1.5 tum:pl-10 tum:pr-3 tum:text-sm tum:text-tum-ui-text"
             />
         </div>
     </div>
@@ -22,7 +21,7 @@
     [style.min-height]="scrollHeight() === 'flex' ? 0 : null"
     [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
 >
-    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()" data-testid="tum-ui-table">
+    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()">
         @for (col of columns(); track columnName(col, $index)) {
             <ng-container [cdkColumnDef]="columnName(col, $index)">
                 <th
@@ -32,12 +31,12 @@
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
                     [ngClass]="columnVisibilityClasses(col)"
-                    class="tum:whitespace-nowrap tum:border-tum-ui-surface-200 tum:bg-tum-ui-surface-0 tum:px-4 tum:py-2 tum:text-left tum:font-semibold tum:text-tum-ui-surface-700 tum:dark:border-tum-ui-surface-800 tum:dark:bg-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0"
+                    class="tum:whitespace-nowrap tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2 tum:text-left tum:font-semibold tum:text-tum-ui-text"
                 >
                     @if (col.sort && col.field) {
                         <button
                             type="button"
-                            class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-tum-ui-surface-700 tum:hover:text-tum-ui-primary tum:dark:text-tum-ui-surface-0"
+                            class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-tum-ui-text tum:hover:text-tum-ui-primary"
                             (click)="onSortClick(col)"
                         >
                             @if (col.headerKey) {
@@ -53,12 +52,7 @@
                         <span>{{ col.header }}</span>
                     }
                 </th>
-                <td
-                    cdk-cell
-                    *cdkCellDef="let row; let i = index"
-                    [ngClass]="columnVisibilityClasses(col)"
-                    class="tum:border-tum-ui-surface-200 tum:px-4 tum:py-2 tum:text-tum-ui-surface-900 tum:dark:border-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0"
-                >
+                <td cdk-cell *cdkCellDef="let row; let i = index" [ngClass]="columnVisibilityClasses(col)" class="tum:border-tum-ui-border tum:px-4 tum:py-2 tum:text-tum-ui-text">
                     @if (col.templateRef) {
                         <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: cellParams(row, col, i) }" />
                     } @else {
@@ -70,18 +64,14 @@
 
         @if (rowActions(); as actions) {
             <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
-                <th
-                    cdk-header-cell
-                    *cdkHeaderCellDef
-                    class="tum:border-tum-ui-surface-200 tum:bg-tum-ui-surface-0 tum:px-4 tum:py-2 tum:dark:border-tum-ui-surface-800 tum:dark:bg-tum-ui-surface-900"
-                ></th>
-                <td cdk-cell *cdkCellDef="let row" class="tum:border-tum-ui-surface-200 tum:px-4 tum:py-2 tum:text-right tum:dark:border-tum-ui-surface-800">
+                <th cdk-header-cell *cdkHeaderCellDef class="tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2"></th>
+                <td cdk-cell *cdkCellDef="let row" class="tum:border-tum-ui-border tum:px-4 tum:py-2 tum:text-right">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>
             </ng-container>
         }
 
-        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tum:bg-tum-ui-surface-0 tum:dark:bg-tum-ui-surface-900"></tr>
+        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tum:bg-tum-ui-content-background"></tr>
         <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()"></tr>
 
         <tr *cdkNoDataRow>
@@ -92,11 +82,7 @@
     </table>
 
     @if (loading()) {
-        <div
-            class="tum:absolute tum:inset-0 tum:flex tum:items-center tum:justify-center tum:bg-tum-ui-surface-0/60 tum:dark:bg-tum-ui-surface-900/60"
-            aria-hidden="true"
-            data-testid="tum-ui-table-loading"
-        >
+        <div class="tum:absolute tum:inset-0 tum:flex tum:items-center tum:justify-center tum:bg-tum-ui-content-background/60" aria-hidden="true">
             <span class="tum:h-6 tum:w-6 tum:animate-spin tum:rounded-full tum:border-2 tum:border-tum-ui-border tum:border-t-tum-ui-primary"></span>
         </div>
     }

@@ -15,16 +15,14 @@ const SIZE_PADDING: Record<TumUiTableSize, string> = {
 
 const HEADER_CLASSES =
     'tum:[&_thead_th]:text-left tum:[&_thead_th]:font-semibold tum:[&_thead_th]:whitespace-nowrap ' +
-    'tum:[&_thead_th]:bg-tum-ui-surface-0 tum:[&_thead_th]:text-tum-ui-surface-700 tum:dark:[&_thead_th]:bg-tum-ui-surface-900 tum:dark:[&_thead_th]:text-tum-ui-surface-0 ' +
-    'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-solid tum:[&_thead_th]:border-tum-ui-surface-200 tum:dark:[&_thead_th]:border-tum-ui-surface-800';
+    'tum:[&_thead_th]:bg-tum-ui-content-background tum:[&_thead_th]:text-tum-ui-text ' +
+    'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-solid tum:[&_thead_th]:border-tum-ui-border';
 
-const BODY_CLASSES =
-    'tum:[&_tbody_td]:text-tum-ui-surface-900 tum:dark:[&_tbody_td]:text-tum-ui-surface-0 ' +
-    'tum:[&_tbody_td]:border-b tum:[&_tbody_td]:border-solid tum:[&_tbody_td]:border-tum-ui-surface-200 tum:dark:[&_tbody_td]:border-tum-ui-surface-800';
+const BODY_CLASSES = 'tum:[&_tbody_td]:text-tum-ui-text tum:[&_tbody_td]:border-b tum:[&_tbody_td]:border-solid tum:[&_tbody_td]:border-tum-ui-border';
 
-const STRIPED_CLASSES = 'tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 tum:dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950';
+const STRIPED_CLASSES = 'tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-table-striped-background';
 
-const HOVER_CLASSES = 'tum:[&_tbody_tr:hover]:bg-tum-ui-surface-100 tum:dark:[&_tbody_tr:hover]:bg-tum-ui-surface-800';
+const HOVER_CLASSES = 'tum:[&_tbody_tr:hover]:bg-tum-ui-hover-background';
 
 const SCROLLABLE_CLASSES = 'tum:[&_thead_th]:sticky tum:[&_thead_th]:top-0 tum:[&_thead_th]:z-10';
 

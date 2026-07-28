@@ -1,0 +1,8 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "..",
+        "types": ["node"]
+    },
+    "include": ["./**/*.ts", "../src/**/*.stories.ts", "../vitest.storybook.config.ts"]
+}

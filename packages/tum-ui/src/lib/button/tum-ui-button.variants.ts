@@ -14,34 +14,32 @@ const BASE =
 
 const SOLID: Record<TumUiButtonSeverity, string> = {
     primary: 'tum:bg-tum-ui-primary tum:text-tum-ui-primary-contrast tum:border-tum-ui-primary',
-    secondary:
-        'tum:bg-tum-ui-surface-100 tum:text-tum-ui-surface-700 tum:border-tum-ui-surface-100 tum:dark:bg-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-800',
-    success: 'tum:bg-tum-ui-state-success tum:text-tum-ui-surface-0 tum:border-tum-ui-state-success',
-    info: 'tum:bg-tum-ui-state-info tum:text-tum-ui-surface-0 tum:border-tum-ui-state-info',
-    warn: 'tum:bg-tum-ui-state-warning tum:text-tum-ui-surface-0 tum:border-tum-ui-state-warning',
-    danger: 'tum:bg-tum-ui-state-danger tum:text-tum-ui-surface-0 tum:border-tum-ui-state-danger',
-    contrast:
-        'tum:bg-tum-ui-surface-900 tum:text-tum-ui-surface-0 tum:border-tum-ui-surface-900 tum:dark:bg-tum-ui-surface-0 tum:dark:text-tum-ui-surface-900 tum:dark:border-tum-ui-surface-0',
+    secondary: 'tum:bg-tum-ui-hover-background tum:text-tum-ui-text tum:border-tum-ui-hover-background',
+    success: 'tum:bg-tum-ui-state-success tum:text-tum-ui-state-success-contrast tum:border-tum-ui-state-success',
+    info: 'tum:bg-tum-ui-state-info tum:text-tum-ui-state-info-contrast tum:border-tum-ui-state-info',
+    warn: 'tum:bg-tum-ui-state-warning tum:text-tum-ui-state-warning-contrast tum:border-tum-ui-state-warning',
+    danger: 'tum:bg-tum-ui-state-danger tum:text-tum-ui-state-danger-contrast tum:border-tum-ui-state-danger',
+    contrast: 'tum:bg-tum-ui-contrast-background tum:text-tum-ui-contrast tum:border-tum-ui-contrast-background',
 };
 
 const OUTLINED: Record<TumUiButtonSeverity, string> = {
     primary: 'tum:bg-transparent tum:text-tum-ui-primary tum:border-tum-ui-primary',
-    secondary: 'tum:bg-transparent tum:text-tum-ui-muted tum:border-tum-ui-surface-200 tum:dark:border-tum-ui-surface-700',
-    success: 'tum:bg-transparent tum:text-tum-ui-state-success tum:border-tum-ui-state-success',
-    info: 'tum:bg-transparent tum:text-tum-ui-state-info tum:border-tum-ui-state-info',
-    warn: 'tum:bg-transparent tum:text-tum-ui-state-warning tum:border-tum-ui-state-warning',
-    danger: 'tum:bg-transparent tum:text-tum-ui-state-danger tum:border-tum-ui-state-danger',
-    contrast: 'tum:bg-transparent tum:text-tum-ui-surface-900 tum:border-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-0',
+    secondary: 'tum:bg-transparent tum:text-tum-ui-text tum:border-tum-ui-border',
+    success: 'tum:bg-transparent tum:text-tum-ui-state-success-foreground tum:border-tum-ui-state-success',
+    info: 'tum:bg-transparent tum:text-tum-ui-state-info-foreground tum:border-tum-ui-state-info',
+    warn: 'tum:bg-transparent tum:text-tum-ui-state-warning-foreground tum:border-tum-ui-state-warning',
+    danger: 'tum:bg-transparent tum:text-tum-ui-state-danger-foreground tum:border-tum-ui-state-danger',
+    contrast: 'tum:bg-transparent tum:text-tum-ui-contrast-background tum:border-tum-ui-contrast-background',
 };
 
 const TEXT: Record<TumUiButtonSeverity, string> = {
     primary: 'tum:bg-transparent tum:text-tum-ui-primary tum:border-transparent',
     secondary: 'tum:bg-transparent tum:text-tum-ui-muted tum:border-transparent',
-    success: 'tum:bg-transparent tum:text-tum-ui-state-success tum:border-transparent',
-    info: 'tum:bg-transparent tum:text-tum-ui-state-info tum:border-transparent',
-    warn: 'tum:bg-transparent tum:text-tum-ui-state-warning tum:border-transparent',
-    danger: 'tum:bg-transparent tum:text-tum-ui-state-danger tum:border-transparent',
-    contrast: 'tum:bg-transparent tum:text-tum-ui-surface-900 tum:border-transparent tum:dark:text-tum-ui-surface-0',
+    success: 'tum:bg-transparent tum:text-tum-ui-state-success-foreground tum:border-transparent',
+    info: 'tum:bg-transparent tum:text-tum-ui-state-info-foreground tum:border-transparent',
+    warn: 'tum:bg-transparent tum:text-tum-ui-state-warning-foreground tum:border-transparent',
+    danger: 'tum:bg-transparent tum:text-tum-ui-state-danger-foreground tum:border-transparent',
+    contrast: 'tum:bg-transparent tum:text-tum-ui-contrast-background tum:border-transparent',
 };
 
 const SIZE: Record<TumUiButtonSize, string> = {

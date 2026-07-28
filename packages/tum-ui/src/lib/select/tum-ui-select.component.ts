@@ -319,14 +319,11 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         const size = TRIGGER_SIZE[this.size() ?? 'default'];
         let state: string;
         if (this.isDisabled()) {
-            state =
-                'tum:cursor-default tum:bg-tum-ui-surface-200 tum:text-tum-ui-surface-500 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-700 tum:dark:text-tum-ui-surface-400 tum:dark:border-tum-ui-surface-600';
+            state = 'tum:cursor-default tum:bg-tum-ui-disabled-background tum:text-tum-ui-disabled tum:border-tum-ui-control-border';
         } else if (this.isOpen()) {
-            state =
-                'tum:cursor-pointer tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-primary tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0';
+            state = 'tum:cursor-pointer tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-primary';
         } else {
-            state =
-                'tum:cursor-pointer tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-surface-300 tum:hover:border-tum-ui-surface-400 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-600 tum:dark:hover:border-tum-ui-surface-500';
+            state = 'tum:cursor-pointer tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-control-border tum:hover:border-tum-ui-control-border-hover';
         }
         return `${base} ${size} ${state}`;
     }
@@ -338,6 +335,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
             return `${base} tum:text-tum-ui-highlight ${background}`;
         }
         const activeState = active ? ' tum:bg-tum-ui-highlight-focus-background tum:text-tum-ui-highlight' : '';
-        return `${base} tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:hover:text-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-800${activeState}`;
+        return `${base} tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background tum:hover:text-tum-ui-text-hover${activeState}`;
     }
 }

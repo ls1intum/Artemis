@@ -28,7 +28,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
     function input(): HTMLInputElement {
-        return fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement;
+        return fixture.debugElement.query(By.css('input[role="combobox"]')).nativeElement;
     }
     function typeQuery(text: string): void {
         const el = input();
@@ -36,13 +36,13 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     function listbox(): HTMLElement | null {
-        return document.querySelector('[data-testid="tum-ui-autocomplete-listbox"]');
+        return document.querySelector('[role="listbox"]');
     }
     function options(): HTMLElement[] {
-        return Array.from(document.querySelectorAll('[data-testid="tum-ui-autocomplete-option"]'));
+        return Array.from(document.querySelectorAll('[role="option"]'));
     }
     function chips(): HTMLElement[] {
-        return Array.from(fixture.nativeElement.querySelectorAll('[data-testid="tum-ui-autocomplete-chip"]'));
+        return Array.from(fixture.nativeElement.querySelectorAll('tum-ui-chip'));
     }
     async function search(text: string, suggestions: unknown[]): Promise<void> {
         input().dispatchEvent(new FocusEvent('focus'));
@@ -122,7 +122,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         const unselectSpy = vi.spyOn(component.onUnselect, 'emit');
         component.writeValue(['admin', 'artemis']);
         fixture.detectChanges();
-        const removeButton = chips()[0].querySelector('[data-testid="tum-ui-chip-remove"]') as HTMLButtonElement;
+        const removeButton = chips()[0].querySelector('button') as HTMLButtonElement;
         removeButton.click();
         fixture.detectChanges();
 
@@ -157,7 +157,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         fixture.componentRef.setInput('emptyMessage', 'Nothing found');
         await search('zzz', []);
         expect(options()).toHaveLength(0);
-        expect((document.querySelector('[data-testid="tum-ui-autocomplete-empty"]') as HTMLElement).textContent?.trim()).toBe('Nothing found');
+        expect(listbox()?.querySelector('[role="presentation"]')?.textContent?.trim()).toBe('Nothing found');
     });
 
     it('reads object option labels via optionLabel', async () => {
@@ -213,12 +213,12 @@ describe('TumUiAutoCompleteComponent with reactive formControl', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const chips = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid="tum-ui-autocomplete-chip"]')) as HTMLElement[];
+        const chips = () => Array.from(fixture.nativeElement.querySelectorAll('tum-ui-chip')) as HTMLElement[];
         expect(chips().map((c) => c.textContent?.trim())).toEqual(['a']);
 
         fixture.componentInstance.control.disable();
         fixture.detectChanges();
-        const inputEl = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
+        const inputEl = fixture.debugElement.query(By.css('input[role="combobox"]')).nativeElement as HTMLInputElement;
         expect(inputEl.disabled).toBe(true);
         fixture.destroy();
     });
@@ -240,7 +240,7 @@ describe('TumUiAutoCompleteComponent single mode with standalone ngModel', () =>
         expect(() => fixture.detectChanges()).not.toThrow();
         await fixture.whenStable();
         fixture.detectChanges();
-        const inputEl = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
+        const inputEl = fixture.debugElement.query(By.css('input[role="combobox"]')).nativeElement as HTMLInputElement;
         expect(inputEl.value).toBe('initial');
         fixture.destroy();
     });
@@ -257,7 +257,7 @@ describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () =>
         component = fixture.componentInstance;
         fixture.componentRef.setInput('delay', 0);
         fixture.detectChanges();
-        input = fixture.debugElement.query(By.css('[data-testid="tum-ui-autocomplete-input"]')).nativeElement as HTMLInputElement;
+        input = fixture.debugElement.query(By.css('input[role="combobox"]')).nativeElement as HTMLInputElement;
     });
 
     afterEach(() => {

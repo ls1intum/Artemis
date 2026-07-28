@@ -35,7 +35,7 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     function input(): HTMLInputElement {
-        return fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-input"]')).nativeElement;
+        return fixture.debugElement.query(By.css('input[type="text"]')).nativeElement;
     }
 
     it('reflects an external value as formatted text and is valid', () => {
@@ -65,7 +65,7 @@ describe('TumUiDatePickerComponent', () => {
     it('clears the value and the displayed text', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-clear"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-label="Clear date"]')).nativeElement.click();
         fixture.detectChanges();
         expect(component.value()).toBeUndefined();
         expect(input().value).toBe('');
@@ -112,10 +112,10 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     it('opens the calendar overlay on trigger click and closes via Done', () => {
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).not.toBeNull();
-        (document.querySelector('[data-testid="tum-ui-date-picker-done"] button') as HTMLElement).click();
+        (document.querySelector('[role="dialog"] tum-ui-button button') as HTMLElement).click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
     });
@@ -135,24 +135,24 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     function openPanel(): void {
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
         fixture.detectChanges();
     }
 
-    function timeField(testId: string): HTMLInputElement {
-        return document.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
+    function timeField(label: string): HTMLInputElement {
+        return document.querySelector(`[role="dialog"] input[aria-label="${label}"]`) as HTMLInputElement;
     }
 
-    function timeButton(testId: string): HTMLButtonElement {
-        return document.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
+    function timeButton(label: string): HTMLButtonElement {
+        return document.querySelector(`[role="dialog"] button[aria-label="${label}"]`) as HTMLButtonElement;
     }
 
     it('updates the time-of-day by typing into the hour and minute fields', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
-        const minute = timeField('tum-ui-date-picker-minute');
+        const hour = timeField('Hour');
+        const minute = timeField('Minute');
         expect(hour.value).toBe('08');
         expect(minute.value).toBe('30');
         hour.value = '10';
@@ -166,7 +166,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
+        const hour = timeField('Hour');
         hour.value = '9';
         hour.dispatchEvent(new Event('change'));
         expect(component.value()?.format('HH:mm')).toBe('09:30');
@@ -177,7 +177,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
+        const hour = timeField('Hour');
         hour.value = '25';
         hour.dispatchEvent(new Event('change'));
         expect(component.value()?.format('HH:mm')).toBe('08:30');
@@ -188,7 +188,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T23:30'));
         fixture.detectChanges();
         openPanel();
-        timeButton('tum-ui-date-picker-hour-up').click();
+        timeButton('Increment hour').click();
         expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 00:30');
     });
 
@@ -196,7 +196,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:00'));
         fixture.detectChanges();
         openPanel();
-        timeButton('tum-ui-date-picker-minute-down').click();
+        timeButton('Decrement minute').click();
         expect(component.value()?.format('HH:mm')).toBe('08:59');
     });
 
@@ -204,7 +204,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
+        const hour = timeField('Hour');
         hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
         expect(component.value()?.format('HH:mm')).toBe('09:30');
         hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
@@ -215,7 +215,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
+        const hour = timeField('Hour');
         hour.value = '10';
         hour.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
         expect(component.value()?.format('HH:mm')).toBe('11:30');
@@ -223,7 +223,7 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     it('selects a day from the calendar overlay', () => {
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
         fixture.detectChanges();
         (document.querySelector('td[role="gridcell"] button') as HTMLElement).click();
         expect(component.value()).toBeDefined();
@@ -232,13 +232,13 @@ describe('TumUiDatePickerComponent', () => {
     it('does not open when disabled', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
     });
 
     it('closes the overlay when the control is disabled while the panel is open', () => {
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).not.toBeNull();
         fixture.componentRef.setInput('disabled', true);
@@ -249,8 +249,8 @@ describe('TumUiDatePickerComponent', () => {
     it('bases the date on today, not the 1st of the month, when the time is set on an empty picker', () => {
         expect(component.value()).toBeUndefined();
         openPanel();
-        const hour = timeField('tum-ui-date-picker-hour');
-        const minute = timeField('tum-ui-date-picker-minute');
+        const hour = timeField('Hour');
+        const minute = timeField('Minute');
         expect(hour.value).toBe('00');
         expect(minute.value).toBe('00');
         hour.value = '10';
@@ -262,14 +262,14 @@ describe('TumUiDatePickerComponent', () => {
     });
 
     it('renders the timezone warning by default and hides it when disabled', () => {
-        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[role="img"][tabindex="0"]'))).not.toBeNull();
         fixture.componentRef.setInput('shouldDisplayTimeZoneWarning', false);
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[role="img"][tabindex="0"]'))).toBeNull();
     });
 
     it('exposes the timezone warning to keyboard and screen-reader users', () => {
-        const warning = fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-tz-warning"]')).nativeElement as HTMLElement;
+        const warning = fixture.debugElement.query(By.css('[role="img"][tabindex="0"]')).nativeElement as HTMLElement;
         expect(warning.getAttribute('tabindex')).toBe('0');
         expect(warning.getAttribute('role')).toBe('img');
         expect(warning.getAttribute('aria-label')).toBeTruthy();
@@ -277,7 +277,7 @@ describe('TumUiDatePickerComponent', () => {
 
     describe('two-way [(value)] binding', () => {
         function hostInput(host: ComponentFixture<TwoWayHostComponent>): HTMLInputElement {
-            return host.debugElement.query(By.css('[data-testid="tum-ui-date-picker-input"]')).nativeElement;
+            return host.debugElement.query(By.css('input[type="text"]')).nativeElement;
         }
 
         it('writes a committed value back to the parent (model output is not shadowed)', () => {

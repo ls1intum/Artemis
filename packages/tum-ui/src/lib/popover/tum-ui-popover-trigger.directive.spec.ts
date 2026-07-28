@@ -7,7 +7,7 @@ import { TumUiPopoverTriggerDirective } from './tum-ui-popover-trigger.directive
 
 @Component({
     template: `
-        <button [tumUiPopoverTrigger]="pop" data-testid="trigger">Open</button>
+        <button [tumUiPopoverTrigger]="pop">Open</button>
         <tum-ui-popover #pop ariaLabel="Test popover">Panel content</tum-ui-popover>
     `,
     imports: [TumUiPopoverTriggerDirective, TumUiPopoverComponent],

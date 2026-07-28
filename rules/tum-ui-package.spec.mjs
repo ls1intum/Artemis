@@ -21,22 +21,36 @@ const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind
 const packageTemplates = globSync('packages/tum-ui/src/**/*.html', { cwd: repoRoot })
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
-const packageTypeScriptFiles = globSync('packages/tum-ui/src/**/*.ts', { cwd: repoRoot, ignore: ['**/*.spec.ts'] });
-const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], {
-    cwd: repoRoot,
-    ignore: ['**/*.spec.ts'],
-})
+const packageTypeScriptFiles = globSync('packages/tum-ui/src/**/*.ts', { cwd: repoRoot }).filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'));
+const storyFiles = globSync('packages/tum-ui/src/**/*.stories.ts', { cwd: repoRoot });
+const storySources = storyFiles.map((file) => readFileSync(resolve(repoRoot, file), 'utf8'));
+const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
+    .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
 const packageStyles = globSync(['packages/tum-ui/**/*.css', 'packages/tum-ui/**/*.scss'], { cwd: repoRoot })
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
+const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/.storybook/theme.css'), 'utf8');
 const hostTheme = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
 const workspace = readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8');
-const catalogBlock = workspace.match(/^catalog:\n(?<entries>(?: {2}.+\n)+)/m)?.groups?.entries ?? '';
+const catalogBlock = workspace.match(/^catalog:\n(?<entries>(?: {2,4}.+\n)+)/m)?.groups?.entries ?? '';
 const catalog = Object.fromEntries(
-    [...catalogBlock.matchAll(/^ {2}(?<name>'[^']+'|[^:]+): (?<version>\S+)$/gm)].map(({ groups }) => [groups.name.replaceAll("'", '').trim(), groups.version]),
+    [...catalogBlock.matchAll(/^ {2,4}(?<name>'[^']+'|[^:]+): (?<version>\S+)$/gm)].map(({ groups }) => [groups.name.replaceAll("'", '').trim(), groups.version]),
 );
+const namedCatalogs = Object.fromEntries(
+    [...workspace.matchAll(/^ {2,4}(?<catalog>[\w-]+):\n(?<entries>(?: {4,8}.+\n)+)/gm)].map(({ groups }) => [
+        groups.catalog,
+        Object.fromEntries(
+            [...groups.entries.matchAll(/^ {4,8}(?<name>'[^']+'|[^:]+): (?<version>\S+)$/gm)].map(({ groups: entry }) => [entry.name.replaceAll("'", '').trim(), entry.version]),
+        ),
+    ]),
+);
+
+function dependencyCatalog(specifier) {
+    const name = specifier.slice('catalog:'.length);
+    return name ? namedCatalogs[name] : catalog;
+}
 
 const exactUtilities = new Set([
     'absolute',
@@ -125,7 +139,7 @@ function classLikeTypeScriptStrings(file) {
 
 describe('@tumaet/ui-angular package manifest', () => {
     it('pins every dependency to the root pnpm catalog version', () => {
-        const dependencies = { ...packageJson.peerDependencies, ...packageJson.dependencies, ...packageJson.devDependencies };
+        const dependencies = { ...packageJson.peerDependencies, ...packageJson.dependencies };
         const rootDependencies = { ...rootPackageJson.dependencies, ...rootPackageJson.devDependencies };
 
         expect(Object.keys(catalog).length).toBeGreaterThan(0);
@@ -133,6 +147,13 @@ describe('@tumaet/ui-angular package manifest', () => {
             expect(catalog[name], `${name} must have one canonical workspace version`).toBe(version);
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
+        }
+        for (const [name, version] of Object.entries(packageJson.devDependencies)) {
+            expect(version, `${name} is package-only tooling and must use a workspace catalog`).toMatch(/^catalog:(?:[\w-]+)?$/);
+            expect(dependencyCatalog(version)?.[name], `${name} must exist in its selected workspace catalog`).toBeDefined();
+            if (rootDependencies[name] && version === 'catalog:') {
+                expect(rootDependencies[name], `${name} must use the same workspace catalog entry`).toBe('catalog:');
+            }
         }
     });
 
@@ -175,18 +196,42 @@ describe('@tumaet/ui-angular package manifest', () => {
 
     it('prefixes package-owned utility class strings', () => {
         const templateClasses = [...packageTemplates.matchAll(/(?<!\[)class="([^"]*)"/g)].flatMap((match) => tokens(match[1]));
+        const unnamespacedTemplateClasses = templateClasses.filter((token) => token && !token.startsWith('tum:') && !token.startsWith('tum-ui-'));
         const typeScriptClasses = packageTypeScriptFiles.flatMap(classLikeTypeScriptStrings).flatMap(tokens);
         const unprefixedUtilities = [...templateClasses, ...typeScriptClasses].filter((token) => isUtility(token) && !token.startsWith('tum:'));
 
         expect(packageTailwind).toContain('prefix(tum)');
         expect(packageTailwind).toContain("@source not './src/**/*.spec.ts'");
+        expect(packageTailwind).toContain("@source not './src/**/*.stories.ts'");
+        expect(unnamespacedTemplateClasses).toEqual([]);
         expect(unprefixedUtilities).toEqual([]);
+    });
+
+    it('keeps package stories on stable CSF3', () => {
+        expect(storyFiles.length).toBeGreaterThan(0);
+        const titles = [];
+        for (const source of storySources) {
+            expect(source).toContain('export default meta;');
+            expect(source).not.toMatch(/\b(?:preview\.meta|meta\.story)\s*\(|\.extend\s*\(/);
+            expect(source).not.toMatch(/\btum:/);
+            const title = source.match(/\btitle:\s*'([^']+)'/)?.[1];
+            expect(title).toMatch(/^[^/]+\/[^/]+$/);
+            titles.push(title);
+        }
+        expect(new Set(titles).size).toBe(titles.length);
+    });
+
+    it('does not ship test-only selectors in package markup', () => {
+        expect(packageRuntimeSources).not.toContain('data-testid');
     });
 
     it('keeps the package theme namespaced and fully mapped by Artemis', () => {
         const consumedProperties = [...packageStyles.matchAll(/var\((--[\w-]+)/g)].map((match) => match[1]);
         const packageProperties = [...new Set([...packageStyles.matchAll(/--tum-ui-[\w-]+/g)].map((match) => match[0]))].sort();
         const hostProperties = [...new Set([...hostTheme.matchAll(/--tum-ui-[\w-]+/g)].map((match) => match[0]))].sort();
+        const storybookProperties = [...new Set([...storybookTheme.matchAll(/--tum-ui-[\w-]+/g)].map((match) => match[0]))]
+            .filter((property) => property !== '--tum-ui-storybook-canvas')
+            .sort();
         const themeColors = new Set([...packageStyles.matchAll(/--color-(tum-ui-[\w-]+)\s*:/g)].map((match) => match[1]));
         const utilityColors = [...new Set(packageRuntimeSources.split(/\s+/).map(themeColorFromUtilityToken).filter(Boolean))].sort();
         const hostColorUtilities = [
@@ -195,7 +240,11 @@ describe('@tumaet/ui-angular package manifest', () => {
 
         expect(themeColorFromUtilityToken(`tum:${'&:'.repeat(10_000)}`)).toBeUndefined();
         expect(consumedProperties.filter((property) => !property.startsWith('--tum-ui-'))).toEqual([]);
+        expect(packageProperties.filter((property) => property.startsWith('--tum-ui-surface-'))).toEqual([]);
+        expect(packageRuntimeSources).not.toContain('tum:dark:');
+        expect(packageRuntimeSources).not.toContain(":host-context(html[data-theme='dark'])");
         expect(hostProperties).toEqual(packageProperties);
+        expect(storybookProperties).toEqual(packageProperties);
         expect(utilityColors.filter((color) => !themeColors.has(color))).toEqual([]);
         expect(hostColorUtilities).toEqual([]);
     });

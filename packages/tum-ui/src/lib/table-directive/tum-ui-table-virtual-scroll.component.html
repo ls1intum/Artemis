@@ -4,7 +4,6 @@
     [style.flex]="isFlexHeight() ? '1 1 0%' : null"
     [style.min-width]="minWidth()"
     [attr.aria-describedby]="ariaDescribedBy()"
-    data-testid="tum-ui-vs-table"
 >
     <div role="row" [class]="headerClasses()">
         <ng-content />
@@ -17,15 +16,9 @@
         [style.min-height]="isFlexHeight() ? 0 : null"
         [style.max-height]="maxHeight()"
         role="rowgroup"
-        data-testid="tum-ui-vs-viewport"
+        tabindex="0"
     >
-        <div
-            *cdkVirtualFor="let item of items(); let i = index; trackBy: effectiveTrackBy()"
-            role="row"
-            [class]="rowClasses() + stripeClass(i)"
-            [style.height.px]="itemSize()"
-            data-testid="tum-ui-vs-row"
-        >
+        <div *cdkVirtualFor="let item of items(); let i = index; trackBy: effectiveTrackBy()" role="row" [class]="rowClasses() + stripeClass(i)" [style.height.px]="itemSize()">
             <ng-container [ngTemplateOutlet]="rowTemplate()" [ngTemplateOutletContext]="{ $implicit: item, index: i }" />
         </div>
     </cdk-virtual-scroll-viewport>

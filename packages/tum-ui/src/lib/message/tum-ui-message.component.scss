@@ -22,50 +22,25 @@
     font-size: 1.125rem;
 }
 
-@mixin message-state($var) {
-    background: color-mix(in srgb, color-mix(in srgb, var($var) 10%, var(--tum-ui-surface-0)), transparent 5%);
-    outline-color: color-mix(in srgb, var($var) 40%, var(--tum-ui-surface-0));
-    color: color-mix(in srgb, var($var) 80%, var(--tum-ui-surface-950));
-    box-shadow: 0 4px 8px 0 color-mix(in srgb, var($var), transparent 96%);
+@mixin message-state($background, $foreground) {
+    background: color-mix(in srgb, var($background) 10%, var(--tum-ui-content-background));
+    outline-color: color-mix(in srgb, var($background) 40%, var(--tum-ui-content-background));
+    color: var($foreground);
+    box-shadow: 0 4px 8px 0 color-mix(in srgb, var($background), transparent 96%);
 }
 
 :host[data-severity='info'] {
-    @include message-state(--tum-ui-state-info);
+    @include message-state(--tum-ui-state-info, --tum-ui-state-info-foreground);
 }
 
 :host[data-severity='success'] {
-    @include message-state(--tum-ui-state-success);
+    @include message-state(--tum-ui-state-success, --tum-ui-state-success-foreground);
 }
 
 :host[data-severity='warn'] {
-    @include message-state(--tum-ui-state-warning);
+    @include message-state(--tum-ui-state-warning, --tum-ui-state-warning-foreground);
 }
 
 :host[data-severity='error'] {
-    @include message-state(--tum-ui-state-danger);
-}
-
-@mixin message-state-dark($var) {
-    background: color-mix(in srgb, var($var), transparent 84%);
-    outline-color: color-mix(in srgb, color-mix(in srgb, var($var) 60%, var(--tum-ui-surface-950)), transparent 64%);
-    color: var($var);
-    box-shadow: 0 4px 8px 0 color-mix(in srgb, var($var), transparent 96%);
-}
-
-:host-context(html[data-theme='dark']) {
-    &[data-severity='info'] {
-        @include message-state-dark(--tum-ui-state-info);
-    }
-
-    &[data-severity='success'] {
-        @include message-state-dark(--tum-ui-state-success);
-    }
-
-    &[data-severity='warn'] {
-        @include message-state-dark(--tum-ui-state-warning);
-    }
-
-    &[data-severity='error'] {
-        @include message-state-dark(--tum-ui-state-danger);
-    }
+    @include message-state(--tum-ui-state-danger, --tum-ui-state-danger-foreground);
 }

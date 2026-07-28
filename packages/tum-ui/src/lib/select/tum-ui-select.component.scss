@@ -8,10 +8,8 @@
     appearance: none;
 
     &:focus-visible {
-        outline: none;
-        box-shadow:
-            0 0 0 2px var(--tum-ui-focus-ring-offset-background),
-            0 0 0 4px var(--tum-ui-primary);
+        outline: 2px solid var(--tum-ui-primary);
+        outline-offset: 2px;
     }
 
     &:disabled {

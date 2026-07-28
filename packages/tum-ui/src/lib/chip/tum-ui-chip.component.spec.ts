@@ -25,7 +25,7 @@ describe('TumUiChipComponent', () => {
         return fixture.debugElement.query(By.css('.tum-ui-chip-label')).nativeElement;
     }
     function removeButton(): HTMLButtonElement | null {
-        const el = fixture.debugElement.query(By.css('[data-testid="tum-ui-chip-remove"]'));
+        const el = fixture.debugElement.query(By.css('button'));
         return el ? (el.nativeElement as HTMLButtonElement) : null;
     }
 

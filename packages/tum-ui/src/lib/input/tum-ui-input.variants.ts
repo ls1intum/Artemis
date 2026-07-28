@@ -1,14 +1,11 @@
 export type TumUiInputSize = 'small' | 'large';
 
 const INPUT_BASE =
-    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:shadow-xs tum:outline-none ' +
-    'tum:transition-colors tum:duration-200 tum:placeholder:text-tum-ui-surface-500 ' +
-    'tum:disabled:opacity-100 tum:disabled:bg-tum-ui-surface-200 tum:disabled:text-tum-ui-surface-500 ' +
-    'tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0 tum:dark:placeholder:text-tum-ui-surface-400 ' +
-    'tum:dark:disabled:bg-tum-ui-surface-700 tum:dark:disabled:text-tum-ui-surface-400';
+    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:shadow-xs tum:outline-none ' +
+    'tum:transition-colors tum:duration-200 tum:placeholder:text-tum-ui-muted ' +
+    'tum:disabled:opacity-100 tum:disabled:bg-tum-ui-disabled-background tum:disabled:text-tum-ui-disabled';
 
-const INPUT_BORDER =
-    'tum:border-tum-ui-surface-300 tum:enabled:hover:border-tum-ui-surface-400 tum:enabled:focus:border-tum-ui-primary tum:dark:border-tum-ui-surface-600 tum:dark:enabled:hover:border-tum-ui-surface-500';
+const INPUT_BORDER = 'tum:border-tum-ui-control-border tum:enabled:hover:border-tum-ui-control-border-hover tum:enabled:focus:border-tum-ui-primary';
 
 const INPUT_BORDER_INVALID = 'tum:border-tum-ui-state-danger';
 

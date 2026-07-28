@@ -8,9 +8,9 @@ import { TumUiTableSortableColumnComponent } from './tum-ui-table-sortable-colum
         <table tumUiTable [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="events.push($event)">
             <thead>
                 <tr>
-                    <th tumUiSortableColumn="login" data-testid="login-col">Login</th>
-                    <th tumUiSortableColumn="email" data-testid="email-col">Email</th>
-                    <th tumUiSortableColumn="frozen" [disabled]="true" data-testid="frozen-col">Frozen</th>
+                    <th tumUiSortableColumn="login">Login</th>
+                    <th tumUiSortableColumn="email">Email</th>
+                    <th tumUiSortableColumn="frozen" [disabled]="true">Frozen</th>
                 </tr>
             </thead>
         </table>
@@ -34,52 +34,52 @@ describe('TumUiTableSortableColumnComponent', () => {
         fixture.detectChanges();
     });
 
-    function th(testid: string): HTMLElement {
-        return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testid}"]`)!;
+    function th(label: string): HTMLElement {
+        return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('th')).find((element) => element.textContent?.includes(label))!;
     }
 
     it('renders a sort icon after the projected header text', () => {
-        const login = th('login-col');
+        const login = th('Login');
         expect(login.textContent).toContain('Login');
         expect(login.querySelector('fa-icon.tum-ui-sort-icon')).not.toBeNull();
     });
 
     it('reflects the controlled sort state via aria-sort', () => {
-        expect(th('login-col').getAttribute('aria-sort')).toBe('ascending');
-        expect(th('email-col').getAttribute('aria-sort')).toBe('none');
+        expect(th('Login').getAttribute('aria-sort')).toBe('ascending');
+        expect(th('Email').getAttribute('aria-sort')).toBe('none');
 
         host.sortOrder.set(-1);
         fixture.detectChanges();
-        expect(th('login-col').getAttribute('aria-sort')).toBe('descending');
+        expect(th('Login').getAttribute('aria-sort')).toBe('descending');
     });
 
     it('is focusable, except when disabled', () => {
-        expect(th('login-col').getAttribute('tabindex')).toBe('0');
-        expect(th('frozen-col').getAttribute('tabindex')).toBeNull();
+        expect(th('Login').getAttribute('tabindex')).toBe('0');
+        expect(th('Frozen').getAttribute('tabindex')).toBeNull();
     });
 
     it('toggles the active field on click (emits order -1)', () => {
-        th('login-col').click();
+        th('Login').click();
         expect(host.events.at(-1)).toEqual({ field: 'login', order: -1 });
     });
 
     it('sorts a different field ascending on click (emits order 1)', () => {
-        th('email-col').click();
+        th('Email').click();
         expect(host.events.at(-1)).toEqual({ field: 'email', order: 1 });
     });
 
     it('sorts on Enter / Space keyboard activation', () => {
-        th('email-col').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        th('Email').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         expect(host.events.at(-1)).toEqual({ field: 'email', order: 1 });
 
-        th('login-col').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        th('Login').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
         expect(host.events.at(-1)).toEqual({ field: 'login', order: -1 });
     });
 
     it('does not sort when the column is disabled', () => {
-        th('frozen-col').click();
-        th('frozen-col').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        th('Frozen').click();
+        th('Frozen').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         expect(host.events).toHaveLength(0);
-        expect(th('frozen-col').getAttribute('aria-sort')).toBe('none');
+        expect(th('Frozen').getAttribute('aria-sort')).toBe('none');
     });
 });

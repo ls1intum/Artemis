@@ -1,31 +1,14 @@
-<div
-    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-surface-200 tum:pt-2 tum:text-sm tum:text-tum-ui-muted tum:dark:border-tum-ui-surface-800"
-    data-testid="tum-ui-paginator"
->
+<div class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-border tum:pt-2 tum:text-sm tum:text-tum-ui-muted">
     @if (showCurrentPageReport()) {
-        <span class="tum:px-2" data-testid="paginator-report">
+        <span class="tum:px-2">
             {{ 'tumUi.paginator.currentPageReport' | tumUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
         </span>
     }
 
-    <button
-        type="button"
-        [class]="navButtonClasses"
-        [disabled]="disabled() || isFirst()"
-        (click)="goToFirst()"
-        [attr.aria-label]="'tumUi.paginator.first' | tumUiTranslate"
-        data-testid="paginator-first"
-    >
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToFirst()" [attr.aria-label]="'tumUi.paginator.first' | tumUiTranslate">
         <fa-icon [icon]="faAnglesLeft" />
     </button>
-    <button
-        type="button"
-        [class]="navButtonClasses"
-        [disabled]="disabled() || isFirst()"
-        (click)="goToPrevious()"
-        [attr.aria-label]="'tumUi.paginator.previous' | tumUiTranslate"
-        data-testid="paginator-previous"
-    >
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToPrevious()" [attr.aria-label]="'tumUi.paginator.previous' | tumUiTranslate">
         <fa-icon [icon]="faAngleLeft" />
     </button>
 
@@ -36,41 +19,25 @@
             [disabled]="disabled()"
             (click)="goToPage(p)"
             [attr.aria-current]="p === clampedPage() ? 'page' : null"
-            data-testid="paginator-page"
         >
             {{ p + 1 }}
         </button>
     }
 
-    <button
-        type="button"
-        [class]="navButtonClasses"
-        [disabled]="disabled() || isLast()"
-        (click)="goToNext()"
-        [attr.aria-label]="'tumUi.paginator.next' | tumUiTranslate"
-        data-testid="paginator-next"
-    >
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToNext()" [attr.aria-label]="'tumUi.paginator.next' | tumUiTranslate">
         <fa-icon [icon]="faAngleRight" />
     </button>
-    <button
-        type="button"
-        [class]="navButtonClasses"
-        [disabled]="disabled() || isLast()"
-        (click)="goToLast()"
-        [attr.aria-label]="'tumUi.paginator.last' | tumUiTranslate"
-        data-testid="paginator-last"
-    >
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToLast()" [attr.aria-label]="'tumUi.paginator.last' | tumUiTranslate">
         <fa-icon [icon]="faAnglesRight" />
     </button>
 
     @if (showRowsPerPage()) {
         <select
-            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-tum-ui-surface-300 tum:bg-tum-ui-surface-0 tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-tum-ui-surface-900 tum:dark:border-tum-ui-surface-600 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0"
+            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-tum-ui-text"
             [ngModel]="pageSize()"
             [disabled]="disabled()"
             (ngModelChange)="onPageSizeChange($event)"
             [attr.aria-label]="'tumUi.paginator.rowsPerPage' | tumUiTranslate"
-            data-testid="paginator-page-size"
         >
             @for (option of pageSizeOptions(); track option) {
                 <option [ngValue]="option">{{ option }}</option>

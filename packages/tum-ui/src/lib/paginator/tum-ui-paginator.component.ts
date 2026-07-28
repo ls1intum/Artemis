@@ -6,7 +6,7 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 const PAGE_LINK_SIZE = 5;
 const NAV_BUTTON_CLASSES =
-    'tum:inline-flex tum:h-[35px] tum:w-[35px] tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-sm tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800 tum:disabled:pointer-events-none tum:disabled:opacity-50';
+    'tum:inline-flex tum:h-[35px] tum:w-[35px] tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-sm tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-hover-background tum:disabled:pointer-events-none tum:disabled:opacity-50';
 
 @Component({
     selector: 'tum-ui-paginator',

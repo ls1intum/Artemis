@@ -11,7 +11,7 @@ interface Row {
 @Component({
     template: `
         <tum-ui-table-virtual-scroll [items]="items" [itemSize]="40" [rowTemplate]="rowTpl" scrollHeight="20rem" minWidth="30rem" ariaDescribedBy="desc">
-            <div class="flex-1" data-testid="header-name">Name</div>
+            <div class="flex-1">Name</div>
         </tum-ui-table-virtual-scroll>
         <ng-template #rowTpl let-row
             ><span class="row-name">{{ row.name }}</span></ng-template
@@ -32,15 +32,12 @@ describe('TumUiTableVirtualScrollComponent', () => {
         fixture.detectChanges();
     });
 
-    function el(testid: string): HTMLElement | null {
-        return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testid}"]`);
-    }
-
     it('renders the CDK virtual-scroll viewport and the projected header', () => {
-        expect(el('tum-ui-vs-table')).not.toBeNull();
-        expect(el('tum-ui-vs-viewport')).not.toBeNull();
-        expect(el('header-name')?.textContent).toContain('Name');
-        expect(el('tum-ui-vs-table')?.getAttribute('aria-describedby')).toBe('desc');
+        const table = (fixture.nativeElement as HTMLElement).querySelector('[role="table"]');
+        expect(table).not.toBeNull();
+        expect(table?.querySelector('[role="rowgroup"]')).not.toBeNull();
+        expect(table?.querySelector('[role="row"]')?.textContent).toContain('Name');
+        expect(table?.getAttribute('aria-describedby')).toBe('desc');
     });
 
     it('forwards the fixed item size to the CDK fixed-size scroll strategy', () => {
@@ -53,7 +50,7 @@ describe('TumUiTableVirtualScrollComponent', () => {
         viewport.checkViewportSize();
         fixture.detectChanges();
 
-        const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="tum-ui-vs-row"]');
+        const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('[role="rowgroup"] [role="row"]');
         expect(rows.length).toBeGreaterThan(0);
         expect(rows.length).toBeLessThan(50);
         expect(rows[0].querySelector('.row-name')?.textContent).toContain('logger-0');

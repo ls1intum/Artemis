@@ -59,9 +59,7 @@ export class TumUiTableSortableColumnComponent {
         }
     });
 
-    protected readonly hostClasses = computed(() =>
-        this.disabled() ? '' : 'tum:cursor-pointer tum:select-none tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800',
-    );
+    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tum:cursor-pointer tum:select-none tum:hover:bg-tum-ui-hover-background'));
 
     protected onActivate(): void {
         if (!this.disabled()) {

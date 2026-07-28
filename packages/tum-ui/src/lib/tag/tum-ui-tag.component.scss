@@ -1,43 +1,20 @@
-@mixin tag-state($var) {
-    background: color-mix(in srgb, var($var) 20%, var(--tum-ui-surface-0));
-    color: color-mix(in srgb, var($var) 60%, var(--tum-ui-surface-950));
+@mixin tag-state($background, $foreground) {
+    background: color-mix(in srgb, var($background) 20%, var(--tum-ui-content-background));
+    color: var($foreground);
 }
 
 :host span[data-severity='success'] {
-    @include tag-state(--tum-ui-state-success);
+    @include tag-state(--tum-ui-state-success, --tum-ui-state-success-foreground);
 }
 
 :host span[data-severity='info'] {
-    @include tag-state(--tum-ui-state-info);
+    @include tag-state(--tum-ui-state-info, --tum-ui-state-info-foreground);
 }
 
 :host span[data-severity='warn'] {
-    @include tag-state(--tum-ui-state-warning);
+    @include tag-state(--tum-ui-state-warning, --tum-ui-state-warning-foreground);
 }
 
 :host span[data-severity='danger'] {
-    @include tag-state(--tum-ui-state-danger);
-}
-
-@mixin tag-state-dark($var) {
-    background: color-mix(in srgb, var($var) 16%, transparent);
-    color: color-mix(in srgb, var($var) 60%, var(--tum-ui-surface-0));
-}
-
-:host-context(html[data-theme='dark']) {
-    span[data-severity='success'] {
-        @include tag-state-dark(--tum-ui-state-success);
-    }
-
-    span[data-severity='info'] {
-        @include tag-state-dark(--tum-ui-state-info);
-    }
-
-    span[data-severity='warn'] {
-        @include tag-state-dark(--tum-ui-state-warning);
-    }
-
-    span[data-severity='danger'] {
-        @include tag-state-dark(--tum-ui-state-danger);
-    }
+    @include tag-state(--tum-ui-state-danger, --tum-ui-state-danger-foreground);
 }

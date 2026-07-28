@@ -36,20 +36,20 @@ describe('TumUiSelectComponent', () => {
     });
 
     function triggerButton(): HTMLButtonElement {
-        return fixture.debugElement.query(By.css('[data-testid="tum-ui-select-trigger"]')).nativeElement;
+        return fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement;
     }
     function labelText(): string {
-        return fixture.debugElement.query(By.css('[data-testid="tum-ui-select-label"]')).nativeElement.textContent.trim();
+        return triggerButton().textContent?.trim() ?? '';
     }
     function openPanel(): void {
         triggerButton().click();
         fixture.detectChanges();
     }
     function listbox(): HTMLElement {
-        return document.querySelector('[data-testid="tum-ui-select-listbox"]') as HTMLElement;
+        return document.querySelector('[role="listbox"]') as HTMLElement;
     }
     function optionElements(): HTMLElement[] {
-        return Array.from(document.querySelectorAll('[data-testid="tum-ui-select-option"]')) as HTMLElement[];
+        return Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[];
     }
 
     it('renders the placeholder when nothing is selected', () => {
@@ -152,7 +152,7 @@ describe('TumUiSelectComponent', () => {
         component.registerOnChange(onChangeCallback);
         component.writeValue('a');
         fixture.detectChanges();
-        const clear = fixture.debugElement.query(By.css('[data-testid="tum-ui-select-clear"]')).nativeElement as HTMLButtonElement;
+        const clear = fixture.debugElement.query(By.css('button:not([aria-haspopup])')).nativeElement as HTMLButtonElement;
         clear.click();
         fixture.detectChanges();
         expect(onChangeCallback).toHaveBeenCalledWith(undefined);
@@ -164,7 +164,7 @@ describe('TumUiSelectComponent', () => {
         fixture.detectChanges();
         openPanel();
         expect(optionElements()).toHaveLength(0);
-        expect((document.querySelector('[data-testid="tum-ui-select-empty"]') as HTMLElement).textContent?.trim()).toBe('Nothing here');
+        expect(listbox().querySelector('[role="presentation"]')?.textContent?.trim()).toBe('Nothing here');
     });
 });
 
@@ -185,11 +185,12 @@ describe('TumUiSelectComponent with [(ngModel)]', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-select-label"]')).nativeElement.textContent.trim()).toBe('Alpha');
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent?.trim()).toBe('Alpha');
 
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-select-trigger"]')).nativeElement.click();
+        trigger.click();
         fixture.detectChanges();
-        (document.querySelectorAll('[data-testid="tum-ui-select-option"]')[2] as HTMLElement).click();
+        (document.querySelectorAll('[role="option"]')[2] as HTMLElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(fixture.componentInstance.value()).toBe('c');
@@ -214,17 +215,18 @@ describe('TumUiSelectComponent with reactive formControl', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[data-testid="tum-ui-select-label"]')).nativeElement.textContent.trim()).toBe('Bravo');
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="listbox"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.textContent?.trim()).toBe('Bravo');
 
-        fixture.debugElement.query(By.css('[data-testid="tum-ui-select-trigger"]')).nativeElement.click();
+        trigger.click();
         fixture.detectChanges();
-        (document.querySelectorAll('[data-testid="tum-ui-select-option"]')[0] as HTMLElement).click();
+        (document.querySelectorAll('[role="option"]')[0] as HTMLElement).click();
         fixture.detectChanges();
         expect(fixture.componentInstance.control.value).toBe('a');
 
         fixture.componentInstance.control.disable();
         fixture.detectChanges();
-        expect((fixture.debugElement.query(By.css('[data-testid="tum-ui-select-trigger"]')).nativeElement as HTMLButtonElement).disabled).toBe(true);
+        expect(trigger.disabled).toBe(true);
         fixture.destroy();
     });
 });

@@ -157,7 +157,7 @@ describe('TumUiDialogComponent', () => {
         host.open.set(true);
         fixture.detectChanges();
 
-        const closeBtn = document.querySelector<HTMLButtonElement>('[data-testid="tum-ui-dialog-close"]');
+        const closeBtn = document.querySelector<HTMLButtonElement>('cdk-dialog-container button[aria-label]');
         expect(closeBtn).not.toBeNull();
         closeBtn!.click();
         fixture.detectChanges();
@@ -170,7 +170,7 @@ describe('TumUiDialogComponent', () => {
         host.closable.set(false);
         host.open.set(true);
         fixture.detectChanges();
-        expect(document.querySelector('[data-testid="tum-ui-dialog-close"]')).toBeNull();
+        expect(document.querySelector('cdk-dialog-container button[aria-label]')).toBeNull();
     });
 
     it('uses the CDK modal backdrop', () => {

@@ -2,20 +2,18 @@
     <div class="tum:mb-2 tum:flex tum:items-center tum:justify-between">
         <button
             type="button"
-            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-700"
+            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background"
             (click)="previousMonth()"
             [attr.aria-label]="previousMonthLabel()"
-            data-testid="calendar-previous"
         >
             <fa-icon [icon]="faChevronLeft" />
         </button>
-        <span class="tum:font-semibold tum:text-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0" aria-live="polite" data-testid="calendar-month-label">{{ monthLabel() }}</span>
+        <span class="tum:font-semibold tum:text-tum-ui-text" aria-live="polite">{{ monthLabel() }}</span>
         <button
             type="button"
-            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-700"
+            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background"
             (click)="nextMonth()"
             [attr.aria-label]="nextMonthLabel()"
-            data-testid="calendar-next"
         >
             <fa-icon [icon]="faChevronRight" />
         </button>

@@ -1,4 +1,4 @@
-<div #container [class]="containerClasses()" (click)="focusInput()" data-testid="tum-ui-autocomplete">
+<div #container [class]="containerClasses()" (click)="focusInput()">
     @if (multiple()) {
         @for (value of selectedValues(); track $index; let i = $index) {
             <tum-ui-chip
@@ -7,7 +7,6 @@
                 [removable]="!isDisabled()"
                 [removeAriaLabel]="removeAriaLabel() ?? ('tumUi.autocomplete.remove' | tumUiTranslate)"
                 (onRemove)="removeAt(i, $event)"
-                data-testid="tum-ui-autocomplete-chip"
             />
         }
     }
@@ -30,20 +29,16 @@
         (focus)="onFocus()"
         (blur)="onBlur()"
         (keydown)="onInputKeydown($event)"
-        data-testid="tum-ui-autocomplete-input"
     />
 </div>
 
 <ng-template #panel>
-    <div
-        class="tum-ui-autocomplete-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:shadow-md tum:dark:bg-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0"
-    >
+    <div class="tum-ui-autocomplete-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:text-tum-ui-text tum:shadow-md">
         <ul
             [id]="listboxId"
             role="listbox"
             [attr.aria-label]="ariaLabel()"
             class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1"
-            data-testid="tum-ui-autocomplete-listbox"
         >
             @for (option of suggestions(); track $index; let i = $index) {
                 <li
@@ -54,12 +49,11 @@
                     (mousedown)="$event.preventDefault()"
                     (click)="selectOption(option, $event)"
                     (mouseenter)="setActive(i)"
-                    data-testid="tum-ui-autocomplete-option"
                 >
                     <span class="tum:flex-1 tum:truncate">{{ valueLabel(option) }}</span>
                 </li>
             } @empty {
-                <li role="presentation" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">
+                <li role="presentation" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted">
                     {{ emptyMessage() ?? ('tumUi.autocomplete.empty' | tumUiTranslate) }}
                 </li>
             }

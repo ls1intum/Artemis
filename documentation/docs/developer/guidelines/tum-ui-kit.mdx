@@ -47,6 +47,20 @@ Tests should assert public behavior: accessible role and name, keyboard interact
 disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
 details or static class maps.
 
+### Stories
+
+Colocate one `*.stories.ts` file with each public visual component or directive. Use the package's
+[stable CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
+TypeScript's `satisfies` operator. Keep configuration in `packages/tum-ui/.storybook`; do not add
+root Storybook configuration or import Artemis into a story. The
+[Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite) is
+still a preview integration, so validate HMR, browser tests, and the static build after upgrades.
+
+Prefer an args-driven default story and only the additional states that expose a meaningful visual
+or behavioral contract. Add a `play` function for browser-only behavior such as focus, keyboard
+navigation, overlays, or dismissal. Query by accessible role and name. Do not assert CSS classes,
+duplicate unit-test matrices, add snapshots, or disable accessibility rules to make a story pass.
+
 ## Consuming the package
 
 Import only from the package root:
@@ -89,13 +103,17 @@ locale-sensitive formatting. Artemis registers `provideArtemisTumUiTranslator()`
 
 From the repository root:
 
-| Command                       | Purpose                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| `pnpm run tum-ui:build`       | Build the production Angular package in `dist/tum-ui`                        |
-| `pnpm run tum-ui:build:watch` | Watch package sources and its precompiled stylesheet                         |
-| `pnpm run tum-ui:test`        | Run package Vitest specs                                                     |
-| `pnpm run tum-ui:stylelint`   | Check package CSS and SCSS                                                   |
-| `pnpm run tum-ui:pack:check`  | Build and validate an isolated artifact with publint and AreTheTypesWrong    |
+| Command                                              | Purpose                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| `pnpm run tum-ui:build`                              | Build the production Angular package in `dist/tum-ui`                     |
+| `pnpm run tum-ui:build:watch`                        | Watch package sources and its precompiled stylesheet                      |
+| `pnpm run tum-ui:test`                               | Run package Vitest specs                                                  |
+| `pnpm run tum-ui:stylelint`                          | Check package CSS and SCSS                                                |
+| `pnpm run tum-ui:pack:check`                         | Build and validate an isolated artifact with publint and AreTheTypesWrong |
+| `pnpm --dir packages/tum-ui run storybook`           | Build package styles and start its isolated component workshop            |
+| `pnpm --dir packages/tum-ui run storybook:typecheck` | Type-check Storybook configuration and stories                            |
+| `pnpm --dir packages/tum-ui run storybook:test`      | Run stories and accessibility checks in Chromium                          |
+| `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
 
 `pnpm start` performs the initial package build, starts the package watcher, and serves Artemis.
 Artemis-only changes use Angular HMR. Package changes rebuild incrementally and cause an application
@@ -127,6 +145,7 @@ equivalent apart from incremental-output cleanup.
 - Interaction behavior delegates to native HTML, CDK, or Angular Aria where available.
 - Accessible names, keyboard behavior, focus, and forms integration have behavioral tests.
 - Styling uses semantic package tokens and works with host-provided light and dark values.
+- Stories cover representative states; unique browser behavior is tested through accessible queries.
 - Package text has an English default; host translations stay in the adapter.
 - Dependency changes update the workspace catalog and exact package manifest together.
 - The packed artifact passes `tum-ui:pack:check`.

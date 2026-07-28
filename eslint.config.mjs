@@ -114,7 +114,14 @@ export default tseslint.config(
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
-                project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json', './packages/tum-ui/tsconfig.lib.json', './packages/tum-ui/tsconfig.spec.json'],
+                project: [
+                    './tsconfig.json',
+                    './tsconfig.app.json',
+                    './tsconfig.spec.json',
+                    './packages/tum-ui/tsconfig.lib.json',
+                    './packages/tum-ui/tsconfig.spec.json',
+                    './packages/tum-ui/.storybook/tsconfig.json',
+                ],
             },
             globals: {
                 NodeJS: 'readonly',
@@ -485,7 +492,7 @@ export default tseslint.config(
                     ],
                     patterns: [
                         {
-                            group: ['app', 'app/**', 'test', 'test/**', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message: 'TUM UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-ui-integration.',
                         },
                     ],

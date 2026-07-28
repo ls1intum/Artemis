@@ -43,18 +43,17 @@ export class TumUiTableVirtualScrollComponent<T> {
 
     protected readonly headerClasses = computed(() => {
         const base =
-            'tum-ui-vs-header tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-surface-700 tum:bg-tum-ui-surface-0 tum:dark:text-tum-ui-surface-0 tum:dark:bg-tum-ui-surface-900 ' +
-            'tum:border-b tum:border-solid tum:border-tum-ui-surface-200 tum:dark:border-tum-ui-surface-800';
+            'tum-ui-vs-header tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-text tum:bg-tum-ui-content-background ' +
+            'tum:border-b tum:border-solid tum:border-tum-ui-border';
         return `${base} ${HEADER_PADDING[this.size()]}`;
     });
 
     protected readonly rowClasses = computed(() => {
-        const base =
-            'tum-ui-vs-row tum:flex tum:items-center tum:text-sm tum:text-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0 tum:border-b tum:border-solid tum:border-tum-ui-surface-200 tum:dark:border-tum-ui-surface-800';
-        const hover = this.rowHover() ? ' tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800' : '';
+        const base = 'tum-ui-vs-row tum:flex tum:items-center tum:text-sm tum:text-tum-ui-text tum:border-b tum:border-solid tum:border-tum-ui-border';
+        const hover = this.rowHover() ? ' tum:hover:bg-tum-ui-hover-background' : '';
         return `${base}${hover} ${HEADER_PADDING[this.size()]}`;
     });
     protected stripeClass(index: number): string {
-        return this.striped() && index % 2 === 0 ? ' tum:bg-tum-ui-surface-50 tum:dark:bg-tum-ui-surface-950' : '';
+        return this.striped() && index % 2 === 0 ? ' tum:bg-tum-ui-table-striped-background' : '';
     }
 }

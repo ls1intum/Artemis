@@ -9,7 +9,7 @@ const packageDirectoryArgument = process.argv.indexOf('--package-dir');
 const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, '../../dist/tum-ui');
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
-const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts'));
+const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
 const [css, manifestSource, ...runtimeSources] = await Promise.all([
     readFile(stylesheetPath, 'utf8'),
     readFile(manifestPath, 'utf8'),
@@ -61,13 +61,15 @@ const contrastRule = ruleFor('tum:text-tum-ui-primary-contrast');
 if (declarationValue(contrastRule, 'color') !== 'var(--tum-ui-primary-contrast)') {
     errors.push('the primary contrast selector does not use its package token');
 }
-const darkSurfaceRule = ruleFor('tum:dark:bg-tum-ui-surface-900');
-const normalizedDarkSelector = darkSurfaceRule?.selector.replaceAll("'", '').replaceAll('"', '').replaceAll(/\s+/g, '');
-if (!normalizedDarkSelector?.includes(':where([data-theme=dark],[data-theme=dark]*)')) {
-    errors.push('the dark surface selector is not guarded by the package theme contract');
+const controlBackgroundRule = ruleFor('tum:bg-tum-ui-control-background');
+if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tum-ui-control-background)') {
+    errors.push('the control background selector does not use its semantic package token');
 }
-if (declarationValue(darkSurfaceRule, 'background-color') !== 'var(--tum-ui-surface-900)') {
-    errors.push('the dark surface selector does not use its package token');
+if (css.includes('--tum-ui-surface-')) {
+    errors.push('the compiled stylesheet exposes a primitive surface token');
+}
+if ([...compiledClasses].some((className) => className.startsWith('tum:dark:'))) {
+    errors.push('the compiled stylesheet contains a theme-specific utility');
 }
 
 stylesheet.walkRules((rule) => {

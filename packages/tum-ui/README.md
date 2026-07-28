@@ -25,28 +25,30 @@ framework styles. For an Angular CLI application:
 }
 ```
 
-Every component must inherit valid CSS color values for these required custom properties:
+Every component must inherit valid values for the package's semantic custom properties:
 
-- `--tum-ui-primary`
-- `--tum-ui-primary-contrast`
-- `--tum-ui-border-color`
-- `--tum-ui-text-color`
-- `--tum-ui-muted-color`
-- `--tum-ui-highlight-color`, `--tum-ui-highlight-background`,
-  `--tum-ui-highlight-focus-background`
-- `--tum-ui-focus-ring-offset-background`
-- `--tum-ui-state-danger`, `--tum-ui-state-success`, `--tum-ui-state-warning`,
-  `--tum-ui-state-info`
-- `--tum-ui-surface-{0,50,100,200,300,400,500,600,700,800,900,950}`
+- brand: `--tum-ui-primary`, `--tum-ui-primary-contrast`;
+- text: `--tum-ui-text-color`, `--tum-ui-text-hover-color`, `--tum-ui-muted-color`,
+  `--tum-ui-disabled-color`;
+- backgrounds: `--tum-ui-content-background`, `--tum-ui-control-background`,
+  `--tum-ui-overlay-background`, `--tum-ui-hover-background`, `--tum-ui-disabled-background`;
+- borders: `--tum-ui-border-color`, `--tum-ui-control-border-color`,
+  `--tum-ui-control-border-hover-color`;
+- selection: `--tum-ui-highlight-color`, `--tum-ui-highlight-background`,
+  `--tum-ui-highlight-focus-background`;
+- states: `--tum-ui-state-{danger,success,warning,info}` and each corresponding
+  `--tum-ui-state-*-contrast` and `--tum-ui-state-*-foreground`;
+- specialized roles: `--tum-ui-contrast-background`, `--tum-ui-contrast-color`,
+  `--tum-ui-table-striped-background`, `--tum-ui-tooltip-background`,
+  `--tum-ui-tooltip-color`.
 
-Surface tokens are a fixed ramp: `0` is always the lightest surface and `950` the darkest,
-independent of the active theme. `primary-contrast` must remain readable on `primary`. Text, muted,
-border, highlight, focus-offset, and state tokens describe the active theme and must update when
-the theme changes. The package does not provide fallback values.
+The values describe the active theme and must change with it. Contrast tokens must remain readable
+on their matching background. The package deliberately exposes roles rather than a numbered color
+ramp, and it does not provide fallback values.
 
-The stylesheet uses `tum:`-prefixed Tailwind class names to avoid unprefixed utility-selector
-collisions and does not depend on the host's Tailwind build. Dark variants activate below an
-ancestor with `data-theme="dark"`; hosts must set that attribute when dark mode is active.
+The stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and does not
+depend on the host's Tailwind build or source scanner. Theme changes flow through the semantic
+custom properties; package components do not contain light/dark palette branches.
 
 `styleClass` inputs append classes already defined by the host; they do not cause the package
 Tailwind build to generate utilities. Use them for non-conflicting layout hooks. Prefer component
@@ -75,6 +77,10 @@ pnpm run tum-ui:build
 pnpm run tum-ui:test
 pnpm run tum-ui:stylelint
 pnpm run tum-ui:pack:check
+pnpm --dir packages/tum-ui run storybook
+pnpm --dir packages/tum-ui run storybook:typecheck
+pnpm --dir packages/tum-ui run storybook:test
+pnpm --dir packages/tum-ui run storybook:build
 ```
 
 `pnpm start` builds the package, watches it, and serves Artemis. An Artemis-only edit uses Angular
@@ -87,6 +93,14 @@ ng-bootstrap; ESLint enforces the boundary.
 Runtime and peer dependency versions are exact and synchronized with the workspace catalog.
 Tailwind and PostCSS are build-only development dependencies pinned through the same catalog.
 `rules/tum-ui-package.spec.mjs` rejects drift.
+
+Storybook configuration, stories, and their direct toolchain dependencies belong to this package.
+Shared dependency versions stay synchronized with Artemis through the workspace catalog. Unit
+tests and TypeScript configurations still use the workspace test runner and compiler policy while
+the package lives in this repository. Stories use stable CSF3 with `Meta`, `StoryObj`, and
+TypeScript's `satisfies` operator. Storybook's Angular Vite integration is a preview feature, so
+its exact version stays pinned and upgrades require HMR verification, the package build, Chromium
+story tests, and the static Storybook build to pass.
 
 ## License
 

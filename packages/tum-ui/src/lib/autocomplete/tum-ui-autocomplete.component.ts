@@ -336,20 +336,18 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
             return `${base} tum:text-tum-ui-highlight ${background}`;
         }
         const activeState = active ? ' tum:bg-tum-ui-highlight-focus-background tum:text-tum-ui-highlight' : '';
-        return `${base} tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:hover:text-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-800${activeState}`;
+        return `${base} tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background tum:hover:text-tum-ui-text-hover${activeState}`;
     }
     protected containerClasses(): string {
         const padding = this.multiple() && this.selectedValues().length > 0 ? 'tum:p-1' : 'tum:py-1 tum:px-3';
         const base = `tum-ui-autocomplete-container tum:flex tum:w-full tum:cursor-text tum:flex-wrap tum:items-center tum:gap-1 tum:rounded-md tum:border tum:text-base tum:transition-colors ${padding}`;
         let state: string;
         if (this.isDisabled()) {
-            state =
-                'tum:bg-tum-ui-surface-200 tum:text-tum-ui-surface-500 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-700 tum:dark:text-tum-ui-surface-400 tum:dark:border-tum-ui-surface-600';
+            state = 'tum:bg-tum-ui-disabled-background tum:text-tum-ui-disabled tum:border-tum-ui-control-border';
         } else if (this.isFocused()) {
-            state = 'tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-primary tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0';
+            state = 'tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-primary';
         } else {
-            state =
-                'tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-surface-300 tum:hover:border-tum-ui-surface-400 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-600 tum:dark:hover:border-tum-ui-surface-500';
+            state = 'tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-control-border tum:hover:border-tum-ui-control-border-hover';
         }
         return `${base} ${state}`;
     }

@@ -51,7 +51,7 @@ describe('TumUiCalendarComponent', () => {
 
     it('emits monthChange from the next button', () => {
         const spy = vi.spyOn(component.monthChange, 'emit');
-        fixture.debugElement.query(By.css('[data-testid="calendar-next"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-label^="Next month:"]')).nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
         expect((spy.mock.calls[0][0] as dayjs.Dayjs).month()).toBe(6);
     });
@@ -90,7 +90,7 @@ describe('TumUiCalendarComponent', () => {
         const buttons = dayButtons();
         buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }));
         buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp' }));
-        fixture.debugElement.query(By.css('[data-testid="calendar-previous"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-label^="Previous month:"]')).nativeElement.click();
         expect(spy).toHaveBeenCalledTimes(3);
     });
 

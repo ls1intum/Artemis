@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TumUiOverlayPlacement } from '../overlay/tum-ui-overlay.service';
 
-const ARROW_BASE = 'tum:absolute tum:h-2 tum:w-2 tum:rotate-45 tum:bg-tum-ui-surface-700';
+const ARROW_BASE = 'tum:absolute tum:h-2 tum:w-2 tum:rotate-45 tum:bg-tum-ui-tooltip-background';
 
 const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
     top: 'tum:left-1/2 tum:top-full tum:-translate-x-1/2 tum:-translate-y-1/2',
@@ -16,7 +16,7 @@ const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
     host: {
         role: 'tooltip',
         '[attr.id]': 'id()',
-        class: 'tum-ui-tooltip-bubble tum:relative tum:inline-block tum:max-w-[12.5rem] tum:rounded-md tum:bg-tum-ui-surface-700 tum:px-[0.75rem] tum:py-[0.5rem] tum:text-sm tum:text-tum-ui-surface-0 tum:shadow-md',
+        class: 'tum-ui-tooltip-bubble tum:relative tum:inline-block tum:max-w-[12.5rem] tum:rounded-md tum:bg-tum-ui-tooltip-background tum:px-[0.75rem] tum:py-[0.5rem] tum:text-sm tum:text-tum-ui-tooltip tum:shadow-md',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

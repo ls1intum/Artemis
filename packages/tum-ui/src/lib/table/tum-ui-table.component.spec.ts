@@ -25,7 +25,7 @@ const ROWS: Row[] = [
     template: `
         <tum-ui-table [columns]="columns" [rows]="rows" [totalRecords]="2" [rowActions]="actions" />
         <ng-template #actions let-row>
-            <button type="button" data-testid="row-action">Edit {{ row.name }}</button>
+            <button type="button">Edit {{ row.name }}</button>
         </ng-template>
     `,
 })
@@ -119,7 +119,7 @@ describe('TumUiTableComponent', () => {
         vi.useFakeTimers();
         fixture.detectChanges();
         const spy = vi.spyOn(component.dataRequest, 'emit');
-        const search: HTMLInputElement = fixture.debugElement.query(By.css('[data-testid="tum-ui-table-search"]')).nativeElement;
+        const search: HTMLInputElement = fixture.debugElement.query(By.css('input[type="search"]')).nativeElement;
         search.value = 'alp';
         search.dispatchEvent(new Event('input'));
         expect(spy).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('TumUiTableComponent', () => {
         await host.whenStable();
         host.detectChanges();
         expect(host.debugElement.queryAll(By.css('th[cdk-header-cell]')).length).toBe(3);
-        const actions = host.debugElement.queryAll(By.css('[data-testid="row-action"]'));
+        const actions = host.debugElement.queryAll(By.css('td[cdk-cell] button'));
         expect(actions.length).toBe(2);
         expect(actions[0].nativeElement.textContent).toContain('Edit Alpha');
     });
@@ -157,7 +157,7 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         const spy = vi.spyOn(component.dataRequest, 'emit');
-        const next: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="paginator-next"]')).nativeElement;
+        const next: HTMLButtonElement = fixture.debugElement.query(By.css('button[aria-label="Next page"]')).nativeElement;
         next.click();
         fixture.detectChanges();
         expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, pageSize: 50 }));
@@ -167,7 +167,7 @@ describe('TumUiTableComponent', () => {
         fixture.componentRef.setInput('totalRecords', 130);
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.debugElement.query(By.css('[data-testid="paginator-last"]')).nativeElement.click();
+        fixture.debugElement.query(By.css('button[aria-label="Last page"]')).nativeElement.click();
         fixture.detectChanges();
         const spy = vi.spyOn(component.dataRequest, 'emit');
         fixture.componentRef.setInput('totalRecords', 30);

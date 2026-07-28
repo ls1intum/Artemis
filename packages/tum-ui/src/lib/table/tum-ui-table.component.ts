@@ -93,7 +93,7 @@ export class TumUiTableComponent<T> {
 
     protected readonly tableClasses = computed(() => {
         const base = 'tum:w-full tum:border-collapse tum:text-sm';
-        return this.striped() ? `${base} tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 tum:dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950` : base;
+        return this.striped() ? `${base} tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-table-striped-background` : base;
     });
 
     constructor() {

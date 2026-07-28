@@ -43,6 +43,12 @@ describe('TumUiProgressBarComponent', () => {
         expect(fill().style.width).toBe('42%');
     });
 
+    it('exposes an accessible name', () => {
+        fixture.componentRef.setInput('ariaLabel', 'Course completion');
+        fixture.detectChanges();
+        expect(host.getAttribute('aria-label')).toBe('Course completion');
+    });
+
     it('clamps the exposed value, fill, and label to the valid range', () => {
         fixture.componentRef.setInput('value', 130);
         fixture.detectChanges();

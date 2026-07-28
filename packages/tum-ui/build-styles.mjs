@@ -68,10 +68,13 @@ if (watching) {
     }
 
     for await (const event of watch(packageRoot, { recursive: true })) {
+        const relativePath = event.filename?.replaceAll('\\', '/');
         if (
-            !event.filename ||
-            event.filename.endsWith('.spec.ts') ||
-            (!event.filename.endsWith('.html') && !event.filename.endsWith('.ts') && !event.filename.endsWith('.css') && !event.filename.endsWith('.scss'))
+            !relativePath ||
+            (relativePath !== 'tailwind.css' && !relativePath.startsWith('src/')) ||
+            relativePath.endsWith('.spec.ts') ||
+            relativePath.endsWith('.stories.ts') ||
+            (!relativePath.endsWith('.html') && !relativePath.endsWith('.ts') && !relativePath.endsWith('.css') && !relativePath.endsWith('.scss'))
         ) {
             continue;
         }

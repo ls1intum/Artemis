@@ -3,34 +3,43 @@
 
 @source './src';
 @source not './src/**/*.spec.ts';
-
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@source not './src/**/*.stories.ts';
 
 @theme inline {
     --color-tum-ui-primary: var(--tum-ui-primary);
     --color-tum-ui-primary-contrast: var(--tum-ui-primary-contrast);
     --color-tum-ui-border: var(--tum-ui-border-color);
+    --color-tum-ui-control-border: var(--tum-ui-control-border-color);
+    --color-tum-ui-control-border-hover: var(--tum-ui-control-border-hover-color);
     --color-tum-ui-text: var(--tum-ui-text-color);
+    --color-tum-ui-text-hover: var(--tum-ui-text-hover-color);
     --color-tum-ui-muted: var(--tum-ui-muted-color);
+    --color-tum-ui-disabled: var(--tum-ui-disabled-color);
+    --color-tum-ui-content-background: var(--tum-ui-content-background);
+    --color-tum-ui-control-background: var(--tum-ui-control-background);
+    --color-tum-ui-overlay-background: var(--tum-ui-overlay-background);
+    --color-tum-ui-hover-background: var(--tum-ui-hover-background);
+    --color-tum-ui-disabled-background: var(--tum-ui-disabled-background);
+    --color-tum-ui-contrast-background: var(--tum-ui-contrast-background);
+    --color-tum-ui-contrast: var(--tum-ui-contrast-color);
     --color-tum-ui-highlight: var(--tum-ui-highlight-color);
     --color-tum-ui-highlight-background: var(--tum-ui-highlight-background);
     --color-tum-ui-highlight-focus-background: var(--tum-ui-highlight-focus-background);
     --color-tum-ui-state-danger: var(--tum-ui-state-danger);
+    --color-tum-ui-state-danger-contrast: var(--tum-ui-state-danger-contrast);
+    --color-tum-ui-state-danger-foreground: var(--tum-ui-state-danger-foreground);
     --color-tum-ui-state-success: var(--tum-ui-state-success);
+    --color-tum-ui-state-success-contrast: var(--tum-ui-state-success-contrast);
+    --color-tum-ui-state-success-foreground: var(--tum-ui-state-success-foreground);
     --color-tum-ui-state-warning: var(--tum-ui-state-warning);
+    --color-tum-ui-state-warning-contrast: var(--tum-ui-state-warning-contrast);
+    --color-tum-ui-state-warning-foreground: var(--tum-ui-state-warning-foreground);
     --color-tum-ui-state-info: var(--tum-ui-state-info);
-    --color-tum-ui-surface-0: var(--tum-ui-surface-0);
-    --color-tum-ui-surface-50: var(--tum-ui-surface-50);
-    --color-tum-ui-surface-100: var(--tum-ui-surface-100);
-    --color-tum-ui-surface-200: var(--tum-ui-surface-200);
-    --color-tum-ui-surface-300: var(--tum-ui-surface-300);
-    --color-tum-ui-surface-400: var(--tum-ui-surface-400);
-    --color-tum-ui-surface-500: var(--tum-ui-surface-500);
-    --color-tum-ui-surface-600: var(--tum-ui-surface-600);
-    --color-tum-ui-surface-700: var(--tum-ui-surface-700);
-    --color-tum-ui-surface-800: var(--tum-ui-surface-800);
-    --color-tum-ui-surface-900: var(--tum-ui-surface-900);
-    --color-tum-ui-surface-950: var(--tum-ui-surface-950);
+    --color-tum-ui-state-info-contrast: var(--tum-ui-state-info-contrast);
+    --color-tum-ui-state-info-foreground: var(--tum-ui-state-info-foreground);
+    --color-tum-ui-table-striped-background: var(--tum-ui-table-striped-background);
+    --color-tum-ui-tooltip-background: var(--tum-ui-tooltip-background);
+    --color-tum-ui-tooltip: var(--tum-ui-tooltip-color);
 }
 
 .tum-ui-button-group {

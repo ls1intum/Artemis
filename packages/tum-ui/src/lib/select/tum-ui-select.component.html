@@ -12,9 +12,8 @@
         [attr.aria-label]="ariaLabel()"
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
-        data-testid="tum-ui-select-trigger"
     >
-        <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-tum-ui-muted' : ''" data-testid="tum-ui-select-label">{{ displayLabel() }}</span>
+        <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-tum-ui-muted' : ''">{{ displayLabel() }}</span>
     </button>
     <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:right-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-tum-ui-muted">
         <fa-icon [icon]="faChevronDown" />
@@ -23,10 +22,9 @@
     @if (showClearButton()) {
         <button
             type="button"
-            class="tum:absolute tum:inset-y-0 tum:right-10 tum:flex tum:appearance-none tum:items-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-surface-900 tum:dark:hover:text-tum-ui-surface-0"
+            class="tum:absolute tum:inset-y-0 tum:right-10 tum:flex tum:appearance-none tum:items-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-text-hover"
             (click)="clear($event)"
             [attr.aria-label]="clearAriaLabel() ?? ('tumUi.select.clear' | tumUiTranslate)"
-            data-testid="tum-ui-select-clear"
         >
             <fa-icon [icon]="faXmark" />
         </button>
@@ -35,7 +33,7 @@
 
 <ng-template #panel>
     <div
-        class="tum-ui-select-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:shadow-md tum:dark:bg-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0"
+        class="tum-ui-select-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:text-tum-ui-text tum:shadow-md"
         cdkTrapFocus
         [cdkTrapFocusAutoCapture]="true"
     >
@@ -47,7 +45,6 @@
             [attr.aria-activedescendant]="activeOptionId()"
             (keydown)="onListKeydown($event)"
             class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1 tum:outline-none"
-            data-testid="tum-ui-select-listbox"
         >
             @for (option of options(); track $index; let i = $index) {
                 <li
@@ -57,7 +54,6 @@
                     [class]="optionClasses(option, i)"
                     (click)="selectOption(option)"
                     (mouseenter)="setActive(i)"
-                    data-testid="tum-ui-select-option"
                 >
                     <span class="tum:flex-1 tum:truncate">{{ label(option) }}</span>
                     @if (isSelected(option)) {
@@ -65,7 +61,7 @@
                     }
                 </li>
             } @empty {
-                <li role="presentation" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted" data-testid="tum-ui-select-empty">
+                <li role="presentation" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted">
                     {{ emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate) }}
                 </li>
             }

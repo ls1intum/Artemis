@@ -137,7 +137,7 @@ describe('TumUiSelectButtonComponent', () => {
     template: `
         <tum-ui-select-button [options]="opts" optionValue="value" [itemTemplate]="itemTpl" />
         <ng-template #itemTpl let-option
-            ><span class="custom-item" [attr.data-testid]="option.value">{{ option.label }}</span></ng-template
+            ><span class="custom-item">{{ option.label }}</span></ng-template
         >
     `,
     imports: [TumUiSelectButtonComponent],
@@ -156,7 +156,6 @@ describe('TumUiSelectButtonComponent (custom item template)', () => {
         fixture.detectChanges();
         const custom = Array.from(fixture.nativeElement.querySelectorAll('.custom-item')) as HTMLElement[];
         expect(custom.map((el) => el.textContent?.trim())).toEqual(['All', 'Runnable']);
-        expect(custom[0].getAttribute('data-testid')).toBe('ALL');
     });
 });
 

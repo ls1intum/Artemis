@@ -127,6 +127,18 @@ jobs:
       - name: Test TUM UI in Isolation
         run: pnpm run tum-ui:test
         if: ${{ !cancelled() }}
+      - name: Type Check TUM UI Stories
+        run: pnpm --dir packages/tum-ui run storybook:typecheck
+        if: ${{ !cancelled() }}
+      - name: Install TUM UI Storybook Browser
+        run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
+        if: ${{ !cancelled() }}
+      - name: Test TUM UI Stories
+        run: pnpm --dir packages/tum-ui run storybook:test
+        if: ${{ !cancelled() }}
+      - name: Build TUM UI Storybook
+        run: pnpm --dir packages/tum-ui run storybook:build
+        if: ${{ !cancelled() }}
       - name: Validate TUM UI Package Artifact
         run: pnpm run tum-ui:pack:check
         if: ${{ !cancelled() }}

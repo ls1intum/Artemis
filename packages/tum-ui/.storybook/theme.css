@@ -1,0 +1,91 @@
+:root,
+[data-theme='light'] {
+    color-scheme: light;
+    --tum-ui-storybook-canvas: #ffffff;
+    --tum-ui-primary: #0065bd;
+    --tum-ui-primary-contrast: #ffffff;
+    --tum-ui-border-color: #e2e8f0;
+    --tum-ui-control-border-color: #cbd5e1;
+    --tum-ui-control-border-hover-color: #94a3b8;
+    --tum-ui-text-color: #0f172a;
+    --tum-ui-text-hover-color: #020617;
+    --tum-ui-muted-color: #64748b;
+    --tum-ui-disabled-color: #64748b;
+    --tum-ui-content-background: #ffffff;
+    --tum-ui-control-background: #ffffff;
+    --tum-ui-overlay-background: #ffffff;
+    --tum-ui-hover-background: #f1f5f9;
+    --tum-ui-disabled-background: #e2e8f0;
+    --tum-ui-contrast-background: #0f172a;
+    --tum-ui-contrast-color: #ffffff;
+    --tum-ui-highlight-color: #00457e;
+    --tum-ui-highlight-background: #dbeafe;
+    --tum-ui-highlight-focus-background: #bfdbfe;
+    --tum-ui-state-danger: #dc2626;
+    --tum-ui-state-danger-contrast: #ffffff;
+    --tum-ui-state-danger-foreground: #991b1b;
+    --tum-ui-state-success: #15803d;
+    --tum-ui-state-success-contrast: #ffffff;
+    --tum-ui-state-success-foreground: #166534;
+    --tum-ui-state-warning: #ca8a04;
+    --tum-ui-state-warning-contrast: #020617;
+    --tum-ui-state-warning-foreground: #854d0e;
+    --tum-ui-state-info: #0891b2;
+    --tum-ui-state-info-contrast: #020617;
+    --tum-ui-state-info-foreground: #155e75;
+    --tum-ui-table-striped-background: #f8fafc;
+    --tum-ui-tooltip-background: #334155;
+    --tum-ui-tooltip-color: #ffffff;
+}
+
+[data-theme='dark'] {
+    color-scheme: dark;
+    --tum-ui-storybook-canvas: #020617;
+    --tum-ui-primary: #6db7f2;
+    --tum-ui-primary-contrast: #082f49;
+    --tum-ui-border-color: #1e293b;
+    --tum-ui-control-border-color: #475569;
+    --tum-ui-control-border-hover-color: #64748b;
+    --tum-ui-text-color: #f8fafc;
+    --tum-ui-text-hover-color: #ffffff;
+    --tum-ui-muted-color: #94a3b8;
+    --tum-ui-disabled-color: #94a3b8;
+    --tum-ui-content-background: #0f172a;
+    --tum-ui-control-background: #020617;
+    --tum-ui-overlay-background: #0f172a;
+    --tum-ui-hover-background: #1e293b;
+    --tum-ui-disabled-background: #334155;
+    --tum-ui-contrast-background: #f8fafc;
+    --tum-ui-contrast-color: #0f172a;
+    --tum-ui-highlight-color: #e0f2fe;
+    --tum-ui-highlight-background: #075985;
+    --tum-ui-highlight-focus-background: #0369a1;
+    --tum-ui-state-danger: #f87171;
+    --tum-ui-state-danger-contrast: #450a0a;
+    --tum-ui-state-danger-foreground: #f87171;
+    --tum-ui-state-success: #4ade80;
+    --tum-ui-state-success-contrast: #052e16;
+    --tum-ui-state-success-foreground: #4ade80;
+    --tum-ui-state-warning: #facc15;
+    --tum-ui-state-warning-contrast: #422006;
+    --tum-ui-state-warning-foreground: #facc15;
+    --tum-ui-state-info: #22d3ee;
+    --tum-ui-state-info-contrast: #083344;
+    --tum-ui-state-info-foreground: #22d3ee;
+    --tum-ui-table-striped-background: #020617;
+    --tum-ui-tooltip-background: #334155;
+    --tum-ui-tooltip-color: #ffffff;
+}
+
+html,
+body,
+#storybook-root {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--tum-ui-storybook-canvas);
+    color: var(--tum-ui-text-color);
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}

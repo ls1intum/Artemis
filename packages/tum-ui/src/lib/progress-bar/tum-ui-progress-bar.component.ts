@@ -10,11 +10,14 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
         '[attr.aria-valuemin]': '0',
         '[attr.aria-valuemax]': '100',
         '[attr.aria-valuenow]': 'normalizedValue()',
+        '[attr.aria-label]': 'ariaLabel()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiProgressBarComponent {
     readonly value = input<number>(0);
+
+    readonly ariaLabel = input<string>();
 
     readonly showValue = input(true);
 
@@ -28,5 +31,5 @@ export class TumUiProgressBarComponent {
         const value = this.value();
         return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
     });
-    protected readonly hostClasses = computed(() => `tum-ui-progress-bar tum:bg-tum-ui-surface-200 tum:dark:bg-tum-ui-surface-800 ${this.styleClass()}`.trim());
+    protected readonly hostClasses = computed(() => `tum-ui-progress-bar tum:bg-tum-ui-border ${this.styleClass()}`.trim());
 }

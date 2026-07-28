@@ -37,15 +37,15 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
 
     protected readonly boxClasses = computed(() => {
         if (this.isDisabled()) {
-            return 'tum:bg-tum-ui-surface-200 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-700 tum:dark:border-tum-ui-surface-600';
+            return 'tum:bg-tum-ui-disabled-background tum:border-tum-ui-control-border';
         }
         if (this.checked()) {
             return 'tum:bg-tum-ui-primary tum:border-tum-ui-primary';
         }
-        return 'tum:bg-tum-ui-surface-0 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-950 tum:dark:border-tum-ui-surface-600';
+        return 'tum:bg-tum-ui-control-background tum:border-tum-ui-control-border';
     });
 
-    protected readonly iconClasses = computed(() => (this.isDisabled() ? 'tum:text-tum-ui-surface-500 tum:dark:text-tum-ui-surface-400' : 'tum:text-tum-ui-surface-0'));
+    protected readonly iconClasses = computed(() => (this.isDisabled() ? 'tum:text-tum-ui-disabled' : 'tum:text-tum-ui-primary-contrast'));
 
     private onModelChange: (value: boolean) => void = () => {};
     private onModelTouched: () => void = () => {};
