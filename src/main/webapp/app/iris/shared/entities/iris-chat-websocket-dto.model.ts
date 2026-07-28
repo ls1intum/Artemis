@@ -9,6 +9,7 @@ import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared
  */
 export interface IrisChatWebsocketDTO {
     type: IrisChatWebsocketPayloadType;
+    event?: EventType; // used to do things when iris event occurs (e.g. start timer when start prompting mode)
     message?: IrisMessageResponseDTO;
     runState?: IrisRunState;
     error?: IrisStatusError;
@@ -28,4 +29,10 @@ export enum IrisChatWebsocketPayloadType {
     MESSAGE = 'MESSAGE',
     STATUS = 'STATUS',
     PARTIAL = 'PARTIAL',
+}
+
+export enum EventType {
+    BUILD_WITH_POINTS = 'build_with_points',
+    STARTED_PROMPTING = 'started_prompting',
+    FINISHED_PROMPTING = 'finished_prompting',
 }

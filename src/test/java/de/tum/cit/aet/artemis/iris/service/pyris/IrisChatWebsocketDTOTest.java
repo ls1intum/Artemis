@@ -26,7 +26,8 @@ class IrisChatWebsocketDTOTest {
         var error = new PyrisStatusErrorDTO("failed", "tool_failed");
         var activity = activity();
 
-        var dto = new IrisChatWebsocketDTO(null, null, PyrisRunState.FAILED, error, "New title", List.of("next question"), null, null, "run-1", null, null, List.of(activity), 4);
+        var dto = new IrisChatWebsocketDTO(null, null, PyrisRunState.FAILED, error, "New title", List.of("next question"), null, null, "run-1", null, null, List.of(activity), 4,
+                null);
 
         assertThat(dto.type()).isEqualTo(IrisWebsocketMessageType.STATUS);
         assertThat(dto.runId()).isEqualTo("run-1");
@@ -40,7 +41,7 @@ class IrisChatWebsocketDTOTest {
     void messageFrameCarriesRunScopedRunningState() {
         var message = message();
 
-        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-2", null, null, null, null);
+        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-2", null, null, null, null, null);
 
         assertThat(dto.type()).isEqualTo(IrisWebsocketMessageType.MESSAGE);
         assertThat(dto.message()).isEqualTo(message);
@@ -52,7 +53,7 @@ class IrisChatWebsocketDTOTest {
     void messageFrameCarriesIntermediateFinalFlag() {
         var message = message();
 
-        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-2", null, null, null, null, false);
+        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-2", null, null, null, null, false, null);
 
         assertThat(dto.type()).isEqualTo(IrisWebsocketMessageType.MESSAGE);
         assertThat(dto.finalResult()).isFalse();
@@ -75,7 +76,7 @@ class IrisChatWebsocketDTOTest {
     void partialFrameTakesPrecedenceOverMessageAndCarriesRunState() {
         var message = message();
 
-        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-3", "draft answer", 6, null, null);
+        var dto = new IrisChatWebsocketDTO(message, null, PyrisRunState.RUNNING, null, null, null, null, null, "run-3", "draft answer", 6, null, null, null);
 
         assertThat(dto.type()).isEqualTo(IrisWebsocketMessageType.PARTIAL);
         assertThat(dto.message()).isEqualTo(message);

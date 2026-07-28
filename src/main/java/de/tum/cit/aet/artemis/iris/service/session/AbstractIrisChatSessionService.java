@@ -169,7 +169,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @param statusUpdate The status update of the job
      * @return the same job record or a new job record with the same job id if changes were made
      */
-    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         long handlingStart = System.nanoTime();
         // Only the result branch (saving the assistant message) needs the messages and contents;
         // the frequent intermediate status updates get away with a plain session load. Pyris blocks
@@ -181,7 +181,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
-            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle, event)
                     : handleResultStatusUpdate(job, statusUpdate, session, sessionTitle);
         }
         else {
@@ -196,15 +196,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         return updatedJob;
     }
 
-    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
-            String sessionTitle) {
+    private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session, String sessionTitle,
+            String event) {
         var message = new IrisMessage();
         for (var content : parseResultContents(statusUpdate.result())) {
             message.addContent(content);
         }
         message.setIntermediate(true);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false);
+        irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false, event);
         return recordTokenUsage(session, job, statusUpdate, null);
     }
 

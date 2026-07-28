@@ -6,7 +6,7 @@ import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-re
 import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { EventType, IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
@@ -88,6 +88,7 @@ export class IrisChatService implements OnDestroy {
     liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
+    latestEvent: EventType | undefined = undefined;
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers
@@ -650,6 +651,9 @@ export class IrisChatService implements OnDestroy {
         this.applyRunState(payload);
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
+                if (payload.event) {
+                    this.latestEvent = payload.event;
+                }
                 this.handleMessageWebsocketPayload(payload);
                 break;
             case IrisChatWebsocketPayloadType.PARTIAL:

@@ -128,10 +128,10 @@ public class IrisSessionService {
      * @param <S>     The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session) {
+    public <S extends IrisSession> void sendOverWebsocket(IrisMessage message, S session, String event) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.sendOverWebsocket(session, message);
+            chatWrapper.sendOverWebsocket(session, message, event);
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + message.getSession().getClass().getSimpleName());

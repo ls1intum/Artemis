@@ -68,7 +68,7 @@ public class IrisChatWebsocketService {
      */
     public void sendMessage(IrisSession session, IrisMessage irisMessage, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle,
             List<IrisCitationMetaDTO> citationInfo) {
-        this.sendMessage(session, irisMessage, runState, error, sessionTitle, citationInfo, null, null, null, null);
+        this.sendMessage(session, irisMessage, runState, error, sessionTitle, citationInfo, null, null, null, null, null);
     }
 
     /**
@@ -88,15 +88,16 @@ public class IrisChatWebsocketService {
      * @param activities   current Pyris activity snapshot
      * @param activitySeq  monotonic sequence number for the activity snapshot
      * @param finalResult  whether the message is the final answer for the run; false means intermediate
+     * @param event        that should be sent over the socket
      */
     public void sendMessage(IrisSession session, IrisMessage irisMessage, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle,
-            List<IrisCitationMetaDTO> citationInfo, String runId, List<PyrisActivityDTO> activities, Integer activitySeq, Boolean finalResult) {
+            List<IrisCitationMetaDTO> citationInfo, String runId, List<PyrisActivityDTO> activities, Integer activitySeq, Boolean finalResult, String event) {
         var messageDTO = irisMessage != null ? IrisMessageResponseDTO.of(irisMessage) : null;
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(messageDTO, rateLimitInfo, runState, error, sessionTitle, null, null, citationInfo, runId, null, null, activities, activitySeq,
-                finalResult);
+                finalResult, event);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -109,7 +110,20 @@ public class IrisChatWebsocketService {
      * @param error    optional Pyris status error
      */
     public void sendStatusUpdate(IrisSession session, String runId, PyrisRunState runState, PyrisStatusErrorDTO error) {
-        this.sendStatusUpdate(session, runId, runState, error, null, null, null, null, null);
+        this.sendStatusUpdate(session, runId, runState, error, null, null, null, null, null, null);
+    }
+
+    /**
+     * Sends a status update over the websocket to a specific user
+     *
+     * @param session  the session to send the status update to
+     * @param runId    the id of the Pyris run that produced the status update
+     * @param runState the current Pyris run state
+     * @param error    optional Pyris status error
+     * @param event    that should be sent over the socket
+     */
+    public void sendStatusUpdate(IrisSession session, String runId, PyrisRunState runState, PyrisStatusErrorDTO error, String event) {
+        this.sendStatusUpdate(session, runId, runState, error, null, null, null, null, null, event);
     }
 
     /**
@@ -124,13 +138,14 @@ public class IrisChatWebsocketService {
      * @param tokens       token usage and cost send by Pyris
      * @param activities   current Pyris activity snapshot
      * @param activitySeq  monotonic sequence number for the activity snapshot
+     * @param event        that should be sent over the socket
      */
     public void sendStatusUpdate(IrisSession session, String runId, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions,
-            List<LLMRequest> tokens, List<PyrisActivityDTO> activities, Integer activitySeq) {
+            List<LLMRequest> tokens, List<PyrisActivityDTO> activities, Integer activitySeq, String event) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, null, runId, null, null, activities, activitySeq);
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, null, runId, null, null, activities, activitySeq, event);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -149,7 +164,7 @@ public class IrisChatWebsocketService {
     public void sendPartialUpdate(IrisSession session, String partialResult, Integer partialSeq, String runId) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, null, PyrisRunState.RUNNING, null, null, null, null, null, runId, partialResult, partialSeq, null, null);
+        var payload = new IrisChatWebsocketDTO(null, null, PyrisRunState.RUNNING, null, null, null, null, null, runId, partialResult, partialSeq, null, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

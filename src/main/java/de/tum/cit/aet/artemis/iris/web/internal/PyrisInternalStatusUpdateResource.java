@@ -56,7 +56,7 @@ public class PyrisInternalStatusUpdateResource {
     }
 
     /**
-     * POST internal/pipelines/chat/runs/:runId/status : Set the status of any Iris chat job (exercise, text exercise, course, or lecture)
+     * POST internal/pipelines/chat/runs/:runId/status : Set the status of any Iris chat job (exercise, text exercise, course, lecture or prompt user)
      * <p>
      * Uses custom token based authentication.
      *

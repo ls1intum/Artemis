@@ -10,8 +10,9 @@ public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends Ir
      *
      * @param session that the message belongs to
      * @param message that should be sent over the websocket
+     * @param event   that should be sent over the websocket
      */
-    void sendOverWebsocket(S session, IrisMessage message);
+    void sendOverWebsocket(S session, IrisMessage message, String event);
 
     /**
      * Sends a request to Iris to get a message for the given session.

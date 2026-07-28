@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.promptuser.PyrisPromptUserPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
@@ -262,6 +263,54 @@ public class PyrisPipelineService {
     public interface PipelineStatusUpdater {
 
         void accept(String runId, PyrisRunState runState, PyrisStatusErrorDTO error);
+    }
+
+    /**
+     * Execute the prompt user pipeline for the given session.
+     * It provides specific data for the prompt user pipeline, including:
+     * - The latest submission of the student
+     * - The programming exercise
+     * - The course the exercise is part of
+     * <p>
+     *
+     * @param variant                the variant of the pipeline
+     * @param supportLevel           the instructional support level ("low" / "moderate" / "high"), sent for consistency with the other pipelines; whether the
+     *                                   prompt user pipeline acts on it is determined by Pyris
+     * @param submissionDTO          the latest submission of the student
+     * @param programmingExerciseDTO the programming exercise
+     * @param session                the chat session
+     * @param course                 the course the exercise belongs to
+     * @param eventVariant           if this function triggers a pipeline execution due to a specific event, this is the used event variant
+     */
+    public void executePromptUserPipeline(String variant, String supportLevel, Optional<PyrisSubmissionDTO> submissionDTO, PyrisProgrammingExerciseDTO programmingExerciseDTO,
+            IrisChatSession session, Course course, Optional<String> eventVariant) {
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        var pyrisUser = toPyrisUserDTO(user);
+        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+
+        // @formatter:off
+        executePipeline(
+            "prompt-user",
+            user.getSelectedLLMUsage(),
+            variant,
+            supportLevel,
+            eventVariant,
+            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
+            executionDto -> new PyrisPromptUserPipelineExecutionDTO(
+                pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                executionDto.settings(),
+                null,
+                pyrisUser,
+                new PyrisCourseDTO(course),
+                programmingExerciseDTO,
+                submissionDTO.orElse(null),
+                0, // TODO: load these values from exercise settings
+                0,
+                0
+            ),
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error, eventVariant.orElse(null))
+        );
+        // @formatter:on
     }
 
     /**

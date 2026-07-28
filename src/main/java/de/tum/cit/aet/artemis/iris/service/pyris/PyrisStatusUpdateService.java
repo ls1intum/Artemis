@@ -77,11 +77,11 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
-            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate, event);
             return;
         }
         if (statusUpdate.partialResult() != null) {
