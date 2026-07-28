@@ -13,6 +13,8 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -22,17 +24,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseRepositoryServiceTest {
+
+    private static final String MIRROR_URL = "https://reposilite.aet.cit.tum.de/releases";
 
     @TempDir
     Path tempDir;
@@ -139,4 +148,100 @@ class ProgrammingExerciseRepositoryServiceTest {
         lenient().when(repository.getRemoteRepositoryUri()).thenReturn(new LocalVCRepositoryUri("https://example.com/git/TEST/TEST-exercise.git"));
         return repository;
     }
+
+    @Test
+    void setupBuildToolProjectFile_keepsTheMirrorDeclarationsWhenAMirrorIsConfigured() throws Exception {
+        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        Path repoPath = gradleTestRepository();
+
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.PLAIN_GRADLE, mirrorSections(true));
+
+        // The mirror survives in build.gradle (dependencies) and in settings.gradle (plugins), and the markers are gone.
+        assertThat(Files.readString(repoPath.resolve("build.gradle"))).contains("artemisMavenCentralMirror").doesNotContain("%maven-central-mirror");
+        assertThat(Files.readString(repoPath.resolve("settings.gradle"))).contains("pluginManagement").contains("artemisMavenCentralMirror")
+                .doesNotContain("%maven-central-mirror");
+    }
+
+    @Test
+    void setupBuildToolProjectFile_removesTheMirrorDeclarationsWhenNoMirrorIsConfigured() throws Exception {
+        Path repoPath = gradleTestRepository();
+
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.PLAIN_GRADLE, mirrorSections(false));
+
+        // Nothing mirror related may be left behind, in particular no unresolved placeholder that would break the build.
+        String buildGradle = Files.readString(repoPath.resolve("build.gradle"));
+        assertThat(buildGradle).doesNotContain("artemisMavenCentralMirror").doesNotContain("${mavenCentralMirrorUrl}").doesNotContain("%maven-central-mirror");
+        assertThat(buildGradle).contains("mavenCentral()");
+        String settingsGradle = Files.readString(repoPath.resolve("settings.gradle"));
+        assertThat(settingsGradle).doesNotContain("pluginManagement").doesNotContain("${mavenCentralMirrorUrl}").doesNotContain("%maven-central-mirror");
+        assertThat(settingsGradle).contains("rootProject.name");
+    }
+
+    @Test
+    void replacePlaceholders_insertsTheConfiguredMirrorUrl() throws Exception {
+        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        Path repoPath = gradleTestRepository();
+        Repository repository = mockRepository(repoPath);
+
+        programmingExerciseRepositoryService.replacePlaceholders(javaExercise(), repository);
+
+        assertThat(Files.readString(repoPath.resolve("build.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
+        assertThat(Files.readString(repoPath.resolve("settings.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
+    }
+
+    private static Map<String, Boolean> mirrorSections(boolean mirrorConfigured) {
+        Map<String, Boolean> sections = new HashMap<>();
+        sections.put("maven-central-mirror", mirrorConfigured);
+        sections.put("static-code-analysis", false);
+        sections.put("non-sequential", true);
+        sections.put("sequential", false);
+        return sections;
+    }
+
+    /**
+     * Creates a repository with the mirror-relevant parts of the Gradle test template: the guarded mirror declarations in
+     * build.gradle and settings.gradle.
+     */
+    private Path gradleTestRepository() throws Exception {
+        Path repoPath = tempDir.resolve("gradle-repo");
+        Files.createDirectories(repoPath);
+        FileUtils.writeStringToFile(repoPath.resolve("build.gradle").toFile(), """
+                repositories {
+                    // %maven-central-mirror-start%
+                    maven {
+                        name 'artemisMavenCentralMirror'
+                        url '${mavenCentralMirrorUrl}'
+                    }
+                    // %maven-central-mirror-stop%
+                    mavenCentral()
+                    mavenLocal()
+                }
+                """, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("settings.gradle").toFile(), """
+                // %maven-central-mirror-start%
+                pluginManagement {
+                    repositories {
+                        maven {
+                            name 'artemisMavenCentralMirror'
+                            url '${mavenCentralMirrorUrl}'
+                        }
+                        gradlePluginPortal()
+                    }
+                }
+                // %maven-central-mirror-stop%
+                rootProject.name = 'Some-Exercise-Tests'
+                """, StandardCharsets.UTF_8);
+        return repoPath;
+    }
+
+    private static ProgrammingExercise javaExercise() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Some Exercise");
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        exercise.setPackageName("de.tum.in.ase");
+        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        return exercise;
+    }
+
 }

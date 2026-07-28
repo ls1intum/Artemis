@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -55,6 +56,10 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String BUILD_GRADLE = "build.gradle";
 
+    private static final String SETTINGS_GRADLE = "settings.gradle";
+
+    private static final String MAVEN_CENTRAL_MIRROR_URL_PLACEHOLDER = "${mavenCentralMirrorUrl}";
+
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -72,6 +77,14 @@ public class ProgrammingExerciseRepositoryService {
     private final ResourceLoaderService resourceLoaderService;
 
     private final Optional<VersionControlService> versionControlService;
+
+    /**
+     * Optional Maven Central mirror all Java and Kotlin test repositories are pointed at. Maven Central rate-limits
+     * requests (HTTP 429), which breaks exercise builds; an instance can configure a mirror that proxies it. Empty by
+     * default, in which case the templates keep resolving from Maven Central directly.
+     */
+    @Value("${artemis.programming.maven-central-mirror-url:}")
+    private String mavenCentralMirrorUrl;
 
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
             Optional<VersionControlService> versionControlService) {
@@ -482,6 +495,8 @@ public class ProgrammingExerciseRepositoryService {
         final Map<String, Boolean> sectionsMap = new HashMap<>();
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
+        sectionsMap.put("maven-central-mirror", isMavenCentralMirrorConfigured());
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -573,13 +588,14 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     /**
-     * Fills in placeholders in the build tool project definition file based on the enabled exercise features.
+     * Fills in the optional sections of the build tool project files, based on the enabled exercise features and the
+     * instance configuration. Package-private for testing.
      *
      * @param repoLocalPath  The local path to the repository.
      * @param projectType    The exercise project type.
      * @param activeFeatures The active features in the exercise.
      */
-    private void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
+    void setupBuildToolProjectFile(final Path repoLocalPath, final ProjectType projectType, final Map<String, Boolean> activeFeatures) {
         final String projectFileFileName;
         if (projectType != null && projectType.isGradle()) {
             projectFileFileName = BUILD_GRADLE;
@@ -589,6 +605,23 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
+
+        // Gradle resolves plugins through settings.gradle rather than build.gradle, so its optional sections have to be
+        // resolved as well. The file only exists for Gradle project types.
+        final Path settingsGradlePath = repoLocalPath.resolve(SETTINGS_GRADLE).toAbsolutePath();
+        if (Files.exists(settingsGradlePath)) {
+            FileUtil.replacePlaceholderSections(settingsGradlePath, activeFeatures);
+        }
+    }
+
+    /**
+     * Whether this Artemis instance configured a Maven Central mirror for the Java and Kotlin test repositories it
+     * creates.
+     *
+     * @return true if a mirror URL is configured
+     */
+    private boolean isMavenCentralMirrorConfigured() {
+        return StringUtils.isNotBlank(mavenCentralMirrorUrl);
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -753,6 +786,9 @@ public class ProgrammingExerciseRepositoryService {
             case JAVA, KOTLIN -> {
                 FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
+                if (isMavenCentralMirrorConfigured()) {
+                    replacements.put(MAVEN_CENTRAL_MIRROR_URL_PLACEHOLDER, mavenCentralMirrorUrl.strip());
+                }
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
