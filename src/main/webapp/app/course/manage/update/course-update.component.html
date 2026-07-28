@@ -121,6 +121,21 @@
                             (click)="openOrganizationsModal()"
                             jhiTranslate="entity.action.add"
                         ></button>
+                        <tum-ui-dialog
+                            [(visible)]="orgSelectorVisible"
+                            [modal]="true"
+                            [dismissableMask]="true"
+                            [style]="{ width: '80vw' }"
+                            [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
+                        >
+                            @if (orgSelectorVisible()) {
+                                <jhi-organization-selector
+                                    [assignedOrganizations]="courseOrganizations()"
+                                    (selected)="onOrgSelected($event); orgSelectorVisible.set(false)"
+                                    (cancelled)="orgSelectorVisible.set(false)"
+                                />
+                            }
+                        </tum-ui-dialog>
                     </div>
                 }
                 <div class="row g-2">
@@ -371,21 +386,6 @@
                         </div>
                     </div>
                 </jhi-feature-overlay>
-                @if (isAdmin()) {
-                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
-                        <div class="form-check">
-                            <input
-                                type="checkbox"
-                                class="form-check-input"
-                                name="studentCourseAnalyticsDashboardEnabled"
-                                id="field_studentCourseAnalyticsDashboardEnabled"
-                                formControlName="studentCourseAnalyticsDashboardEnabled"
-                            />
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.dashboard.label" for="field_studentCourseAnalyticsDashboardEnabled"></label>
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.dashboard.tooltip' | artemisTranslate }}" />
-                        </div>
-                    </div>
-                }
                 @if (isAdmin() && isAthenaEnabled()) {
                     <div class="form-group form-check">
                         <input

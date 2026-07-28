@@ -1,11 +1,18 @@
 <div>
     <h5 *adminTitleBarTitle id="statistics-page-heading" class="mb-0" jhiTranslate="statistics.title"></h5>
     <div *adminTitleBarActions data-testid="span-selector">
-        <p-selectbutton [options]="spanOptions" [ngModel]="currentSpan()" (ngModelChange)="onTabChanged($event)" optionLabel="label" optionValue="value" size="small">
-            <ng-template let-option #item>
-                {{ option.label | artemisTranslate }}
-            </ng-template>
-        </p-selectbutton>
+        <tum-ui-select-button
+            [options]="spanOptions"
+            [ngModel]="currentSpan()"
+            (ngModelChange)="onTabChanged($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [itemTemplate]="spanItem"
+        />
+        <ng-template #spanItem let-option>
+            {{ option.label | artemisTranslate }}
+        </ng-template>
     </div>
     <div class="mb-5"></div>
     @for (graph of graphTypes; track graph; let i = $index) {

@@ -8,6 +8,56 @@ import TumuiTooltipLight from './assets/tumui-tooltip-light.png';
 import TumuiTooltipDark from './assets/tumui-tooltip-dark.png';
 import TumuiPopoverLight from './assets/tumui-popover-light.png';
 import TumuiPopoverDark from './assets/tumui-popover-dark.png';
+import TumuiTableLight from './assets/tumui-table-light.png';
+import TumuiTableDark from './assets/tumui-table-dark.png';
+import TumuiPaginatorLight from './assets/tumui-paginator-light.png';
+import TumuiPaginatorDark from './assets/tumui-paginator-dark.png';
+import TumuiDatepickerLight from './assets/tumui-datepicker-light.png';
+import TumuiDatepickerDark from './assets/tumui-datepicker-dark.png';
+import TumuiCalendarLight from './assets/tumui-calendar-light.png';
+import TumuiCalendarDark from './assets/tumui-calendar-dark.png';
+import TumuiInputLight from './assets/tumui-input-light.png';
+import TumuiInputDark from './assets/tumui-input-dark.png';
+import TumuiIconFieldLight from './assets/tumui-icon-field-light.png';
+import TumuiIconFieldDark from './assets/tumui-icon-field-dark.png';
+import TumuiInputGroupLight from './assets/tumui-input-group-light.png';
+import TumuiInputGroupDark from './assets/tumui-input-group-dark.png';
+import TumuiSelectLight from './assets/tumui-select-light.png';
+import TumuiSelectDark from './assets/tumui-select-dark.png';
+import TumuiAutocompleteLight from './assets/tumui-autocomplete-light.png';
+import TumuiAutocompleteDark from './assets/tumui-autocomplete-dark.png';
+import TumuiCheckboxLight from './assets/tumui-checkbox-light.png';
+import TumuiCheckboxDark from './assets/tumui-checkbox-dark.png';
+import TumuiRadioButtonLight from './assets/tumui-radio-button-light.png';
+import TumuiRadioButtonDark from './assets/tumui-radio-button-dark.png';
+import TumuiToggleSwitchLight from './assets/tumui-toggle-switch-light.png';
+import TumuiToggleSwitchDark from './assets/tumui-toggle-switch-dark.png';
+import TumuiSelectButtonLight from './assets/tumui-select-button-light.png';
+import TumuiSelectButtonDark from './assets/tumui-select-button-dark.png';
+import TumuiChipLight from './assets/tumui-chip-light.png';
+import TumuiChipDark from './assets/tumui-chip-dark.png';
+import TumuiCardLight from './assets/tumui-card-light.png';
+import TumuiCardDark from './assets/tumui-card-dark.png';
+import TumuiPanelLight from './assets/tumui-panel-light.png';
+import TumuiPanelDark from './assets/tumui-panel-dark.png';
+import TumuiTabsLight from './assets/tumui-tabs-light.png';
+import TumuiTabsDark from './assets/tumui-tabs-dark.png';
+import TumuiButtonGroupLight from './assets/tumui-button-group-light.png';
+import TumuiButtonGroupDark from './assets/tumui-button-group-dark.png';
+import TumuiMessageLight from './assets/tumui-message-light.png';
+import TumuiMessageDark from './assets/tumui-message-dark.png';
+import TumuiDialogLight from './assets/tumui-dialog-light.png';
+import TumuiDialogDark from './assets/tumui-dialog-dark.png';
+import TumuiProgressBarLight from './assets/tumui-progress-bar-light.png';
+import TumuiProgressBarDark from './assets/tumui-progress-bar-dark.png';
+import TumuiProgressSpinnerLight from './assets/tumui-progress-spinner-light.png';
+import TumuiProgressSpinnerDark from './assets/tumui-progress-spinner-dark.png';
+import TumuiNativeTableLight from './assets/tumui-native-table-light.png';
+import TumuiNativeTableDark from './assets/tumui-native-table-dark.png';
+import TumuiInputNumberLight from './assets/tumui-input-number-light.png';
+import TumuiInputNumberDark from './assets/tumui-input-number-dark.png';
+import TumuiConfirmDialogLight from './assets/tumui-confirm-dialog-light.png';
+import TumuiConfirmDialogDark from './assets/tumui-confirm-dialog-dark.png';
 
 export const Shots = ({ light, dark, alt }) => (
     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', margin: '1rem 0' }}>
@@ -67,10 +117,9 @@ apps in the fleet mirror the same concepts with their own primitive stack.
 
 ### Overlay substrate
 
-Every anchored overlay (the tooltip and popover today, and later the date picker, menu, and select)
-builds on one shared service, `TumUiOverlayService`, so they share a single positioning contract:
-connected positioning with a flipped fallback on collision, `push` to stay in the viewport, and
-reposition-on-scroll.
+Every anchored overlay (tooltip, popover, date picker, and later menu / select) builds on one shared
+service, `TumUiOverlayService`, so they share a single positioning contract: connected positioning
+with a flipped fallback on collision, `push` to stay in the viewport, and reposition-on-scroll.
 
 ```typescript
 const overlayRef = overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
@@ -95,56 +144,61 @@ declarative, testable, and dependency-free.
 Colors use semantic tokens only (see also [Client Theming](/developer/guidelines/client-theming)). The kit
 uses the same tokens Artemis' PrimeNG theme exposes, so the components render like the widgets they replace:
 
-| Token                                                                              | Meaning                | Used by                                                                                    |
-| ---------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
-| `bg-primary` / `text-primary`                                                      | The brand color.       | Solid primary buttons (`bg-primary` + `text-surface-0`); outlined / text primary.          |
-| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.     | Solid state buttons; tag tints (a low-opacity `color-mix` of the state color, in the tag SCSS) with a state-colored label; borders. |
-| `bg-surface-*` / `text-surface-*` / `text-muted-color`                             | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                    |
+| Token                                                                              | Meaning                   | Used by                                                                                                                             |
+| ---------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `bg-primary` / `text-primary`                                                      | The brand color.          | Solid primary buttons (`bg-primary` + `text-surface-0`); outlined / text primary.                                                   |
+| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.        | Solid state buttons; tag tints (a low-opacity `color-mix` of the state color, in the tag SCSS) with a state-colored label; borders. |
+| `bg-surface-*` / `text-surface-*` / `text-muted-color`                             | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                                                             |
 
 Dark mode is automatic: `--danger` / `--success` / … resolve to their per-theme values, so a single class
 such as `text-state-danger` is correct in both themes without a `dark:` variant.
 
 <Callout variant={CalloutVariant.info}>
-    The migration is intentionally **appearance-neutral**: a tum-ui component must render identically to the
-    PrimeNG component it replaces, so use the Aura tokens above rather than introducing new shades. (Improving
-    color contrast to WCAG AA is a separate, app-wide effort on the underlying PrimeNG theme, not something the
-    kit should diverge on.)
+    The migration is intentionally **appearance-neutral**: a tum-ui component must render identically to the PrimeNG component it replaces, so use the Aura tokens above rather than
+    introducing new shades. (Improving color contrast to WCAG AA is a separate, app-wide effort on the underlying PrimeNG theme, not something the kit should diverge on.)
 </Callout>
 
 ## Components
 
-The kit is introduced in two steps. This page (the first step) covers the button, tag, tooltip, and
-popover, plus the shared overlay substrate. The data table, paginator, and date picker are added in
-the [second step](https://github.com/ls1intum/Artemis/pull/13229) and documented once they land.
-
 ### Button — `tum-ui-button`
 
-A native `<button>` with severity / size variants.
+A native `<button>` wrapped so its look is driven by two orthogonal axes — **`severity`** (what the action
+means: primary action, neutral, or a state like success/danger) and **`variant`** (how much visual weight it
+carries: `solid` for the main call-to-action, `outlined` for secondary actions, `text` for low-emphasis inline
+actions). Pick the severity from intent and the variant from prominence; e.g. a destructive confirm is
+`severity="danger" variant="solid"`, a cancel next to it is `severity="secondary" variant="text"`. The real
+`<button>` is kept internal so focus, `type="submit"`, and disabled semantics behave natively.
 
 <Shots light={TumuiButtonLight} dark={TumuiButtonDark} alt="tum-ui-button variants" />
 
-| Input              | Type                                                                                  | Default     | Notes                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| `severity`         | `'primary' \| 'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'primary'` |                                                                        |
-| `size`             | `'small' \| 'default' \| 'large'`                                                     | `'default'` |                                                                        |
-| `variant`          | `'solid' \| 'outlined' \| 'text'`                                                     | `'solid'`   | Fill style. A single input (not two `outlined` / `text` booleans) so the states can't conflict. |
-| `disabled`         | `boolean`                                                                             | `false`     |                                                                        |
-| `icon`             | `IconProp`                                                                            | –           | FontAwesome icon rendered before the label.                            |
-| `type`             | `'button' \| 'submit'`                                                                | `'button'`  |                                                                        |
-| `ariaLabel`        | `string`                                                                              | –           | Forwarded to the inner `<button>`. **Required for icon-only buttons.** |
-| `ariaExpanded` / `ariaPressed` / `ariaControls` / `ariaDescribedBy` | `boolean` / `string`                                          | –           | Baseline accessibility attributes forwarded to the inner `<button>` (host attributes would sit on the wrong element). |
-| `clicked` (output) | `MouseEvent`                                                                          |             | The click contract; emitted on click when enabled. Prefer `(clicked)` over the host's bubbled native `(click)`. |
+| Input                                                               | Type                                                                                  | Default     | Notes                                                                                                                 |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| `severity`                                                          | `'primary' \| 'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'primary'` |                                                                                                                       |
+| `size`                                                              | `'small' \| 'default' \| 'large'`                                                     | `'default'` |                                                                                                                       |
+| `variant`                                                           | `'solid' \| 'outlined' \| 'text'`                                                     | `'solid'`   | Fill style. A single input (not two `outlined` / `text` booleans) so the states can't conflict.                       |
+| `disabled`                                                          | `boolean`                                                                             | `false`     |                                                                                                                       |
+| `icon`                                                              | `IconProp`                                                                            | –           | FontAwesome icon rendered before the label.                                                                           |
+| `type`                                                              | `'button' \| 'submit'`                                                                | `'button'`  |                                                                                                                       |
+| `ariaLabel`                                                         | `string`                                                                              | –           | Forwarded to the inner `<button>`. **Required for icon-only buttons.**                                                |
+| `ariaExpanded` / `ariaPressed` / `ariaControls` / `ariaDescribedBy` | `boolean` / `string`                                                                  | –           | Baseline accessibility attributes forwarded to the inner `<button>` (host attributes would sit on the wrong element). |
+| `clicked` (output)                                                  | `MouseEvent`                                                                          |             | The click contract; emitted on click when enabled. Prefer `(clicked)` over the host's bubbled native `(click)`.       |
 
 ```html
+<!-- Secondary, low-emphasis text button with a leading icon -->
 <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('features')"> {{ 'artemisApp.features.title' | artemisTranslate }} </tum-ui-button>
 
 <!-- Icon-only: the glyph carries no text, so an accessible name is mandatory -->
 <tum-ui-button [icon]="faTrash" severity="danger" ariaLabel="Delete" (clicked)="delete()" />
+
+<!-- Primary submit inside a form: type="submit" keeps native form submission, disabled gates it -->
+<tum-ui-button type="submit" severity="primary" [disabled]="form.invalid()" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tum-ui-button>
 ```
 
 <Callout variant={CalloutVariant.danger}>
     An `aria-label` placed on the `<tum-ui-button>` host sits on the wrong element and leaves the real
-    button unnamed. Always pass the `ariaLabel` **input** for icon-only buttons.
+    button unnamed. Always pass the `ariaLabel` **input** for icon-only buttons. Likewise, prefer the
+    `(clicked)` output over the host's bubbled native `(click)`: `(clicked)` fires only when the button is
+    enabled, so a disabled button can never emit an action.
 </Callout>
 
 ### Tag — `tum-ui-tag`
@@ -156,53 +210,800 @@ component SCSS (matching PrimeNG's `--p-<color>-100` / `-700`), not a Tailwind o
 
 <Shots light={TumuiTagLight} dark={TumuiTagDark} alt="tum-ui-tag severities" />
 
-| Input      | Type                                                                     | Default                             |
-| ---------- | ------------------------------------------------------------------------ | ----------------------------------- |
-| `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       |
-| `value`    | `string`                                                                 | – (falls back to projected content) |
-| `rounded`  | `boolean`                                                                | `false`                             |
+| Input      | Type                                                                     | Default                             | Notes                                                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       | Picks the tint. Map it to meaning: `success` (done/active), `warn` (attention), `danger` (error/blocked), `info` (neutral highlight), `secondary` (default), `contrast` (high-emphasis dark chip). |
+| `value`    | `string`                                                                 | – (falls back to projected content) | Convenience for a plain-text label. Omit it and project content instead when you need markup (an icon + text).                                                                                     |
+| `rounded`  | `boolean`                                                                | `false`                             | `true` renders a fully pill-shaped chip; the default is a subtly-rounded rectangle.                                                                                                                |
 
 ```html
+<!-- Plain-text label via the value input -->
 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" />
+
+<!-- Projected content when you need more than text (e.g. an icon + label) -->
+<tum-ui-tag severity="warn"> <fa-icon [icon]="faTriangleExclamation" /> {{ 'artemisApp.exercise.pending' | artemisTranslate }} </tum-ui-tag>
+
+<!-- Pill-shaped count badge -->
+<tum-ui-tag severity="info" [rounded]="true" [value]="participantCount().toString()" />
 ```
 
 ### Tooltip — `[tumUiTooltip]`
 
-Hover + focus tooltip built on the overlay substrate, with `aria-describedby` wiring so the bubble is
-announced. Hover and keyboard focus are tracked independently, so the tooltip stays visible while
-either is active.
+A directive (attach it to any focusable host — a button, link, or icon button) that shows a short text
+bubble on hover **and** keyboard focus, built on the overlay substrate. Hover and focus are tracked
+independently, so the bubble stays visible while either is active (e.g. it does not vanish when the pointer
+leaves but the element is still focused). It wires `aria-describedby` from the host to the bubble, so screen
+readers announce the hint — which is why the host must be genuinely focusable (a `<button>`, not a bare
+`<span>`). Use it for a brief hint only; for rich or interactive content use the **popover** instead.
 
 <Shots light={TumuiTooltipLight} dark={TumuiTooltipDark} alt="tum-ui tooltip" />
 
-| Input                     | Type                                     | Default       |
-| ------------------------- | ---------------------------------------- | ------------- |
-| `tumUiTooltip`            | `string` (required)                      | –             |
-| `tumUiTooltipPlacement`   | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'`       |
-| `showDelay` / `hideDelay` | `number`                                 | `150` / `100` |
+| Input                     | Type                                     | Default       | Notes                                                                                              |
+| ------------------------- | ---------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| `tumUiTooltip`            | `string` (required)                      | –             | The bubble text. Also the selector — attaching the attribute enables the tooltip.                  |
+| `tumUiTooltipPlacement`   | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'`       | Preferred side; the overlay flips to the opposite side automatically on a viewport-edge collision. |
+| `showDelay` / `hideDelay` | `number`                                 | `150` / `100` | Milliseconds before the bubble appears / disappears, so quick pointer passes don't flash it.       |
 
 ```html
+<!-- On a text button -->
 <button tumUiTooltip="Refresh" tumUiTooltipPlacement="bottom">…</button>
+
+<!-- On an icon-only button: the tooltip complements (does not replace) the required aria-label -->
+<tum-ui-button [icon]="faRotate" ariaLabel="Refresh" tumUiTooltip="Refresh the list" />
 ```
 
 ### Popover — `tum-ui-popover` + `[tumUiPopoverTrigger]`
 
-A content-projected `role="dialog"` panel. Closes on backdrop click and Escape, traps and restores
-focus (`cdkTrapFocus`), and is exposed as a modal dialog (`aria-modal="true"`).
+A content-projected `role="dialog"` panel opened from a trigger. Unlike the tooltip it holds **interactive**
+content (form controls, buttons, links): it traps and restores focus (`cdkTrapFocus`), is exposed as a modal
+dialog (`aria-modal="true"`), and closes on backdrop click and Escape. Reach for it for filter panels, small
+inline forms, and confirmation prompts; for a one-line hint use the **tooltip** instead.
+The pattern is two pieces: the `[tumUiPopoverTrigger]` directive on the opener (any focusable element) bound to
+a template-reference of the `<tum-ui-popover>` panel.
 
 <Shots light={TumuiPopoverLight} dark={TumuiPopoverDark} alt="tum-ui-popover panel" />
 
-| Input                 | Type                                     | Notes                           |
-| --------------------- | ---------------------------------------- | ------------------------------- |
-| `placement`           | `'top' \| 'bottom' \| 'left' \| 'right'` | Default `'bottom'`.             |
-| `ariaLabel`           | `string` (**required**)                  | Accessible name for the dialog. |
-| `openChange` (output) | `boolean`                                |                                 |
+| Input / Output        | Type                                     | Notes                                                                                                   |
+| --------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `placement`           | `'top' \| 'bottom' \| 'left' \| 'right'` | Preferred side of the trigger; default `'bottom'`, flips on a viewport-edge collision.                  |
+| `ariaLabel`           | `string` (**required**)                  | Accessible name announced for the dialog — required because the panel is a modal dialog.                |
+| `openChange` (output) | `boolean`                                | Emits `true` when it opens and `false` when it closes; use it to lazy-load panel data or sync a toggle. |
 
 ```html
 <button [tumUiPopoverTrigger]="filters">Filters</button>
-<tum-ui-popover #filters ariaLabel="Filter options">
-    <!-- projected content -->
+<tum-ui-popover #filters ariaLabel="Filter options" placement="bottom" (openChange)="onFilterPanelToggle($event)">
+    <!-- interactive, projected content -->
+    <div class="flex flex-col gap-2">
+        <label><input type="checkbox" [checked]="showActive()" (change)="toggleActive()" /> Active only</label>
+        <label><input type="checkbox" [checked]="showArchived()" (change)="toggleArchived()" /> Include archived</label>
+    </div>
 </tum-ui-popover>
 ```
+
+### Table — `tum-ui-table<T>`
+
+A generic (`<T>`) data grid on `@angular/cdk/table`: dynamic columns, single-column server-side sort,
+server-side paging, debounced global search, row actions, striped / scrollable with a sticky header. It is a
+**dumb, server-driven grid** — it never sorts, filters, or pages `rows` itself; it emits one `dataRequest`
+event describing the wanted query and renders exactly the `rows` you hand back. That keeps the source of
+truth on the server and makes it a drop-in for Artemis' paged search endpoints.
+
+<Shots light={TumuiTableLight} dark={TumuiTableDark} alt="tum-ui-table data grid" />
+
+| Input / Output                              | Type                            | Default  | Notes                                                                                                                                                                                      |
+| ------------------------------------------- | ------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `columns`                                   | `ColumnDef<T>[]` (**required**) | –        | Column definitions (see below); the array order is the visual column order.                                                                                                                |
+| `rows`                                      | `T[]` (**required**)            | –        | The current page's rows, exactly as returned by the server for the last `dataRequest`.                                                                                                     |
+| `totalRecords`                              | `number`                        | `0`      | Total across all pages, so the embedded paginator can compute the last page and the "of Z" report.                                                                                         |
+| `loading`                                   | `boolean`                       | `false`  | Shows the loading state and disables controls while a fetch is in flight.                                                                                                                  |
+| `rowActions`                                | `TemplateRef`                   | –        | Per-row action cell (edit/delete buttons); rendered as a trailing column. The row is the template `$implicit` context.                                                                     |
+| `trackBy`                                   | `TrackByFunction<T>`            | identity | Row identity (e.g. `(_, row) => row.id`) so a reload **reuses** row DOM instead of rebuilding it — important so an open row action stays bound across a debounced-search reload.           |
+| `striped` / `scrollable`                    | `boolean`                       | `false`  | Zebra rows; a bounded, vertically-scrolling body with a sticky header.                                                                                                                     |
+| `scrollHeight`                              | `string`                        | –        | Height of the scroll viewport; `"flex"` fills the remaining space of a `min-h-0` flex-column parent.                                                                                       |
+| `showSearch`                                | `boolean`                       | `true`   | Toggles the debounced global search box.                                                                                                                                                   |
+| `searchPlaceholder` / `emptyMessage`        | `string` (i18n key)             | defaults | Translation keys for the search placeholder and the no-results message.                                                                                                                    |
+| `pageSize` / `pageSizeOptions`              | `number` / `number[]`           | –        | Forwarded to the embedded paginator.                                                                                                                                                       |
+| `initialSortField` / `initialSortDirection` | `string` / `'asc' \| 'desc'`    | –        | Pre-select a sorted column on first render.                                                                                                                                                |
+| `dataRequest` (output)                      | `TumUiTableQueryEvent`          | –        | Emitted whenever the query changes (sort / page / search). Carries `page` (0-based), `pageSize`, `sort?` (`{ field, direction }`, absent when unsorted), and `searchTerm?`. Refetch on it. |
+
+A column is defined by a `ColumnDef<T>`: `field` (a `keyof T` key — autocompleted and typo-checked — or a
+dot-path string for nested reads), `header` (literal) or `headerKey` (i18n key), `sort` (makes the header a
+server-side sort trigger), optional `width`, and an optional `templateRef` for a custom cell:
+
+```typescript
+const columns: ColumnDef<Organization>[] = [
+    { headerKey: 'artemisApp.organizationManagement.name', field: 'name', sort: true, templateRef: this.nameColumn() },
+    { headerKey: 'artemisApp.organizationManagement.shortName', field: 'shortName', sort: true },
+    { header: 'Users', field: 'numberOfUsers', sort: true, width: '8rem' },
+];
+```
+
+```html
+<tum-ui-table
+    [columns]="columns()"
+    [rows]="organizations()"
+    [totalRecords]="totalItems()"
+    [rowActions]="actions"
+    [loading]="isLoading()"
+    [striped]="true"
+    [scrollable]="true"
+    scrollHeight="flex"
+    (dataRequest)="loadOrganizations($event)"
+/>
+```
+
+`buildDbQueryFromTableEvent(event)` converts a `TumUiTableQueryEvent` into the standard
+`SearchTermPageableSearch` used by paged Artemis endpoints (the 0-based `page` passes straight through — no
+offset↔page conversion — the sorted column defaults to `'id'` when the sort is absent or blank, and the
+sorting order comes from the `'asc'` / `'desc'` sort direction).
+
+<Callout variant={CalloutVariant.info}>
+    The table renders a native `<table>` with `<th scope="col">`, `aria-sort` on the active column, and a
+    real `<button>` sort trigger — not `role="grid"`. Sticky headers need an opaque background and a bounded
+    scroll container (`scrollHeight="flex"`).
+</Callout>
+
+### Paginator — `tum-ui-paginator`
+
+Standalone paginator. The **table** embeds one, but it is reusable on its own for any
+paged list. It renders a "Showing X to Y of Z items" report, first / previous / a windowed run of numbered
+page buttons / next / last, and a rows-per-page selector. It is **controlled**: it owns no page state — you
+pass the current `page` / `pageSize` in and react to the change outputs. It also self-clamps, so if
+`totalRecords` shrinks below the current page (e.g. after deleting the last row on the last page) its
+range, navigation state, and active page stay consistent.
+
+<Shots light={TumuiPaginatorLight} dark={TumuiPaginatorDark} alt="tum-ui-paginator" />
+
+| Input / Output            | Type       | Default                  | Notes                                                                                           |
+| ------------------------- | ---------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `totalRecords`            | `number`   | `0`                      | Total item count across all pages (drives the report and the last-page index).                  |
+| `page`                    | `number`   | `0`                      | **Zero-based** current page index (page 1 is `0`), matching the table's `TumUiTableQueryEvent`. |
+| `pageSize`                | `number`   | `50`                     | Rows per page; must be one of `pageSizeOptions` to appear selected in the dropdown.             |
+| `pageSizeOptions`         | `number[]` | `[10, 20, 50, 100, 200]` | Choices offered in the rows-per-page selector.                                                  |
+| `disabled`                | `boolean`  | `false`                  | Disables every control (e.g. while a page is loading).                                          |
+| `pageChange` (output)     | `number`   | –                        | New zero-based page index when the user navigates.                                              |
+| `pageSizeChange` (output) | `number`   | –                        | New page size when the user changes the rows-per-page selector.                                 |
+
+```html
+<tum-ui-paginator [totalRecords]="total()" [page]="page()" [pageSize]="pageSize()" (pageChange)="page.set($event)" (pageSizeChange)="onPageSizeChange($event)" />
+```
+
+### Date picker — `tum-ui-date-picker`
+
+A `dayjs`-backed date + time picker with a hand-built, keyboard-navigable calendar (roving tabindex,
+arrows / Home / End / PageUp / PageDown), a hand-built 24h `HH:mm` hour/minute spinner (chevron up/down
+per unit, typeable, ArrowUp/ArrowDown), and the shared overlay for the panel. The spinner is fixed 24h
+regardless of the viewer's locale, mirroring the legacy `jhi-date-time-picker` (`hourFormat="24"`); a
+native `<input type="time">` would fall back to a 12h AM/PM field in en-US locales and unstylable chrome.
+
+<Shots light={TumuiDatepickerLight} dark={TumuiDatepickerDark} alt="tum-ui-date-picker input control" />
+
+| Input                          | Type                       | Default             | Notes                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------ | -------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `value` (`model`)              | `dayjs.Dayjs \| undefined` | `undefined`         | Selected date+time; two-way bindable as `[(value)]`.                                                                                                                                                                                                                                                                                 |
+| `error`                        | `boolean`                  | `false`             | Force the error border (e.g. a consumer-computed range error).                                                                                                                                                                                                                                                                       |
+| `disabled`                     | `boolean`                  | `false`             |                                                                                                                                                                                                                                                                                                                                      |
+| `inputId`                      | `string`                   | unique per instance | `id` of the inner `<input>` and the label's `for`; set it for a stable, known id.                                                                                                                                                                                                                                                    |
+| `labelName`                    | `string` (i18n key)        | –                   | Translation key for the label; omit to render no label.                                                                                                                                                                                                                                                                              |
+| `ariaLabel`                    | `string`                   | –                   | Accessible name for the inner `<input>` (`aria-label`); set it when there is no visible label (`hideLabelName`) so screen-reader users still hear which date it is.                                                                                                                                                                  |
+| `hideLabelName`                | `boolean`                  | `false`             | Hide the label even when `labelName` is set.                                                                                                                                                                                                                                                                                         |
+| `hideValidationMessage`        | `boolean`                  | `false`             | Hide the inline "invalid date" message (keep only the error border).                                                                                                                                                                                                                                                                 |
+| `shouldDisplayTimeZoneWarning` | `boolean`                  | `true`              | Show the viewer's-local-timezone warning icon + tooltip.                                                                                                                                                                                                                                                                             |
+| `baseZIndex`                   | `number`                   | `1060`              | z-index of the calendar overlay panel.                                                                                                                                                                                                                                                                                               |
+| `valueChange` (output)         | `dayjs.Dayjs \| undefined` | –                   | Auto-generated by `value = model()`; fires only when the value actually changes (commit / clear / empty), and powers two-way `[(value)]`.                                                                                                                                                                                            |
+| `parseValidChange` (output)    | `boolean`                  | –                   | Fires whenever parse-validity changes (and once with the initial `true`) — the output mirror of `hasValidInput()`, **not** the combined `isValid()`. Use it to gate a destructive action on the field being parseable when you cannot read `hasValidInput()` off the instance (e.g. the action lives in a different template scope). |
+
+The picker always renders a date + 24h-time control (`DD.MM.YYYY HH:mm`). Date-only / time-only modes are
+not implemented yet; use the legacy `jhi-date-time-picker` if you need those today. Opening the trigger
+shows the calendar overlay (month grid + 24h `HH:mm` hour/minute spinner):
+
+<Shots light={TumuiCalendarLight} dark={TumuiCalendarDark} alt="tum-ui-date-picker calendar overlay" />
+
+Validation surface (all signals): `value()` (current value), `isValid()` (the input parses **and** the
+component is not externally `[error]`-flagged — use it to gate an imperative action such as enabling a
+submit button), and `hasValidInput()` (only whether the typed text parses, ignoring the external
+`[error]`). `valueChange` already fires only on committed / cleared values, so a `(valueChange)` handler
+should just consume `$event` — there is no need to gate it on an accessor or reach into a template ref.
+Because unparseable input does **not** emit `valueChange` (keepInvalid), gate a destructive action on
+parse-validity via `isValid()` / `hasValidInput()`, or — when the action sits in a different template
+scope than the picker — the `(parseValidChange)` output. The admin cleanup service does the latter to keep
+its "Execute" button disabled while a date field shows unparseable text.
+
+```html
+<!-- Two-way binding (simplest) -->
+<tum-ui-date-picker [(value)]="scheduledAt" />
+
+<!-- One-way binding with an externally-driven range error (admin cleanup service) -->
+<tum-ui-date-picker [value]="deleteFrom()" [error]="!datesValid()" (valueChange)="onFromChange($event)" />
+```
+
+#### Signal Forms
+
+The picker implements the [Signal Forms](https://angular.dev/guide/signals) `FormValueControl` contract
+(type-only import from `@angular/forms/signals`). That interface's only required member is a `value`
+model, which the picker already exposes, so it is bindable via `[field]` with **no** `ControlValueAccessor`.
+
+```typescript
+import type { FormValueControl } from '@angular/forms/signals';
+
+export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | undefined> {
+    readonly value = model<dayjs.Dayjs | undefined>(undefined);
+}
+```
+
+<Callout variant={CalloutVariant.info}>
+    Prefer Signal Forms (`FormValueControl`) over the legacy `ControlValueAccessor` for new form controls. It is the modern, signal-native binding and needs far less boilerplate.
+</Callout>
+
+### Text input — `[tumUiInput]` / `[tumUiTextarea]`
+
+A **styling-only** attribute directive for a native `<input>` or `<textarea>` — the drop-in for PrimeNG's `pInputText` / `pTextarea`. It never touches the element's value or events, so `[(ngModel)]`, `formControlName`, `type`, `placeholder`, `pattern`, `maxlength`, `required`, and a static `class` all keep working; the host class binding merges with (does not clobber) template classes like `class="w-full"`. `[tumUiTextarea]` is a `<textarea>`-only alias of the same directive.
+
+<Shots light={TumuiInputLight} dark={TumuiInputDark} alt="tum-ui input directive: default, small, disabled, textarea" />
+
+| Input               | Type                 | Default | Notes                                                                                                           |
+| ------------------- | -------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `tumUiInputSize`    | `'small' \| 'large'` | –       | Mirrors PrimeNG `pSize`; omit for the normal size. Named distinctly so the native `size` attribute still works. |
+| `tumUiInputInvalid` | `boolean`            | `false` | Mirrors PrimeNG `[invalid]`; marks the field invalid (danger border).                                           |
+
+The directive has no outputs and is not a form-control itself — bind `[(ngModel)]` / `formControlName` directly on the element.
+
+```html
+<!-- Reactive form field with a computed invalid state -->
+<input type="text" tumUiInput class="w-full" formControlName="clientId" [tumUiInputInvalid]="isFieldInvalid('clientId')" />
+
+<!-- Small size, template-driven -->
+<input tumUiInput tumUiInputSize="small" type="text" class="w-full" [ngModel]="filterInput()" (ngModelChange)="updateFilter($event)" />
+
+<!-- Textarea alias -->
+<textarea tumUiTextarea class="w-full" name="description" [(ngModel)]="description"></textarea>
+```
+
+### Icon field — `tum-ui-icon-field`
+
+Wraps a projected `<input tumUiInput>` (or `<textarea tumUiInput>`) and overlays a FontAwesome icon inside the field, on the leading (default) or trailing side — the drop-in for `p-iconfield` + `p-inputicon`. The field gains matching padding on the icon side so text never runs under the icon.
+
+<Shots light={TumuiIconFieldLight} dark={TumuiIconFieldDark} alt="tum-ui-icon-field with a leading search icon" />
+
+| Input          | Type                | Default  | Notes                                                                   |
+| -------------- | ------------------- | -------- | ----------------------------------------------------------------------- |
+| `icon`         | `IconProp`          | –        | Leading/trailing FontAwesome icon. No icon (and no padding) unless set. |
+| `iconPosition` | `'left' \| 'right'` | `'left'` | Which side the icon sits on.                                            |
+
+```html
+<tum-ui-icon-field [icon]="faSearch">
+    <input tumUiInput type="text" class="w-full" [placeholder]="'…filter' | artemisTranslate" [ngModel]="filterText()" (ngModelChange)="updateFilter($event)" />
+</tum-ui-icon-field>
+```
+
+### Input group — `tum-ui-input-group` + `tum-ui-input-group-addon`
+
+A horizontal row that welds fixed addon segments (labels/icons) flush against a field so they share its height — the drop-in for `p-inputgroup` + `p-inputgroup-addon`. Unlike `p-inputgroup` (which is `width: 100%`) the group sets no width; the consumer controls it with a utility (`w-full`, `w-auto`, …). The addon owns corner joining: it always draws top/bottom borders and rounds only its outer (first/last) edge.
+
+<Shots light={TumuiInputGroupLight} dark={TumuiInputGroupDark} alt="tum-ui-input-group with a leading addon" />
+
+Neither component takes inputs or outputs — compose them with a field:
+
+```html
+<tum-ui-input-group class="w-auto">
+    <tum-ui-input-group-addon jhiTranslate="audits.filter.from" />
+    <input tumUiInput type="text" [(ngModel)]="from" />
+</tum-ui-input-group>
+```
+
+### Select — `tum-ui-select`
+
+A single-select dropdown on the CDK overlay — the drop-in for `p-select`. A `role="button"` trigger opens a `role="listbox"` panel portaled to the overlay container (never clipped by an overflow ancestor). Options can be objects (read via `optionLabel` / `optionValue`) or bare primitives. Works with both `[(ngModel)]` and reactive `formControlName` (it is a `ControlValueAccessor`).
+
+<Shots light={TumuiSelectLight} dark={TumuiSelectDark} alt="tum-ui-select trigger with a selected value and a placeholder" />
+
+| Input / Output      | Type                 | Default                  | Notes                                                                                                                                                            |
+| ------------------- | -------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `options`           | `readonly unknown[]` | `[]`                     | Objects or primitives.                                                                                                                                           |
+| `optionLabel`       | `string`             | –                        | Property to read each option's display label from. Omit for primitives.                                                                                          |
+| `optionValue`       | `string`             | –                        | Property to read each option's bound value from. Omit to bind the whole option object (reference-compared).                                                      |
+| `placeholder`       | `string`             | –                        | Trigger text when nothing is selected.                                                                                                                           |
+| `disabled`          | `boolean`            | `false`                  | Merged with the reactive-forms disabled state.                                                                                                                   |
+| `showClear`         | `boolean`            | `false`                  | Renders a clear (×) button once a value is selected.                                                                                                             |
+| `size`              | `'small' \| 'large'` | –                        | Omit for the default size.                                                                                                                                       |
+| `styleClass`        | `string`             | `''`                     | Classes forwarded onto the host (e.g. `w-full`).                                                                                                                 |
+| `inputId`           | `string`             | unique per instance      | `id` of the trigger; set it for a stable `<label for>` target.                                                                                                   |
+| `ariaLabel`         | `string`             | –                        | Accessible name when there is no visible label.                                                                                                                  |
+| `name`              | `string`             | –                        | Forwarded onto the trigger for template-driven-form parity.                                                                                                      |
+| `clearAriaLabel`    | `string`             | `'Clear selection'`      | Accessible name for the clear (×) button (shown when `showClear` is set).                                                                                        |
+| `emptyMessage`      | `string`             | `'No available options'` | Panel text when there are no options.                                                                                                                            |
+| `onChange` (output) | `unknown`            | –                        | The newly selected value (resolved `optionValue`, or the whole option; `undefined` on clear). Not PrimeNG's `{ originalEvent, value }` wrapper — just the value. |
+
+`appendTo` is accepted for API parity but is a no-op (the panel always renders in the overlay container). Keyboard: arrows open/roam, Home/End jump, Enter/Space select, Escape closes, and printable characters do type-ahead.
+
+```html
+<!-- Reactive form, object options -->
+<tum-ui-select inputId="langKey" formControlName="langKey" styleClass="w-full" [options]="languageOptions()" optionLabel="label" optionValue="value" />
+
+<!-- Two-way binding + change handler -->
+<tum-ui-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" styleClass="w-auto" />
+```
+
+### Autocomplete — `tum-ui-autocomplete`
+
+An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplete`. Supports single-select and multi-select-with-chips: a `role="combobox"` input, selected values rendered as removable chips (`tum-ui-chip`), and a `role="listbox"` of suggestions. The parent drives suggestions **asynchronously**: typing (debounced by `delay`, gated by `minLength`) emits `completeMethod` with `{ query }`; the parent filters and pushes the result into `[suggestions]`. Works with `[(ngModel)]` and `formControlName` (a `ControlValueAccessor`).
+
+<Shots light={TumuiAutocompleteLight} dark={TumuiAutocompleteDark} alt="tum-ui-autocomplete in multi-select mode with chips" />
+
+| Input / Output          | Type                        | Default              | Notes                                                                                      |
+| ----------------------- | --------------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| `suggestions`           | `readonly unknown[]`        | `[]`                 | The async result list the parent fills in response to `completeMethod`.                    |
+| `optionLabel` / `field` | `string`                    | –                    | Property to read each option's display label from (`field` is the `p-autocomplete` alias). |
+| `multiple`              | `boolean`                   | `false`              | Multi-select: renders chips and binds an array.                                            |
+| `placeholder`           | `string`                    | –                    | Shown when empty (and, in multiple mode, no chip selected).                                |
+| `disabled`              | `boolean`                   | `false`              | Merged with the reactive-forms disabled state.                                             |
+| `minLength`             | `number`                    | `1`                  | Minimum typed characters before `completeMethod` fires.                                    |
+| `delay`                 | `number`                    | `300`                | Debounce (ms) before `completeMethod` fires.                                               |
+| `completeOnFocus`       | `boolean`                   | `false`              | Fire `completeMethod` (even empty) and open the panel on focus.                            |
+| `styleClass`            | `string`                    | `''`                 | Classes forwarded onto the host (e.g. `w-full`).                                           |
+| `emptyMessage`          | `string`                    | `'No results found'` | Panel text when a search returns nothing.                                                  |
+| `inputId`               | `string`                    | unique per instance  | `id` of the text input, for a stable `<label for>` target.                                 |
+| `name`                  | `string`                    | –                    | Forwarded onto the input for template-driven-form parity.                                  |
+| `ariaLabel`             | `string`                    | –                    | Accessible name for the input when there is no visible label.                              |
+| `removeAriaLabel`       | `string`                    | `'Remove'`           | Accessible name for each selected chip's remove button.                                    |
+| `completeMethod` (out)  | `{ originalEvent?, query }` | –                    | The debounced typed query is ready — filter and push into `[suggestions]`.                 |
+| `onSelect` (out)        | `{ originalEvent?, value }` | –                    | A suggestion was chosen.                                                                   |
+| `onUnselect` (out)      | `{ originalEvent?, value }` | –                    | A selected value (chip) was removed (button, or Backspace on an empty input).              |
+
+```html
+<tum-ui-autocomplete
+    styleClass="w-full"
+    [multiple]="true"
+    [ngModel]="user().groups ?? []"
+    [ngModelOptions]="{ standalone: true }"
+    [suggestions]="groupSuggestions()"
+    (completeMethod)="filterGroups($event)"
+    (onSelect)="onGroupSelect($event)"
+    (onUnselect)="onGroupUnselect($event)"
+    [placeholder]="'…addGroup' | artemisTranslate"
+/>
+```
+
+### Input number — `tum-ui-input-number`
+
+A numeric input — the drop-in for `p-inputnumber` (integer values). A token-styled field showing a locale-formatted number (optional digit grouping, optional prefix / suffix) with an optional stacked stepper. The value binds as a plain `number | undefined` through a `ControlValueAccessor`, so `[(ngModel)]`, `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work; empty input clears to `undefined`, and the value is clamped to `[min, max]` on blur and on every step. It builds on `[tumUiInput]`, so it shares the kit's input styling; compose it inside a `tum-ui-input-group` for a leading addon. The input carries WAI-ARIA `spinbutton` semantics (its value and range are announced, and Arrow Up / Down adjust it), so the stepper is fully keyboard- and screen-reader-operable even though the visible ▲/▼ buttons are mouse-only affordances.
+
+<Shots light={TumuiInputNumberLight} dark={TumuiInputNumberDark} alt="tum-ui-input-number: plain, with stepper, with a leading addon, and with prefix/suffix" />
+
+| Input / Output       | Type         | Default             | Notes                                                                                                               |
+| -------------------- | ------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                     |
+| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                       |
+| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                              |
+| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                            |
+| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                             |
+| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it. |
+| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                      |
+| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                      |
+| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                          |
+| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                   |
+| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
+| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
+| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
+| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
+| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
+| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
+
+Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
+
+```html
+<!-- Two-way binding with a stepper, clamped 1..5000 -->
+<tum-ui-input-number [(ngModel)]="capacity" [min]="1" [max]="5000" [showButtons]="true" />
+
+<!-- Prefix / suffix, rendered inside the field ("every 2 week(s)") -->
+<tum-ui-input-number [(ngModel)]="frequency" [min]="1" [max]="48" [showButtons]="true" prefix="every " suffix=" week(s)" />
+
+<!-- Reactive form, full width -->
+<tum-ui-input-number formControlName="score" [min]="0" [max]="100" [fluid]="true" />
+```
+
+<Callout variant={CalloutVariant.info}>
+    Scope: **integer** values (every Artemis usage is an integer). Decimal / currency / fraction-digit modes are not implemented — add them to the component if a consumer needs
+    them.
+</Callout>
+
+### Checkbox — `tum-ui-checkbox`
+
+A binary (boolean) checkbox — the drop-in for a binary `p-checkbox`. Built on a visually hidden native `<input type="checkbox">` overlaying a token-styled box, so keyboard (Space), `<label for>` association, and screen-reader semantics come for free. Works with `[(ngModel)]`, one-way `[ngModel]` + `(onChange)`, and `formControlName`.
+
+<Shots light={TumuiCheckboxLight} dark={TumuiCheckboxDark} alt="tum-ui-checkbox: off, on, disabled" />
+
+| Input / Output      | Type                                         | Default | Notes                                                                                                                          |
+| ------------------- | -------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `checked` (`model`) | `boolean`                                    | `false` | Two-way bindable as `[(checked)]`; also driven by the CVA. Generates `checkedChange`.                                          |
+| `disabled`          | `boolean`                                    | `false` | Merged with the reactive-forms disabled state.                                                                                 |
+| `inputId`           | `string`                                     | –       | Forwarded to the native input's `id`, for an external `<label for>`.                                                           |
+| `name`              | `string`                                     | –       | Forwarded to the native input's `name`.                                                                                        |
+| `ariaLabel`         | `string`                                     | –       | Accessible label when there is no `<label for>`.                                                                               |
+| `onChange` (output) | `{ originalEvent: Event; checked: boolean }` | –       | On every user toggle. Payload mirrors PrimeNG's `CheckboxChangeEvent`, so `(onChange)="h($event.checked)"` migrates unchanged. |
+
+```html
+<!-- Reactive form -->
+<tum-ui-checkbox inputId="activated" name="activated" formControlName="activated" />
+
+<!-- Controlled one-way binding + change handler -->
+<tum-ui-checkbox [ngModel]="useRandomPassword()" (onChange)="shouldRandomizePassword($event.checked)" />
+```
+
+### Radio button — `tum-ui-radio-button`
+
+A radio button — the drop-in for `p-radiobutton`. Built on a visually hidden native `<input type="radio">` overlaying a token-styled circle. A radio renders "checked" when its own `value` equals the selected group value, which can arrive via a form binding (`[ngModel]` / `formControlName`) or the explicit `modelValue` input.
+
+<Shots light={TumuiRadioButtonLight} dark={TumuiRadioButtonDark} alt="tum-ui-radio-button group with one selected and one disabled" />
+
+| Input / Output     | Type                                   | Default | Notes                                                                             |
+| ------------------ | -------------------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `value`            | `unknown`                              | –       | The value this radio represents; checked when it equals the selected group value. |
+| `modelValue`       | `unknown`                              | –       | Explicit selected group value for non-forms usage. A form binding via CVA wins.   |
+| `name`             | `string`                               | –       | Radio group name, forwarded to the native input.                                  |
+| `inputId`          | `string`                               | –       | Forwarded to the native input's `id`, for an external `<label for>`.              |
+| `disabled`         | `boolean`                              | `false` |                                                                                   |
+| `ariaLabel`        | `string`                               | –       | Accessible label when there is no `<label for>`.                                  |
+| `onClick` (output) | `{ originalEvent: MouseEvent; value }` | –       | On **every** click (including re-clicking the selected radio), matching PrimeNG.  |
+
+```html
+<!-- Grouped by name; one-way [ngModel] + (onClick) sets the source of truth -->
+<tum-ui-radio-button name="buildStatusFilter" [value]="status" [ngModel]="filter.status" (onClick)="toggleBuildStatusFilter(status)" />
+```
+
+### Toggle switch — `tum-ui-toggle-switch`
+
+A boolean on/off switch — the drop-in for `p-toggleswitch`. The host element itself is the switch (`role="switch"`), so a template `aria-label` / `data-testid` lands on the right element. Works with `[(ngModel)]`, one-way `[ngModel]` + `(changed)`, and `formControlName`.
+
+<Shots light={TumuiToggleSwitchLight} dark={TumuiToggleSwitchDark} alt="tum-ui-toggle-switch: off, on, disabled" />
+
+| Input / Output     | Type      | Default | Notes                                                                                                                                                                                                               |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`         | `boolean` | `false` | Merged with the reactive-forms disabled state.                                                                                                                                                                      |
+| `inputId`          | `string`  | –       | Sets the host `id`. The switch is a custom element (not a labelable control), so a `<label for>` will **not** toggle it — give it an accessible name with `aria-label`, or point an `aria-labelledby` at this `id`. |
+| `changed` (output) | `boolean` | –       | The new boolean, whenever the switch is toggled (parity with `(onChange)`).                                                                                                                                         |
+
+```html
+<tum-ui-toggle-switch
+    [ngModel]="featureInfo.isActive"
+    [disabled]="pendingFeatures().has(featureInfo.feature)"
+    (changed)="onFeatureToggle(featureInfo)"
+    [attr.aria-label]="name | artemisTranslate"
+/>
+```
+
+### Select button — `tum-ui-select-button`
+
+A segmented single-select control — the drop-in for a single-select `p-selectbutton`. A row of joined buttons built from `options`, following the WAI-ARIA radio-group pattern (`role="radiogroup"` + `role="radio"`, roving tabindex, arrow-key navigation). Works with `[(ngModel)]`, one-way `[ngModel]` + `(changed)`, and `formControlName`.
+
+<Shots light={TumuiSelectButtonLight} dark={TumuiSelectButtonDark} alt="tum-ui-select-button segmented control" />
+
+| Input / Output     | Type                 | Default | Notes                                                                                             |
+| ------------------ | -------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `options`          | `readonly unknown[]` | `[]`    | Objects or primitives.                                                                            |
+| `optionLabel`      | `string`             | –       | Object property for the visible label.                                                            |
+| `optionValue`      | `string`             | –       | Object property for the model value. Omit → the whole option is the value.                        |
+| `size`             | `'small' \| 'large'` | –       | Default = normal; only scales the font.                                                           |
+| `allowEmpty`       | `boolean`            | `true`  | When `false`, re-clicking the selected option keeps it selected.                                  |
+| `disabled`         | `boolean`            | `false` | Merged with the reactive-forms disabled state.                                                    |
+| `itemTemplate`     | `TemplateRef`        | –       | Custom per-option template; receives the raw option as `$implicit` (like `p-selectbutton #item`). |
+| `changed` (output) | `unknown`            | –       | The new value; `undefined` when cleared by re-click.                                              |
+
+```html
+<tum-ui-select-button
+    [options]="spanOptions"
+    [ngModel]="currentSpan()"
+    (ngModelChange)="onTabChanged($event)"
+    optionLabel="label"
+    optionValue="value"
+    size="small"
+    [itemTemplate]="spanItem"
+/>
+<ng-template #spanItem let-option>{{ option.label | artemisTranslate }}</ng-template>
+```
+
+### Chip — `tum-ui-chip`
+
+A rounded pill with a text `[label]` (or projected content) and an optional keyboard-accessible remove control — the drop-in for `p-chip`. Presentational: the parent owns the list and drops the item in the `onRemove` handler. Used internally by the autocomplete (`tum-ui-autocomplete`) for its selected values.
+
+<Shots light={TumuiChipLight} dark={TumuiChipDark} alt="tum-ui-chip: read-only and removable" />
+
+| Input / Output      | Type      | Default    | Notes                                                                                    |
+| ------------------- | --------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `label`             | `string`  | –          | Text on the pill. Omit to project custom content.                                        |
+| `removable`         | `boolean` | `false`    | Renders the accessible remove (×) button.                                                |
+| `size`              | `'small'` | –          | `'small'` renders the compact in-field chip; omit for the default size.                  |
+| `removeAriaLabel`   | `string`  | `'Remove'` | Accessible name for the remove button; override for i18n.                                |
+| `styleClass`        | `string`  | `''`       | Classes forwarded onto the pill.                                                         |
+| `onRemove` (output) | `Event`   | –          | The remove control was activated (click, Enter/Space, or Backspace/Delete when focused). |
+
+```html
+<tum-ui-chip [label]="organization.name" [removable]="true" (onRemove)="removeOrganizationFromUser(organization)" />
+```
+
+### Card — `tum-ui-card`
+
+A content card with a surface, rounded corners, and a soft shadow — the drop-in for `p-card`. Content projects into the body via the default slot; optional `header` / `subheader` render a caption. Dedicated `[tumUiCardHeader]` / `[tumUiCardFooter]` projection slots cover the remaining regions.
+
+<Shots light={TumuiCardLight} dark={TumuiCardDark} alt="tum-ui-card with a header, subheader and body" />
+
+| Input        | Type     | Default | Notes                                                     |
+| ------------ | -------- | ------- | --------------------------------------------------------- |
+| `header`     | `string` | –       | Optional title, rendered in the caption.                  |
+| `subheader`  | `string` | –       | Optional subtitle under the title, in the muted color.    |
+| `styleClass` | `string` | `''`    | Classes forwarded onto the card root (e.g. a hook class). |
+
+```html
+<tum-ui-card header="Statistics" subheader="Last 30 days">
+    <p>Body content projected into the default slot.</p>
+</tum-ui-card>
+```
+
+### Panel — `tum-ui-panel`
+
+A titled, bordered content panel with an optional collapse toggle — the drop-in for `p-panel`. When `toggleable`, the header renders a real `<button>` with `aria-expanded` / `aria-controls`, and the body collapses with the Aura grid-rows animation.
+
+<Shots light={TumuiPanelLight} dark={TumuiPanelDark} alt="tum-ui-panel with a toggleable header" />
+
+| Input / Output        | Type      | Default | Notes                                                                                    |
+| --------------------- | --------- | ------- | ---------------------------------------------------------------------------------------- |
+| `header`              | `string`  | `''`    | Header title text.                                                                       |
+| `toggleable`          | `boolean` | `false` | Whether the header toggle can collapse the body.                                         |
+| `collapsed` (`model`) | `boolean` | `false` | Two-way bindable as `[(collapsed)]` (or one-way `[collapsed]`). Emits `collapsedChange`. |
+| `styleClass`          | `string`  | `''`    | Classes forwarded onto the panel root.                                                   |
+
+```html
+<tum-ui-panel [header]="'…config' | artemisTranslate" [toggleable]="true" [collapsed]="true">
+    <pre>{{ config() | json }}</pre>
+</tum-ui-panel>
+```
+
+### Tabs — `tum-ui-tabs` family
+
+A composable tab set — the drop-in for `p-tabs` / `p-tablist` / `p-tab` / `p-tabpanels` / `p-tabpanel`. The `<tum-ui-tabs>` container owns the active `value` and provides a coordination service; the tab list is a `role="tablist"` with roving-tabindex arrow-key navigation and a sliding active bar; each panel mounts its content only while active. `tab-panels` is optional — you can drive content yourself with external `@if` blocks off `(valueChange)`.
+
+<Shots light={TumuiTabsLight} dark={TumuiTabsDark} alt="tum-ui-tabs with an active, an inactive, and a disabled tab" />
+
+| Piece          | Selector            | Key API                                                                                   |
+| -------------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| Container      | `tum-ui-tabs`       | `value` (`model<number \| string>`) — two-way `[(value)]` or `[value]` + `(valueChange)`. |
+| Tab list       | `tum-ui-tab-list`   | Wraps the tabs; no inputs. Handles keyboard nav + the active bar.                         |
+| Tab            | `tum-ui-tab`        | `value` (**required**, matches a panel), `disabled` (default `false`).                    |
+| Panels wrapper | `tum-ui-tab-panels` | Optional; supplies padding.                                                               |
+| Panel          | `tum-ui-tab-panel`  | `value` (**required**, matches a tab). Content is unmounted while inactive.               |
+
+```html
+<tum-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
+    <tum-ui-tab-list>
+        <tum-ui-tab [value]="1">Platform</tum-ui-tab>
+        <tum-ui-tab [value]="2">Service URLs</tum-ui-tab>
+    </tum-ui-tab-list>
+    <tum-ui-tab-panels>
+        <tum-ui-tab-panel [value]="1">…</tum-ui-tab-panel>
+        <tum-ui-tab-panel [value]="2">…</tum-ui-tab-panel>
+    </tum-ui-tab-panels>
+</tum-ui-tabs>
+```
+
+### Button group — `tum-ui-button-group`
+
+A presentational wrapper — the drop-in for `p-buttongroup` — that welds projected buttons (`tum-ui-button`) into one segmented control: it collapses shared borders and squares inner corners, keeping only the outer corners rounded.
+
+<Shots light={TumuiButtonGroupLight} dark={TumuiButtonGroupDark} alt="tum-ui-button-group welding three buttons" />
+
+| Input        | Type     | Default | Notes                                  |
+| ------------ | -------- | ------- | -------------------------------------- |
+| `styleClass` | `string` | `''`    | Classes forwarded onto the group root. |
+
+```html
+<tum-ui-button-group>
+    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('running')">Running</tum-ui-button>
+    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('queued')">Queued</tum-ui-button>
+    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollTo('finished')">Finished</tum-ui-button>
+</tum-ui-button-group>
+```
+
+### Message — `tum-ui-message`
+
+An inline message / alert box — the drop-in for `p-message`. Colored severities use the four Artemis semantic state tokens (info = cyan, success, warn = yellow, error); `secondary` / `contrast` use the surface ramp. No icon unless `icon` is set.
+
+<Shots light={TumuiMessageLight} dark={TumuiMessageDark} alt="tum-ui-message in info, success, warn and error severities" />
+
+| Input        | Type                                                                    | Default  | Notes                                                                     |
+| ------------ | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
+| `severity`   | `'info' \| 'success' \| 'warn' \| 'error' \| 'secondary' \| 'contrast'` | `'info'` |                                                                           |
+| `text`       | `string`                                                                | –        | Plain-text message; when set it renders **instead of** projected content. |
+| `icon`       | `IconProp`                                                              | –        | Optional leading FontAwesome icon; none shown by default.                 |
+| `styleClass` | `string`                                                                | `''`     | Classes forwarded onto the box (e.g. `mb-3 w-full`).                      |
+
+```html
+<!-- Plain text via the input -->
+<tum-ui-message severity="error" [text]="error" styleClass="mb-3 w-full" aria-live="assertive" />
+
+<!-- Projected content -->
+<tum-ui-message severity="warn"><fa-icon [icon]="faTriangleExclamation" /> This action needs your attention.</tum-ui-message>
+```
+
+<Callout variant={CalloutVariant.info}>
+    `tum-ui-message` bakes in no `aria-live`; add it yourself where the message appears dynamically (e.g. `aria-live="assertive"` on an error banner) so screen readers announce it.
+</Callout>
+
+### Dialog — `tum-ui-dialog`
+
+A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and `DialogService.open(...)`. Two-way `[(visible)]`, a `header` string or a projected `#header` template, a projected `#footer` template, and a modal mask. The panel is portaled into the overlay container (equivalent to `appendTo="body"`), traps focus (`cdkTrapFocus`), and closes on Escape / the × button.
+
+<Shots light={TumuiDialogLight} dark={TumuiDialogDark} alt="tum-ui-dialog with a title, body and footer buttons" />
+
+| Input / Output            | Type                     | Default   | Notes                                                                                              |
+| ------------------------- | ------------------------ | --------- | -------------------------------------------------------------------------------------------------- |
+| `visible` (`model`)       | `boolean`                | `false`   | Two-way `[(visible)]`; opens/closes the overlay. Emits `visibleChange`.                            |
+| `modal`                   | `boolean`                | `true`    | Dimmed, pointer-blocking mask behind the dialog.                                                   |
+| `header`                  | `string`                 | –         | Plain-text title; ignored when a `#header` template is projected.                                  |
+| `showHeader`              | `boolean`                | `true`    | Render the header region (title + close button).                                                   |
+| `ariaLabel`               | `string`                 | –         | Accessible-name fallback for the dialog when neither `header` nor a `#header` template is present. |
+| `closable`                | `boolean`                | `true`    | Show the × close button.                                                                           |
+| `closeOnEscape`           | `boolean`                | `true`    | Close on Escape.                                                                                   |
+| `dismissableMask`         | `boolean`                | `false`   | Close on mask/backdrop click.                                                                      |
+| `style` / `contentStyle`  | `Record<string, string>` | `{}`      | Style records on the panel / scrollable content (e.g. `{ width: '30rem' }`).                       |
+| `closeButtonAriaLabel`    | `string`                 | `'Close'` | Accessible label for the × button.                                                                 |
+| `visibleChange` (out)     | `boolean`                | –         | Whenever visibility flips.                                                                         |
+| `onShow` / `onHide` (out) | `void`                   | –         | When the dialog becomes visible / hidden (any close path).                                         |
+
+`appendTo` and `draggable` are accepted for parity but are no-ops (always portaled, never draggable). Provide the footer via a `#footer` template; it only renders when present.
+
+```html
+<tum-ui-dialog [(visible)]="visible" [modal]="true" [closable]="true" header="Create export" [style]="{ width: '30rem' }">
+    <p>Dialog body content.</p>
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="visible.set(false)">Cancel</tum-ui-button>
+        <tum-ui-button severity="primary" size="small" (clicked)="submit()">Confirm</tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>
+```
+
+<Callout variant={CalloutVariant.info}>
+    A reusable modal wraps this and re-exposes `visible` as its own `model`, so the parent opens it with `[(visible)]` and reacts to a result `output()`. This replaces the
+    imperative `DialogService.open(...)` and is signal-input-friendly (unlike ng-bootstrap's `componentInstance.X = Y`).
+</Callout>
+
+### Confirm dialog — `tum-ui-confirm-dialog` + `TumUiConfirmationService`
+
+The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback. The dialog is exposed as an `alertdialog` with `aria-describedby` pointing at the message, so a screen reader announces the question (not just the header).
+
+<Shots light={TumuiConfirmDialogLight} dark={TumuiConfirmDialogDark} alt="tum-ui-confirm-dialog" />
+
+`TumUiConfirmationService.confirm(request)` — the request shape (a normalized subset of PrimeNG's `Confirmation`):
+
+| Option                              | Type                    | Default                     | Notes                                                                                               |
+| ----------------------------------- | ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| `header`                            | `string`                | –                           | Dialog title.                                                                                       |
+| `message`                           | `string`                | –                           | Body text shown next to the optional icon.                                                          |
+| `accept`                            | `() => void`            | –                           | Invoked when the user confirms.                                                                     |
+| `reject`                            | `() => void`            | –                           | Invoked on cancel / dismiss (optional).                                                             |
+| `acceptLabel` / `rejectLabel`       | `string` (**required**) | –                           | Button labels. Required so the caller always passes a localized string (the kit has no i18n layer). |
+| `acceptSeverity` / `rejectSeverity` | `TumUiButtonSeverity`   | `'primary'` / `'secondary'` | Button severities (e.g. `'danger'` for a destructive confirm).                                      |
+| `icon`                              | `IconProp`              | –                           | Optional leading icon before the message.                                                           |
+| `key`                               | `string`                | –                           | Scopes the request to a `<tum-ui-confirm-dialog [key]>` with the same key.                          |
+
+The `<tum-ui-confirm-dialog>` component takes a single optional `key` input, used to match scoped `confirm({ key })` calls when several confirm dialogs live on one page.
+
+```typescript
+@Component({
+    /* … */
+    providers: [TumUiConfirmationService],
+})
+export class MyComponent {
+    private readonly confirmationService = inject(TumUiConfirmationService);
+
+    confirmDelete(): void {
+        this.confirmationService.confirm({
+            header: this.translate('…deleteHeader'),
+            message: this.translate('…deleteQuestion'),
+            acceptLabel: this.translate('entity.action.delete'),
+            rejectLabel: this.translate('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            rejectSeverity: 'secondary',
+            accept: () => this.delete(),
+        });
+    }
+}
+```
+
+```html
+<!-- Placed once in the component's template; renders whatever confirm() opens -->
+<tum-ui-confirm-dialog />
+```
+
+<Callout variant={CalloutVariant.info}>
+    Mirror PrimeNG's wiring: provide `TumUiConfirmationService` in the component's `providers` and place exactly one `<tum-ui-confirm-dialog>` in its template. When a page needs several independent confirm dialogs, give each a `[key]` and pass the matching `key` in the `confirm({ key })` call.
+</Callout>
+
+### Progress bar — `tum-ui-progress-bar`
+
+A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` fill animates to `value` percent over the track. Projected content renders inside the fill and always shows regardless of `showValue`.
+
+<Shots light={TumuiProgressBarLight} dark={TumuiProgressBarDark} alt="tum-ui-progress-bar at 65%" />
+
+| Input        | Type      | Default | Notes                                                                     |
+| ------------ | --------- | ------- | ------------------------------------------------------------------------- |
+| `value`      | `number`  | `0`     | Current progress 0–100; drives the fill width and `aria-valuenow`.        |
+| `showValue`  | `boolean` | `true`  | Render the default `{value}{unit}` label (ignored for projected content). |
+| `color`      | `string`  | –       | CSS color for the fill, overriding the default `bg-primary`.              |
+| `unit`       | `string`  | `'%'`   | Unit appended to the default value label.                                 |
+| `styleClass` | `string`  | `''`    | Classes forwarded onto the bar (e.g. `mb-2`).                             |
+
+```html
+<!-- Labelled percentage -->
+<tum-ui-progress-bar [value]="progress()" />
+
+<!-- Projected count, custom fill color, no default label -->
+<tum-ui-progress-bar [value]="toPercentage(count, total)" [showValue]="false" color="var(--success)">{{ count }}</tum-ui-progress-bar>
+```
+
+### Progress spinner — `tum-ui-progress-spinner`
+
+An indeterminate loading spinner — the drop-in for `p-progressspinner`. A rotating SVG circle whose stroke sweeps through the semantic state colors.
+
+<Shots light={TumuiProgressSpinnerLight} dark={TumuiProgressSpinnerDark} alt="tum-ui-progress-spinner" />
+
+| Input               | Type               | Default  | Notes                                                   |
+| ------------------- | ------------------ | -------- | ------------------------------------------------------- |
+| `strokeWidth`       | `string \| number` | `'2'`    | Width of the circle stroke.                             |
+| `fill`              | `string`           | `'none'` | Fill of the circle interior.                            |
+| `animationDuration` | `string`           | `'2s'`   | Duration of one full rotation.                          |
+| `ariaLabel`         | `string`           | –        | Accessible label describing what is loading.            |
+| `styleClass`        | `string`           | `''`     | Classes forwarded onto the spinner (e.g. to resize it). |
+
+```html
+<tum-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" styleClass="w-16 h-16" />
+```
+
+<Callout variant={CalloutVariant.info}>The visible spinner carries no text, so `ariaLabel` is the only description a screen reader gets — set it to say what is loading.</Callout>
+
+### Native table — `[tumUiTable]` + `[tumUiSortableColumn]`
+
+The **low-level, hand-templated** table primitive — the drop-in for using `p-table` as a _styling shell_ around markup you write yourself (`<thead>` / `<tbody>` / `@for` rows, checkboxes, custom cells). Distinct from the higher-level data-driven `tum-ui-table` grid (above): with `[tumUiTable]` you own every cell; the directive only applies Aura-identical styling and coordinates **controlled** single-column sorting. Add `[tumUiSortableColumn]` to a `<th>` to make it a sort trigger (drop-in for `pSortableColumn` + `<p-sortIcon>`); it appends the three-state sort icon, exposes `aria-sort`, and is keyboard-operable.
+
+<Shots light={TumuiNativeTableLight} dark={TumuiNativeTableDark} alt="native table styled with tumUiTable and sortable columns" />
+
+| `[tumUiTable]` input / output | Type                               | Default    | Notes                                                                                                                 |
+| ----------------------------- | ---------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `size`                        | `'small' \| 'normal' \| 'large'`   | `'normal'` | Cell density (admin tables use `'small'`).                                                                            |
+| `striped`                     | `boolean`                          | `false`    | Zebra-stripe body rows.                                                                                               |
+| `scrollable`                  | `boolean`                          | `false`    | Pin the header while a bounded ancestor container scrolls.                                                            |
+| `rowHover`                    | `boolean`                          | `false`    | Tint body rows on hover.                                                                                              |
+| `styleClass`                  | `string`                           | `''`       | Classes forwarded onto the table (e.g. `mt-3`).                                                                       |
+| `sortField`                   | `string`                           | –          | Active sort field (**controlled**); drives icons + `aria-sort`.                                                       |
+| `sortOrder`                   | `number`                           | `1`        | Active sort order: `1` ascending, `-1` descending.                                                                    |
+| `defaultSortOrder`            | `number`                           | `1`        | Order applied when a previously-unsorted column is first clicked.                                                     |
+| `sortChange` (output)         | `{ field: string; order: number }` | –          | On a sortable-column activation. Shape matches PrimeNG's `SortEvent`, so existing `(onSort)` handlers work unchanged. |
+
+`[tumUiSortableColumn]="'field'"` is **required** on a sortable `<th>`; add `[disabled]="true"` to make a column non-sortable. Sorting is controlled — the directive holds no internal state; feed `sortChange` back into your query and pass the new `sortField` / `sortOrder` back in.
+
+```html
+<table tumUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onTableSort($event)">
+    <thead>
+        <tr>
+            <th scope="col" [tumUiSortableColumn]="'id'"><span jhiTranslate="global.field.id"></span></th>
+            <th scope="col" [tumUiSortableColumn]="'name'"><span jhiTranslate="…name"></span></th>
+            <th scope="col"><!-- non-sortable: plain th --></th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (row of rows(); track row.id) {
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.name }}</td>
+            <td class="text-end"><!-- row actions --></td>
+        </tr>
+        }
+    </tbody>
+</table>
+```
+
+<Callout variant={CalloutVariant.info}>
+    For very large lists, `tum-ui-table-virtual-scroll` renders only the visible rows via the CDK virtual scroller. Because the scroller is incompatible with native `<table>` row layout, its body is a `role="table"` **div grid** styled to match — use it only when virtualization is required (thousands of rows); reach for `[tumUiTable]` otherwise.
+</Callout>
 
 ## Testing
 
@@ -219,12 +1020,41 @@ so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-s
 
 ## Migrating to the kit
 
-| Legacy                                                     | Replacement       |
-| ---------------------------------------------------------- | ----------------- |
-| `<p-button>` / `<button pButton>`                          | `<tum-ui-button>` |
-| `<p-tag>`                                                  | `<tum-ui-tag>`    |
-| `pTooltip` / `NgbTooltip`                                  | `[tumUiTooltip]`  |
-| `NgbPopover` / `p-overlaypanel` / `NgbModal` (lightweight) | `tum-ui-popover`  |
+| Legacy                                                                       | Replacement                                                                                                                 |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `<p-button (onClick)>`                                                       | `<tum-ui-button (clicked)>`                                                                                                 |
+| `<a pButton>` / `<button pButton jhiDeleteButton>`                           | `<a tumUiButton>` / `<button tumUiButton …>` (attribute form; `[outlined]="true"`→`variant="outlined"`)                     |
+| `<p-tag>`                                                                    | `<tum-ui-tag>`                                                                                                              |
+| `pTooltip` / `NgbTooltip`                                                    | `[tumUiTooltip]`                                                                                                            |
+| `NgbPopover` / `p-overlaypanel` / `NgbModal` (lightweight)                   | `tum-ui-popover`                                                                                                            |
+| `<p-message>`                                                                | `<tum-ui-message>`                                                                                                          |
+| `pInputText` / `pTextarea`                                                   | `[tumUiInput]` / `[tumUiTextarea]`                                                                                          |
+| `<p-iconfield>` + `<p-inputicon>`                                            | `<tum-ui-icon-field>`                                                                                                       |
+| `<p-inputgroup>` + `<p-inputgroup-addon>`                                    | `<tum-ui-input-group>` + `<tum-ui-input-group-addon>`                                                                       |
+| `<p-select>`                                                                 | `<tum-ui-select>`                                                                                                           |
+| `<p-checkbox>`                                                               | `<tum-ui-checkbox>`                                                                                                         |
+| `<p-radiobutton>`                                                            | `<tum-ui-radio-button>`                                                                                                     |
+| `<p-toggleswitch (onChange)>`                                                | `<tum-ui-toggle-switch (changed)>`                                                                                          |
+| `<p-selectbutton (onChange)>` (+ `#item`)                                    | `<tum-ui-select-button (changed)>` (+ `[itemTemplate]`)                                                                     |
+| `<p-chip>` / `<p-autocomplete>`                                              | `<tum-ui-chip>` / `<tum-ui-autocomplete>`                                                                                   |
+| `<p-progressbar>` / `<p-progressspinner>`                                    | `<tum-ui-progress-bar>` / `<tum-ui-progress-spinner>`                                                                       |
+| `<p-card>` / `<p-panel>`                                                     | `<tum-ui-card>` / `<tum-ui-panel>`                                                                                          |
+| `<p-tabs>` / `<p-tablist>` / `<p-tab>` / `<p-tabpanels>` / `<p-tabpanel>`    | `<tum-ui-tabs>` / `<tum-ui-tab-list>` / `<tum-ui-tab>` / `<tum-ui-tab-panels>` / `<tum-ui-tab-panel>`                       |
+| `<p-buttongroup>`                                                            | `<tum-ui-button-group>`                                                                                                     |
+| `<p-dialog>` / `DialogService.open(...)`                                     | `<tum-ui-dialog [(visible)]>` (declarative; expose data via `input()`, result via `output()`)                               |
+| `<jhi-table-view>` / `<p-table>` (data-driven)                               | `<tum-ui-table>` (+ `buildDbQueryFromTableEvent`)                                                                           |
+| `<p-table>` (hand-templated) + `pSortableColumn` / `p-sortIcon` / `(onSort)` | native `<table tumUiTable>` + `[tumUiSortableColumn]` + `(sortChange)`; `tum-ui-table-virtual-scroll` for `[virtualScroll]` |
+| `<jhi-date-time-picker>` / `<p-datepicker>`                                  | `<tum-ui-date-picker>`                                                                                                      |
+| `<p-inputnumber>`                                                            | `<tum-ui-input-number>`                                                                                                     |
+| `<p-confirmdialog>` + `ConfirmationService`                                  | `<tum-ui-confirm-dialog>` + `TumUiConfirmationService`                                                                      |
+
+The severity-color house rule: `tum-ui` maps `severity` to the four Artemis semantic state tokens
+(`--info` = cyan, `--success`, `--warning` = yellow, `--danger`), not Aura's blue / sky / orange primitives,
+so a message and a tag of the same severity share one hue. Pixel-match new components by extracting the Aura
+tokens from `@primeuix/themes` + `@primeuix/styles` in `node_modules` and translating the formulas onto those
+state vars (as `primeng-artemis-theme.ts` remaps green / red / yellow / orange / cyan). Because admin specs blank
+their templates (`overrideTemplate`), template bindings are only type-checked by the Angular build — run
+`pnpm run webapp:build`, not just Vitest, after a template migration.
 
 Migrate one screen at a time and keep the existing component for everything else. Because the kit uses
 distinct selectors and the PrimeNG / ng-bootstrap dependencies stay installed, a partial migration is
@@ -239,7 +1069,6 @@ always safe to ship, and a rollback is just reverting the touched screen.
 ## Roadmap
 
 - Extract the settled components into `@tumaet/ui-angular` and consume it from Artemis and TumApply.
-- Grow the set as screens migrate (data table, paginator, date picker, menu, select, dialog service,
-  and more), always on CDK primitives.
+- Grow the set as screens migrate (menu, select, dialog service, and more), always on CDK primitives.
 - Keep the contracts aligned with the React kits used elsewhere in the TUM fleet so concepts transfer
   across apps.

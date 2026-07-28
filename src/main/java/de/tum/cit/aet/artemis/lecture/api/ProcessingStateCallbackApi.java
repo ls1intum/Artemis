@@ -51,16 +51,6 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     }
 
     /**
-     * Handle an Iris restart notification.
-     * All in-flight jobs are lost — mark them as failed with retry.
-     *
-     * @return the number of jobs that were reset
-     */
-    public int handleIrisReset() {
-        return processingStateCallbackService.handleIrisReset();
-    }
-
-    /**
      * Called when the processing pipeline completes (terminal Iris callback).
      * Validates the job token and marks the unit as DONE or handles failure.
      *
