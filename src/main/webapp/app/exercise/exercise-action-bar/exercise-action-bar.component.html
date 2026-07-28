@@ -9,7 +9,9 @@
     </span>
 
     <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
-         resizing only toggles that class, it never recreates buttons. -->
+         resizing only toggles that class, it never recreates buttons.
+         Keep `d-none`, not Tailwind `hidden`: `.inline-item`'s unlayered `display` beats a layered utility, so only
+         Bootstrap's `!important` actually hides. -->
     @for (item of inlineActions(); track item.action.id) {
         <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.d-none]="item.hidden">
             <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="item.context" />

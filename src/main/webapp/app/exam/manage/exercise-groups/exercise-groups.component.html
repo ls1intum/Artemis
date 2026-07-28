@@ -29,10 +29,10 @@
             <tum-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
                 <div tumUiPanelHeader class="flex items-center gap-2 w-full">
                     <div class="flex flex-col">
-                        <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 bg-transparent lh-1">
+                        <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 bg-transparent p-0 leading-none">
                             <fa-icon [icon]="faAngleUp" />
                         </a>
-                        <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups()!.length - 1" class="border-0 p-0 bg-transparent lh-1">
+                        <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups()!.length - 1" class="border-0 bg-transparent p-0 leading-none">
                             <fa-icon [icon]="faAngleDown" />
                         </a>
                     </div>

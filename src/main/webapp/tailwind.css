@@ -82,6 +82,13 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/shared-ui/tum-ui';
+/* AI exercise variant generation: tray, wizard, exam group management and the shared exercise action bar. */
+@source './app/core/navbar/variant-generation-tray';
+@source './app/course/manage/exercises/create-variant-modal';
+@source './app/course/manage/exercises/exercise-row';
+@source './app/exam/manage/exercise-groups';
+@source './app/exercise/exercise-action-bar';
+@source './app/exercise/exam-exercise-row-buttons';
 
 /*
  * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name

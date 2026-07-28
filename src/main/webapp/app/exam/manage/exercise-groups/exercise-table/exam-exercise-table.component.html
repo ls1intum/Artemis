@@ -53,7 +53,7 @@
                             </div>
                             @if (showDragHandle()) {
                                 <td>
-                                    <span cdkDragHandle class="pi pi-bars drag-handle" [title]="'artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate"></span>
+                                    <fa-icon cdkDragHandle [icon]="faBars" class="drag-handle" [title]="'artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate" />
                                 </td>
                             }
                             <td class="align-middle">

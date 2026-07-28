@@ -392,7 +392,7 @@
                                      field, oldest first (latest at the bottom) — earlier attempt errors stay
                                      inspectable after a later attempt succeeded. -->
                                 @if (hasAnyDetail(outputs)) {
-                                    <a class="block text-sm text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
+                                    <a class="block cursor-pointer text-sm no-underline" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
                                         <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                         {{ outputs[outputs.length - 1].summary }}
                                     </a>
@@ -490,10 +490,10 @@
             @if (jobPhase() === 'DRAFT_WITH_WARNINGS') {
                 <div class="ai-warning mb-4" data-testid="variant-wizard-warnings">
                     <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
-                    <div class="min-width-0">
+                    <div class="min-w-0">
                         <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
                         @if (warnings().length > 0) {
-                            <a class="block text-sm text-decoration-none pointer" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
+                            <a class="block cursor-pointer text-sm no-underline" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
                                 <fa-icon [icon]="warningsExpanded() ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ 'artemisApp.exerciseVariantGeneration.wizard.warningDetails' | artemisTranslate: { count: warnings().length } }}
                             </a>
@@ -559,7 +559,7 @@
                         <!-- Collapsed: the latest message's summary. Expanded: the phase's FULL history, each
                              message in its own scrollable code field, latest at the bottom. -->
                         @if (hasAnyDetail(entry.outputs)) {
-                            <a class="block text-decoration-none pointer" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
+                            <a class="block cursor-pointer no-underline" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
                                 <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ entry.outputs[entry.outputs.length - 1].summary }}
                             </a>
