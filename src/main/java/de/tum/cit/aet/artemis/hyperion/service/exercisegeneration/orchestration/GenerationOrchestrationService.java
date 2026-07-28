@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -151,7 +152,7 @@ public class GenerationOrchestrationService {
     }
 
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
         return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null);
     }
 
@@ -172,8 +173,9 @@ public class GenerationOrchestrationService {
      *                                repair-framed prompt; {@code null} otherwise
      * @return the outcome including the verification verdict and the produced files
      */
-    GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled, Consumer<String> progress,
-            @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink, @Nullable String originalSourceBrief) {
+    GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable String originalSourceBrief) {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
@@ -195,7 +197,7 @@ public class GenerationOrchestrationService {
                 new SandboxSessionContextDTO(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
         try {
             if (cancelled.getAsBoolean()) {
-                return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+                return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(sessionSpec);
@@ -210,18 +212,19 @@ public class GenerationOrchestrationService {
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
             if (cancelled.getAsBoolean()) {
                 return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
 
             emit(progress, "Checking the build environment");
             Optional<String> buildEnvironmentFailure = checkBuildEnvironment(sandbox, sessionId, exercise);
             if (cancelled.getAsBoolean()) {
                 return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
             if (buildEnvironmentFailure.isPresent()) {
                 destroyQuietly(sandbox, sessionId);
-                return GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""), buildEnvironmentFailure.get());
+                return GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""), buildEnvironmentFailure.get())
+                        .withTermination(TerminationReason.ENVIRONMENT_UNAVAILABLE);
             }
 
             String systemPrompt = systemPromptService.build(exercise, mode);
@@ -243,18 +246,18 @@ public class GenerationOrchestrationService {
                             tools, cancelled, progress, effectiveUsageSink));
             GenerationOutcome decidedInLoop = attemptLoop.run();
             if (decidedInLoop != null) {
-                return decidedInLoop;
+                return decidedInLoop.withTermination(attemptLoop.terminationReason());
             }
 
             emit(progress, "The run used " + attemptLoop.totalAgentTurns() + " agent turn(s) in total.");
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
             // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
             if ((attemptLoop.verification() == null || !attemptLoop.verification().mechanicallyVerified()) && attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
-                return preserveCandidate(attemptLoop.lastMechanicallyVerifiedCandidate(), sandbox, sessionId, workspaceSeed);
+                return preserveCandidate(attemptLoop.lastMechanicallyVerifiedCandidate(), sandbox, sessionId, workspaceSeed).withTermination(attemptLoop.terminationReason());
             }
             return new GenerationOutcome(attemptLoop.loopResult(), attemptLoop.verification(), sessionId, this, sandbox, attemptLoop.producedFilesByType(),
                     attemptLoop.producedProblemStatement(), attemptLoop.specFidelityReport(), workspaceSeed.repositoryHeads(), readSpecDocument(sandbox, sessionId),
-                    readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+                    readWorkspaceRootFile(sandbox, sessionId, "test-plan.json")).withTermination(attemptLoop.terminationReason());
         }
         catch (RuntimeException e) {
             GenerationAttemptLoop.CandidateSnapshot verifiedCheckpoint = attemptLoop == null ? null : attemptLoop.lastMechanicallyVerifiedCandidate();
@@ -262,17 +265,17 @@ public class GenerationOrchestrationService {
             // A build interrupted by the cancel hook surfaces as a throw; report it as a clean cancellation.
             if (cancelled.getAsBoolean()) {
                 if (verifiedCheckpoint != null && workspaceSeed != null) {
-                    return preserveCandidate(verifiedCheckpoint, sandbox, sessionId, workspaceSeed);
+                    return preserveCandidate(verifiedCheckpoint, sandbox, sessionId, workspaceSeed).withTermination(TerminationReason.CANCELLED);
                 }
                 return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, ""));
+                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
             if (verifiedCheckpoint != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint ({})", exercise.getId(),
                         e.getClass().getSimpleName(), e);
                 return new GenerationOutcome(verifiedCheckpoint.loopResult(), verifiedCheckpoint.verification(), sessionId, this, sandbox, verifiedCheckpoint.producedFiles(),
                         verifiedCheckpoint.problemStatement(), verifiedCheckpoint.reviewReport(), workspaceSeed.repositoryHeads(), verifiedCheckpoint.specDocument(),
-                        verifiedCheckpoint.testPlanJson());
+                        verifiedCheckpoint.testPlanJson()).withTermination(TerminationReason.RUN_FAILED);
             }
             if (extractedCheckpoint != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
@@ -281,13 +284,13 @@ public class GenerationOrchestrationService {
                         "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, extractedCheckpoint.producedFiles(), extractedCheckpoint.problemStatement(),
                         SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads(),
-                        readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+                        readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json")).withTermination(TerminationReason.RUN_FAILED);
             }
             GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
             if (diagnosticError != null) {
                 log.warn("Exercise generation failed after producing diagnostic artifacts for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName(), e);
-                return diagnosticError;
+                return diagnosticError.withTermination(TerminationReason.RUN_FAILED);
             }
             // No usable outcome exists for the caller to close.
             destroyQuietly(sandbox, sessionId);
@@ -618,7 +621,7 @@ public class GenerationOrchestrationService {
         }
     }
 
-    static void emit(Consumer<String> progress, String message) {
+    static void emit(@Nullable Consumer<String> progress, String message) {
         if (progress != null) {
             progress.accept(message);
         }

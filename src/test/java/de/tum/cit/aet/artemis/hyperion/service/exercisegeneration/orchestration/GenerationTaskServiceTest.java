@@ -969,4 +969,105 @@ class GenerationTaskServiceTest {
 
         verify(generationBudgetService).releaseReservation("reservation-2");
     }
+
+    // --- Termination reason on the terminal event ---
+
+    /**
+     * Whatever the attempt loop concluded must survive onto the terminal event, for every value of the closed enum: the harness reads the persisted terminal status, and a reason
+     * that only some branches carry is missing exactly when a campaign needs it.
+     */
+    @ParameterizedTest
+    @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
+    void terminalEvent_carriesTheOutcomesTerminationReason(ExerciseGenerationEventDTO.TerminationReason reason) {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())).withTermination(reason));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.terminationReason()).isEqualTo(reason);
+        assertThat(terminal.completionStatus()).as("the reason is orthogonal to what became of the result").isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+    }
+
+    @Test
+    void errorTerminalEvent_carriesTheOutcomesTerminationReason() {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, false, 0, List.of("the template passed every test")))
+                .withTermination(ExerciseGenerationEventDTO.TerminationReason.MECHANICAL_REPAIR_EXHAUSTED));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
+    }
+
+    @Test
+    void jobThatNeverReachedTheAttemptLoop_reportsThatItNeverStarted() {
+        when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(false);
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.NOT_STARTED);
+    }
+
+    @Test
+    void deadlineThatElapsedBeforeTheRunStarted_reportsTheDeadline() {
+        GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(),
+                Instant.now().minusSeconds(1));
+
+        taskService.runAsync(event);
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
+    }
+
+    @Test
+    void unexpectedFailureWhileHandlingTheOutcome_reportsTheRunAsFailed() {
+        when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("the job map is unreachable"));
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()))
+                .withTermination(ExerciseGenerationEventDTO.TerminationReason.CONVERGED));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.message()).isEqualTo("Generation failed.");
+        assertThat(terminal.terminationReason()).as("the task's own failure is not the loop's conclusion about the candidate")
+                .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
+    }
+
+    /**
+     * The attempt loop sees only a cooperative stop flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@code CANCELLED}; only the task knows
+     * which fired. Every other reason is the loop's own conclusion about the candidate and must survive untouched — a run that converged before the deadline fired terminated by
+     * converging.
+     */
+    @ParameterizedTest
+    @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
+    void runLevelBudgets_refineOnlyACooperativeStop(ExerciseGenerationEventDTO.TerminationReason reason) {
+        ExerciseGenerationEventDTO.TerminationReason refined = GenerationTaskService.refineTerminationReason(reason, true, true);
+
+        if (reason == ExerciseGenerationEventDTO.TerminationReason.CANCELLED) {
+            assertThat(refined).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
+        }
+        else {
+            assertThat(refined).isEqualTo(reason);
+        }
+    }
+
+    @Test
+    void aCooperativeStopUnderNoBudgetPressure_staysACancellation() {
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, false))
+                .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
+    }
+
+    @Test
+    void aCooperativeStopUnderTokenPressureAlone_reportsTheTokenBudget() {
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, true))
+                .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.TOKEN_BUDGET_EXHAUSTED);
+    }
+
+    @Test
+    void anOutcomeThatNothingStamped_leavesTheReasonAbsentRatherThanGuessing() {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        assertThat(sentEvents().getLast().terminationReason()).isNull();
+    }
+
 }

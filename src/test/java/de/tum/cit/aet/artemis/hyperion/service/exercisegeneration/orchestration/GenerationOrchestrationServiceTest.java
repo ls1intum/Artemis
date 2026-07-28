@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +48,8 @@ import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
@@ -1376,6 +1379,334 @@ class GenerationOrchestrationServiceTest {
             verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
             assertThat(prompts.getAllValues().get(1)).as("the first repair addresses the blocker, not the witness").contains("review blockers");
         }
+    }
+
+    // --- Termination reason: every exit of the attempt loop names itself, so "budget or convergence" is answerable from a run's artifact rather than from a log line ---
+
+    /**
+     * Runs a service whose semantic repair budget is {@code maxSemanticRepairs}, which also derives the attempt cap
+     * ({@link GenerationAttemptLoop#MAX_MECHANICAL_ATTEMPTS} + budget + 1). Referenced rather than copied so a change to that arithmetic breaks here instead of silently
+     * re-routing a scripted run into a different exit.
+     */
+    private GenerationOrchestrationService serviceWithRepairBudget(int maxSemanticRepairs) {
+        return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
+                jobService, Optional.of(testCaseRepository), 100, maxSemanticRepairs, stagedGenerationRunner, false, stageCheckService, new AgentTranscriptWriter(""),
+                new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry());
+    }
+
+    @Test
+    void acceptedWithNothingBlocking_terminatesAsConverged() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        }
+    }
+
+    @Test
+    void repairBudgetSpentWithBlockersRemaining_terminatesAsRepairBudgetExhausted() {
+        // The single most consequential distinction the artifacts could not previously make: a run that stopped because it ran out of rounds, not because it was finished.
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("unbounded blocker"));
+
+        try (GenerationOutcome outcome = serviceWithRepairBudget(1).generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null,
+                null, null)) {
+            assertThat(outcome.isMechanicallyVerified()).as("the exercise still stands; only the repair budget ran out").isTrue();
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REPAIR_BUDGET_EXHAUSTED);
+        }
+    }
+
+    @Test
+    void lastAttemptWithBlockersRemaining_terminatesAsAttemptCapReached() {
+        // Budget 1 caps attempts at MAX_MECHANICAL_ATTEMPTS + 1 + 1 = 6. Three pre-repair rejections, one repair, one post-repair correction, and the sixth attempt is the last.
+        makeSolutionChangeOnEachExtraction();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("first"), rejected("second"), rejected("third"),
+                accepted(), rejected("the repair broke the build"), accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("unbounded blocker"));
+
+        try (GenerationOutcome outcome = serviceWithRepairBudget(1).generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null,
+                null, null)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+        }
+
+        verify(agentLoopRunner, times(6)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void mechanicalPhaseSpentBeforeAnyRepair_terminatesAsMechanicalRepairExhausted() {
+        makeSolutionChangeOnEachExtraction();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still does not build"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
+        }
+
+        verify(agentLoopRunner, times(MAX_MECHANICAL_ATTEMPTS)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void repairThatKeepsBreakingTheBuild_terminatesAsPostRepairCorrectionExhausted() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("repair no longer compiles"),
+                rejected("repair still does not compile"));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("invalid events"));
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Verified", "# Broken repair", "# Still broken repair");
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).as("the preserved checkpoint is the verified one, not the broken repair").isTrue();
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED);
+        }
+    }
+
+    @Test
+    void reviewerThatNeverReturnsAVerdict_terminatesAsReviewUnavailable() {
+        // Distinct from an exhausted budget: the rounds were never spent, because the instrument that names the work failed.
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        }
+    }
+
+    @Test
+    void unchangedResubmittedCandidate_terminatesAsUnchangedCandidateResubmitted() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("template passed every test"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED);
+        }
+
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+    }
+
+    @Test
+    void cancellationInsideTheLoop_terminatesAsCancelled() {
+        SpecFidelityReport contractBlocker = reportWith("invalid events");
+        AgentLoopResult cancelledRepair = new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 2, "cancelled");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()), loopSession(cancelledRepair));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractBlocker);
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
+        }
+    }
+
+    @Test
+    void agentLoopError_terminatesAsAgentError() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
+                .thenReturn(loopSession(new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "provider stopped responding")));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.AGENT_ERROR);
+        }
+    }
+
+    @Test
+    void buildEnvironmentFailure_terminatesAsEnvironmentUnavailable() {
+        when(verifier.checkBuildEnvironment(sandbox, SESSION_ID, exercise)).thenReturn(Optional.of("The sandbox image is not offline-ready."));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
+        }
+    }
+
+    @Test
+    void unexpectedFailureWhileRepairing_terminatesAsRunFailed() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("invalid events"));
+        when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(Set.of()).thenThrow(new IllegalStateException("repair extraction failed"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
+        }
+    }
+
+    @Test
+    void cancellationBeforeTheSandboxExists_terminatesAsCancelled() {
+        try (GenerationOutcome outcome = generate(() -> true)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
+        }
+    }
+
+    @Test
+    void aBlockingFindingWithNoRepairSurface_isReportedAsNoSchedulableSurface() {
+        // Pinned directly on the classifier: no blocking Kind currently maps to a null surface, so the loop cannot reach this state today. That is itself the audit finding —
+        // the "no schedulable surface" condition never fired in 97 runs because it is unreachable, not only because it was unobservable.
+        SpecFidelityReport blockingWithNoSurface = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "unschedulable", "no surface owns it")));
+
+        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(blockingWithNoSurface)).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
+    void anUnschedulableReportWithoutBlockers_isReportedAsConverged() {
+        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(advisoryReportWith("a worked example would help"))).isEqualTo(TerminationReason.CONVERGED);
+        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.empty())).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void anUnschedulableReportFromAFailedReview_isReportedAsReviewUnavailable() {
+        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.qualityReviewUnavailable("no verdict"))).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.adaptationScopeUnavailable("no verdict"))).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    // --- Per-round finding drain: the counts that tell a recurring finding apart from a fresh one of the same category ---
+
+    /** Captures both halves of the progress channel: the human-readable lines, and the structured round telemetry rides on the same events. */
+    private static final class RecordingProgressSink implements GenerationProgressSink {
+
+        private final List<String> lines = new ArrayList<>();
+
+        private final List<ExerciseGenerationRepairRoundDTO> rounds = new ArrayList<>();
+
+        @Override
+        public void accept(String message) {
+            lines.add(message);
+        }
+
+        @Override
+        public void progress(String message, ExerciseGenerationRepairRoundDTO round) {
+            lines.add(message);
+            rounds.add(round);
+        }
+    }
+
+    private RecordingProgressSink generateRecordingProgress() {
+        RecordingProgressSink sink = new RecordingProgressSink();
+        try (GenerationOutcome ignored = service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, sink, null, null)) {
+            return sink;
+        }
+    }
+
+    private void acceptedCandidateReviewedAs(SpecFidelityReport first, SpecFidelityReport... rest) {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(first, rest);
+    }
+
+    @Test
+    void theSameFindingAfterARepair_isCountedAsCarriedOverRatherThanFresh() {
+        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("emoji graphemes"), SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds).hasSize(3);
+        assertThat(rounds.get(0)).as("the first round has nothing to compare against").satisfies(round -> {
+            assertThat(round.round()).isEqualTo(1);
+            assertThat(round.attempt()).isEqualTo(1);
+            assertThat(round.blocking()).isEqualTo(1);
+            assertThat(round.carriedOver()).isZero();
+            assertThat(round.drained()).isZero();
+            assertThat(round.fresh()).isEqualTo(1);
+        });
+        assertThat(rounds.get(1)).as("the repair did not fix the named defect").satisfies(round -> {
+            assertThat(round.carriedOver()).isEqualTo(1);
+            assertThat(round.drained()).isZero();
+            assertThat(round.fresh()).isZero();
+        });
+        assertThat(rounds.get(2)).as("the second repair drained it").satisfies(round -> {
+            assertThat(round.carriedOver()).isZero();
+            assertThat(round.drained()).isEqualTo(1);
+            assertThat(round.fresh()).isZero();
+            assertThat(round.blocking()).isZero();
+        });
+    }
+
+    @Test
+    void aDifferentFindingOfTheSameKind_isCountedAsDrainedPlusFreshRatherThanCarriedOver() {
+        // The whole point of per-finding identity: both rounds carry exactly one UNCOVERED_REQUIREMENT, so a Kind histogram cannot tell "unrepaired" from "bottomless well".
+        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("CJK graphemes"), SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(rounds.get(1)).satisfies(round -> {
+            assertThat(round.blocking()).as("the category histogram is identical to the previous round").isEqualTo(1);
+            assertThat(round.carriedOver()).isZero();
+            assertThat(round.drained()).isEqualTo(1);
+            assertThat(round.fresh()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void aRewordedDetailOnTheSameRequirement_stillCountsAsCarriedOver() {
+        // detail is prose the reviewer rewrites freely; treating it as part of the identity would report every finding as fresh and make drain unmeasurable.
+        SpecFidelityReport first = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji graphemes", "no test covers it")));
+        SpecFidelityReport reworded = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji graphemes",
+                "Still nothing asserts this; add an assertion over a multi-codepoint sequence.")));
+        acceptedCandidateReviewedAs(first, reworded, SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
+        assertThat(rounds.get(1).fresh()).isZero();
+    }
+
+    @Test
+    void aRequirementDifferingOnlyInCasingAndPunctuation_stillCountsAsCarriedOver() {
+        acceptedCandidateReviewedAs(reportWith("`emoji` graphemes are not counted"), reportWith("Emoji graphemes are not counted."), SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
+        assertThat(rounds.get(1).fresh()).isZero();
+    }
+
+    @Test
+    void aFindingUnderADifferentKind_isNotTheSameFinding() {
+        acceptedCandidateReviewedAs(reportWith("delegation is not proven"),
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "delegation is not proven", "a wrong forwarder passes"))),
+                SpecFidelityReport.empty());
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds.get(1).carriedOver()).isZero();
+        assertThat(rounds.get(1).drained()).isEqualTo(1);
+        assertThat(rounds.get(1).fresh()).isEqualTo(1);
+    }
+
+    @Test
+    void aMechanicallyRejectedAttempt_isNotAReviewRoundAndDoesNotResetTheBaseline() {
+        // A rejected attempt empties the report without asking the reviewer anything. Counting it as a round would report every finding drained precisely when nothing was
+        // reviewed, and would then report the same finding as fresh on the next real review.
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("the repair broke the build"),
+                accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("emoji graphemes"),
+                reportWith("emoji graphemes"), SpecFidelityReport.empty());
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Verified", "# Broken repair", "# Corrected repair", "# Final");
+
+        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
+
+        assertThat(rounds).extracting(ExerciseGenerationRepairRoundDTO::attempt).as("only the attempts that were actually reviewed produce a round").containsExactly(1, 3, 4);
+        assertThat(rounds.get(1)).satisfies(round -> {
+            assertThat(round.round()).isEqualTo(2);
+            assertThat(round.carriedOver()).as("the baseline survived the unreviewed attempt in between").isEqualTo(1);
+            assertThat(round.drained()).isZero();
+        });
+    }
+
+    @Test
+    void theRoundLine_readsAsProgressAndCarriesItsCountsOnTheSameEvent() {
+        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("CJK graphemes"), SpecFidelityReport.empty());
+
+        RecordingProgressSink sink = generateRecordingProgress();
+
+        assertThat(sink.lines).as("the existing human-readable lines are kept; the telemetry is additive")
+                .anySatisfy(line -> assertThat(line).contains("The review found", "1 blocking"));
+        assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 2", "0 still open from the previous round", "1 resolved", "1 new"));
+        assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 3", "no issues remain"));
     }
 
     @Test

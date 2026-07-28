@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExerciseGenerationRepairRound } from './exercise-generation-repair-round';
 import type { ExerciseGenerationVerdict } from './exercise-generation-verdict';
 
 export interface ExerciseGenerationEvent {
@@ -18,6 +19,8 @@ export interface ExerciseGenerationEvent {
     liveExerciseChanged?: boolean;
     savedRepositoryCommits?: { [key: string]: string };
     savedExerciseVersionId?: number;
+    terminationReason?: ExerciseGenerationEventTerminationReasonEnum;
+    repairRound?: ExerciseGenerationRepairRound;
     timestamp: string;
 }
 
@@ -42,3 +45,56 @@ export const ExerciseGenerationEventCompletionStatusEnum = {
 } as const;
 
 export const ExerciseGenerationEventCompletionStatusEnumValues = ['SUCCESS', 'NEEDS_REVIEW', 'PARTIAL'] as const;
+
+export type ExerciseGenerationEventTerminationReasonEnum =
+    | 'CONVERGED'
+    | 'REPAIR_BUDGET_EXHAUSTED'
+    | 'ATTEMPT_CAP_REACHED'
+    | 'MECHANICAL_REPAIR_EXHAUSTED'
+    | 'POST_REPAIR_CORRECTION_EXHAUSTED'
+    | 'NO_SCHEDULABLE_SURFACE'
+    | 'REVIEW_UNAVAILABLE'
+    | 'UNCHANGED_CANDIDATE_RESUBMITTED'
+    | 'CANCELLED'
+    | 'DEADLINE_EXCEEDED'
+    | 'TOKEN_BUDGET_EXHAUSTED'
+    | 'AGENT_ERROR'
+    | 'ENVIRONMENT_UNAVAILABLE'
+    | 'RUN_FAILED'
+    | 'NOT_STARTED';
+
+export const ExerciseGenerationEventTerminationReasonEnum = {
+    Converged: 'CONVERGED' as const,
+    RepairBudgetExhausted: 'REPAIR_BUDGET_EXHAUSTED' as const,
+    AttemptCapReached: 'ATTEMPT_CAP_REACHED' as const,
+    MechanicalRepairExhausted: 'MECHANICAL_REPAIR_EXHAUSTED' as const,
+    PostRepairCorrectionExhausted: 'POST_REPAIR_CORRECTION_EXHAUSTED' as const,
+    NoSchedulableSurface: 'NO_SCHEDULABLE_SURFACE' as const,
+    ReviewUnavailable: 'REVIEW_UNAVAILABLE' as const,
+    UnchangedCandidateResubmitted: 'UNCHANGED_CANDIDATE_RESUBMITTED' as const,
+    Cancelled: 'CANCELLED' as const,
+    DeadlineExceeded: 'DEADLINE_EXCEEDED' as const,
+    TokenBudgetExhausted: 'TOKEN_BUDGET_EXHAUSTED' as const,
+    AgentError: 'AGENT_ERROR' as const,
+    EnvironmentUnavailable: 'ENVIRONMENT_UNAVAILABLE' as const,
+    RunFailed: 'RUN_FAILED' as const,
+    NotStarted: 'NOT_STARTED' as const,
+} as const;
+
+export const ExerciseGenerationEventTerminationReasonEnumValues = [
+    'CONVERGED',
+    'REPAIR_BUDGET_EXHAUSTED',
+    'ATTEMPT_CAP_REACHED',
+    'MECHANICAL_REPAIR_EXHAUSTED',
+    'POST_REPAIR_CORRECTION_EXHAUSTED',
+    'NO_SCHEDULABLE_SURFACE',
+    'REVIEW_UNAVAILABLE',
+    'UNCHANGED_CANDIDATE_RESUBMITTED',
+    'CANCELLED',
+    'DEADLINE_EXCEEDED',
+    'TOKEN_BUDGET_EXHAUSTED',
+    'AGENT_ERROR',
+    'ENVIRONMENT_UNAVAILABLE',
+    'RUN_FAILED',
+    'NOT_STARTED',
+] as const;

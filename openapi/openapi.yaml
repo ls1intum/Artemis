@@ -1498,7 +1498,22 @@ components:
           type: object
           additionalProperties: {type: string}
         savedExerciseVersionId: {type: integer, format: int64}
+        terminationReason:
+          type: string
+          enum: [CONVERGED, REPAIR_BUDGET_EXHAUSTED, ATTEMPT_CAP_REACHED, MECHANICAL_REPAIR_EXHAUSTED, POST_REPAIR_CORRECTION_EXHAUSTED, NO_SCHEDULABLE_SURFACE, REVIEW_UNAVAILABLE, UNCHANGED_CANDIDATE_RESUBMITTED, CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED, AGENT_ERROR, ENVIRONMENT_UNAVAILABLE, RUN_FAILED, NOT_STARTED]
+        repairRound: {$ref: '#/components/schemas/ExerciseGenerationRepairRound'}
         timestamp: {type: string, format: date-time}
+    ExerciseGenerationRepairRound:
+      type: object
+      required: [round, attempt, blocking, advisory, carriedOver, drained, fresh]
+      properties:
+        round: {type: integer, format: int32}
+        attempt: {type: integer, format: int32}
+        blocking: {type: integer, format: int32}
+        advisory: {type: integer, format: int32}
+        carriedOver: {type: integer, format: int32}
+        drained: {type: integer, format: int32}
+        fresh: {type: integer, format: int32}
     ExerciseGenerationVerdict:
       type: object
       required: [mechanicallyVerified, solutionPassed, templateFailed, testCount, reasons]

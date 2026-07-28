@@ -13,6 +13,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -147,16 +149,19 @@ public class GenerationTaskService {
         ScheduledFuture<?> heartbeatFuture = null;
         try {
             if (jobService.isCancelled(jobId)) {
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed.")
+                        .withTerminationReason(TerminationReason.CANCELLED));
                 return;
             }
             if (!jobService.isActiveJob(exerciseId, jobId)) {
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was superseded or expired. Nothing was changed."));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was superseded or expired. Nothing was changed.")
+                        .withTerminationReason(TerminationReason.NOT_STARTED));
                 return;
             }
             if (isDeadlineExceeded(event.deadlineAt())) {
                 deadlineExceeded.set(true);
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false))
+                        .withTerminationReason(TerminationReason.DEADLINE_EXCEEDED));
                 return;
             }
             // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are
@@ -165,12 +170,14 @@ public class GenerationTaskService {
             ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
             if (exercise == null) {
                 log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists.")
+                        .withTerminationReason(TerminationReason.NOT_STARTED));
                 return;
             }
             if (!LanguageGenerationProfile.isSupported(exercise, !auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty())) {
                 emitter.milestone(
-                        ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because the exercise configuration is no longer supported."));
+                        ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because the exercise configuration is no longer supported.")
+                                .withTerminationReason(TerminationReason.NOT_STARTED));
                 return;
             }
             deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
@@ -181,23 +188,28 @@ public class GenerationTaskService {
             BooleanSupplier cancelled = () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get()
                     || heartbeatLost.get();
             GenerationOutcome generated = event.sourceBrief() == null
-                    ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink)
-                    : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter::progress, fileChangeSink, usageSink, event.sourceBrief());
+                    ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink)
+                    : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief());
             try (GenerationOutcome outcome = generated) {
+                // Why the run stopped producing candidates, decided once for every terminal branch below. The run-level controls the attempt loop cannot see refine its own
+                // cooperative stop into the specific budget that ended it.
+                TerminationReason terminationReason = refineTerminationReason(outcome.terminationReason(), deadlineExceeded.get(), tokenBudgetExceeded.get());
                 // Before any terminal branch below, so specification quality stays inspectable through the status/replay API even for a run that is never saved.
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }
                 if (tokenAccountingFailed.get()) {
-                    emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                            "Generation stopped because token usage could not be accounted for. Nothing was changed."));
+                    emitter.milestone(ExerciseGenerationEventDTO
+                            .of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation stopped because token usage could not be accounted for. Nothing was changed.")
+                            .withTerminationReason(terminationReason));
                     return;
                 }
                 if (tokenBudgetExceeded.get()) {
                     // The budget controls provider spend, so it stops further model calls but must not discard work already paid for: saving consumes no provider tokens. Only
                     // a run without a mechanically verified candidate ends here.
                     if (!outcome.isMechanicallyVerified()) {
-                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false)));
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false))
+                                .withTerminationReason(terminationReason));
                         return;
                     }
                     emitter.progress("The token budget was reached; keeping and saving the already-verified exercise instead of discarding it.");
@@ -206,18 +218,20 @@ public class GenerationTaskService {
                     // Same rule as the token budget above: the deadline stops further model work, it does not invalidate a candidate that already passed verification, and
                     // persisting one neither re-runs nor re-bills it. Only a deadline hit with no verified checkpoint discards.
                     if (!outcome.isMechanicallyVerified()) {
-                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false))
+                                .withTerminationReason(terminationReason));
                         return;
                     }
                     emitter.progress("The time budget was reached; keeping and saving the already-verified exercise for review instead of discarding it.");
                 }
                 switch (outcome.loopResult().status()) {
-                    case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                            cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
+                    case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO
+                            .of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get()))
+                            .withTerminationReason(terminationReason));
                     case ERROR -> {
                         String message = outcome.hasCapturedArtifacts() ? "Generation stopped before mechanical verification completed. Nothing was saved."
                                 : outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed.";
-                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message));
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message).withTerminationReason(terminationReason));
                     }
                     // A budget-exhausted run may still have produced a mechanically verified exercise before the turn cap.
                     case COMPLETED, BUDGET_EXHAUSTED -> {
@@ -226,8 +240,9 @@ public class GenerationTaskService {
                         ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                         if (!outcome.isMechanicallyVerified()) {
                             String report = outcome.verification() == null ? "No mechanical verification result was produced." : outcome.verification().report();
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "Generation did not pass mechanical verification. Nothing was saved. " + conciseReason(report)));
+                            emitter.milestone(ExerciseGenerationEventDTO
+                                    .of(ExerciseGenerationEventDTO.Type.ERROR, "Generation did not pass mechanical verification. Nothing was saved. " + conciseReason(report))
+                                    .withTerminationReason(terminationReason));
                             break;
                         }
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
@@ -235,11 +250,14 @@ public class GenerationTaskService {
                             // requestCancellation/requestSystemCancellation: either a cancellation already won the race (the transcript is already terminal as CANCELLED, so
                             // this run must be reported the same way, never as a save failure), or ownership of the job was genuinely lost.
                             if (jobService.isCancelled(jobId)) {
-                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed.")
+                                        .withTerminationReason(terminationReason));
                             }
                             else {
-                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                        "The generated exercise passed verification but could not be saved because job ownership was lost."));
+                                emitter.milestone(ExerciseGenerationEventDTO
+                                        .of(ExerciseGenerationEventDTO.Type.ERROR,
+                                                "The generated exercise passed verification but could not be saved because job ownership was lost.")
+                                        .withTerminationReason(terminationReason));
                             }
                             return;
                         }
@@ -259,40 +277,44 @@ public class GenerationTaskService {
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
                             if (!e.liveExerciseChanged()) {
-                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                        "The generated exercise passed verification but could not be saved. All changes were reverted."));
+                                emitter.milestone(ExerciseGenerationEventDTO
+                                        .of(ExerciseGenerationEventDTO.Type.ERROR, "The generated exercise passed verification but could not be saved. All changes were reverted.")
+                                        .withTerminationReason(terminationReason));
                                 return;
                             }
                             emitter.milestone(ExerciseGenerationEventDTO.done(
                                     "Saving did not complete. Some changes may already have been saved; manual review is required. Automatic revert to the previous state is no longer available for this exercise.",
-                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(), e.savedRepositoryCommits().entrySet().stream()
-                                            .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue))));
+                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, e.liveExerciseChanged(),
+                                    e.savedRepositoryCommits().entrySet().stream()
+                                            .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)))
+                                    .withTerminationReason(terminationReason));
                             return;
                         }
                         catch (RuntimeException e) {
                             log.error("Failed to persist generated exercise {}", exerciseId, e);
                             if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
-                                reportContinuationFailure(emitter);
+                                reportContinuationFailure(emitter, terminationReason);
                                 return;
                             }
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "The generated exercise passed verification but could not be saved. Nothing was changed."));
+                            emitter.milestone(ExerciseGenerationEventDTO
+                                    .of(ExerciseGenerationEventDTO.Type.ERROR, "The generated exercise passed verification but could not be saved. Nothing was changed.")
+                                    .withTerminationReason(terminationReason));
                             return;
                         }
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
-                            reportUncertainLiveSave(verdict, emitter);
+                            reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
                         if (isNoOpPersist(persistResult)) {
                             emitter.milestone(ExerciseGenerationEventDTO.done("The generated exercise already matched the current exercise. No changes were needed.",
-                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, false, Map.of()));
+                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, false, Map.of()).withTerminationReason(terminationReason));
                             return;
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
                                 persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
                                 persistResult.persistedTitle(), persistResult.repositoryBranch());
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
-                            reportUncertainLiveSave(verdict, emitter);
+                            reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
                         Map<RepositoryType, String> savedRepositoryHeads = new EnumMap<>(RepositoryType.class);
@@ -320,7 +342,7 @@ public class GenerationTaskService {
                             savedMessage += " Automatic revert is unavailable for this run.";
                         }
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
-                            reportUncertainLiveSave(verdict, emitter);
+                            reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
                         }
                         boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings();
@@ -332,13 +354,13 @@ public class GenerationTaskService {
                                 true,
                                 persistResult.postPersistHeads().entrySet().stream()
                                         .collect(Collectors.toUnmodifiableMap(entry -> entry.getKey().name().toLowerCase(Locale.ROOT), Map.Entry::getValue)),
-                                persistResult.savedExerciseVersionId()));
+                                persistResult.savedExerciseVersionId()).withTerminationReason(terminationReason));
                     }
                 }
             }
             catch (RuntimeException e) {
                 log.error("Exercise generation job {} failed", jobId, e);
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed."));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
         }
         finally {
@@ -429,15 +451,42 @@ public class GenerationTaskService {
         }
     }
 
-    private static void reportContinuationFailure(GenerationProgressEmitter emitter) {
-        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                "Generation stopped because job ownership could not be verified. Further changes were aborted."));
+    private static void reportContinuationFailure(GenerationProgressEmitter emitter, @Nullable TerminationReason terminationReason) {
+        emitter.milestone(ExerciseGenerationEventDTO
+                .of(ExerciseGenerationEventDTO.Type.ERROR, "Generation stopped because job ownership could not be verified. Further changes were aborted.")
+                .withTerminationReason(terminationReason));
     }
 
-    private static void reportUncertainLiveSave(ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter) {
+    private static void reportUncertainLiveSave(ExerciseGenerationVerdictDTO verdict, GenerationProgressEmitter emitter, @Nullable TerminationReason terminationReason) {
         emitter.milestone(ExerciseGenerationEventDTO.done(
                 "The live save may be incomplete or the save may already have completed, but the job could not safely continue; manual review is required. No further durable side effects were started after the stop was detected.",
-                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true));
+                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true).withTerminationReason(terminationReason));
+    }
+
+    /**
+     * Sharpens the attempt loop's own stop reason with the run-level budgets it cannot observe.
+     * <p>
+     * The loop sees only a cooperative {@code cancelled} flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@link TerminationReason#CANCELLED};
+     * only this class knows which fired. Every other reason is the loop's own conclusion about the candidate and is passed through untouched — a run that converged before the
+     * deadline fired still terminated by converging.
+     *
+     * @param reason              the reason the attempt loop recorded, or {@code null} when no loop produced this outcome
+     * @param deadlineExceeded    whether the run's wall-clock budget elapsed
+     * @param tokenBudgetExceeded whether the run's provider token budget was reached
+     * @return the reason to report on the terminal event
+     */
+    @Nullable
+    static TerminationReason refineTerminationReason(@Nullable TerminationReason reason, boolean deadlineExceeded, boolean tokenBudgetExceeded) {
+        if (reason != TerminationReason.CANCELLED) {
+            return reason;
+        }
+        if (deadlineExceeded) {
+            return TerminationReason.DEADLINE_EXCEEDED;
+        }
+        if (tokenBudgetExceeded) {
+            return TerminationReason.TOKEN_BUDGET_EXHAUSTED;
+        }
+        return TerminationReason.CANCELLED;
     }
 
     private ProviderUsageSink budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded,

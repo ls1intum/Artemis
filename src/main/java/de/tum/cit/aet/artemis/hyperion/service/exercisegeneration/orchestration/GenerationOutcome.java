@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -64,6 +65,15 @@ public final class GenerationOutcome implements AutoCloseable {
     @Nullable
     private final String testPlanJson;
 
+    /**
+     * Why the run stopped producing candidates, stamped by the orchestrator on the single thread that builds and returns this outcome, before it is handed to the caller.
+     * <p>
+     * Not a constructor parameter because the attempt loop only knows the reason once it has already produced the outcome object it is about to return; a stamp keeps every
+     * construction site readable and lets the reason be attached exactly where the exit is taken. Purely observational: nothing in persistence or the verdict reads it.
+     */
+    @Nullable
+    private TerminationReason terminationReason;
+
     private final AtomicBoolean closed = new AtomicBoolean();
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
@@ -114,6 +124,27 @@ public final class GenerationOutcome implements AutoCloseable {
 
     static GenerationOutcome error(AgentLoopResult loopResult, String errorMessage) {
         return new GenerationOutcome(loopResult, errorMessage);
+    }
+
+    /**
+     * Records why the run ended. The first reason wins, so a wrapping path that adds context cannot overwrite the precise reason the exit itself recorded.
+     *
+     * @param reason the machine-readable termination reason
+     * @return this outcome, so the stamp reads inline at the {@code return} that takes the exit
+     */
+    GenerationOutcome withTermination(@Nullable TerminationReason reason) {
+        if (this.terminationReason == null) {
+            this.terminationReason = reason;
+        }
+        return this;
+    }
+
+    /**
+     * @return why the run stopped producing candidates, or {@code null} when the outcome was produced outside the attempt loop and nothing stamped it
+     */
+    @Nullable
+    public TerminationReason terminationReason() {
+        return terminationReason;
     }
 
     public SpecFidelityReport specFidelityReport() {

@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 
 /**
  * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: it streams every progress line to the live client immediately (per-turn feedback, no
@@ -97,6 +98,47 @@ class GenerationProgressEmitterTest {
 
         assertThat(recorded).hasSize(1);
         assertThat(recorded.getFirst().terminal()).isFalse();
+    }
+
+    @Test
+    void repairRoundLine_carriesItsCountsOnTheSameEventItStreams() {
+        // The counts must ride the event the client and the persisted transcript already carry; a second, parallel channel would be invisible to reconnect replay.
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Quality review round 2: 3 issues", new ExerciseGenerationRepairRoundDTO(2, 4, 2, 1, 2, 1, 1));
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.message()).isEqualTo("Quality review round 2: 3 issues");
+            assertThat(event.repairRound()).isEqualTo(new ExerciseGenerationRepairRoundDTO(2, 4, 2, 1, 2, 1, 1));
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> {
+            assertThat(entry.terminal()).isFalse();
+            assertThat(entry.event().repairRound().carriedOver()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void plainProgressLine_carriesNoRepairRound() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Setting up the build environment");
+
+        assertThat(sent).singleElement().satisfies(event -> assertThat(event.repairRound()).isNull());
+    }
+
+    /**
+     * The channel the attempt loop is handed must be usable as a plain {@code Consumer<String>}; every stage below the loop takes one, and a caller that supplies only a lambda
+     * must still get the human-readable line rather than losing it.
+     */
+    @Test
+    void aPlainConsumerSink_stillReceivesTheRoundLineWithoutTheCounts() {
+        List<String> lines = new ArrayList<>();
+        GenerationProgressSink sink = lines::add;
+
+        sink.progress("Quality review round 1: 2 issues found.", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+
+        assertThat(lines).containsExactly("Quality review round 1: 2 issues found.");
     }
 
     @Test

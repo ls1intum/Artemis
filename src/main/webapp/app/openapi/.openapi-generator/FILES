@@ -37,6 +37,7 @@ model/exam-seat.ts
 model/exercise-generation-event.ts
 model/exercise-generation-file-change.ts
 model/exercise-generation-job-start.ts
+model/exercise-generation-repair-round.ts
 model/exercise-generation-request.ts
 model/exercise-generation-revert-result.ts
 model/exercise-generation-status.ts

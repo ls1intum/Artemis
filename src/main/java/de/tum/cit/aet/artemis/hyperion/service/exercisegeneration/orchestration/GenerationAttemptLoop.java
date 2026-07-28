@@ -22,6 +22,8 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
@@ -55,6 +57,9 @@ class GenerationAttemptLoop {
     /** Initial candidate plus at most three mechanical repairs. */
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
+    /** Bounds one finding-identity key. A reviewer that emits a whole paragraph as a "requirement" must not turn the per-round identity set into an unbounded allocation. */
+    private static final int MAX_IDENTITY_REQUIREMENT_CHARS = 300;
+
     record Dependencies(GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner, DifferentialVerificationService verifier,
             StructuralOracleSeedingService structuralOracleSeeder, SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService,
             StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter, boolean stagedGenerationEnabled, int maxTurns, int maxGenerationAttempts,
@@ -68,8 +73,8 @@ class GenerationAttemptLoop {
     record RunContext(ProgrammingExercise exercise, GenerationMode mode, String jobId, InteractiveSandbox sandbox, String sessionId,
             GenerationWorkspaceService.WorkspaceSeed workspaceSeed, Map<String, String> testsSeedSnapshot, Map<String, String> placeholderReplacements,
             Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement, Set<String> baselineGradedTestNames, String sourceBrief,
-            boolean specStageApplies, String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools, BooleanSupplier cancelled, Consumer<String> progress,
-            Consumer<ChatResponse> usageSink) {
+            boolean specStageApplies, String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools, BooleanSupplier cancelled,
+            @Nullable GenerationProgressSink progress, Consumer<ChatResponse> usageSink) {
     }
 
     private record CandidateArtifacts(Map<RepositoryType, Map<String, String>> candidateFiles, Set<String> extractionFailed, VerificationRequest verificationRequest,
@@ -144,7 +149,8 @@ class GenerationAttemptLoop {
 
     private final BooleanSupplier cancelled;
 
-    private final Consumer<String> progress;
+    @Nullable
+    private final GenerationProgressSink progress;
 
     private final Consumer<ChatResponse> usageSink;
 
@@ -223,6 +229,19 @@ class GenerationAttemptLoop {
     @Nullable
     private ExtractedCandidate lastExtractedCandidate;
 
+    // Instrumentation only; nothing below is read by a scheduling decision, a gate, or the verdict.
+
+    // Why this loop stopped, recorded at the exit that takes it. Written once per run: the run's only reader is the owning service, which stamps it onto the outcome so the
+    // terminal event carries it. Prose in a log line cannot answer "budget or convergence"; this can.
+    @Nullable
+    private TerminationReason terminationReason;
+
+    // The identities of the previous review round's findings, so drain can be measured per finding rather than per category. Survives a mechanically rejected attempt (which
+    // resets the report to empty without reviewing anything), so the next real review still compares against the last real one.
+    private Set<String> previousRoundFindingIdentities = Set.of();
+
+    private int reviewRounds;
+
     GenerationAttemptLoop(GenerationOrchestrationService service, Dependencies dependencies, RunContext context) {
         this.service = service;
         this.workspace = dependencies.workspace();
@@ -299,6 +318,7 @@ class GenerationAttemptLoop {
             }
             if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())) {
                 emit("The agent resubmitted the unchanged rejected candidate; stopping without repeating the same verification.");
+                terminationReason = TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED;
                 break;
             }
             // Snapshot the approved SPEC.md before verification: each restore below resets the tmpfs workspace, and without re-seeding it the contract would be silently gone
@@ -318,7 +338,7 @@ class GenerationAttemptLoop {
 
             // Reviewing a candidate that cannot build or grade would spend provider quota on findings against artifacts the next attempt must replace anyway.
             if (verification.mechanicallyVerified()) {
-                GenerationOutcome cancelledDuringReview = reviewCandidate(artifacts, specDocumentSnapshot);
+                GenerationOutcome cancelledDuringReview = reviewCandidate(attempt, artifacts, specDocumentSnapshot);
                 if (cancelledDuringReview != null) {
                     return cancelledDuringReview;
                 }
@@ -334,13 +354,16 @@ class GenerationAttemptLoop {
                     // An adaptation gets a single semantic round; spending it on optional tests rather than on a defect would be a poor trade.
                     && mode == GenerationMode.GENERATE && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
+                terminationReason = TerminationReason.CONVERGED;
                 break;
             }
             if (attempt == maxGenerationAttempts) {
+                terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
                 break;
             }
             if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
                 emit("The bounded mechanical repair phase is exhausted; keeping the current candidate for instructor review.");
+                terminationReason = TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
                 break;
             }
             if (verification.mechanicallyVerified()) {
@@ -352,6 +375,7 @@ class GenerationAttemptLoop {
             if (semanticRepairsStarted > 0 && mechanicalCorrectionsAfterRepairRemaining == 0) {
                 emit("The one mechanical correction after semantic repair was not enough; preserving the last mechanically verified candidate instead of starting "
                         + "another open-ended repair cycle.");
+                terminationReason = TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED;
                 break;
             }
             if (semanticRepairsStarted > 0) {
@@ -360,6 +384,12 @@ class GenerationAttemptLoop {
             }
             emit("Verification rejected the exercise; asking the agent to fix the issues and try again.");
             currentPrompt = mechanicalRejectionPrompt(attempt);
+        }
+        if (terminationReason == null) {
+            // Reachable only when the derived attempt cap is non-positive, so the body never ran and no exit above was taken. Recorded rather than left absent — a termination
+            // reason that can be missing is missing exactly when a campaign needs it — but logged, because a silent default here would hide a real regression in the exits above.
+            log.warn("Exercise {} generation loop ended without recording a termination reason at any exit; attributing it to the attempt cap", exercise.getId());
+            terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
         }
         return null;
     }
@@ -419,6 +449,7 @@ class GenerationAttemptLoop {
             return cancelledOutcome(loopResult);
         }
         if (loopResult.status() == AgentLoopResult.Status.ERROR) {
+            terminationReason = TerminationReason.AGENT_ERROR;
             if (lastMechanicallyVerifiedCandidate != null) {
                 return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
             }
@@ -527,7 +558,7 @@ class GenerationAttemptLoop {
 
     /** Returns an outcome only when a cancellation arrived during the review; {@code null} means the run continues. */
     @Nullable
-    private GenerationOutcome reviewCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+    private GenerationOutcome reviewCandidate(int attempt, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         @Nullable
         String adaptationChanges = mode == GenerationMode.ADAPT
                 ? GenerationOrchestrationService.renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
@@ -548,11 +579,74 @@ class GenerationAttemptLoop {
         }
         lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement, specFidelityReport,
                 specDocumentSnapshot, artifacts.testPlanJson());
+        recordReviewRound(attempt);
         if (cancelled.getAsBoolean()) {
             CandidateSnapshot safeCheckpoint = candidateBeforeCurrentRepair == null ? lastMechanicallyVerifiedCandidate : candidateBeforeCurrentRepair;
+            terminationReason = TerminationReason.CANCELLED;
             return service.preserveCandidate(safeCheckpoint, sandbox, sessionId, workspaceSeed);
         }
         return null;
+    }
+
+    /**
+     * Records how this review's findings relate to the previous review's, and emits the counts on the round's progress event.
+     * <p>
+     * Only a completed review is a round: a mechanically rejected attempt resets the report to empty without asking the reviewer anything, and counting that as "every finding
+     * drained" would report the repair loop working precisely when it is not. Purely observational — no caller reads the counts.
+     *
+     * @param attempt the authoring attempt whose candidate was just reviewed
+     */
+    private void recordReviewRound(int attempt) {
+        Set<String> currentIdentities = findingIdentities(specFidelityReport);
+        int carriedOver = (int) currentIdentities.stream().filter(previousRoundFindingIdentities::contains).count();
+        int drained = (int) previousRoundFindingIdentities.stream().filter(identity -> !currentIdentities.contains(identity)).count();
+        int fresh = currentIdentities.size() - carriedOver;
+        int blocking = (int) specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).count();
+        int advisory = specFidelityReport.findings().size() - blocking;
+        previousRoundFindingIdentities = currentIdentities;
+        reviewRounds++;
+        ExerciseGenerationRepairRoundDTO round = new ExerciseGenerationRepairRoundDTO(reviewRounds, attempt, blocking, advisory, carriedOver, drained, fresh);
+        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.getId(), reviewRounds, attempt,
+                blocking, advisory, carriedOver, drained, fresh);
+        emitRound(roundMessage(round), round);
+    }
+
+    private static String roundMessage(ExerciseGenerationRepairRoundDTO round) {
+        int total = round.carriedOver() + round.fresh();
+        if (total == 0) {
+            return "Quality review round " + round.round() + ": no issues remain.";
+        }
+        String issues = total + (total == 1 ? " issue" : " issues");
+        if (round.round() == 1) {
+            return "Quality review round " + round.round() + ": " + issues + " found.";
+        }
+        return "Quality review round " + round.round() + ": " + issues + " — " + round.carriedOver() + " still open from the previous round, " + round.drained() + " resolved, "
+                + round.fresh() + " new.";
+    }
+
+    /**
+     * The identity of every finding in {@code report}, deduplicated.
+     * <p>
+     * Identity is the finding's {@link SpecFidelityReport.Kind} plus its normalised {@code requirement}, and deliberately not the whole record: {@code detail} is prose the
+     * reviewer rewrites freely between rounds while the underlying defect does not move, so hashing it would report every finding as fresh and make drain unmeasurable. The
+     * requirement is the defect's own name ("CJK graphemes are not counted", "throws on zero capacity"), and the kind is kept because the same requirement under a different kind
+     * is a different defect calling for a different repair.
+     * <p>
+     * Matching is exact on the normalised text, with no similarity threshold: a threshold cannot be calibrated until the reviewer's own run-to-run stability is measured, and an
+     * uncalibrated one would silently decide the very question this instrument exists to answer. The known cost is stated rather than hidden — a reviewer that rephrases the same
+     * defect registers it as one drained plus one fresh, which overstates drain. Normalisation removes the cheap half of that (casing, punctuation, quoting, whitespace).
+     */
+    private static Set<String> findingIdentities(SpecFidelityReport report) {
+        return report.findings().stream().map(GenerationAttemptLoop::findingIdentity).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private static String findingIdentity(SpecFidelityReport.Finding finding) {
+        return finding.kind().name() + '\n' + normalizeRequirement(finding.requirement());
+    }
+
+    private static String normalizeRequirement(String requirement) {
+        String normalized = requirement.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").strip();
+        return normalized.length() <= MAX_IDENTITY_REQUIREMENT_CHARS ? normalized : normalized.substring(0, MAX_IDENTITY_REQUIREMENT_CHARS);
     }
 
     /**
@@ -564,10 +658,10 @@ class GenerationAttemptLoop {
     private LoopStep applySemanticRepair(int attempt, boolean adoptWitnesses, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         if (semanticRepairsStarted >= semanticRepairLimit) {
             emit("The bounded semantic repair phase is exhausted; keeping the latest mechanically verified candidate and its current review findings.");
+            terminationReason = TerminationReason.REPAIR_BUDGET_EXHAUSTED;
             return LoopStep.STOP;
         }
-        boolean reviewUnavailable = specFidelityReport.findings().stream().anyMatch(
-                finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        boolean reviewUnavailable = hasReviewUnavailableFinding(specFidelityReport);
         Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? SemanticRepairBatch.witnessAdoption(specFidelityReport) : chooseRepairSurface();
         if (adoptWitnesses) {
             witnessAdoptionAttempted = true;
@@ -588,9 +682,11 @@ class GenerationAttemptLoop {
                         effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
                 lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                         specFidelityReport, specDocumentSnapshot, artifacts.testPlanJson());
+                recordReviewRound(attempt);
                 repairBatch = chooseRepairSurface();
             }
             if (repairBatch.isEmpty()) {
+                terminationReason = reasonForUnschedulableReport(specFidelityReport);
                 return LoopStep.STOP;
             }
         }
@@ -599,6 +695,7 @@ class GenerationAttemptLoop {
             log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), semanticRepairsStarted,
                     semanticRepairLimit, specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                             .collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())));
+            terminationReason = reasonForUnschedulableReport(specFidelityReport);
             return LoopStep.STOP;
         }
         candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
@@ -616,6 +713,30 @@ class GenerationAttemptLoop {
                 : "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
         currentPrompt = adoptWitnesses ? witnessAdoptionPrompt(attempt, specSnapshot.get(), repairBatch.get()) : semanticRepairPrompt(attempt, repairBatch.get());
         return LoopStep.NEXT_ATTEMPT;
+    }
+
+    /**
+     * Why a run ends when the scheduler has no batch to offer. The three cases look identical from the outside and call for opposite fixes, so they are never collapsed:
+     * a reviewer that could not produce a verdict is an instrument failure, a candidate whose remaining findings are all advisory is a converged run, and a blocking finding that
+     * maps to no repair surface is a gap in the surface map.
+     *
+     * @param report the review the scheduler was given
+     * @return the reason to record for this exit
+     */
+    static TerminationReason reasonForUnschedulableReport(SpecFidelityReport report) {
+        if (hasReviewUnavailableFinding(report)) {
+            return TerminationReason.REVIEW_UNAVAILABLE;
+        }
+        if (!report.hasBlockingFindings()) {
+            return TerminationReason.CONVERGED;
+        }
+        return TerminationReason.NO_SCHEDULABLE_SURFACE;
+    }
+
+    /** Whether the report says "the review could not complete" rather than anything about the exercise. */
+    private static boolean hasReviewUnavailableFinding(SpecFidelityReport report) {
+        return report.findings().stream().anyMatch(
+                finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
     }
 
     private Optional<SemanticRepairBatch> chooseRepairSurface() {
@@ -817,6 +938,8 @@ class GenerationAttemptLoop {
     }
 
     private GenerationOutcome cancelledOutcome(AgentLoopResult cancelledResult) {
+        // Every caller of this method is a cooperative stop, so the reason belongs here rather than repeated at each of them.
+        terminationReason = TerminationReason.CANCELLED;
         if (lastMechanicallyVerifiedCandidate != null) {
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
@@ -853,6 +976,13 @@ class GenerationAttemptLoop {
         GenerationOrchestrationService.emit(progress, message);
     }
 
+    /** The same progress line every other stage emits, with this round's counts attached so the persisted transcript is machine-readable without parsing the prose. */
+    private void emitRound(String message, ExerciseGenerationRepairRoundDTO round) {
+        if (progress != null) {
+            progress.progress(message, round);
+        }
+    }
+
     @Nullable
     AgentLoopResult loopResult() {
         return loopResult;
@@ -887,5 +1017,13 @@ class GenerationAttemptLoop {
     @Nullable
     ExtractedCandidate lastExtractedCandidate() {
         return lastExtractedCandidate;
+    }
+
+    /**
+     * @return why this loop stopped; {@code null} only while it is still running, or when it was abandoned by an exception it never caught
+     */
+    @Nullable
+    TerminationReason terminationReason() {
+        return terminationReason;
     }
 }
