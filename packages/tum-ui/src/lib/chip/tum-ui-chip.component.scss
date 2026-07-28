@@ -1,0 +1,13 @@
+:host {
+    display: inline-flex;
+    max-width: 100%;
+}
+
+.tum-ui-chip-remove {
+    border-radius: 50%;
+
+    &:focus-visible {
+        outline: 2px solid var(--tum-ui-primary);
+        outline-offset: 1px;
+    }
+}

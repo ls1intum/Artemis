@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
+import { TumUiButtonDirective, TumUiDialogComponent, TumUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -29,12 +27,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     template: `
         <tum-ui-dialog
             [header]="'artemisApp.dataExport.admin.createExport' | artemisTranslate"
-            [modal]="true"
             [visible]="visible()"
             (visibleChange)="visible.set($event)"
             [closable]="true"
             [style]="{ width: '500px' }"
-            appendTo="body"
         >
             <div class="mb-3">
                 <jhi-type-ahead-user-search-field [(loginOrName)]="selectedUserLogin" />

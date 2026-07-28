@@ -256,13 +256,7 @@
     }
 </div>
 <!-- Filter Modal -->
-<tum-ui-dialog
-    [(visible)]="filterModalVisible"
-    [modal]="true"
-    [draggable]="false"
-    [style]="{ width: '50dvw' }"
-    header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}"
->
+<tum-ui-dialog [(visible)]="filterModalVisible" [style]="{ width: '50dvw' }" header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}">
     <div class="flex flex-col">
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pb-1">
             <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: filters().authorityFilter.size }"></h5>

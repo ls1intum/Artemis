@@ -1,0 +1,53 @@
+<div class="w-72 select-none">
+    <div class="mb-2 flex items-center justify-between">
+        <button
+            type="button"
+            class="appearance-none rounded border-0 bg-transparent p-1 text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-700"
+            (click)="previousMonth()"
+            [attr.aria-label]="previousMonthLabel()"
+            data-testid="calendar-previous"
+        >
+            <fa-icon [icon]="faChevronLeft" />
+        </button>
+        <span class="font-semibold text-tum-ui-surface-900 dark:text-tum-ui-surface-0" aria-live="polite" data-testid="calendar-month-label">{{ monthLabel() }}</span>
+        <button
+            type="button"
+            class="appearance-none rounded border-0 bg-transparent p-1 text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-700"
+            (click)="nextMonth()"
+            [attr.aria-label]="nextMonthLabel()"
+            data-testid="calendar-next"
+        >
+            <fa-icon [icon]="faChevronRight" />
+        </button>
+    </div>
+    <table role="grid" class="w-full border-collapse text-center text-sm">
+        <thead>
+            <tr>
+                @for (label of weekdayLabels(); track $index) {
+                    <th scope="col" class="p-1 font-medium text-tum-ui-muted">{{ label }}</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (week of weeks(); track $index; let w = $index) {
+                <tr>
+                    @for (day of week; track day.valueOf(); let d = $index) {
+                        <td class="p-0.5" role="gridcell" [attr.aria-selected]="isSelected(day) ? 'true' : null">
+                            <button
+                                #dayButton
+                                type="button"
+                                [class]="dayButtonClasses(day)"
+                                [attr.tabindex]="focusedIndex() === w * 7 + d ? 0 : -1"
+                                [attr.aria-label]="dayLabel(day)"
+                                (click)="selectDay(day)"
+                                (keydown)="onKeydown($event, w * 7 + d)"
+                            >
+                                {{ day.date() }}
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

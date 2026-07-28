@@ -5,7 +5,7 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { TumUiAutoCompleteCompleteEvent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
+import { TumUiAutoCompleteCompleteEvent } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

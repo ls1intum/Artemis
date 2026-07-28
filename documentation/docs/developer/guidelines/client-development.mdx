@@ -68,13 +68,12 @@ Key principles:
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
-**UI Component Library: our own `tum-ui` kit (PrimeNG and Bootstrap are deprecated)**
+**UI Component Library: PrimeNG**
 
 <Callout variant={CalloutVariant.danger}>
-    **Bootstrap and PrimeNG are deprecated.** The long-term direction is to migrate the client **entirely** onto our own [tum-ui component kit](/developer/guidelines/tum-ui-kit)
-    (built on Angular CDK + Tailwind tokens) and drop Bootstrap, PrimeNG, and ng-bootstrap. They coexist only for the duration of the migration: **prefer a `tum-ui-*` component when one
-    exists**, and use PrimeNG only for widgets the kit does not provide yet. The PrimeNG guidance in this section applies to that shrinking fallback set — do not read it as "PrimeNG is
-    the end target". Never introduce new Bootstrap.
+    New UI uses PrimeNG components with Tailwind utilities, as specified in `CLAUDE.md`. The private [tum-ui package](/developer/guidelines/tum-ui-kit) is an extraction boundary
+    for existing Artemis-owned components; it does not replace this policy. Do not create a custom widget when PrimeNG, Angular CDK, Angular Aria, or native HTML already provides
+    the required behavior. Never introduce new Bootstrap.
 </Callout>
 
 <Callout variant={CalloutVariant.danger}>
@@ -257,9 +256,7 @@ So `ngOnChanges` is functional and not a correctness bug — but the Angular doc
 
 ```ts
 // Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent implements OnChanges {
     value = input.required<number>();
     doubled = 0;
@@ -269,9 +266,7 @@ export class ExampleComponent implements OnChanges {
 }
 
 // Do - derive declaratively; it can never go stale
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent {
     value = input.required<number>();
     doubled = computed(() => this.value() * 2);

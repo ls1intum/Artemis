@@ -6,12 +6,14 @@ import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
-import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
-
+import {
+    TumUiAutoCompleteCompleteEvent,
+    TumUiAutoCompleteComponent,
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiRadioButtonComponent,
+} from '@tumaet/ui-angular';
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;

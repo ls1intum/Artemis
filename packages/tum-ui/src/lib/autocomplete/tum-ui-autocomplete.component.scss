@@ -1,0 +1,24 @@
+:host {
+    display: block;
+    max-width: 100%;
+}
+
+.tum-ui-autocomplete-option-selected {
+    color: color-mix(in srgb, var(--tum-ui-primary) 60%, var(--tum-ui-surface-950));
+    background: color-mix(in srgb, var(--tum-ui-primary) 10%, var(--tum-ui-surface-0));
+
+    &.is-active {
+        background: color-mix(in srgb, var(--tum-ui-primary) 20%, var(--tum-ui-surface-0));
+    }
+}
+
+:host-context(html[data-theme='dark']) {
+    .tum-ui-autocomplete-option-selected {
+        color: color-mix(in srgb, var(--tum-ui-surface-0) 87%, transparent);
+        background: color-mix(in srgb, var(--tum-ui-primary), transparent 84%);
+
+        &.is-active {
+            background: color-mix(in srgb, var(--tum-ui-primary), transparent 76%);
+        }
+    }
+}

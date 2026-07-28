@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { MockProvider } from 'ng-mocks';
 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';

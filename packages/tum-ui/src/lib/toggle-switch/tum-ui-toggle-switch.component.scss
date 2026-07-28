@@ -1,0 +1,44 @@
+:host {
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    width: 2.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    border-radius: 30px;
+    cursor: pointer;
+    vertical-align: middle;
+    outline-color: transparent;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+}
+
+:host([aria-disabled='true']) {
+    cursor: default;
+}
+
+:host(:focus-visible) {
+    outline: 1px solid var(--tum-ui-primary);
+    outline-offset: 2px;
+}
+
+.tum-ui-toggle-switch-handle {
+    position: absolute;
+    top: 50%;
+    width: 1rem;
+    height: 1rem;
+    margin-block-start: -0.5rem;
+    inset-inline-start: 0.25rem;
+    border-radius: 50%;
+    transition:
+        background-color 0.2s,
+        inset-inline-start 0.2s;
+}
+
+:host([data-checked='true']) .tum-ui-toggle-switch-handle {
+    inset-inline-start: 1.25rem;
+}

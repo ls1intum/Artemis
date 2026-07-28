@@ -11,6 +11,12 @@
             }
         },
         {
+            "files": ["packages/tum-ui/theme.css"],
+            "rules": {
+                "scss/at-rule-no-unknown": [true, { "ignoreAtRules": ["source", "theme"] }]
+            }
+        },
+        {
             "files": [
                 "src/main/webapp/app/admin/**/*.scss",
                 "src/main/webapp/app/course/request/**/*.scss",
@@ -32,7 +38,7 @@
                 "src/main/webapp/app/localci/build-job-statistics/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
                 "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss",
-                "src/main/webapp/app/shared-ui/tum-ui/**/*.scss"
+                "packages/tum-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {

@@ -22,7 +22,7 @@ permissions: {}  # default-deny; the job grants only what CodeQL needs
 # Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
-  node: 24
+  node: '24.18.0'
   java: 25
 
 jobs:

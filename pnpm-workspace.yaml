@@ -3,6 +3,25 @@
 # and into this file. Settings here govern the install behaviour in this
 # project root.
 
+packages:
+  - 'packages/*'
+
+# Canonical runtime versions shared by Artemis and in-repository packages.
+# rules/tum-ui-package.spec.mjs rejects drift in the publishable manifest.
+catalog:
+  '@angular/cdk': 22.1.0
+  '@angular/common': 22.1.0
+  '@angular/core': 22.1.0
+  '@angular/forms': 22.1.0
+  '@fortawesome/angular-fontawesome': 5.1.0
+  '@fortawesome/fontawesome-svg-core': 7.3.1
+  '@fortawesome/free-solid-svg-icons': 7.3.1
+  dayjs: 1.11.21
+  lodash-es: 4.18.1
+  rxjs: 7.8.2
+  tailwindcss: 4.3.3
+  tslib: 2.8.1
+
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
 # go through pnpm.patchedDependencies (which works on the .pnpm symlink store

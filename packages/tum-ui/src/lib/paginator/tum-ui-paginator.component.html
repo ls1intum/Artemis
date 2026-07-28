@@ -1,0 +1,81 @@
+<div
+    class="flex flex-wrap items-center justify-center gap-1 border-t border-tum-ui-surface-200 pt-2 text-sm text-tum-ui-muted dark:border-tum-ui-surface-800"
+    data-testid="tum-ui-paginator"
+>
+    @if (showCurrentPageReport()) {
+        <span class="px-2" data-testid="paginator-report">
+            {{ 'tumUi.paginator.currentPageReport' | tumUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
+        </span>
+    }
+
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isFirst()"
+        (click)="goToFirst()"
+        [attr.aria-label]="'tumUi.paginator.first' | tumUiTranslate"
+        data-testid="paginator-first"
+    >
+        <fa-icon [icon]="faAnglesLeft" />
+    </button>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isFirst()"
+        (click)="goToPrevious()"
+        [attr.aria-label]="'tumUi.paginator.previous' | tumUiTranslate"
+        data-testid="paginator-previous"
+    >
+        <fa-icon [icon]="faAngleLeft" />
+    </button>
+
+    @for (p of visiblePages(); track p) {
+        <button
+            type="button"
+            [class]="p === clampedPage() ? selectedPageClasses : navButtonClasses"
+            [disabled]="disabled()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === clampedPage() ? 'page' : null"
+            data-testid="paginator-page"
+        >
+            {{ p + 1 }}
+        </button>
+    }
+
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isLast()"
+        (click)="goToNext()"
+        [attr.aria-label]="'tumUi.paginator.next' | tumUiTranslate"
+        data-testid="paginator-next"
+    >
+        <fa-icon [icon]="faAngleRight" />
+    </button>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isLast()"
+        (click)="goToLast()"
+        [attr.aria-label]="'tumUi.paginator.last' | tumUiTranslate"
+        data-testid="paginator-last"
+    >
+        <fa-icon [icon]="faAnglesRight" />
+    </button>
+
+    @if (showRowsPerPage()) {
+        <select
+            #sizeSelect
+            class="ml-1 cursor-pointer rounded-md border border-tum-ui-surface-300 bg-tum-ui-surface-0 px-2.5 py-1.5 text-sm text-tum-ui-surface-900 dark:border-tum-ui-surface-600 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0"
+            [disabled]="disabled()"
+            (change)="onPageSizeChange(sizeSelect.value)"
+            [attr.aria-label]="'tumUi.paginator.rowsPerPage' | tumUiTranslate"
+            data-testid="paginator-page-size"
+        >
+            @for (option of pageSizeOptions(); track option) {
+                <!-- [selected] (not [value] on the select) so the current size sticks even though options render after binding. -->
+                <option [value]="option" [selected]="option === pageSize()">{{ option }}</option>
+            }
+        </select>
+    }
+</div>

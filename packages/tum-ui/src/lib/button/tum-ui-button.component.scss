@@ -1,0 +1,45 @@
+:host {
+    display: inline-flex;
+}
+
+.tum-ui-btn.tum-ui-btn-rounded {
+    border-radius: 9999px;
+}
+
+.tum-ui-btn {
+    position: relative;
+    appearance: none;
+    line-height: 1.25;
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+
+    &:hover:not(:disabled)::after {
+        background-color: rgb(0 0 0 / 0.045);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 2px var(--tum-ui-focus-ring-offset-background),
+            0 0 0 4px var(--tum-ui-primary);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+:host-context(html[data-theme='dark']) .tum-ui-btn:hover:not(:disabled)::after {
+    background-color: rgb(255 255 255 / 0.06);
+}

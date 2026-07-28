@@ -1,0 +1,39 @@
+<ng-template #panel>
+    <div
+        class="tum-ui-dialog flex max-h-[90dvh] max-w-[90dvw] flex-col overflow-hidden rounded-xl border border-tum-ui-surface-200 bg-tum-ui-surface-0 text-tum-ui-surface-700 shadow-xl dark:border-tum-ui-surface-700 dark:bg-tum-ui-surface-900 dark:text-tum-ui-surface-0"
+        [style]="style()"
+    >
+        @if (showHeader()) {
+            <div class="tum-ui-dialog-header flex shrink-0 items-center justify-between gap-2 p-4">
+                <span [id]="titleId" class="tum-ui-dialog-title text-xl font-semibold">
+                    @if (headerTemplate(); as headerTpl) {
+                        <ng-container [ngTemplateOutlet]="headerTpl" />
+                    } @else {
+                        {{ header() }}
+                    }
+                </span>
+                @if (closable()) {
+                    <button
+                        type="button"
+                        class="tum-ui-dialog-close inline-flex h-8 w-8 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-full border-0 bg-transparent text-tum-ui-muted transition-colors hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800"
+                        [attr.aria-label]="closeButtonAriaLabel()"
+                        (click)="close()"
+                        data-testid="tum-ui-dialog-close"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
+            </div>
+        }
+
+        <div class="tum-ui-dialog-content grow overflow-y-auto px-4 pb-4" [style]="contentStyle()">
+            <ng-content />
+        </div>
+
+        @if (footerTemplate(); as footerTpl) {
+            <div class="tum-ui-dialog-footer flex shrink-0 justify-end gap-2 px-4 pb-4">
+                <ng-container [ngTemplateOutlet]="footerTpl" />
+            </div>
+        }
+    </div>
+</ng-template>

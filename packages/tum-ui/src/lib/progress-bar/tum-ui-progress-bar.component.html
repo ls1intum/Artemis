@@ -1,0 +1,9 @@
+<div class="tum-ui-progress-bar-value bg-tum-ui-primary" [style.width.%]="value()" [style.background]="color()">
+    <span class="tum-ui-progress-bar-label text-tum-ui-primary-contrast">
+        <ng-content>
+            @if (showValue() && value() !== 0) {
+                {{ value() }}{{ unit() }}
+            }
+        </ng-content>
+    </span>
+</div>

@@ -193,6 +193,33 @@
                     }
                 }
             }
+        },
+        "tum-ui": {
+            "projectType": "library",
+            "root": "packages/tum-ui",
+            "sourceRoot": "packages/tum-ui/src",
+            "prefix": "tum-ui",
+            "architect": {
+                "build": {
+                    "builder": "@angular/build:ng-packagr",
+                    "configurations": {
+                        "production": {
+                            "tsConfig": "packages/tum-ui/tsconfig.lib.prod.json"
+                        },
+                        "development": {
+                            "project": "packages/tum-ui/ng-package.dev.json",
+                            "tsConfig": "packages/tum-ui/tsconfig.lib.json"
+                        }
+                    },
+                    "defaultConfiguration": "production"
+                },
+                "lint": {
+                    "builder": "@angular-eslint/builder:lint",
+                    "options": {
+                        "lintFilePatterns": ["packages/tum-ui/**/*.ts", "packages/tum-ui/**/*.html"]
+                    }
+                }
+            }
         }
     },
     "cli": {

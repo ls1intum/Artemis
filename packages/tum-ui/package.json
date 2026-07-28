@@ -1,0 +1,32 @@
+{
+    "name": "@tumaet/ui-angular",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Signal-first Angular UI components for TUM applications",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ls1intum/Artemis.git",
+        "directory": "packages/tum-ui"
+    },
+    "exports": {
+        "./theme.css": "./theme.css"
+    },
+    "peerDependencies": {
+        "@angular/cdk": "22.1.0",
+        "@angular/common": "22.1.0",
+        "@angular/core": "22.1.0",
+        "@angular/forms": "22.1.0",
+        "@fortawesome/angular-fontawesome": "5.1.0",
+        "@fortawesome/fontawesome-svg-core": "7.3.1",
+        "@fortawesome/free-solid-svg-icons": "7.3.1",
+        "rxjs": "7.8.2",
+        "tailwindcss": "4.3.3"
+    },
+    "dependencies": {
+        "dayjs": "1.11.21",
+        "lodash-es": "4.18.1",
+        "tslib": "2.8.1"
+    },
+    "sideEffects": false
+}

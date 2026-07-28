@@ -1,0 +1,64 @@
+:host {
+    position: relative;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+}
+
+:host(.text-tum-ui-surface-0) {
+    color: var(--tum-ui-surface-0);
+}
+
+:host(.text-tum-ui-muted) {
+    color: var(--tum-ui-muted-color);
+}
+
+:host(.text-tum-ui-primary) {
+    color: var(--tum-ui-primary);
+}
+
+:host(.text-tum-ui-state-success) {
+    color: var(--tum-ui-state-success);
+}
+
+:host(.text-tum-ui-state-info) {
+    color: var(--tum-ui-state-info);
+}
+
+:host(.text-tum-ui-state-warning) {
+    color: var(--tum-ui-state-warning);
+}
+
+:host(.text-tum-ui-state-danger) {
+    color: var(--tum-ui-state-danger);
+}
+
+:host {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: transparent;
+        pointer-events: none;
+        transition: background-color 0.15s ease;
+    }
+
+    &:hover:not(:disabled)::after {
+        background-color: rgb(0 0 0 / 0.045);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 2px var(--tum-ui-focus-ring-offset-background),
+            0 0 0 4px var(--tum-ui-primary);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+:host-context(html[data-theme='dark']):hover:not(:disabled)::after {
+    background-color: rgb(255 255 255 / 0.06);
+}

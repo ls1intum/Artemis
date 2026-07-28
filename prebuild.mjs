@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { hashElement } from 'folder-hash';
 import { fileURLToPath } from 'url';
+import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
 import { runViteOverrideCheck } from './supporting_scripts/check-vite-override.mjs';
 
@@ -147,6 +148,25 @@ await esbuild.build({
     format: 'esm',
     outbase: 'node_modules/monaco-editor/esm',
     outdir: 'node_modules/monaco-editor/bundles',
+});
+
+// Artemis consumes the ng-packagr output, rather than the library's TypeScript sources. This keeps
+// local and CI builds on the same Angular Package Format boundary that an extracted npm package uses.
+const tumUiConfiguration = developFlag ? 'development' : 'production';
+const pnpmExecutable = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+await new Promise((resolve, reject) => {
+    const child = spawn(pnpmExecutable, ['exec', 'ng', 'build', 'tum-ui', '--configuration', tumUiConfiguration], {
+        cwd: __dirname,
+        stdio: 'inherit',
+    });
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+        if (code === 0) {
+            resolve();
+            return;
+        }
+        reject(new Error(`TUM UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
+    });
 });
 
 console.log('Pre-Build complete!');

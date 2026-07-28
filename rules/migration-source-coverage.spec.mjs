@@ -26,6 +26,9 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // to its `app/`-relative module base, stripping a trailing `/**/*.{html,scss,ts}` glob or a `.component.{html,scss,ts}`
 // file suffix, so an html lock, its scss override, and its `@source` dir all reduce to the same base.
 function toAppBase(p) {
+    if (p.includes('packages/tum-ui/src/lib') || p.includes('dist/tum-ui') || p.includes('fesm2022')) {
+        return '@tumaet/ui-angular';
+    }
     return p
         .replace(/^\.\/app\//, '')
         .replace(/^.*\/app\//, '')
@@ -44,8 +47,9 @@ describe('migration lock consistency', () => {
     const stylelintBases = hexBsOverride?.files.map(toAppBase) ?? [];
 
     const tailwindCss = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
+    const tumUiThemeCss = readFileSync(resolve(repoRoot, 'packages/tum-ui/theme.css'), 'utf8');
     // Positive `@source './app/...'` entries only — `@source not '...'` / `@source not inline("...")` are exclusions.
-    const sourceBases = [...tailwindCss.matchAll(/@source\s+'([^']+)'/g)].map((m) => toAppBase(m[1]));
+    const sourceBases = [...`${tailwindCss}\n${tumUiThemeCss}`.matchAll(/@source\s+'([^']+)'/g)].map((m) => toAppBase(m[1]));
 
     // Guard against a vacuous pass if any config shape changes and parsing yields nothing.
     it('parses all three lock lists non-vacuously', () => {

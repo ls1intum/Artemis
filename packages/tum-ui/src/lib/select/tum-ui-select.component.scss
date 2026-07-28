@@ -1,0 +1,40 @@
+:host {
+    display: inline-flex;
+    max-width: 100%;
+}
+
+.tum-ui-select-trigger {
+    border-radius: var(--radius-md);
+    appearance: none;
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 2px var(--tum-ui-focus-ring-offset-background),
+            0 0 0 4px var(--tum-ui-primary);
+    }
+
+    &:disabled {
+        opacity: 1;
+    }
+}
+
+.tum-ui-select-option-selected {
+    color: color-mix(in srgb, var(--tum-ui-primary) 60%, var(--tum-ui-surface-950));
+    background: color-mix(in srgb, var(--tum-ui-primary) 10%, var(--tum-ui-surface-0));
+
+    &.is-active {
+        background: color-mix(in srgb, var(--tum-ui-primary) 20%, var(--tum-ui-surface-0));
+    }
+}
+
+:host-context(html[data-theme='dark']) {
+    .tum-ui-select-option-selected {
+        color: color-mix(in srgb, var(--tum-ui-surface-0) 87%, transparent);
+        background: color-mix(in srgb, var(--tum-ui-primary), transparent 84%);
+
+        &.is-active {
+            background: color-mix(in srgb, var(--tum-ui-primary), transparent 76%);
+        }
+    }
+}

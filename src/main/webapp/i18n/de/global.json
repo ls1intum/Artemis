@@ -336,6 +336,8 @@
         },
         "datePicker": {
             "open": "Kalender öffnen",
+            "previousMonth": "Vorheriger Monat: {{ month }}",
+            "nextMonth": "Nächster Monat: {{ month }}",
             "clear": "Löschen",
             "done": "Fertig",
             "time": "Uhrzeit",

@@ -1,0 +1,164 @@
+<div class="flex flex-col gap-1">
+    @if ((!hideLabelName() && labelName()) || shouldDisplayTimeZoneWarning()) {
+        <div class="flex items-center gap-1">
+            @if (!hideLabelName() && labelName()) {
+                <label [attr.for]="inputId()" class="font-semibold text-tum-ui-surface-900 dark:text-tum-ui-surface-0">{{ labelName()! | tumUiTranslate }}</label>
+            }
+            @if (shouldDisplayTimeZoneWarning()) {
+                <fa-stack
+                    class="icon-full-size"
+                    tabindex="0"
+                    role="img"
+                    [attr.aria-label]="'tumUi.datePicker.timeZoneWarning' | tumUiTranslate: { timeZone: currentTimeZone }"
+                    [tumUiTooltip]="'tumUi.datePicker.timeZoneWarning' | tumUiTranslate: { timeZone: currentTimeZone }"
+                    data-testid="tum-ui-date-picker-tz-warning"
+                >
+                    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-tum-ui-muted" />
+                    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-tum-ui-muted" />
+                </fa-stack>
+            }
+        </div>
+    }
+
+    <div #triggerWrapper class="relative flex items-center">
+        <input
+            #dateInput
+            [id]="inputId()"
+            type="text"
+            [value]="inputText()"
+            [disabled]="disabled()"
+            placeholder="dd.mm.yyyy hh:mm"
+            [attr.aria-invalid]="showErrorBorder()"
+            [attr.aria-label]="ariaLabel()"
+            [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+            (input)="onInput(dateInput.value)"
+            (blur)="onBlur(dateInput.value)"
+            class="w-full rounded-md border bg-tum-ui-surface-0 py-2 pl-3 pr-17 text-tum-ui-surface-900 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0"
+            [class.border-tum-ui-border]="!showErrorBorder()"
+            [class.border-tum-ui-state-danger]="showErrorBorder()"
+            data-testid="tum-ui-date-picker-input"
+        />
+        @if (showClear() && !disabled()) {
+            <button
+                type="button"
+                class="absolute right-9 appearance-none border-0 bg-transparent p-0 text-tum-ui-muted hover:text-tum-ui-surface-900 dark:hover:text-tum-ui-surface-0"
+                (click)="clear()"
+                [attr.aria-label]="'tumUi.datePicker.clear' | tumUiTranslate"
+                data-testid="tum-ui-date-picker-clear"
+            >
+                <fa-icon [icon]="faXmark" />
+            </button>
+        }
+        <button
+            type="button"
+            class="absolute right-2 appearance-none border-0 bg-transparent p-0 text-tum-ui-muted hover:text-tum-ui-primary"
+            [disabled]="disabled()"
+            (click)="toggle()"
+            [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
+            data-testid="tum-ui-date-picker-trigger"
+        >
+            <fa-icon [icon]="faCalendar" />
+        </button>
+    </div>
+
+    @if (!hideValidationMessage() && showErrorBorder()) {
+        <span [id]="inputId() + '-error'" role="alert" class="text-sm text-tum-ui-state-danger" data-testid="tum-ui-date-picker-error">
+            {{ 'tumUi.datePicker.invalid' | tumUiTranslate }}
+        </span>
+    }
+</div>
+
+<ng-template #panel>
+    <div
+        class="rounded-md border border-tum-ui-border bg-tum-ui-surface-0 p-3 shadow-lg dark:bg-tum-ui-surface-800"
+        role="dialog"
+        [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+    >
+        <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+        <!-- 24h hour:minute spinner (chevron up / editable field / chevron down per unit), matching the legacy
+             PrimeNG time picker. Fixed 24h format regardless of locale; a native <input type="time"> would show a
+             12h AM/PM field in en-US locales and unstylable browser chrome. -->
+        <div class="mt-3 flex items-center justify-center gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate" data-testid="tum-ui-date-picker-time">
+            <div class="flex flex-col items-center">
+                <button
+                    type="button"
+                    class="appearance-none border-0 bg-transparent p-1 text-tum-ui-muted hover:text-tum-ui-primary"
+                    [disabled]="disabled()"
+                    (click)="stepHour(1)"
+                    [attr.aria-label]="'tumUi.datePicker.incrementHour' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-hour-up"
+                >
+                    <fa-icon [icon]="faChevronUp" />
+                </button>
+                <input
+                    #hourInput
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="2"
+                    [value]="displayHour()"
+                    [disabled]="disabled()"
+                    (change)="onHourInput(hourInput)"
+                    (keydown)="onTimeKeydown($event, hourInput, 'hour')"
+                    class="w-9 appearance-none rounded-md border border-tum-ui-border bg-tum-ui-surface-0 py-1 text-center text-tum-ui-surface-900 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0"
+                    [attr.aria-label]="'tumUi.datePicker.hour' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-hour"
+                />
+                <button
+                    type="button"
+                    class="appearance-none border-0 bg-transparent p-1 text-tum-ui-muted hover:text-tum-ui-primary"
+                    [disabled]="disabled()"
+                    (click)="stepHour(-1)"
+                    [attr.aria-label]="'tumUi.datePicker.decrementHour' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-hour-down"
+                >
+                    <fa-icon [icon]="faChevronDown" />
+                </button>
+            </div>
+            <span class="pb-0.5 font-semibold text-tum-ui-surface-900 dark:text-tum-ui-surface-0">:</span>
+            <div class="flex flex-col items-center">
+                <button
+                    type="button"
+                    class="appearance-none border-0 bg-transparent p-1 text-tum-ui-muted hover:text-tum-ui-primary"
+                    [disabled]="disabled()"
+                    (click)="stepMinute(1)"
+                    [attr.aria-label]="'tumUi.datePicker.incrementMinute' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-minute-up"
+                >
+                    <fa-icon [icon]="faChevronUp" />
+                </button>
+                <input
+                    #minuteInput
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="2"
+                    [value]="displayMinute()"
+                    [disabled]="disabled()"
+                    (change)="onMinuteInput(minuteInput)"
+                    (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
+                    class="w-9 appearance-none rounded-md border border-tum-ui-border bg-tum-ui-surface-0 py-1 text-center text-tum-ui-surface-900 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0"
+                    [attr.aria-label]="'tumUi.datePicker.minute' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-minute"
+                />
+                <button
+                    type="button"
+                    class="appearance-none border-0 bg-transparent p-1 text-tum-ui-muted hover:text-tum-ui-primary"
+                    [disabled]="disabled()"
+                    (click)="stepMinute(-1)"
+                    [attr.aria-label]="'tumUi.datePicker.decrementMinute' | tumUiTranslate"
+                    data-testid="tum-ui-date-picker-minute-down"
+                >
+                    <fa-icon [icon]="faChevronDown" />
+                </button>
+            </div>
+        </div>
+        <div class="mt-3 flex justify-end">
+            <tum-ui-button severity="secondary" variant="text" size="small" (clicked)="close()" data-testid="tum-ui-date-picker-done">
+                <span>{{ 'tumUi.datePicker.done' | tumUiTranslate }}</span>
+            </tum-ui-button>
+        </div>
+    </div>
+</ng-template>

@@ -97,10 +97,9 @@
 
             <div class="label-and-input">
                 <label for="capacity-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
-                <tum-ui-input-group class="w-full">
-                    <tum-ui-input-group-addon><fa-icon [icon]="faHashtag" /></tum-ui-input-group-addon>
-                    <tum-ui-input-number
-                        [fluid]="true"
+                <p-inputgroup>
+                    <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
+                    <p-inputnumber
                         inputId="capacity-input"
                         [(ngModel)]="capacity"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
@@ -108,7 +107,7 @@
                         [max]="5000"
                         [showButtons]="true"
                     />
-                </tum-ui-input-group>
+                </p-inputgroup>
             </div>
         </div>
 
@@ -189,9 +188,8 @@
             <div class="label-and-input-row">
                 <div class="label-and-input">
                     <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
-                    <tum-ui-input-group class="w-full">
-                        <tum-ui-input-number
-                            [fluid]="true"
+                    <p-inputgroup>
+                        <p-inputnumber
                             inputId="repetition-frequency-input"
                             [(ngModel)]="repetitionFrequency"
                             [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
@@ -200,7 +198,7 @@
                             [max]="48"
                             [showButtons]="true"
                         />
-                    </tum-ui-input-group>
+                    </p-inputgroup>
                 </div>
 
                 <div class="label-and-input">
@@ -264,4 +262,4 @@
         ></button>
     </div>
 </div>
-<tum-ui-confirm-dialog />
+<p-confirmdialog />

@@ -24,7 +24,7 @@ permissions: {}  # default-deny; each job grants only what it needs
 # Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
-  node: 24
+  node: '24.18.0'
   java: 25
 
 jobs:
@@ -89,6 +89,9 @@ jobs:
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
+      - name: TUM UI Styles
+        run: pnpm run tum-ui:stylelint
+        if: ${{ !cancelled() }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -121,6 +124,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Validate TUM UI Package Artifact
+        run: pnpm run tum-ui:pack:check
+        if: ${{ !cancelled() }}
 
   code-quality:
     name: Server Code Quality

@@ -1,0 +1,38 @@
+:host {
+    display: inline-flex;
+}
+
+:host ::ng-deep {
+    .tum-ui-btn,
+    button:not(.tum-ui-btn) {
+        margin: 0;
+    }
+
+    tum-ui-button:not(:first-of-type):not(:last-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):not(:first-of-type):not(:last-of-type) {
+        border-radius: 0;
+    }
+
+    tum-ui-button:first-of-type:not(:only-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):first-of-type:not(:only-of-type) {
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    tum-ui-button:last-of-type:not(:only-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):last-of-type:not(:only-of-type) {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
+
+    tum-ui-button:not(:last-of-type) .tum-ui-btn,
+    button:not(.tum-ui-btn):not(:last-of-type) {
+        border-inline-end: 0 none;
+    }
+
+    .tum-ui-btn:focus-visible,
+    button:not(.tum-ui-btn):focus-visible {
+        position: relative;
+        z-index: 1;
+    }
+}

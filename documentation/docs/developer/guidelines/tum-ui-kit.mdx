@@ -54,10 +54,6 @@ import TumuiProgressSpinnerLight from './assets/tumui-progress-spinner-light.png
 import TumuiProgressSpinnerDark from './assets/tumui-progress-spinner-dark.png';
 import TumuiNativeTableLight from './assets/tumui-native-table-light.png';
 import TumuiNativeTableDark from './assets/tumui-native-table-dark.png';
-import TumuiInputNumberLight from './assets/tumui-input-number-light.png';
-import TumuiInputNumberDark from './assets/tumui-input-number-dark.png';
-import TumuiConfirmDialogLight from './assets/tumui-confirm-dialog-light.png';
-import TumuiConfirmDialogDark from './assets/tumui-confirm-dialog-dark.png';
 
 export const Shots = ({ light, dark, alt }) => (
     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', margin: '1rem 0' }}>
@@ -68,36 +64,26 @@ export const Shots = ({ light, dark, alt }) => (
 
 # UI Kit (tum-aet-ui)
 
-The **tum-aet UI kit** is Artemis' own set of Angular UI components, built directly on
-[Angular CDK](https://material.angular.dev/cdk/categories) and Tailwind CSS v4. It lives in
-`src/main/webapp/app/shared-ui/tum-ui/` and is the intended long-term replacement for third-party
-component libraries in the client.
+The **tum-aet UI kit** is an incubating, private Angular package for UI components that Artemis
+already owns. It lives in `packages/tum-ui/` and is built as `@tumaet/ui-angular`.
 
 <Callout variant={CalloutVariant.info}>
-    **Working name:** `@tumaet/ui-angular`. The components live in-repo first (a pilot against real admin screens) and will be extracted into a standalone package once the API has
-    settled. Treat the folder as a library: keep components self-contained, dependency-light, and consistent.
+    **Package boundary:** Artemis imports only the package public API from `@tumaet/ui-angular`. Host-specific translation and pageable-search adapters live in
+    `app/shared-ui/tum-ui-integration/`. The package remains private and in this repository while its API, theming, accessibility, and release ownership mature.
 </Callout>
 
-## Why we own our components
+## Why this package exists
 
-PrimeNG 22+ moved to a commercial license and can no longer be a long-term dependency for an
-open-source project. Instead of replacing one third-party component library with another, we own a
-small set of components and depend only on a primitive:
+The package makes the existing Artemis-owned components build and test independently and prevents
+them from importing application code. It is an extraction seam, not a separate UI policy:
 
 - **Angular CDK** provides the hard, unstyled behavior (overlay positioning, focus trapping, tables,
-  a11y helpers). It is MIT-licensed, maintained by the Angular team, and tracks the latest Angular
-  features (standalone, signals).
-- **Tailwind CSS v4** provides our semantic design tokens, so the look is ours and dark mode is free.
-
-This also serves a cross-app goal: the same component contracts are meant to be shared across TUM
-Angular apps (Artemis, TumApply, and future apps) so a TUM user learns each UI concept once. React
-apps in the fleet mirror the same concepts with their own primitive stack.
+  and accessibility helpers).
+- **Tailwind CSS v4** consumes the host application's semantic design tokens.
 
 <Callout variant={CalloutVariant.warning}>
-    **Bootstrap and PrimeNG are deprecated.** The long-term goal is to migrate the client **entirely** onto this owned kit (Angular CDK + Tailwind tokens) and remove Bootstrap,
-    PrimeNG, and ng-bootstrap. They stay installed only for the duration of the migration: the kit components are additive and use distinct `tum-ui-*` selectors, so they coexist
-    without collisions. Do **not** add new Bootstrap or PrimeNG usage — reach for a kit component first and fall back to PrimeNG only for widgets the kit does not provide yet, then
-    migrate screen by screen (do not rip out PrimeNG wholesale).
+    This package does not supersede the repository's UI governance. Follow [Client Development](/developer/guidelines/client-development): new Artemis UI uses PrimeNG unless an
+    explicit architecture decision changes that policy. Do not recreate framework or PrimeNG widgets merely to grow this package.
 </Callout>
 
 ## Principles
@@ -107,8 +93,8 @@ apps in the fleet mirror the same concepts with their own primitive stack.
 - **Standalone + `ChangeDetectionStrategy.OnPush`**, zoneless-safe.
 - **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens)).
   Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
-- **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
-  management, all verified in tests.
+- **Accessibility is part of the contract** — prefer native controls or CDK behavior and test observable
+  roles, names, keyboard interactions, and focus management.
 - **`@angular/cdk` is the only UI _component-library_ dependency** — no PrimeNG / Bootstrap /
   ng-bootstrap imports. (Icon, date, and utility libraries — FontAwesome, `dayjs`, `lodash-es` — are
   still used where needed; the rule is specifically that no third-party _component_ library is pulled in.)
@@ -127,11 +113,9 @@ overlayRef.attach(new TemplatePortal(templateRef, viewContainerRef));
 overlayRef.backdropClick().subscribe(() => close());
 ```
 
-<Callout variant={CalloutVariant.danger}>
-    **CDK overlay backdrops need structural CSS.** Artemis does not import the CDK `overlay-prebuilt` stylesheet, so the kit ships its own backdrop rule (`.tum-ui-overlay-backdrop`
-    in `content/scss/global.scss`: `position: fixed; inset: 0; pointer-events: auto`). Without it a transparent backdrop has no size and outside clicks pass straight through, so
-    `backdropClick()` never fires. Any new overlay that needs a click-catching backdrop must use this backdrop class (the overlay service sets it by default).
-</Callout>
+Angular CDK 22 injects its overlay structure styles when the overlay container is created. Use CDK's
+built-in backdrop classes rather than duplicating those structural rules; the shared service uses the
+transparent backdrop for click-outside behavior.
 
 ### Variant maps
 
@@ -141,22 +125,17 @@ declarative, testable, and dependency-free.
 
 ## Design tokens
 
-Colors use semantic tokens only (see also [Client Theming](/developer/guidelines/client-theming)). The kit
-uses the same tokens Artemis' PrimeNG theme exposes, so the components render like the widgets they replace:
+The package exports `@tumaet/ui-angular/theme.css`. Artemis imports that file from its Tailwind
+entrypoint and maps the package's namespaced custom properties to the application theme:
 
-| Token                                                                              | Meaning                   | Used by                                                                                                                             |
-| ---------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `bg-primary` / `text-primary`                                                      | The brand color.          | Solid primary buttons (`bg-primary` + `text-surface-0`); outlined / text primary.                                                   |
-| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The status colors.        | Solid state buttons; tag tints (a low-opacity `color-mix` of the state color, in the tag SCSS) with a state-colored label; borders. |
-| `bg-surface-*` / `text-surface-*` / `text-muted-color`                             | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                                                             |
+| Token                                                                 | Meaning                   | Used by                                                                                         |
+| --------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `bg-tum-ui-primary` / `text-tum-ui-primary`                           | The brand color.          | Solid primary buttons (`bg-tum-ui-primary` + `text-tum-ui-surface-0`); outlined / text primary. |
+| `--tum-ui-state-*` / `*-tum-ui-state-*`                               | The status colors.        | Solid state buttons; tag tints and borders.                                                     |
+| `bg-tum-ui-surface-*` / `text-tum-ui-surface-*` / `text-tum-ui-muted` | The neutral surface ramp. | Secondary / contrast variants, backgrounds, muted text.                                         |
 
-Dark mode is automatic: `--danger` / `--success` / … resolve to their per-theme values, so a single class
-such as `text-state-danger` is correct in both themes without a `dark:` variant.
-
-<Callout variant={CalloutVariant.info}>
-    The migration is intentionally **appearance-neutral**: a tum-ui component must render identically to the PrimeNG component it replaces, so use the Aura tokens above rather than
-    introducing new shades. (Improving color contrast to WCAG AA is a separate, app-wide effort on the underlying PrimeNG theme, not something the kit should diverge on.)
-</Callout>
+Dark mode is automatic when the host updates those custom properties for its dark theme. Package
+source must not read Artemis or PrimeNG variables directly.
 
 ## Components
 
@@ -564,49 +543,6 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 />
 ```
 
-### Input number — `tum-ui-input-number`
-
-A numeric input — the drop-in for `p-inputnumber` (integer values). A token-styled field showing a locale-formatted number (optional digit grouping, optional prefix / suffix) with an optional stacked stepper. The value binds as a plain `number | undefined` through a `ControlValueAccessor`, so `[(ngModel)]`, `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work; empty input clears to `undefined`, and the value is clamped to `[min, max]` on blur and on every step. It builds on `[tumUiInput]`, so it shares the kit's input styling; compose it inside a `tum-ui-input-group` for a leading addon. The input carries WAI-ARIA `spinbutton` semantics (its value and range are announced, and Arrow Up / Down adjust it), so the stepper is fully keyboard- and screen-reader-operable even though the visible ▲/▼ buttons are mouse-only affordances.
-
-<Shots light={TumuiInputNumberLight} dark={TumuiInputNumberDark} alt="tum-ui-input-number: plain, with stepper, with a leading addon, and with prefix/suffix" />
-
-| Input / Output       | Type         | Default             | Notes                                                                                                               |
-| -------------------- | ------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                     |
-| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                       |
-| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                              |
-| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                            |
-| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                             |
-| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it. |
-| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                      |
-| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                      |
-| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                          |
-| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                   |
-| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
-| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
-| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
-| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
-| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
-| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
-
-Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
-
-```html
-<!-- Two-way binding with a stepper, clamped 1..5000 -->
-<tum-ui-input-number [(ngModel)]="capacity" [min]="1" [max]="5000" [showButtons]="true" />
-
-<!-- Prefix / suffix, rendered inside the field ("every 2 week(s)") -->
-<tum-ui-input-number [(ngModel)]="frequency" [min]="1" [max]="48" [showButtons]="true" prefix="every " suffix=" week(s)" />
-
-<!-- Reactive form, full width -->
-<tum-ui-input-number formControlName="score" [min]="0" [max]="100" [fluid]="true" />
-```
-
-<Callout variant={CalloutVariant.info}>
-    Scope: **integer** values (every Artemis usage is an integer). Decimal / currency / fraction-digit modes are not implemented — add them to the component if a consumer needs
-    them.
-</Callout>
-
 ### Checkbox — `tum-ui-checkbox`
 
 A binary (boolean) checkbox — the drop-in for a binary `p-checkbox`. Built on a visually hidden native `<input type="checkbox">` overlaying a token-styled box, so keyboard (Space), `<label for>` association, and screen-reader semantics come for free. Works with `[(ngModel)]`, one-way `[ngModel]` + `(onChange)`, and `formControlName`.
@@ -830,14 +766,15 @@ An inline message / alert box — the drop-in for `p-message`. Colored severitie
 
 ### Dialog — `tum-ui-dialog`
 
-A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and `DialogService.open(...)`. Two-way `[(visible)]`, a `header` string or a projected `#header` template, a projected `#footer` template, and a modal mask. The panel is portaled into the overlay container (equivalent to `appendTo="body"`), traps focus (`cdkTrapFocus`), and closes on Escape / the × button.
+A declarative modal built on Angular CDK Dialog. It supports two-way `[(visible)]`, a `header` string
+or projected `#header` template, and a projected `#footer` template. CDK Dialog owns the overlay,
+focus trap, initial focus, focus restoration, dialog role, and modal semantics.
 
 <Shots light={TumuiDialogLight} dark={TumuiDialogDark} alt="tum-ui-dialog with a title, body and footer buttons" />
 
 | Input / Output            | Type                     | Default   | Notes                                                                                              |
 | ------------------------- | ------------------------ | --------- | -------------------------------------------------------------------------------------------------- |
 | `visible` (`model`)       | `boolean`                | `false`   | Two-way `[(visible)]`; opens/closes the overlay. Emits `visibleChange`.                            |
-| `modal`                   | `boolean`                | `true`    | Dimmed, pointer-blocking mask behind the dialog.                                                   |
 | `header`                  | `string`                 | –         | Plain-text title; ignored when a `#header` template is projected.                                  |
 | `showHeader`              | `boolean`                | `true`    | Render the header region (title + close button).                                                   |
 | `ariaLabel`               | `string`                 | –         | Accessible-name fallback for the dialog when neither `header` nor a `#header` template is present. |
@@ -849,10 +786,10 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
 | `visibleChange` (out)     | `boolean`                | –         | Whenever visibility flips.                                                                         |
 | `onShow` / `onHide` (out) | `void`                   | –         | When the dialog becomes visible / hidden (any close path).                                         |
 
-`appendTo` and `draggable` are accepted for parity but are no-ops (always portaled, never draggable). Provide the footer via a `#footer` template; it only renders when present.
+Provide the footer via a `#footer` template; it only renders when present.
 
 ```html
-<tum-ui-dialog [(visible)]="visible" [modal]="true" [closable]="true" header="Create export" [style]="{ width: '30rem' }">
+<tum-ui-dialog [(visible)]="visible" [closable]="true" header="Create export" [style]="{ width: '30rem' }">
     <p>Dialog body content.</p>
     <ng-template #footer>
         <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="visible.set(false)">Cancel</tum-ui-button>
@@ -866,61 +803,9 @@ A modal dialog on the CDK overlay — the declarative drop-in for `p-dialog` and
     imperative `DialogService.open(...)` and is signal-input-friendly (unlike ng-bootstrap's `componentInstance.X = Y`).
 </Callout>
 
-### Confirm dialog — `tum-ui-confirm-dialog` + `TumUiConfirmationService`
-
-The drop-in for `p-confirmdialog` + `ConfirmationService`. Two pieces: inject `TumUiConfirmationService` and call `confirm({ … })`; place one `<tum-ui-confirm-dialog>` in the template and it renders the pending request as a modal (built on the `tum-ui-dialog`) — an optional icon, the message, and cancel / confirm buttons. Confirming runs the request's `accept`; dismissing (cancel button, Escape, ×) runs its optional `reject`. Provide the service **once per owning component** (like PrimeNG); that single service holds one request stream, and each `<tum-ui-confirm-dialog>` renders the pending request whose `[key]` matches it (so one component can host several keyed dialogs off the same service). `[key]` must be **static** — changing it while a request is open would drop the request without a callback. The dialog is exposed as an `alertdialog` with `aria-describedby` pointing at the message, so a screen reader announces the question (not just the header).
-
-<Shots light={TumuiConfirmDialogLight} dark={TumuiConfirmDialogDark} alt="tum-ui-confirm-dialog" />
-
-`TumUiConfirmationService.confirm(request)` — the request shape (a normalized subset of PrimeNG's `Confirmation`):
-
-| Option                              | Type                    | Default                     | Notes                                                                                               |
-| ----------------------------------- | ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| `header`                            | `string`                | –                           | Dialog title.                                                                                       |
-| `message`                           | `string`                | –                           | Body text shown next to the optional icon.                                                          |
-| `accept`                            | `() => void`            | –                           | Invoked when the user confirms.                                                                     |
-| `reject`                            | `() => void`            | –                           | Invoked on cancel / dismiss (optional).                                                             |
-| `acceptLabel` / `rejectLabel`       | `string` (**required**) | –                           | Button labels. Required so the caller always passes a localized string (the kit has no i18n layer). |
-| `acceptSeverity` / `rejectSeverity` | `TumUiButtonSeverity`   | `'primary'` / `'secondary'` | Button severities (e.g. `'danger'` for a destructive confirm).                                      |
-| `icon`                              | `IconProp`              | –                           | Optional leading icon before the message.                                                           |
-| `key`                               | `string`                | –                           | Scopes the request to a `<tum-ui-confirm-dialog [key]>` with the same key.                          |
-
-The `<tum-ui-confirm-dialog>` component takes a single optional `key` input, used to match scoped `confirm({ key })` calls when several confirm dialogs live on one page.
-
-```typescript
-@Component({
-    /* … */
-    providers: [TumUiConfirmationService],
-})
-export class MyComponent {
-    private readonly confirmationService = inject(TumUiConfirmationService);
-
-    confirmDelete(): void {
-        this.confirmationService.confirm({
-            header: this.translate('…deleteHeader'),
-            message: this.translate('…deleteQuestion'),
-            acceptLabel: this.translate('entity.action.delete'),
-            rejectLabel: this.translate('entity.action.cancel'),
-            acceptSeverity: 'danger',
-            rejectSeverity: 'secondary',
-            accept: () => this.delete(),
-        });
-    }
-}
-```
-
-```html
-<!-- Placed once in the component's template; renders whatever confirm() opens -->
-<tum-ui-confirm-dialog />
-```
-
-<Callout variant={CalloutVariant.info}>
-    Mirror PrimeNG's wiring: provide `TumUiConfirmationService` in the component's `providers` and place exactly one `<tum-ui-confirm-dialog>` in its template. When a page needs several independent confirm dialogs, give each a `[key]` and pass the matching `key` in the `confirm({ key })` call.
-</Callout>
-
 ### Progress bar — `tum-ui-progress-bar`
 
-A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` fill animates to `value` percent over the track. Projected content renders inside the fill and always shows regardless of `showValue`.
+A determinate progress bar — the drop-in for `p-progressbar`. A `bg-tum-ui-primary` fill animates to `value` percent over the track. Projected content renders inside the fill and always shows regardless of `showValue`.
 
 <Shots light={TumuiProgressBarLight} dark={TumuiProgressBarDark} alt="tum-ui-progress-bar at 65%" />
 
@@ -928,7 +813,7 @@ A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` f
 | ------------ | --------- | ------- | ------------------------------------------------------------------------- |
 | `value`      | `number`  | `0`     | Current progress 0–100; drives the fill width and `aria-valuenow`.        |
 | `showValue`  | `boolean` | `true`  | Render the default `{value}{unit}` label (ignored for projected content). |
-| `color`      | `string`  | –       | CSS color for the fill, overriding the default `bg-primary`.              |
+| `color`      | `string`  | –       | CSS color for the fill, overriding the default `bg-tum-ui-primary`.       |
 | `unit`       | `string`  | `'%'`   | Unit appended to the default value label.                                 |
 | `styleClass` | `string`  | `''`    | Classes forwarded onto the bar (e.g. `mb-2`).                             |
 
@@ -937,7 +822,7 @@ A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` f
 <tum-ui-progress-bar [value]="progress()" />
 
 <!-- Projected count, custom fill color, no default label -->
-<tum-ui-progress-bar [value]="toPercentage(count, total)" [showValue]="false" color="var(--success)">{{ count }}</tum-ui-progress-bar>
+<tum-ui-progress-bar [value]="toPercentage(count, total)" [showValue]="false" color="var(--tum-ui-state-success)">{{ count }}</tum-ui-progress-bar>
 ```
 
 ### Progress spinner — `tum-ui-progress-spinner`
@@ -1018,7 +903,7 @@ so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-s
 - The strict spec compile (`tsc -p tsconfig.spec.json`) enforces member visibility, so specs must use
   public members. Run it before pushing.
 
-## Migrating to the kit
+## Existing Artemis integrations
 
 | Legacy                                                                       | Replacement                                                                                                                 |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -1045,30 +930,25 @@ so a spec just calls `TestBed.configureTestingModule(...)` directly — no per-s
 | `<jhi-table-view>` / `<p-table>` (data-driven)                               | `<tum-ui-table>` (+ `buildDbQueryFromTableEvent`)                                                                           |
 | `<p-table>` (hand-templated) + `pSortableColumn` / `p-sortIcon` / `(onSort)` | native `<table tumUiTable>` + `[tumUiSortableColumn]` + `(sortChange)`; `tum-ui-table-virtual-scroll` for `[virtualScroll]` |
 | `<jhi-date-time-picker>` / `<p-datepicker>`                                  | `<tum-ui-date-picker>`                                                                                                      |
-| `<p-inputnumber>`                                                            | `<tum-ui-input-number>`                                                                                                     |
-| `<p-confirmdialog>` + `ConfirmationService`                                  | `<tum-ui-confirm-dialog>` + `TumUiConfirmationService`                                                                      |
 
-The severity-color house rule: `tum-ui` maps `severity` to the four Artemis semantic state tokens
-(`--info` = cyan, `--success`, `--warning` = yellow, `--danger`), not Aura's blue / sky / orange primitives,
-so a message and a tag of the same severity share one hue. Pixel-match new components by extracting the Aura
-tokens from `@primeuix/themes` + `@primeuix/styles` in `node_modules` and translating the formulas onto those
-state vars (as `primeng-artemis-theme.ts` remaps green / red / yellow / orange / cyan). Because admin specs blank
-their templates (`overrideTemplate`), template bindings are only type-checked by the Angular build — run
-`pnpm run webapp:build`, not just Vitest, after a template migration.
+The severity-color contract maps messages, tags, and buttons to the same four namespaced state
+tokens. Template bindings are type-checked by the Angular build, so run `pnpm run compile`, not just
+Vitest, after changing a component or consumer template.
 
-Migrate one screen at a time and keep the existing component for everything else. Because the kit uses
-distinct selectors and the PrimeNG / ng-bootstrap dependencies stay installed, a partial migration is
-always safe to ship, and a rollback is just reverting the touched screen.
+This table records existing integrations; it is not permission to replace PrimeNG components
+indiscriminately. New migrations require the same design, accessibility, and maintenance scrutiny as
+any other public API.
 
 <Callout variant={CalloutVariant.warning}>
-    **Styling coexistence guardrails.** Three lock lists must stay consistent: the ESLint `no-bootstrap-classes` glob, the Stylelint hex / `--bs-` override, and the Tailwind
-    `@source` allowlist in `tailwind.css`. They all cover `shared-ui/tum-ui/**` recursively, so new component subfolders need no edits. The
-    `rules/migration-source-coverage.spec.mjs` test enforces the invariant.
+    **Styling coexistence guardrails.** ESLint and Stylelint cover `packages/tum-ui/src/lib/**`; the exported `theme.css` scans the built `fesm2022` artifact. The
+    `rules/migration-source-coverage.spec.mjs` test prevents those scopes from drifting.
 </Callout>
 
 ## Roadmap
 
-- Extract the settled components into `@tumaet/ui-angular` and consume it from Artemis and TumApply.
-- Grow the set as screens migrate (menu, select, dialog service, and more), always on CDK primitives.
-- Keep the contracts aligned with the React kits used elsewhere in the TUM fleet so concepts transfer
-  across apps.
+- Add Storybook in a follow-up change, using the package's English translation defaults and semantic-token
+  host theme to exercise the public API in isolation.
+- Establish release ownership, versioning, browser-level accessibility coverage, and a supported
+  theme compatibility matrix before making the package publishable or extracting it.
+- Prefer Angular CDK, Angular Aria, native HTML, or PrimeNG behavior over maintaining custom widget
+  mechanics.

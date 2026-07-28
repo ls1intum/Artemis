@@ -1,0 +1,141 @@
+import { Component, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumUiTableDirective, TumUiTableSize, TumUiTableSortEvent } from './tum-ui-table.directive';
+
+@Component({
+    template: `
+        <table
+            tumUiTable
+            [size]="size()"
+            [striped]="striped()"
+            [scrollable]="scrollable()"
+            [rowHover]="rowHover()"
+            [styleClass]="styleClass()"
+            [sortField]="sortField()"
+            [sortOrder]="sortOrder()"
+            (sortChange)="events.push($event)"
+        >
+            <thead>
+                <tr>
+                    <th>Header</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Cell</td>
+                </tr>
+            </tbody>
+        </table>
+    `,
+    imports: [TumUiTableDirective],
+})
+class HostComponent {
+    readonly size = signal<TumUiTableSize>('normal');
+    readonly striped = signal(false);
+    readonly scrollable = signal(false);
+    readonly rowHover = signal(false);
+    readonly styleClass = signal('');
+    readonly sortField = signal<string | undefined>(undefined);
+    readonly sortOrder = signal(1);
+    events: TumUiTableSortEvent[] = [];
+}
+
+describe('TumUiTableDirective', () => {
+    let fixture: ComponentFixture<HostComponent>;
+    let host: HostComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(HostComponent);
+        host = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    function tableClass(): string {
+        return (fixture.nativeElement as HTMLElement).querySelector('table')!.className;
+    }
+
+    function directive(): TumUiTableDirective {
+        return fixture.debugElement.query(By.directive(TumUiTableDirective)).injector.get(TumUiTableDirective);
+    }
+
+    it('applies the base + normal-size p-table-matched styling classes', () => {
+        const cls = tableClass();
+        expect(cls).toContain('tum-ui-table');
+        expect(cls).toContain('w-full');
+        expect(cls).toContain('border-collapse');
+        expect(cls).toContain('[&_thead_th]:px-4');
+        expect(cls).toContain('[&_thead_th]:py-3');
+        expect(cls).toContain('[&_tbody_td]:px-4');
+        expect(cls).toContain('[&_tbody_td]:py-3');
+        expect(cls).toContain('[&_thead_th]:bg-tum-ui-surface-0');
+        expect(cls).toContain('[&_thead_th]:font-semibold');
+        expect(cls).toContain('[&_thead_th]:border-b');
+        expect(cls).toContain('[&_thead_th]:border-solid');
+        expect(cls).toContain('[&_tbody_td]:border-b');
+    });
+
+    it('switches to the compact (small) cell padding', () => {
+        host.size.set('small');
+        fixture.detectChanges();
+        const cls = tableClass();
+        expect(cls).toContain('[&_thead_th]:px-2');
+        expect(cls).toContain('[&_thead_th]:py-1.5');
+        expect(cls).toContain('[&_tbody_td]:py-1.5');
+        expect(cls).not.toContain('[&_thead_th]:px-4');
+    });
+
+    it('adds the zebra-striping classes only when striped', () => {
+        expect(tableClass()).not.toContain('[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50');
+        host.striped.set(true);
+        fixture.detectChanges();
+        expect(tableClass()).toContain('[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50');
+        expect(tableClass()).toContain('dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950');
+    });
+
+    it('adds the sticky-header classes only when scrollable', () => {
+        expect(tableClass()).not.toContain('[&_thead_th]:sticky');
+        host.scrollable.set(true);
+        fixture.detectChanges();
+        expect(tableClass()).toContain('[&_thead_th]:sticky');
+        expect(tableClass()).toContain('[&_thead_th]:top-0');
+    });
+
+    it('adds the row-hover classes only when rowHover', () => {
+        expect(tableClass()).not.toContain('[&_tbody_tr:hover]:bg-tum-ui-surface-100');
+        host.rowHover.set(true);
+        fixture.detectChanges();
+        expect(tableClass()).toContain('[&_tbody_tr:hover]:bg-tum-ui-surface-100');
+    });
+
+    it('forwards styleClass onto the table', () => {
+        host.styleClass.set('mt-3 shadow');
+        fixture.detectChanges();
+        expect(tableClass()).toContain('mt-3');
+        expect(tableClass()).toContain('shadow');
+    });
+
+    it('toggles the order when re-sorting the active field (parity with p-table single sort)', () => {
+        host.sortField.set('name');
+        host.sortOrder.set(1);
+        fixture.detectChanges();
+
+        directive().requestSort('name');
+        expect(host.events.at(-1)).toEqual({ field: 'name', order: -1 });
+
+        host.sortOrder.set(-1);
+        fixture.detectChanges();
+        directive().requestSort('name');
+        expect(host.events.at(-1)).toEqual({ field: 'name', order: 1 });
+    });
+
+    it('sorts a newly selected field ascending (defaultSortOrder)', () => {
+        host.sortField.set('name');
+        host.sortOrder.set(-1);
+        fixture.detectChanges();
+
+        directive().requestSort('email');
+        expect(host.events.at(-1)).toEqual({ field: 'email', order: 1 });
+    });
+});

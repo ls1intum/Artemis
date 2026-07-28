@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
+import { TumUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CleanupServiceComponent date range integration', () => {

@@ -1,0 +1,394 @@
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    TemplateRef,
+    ViewContainerRef,
+    computed,
+    effect,
+    forwardRef,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
+import { OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
+import { TumUiChipComponent } from '../chip/tum-ui-chip.component';
+
+/** Emitted when the debounced typed query is ready. */
+export interface TumUiAutoCompleteCompleteEvent {
+    originalEvent?: Event;
+    query: string;
+}
+/** Emitted when a suggestion is chosen. */
+export interface TumUiAutoCompleteSelectEvent {
+    originalEvent?: Event;
+    value: unknown;
+}
+/** Emitted when a selected value (chip) is removed. */
+export interface TumUiAutoCompleteUnselectEvent {
+    originalEvent?: Event;
+    value: unknown;
+}
+
+let nextAutoCompleteId = 0;
+
+/**
+ * Autocomplete / combobox built on the Angular CDK overlay.
+ *
+ * Supports single-select and multi-select-with-chips: a `role="combobox"` text input inside a bordered field, the
+ * selected values rendered as removable {@link TumUiChipComponent}s in front of it, and a CDK-overlay
+ * `role="listbox"` of suggestions. No third-party UI dependency; rides the shared {@link TumUiOverlayService}.
+ *
+ * The parent drives suggestions asynchronously: typing (debounced by `delay`, gated by `minLength`) emits
+ * {@link completeMethod} with `{ query }`; the parent filters and pushes the result into `[suggestions]`. Choosing a
+ * suggestion appends a chip, writes the value through the {@link ControlValueAccessor}, and emits {@link onSelect}
+ * with `{ value }`; removing a chip (remove button, or Backspace on an empty input) emits {@link onUnselect} with
+ * `{ value }`. Works with `[(ngModel)]` and reactive `formControlName`.
+ */
+@Component({
+    selector: 'tum-ui-autocomplete',
+    templateUrl: './tum-ui-autocomplete.component.html',
+    styleUrl: './tum-ui-autocomplete.component.scss',
+    imports: [A11yModule, TumUiChipComponent],
+    host: {
+        '[class]': 'styleClass()',
+    },
+    providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiAutoCompleteComponent), multi: true }],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class TumUiAutoCompleteComponent implements ControlValueAccessor {
+    private readonly overlayService = inject(TumUiOverlayService);
+    private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly destroyRef = inject(DestroyRef);
+
+    /** The async result list the parent fills in response to {@link completeMethod}. Objects or bare primitives. */
+    readonly suggestions = input<readonly unknown[]>([]);
+    /** Property name to read each option's display label from. Omit for primitive options (the option itself is shown). */
+    readonly optionLabel = input<string>();
+    /** `p-autocomplete` alias for {@link optionLabel}; `optionLabel` wins when both are set. */
+    readonly field = input<string>();
+    /** Multi-select mode: renders selected values as chips and binds an array (the admin group / organization picker). */
+    readonly multiple = input(false);
+    /** Placeholder shown in the text input when it is empty (and, in multiple mode, no chip is selected). */
+    readonly placeholder = input<string>();
+    /** Disables the control (merged with a reactive-forms `setDisabledState`). */
+    readonly disabled = input(false);
+    /** Minimum number of typed characters before {@link completeMethod} fires (parity with `p-autocomplete [minLength]`). */
+    readonly minLength = input(1);
+    /** Debounce in milliseconds before {@link completeMethod} fires (parity with `p-autocomplete [delay]`). */
+    readonly delay = input(300);
+    /** Fire {@link completeMethod} on focus (even with an empty query) and open the panel, so all options show
+     *  when the field is focused (parity with `p-autocomplete [completeOnFocus]`). */
+    readonly completeOnFocus = input(false);
+    /** `id` of the text input (the target of an external `<label for>`). Defaults to a unique per-instance id. */
+    readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
+    /** Forwarded onto the input for template-driven-form parity; the CVA itself does not need it. */
+    readonly name = input<string>();
+    /** Accessible name for the input, forwarded as `aria-label` (use when there is no visible `<label>`). */
+    readonly ariaLabel = input<string>();
+    /** Accessible name for each chip's remove button; overridable for i18n. */
+    readonly removeAriaLabel = input<string>('Remove');
+    /** Extra classes forwarded onto the host (drop-in for `p-autocomplete styleClass`, e.g. `w-full`). */
+    readonly styleClass = input<string>('');
+    /** Text shown in the panel when a search returned no suggestions. */
+    readonly emptyMessage = input<string>('No results found');
+
+    /** Emits the debounced typed query so the parent can fetch + set `[suggestions]`. Parity with `(completeMethod)`. */
+    readonly completeMethod = output<TumUiAutoCompleteCompleteEvent>();
+    /** Emits the chosen suggestion. Parity with `(onSelect)` — `{ value }` matches the admin handler. */
+    readonly onSelect = output<TumUiAutoCompleteSelectEvent>();
+    /** Emits the removed value. Parity with `(onUnselect)` — `{ value }` matches the admin handler. */
+    readonly onUnselect = output<TumUiAutoCompleteUnselectEvent>();
+
+    protected readonly listboxId = `tum-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
+
+    private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
+    private readonly textInput = viewChild<ElementRef<HTMLInputElement>>('textInput');
+    private readonly panel = viewChild.required('panel', { read: TemplateRef });
+    private overlayRef?: OverlayRef;
+
+    protected readonly selectedValues = signal<unknown[]>([]);
+    private readonly singleValue = signal<unknown>(undefined);
+    protected readonly query = signal('');
+    protected readonly isFocused = signal(false);
+    /** True once a debounced search has fired for the current query; gates the panel so it never flashes empty on focus. */
+    private readonly hasSearched = signal(false);
+    protected readonly activeIndex = signal(-1);
+    private readonly disabledByForm = signal(false);
+
+    private debounceTimer?: ReturnType<typeof setTimeout>;
+    private onChangeCallback: (value: unknown) => void = () => {};
+    private onTouchedCallback: () => void = () => {};
+
+    protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
+    private readonly labelKey = computed(() => this.optionLabel() ?? this.field());
+
+    /** The panel is shown while focused, once a search has fired for a query that meets `minLength` — or for any
+     *  query length when `completeOnFocus` is on (so focusing an empty field can show all options). */
+    protected readonly panelVisible = computed(
+        () => this.isFocused() && this.hasSearched() && !this.isDisabled() && (this.query().length >= this.minLength() || this.completeOnFocus()),
+    );
+    protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
+    /** Placeholder is suppressed once a chip is selected in multiple mode, matching `p-autocomplete`. */
+    protected readonly inputPlaceholder = computed(() => (this.multiple() && this.selectedValues().length > 0 ? undefined : this.placeholder()));
+
+    constructor() {
+        this.destroyRef.onDestroy(() => {
+            this.overlayRef?.dispose();
+            if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+            }
+        });
+        effect(() => {
+            if (this.panelVisible()) {
+                this.openPanel();
+            } else {
+                this.closePanel();
+            }
+        });
+        effect(() => this.syncSingleInputText());
+    }
+
+    writeValue(value: unknown): void {
+        if (this.multiple()) {
+            this.selectedValues.set(Array.isArray(value) ? [...value] : value == undefined ? [] : [value]);
+        } else {
+            this.singleValue.set(value ?? undefined);
+        }
+    }
+
+    registerOnChange(fn: (value: unknown) => void): void {
+        this.onChangeCallback = fn;
+    }
+
+    registerOnTouched(fn: () => void): void {
+        this.onTouchedCallback = fn;
+    }
+
+    setDisabledState(isDisabled: boolean): void {
+        this.disabledByForm.set(isDisabled);
+    }
+
+    /** Display text for a value: its `optionLabel` / `field` property, or the primitive itself. */
+    protected valueLabel(value: unknown): string {
+        const key = this.labelKey();
+        const raw = key && value !== null && typeof value === 'object' ? (value as Record<string, unknown>)[key] : value;
+        return this.toText(raw);
+    }
+
+    private toText(value: unknown): string {
+        switch (typeof value) {
+            case 'string':
+                return value;
+            case 'number':
+            case 'boolean':
+            case 'bigint':
+                return String(value);
+            default:
+                return '';
+        }
+    }
+
+    private valuesMatch(a: unknown, b: unknown): boolean {
+        return Object.is(a, b) || a === b;
+    }
+
+    protected isAlreadySelected(option: unknown): boolean {
+        return this.selectedValues().some((value) => this.valuesMatch(value, option));
+    }
+
+    protected optionId(index: number): string {
+        return `${this.listboxId}-option-${index}`;
+    }
+
+    protected focusInput(): void {
+        if (!this.isDisabled()) {
+            this.textInput()?.nativeElement.focus();
+        }
+    }
+
+    protected onFocus(): void {
+        this.isFocused.set(true);
+        if (this.completeOnFocus() && !this.isDisabled()) {
+            this.fireComplete(this.query());
+        }
+    }
+
+    protected onBlur(): void {
+        this.isFocused.set(false);
+        this.onTouchedCallback();
+    }
+
+    protected onInput(event: Event): void {
+        const value = (event.target as HTMLInputElement).value;
+        this.query.set(value);
+        this.activeIndex.set(-1);
+        if (!this.multiple()) {
+            const singleVal = value === '' ? undefined : value;
+            this.singleValue.set(singleVal);
+            this.onChangeCallback(singleVal);
+        }
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+        }
+        if (value.length >= this.minLength()) {
+            this.debounceTimer = setTimeout(() => this.fireComplete(value, event), this.delay());
+        } else if (this.completeOnFocus()) {
+            this.fireComplete(value, event);
+        } else {
+            this.hasSearched.set(false);
+        }
+    }
+
+    /** Emit the complete request for `query` and mark that a search has run (so the panel may open). */
+    private fireComplete(query: string, originalEvent?: Event): void {
+        this.completeMethod.emit({ originalEvent, query });
+        this.hasSearched.set(true);
+    }
+
+    protected onInputKeydown(event: KeyboardEvent): void {
+        const count = this.suggestions().length;
+        switch (event.key) {
+            case 'ArrowDown':
+                if (this.panelVisible() && count > 0) {
+                    event.preventDefault();
+                    this.setActive(Math.min(count - 1, this.activeIndex() + 1));
+                }
+                break;
+            case 'ArrowUp':
+                if (this.panelVisible() && count > 0) {
+                    event.preventDefault();
+                    this.setActive(Math.max(0, this.activeIndex() - 1));
+                }
+                break;
+            case 'Enter':
+                if (this.panelVisible() && this.activeIndex() >= 0 && this.activeIndex() < count) {
+                    event.preventDefault();
+                    this.selectOption(this.suggestions()[this.activeIndex()], event);
+                }
+                break;
+            case 'Escape':
+                if (this.panelVisible()) {
+                    event.stopPropagation();
+                    this.hasSearched.set(false);
+                }
+                break;
+            case 'Backspace':
+                if (this.multiple() && this.query().length === 0 && this.selectedValues().length > 0) {
+                    this.removeAt(this.selectedValues().length - 1, event);
+                }
+                break;
+        }
+    }
+
+    protected setActive(index: number): void {
+        this.activeIndex.set(index);
+        document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
+    }
+
+    protected selectOption(option: unknown, event?: Event): void {
+        if (this.multiple()) {
+            if (!this.isAlreadySelected(option)) {
+                const next = [...this.selectedValues(), option];
+                this.selectedValues.set(next);
+                this.onChangeCallback(next);
+                this.onSelect.emit({ originalEvent: event, value: option });
+            }
+        } else {
+            this.singleValue.set(option);
+            this.onChangeCallback(option);
+            this.onSelect.emit({ originalEvent: event, value: option });
+            this.syncSingleInputText();
+        }
+        this.clearInput();
+        this.focusInput();
+    }
+
+    protected removeAt(index: number, event?: Event): void {
+        const current = this.selectedValues();
+        if (index < 0 || index >= current.length) {
+            return;
+        }
+        const removed = current[index];
+        const next = current.filter((_, i) => i !== index);
+        this.selectedValues.set(next);
+        this.onChangeCallback(next);
+        this.onUnselect.emit({ originalEvent: event, value: removed });
+        this.focusInput();
+    }
+
+    private clearInput(): void {
+        const el = this.textInput()?.nativeElement;
+        if (el && this.multiple()) {
+            el.value = '';
+        }
+        this.query.set('');
+        this.hasSearched.set(false);
+        this.activeIndex.set(-1);
+    }
+
+    /** Single mode shows the selected value's label as the input text; keep the uncontrolled input in sync. */
+    private syncSingleInputText(): void {
+        if (this.multiple()) {
+            return;
+        }
+        const el = this.textInput()?.nativeElement;
+        if (el) {
+            const value = this.singleValue();
+            const next = value == undefined ? '' : this.valueLabel(value);
+            if (el.value !== next) {
+                el.value = next;
+            }
+        }
+    }
+
+    private openPanel(): void {
+        if (this.overlayRef) {
+            return;
+        }
+        const origin = this.container();
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom');
+        this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width });
+        this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
+    }
+
+    private closePanel(): void {
+        this.overlayRef?.dispose();
+        this.overlayRef = undefined;
+    }
+
+    /** Full class string for one option row (base layout + Aura hover / active / selected state colors). */
+    protected optionClasses(option: unknown, index: number): string {
+        const base = 'tum-ui-autocomplete-option flex cursor-pointer items-center px-3 py-2';
+        const active = this.activeIndex() === index;
+        if (this.isAlreadySelected(option)) {
+            return `${base} tum-ui-autocomplete-option-selected${active ? ' is-active' : ''}`;
+        }
+        const activeState = active ? ' bg-tum-ui-surface-100 text-tum-ui-surface-800 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0' : '';
+        return `${base} text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 hover:text-tum-ui-surface-800 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-800${activeState}`;
+    }
+
+    /** Full class string for the multi-container field (base layout + Aura border / focus / disabled state). */
+    protected containerClasses(): string {
+        const padding = this.multiple() && this.selectedValues().length > 0 ? 'p-1' : 'py-1 px-3';
+        const base = `tum-ui-autocomplete-container flex w-full cursor-text flex-wrap items-center gap-1 rounded-md border text-base transition-colors ${padding}`;
+        let state: string;
+        if (this.isDisabled()) {
+            state =
+                'bg-tum-ui-surface-200 text-tum-ui-surface-500 border-tum-ui-surface-300 dark:bg-tum-ui-surface-700 dark:text-tum-ui-surface-400 dark:border-tum-ui-surface-600';
+        } else if (this.isFocused()) {
+            state = 'bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-primary dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0';
+        } else {
+            state =
+                'bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-surface-300 hover:border-tum-ui-surface-400 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0 dark:border-tum-ui-surface-600 dark:hover:border-tum-ui-surface-500';
+        }
+        return `${base} ${state}`;
+    }
+}

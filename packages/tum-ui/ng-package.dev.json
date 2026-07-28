@@ -1,0 +1,10 @@
+{
+    "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
+    "deleteDestPath": false,
+    "dest": "../../dist/tum-ui",
+    "assets": ["README.md", "LICENSE", "theme.css"],
+    "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
+    "lib": {
+        "entryFile": "src/public-api.ts"
+    }
+}

@@ -1,0 +1,70 @@
+:host {
+    display: inline-flex;
+    vertical-align: bottom;
+    user-select: none;
+    border-radius: var(--radius-md);
+    outline-color: transparent;
+}
+
+.tum-ui-select-button-option {
+    position: relative;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+    cursor: pointer;
+    border-width: 1px 1px 1px 0;
+    border-style: solid;
+    border-radius: 0;
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        outline-color 0.2s;
+    outline-color: transparent;
+}
+
+.tum-ui-select-button-option:first-child {
+    border-inline-start-width: 1px;
+    border-start-start-radius: var(--radius-md);
+    border-end-start-radius: var(--radius-md);
+}
+
+.tum-ui-select-button-option:last-child {
+    border-start-end-radius: var(--radius-md);
+    border-end-end-radius: var(--radius-md);
+}
+
+.tum-ui-select-button-option:disabled {
+    cursor: default;
+}
+
+.tum-ui-select-button-option:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 1px solid var(--tum-ui-primary);
+    outline-offset: -1px;
+}
+
+.tum-ui-select-button-option::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: transparent;
+    pointer-events: none;
+    transition: background-color 0.15s ease;
+}
+
+.tum-ui-select-button-option:not(:disabled):hover::after {
+    background-color: rgb(0 0 0 / 0.045);
+}
+
+:host-context(html[data-theme='dark']) .tum-ui-select-button-option:not(:disabled):hover::after {
+    background-color: rgb(255 255 255 / 0.06);
+}

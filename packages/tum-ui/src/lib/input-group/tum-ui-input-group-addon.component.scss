@@ -1,0 +1,8 @@
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--spacing) * 2); // 0.5rem
+    min-width: calc(var(--spacing) * 10); // 2.5rem
+    white-space: nowrap;
+}

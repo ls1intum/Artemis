@@ -1,0 +1,66 @@
+<div #container [class]="containerClasses()" (click)="focusInput()" data-testid="tum-ui-autocomplete">
+    @if (multiple()) {
+        @for (value of selectedValues(); track $index; let i = $index) {
+            <tum-ui-chip
+                size="small"
+                [label]="valueLabel(value)"
+                [removable]="!isDisabled()"
+                [removeAriaLabel]="removeAriaLabel()"
+                (onRemove)="removeAt(i, $event)"
+                data-testid="tum-ui-autocomplete-chip"
+            />
+        }
+    }
+    <input
+        #textInput
+        type="text"
+        role="combobox"
+        [id]="inputId()"
+        [attr.name]="name()"
+        class="tum-ui-autocomplete-input min-w-16 flex-1 border-0 bg-transparent p-0 text-base text-inherit outline-none placeholder:text-tum-ui-muted"
+        [attr.placeholder]="inputPlaceholder()"
+        [disabled]="isDisabled()"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="panelVisible() ? 'true' : 'false'"
+        [attr.aria-controls]="panelVisible() ? listboxId : null"
+        [attr.aria-activedescendant]="activeOptionId()"
+        [attr.aria-label]="ariaLabel()"
+        (input)="onInput($event)"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        (keydown)="onInputKeydown($event)"
+        data-testid="tum-ui-autocomplete-input"
+    />
+</div>
+
+<ng-template #panel>
+    <div
+        class="tum-ui-autocomplete-panel rounded-md border border-tum-ui-border bg-tum-ui-surface-0 text-tum-ui-surface-700 shadow-md dark:bg-tum-ui-surface-900 dark:text-tum-ui-surface-0"
+    >
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            [attr.aria-label]="ariaLabel()"
+            class="m-0 flex max-h-60 list-none flex-col gap-0.5 overflow-y-auto p-1"
+            data-testid="tum-ui-autocomplete-listbox"
+        >
+            @for (option of suggestions(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isAlreadySelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(option, i)"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="selectOption(option, $event)"
+                    (mouseenter)="setActive(i)"
+                    data-testid="tum-ui-autocomplete-option"
+                >
+                    <span class="flex-1 truncate">{{ valueLabel(option) }}</span>
+                </li>
+            } @empty {
+                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">{{ emptyMessage() }}</li>
+            }
+        </ul>
+    </div>
+</ng-template>
