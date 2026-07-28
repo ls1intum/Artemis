@@ -103,9 +103,10 @@ TypeScript's `satisfies` operator. The theme toolbar applies to component previe
 the manager remains independently themed by Storybook. Every story runs in both package themes,
 so theme-specific duplicate stories are unnecessary. Compodoc supplies AutoDocs API metadata;
 JSDoc should explain only non-obvious public behavior or constraints, never repeat names, types,
-or defaults. Storybook's Angular Vite integration is a preview feature, so its exact version stays
-pinned and upgrades require HMR verification, the package build, Chromium story tests, the static
-Storybook build, and the AutoDocs theme tests to pass.
+or defaults. Compodoc metadata is generated when Storybook starts; restart Storybook after changing
+public API documentation. Storybook's Angular Vite integration is a preview feature, so its exact
+version stays pinned and upgrades require HMR verification, the package build, Chromium story tests,
+the static Storybook build, and the AutoDocs theme tests to pass.
 
 ## License
 
