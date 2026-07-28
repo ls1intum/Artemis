@@ -1033,6 +1033,18 @@ class GenerationTaskServiceTest {
                 .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
     }
 
+    @Test
+    void unexpectedFailureBeforeAnOutcome_reportsTheRunAsFailed() {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("checkpoint replay drift"));
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.message()).isEqualTo("Generation failed.");
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
+    }
+
     /**
      * The attempt loop sees only a cooperative stop flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@code CANCELLED}; only the task knows
      * which fired. Every other reason is the loop's own conclusion about the candidate and must survive untouched — a run that converged before the deadline fired terminated by

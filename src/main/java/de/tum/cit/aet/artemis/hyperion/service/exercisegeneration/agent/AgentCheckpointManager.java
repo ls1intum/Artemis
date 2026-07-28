@@ -63,7 +63,9 @@ public class AgentCheckpointManager {
 
     private static final DateTimeFormatter RUN_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
 
-    private static final List<String> SNAPSHOT_ROOTS = List.of("/workspace", "/tmp/hyperion", "/opt/hyperion", "/opt/hyperion-readiness-fixture");
+    // Only agent-owned mutable state belongs in time travel. /opt/hyperion is verifier-owned and contains fresh JUnit reports whose timestamps differ on every readiness run;
+    // recording it made otherwise identical forks fail before call 1. The immutable verifier and readiness fixture are part of the current runtime, not authoring state.
+    private static final List<String> SNAPSHOT_ROOTS = List.of("/workspace", "/tmp/hyperion");
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
@@ -438,8 +440,12 @@ public class AgentCheckpointManager {
             if (!expectedPrompt.equals(actualPrompt)) {
                 throw new IllegalStateException("Prompt drift before replayed checkpoint call " + ordinal + ". Use a fork at the first intentionally changed call.");
             }
-            if (!rootHashes(source.before()).equals(rootHashes(current))) {
-                throw new IllegalStateException("Sandbox state drift before replayed checkpoint call " + ordinal + "; refusing to hide a non-deterministic prefix.");
+            Map<String, String> expectedRoots = rootHashes(source.before());
+            Map<String, String> actualRoots = rootHashes(current);
+            if (!expectedRoots.equals(actualRoots)) {
+                List<String> changedRoots = expectedRoots.keySet().stream().filter(root -> !Objects.equals(expectedRoots.get(root), actualRoots.get(root))).toList();
+                throw new IllegalStateException(
+                        "Sandbox state drift before replayed checkpoint call " + ordinal + " in " + changedRoots + "; refusing to hide a non-deterministic prefix.");
             }
         }
     }
@@ -455,7 +461,12 @@ public class AgentCheckpointManager {
 
     private static Map<String, String> rootHashes(CheckpointState state) {
         Map<String, String> hashes = new LinkedHashMap<>();
-        state.roots().forEach((root, snapshot) -> hashes.put(root, snapshot.sha256()));
+        SNAPSHOT_ROOTS.forEach(root -> {
+            RootSnapshot snapshot = state.roots().get(root);
+            if (snapshot != null) {
+                hashes.put(root, snapshot.sha256());
+            }
+        });
         return hashes;
     }
 

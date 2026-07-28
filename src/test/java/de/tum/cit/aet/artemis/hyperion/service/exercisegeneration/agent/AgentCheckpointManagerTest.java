@@ -247,7 +247,7 @@ class AgentCheckpointManagerTest {
         private final Map<String, Map<String, byte[]>> roots = new LinkedHashMap<>();
 
         private InMemorySandbox(Map<String, Map<String, byte[]>> initial) {
-            for (String root : List.of("/workspace", "/tmp/hyperion", "/opt/hyperion", "/opt/hyperion-readiness-fixture")) {
+            for (String root : List.of("/workspace", "/tmp/hyperion")) {
                 roots.put(root, new LinkedHashMap<>());
             }
             initial.forEach((root, files) -> roots.put(root, new LinkedHashMap<>(files)));

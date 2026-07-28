@@ -363,6 +363,10 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
         }
+        catch (RuntimeException e) {
+            log.error("Exercise generation job {} failed before producing an outcome", jobId, e);
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
+        }
         finally {
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
