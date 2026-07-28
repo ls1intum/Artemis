@@ -20,7 +20,8 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { IrisCommand, IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
+import { IrisPointOut, parsePointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -1114,9 +1115,10 @@ export class IrisChatService implements OnDestroy {
     private handleCommand(command: IrisCommand): void {
         switch (command.type) {
             case 'pointOut': {
-                const pointOut = this.toPointOut(command);
+                const pointOut = parsePointOut(command.parameters);
                 if (pointOut) {
-                    // The combined view applies it and acknowledges once it has actually moved.
+                    // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
+                    pointOut.correlationId = command.correlationId;
                     this.pointOutSubject.next(pointOut);
                     return;
                 }
@@ -1126,19 +1128,6 @@ export class IrisChatService implements OnDestroy {
         if (typeof command.correlationId === 'string') {
             this.sendCommandAck(command.correlationId, false);
         }
-    }
-
-    private toPointOut(command: IrisCommand): IrisPointOut | undefined {
-        const parameters = command.parameters;
-        if (parameters === undefined || typeof parameters['lectureUnitId'] !== 'number') {
-            return undefined;
-        }
-        const page = typeof parameters['page'] === 'number' ? parameters['page'] : undefined;
-        const timestamp = typeof parameters['timestamp'] === 'number' ? parameters['timestamp'] : undefined;
-        if (page === undefined && timestamp === undefined) {
-            return undefined;
-        }
-        return { correlationId: command.correlationId, lectureUnitId: parameters['lectureUnitId'], page, timestamp };
     }
 
     /**

@@ -36,7 +36,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
-import { IrisCommand } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;

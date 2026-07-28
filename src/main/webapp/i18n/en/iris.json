@@ -258,6 +258,7 @@
                 "trailLabel": "Iris activity trail",
                 "trailSummary": "Tools used: {{ count }} · {{ duration }}s",
                 "lecture_content_retrieval": "Reading lecture",
+                "point_out_relevant_lecture_position": "Locating lecture position",
                 "faq_content_retrieval": "Reading FAQs",
                 "get_course_details": "Looking up course info",
                 "get_exercise_list": "Looking up exercises",

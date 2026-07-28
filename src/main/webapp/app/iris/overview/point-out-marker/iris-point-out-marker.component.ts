@@ -5,8 +5,8 @@ import { faLocationArrow } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { IrisMessageContent, getPointOut, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisPointOut, getPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 

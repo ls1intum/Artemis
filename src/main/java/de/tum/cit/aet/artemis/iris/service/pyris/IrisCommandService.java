@@ -184,9 +184,9 @@ public class IrisCommandService {
     /**
      * Persists an applied command as a COMMAND marker in the chat history and pushes it to the client.
      * <p>
-     * Only commands whose marker can be rendered for both audiences are persisted (see {@link #executeCommand}): the student, who gets a clickable chip, and Iris, which gets a
-     * plain-text system note built in {@code PyrisMessageDTO}. For a point-out, the stored {@code page} is the slide's index in the deck, the same value the client navigates by,
-     * so the chip labels the slide with that index while Iris refers to it in its answer text by the number printed on the slide. Both can differ.
+     * Only commands whose marker can be rendered for both audiences are persisted (see {@link #executeCommand}): the student, who gets a clickable chip, and Iris, which gets the
+     * system note Pyris builds from the marker JSON (Artemis forwards it unchanged). For a point-out, the stored {@code page} is the slide's index in the deck, the same value the
+     * client navigates by, so the chip labels the slide with that index while Iris refers to it in its answer text by the number printed on the slide. Both can differ.
      */
     private void persistAndPushMarker(IrisSession session, ObjectNode markerContent) {
         var message = new IrisMessage();

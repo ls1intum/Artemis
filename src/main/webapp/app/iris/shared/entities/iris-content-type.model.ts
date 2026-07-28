@@ -1,5 +1,3 @@
-import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
-
 export enum IrisMessageContentType {
     TEXT = 'text',
     JSON = 'json',
@@ -128,27 +126,6 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
         return content.attributes;
     }
     return undefined;
-}
-
-/**
- * Extracts the point-out recorded on a COMMAND marker, if it is a valid one (it must name a lecture
- * unit and at least one of page / timestamp). The caller establishes the marker's command type; this
- * only reads the parameters of a marker already known to be a point-out.
- * @param marker the marker's JSON attributes, in the persisted {type, parameters} shape
- * @returns the point-out if valid, undefined otherwise
- */
-export function getPointOut(marker: Record<string, unknown>): IrisPointOut | undefined {
-    const parameters = marker['parameters'] as Record<string, unknown> | undefined;
-    if (typeof parameters?.['lectureUnitId'] !== 'number') {
-        return undefined;
-    }
-    const page = typeof parameters['page'] === 'number' ? parameters['page'] : undefined;
-    const timestamp = typeof parameters['timestamp'] === 'number' ? parameters['timestamp'] : undefined;
-    if (page === undefined && timestamp === undefined) {
-        return undefined;
-    }
-    const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
-    return { lectureUnitId: parameters['lectureUnitId'], page, timestamp, lectureUnitName };
 }
 
 /**

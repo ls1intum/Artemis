@@ -1,7 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisCommand } from 'app/iris/shared/entities/iris-point-out.model';
-import { IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command-ack-dto.model';
+import { IrisCommand, IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
