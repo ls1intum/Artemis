@@ -39,6 +39,9 @@ public class Attachment extends DomainObject implements Serializable {
     @Column(name = "version")
     private Integer version;
 
+    @Column(name = "sha256_hash")
+    private String sha256Hash;
+
     @Column(name = "upload_date")
     private ZonedDateTime uploadDate;
 
@@ -91,6 +94,14 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public String getSha256Hash() {
+        return sha256Hash;
+    }
+
+    public void setSha256Hash(String sha256Hash) {
+        this.sha256Hash = sha256Hash;
     }
 
     public ZonedDateTime getUploadDate() {
