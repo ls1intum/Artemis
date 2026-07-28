@@ -388,27 +388,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void tempQueryCountForSecondPass() throws Exception {
-        var now = ZonedDateTime.now();
-        FileUploadExercise ex = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
-        course.addExercises(ex);
-        fileUploadExerciseRepository.save(ex);
-        final User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        List<Long> ids = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            FileUploadSubmission submission = new FileUploadSubmission();
-            submission.submitted(true);
-            submission.submissionDate(now.minusHours(3 + i));
-            participationUtilService.addSubmission(ex, submission, TEST_PREFIX + "student" + (i % NUMBER_OF_STUDENTS + 1));
-            Submission saved = participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, instructor, 10D, true);
-            ids.add(saved.getResults().getFirst().getId());
-        }
-        var loaded = assertThatDb(() -> resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(ids)).hasBeenCalledTimes(1);
-        assertThat(loaded).hasSize(10);
-    }
-
     private FileUploadExercise setupFileUploadExerciseWithResults() {
         var now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
