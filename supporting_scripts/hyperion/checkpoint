@@ -308,9 +308,24 @@ def start_stack(env: dict[str, str]) -> None:
             raise SystemExit(f"Angular did not become healthy; inspect {client_log.name}")
 
 
-def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fork_at: int, repeats: int, fork_instruction: str = "") -> None:
+def run_scenario(
+    scenario: str,
+    name: str,
+    output: Path,
+    replay: Path | None,
+    fork_at: int,
+    fork_review_at: int,
+    repeats: int,
+    fork_instruction: str = "",
+) -> None:
     output.mkdir(parents=True, exist_ok=True)
-    metadata = {"scenario": scenario, "name": name, "parent": str(replay) if replay else None, "forkAt": fork_at}
+    metadata = {
+        "scenario": scenario,
+        "name": name,
+        "parent": str(replay) if replay else None,
+        "forkAt": fork_at,
+        "forkReviewAt": fork_review_at,
+    }
     (output / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     for repeat in range(1, repeats + 1):
         env = load_local_env()
@@ -329,6 +344,7 @@ def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fo
         if replay:
             env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_REPLAY_FROM"] = str(replay)
             env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_AT"] = str(fork_at)
+            env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_REVIEW_AT"] = str(fork_review_at)
             if fork_instruction:
                 env["ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_INSTRUCTION"] = fork_instruction
             source_manifest = read_json(replay / "run.json")
@@ -379,7 +395,7 @@ def main() -> None:
     replay_parser.add_argument("--scenario")
     replay_parser.add_argument("--name")
     fork = sub.add_parser("fork")
-    fork.add_argument("reference", help="RUN@CALL")
+    fork.add_argument("reference", help="RUN@CALL or RUN@rREVIEW")
     fork.add_argument("--scenario")
     fork.add_argument("--name", required=True)
     fork.add_argument("--repeat", type=int, default=1)
@@ -391,7 +407,7 @@ def main() -> None:
     store = args.store.resolve()
 
     if args.command == "record":
-        run_scenario(args.scenario, args.name, store / args.name, None, 0, 1)
+        run_scenario(args.scenario, args.name, store / args.name, None, 0, 0, 1)
     elif args.command == "turns":
         print_turns(resolve_run(args.run, store))
     elif args.command == "show":
@@ -407,15 +423,29 @@ def main() -> None:
         source = resolve_run(args.run, store)
         scenario = args.scenario or parent_scenario(source)
         name = args.name or f"{source.parent.name}-replay"
-        run_scenario(scenario, name, store / name, source, 0, 1)
+        run_scenario(scenario, name, store / name, source, 0, 0, 1)
     elif args.command == "fork":
         run_name, separator, ordinal = args.reference.rpartition("@")
-        if not separator or not ordinal.isdigit():
-            raise SystemExit("Expected RUN@CALL, for example elevator-base@42")
+        reviewer_fork = ordinal.startswith("r") and ordinal[1:].isdigit()
+        if not separator or not (ordinal.isdigit() or reviewer_fork):
+            raise SystemExit("Expected RUN@CALL or RUN@rREVIEW, for example elevator-base@42 or elevator-base@r1")
         source = resolve_run(run_name, store)
         scenario = args.scenario or parent_scenario(source)
+        if reviewer_fork and args.instruction_file:
+            raise SystemExit("--instruction-file is supported only for an author call fork")
+        if reviewer_fork and not (source / "reviews" / f"{int(ordinal[1:]):06d}.json").is_file():
+            raise SystemExit(f"Reviewer call {ordinal} does not exist in {source}")
         instruction = args.instruction_file.read_text(encoding="utf-8").strip() if args.instruction_file else ""
-        run_scenario(scenario, args.name, store / args.name, source, int(ordinal), args.repeat, instruction)
+        run_scenario(
+            scenario,
+            args.name,
+            store / args.name,
+            source,
+            0 if reviewer_fork else int(ordinal),
+            int(ordinal[1:]) if reviewer_fork else 0,
+            args.repeat,
+            instruction,
+        )
     elif args.command == "compare":
         compare_runs(resolve_run(args.left, store), resolve_run(args.right, store))
 

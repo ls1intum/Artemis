@@ -197,6 +197,57 @@ class AgentCheckpointManagerTest {
     }
 
     @Test
+    void reviewerForkReplaysTheAuthorPrefixAndRunsTheSelectedReviewAndSuffixLive() throws IOException {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(11L);
+        when(exercise.getTitle()).thenReturn("Review fork");
+        Path recordRoot = tempDirectory.resolve("review-fork-source");
+        InMemorySandbox sourceSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("artifact.txt", "source".getBytes())));
+        SandboxAgentTools sourceTools = new SandboxAgentTools(sourceSandbox, "source");
+        AgentCheckpointManager recorder = new AgentCheckpointManager(mapper, recordRoot.toString(), "", 0, true, "");
+        recorder.beginRun("review-fork-source", exercise, sourceTools, new ApprovedSpecRegistry());
+        List<Message> firstPrompt = List.of(new SystemMessage("system"), new UserMessage("first"));
+        List<Message> firstResult = List.of(new SystemMessage("system"), new UserMessage("first"), new AssistantMessage("first result"));
+        AgentCheckpointManager.LoopCursor cursor = new AgentCheckpointManager.LoopCursor("", 0, 0, 0);
+        AgentCheckpointManager.TurnHandle first = recorder.beforeTurn(1, 2, "provider-v1", "tools-v1", firstPrompt, cursor);
+        recorder.finishTurn(first, firstResult, cursor, AgentLoopResult.Status.COMPLETED);
+        assertThat(recorder.reviewerCall("old system", "old candidate", "reviewer-v1", () -> "old verdict")).isEqualTo("old verdict");
+        AgentCheckpointManager.TurnHandle second = recorder.beforeTurn(2, 2, "provider-v1", "tools-v1", firstResult, cursor);
+        recorder.finishTurn(second, firstResult, cursor, AgentLoopResult.Status.COMPLETED);
+        recorder.endRun();
+        Path source = Files.list(recordRoot).filter(Files::isDirectory).findFirst().orElseThrow();
+
+        InMemorySandbox branchSandbox = new InMemorySandbox(Map.of("/workspace", Map.of("artifact.txt", "source".getBytes())));
+        AgentCheckpointManager branch = new AgentCheckpointManager(mapper, tempDirectory.resolve("review-fork-branch").toString(), source.toString(), 0, 1, true, "");
+        branch.beginRun("review-fork-branch", exercise, new SandboxAgentTools(branchSandbox, "branch"), new ApprovedSpecRegistry());
+
+        assertThat(branch.beforeTurn(1, 2, "provider-v1", "tools-v1", firstPrompt, cursor).replayed()).isTrue();
+        AtomicBoolean reviewerCalled = new AtomicBoolean();
+        assertThat(branch.reviewerCall("new system", "new candidate", "reviewer-v1", () -> {
+            reviewerCalled.set(true);
+            return "new verdict";
+        })).isEqualTo("new verdict");
+        assertThat(reviewerCalled).isTrue();
+        AgentCheckpointManager.TurnHandle liveSuffix = branch.beforeTurn(2, 2, "provider-v1", "tools-v1", firstResult, cursor);
+        assertThat(liveSuffix.replayed()).isFalse();
+        branch.finishTurn(liveSuffix, firstResult, cursor, AgentLoopResult.Status.COMPLETED);
+        branch.endRun();
+    }
+
+    @Test
+    void reviewerForkConfigurationRejectsAmbiguousOrUnsupportedModes() {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+        assertThatThrownBy(() -> new AgentCheckpointManager(mapper, "", "source", 1, 1, true, "")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("mutually exclusive");
+        assertThatThrownBy(() -> new AgentCheckpointManager(mapper, "", "", 0, 1, true, "")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("requires checkpoint-replay-from");
+        assertThatThrownBy(() -> new AgentCheckpointManager(mapper, "", "source", 0, 1, true, "change it")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("only for an author call fork");
+    }
+
+    @Test
     void forkPreservesTheConsecutiveToolFailureCeiling() throws IOException {
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);

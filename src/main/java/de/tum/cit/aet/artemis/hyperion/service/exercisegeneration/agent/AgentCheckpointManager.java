@@ -31,6 +31,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -79,32 +80,48 @@ public class AgentCheckpointManager {
 
     private final int forkAt;
 
+    private final int forkReviewAt;
+
     private final boolean strict;
 
     private final String forkInstruction;
 
     private final ThreadLocal<RunScope> currentRun = new ThreadLocal<>();
 
+    @Autowired
     public AgentCheckpointManager(ObjectMapper objectMapper, @Value("${artemis.hyperion.agent.checkpoint-dir:}") String checkpointDirectory,
             @Value("${artemis.hyperion.agent.checkpoint-replay-from:}") String replaySource, @Value("${artemis.hyperion.agent.checkpoint-fork-at:0}") int forkAt,
-            @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict, @Value("${artemis.hyperion.agent.checkpoint-fork-instruction:}") String forkInstruction) {
+            @Value("${artemis.hyperion.agent.checkpoint-fork-review-at:0}") int forkReviewAt, @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict,
+            @Value("${artemis.hyperion.agent.checkpoint-fork-instruction:}") String forkInstruction) {
         this.objectMapper = objectMapper;
         this.checkpointDirectory = strip(checkpointDirectory);
         this.replaySource = strip(replaySource);
         this.forkAt = forkAt;
+        this.forkReviewAt = forkReviewAt;
         this.strict = strict;
         this.forkInstruction = strip(forkInstruction);
-        if (forkAt < 0) {
-            throw new IllegalArgumentException("artemis.hyperion.agent.checkpoint-fork-at cannot be negative");
+        if (forkAt < 0 || forkReviewAt < 0) {
+            throw new IllegalArgumentException("checkpoint fork ordinals cannot be negative");
         }
-        if (forkAt > 0 && this.replaySource.isBlank()) {
-            throw new IllegalArgumentException("checkpoint-fork-at requires checkpoint-replay-from");
+        if (forkAt > 0 && forkReviewAt > 0) {
+            throw new IllegalArgumentException("checkpoint-fork-at and checkpoint-fork-review-at are mutually exclusive");
+        }
+        if (hasFork() && this.replaySource.isBlank()) {
+            throw new IllegalArgumentException("a checkpoint fork requires checkpoint-replay-from");
         }
         if (!this.forkInstruction.isBlank() && forkAt == 0) {
-            throw new IllegalArgumentException("checkpoint-fork-instruction requires checkpoint-fork-at");
+            throw new IllegalArgumentException("checkpoint-fork-instruction is supported only for an author call fork");
         }
         SECRET_MATERIAL_POLICY.requireSafe("checkpoint/fork-instruction", this.forkInstruction.getBytes(StandardCharsets.UTF_8),
                 HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
+    }
+
+    public AgentCheckpointManager(ObjectMapper objectMapper, String checkpointDirectory, String replaySource, int forkAt, boolean strict, String forkInstruction) {
+        this(objectMapper, checkpointDirectory, replaySource, forkAt, 0, strict, forkInstruction);
+    }
+
+    private boolean hasFork() {
+        return forkAt > 0 || forkReviewAt > 0;
     }
 
     public boolean enabled() {
@@ -146,9 +163,11 @@ public class AgentCheckpointManager {
                 Files.createDirectories(output.resolve("calls"));
                 Files.createDirectories(output.resolve("reviews"));
                 Files.createDirectories(output.resolve("blobs"));
-                writeAtomic(output.resolve("run.json"), new RunManifest(SCHEMA_VERSION, jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(),
-                        exercise.getPackageName(), exercise.getProblemStatement(), exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
-                        exercise.getProjectType() == null ? null : exercise.getProjectType().name(), Instant.now(), source == null ? null : source.toString(), forkAt, false));
+                writeAtomic(output.resolve("run.json"),
+                        new RunManifest(SCHEMA_VERSION, jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(),
+                                exercise.getProblemStatement(), exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
+                                exercise.getProjectType() == null ? null : exercise.getProjectType().name(), Instant.now(), source == null ? null : source.toString(), forkAt,
+                                forkReviewAt, false));
             }
             currentRun.set(new RunScope(jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(), exercise.getProblemStatement(),
                     exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
@@ -164,13 +183,18 @@ public class AgentCheckpointManager {
     public void endRun() {
         RunScope run = currentRun.get();
         currentRun.remove();
+        if (run != null && forkReviewAt > 0 && !run.liveSuffix) {
+            run.failed = true;
+            throw new IllegalStateException("Checkpoint has no reachable reviewer call r" + forkReviewAt + ".");
+        }
         if (run == null || run.outputDirectory == null || run.failed) {
             return;
         }
         try {
             writeAtomic(run.outputDirectory.resolve("run.json"),
                     new RunManifest(SCHEMA_VERSION, run.jobId, run.exerciseId, run.exerciseTitle, run.exerciseShortName, run.exercisePackageName, run.exerciseProblemStatement,
-                            run.programmingLanguage, run.projectType, run.startedAt, run.sourceDirectory == null ? null : run.sourceDirectory.toString(), forkAt, true));
+                            run.programmingLanguage, run.projectType, run.startedAt, run.sourceDirectory == null ? null : run.sourceDirectory.toString(), forkAt, forkReviewAt,
+                            true));
         }
         catch (IOException | RuntimeException e) {
             handleFailure("Could not complete the checkpoint run", e);
@@ -181,7 +205,7 @@ public class AgentCheckpointManager {
      * @return whether the current run is a provider-free full replay rather than a live fork
      */
     public boolean replaysAllAuthoringCalls() {
-        return !replaySource.isBlank() && forkAt == 0 && currentRun.get() != null;
+        return !replaySource.isBlank() && !hasFork() && currentRun.get() != null;
     }
 
     /**
@@ -201,7 +225,8 @@ public class AgentCheckpointManager {
             return liveCall.get();
         }
         int ordinal = ++run.reviewerOrdinal;
-        boolean replay = run.sourceDirectory != null && (forkAt == 0 || run.ordinal < forkAt);
+        boolean selectedReviewerFork = run.sourceDirectory != null && forkReviewAt == ordinal && !run.liveSuffix;
+        boolean replay = run.sourceDirectory != null && !run.liveSuffix && !selectedReviewerFork && (forkReviewAt > 0 || forkAt == 0 || run.ordinal < forkAt);
         if (replay) {
             ReviewerRecord source;
             try {
@@ -219,6 +244,19 @@ public class AgentCheckpointManager {
                 throw new RecordedReviewerException(source.errorClass() + ": " + source.errorMessage());
             }
             return source.response();
+        }
+        if (selectedReviewerFork) {
+            try {
+                ReviewerRecord source = readReviewer(run.sourceDirectory, ordinal);
+                if (!source.contract().equals(contract)) {
+                    throw new IllegalStateException("Provider contract drift at selected reviewer fork r" + ordinal + ".");
+                }
+                run.liveSuffix = true;
+            }
+            catch (IOException | RuntimeException e) {
+                handleTurnFailure(run, "Could not prepare reviewer fork r" + ordinal, e);
+                return null;
+            }
         }
         String response;
         try {
@@ -278,10 +316,12 @@ public class AgentCheckpointManager {
         try {
             CheckpointState current = captureState(run, conversation, cursor);
             boolean prepared = false;
-            if (run.sourceDirectory != null && (forkAt == 0 || ordinal <= forkAt)) {
+            boolean replayBeforeReviewerFork = run.sourceDirectory != null && forkReviewAt > 0 && !run.liveSuffix;
+            if (run.sourceDirectory != null && (replayBeforeReviewerFork || !hasFork() || ordinal <= forkAt)) {
                 TurnRecord sourceTurn = readTurn(run.sourceDirectory, ordinal);
-                requireCompatible(sourceTurn, current, providerContract, toolContract, localTurn, maxTurns, ordinal, ordinal == forkAt);
-                if (forkAt == 0 || ordinal < forkAt) {
+                boolean selectedAuthorFork = forkAt > 0 && ordinal == forkAt;
+                requireCompatible(sourceTurn, current, providerContract, toolContract, localTurn, maxTurns, ordinal, selectedAuthorFork);
+                if (!selectedAuthorFork) {
                     if (sourceTurn.after() == null) {
                         throw new IllegalStateException("Checkpoint call " + ordinal + " has no committed post-state.");
                     }
@@ -289,7 +329,8 @@ public class AgentCheckpointManager {
                     restoreState(run, sourceTurn.after());
                     return TurnHandle.replayed(ordinal, sourceTurn);
                 }
-                if (ordinal == forkAt) {
+                if (selectedAuthorFork) {
+                    run.liveSuffix = true;
                     restoreState(run, sourceTurn.before());
                     if (!forkInstruction.isBlank()) {
                         List<Message> preparedConversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(sourceTurn.before().conversation()));
@@ -429,7 +470,7 @@ public class AgentCheckpointManager {
         if (!source.toolContract().equals(toolContract)) {
             throw new IllegalStateException("Tool contract changed before checkpoint call " + ordinal + "; refusing an unsafe replay/fork.");
         }
-        if (forkAt > 0 && !source.providerContract().equals(providerContract)) {
+        if (hasFork() && !source.providerContract().equals(providerContract)) {
             throw new IllegalStateException("Provider model or options changed before checkpoint call " + ordinal + "; refusing an incomparable fork.");
         }
         if (source.localTurn() != localTurn || source.maxTurns() != maxTurns) {
@@ -537,7 +578,7 @@ public class AgentCheckpointManager {
 
     private Path outputDirectory(String jobId, @Nullable Path source) {
         String root = checkpointDirectory;
-        if (root.isBlank() && source != null && forkAt > 0) {
+        if (root.isBlank() && source != null && hasFork()) {
             root = source.resolveSibling("branches").toString();
         }
         if (root.isBlank()) {
@@ -667,7 +708,7 @@ public class AgentCheckpointManager {
 
     record RunManifest(int schemaVersion, String jobId, @Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseShortName,
             @Nullable String exercisePackageName, @Nullable String exerciseProblemStatement, @Nullable String programmingLanguage, @Nullable String projectType, Instant startedAt,
-            @Nullable String parent, int forkAt, boolean completed) {
+            @Nullable String parent, int forkAt, int forkReviewAt, boolean completed) {
     }
 
     record TurnHandle(boolean enabled, boolean replayed, boolean prepared, int ordinal, String providerContract, String toolContract, int localTurn, int maxTurns,
@@ -737,6 +778,8 @@ public class AgentCheckpointManager {
         private final Map<String, CachedRoot> rootCache = new LinkedHashMap<>();
 
         private boolean failed;
+
+        private boolean liveSuffix;
 
         private RunScope(String jobId, @Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseShortName, @Nullable String exercisePackageName,
                 @Nullable String exerciseProblemStatement, @Nullable String programmingLanguage, @Nullable String projectType, SandboxAgentTools tools,
