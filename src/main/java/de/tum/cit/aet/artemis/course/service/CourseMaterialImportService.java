@@ -369,6 +369,10 @@ public class CourseMaterialImportService {
         skeleton.setMaxPoints(source.getMaxPoints());
         skeleton.setBonusPoints(source.getBonusPoints());
         skeleton.setIncludedInOverallScore(source.getIncludedInOverallScore());
+        skeleton.setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        // The skeleton has no grading criteria of its own; null asks the import service to deep-copy the source's (an
+        // initialized empty collection would count as "the caller wants none", see ExerciseImportService#copyExerciseBasis).
+        skeleton.setGradingCriteria(null);
         // Note: mode is intentionally not copied here. A TEAM source would also need its teamAssignmentConfig, which the
         // course-material fetch does not load; preserving team mode + config for course-material import is left as a
         // follow-up together with the categories / plagiarism-config fetch-graph expansion.

@@ -408,6 +408,10 @@ public class ExamImportService {
                 // Hibernate conflicts with managed entities that have the same ID in the persistence context
                 Long sourceExerciseId = exerciseToCopy.getId();
                 exerciseToCopy.setId(null);
+                // The exercise is not editable on this path, so the skeleton carries no grading criteria of its own; null
+                // asks the import service to deep-copy the source's (an initialized empty collection would count as "the
+                // caller wants none", see ExerciseImportService#copyExerciseBasis).
+                exerciseToCopy.setGradingCriteria(null);
                 Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                     case MODELING -> {
                         if (modelingExerciseImportApi.isEmpty()) {

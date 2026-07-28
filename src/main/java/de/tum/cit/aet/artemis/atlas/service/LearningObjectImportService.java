@@ -301,6 +301,9 @@ public class LearningObjectImportService {
         // the source's collections in place.
         E newExercise = newExerciseSupplier.get();
         newExercise.setCourse(course);
+        // The fresh target has no grading criteria of its own; null asks the import service to deep-copy the source's (an
+        // initialized empty collection would count as "the caller wants none", see ExerciseImportService#copyExerciseBasis).
+        newExercise.setGradingCriteria(null);
         newExercise.setTitle(sourceExercise.getTitle());
         newExercise.setMaxPoints(sourceExercise.getMaxPoints());
         newExercise.setBonusPoints(sourceExercise.getBonusPoints());

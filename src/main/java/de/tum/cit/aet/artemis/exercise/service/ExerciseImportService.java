@@ -73,6 +73,13 @@ public abstract class ExerciseImportService {
      * backfill is largely a no-op. A bulk import (exam / course-material) passes a destination skeleton, so nearly
      * every field is filled from {@code sourceExercise}. This single "keep the caller's value, else take the source's"
      * rule keeps both cases correct without a separate intended-vs-source object.
+     * <p>
+     * Fields with a non-null default on a fresh entity cannot take part in the backfill, because a skeleton's default is
+     * indistinguishable from an intentional value: {@code includedInOverallScore}, {@code mode},
+     * {@code presentationScoreEnabled} and the release/start/due/assessment dates stay exactly as the caller set them,
+     * so a bulk caller has to copy the ones it wants from the source itself. For the same reason a bulk caller must set
+     * {@code gradingCriteria} to {@code null} on its skeleton to request the deep copy from the source; an initialized
+     * (possibly empty) collection is treated as the caller's own content.
      *
      * @param newExercise                   the exercise being built; already carries the destination and any caller
      *                                          overrides, receives the source content for every field it does not define
@@ -88,9 +95,10 @@ public abstract class ExerciseImportService {
         newExercise.setProblemStatement(firstNonNull(newExercise.getProblemStatement(), sourceExercise.getProblemStatement()));
         newExercise.setDifficulty(firstNonNull(newExercise.getDifficulty(), sourceExercise.getDifficulty()));
         newExercise.setGradingInstructions(firstNonNull(newExercise.getGradingInstructions(), sourceExercise.getGradingInstructions()));
-        // includedInOverallScore and mode have non-null defaults, so a bulk skeleton's default cannot be distinguished
-        // from an intentional value; both stay as the caller set them on newExercise (the standalone form supplies them,
-        // and the course-material import copies them from the source onto its skeleton - see CourseMaterialImportService).
+        // includedInOverallScore, mode and presentationScoreEnabled have non-null defaults, so a bulk skeleton's default
+        // cannot be distinguished from an intentional value; they stay exactly as the caller set them on newExercise. The
+        // standalone form supplies them, and each bulk caller copies the ones it supports from the source onto its
+        // skeleton (see CourseMaterialImportService#copyImportOverrides and LearningObjectImportService).
 
         // Dates are reset on import: the standalone import clears them client-side and the bulk skeletons have none, so
         // whatever the caller left on newExercise is kept and an imported exercise starts fresh instead of inheriting
@@ -98,12 +106,18 @@ public abstract class ExerciseImportService {
         newExercise.setExampleSolutionPublicationDate(null); // This should not be imported as the client might serve the original date as the default.
         newExercise.validateDates();
 
-        // Grading criteria: prefer the caller's edited criteria if initialized, else deep-copy the source's.
-        // Prefer the caller's edited criteria only if it actually carries some (a fresh bulk skeleton has an
-        // initialized-but-empty set, which must not win over the source), else deep-copy the source's criteria.
-        Exercise gradingCriteriaSource = hasInitializedGradingCriteria(newExercise) && !newExercise.getGradingCriteria().isEmpty() ? newExercise : sourceExercise;
+        // Grading criteria: a caller that carries an initialized collection owns it, so a standalone import can express
+        // "no grading criteria" by submitting an empty one. A bulk-import caller has no criteria of its own and requests
+        // the backfill by setting the collection to null on its skeleton - the initialized-but-empty set of a fresh entity
+        // must not win over the source, which is how the criteria used to get dropped on bulk import (see #13268).
+        Exercise gradingCriteriaSource = hasInitializedGradingCriteria(newExercise) ? newExercise : sourceExercise;
         if (hasInitializedGradingCriteria(gradingCriteriaSource)) {
             newExercise.setGradingCriteria(gradingCriteriaSource.copyGradingCriteria(gradingInstructionCopyTracker));
+        }
+        else {
+            // Neither side carries readable criteria (a bulk skeleton whose source query did not fetch them): never
+            // leave the collection null, since the rest of the import and the response read it.
+            newExercise.setGradingCriteria(new HashSet<>());
         }
 
         // Competency links point at course-specific competencies, so they only come from newExercise (the standalone
@@ -120,16 +134,26 @@ public abstract class ExerciseImportService {
         }
 
         if (newExercise.getExerciseGroup() != null) {
+            // Exam exercises are always individual. newExercise may be a client-supplied entity, so a team assignment
+            // configuration it carries has to be cleared explicitly - it would otherwise be cascade-persisted.
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
+            newExercise.setTeamAssignmentConfig(null);
         }
         else {
             Exercise categoriesSource = hasInitializedCategories(newExercise) && !newExercise.getCategories().isEmpty() ? newExercise : sourceExercise;
             if (hasInitializedCategories(categoriesSource)) {
                 newExercise.setCategories(new HashSet<>(categoriesSource.getCategories()));
             }
-            Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
-            if (newExercise.getMode() == ExerciseMode.TEAM && hasTeamAssignmentConfig(teamConfigSource)) {
-                newExercise.setTeamAssignmentConfig(teamConfigSource.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+            if (newExercise.getMode() == ExerciseMode.TEAM) {
+                Exercise teamConfigSource = hasTeamAssignmentConfig(newExercise) ? newExercise : sourceExercise;
+                if (hasTeamAssignmentConfig(teamConfigSource)) {
+                    // Always a fresh copy: a caller-supplied configuration may still carry the source's id.
+                    newExercise.setTeamAssignmentConfig(teamConfigSource.getTeamAssignmentConfig().copyTeamAssignmentConfig());
+                }
+            }
+            else {
+                // An individual exercise must not keep a configuration a client-supplied entity brought along.
+                newExercise.setTeamAssignmentConfig(null);
             }
         }
     }
