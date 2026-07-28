@@ -69,7 +69,7 @@ class PyrisPipelineServiceTest {
         session.setUserId(7L);
 
         service.executeChatPipeline("default", "moderate", session, Optional.empty(), (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null,
-                List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null, null));
+                List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null));
 
         verify(irisChatWebsocketService).sendStatusUpdate(eq(session), eq("run-1"), eq(PyrisRunState.RUNNING), isNull());
     }
@@ -125,7 +125,7 @@ class PyrisPipelineServiceTest {
         var capturedSettings = new AtomicReference<PyrisPipelineExecutionSettingsDTO>();
         service.executeChatPipeline("default", "moderate", session, Optional.empty(), (executionDto, ignoredUser, ignoredPyrisUser) -> {
             capturedSettings.set(executionDto.settings());
-            return new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null, null);
+            return new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null);
         });
 
         return capturedSettings.get();
