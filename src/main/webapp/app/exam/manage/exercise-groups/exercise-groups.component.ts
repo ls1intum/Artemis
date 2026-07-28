@@ -1,5 +1,5 @@
 import { Component, OnInit, Type, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -13,23 +13,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import {
-    faAngleDown,
-    faAngleUp,
-    faCheckDouble,
-    faFileImport,
-    faFileUpload,
-    faFont,
-    faKeyboard,
-    faPlus,
-    faProjectDiagram,
-    faTrash,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -37,16 +23,15 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
-import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
-import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { TumUiPanelComponent } from 'app/shared-ui/tum-ui/panel/tum-ui-panel.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { ExamExerciseTableComponent, ExamTableGroupChange } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
+import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
+import { ExamExerciseTypePickerComponent, ExamExerciseTypePickerMode } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -55,23 +40,17 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
     imports: [
         TranslateDirective,
         FaIconComponent,
-        RouterLink,
-        HelpIconComponent,
-        DeleteButtonDirective,
-        ProgrammingExerciseGroupCellComponent,
-        QuizExerciseGroupCellComponent,
-        ModelingExerciseGroupCellComponent,
-        FileUploadExerciseGroupCellComponent,
-        ExamExerciseRowButtonsComponent,
-        LowerCasePipe,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
+        TumUiPanelComponent,
+        TumUiButtonComponent,
+        ExamExerciseTableComponent,
+        ExamExerciseGroupEditModalComponent,
+        ExamExerciseTypePickerComponent,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
-    exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
@@ -79,43 +58,52 @@ export class ExerciseGroupsComponent implements OnInit {
     private translateService = inject(TranslateService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+    private deleteDialogService = inject(DeleteDialogService);
 
-    courseId!: number;
+    readonly courseId = signal<number>(undefined!);
     course = signal<Course | undefined>(undefined);
     readonly examId = signal<number>(undefined!);
     exam = signal<Exam | undefined>(undefined);
     exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-    exerciseType = ExerciseType;
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
-    exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
 
     localCIEnabled = signal(true);
-    textExerciseEnabled = signal(false);
-    modelingExerciseEnabled = signal(false);
-    fileUploadExerciseEnabled = signal(false);
-    disabledExerciseTypes: string[] = [];
+    disabledExerciseTypes: ExerciseType[] = [];
+
+    /** Ids (as strings) of every group's drop list, so exercises can be dragged between any two group tables. */
+    dropListIds(): string[] {
+        return (this.exerciseGroups() ?? []).map((group) => this.groupDropListId(group.id));
+    }
+
+    groupDropListId(groupId: number | undefined): string {
+        return `exercise-group-${groupId}`;
+    }
+
+    readonly typePickerVisible = signal(false);
+    readonly typePickerGroupId = signal<number | undefined>(undefined);
+    readonly typePickerMode = signal<ExamExerciseTypePickerMode>('create');
+
+    readonly groupEditVisible = signal(false);
+    readonly groupEditTarget = signal<ExerciseGroup | undefined>(undefined);
+    /** Selects the create vs. update persistence path in {@link onGroupEditSaved}. */
+    readonly groupEditIsNew = signal(false);
 
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
-    faFont = faFont;
-    faWrench = faWrench;
-    faCheckDouble = faCheckDouble;
-    faFileUpload = faFileUpload;
-    faKeyboard = faKeyboard;
-    faProjectDiagram = faProjectDiagram;
+    faPen = faPen;
+    faFileImport = faFileImport;
+    faLayerGroup = faLayerGroup;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-    faFileImport = faFileImport;
 
     /**
-     * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
-     * See {@link setupExerciseGroupToExerciseTypesDict}.
+     * Initialize the courseId and examId. Get all exercise groups for the exam.
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
@@ -124,21 +112,17 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
-                this.setupExerciseGroupToExerciseTypesDict();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
-        this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
-        this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
-        this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
-        if (!this.textExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT)) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
-        if (!this.modelingExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING)) {
             this.disabledExerciseTypes.push(ExerciseType.MODELING);
         }
-        if (!this.fileUploadExerciseEnabled()) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD)) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
     }
@@ -148,7 +132,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * null will be returned
      */
     loadLatestIndividualEndDateOfExam() {
-        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId, this.examId()).pipe(
+        return this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId(), this.examId()).pipe(
             // When the exam start date was not set properly an error will be thrown.
             // Catch this in the inner observable otherwise forkJoin won't return data
             catchError(() => {
@@ -161,12 +145,11 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        return this.examManagementService.find(this.courseId, this.examId(), true);
+        return this.examManagementService.find(this.courseId(), this.examId(), true);
     }
 
     /**
-     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId. In case the removed exercise was a Programming Exercise,
-     * it calls {@link setupExerciseGroupToExerciseTypesDict} to update the dictionary
+     * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
      * @param exerciseId
      * @param exerciseGroupId
      */
@@ -178,7 +161,6 @@ export class ExerciseGroupsComponent implements OnInit {
                     exerciseGroup.exercises = exerciseGroup.exercises.filter((exercise) => exercise.id !== exerciseId);
                     // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
                     this.exerciseGroups.set([...exerciseGroups]);
-                    this.setupExerciseGroupToExerciseTypesDict();
                 }
             });
         }
@@ -190,7 +172,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.exerciseGroupService.delete(this.courseId(), this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',
@@ -198,31 +180,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
-                const dict = new Map(this.exerciseGroupToExerciseTypesDict());
-                dict.delete(exerciseGroupId);
-                this.exerciseGroupToExerciseTypesDict.set(dict);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): IconProp {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return faCheckDouble;
-            case ExerciseType.FILE_UPLOAD:
-                return faFileUpload;
-            case ExerciseType.MODELING:
-                return faProjectDiagram;
-            case ExerciseType.PROGRAMMING:
-                return faKeyboard;
-            default:
-                return faFont;
-        }
     }
 
     /**
@@ -231,7 +191,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
         const dialogData: ExerciseImportDialogData = { exerciseType };
 
         // Determine the header key based on exercise type
@@ -271,6 +231,64 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Opens the per-group exercise-type picker, either to create a new exercise or to import one.
+     * @param groupId the id of the exercise group the exercise should be created/imported into
+     * @param mode 'create' opens the type picker on the create routes, 'import' delegates to the import dialog
+     */
+    openTypePicker(groupId: number, mode: ExamExerciseTypePickerMode): void {
+        this.typePickerGroupId.set(groupId);
+        this.typePickerMode.set(mode);
+        this.typePickerVisible.set(true);
+    }
+
+    /** Forwards the type picker's import request to the existing import dialog for the remembered group. */
+    onTypePickerImport(exerciseType: ExerciseType): void {
+        const group = this.exerciseGroups()?.find((g) => g.id === this.typePickerGroupId());
+        if (group) {
+            this.openImportModal(group, exerciseType);
+        }
+    }
+
+    /**
+     * Opens the title/mandatory-only group-edit dialog for the given group.
+     * @param groupId the id of the exercise group to edit
+     */
+    openGroupEditModal(groupId: number): void {
+        const group = this.exerciseGroups()?.find((g) => g.id === groupId);
+        if (group) {
+            this.groupEditTarget.set(group);
+            this.groupEditIsNew.set(false);
+            this.groupEditVisible.set(true);
+        }
+    }
+
+    /** Opens the same dialog with a blank draft to create a new exercise group. */
+    openCreateGroupModal(): void {
+        this.groupEditTarget.set({ title: '', isMandatory: true });
+        this.groupEditIsNew.set(true);
+        this.groupEditVisible.set(true);
+    }
+
+    /** Persists the group-edit dialog's result (create or update, per {@link groupEditIsNew}) and updates the local list. */
+    onGroupEditSaved(edited: ExerciseGroup): void {
+        if (this.groupEditIsNew()) {
+            const newGroup: ExerciseGroup = { ...edited, exam: this.exam() };
+            this.exerciseGroupService.create(this.courseId(), this.examId(), newGroup).subscribe({
+                next: (res) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), res.body!]),
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+            return;
+        }
+        this.exerciseGroupService.update(this.courseId(), this.examId(), edited).subscribe({
+            next: (res) => {
+                const saved = res.body!;
+                this.exerciseGroups.set((this.exerciseGroups() ?? []).map((g) => (g.id === saved.id ? { ...g, ...saved } : g)));
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    /**
      * Move the exercise group up one position in the order
      * @param index of the exercise group in the exerciseGroups array
      */
@@ -278,7 +296,6 @@ export class ExerciseGroupsComponent implements OnInit {
         const exerciseGroups = this.exerciseGroups();
         if (exerciseGroups) {
             [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
             this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
@@ -292,38 +309,49 @@ export class ExerciseGroupsComponent implements OnInit {
         const exerciseGroups = this.exerciseGroups();
         if (exerciseGroups) {
             [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
             this.exerciseGroups.set([...exerciseGroups]);
         }
         this.saveOrder();
     }
 
     private saveOrder(): void {
-        this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
+        this.examManagementService.updateOrder(this.courseId(), this.examId(), this.exerciseGroups()!).subscribe({
             next: (res) => this.exerciseGroups.set(res.body!),
             error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         });
     }
 
     /**
-     * sets up {@link exerciseGroupToExerciseTypesDict} that maps the exercise group id to whether the said exercise group contains a specific exercise type.
-     * Used to show the correct modal for deleting exercises and to show only relevant information in the exercise tables.
-     * E.g. in case programming exercises are present, the user must decide whether they want to delete the build plans.
+     * Moves an exercise into a different exercise group, triggered by the table's drag-and-drop or group dropdown.
+     * Rejected by the server once student exams have been generated for the exam.
      */
-    setupExerciseGroupToExerciseTypesDict() {
-        const dict = new Map<number, ExerciseType[]>();
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            for (const exerciseGroup of exerciseGroups) {
-                dict.set(exerciseGroup.id!, []);
-                if (exerciseGroup.exercises) {
-                    for (const exercise of exerciseGroup.exercises) {
-                        dict.get(exerciseGroup.id!)!.push(exercise.type!);
-                    }
-                }
-            }
+    onTableGroupChange(event: ExamTableGroupChange): void {
+        const exerciseId = event.exercise.id;
+        const targetGroupId = event.group.id;
+        if (exerciseId === undefined || targetGroupId === undefined) {
+            return;
         }
-        this.exerciseGroupToExerciseTypesDict.set(dict);
+        this.exerciseGroupService.moveExerciseToGroup(this.courseId(), this.examId(), exerciseId, targetGroupId).subscribe({
+            next: () => {
+                const exerciseGroups = this.exerciseGroups();
+                if (!exerciseGroups) {
+                    return;
+                }
+                const moved = exerciseGroups.flatMap((g) => g.exercises ?? []).find((e) => e.id === exerciseId);
+                if (!moved) {
+                    return;
+                }
+                this.exerciseGroups.set(
+                    exerciseGroups.map((g) => {
+                        if (g.id === targetGroupId) {
+                            return { ...g, exercises: [...(g.exercises ?? []), moved] };
+                        }
+                        return { ...g, exercises: (g.exercises ?? []).filter((e) => e.id !== exerciseId) };
+                    }),
+                );
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -332,7 +360,7 @@ export class ExerciseGroupsComponent implements OnInit {
     openExerciseGroupImportModal() {
         const dialogData: ExamImportDialogData = {
             subsequentExerciseGroupSelection: true,
-            targetCourseId: this.courseId,
+            targetCourseId: this.courseId(),
             targetExamId: this.examId(),
         };
 
@@ -355,7 +383,39 @@ export class ExerciseGroupsComponent implements OnInit {
         });
     }
 
-    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
-        return this.disabledExerciseTypes.includes(exerciseType);
+    protected containsProgrammingExercise(exerciseGroup: ExerciseGroup): boolean {
+        return (exerciseGroup.exercises ?? []).some((exercise) => exercise.type === ExerciseType.PROGRAMMING);
+    }
+
+    /**
+     * Opens the shared delete-confirmation dialog for an exercise group, mirroring the course-side exercise-group
+     * card's delete button. A group containing a programming exercise gets the LocalVC-aware question plus the
+     * build-plan cleanup checks (unless LocalCI is active, which needs none); every other group gets the plain
+     * question. The actual deletion runs on confirm via {@link deleteExerciseGroup}.
+     */
+    protected confirmDeleteGroup(exerciseGroup: ExerciseGroup): void {
+        const groupId = exerciseGroup.id;
+        if (groupId === undefined) {
+            return;
+        }
+        const isProgrammingGroup = this.containsProgrammingExercise(exerciseGroup);
+        this.deleteDialogService.openDeleteDialog({
+            entityTitle: exerciseGroup.title,
+            deleteQuestion: isProgrammingGroup ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC' : 'artemisApp.examManagement.exerciseGroup.delete.question',
+            deleteConfirmationText: 'artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm',
+            translateValues: {},
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            requireConfirmationOnlyForAdditionalChecks: false,
+            additionalChecks:
+                isProgrammingGroup && !this.localCIEnabled()
+                    ? {
+                          deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                          deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+                      }
+                    : {},
+            dialogError: this.dialogError,
+            delete: (checks) => this.deleteExerciseGroup(groupId, checks),
+        });
     }
 }

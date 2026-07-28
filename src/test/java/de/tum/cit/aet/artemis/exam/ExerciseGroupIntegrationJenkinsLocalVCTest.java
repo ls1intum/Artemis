@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -400,5 +401,45 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         // Should fail with different exercise group
         orderedExerciseGroups = Arrays.asList(exerciseGroup2, exerciseGroup3, ExamFactory.generateExerciseGroup(true, exam));
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_asEditor() throws Exception {
+        ExerciseGroup targetGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.OK);
+
+        TextExercise moved = textExerciseRepository.findById(textExercise1.getId()).orElseThrow();
+        assertThat(moved.getExerciseGroup().getId()).isEqualTo(savedTargetGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_examIdMismatch() throws Exception {
+        ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(otherExamGroup.getId()), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_blockedOnceStudentExamsGenerated() throws Exception {
+        ExerciseGroup targetGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+        examUtilService.addStudentExam(exam1);
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.CONFLICT);
+
+        TextExercise unchanged = textExerciseRepository.findById(textExercise1.getId()).orElseThrow();
+        assertThat(unchanged.getExerciseGroup().getId()).isEqualTo(exerciseGroup1.getId());
     }
 }
