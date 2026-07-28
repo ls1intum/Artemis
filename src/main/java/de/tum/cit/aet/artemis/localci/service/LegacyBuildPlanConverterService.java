@@ -30,7 +30,15 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 @Profile(PROFILE_LOCALCI)
 public class LegacyBuildPlanConverterService {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final ObjectMapper objectMapper = createMapper();
+
+    private static ObjectMapper createMapper() {
+        // Parse the user-provided build plan configuration with the same bounds as BuildPlanPhasesDTO, so that an oversized
+        // or excessively wide payload is rejected during parsing instead of building a huge JSON tree on a request thread.
+        ObjectMapper configuredMapper = JsonObjectMapper.get().copy();
+        configuredMapper.getFactory().setStreamReadConstraints(BuildPlanPhasesDTO.BUILD_PLAN_CONFIGURATION_CONSTRAINTS);
+        return configuredMapper;
+    }
 
     /**
      * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase.
