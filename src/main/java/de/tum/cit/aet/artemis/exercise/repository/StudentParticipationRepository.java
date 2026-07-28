@@ -341,13 +341,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.initializationDate = (
-                SELECT MAX(p2.initializationDate)
-                FROM StudentParticipation p2
-                    LEFT JOIN p2.submissions s2
-                WHERE p2.exercise.id = :exerciseId
-                    AND p2.student.login = :username
-            )
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.login = :username
+                AND p.initializationDate = (
+                    SELECT MAX(p2.initializationDate)
+                    FROM StudentParticipation p2
+                    WHERE p2.exercise.id = :exerciseId
+                        AND p2.student.login = :username
+                )
             """)
     Optional<StudentParticipation> findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
