@@ -260,7 +260,14 @@
                                     <div class="flex flex-wrap gap-2 items-end mt-2">
                                         <div class="grow" style="min-width: 120px">
                                             <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.groupTitle' | artemisTranslate }}</div>
-                                            <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" tumUiInput tumUiInputSize="small" />
+                                            <input
+                                                type="text"
+                                                [ngModel]="newGroupTitle()"
+                                                (ngModelChange)="newGroupTitle.set($event)"
+                                                tumUiInput
+                                                tumUiInputSize="small"
+                                                class="w-full"
+                                            />
                                         </div>
                                         <div>
                                             <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate }}</div>
