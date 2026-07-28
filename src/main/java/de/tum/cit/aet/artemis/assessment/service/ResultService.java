@@ -476,9 +476,11 @@ public class ResultService {
 
         // Second pass: load feedbacks (and the assessor) for exactly the results selected above. The participations were loaded without feedbacks on purpose, because
         // fetch-joining them for every result of the exercise multiplies the row count by the feedback fan-out and then discards most of it.
+        // The load has to select Result rather than Feedback: a @OneToMany collection is only marked initialized when the owning entity is fetched with the collection, and
+        // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
         final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
-                : resultRepository.findAllByIdInWithEagerFeedbacksAndAssessor(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+                : resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
         final List<Result> results = new ArrayList<>();
         for (Submission submission : relevantSubmissions) {
