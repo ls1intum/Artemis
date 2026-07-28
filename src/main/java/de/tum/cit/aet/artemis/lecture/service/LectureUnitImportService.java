@@ -108,11 +108,11 @@ public class LectureUnitImportService {
                 if (importedAttachmentVideoUnit.getAttachment() != null) {
                     Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
                     attachment.setAttachmentVideoUnit(attachmentVideoUnit);
-                    attachmentRepository.save(attachment);
-                    if (attachment.getLink().endsWith(".pdf")) {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
-                    }
+                    attachment = attachmentRepository.saveAndFlush(attachment);
                     attachmentVideoUnit.setAttachment(attachment);
+                    if (attachment.getLink().endsWith(".pdf")) {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(attachmentVideoUnit, null, null));
+                    }
                 }
 
                 return attachmentVideoUnit;

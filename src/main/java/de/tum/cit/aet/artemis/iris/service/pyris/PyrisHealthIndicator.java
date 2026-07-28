@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateRecoveryApi;
 
 @Component
 @Lazy
@@ -51,7 +51,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final RestTemplate restTemplate;
 
-    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
+    private final Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi;
 
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
@@ -73,9 +73,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi) {
         this.restTemplate = restTemplate;
-        this.processingStateCallbackApi = processingStateCallbackApi;
+        this.processingStateRecoveryApi = processingStateRecoveryApi;
     }
 
     /**
@@ -137,11 +137,12 @@ public class PyrisHealthIndicator implements HealthIndicator {
         boolean wasUp = previouslyUp.getAndSet(currentlyUp);
         if (currentlyUp && !wasUp) {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
-            processingStateCallbackApi.ifPresent(api -> {
+            processingStateRecoveryApi.ifPresent(api -> {
                 try {
                     api.handleIrisReset();
                 }
                 catch (Exception e) {
+                    previouslyUp.set(false);
                     log.error("Failed to reset in-flight jobs after Iris restart", e);
                 }
             });
