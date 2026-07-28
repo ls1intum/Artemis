@@ -141,6 +141,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                         data: { date: exam.startDate },
                     },
                     { type: DetailType.Date, title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate', data: { date: exam.endDate } },
+                    { type: DetailType.Date, title: 'artemisApp.exam.examSummaryPublicationDate', data: { date: exam.examSummaryPublicationDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.publishResultsDate', data: { date: exam.publishResultsDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewStart', data: { date: exam.examStudentReviewStart } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewEnd', data: { date: exam.examStudentReviewEnd } },

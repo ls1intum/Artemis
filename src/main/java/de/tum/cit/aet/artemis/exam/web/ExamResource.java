@@ -310,6 +310,9 @@ public class ExamResource {
 
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
+        // Separate from the generic conflict checks because it needs the pre-update duration: a duration change rescales
+        // the individual working time extensions further down, so the invariant has to hold for the PROJECTED state.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(originalExam, originalExamDuration);
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
@@ -405,6 +408,11 @@ public class ExamResource {
             exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         }
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        // The submission overview must never become visible while a student is still writing, so validate against the
+        // PROJECTED latest individual end date: step 2 rescales the existing individual extensions by the same duration
+        // change, so checking only the new nominal end date would miss an extended student crossing the publication
+        // date. Safe to validate after mutating: the exam is detached here, and throwing skips the save below.
+        checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam, originalExamDuration);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         examRepository.save(exam);
 
@@ -568,9 +576,10 @@ public class ExamResource {
             throw new BadRequestAlertException("The grace period is too long. Maximum allowed is 3600 seconds.", ENTITY_NAME, "examGracePeriodTooHigh");
         }
 
-        // Max points: max 9999
-        if (exam.getExamMaxPoints() > 9999) {
-            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is 9999.", ENTITY_NAME, "examMaxPointsTooHigh");
+        // Max points: max MAX_GRADING_POINTS
+        if (exam.getExamMaxPoints() > Constants.MAX_GRADING_POINTS) {
+            throw new BadRequestAlertException("The maximum points value is too high. Maximum allowed is " + Constants.MAX_GRADING_POINTS + ".", ENTITY_NAME,
+                    "examMaxPointsTooHigh");
         }
 
         // Number of exercises: max 100
@@ -604,6 +613,38 @@ public class ExamResource {
 
         if (exam.getExampleSolutionPublicationDate() != null && exam.getExampleSolutionPublicationDate().isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Example solutions cannot be published before the end date of an exam.", ENTITY_NAME, "examTimes");
+        }
+
+        if (exam.getExamSummaryPublicationDate() != null) {
+            if (!exam.getExamSummaryPublicationDate().isAfter(exam.getEndDate())) {
+                throw new BadRequestAlertException("The exam summary must be published after the end date of an exam.", ENTITY_NAME, "examTimes");
+            }
+            // the overview must never lag behind the grades: if a publish results date is set, the summary has to be visible no later than the results
+            if (exam.getPublishResultsDate() != null && exam.getExamSummaryPublicationDate().isAfter(exam.getPublishResultsDate())) {
+                throw new BadRequestAlertException("The exam summary cannot be published after the results are published.", ENTITY_NAME, "examTimes");
+            }
+        }
+    }
+
+    /**
+     * Checks that the submission overview would not become visible while a student with an individual working time extension is still writing.
+     * <p>
+     * {@link #checkExamForDatesConflictsElseThrow} only compares against the nominal end date, but individual extensions can push a student exam past it. When the update also
+     * changes the exam duration, {@link ExamService#updateStudentExamsAndRescheduleExercises} rescales those extensions proportionally AFTER this validation runs, so the check
+     * has to look at the PROJECTED working times: an extension that is still below the publication date today can cross it once recalculated. Skipped for exams that do not
+     * exist yet (creation, so no student exams) and for exams without a configured publication date.
+     *
+     * @param exam                 the exam to be checked, already carrying the new dates
+     * @param originalExamDuration the exam duration in seconds before this update
+     */
+    private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+            return;
+        }
+        ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);
+        if (!exam.getExamSummaryPublicationDate().isAfter(latestIndividualExamEndDate)) {
+            throw new BadRequestAlertException("The exam summary must be published after the individual end date of every student, including working time extensions.", ENTITY_NAME,
+                    "examSummaryPublicationDateBeforeIndividualEnd");
         }
     }
 

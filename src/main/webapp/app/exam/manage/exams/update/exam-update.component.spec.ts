@@ -263,6 +263,43 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
+        it('should validate the exam summary publication date correctly', () => {
+            const newExam = new Exam();
+            newExam.id = 3;
+            component.exam = newExam;
+
+            const now = dayjs();
+            newExam.visibleDate = now.add(2, 'hours');
+            newExam.startDate = now.add(3, 'hours');
+            newExam.endDate = now.add(4, 'hours');
+            newExam.workingTime = 3600;
+
+            // unset: valid (summary shown immediately after submission)
+            newExam.examSummaryPublicationDate = undefined;
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+
+            // after the end date: valid
+            newExam.examSummaryPublicationDate = now.add(5, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+
+            // before the end date: invalid
+            newExam.examSummaryPublicationDate = now.add(3, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            // after the publish results date: invalid
+            newExam.publishResultsDate = now.add(5, 'hours');
+            newExam.examSummaryPublicationDate = now.add(6, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            // no later than the publish results date: valid
+            newExam.examSummaryPublicationDate = now.add(5, 'hours');
+            expect(component.isValidExamSummaryPublicationDate).toBe(true);
+        });
+
         it('should update', async () => {
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');

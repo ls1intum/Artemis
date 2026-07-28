@@ -1555,18 +1555,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
-            // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
-            }
-            else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
-                studentExam.setWorkingTime(adjustedWorkingTime);
-            }
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.

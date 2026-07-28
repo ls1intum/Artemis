@@ -1067,6 +1067,24 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()?.submitted).toBe(true);
     });
 
+    it('should leave the hand-in-early view after a successful early submission so the confirmation panel can show', () => {
+        // Regression for the delayed-summary flow: after handing in early the student stayed on the hand-in-early cover with a
+        // disabled Finish button, because handInEarly was never reset. With a publication date in the future there is also no
+        // summary to navigate to, so nothing else moved the student off that screen.
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        const exam = new Exam();
+        exam.examSummaryPublicationDate = dayjs().add(1, 'day');
+        comp.exam.set(exam);
+        comp.handInEarly.set(true);
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+
+        comp.onExamEndConfirmed();
+
+        expect(comp.studentExam()?.submitted).toBe(true);
+        expect(comp.handInEarly()).toBe(false);
+    });
+
     it('should clear the failed-save flag once the exam is successfully submitted', () => {
         comp.studentExam.set(new StudentExam());
         comp.studentExam().submitted = false;
@@ -1204,6 +1222,34 @@ describe('ExamParticipationComponent', () => {
         comp.ngOnInit();
         comp.exam.set(new Exam());
     };
+
+    describe('isExamSummaryVisible', () => {
+        it('should be visible for a test run regardless of the summary publication date', () => {
+            comp.exam.set(new Exam());
+            comp.exam().examSummaryPublicationDate = dayjs().add(1, 'days');
+            // the default component is set up as a test run
+            expect(comp.isExamSummaryVisible()).toBe(true);
+        });
+
+        it('should be visible if no summary publication date is set', () => {
+            setComponentWithoutTestRun();
+            expect(comp.isExamSummaryVisible()).toBe(true);
+        });
+
+        it('should be hidden if the summary publication date is in the future', () => {
+            setComponentWithoutTestRun();
+            comp.exam().examSummaryPublicationDate = dayjs().add(1, 'days');
+            vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isExamSummaryVisible()).toBe(false);
+        });
+
+        it('should be visible if the summary publication date is in the past', () => {
+            setComponentWithoutTestRun();
+            comp.exam().examSummaryPublicationDate = dayjs().subtract(1, 'minutes');
+            vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isExamSummaryVisible()).toBe(true);
+        });
+    });
 
     describe('isVisible', () => {
         it('should be visible if test run', () => {
@@ -1565,6 +1611,41 @@ describe('ExamParticipationComponent', () => {
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).not.toHaveBeenCalledOnce();
+    });
+
+    it('should not load the summary in handleStudentExam when it is not yet visible', () => {
+        const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary');
+        vi.spyOn(comp, 'isOver').mockReturnValue(true);
+        vi.spyOn(comp, 'isExamSummaryVisible').mockReturnValue(false);
+        const studentExam = new StudentExam();
+        studentExam.submitted = true;
+        studentExam.exam = new Exam();
+        studentExam.exam.startDate = dayjs().subtract(1, 'hours');
+
+        comp.handleStudentExam(studentExam);
+
+        expect(summarySpy).not.toHaveBeenCalled();
+        expect(comp.showExamSummary()).toBe(false);
+        expect(comp.loadingExam()).toBe(false);
+    });
+
+    it('should load the summary in handleStudentExam when it is visible', () => {
+        vi.spyOn(examParticipationService, 'resetExamLayout');
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.exam = new Exam();
+        const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+        vi.spyOn(comp, 'isOver').mockReturnValue(true);
+        vi.spyOn(comp, 'isExamSummaryVisible').mockReturnValue(true);
+        const studentExam = new StudentExam();
+        studentExam.id = 3;
+        studentExam.submitted = true;
+        studentExam.exam = new Exam();
+        studentExam.exam.startDate = dayjs().subtract(1, 'hours');
+
+        comp.handleStudentExam(studentExam);
+
+        expect(summarySpy).toHaveBeenCalledOnce();
+        expect(comp.showExamSummary()).toBe(true);
     });
 
     it('should reset Exam Layout in onExamEndConfirmed if it is a test exam', () => {

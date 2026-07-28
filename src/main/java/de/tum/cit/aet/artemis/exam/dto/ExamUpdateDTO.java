@@ -8,7 +8,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
@@ -21,9 +23,10 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @NotNull ExamMode examMode, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
-        @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
-        @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
-        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName) {
+        @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints,
+        @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
+        @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate,
+        @Nullable String channelName) {
 
     /**
      * Creates an ExamUpdateDTO from the given Exam domain object.
@@ -36,7 +39,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @NotNull E
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                exam.getExampleSolutionPublicationDate(), exam.getChannelName());
+                exam.getExampleSolutionPublicationDate(), exam.getExamSummaryPublicationDate(), exam.getChannelName());
     }
 
     /**
@@ -72,6 +75,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @NotNull E
         exam.setModuleNumber(moduleNumber);
         exam.setCourseName(courseName);
         exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
         exam.setChannelName(channelName);
         return exam;
     }
@@ -108,6 +112,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @NotNull E
         exam.setModuleNumber(moduleNumber);
         exam.setCourseName(courseName);
         exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
         exam.setChannelName(channelName);
     }
 }

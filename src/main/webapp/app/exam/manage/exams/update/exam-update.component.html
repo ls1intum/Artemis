@@ -122,11 +122,16 @@
                         type="number"
                         min="1"
                         max="9999"
+                        step="1"
+                        pattern="\d*"
                         [(ngModel)]="exam.examMaxPoints"
                         #examMaxPointsInput="ngModel"
                     />
                     @if (examMaxPointsInput.errors?.['max']) {
                         <div class="alert alert-danger" jhiTranslate="error.examMaxPointsTooHigh"></div>
+                    }
+                    @if (examMaxPointsInput.errors?.['pattern']) {
+                        <div class="alert alert-danger" jhiTranslate="error.examMaxPointsWholeNumber"></div>
                     }
                 </div>
                 <div class="col-sm-6">
@@ -168,29 +173,47 @@
                     <hr />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    <div class="row mb-3">
-                        <div class="col-sm-6">
-                            <label class="form-check-label" for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"></label>
-                            <input
-                                id="numberOfCorrectionRoundsInExam"
-                                name="numberOfCorrectionRoundsInExam"
-                                class="form-control"
-                                type="number"
-                                min="1"
-                                max="2"
-                                [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
-                            />
+                    @if (!exam.testExam) {
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label
+                                    class="form-check-label"
+                                    for="numberOfCorrectionRoundsInExam"
+                                    jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"
+                                ></label>
+                                <input
+                                    id="numberOfCorrectionRoundsInExam"
+                                    name="numberOfCorrectionRoundsInExam"
+                                    class="form-control"
+                                    type="number"
+                                    min="1"
+                                    max="2"
+                                    [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
+                                />
+                            </div>
+                            <div class="col-sm-6">
+                                <jhi-date-time-picker
+                                    labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
+                                    [(ngModel)]="exam.publishResultsDate"
+                                    [error]="!isValidPublishResultsDate"
+                                    name="publishResultsDate"
+                                    id="publishResultsDate"
+                                />
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
-                                [(ngModel)]="exam.publishResultsDate"
-                                [error]="!isValidPublishResultsDate"
-                                name="publishResultsDate"
-                                id="publishResultsDate"
-                            />
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <jhi-date-time-picker
+                                    labelName="{{ 'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate }}"
+                                    labelTooltip="{{ 'artemisApp.examManagement.examSummaryPublicationDateTooltip' | artemisTranslate }}"
+                                    [(ngModel)]="exam.examSummaryPublicationDate"
+                                    [error]="!isValidExamSummaryPublicationDate"
+                                    name="examSummaryPublicationDate"
+                                    id="examSummaryPublicationDate"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    }
                     <div class="row mb-3">
                         <div class="col-sm-6">
                             <jhi-date-time-picker

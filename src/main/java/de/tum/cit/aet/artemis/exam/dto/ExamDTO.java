@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param moduleNumber                   the module number
  * @param courseName                     the course name shown on the exam cover
  * @param exampleSolutionPublicationDate the date example solutions are published
+ * @param examSummaryPublicationDate     the date the submission overview becomes visible to students
  * @param course                         the slim course projection (id, title, testCourse, group names)
  * @param channelName                    the exam's communication channel name (plain / edit path only; {@code null} elsewhere)
  * @param examArchivePath                the archive path; the archive button reads it (after a re-fetch) to enable download / cleanup
@@ -60,8 +61,8 @@ public record ExamDTO(long id, @Nullable String title, ExamMode examMode, boolea
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
         @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam,
         @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber, @Nullable String courseName,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExamDTO course, @Nullable String channelName, @Nullable String examArchivePath)
-        implements ExamResponseDTO {
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable CourseForExamDTO course, @Nullable String channelName,
+        @Nullable String examArchivePath) implements ExamResponseDTO {
 
     /**
      * Builds the scalar-core response DTO from an exam. Reads only stored scalar columns, the eager course, and the
@@ -77,6 +78,7 @@ public record ExamDTO(long id, @Nullable String title, ExamMode examMode, boolea
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                exam.getExampleSolutionPublicationDate(), CourseForExamDTO.of(exam.getCourse()), exam.getChannelName(), exam.getExamArchivePath());
+                exam.getExampleSolutionPublicationDate(), exam.getExamSummaryPublicationDate(), CourseForExamDTO.of(exam.getCourse()), exam.getChannelName(),
+                exam.getExamArchivePath());
     }
 }

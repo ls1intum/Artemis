@@ -143,6 +143,58 @@ public class ExamDateService {
     }
 
     /**
+     * Returns the latest individual exam end date the exam will have once a pending duration change has been applied.
+     * <p>
+     * Changing the exam duration also rescales existing individual time extensions (see
+     * {@link ExamService#updateStudentExamsAndRescheduleExercises}), which happens only after an update has been
+     * validated. Callers that must validate the resulting state therefore need the projected end date, not the stored
+     * one.
+     *
+     * @param exam                 the exam, already carrying the new dates
+     * @param originalExamDuration the exam duration in seconds before the update
+     * @return the latest individual end date after the change, or the exam end date if no student exams exist
+     */
+    @NonNull
+    public ZonedDateTime getLatestIndividualExamEndDateAfterDurationChange(Exam exam, int originalExamDuration) {
+        var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
+        if (maxWorkingTime.isEmpty()) {
+            return exam.getEndDate();
+        }
+        int workingTimeChange = exam.getDuration() - originalExamDuration;
+        return exam.getStartDate().plusSeconds(projectWorkingTimeAfterDurationChange(maxWorkingTime.get(), originalExamDuration, workingTimeChange));
+    }
+
+    /**
+     * Projects the working time a student exam gets when the exam duration changes, taking an existing individual time
+     * extension into account: a student without an extension simply follows the duration change, while an extension is
+     * rescaled proportionally so it keeps its share of the (new) regular working time.
+     * <p>
+     * {@link ExamService#updateStudentExamsAndRescheduleExercises} applies this to every student exam; validation that
+     * has to run before that mutation uses the same function so the two cannot drift apart. Monotonically
+     * non-decreasing in {@code currentWorkingTime}, so projecting the largest current working time yields the largest
+     * new one.
+     *
+     * @param currentWorkingTime   the student exam's working time in seconds before the change
+     * @param originalExamDuration the exam duration in seconds before the change
+     * @param workingTimeChange    the change to the exam duration in seconds (may be negative)
+     * @return the working time in seconds the student exam will have after the change
+     */
+    public static int projectWorkingTimeAfterDurationChange(int currentWorkingTime, int originalExamDuration, int workingTimeChange) {
+        if (workingTimeChange == 0) {
+            return currentWorkingTime;
+        }
+        int originalTimeExtension = currentWorkingTime - originalExamDuration;
+        // NOTE: take the original working time extensions into account
+        if (originalTimeExtension == 0) {
+            return currentWorkingTime + workingTimeChange;
+        }
+        double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
+        int newNormalWorkingTime = originalExamDuration + workingTimeChange;
+        int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
+        return Math.max(newNormalWorkingTime + timeAdjustment, 0);
+    }
+
+    /**
      * Returns all individual exam end dates as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, an empty set returned.

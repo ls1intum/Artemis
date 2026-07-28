@@ -180,15 +180,24 @@
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
-                <button
-                    type="button"
-                    id="showExamSummaryButton"
-                    class="btn btn-primary"
-                    [disabled]="examSummaryButtonSecondsLeft()"
-                    (click)="loadAndDisplaySummary()"
-                    jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
-                    [translateValues]="{ countdown: examSummaryButtonSecondsLeft() ? ' (' + examSummaryButtonSecondsLeft() + ')' : '' }"
-                ></button>
+                @if (isExamSummaryVisible()) {
+                    <button
+                        type="button"
+                        id="showExamSummaryButton"
+                        class="btn btn-primary"
+                        [disabled]="examSummaryButtonSecondsLeft()"
+                        (click)="loadAndDisplaySummary()"
+                        jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
+                        [translateValues]="{ countdown: examSummaryButtonSecondsLeft() ? ' (' + examSummaryButtonSecondsLeft() + ')' : '' }"
+                    ></button>
+                } @else {
+                    <p
+                        id="examSummaryUnavailableHint"
+                        class="mb-0"
+                        jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
+                        [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"
+                    ></p>
+                }
             </div>
         }
         @if (showExamSummary()) {

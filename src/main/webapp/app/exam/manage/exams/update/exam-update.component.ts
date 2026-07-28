@@ -333,6 +333,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examValidSummaryPublicationDate = this.isValidExamSummaryPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         return (
             examConductionValid &&
@@ -340,6 +341,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidExampleSolutionPublicationDate &&
+            examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
             this.areExamTextsValid
         );
@@ -426,6 +428,25 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Validates the optional submission-overview publication date.
+     * It is valid when unset (summary shown immediately after submission) or, when set, strictly after the end date and no later than the publish results date
+     * (so the overview never becomes visible after the grades). Mirrors the server-side check in ExamResource#checkExamForDatesConflictsElseThrow.
+     *
+     * @returns true if the configured examSummaryPublicationDate is valid
+     */
+    get isValidExamSummaryPublicationDate(): boolean {
+        // allow instructors to leave examSummaryPublicationDate unset (summary shown immediately after submission)
+        if (!this.exam.examSummaryPublicationDate) {
+            return true;
+        }
+        const summaryDate = dayjs(this.exam.examSummaryPublicationDate);
+        // must be after the end date and, if a publish results date is set, no later than it (the overview must not lag behind the grades)
+        const afterEndDate = !!this.exam.endDate && summaryDate.isAfter(this.exam.endDate);
+        const notAfterPublishResults = !this.exam.publishResultsDate || !summaryDate.isAfter(this.exam.publishResultsDate);
+        return afterEndDate && notAfterPublishResults;
+    }
+
+    /**
      * Default exam start text, which can be edited by instructors in the text editor
      */
     get examDefaultStartText(): string {
@@ -472,6 +493,17 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
 export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
+    ...omit(exam, [
+        'id',
+        'visibleDate',
+        'startDate',
+        'endDate',
+        'publishResultsDate',
+        'examStudentReviewStart',
+        'examStudentReviewEnd',
+        'examSummaryPublicationDate',
+        'examUsers',
+        'studentExams',
+    ]),
     workingTime: 0,
 });

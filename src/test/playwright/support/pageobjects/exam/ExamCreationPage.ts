@@ -65,6 +65,13 @@ export class ExamCreationPage {
     }
 
     /**
+     * @param date the date from which the submission overview (summary) becomes visible to students
+     */
+    async setExamSummaryPublicationDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examSummaryPublicationDate', date);
+    }
+
+    /**
      * @param date the date when the exam student review ends
      */
     async setStudentReviewEndDate(date: dayjs.Dayjs) {

@@ -20,6 +20,8 @@ export class Exam implements BaseEntity {
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
+    // date from which students can see the summary (submission overview) of their submitted exam; if unset the summary is shown immediately after submission
+    public examSummaryPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
     public examiner?: string;

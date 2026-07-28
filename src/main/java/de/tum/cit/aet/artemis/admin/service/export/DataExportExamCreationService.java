@@ -98,27 +98,33 @@ public class DataExportExamCreationService {
     /**
      * Creates the data export for the given student exam.
      * <p>
-     * This includes extracting all exercise participations, general exam information such as working time, and the results if the results are published.
+     * This includes extracting all exercise participations (only once the submission overview is published, i.e. Exam#isExamSummaryPublished()), general exam information
+     * such as working time, and the results if the results are published.
      *
      * @param studentExam    the student exam belonging to the user for which the data export should be created
      * @param examWorkingDir the directory in which the information about the exam should be stored
      */
     private void createStudentExamExport(StudentExam studentExam, Path examWorkingDir) throws IOException {
         var userId = studentExam.getUser().getId();
-        for (var exercise : studentExam.getExercises()) {
-            // since the behavior is undefined if multiple student exams for the same exam and student combination exist, the exercise can be null
-            if (exercise == null) {
-                continue;
-            }
-            // Fetch exercise with participation data. The returned exercise has eager-loaded
-            // relationships (exerciseGroup, exam, course) via @ManyToOne default eager fetching.
-            Exercise exerciseWithParticipations = fetchExerciseWithParticipations(exercise, userId);
+        // Withhold the exam exercise content (problem statements, quiz questions, and the student's submissions) until the submission overview is published, mirroring the
+        // /summary and /conduction gates. This prevents the personal data export from being used to leak the exam content before its release date (relevant for staggered /
+        // multi-shift exams). If no examSummaryPublicationDate is configured (or the exam is a test exam), the content is exported immediately as before.
+        if (studentExam.getExam().isExamSummaryPublished()) {
+            for (var exercise : studentExam.getExercises()) {
+                // since the behavior is undefined if multiple student exams for the same exam and student combination exist, the exercise can be null
+                if (exercise == null) {
+                    continue;
+                }
+                // Fetch exercise with participation data. The returned exercise has eager-loaded
+                // relationships (exerciseGroup, exam, course) via @ManyToOne default eager fetching.
+                Exercise exerciseWithParticipations = fetchExerciseWithParticipations(exercise, userId);
 
-            if (exerciseWithParticipations instanceof ProgrammingExercise programmingExercise) {
-                dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser());
-            }
-            else {
-                dataExportExerciseCreationService.createNonProgrammingExerciseExport(exerciseWithParticipations, examWorkingDir, studentExam.getUser());
+                if (exerciseWithParticipations instanceof ProgrammingExercise programmingExercise) {
+                    dataExportExerciseCreationService.createProgrammingExerciseExport(programmingExercise, examWorkingDir, studentExam.getUser());
+                }
+                else {
+                    dataExportExerciseCreationService.createNonProgrammingExerciseExport(exerciseWithParticipations, examWorkingDir, studentExam.getUser());
+                }
             }
         }
         // leave out the results if the results are not published yet to avoid leaking information through the data export
