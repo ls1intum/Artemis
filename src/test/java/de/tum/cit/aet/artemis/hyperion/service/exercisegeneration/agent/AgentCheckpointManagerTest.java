@@ -236,6 +236,68 @@ class AgentCheckpointManagerTest {
     }
 
     @Test
+    void reviewerForkReplaysAnAuthorBranchWithItsInjectedInstruction() throws Exception {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(12L);
+        when(exercise.getTitle()).thenReturn("Nested checkpoint fork");
+        List<Message> prompt = List.of(new SystemMessage("system"), new UserMessage("author"));
+        AgentCheckpointManager.LoopCursor cursor = new AgentCheckpointManager.LoopCursor("", 0, 0, 0);
+
+        Path baseRoot = tempDirectory.resolve("nested-base");
+        AgentCheckpointManager base = new AgentCheckpointManager(mapper, baseRoot.toString(), "", 0, true, "");
+        base.beginRun("nested-base", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "base"), new ApprovedSpecRegistry());
+        AgentCheckpointManager.TurnHandle baseTurn = base.beforeTurn(1, 1, "provider-v1", "tools-v1", prompt, cursor);
+        base.finishTurn(baseTurn, List.of(new SystemMessage("system"), new UserMessage("author"), new AssistantMessage("base result")), cursor, AgentLoopResult.Status.COMPLETED);
+        base.reviewerCall("review system", "base candidate", "reviewer-v1", () -> "base verdict");
+        base.endRun();
+        Path baseRun = Files.list(baseRoot).filter(Files::isDirectory).findFirst().orElseThrow();
+
+        Path authorBranchRoot = tempDirectory.resolve("nested-author-branch");
+        AgentCheckpointManager authorBranch = new AgentCheckpointManager(mapper, authorBranchRoot.toString(), baseRun.toString(), 1, true, "Prefer direct policy seams.");
+        authorBranch.beginRun("nested-author-branch", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "author-branch"), new ApprovedSpecRegistry());
+        AgentCheckpointManager.TurnHandle forkedTurn = authorBranch.beforeTurn(1, 1, "provider-v1", "tools-v1", prompt, cursor);
+        List<Message> forkedConversation = new java.util.ArrayList<>(AgentCheckpointMessageCodec.decode(forkedTurn.before().conversation()));
+        assertThat(forkedConversation.getLast().getText()).startsWith("CHECKPOINT FORK EXPERIMENT INSTRUCTION");
+        forkedConversation.add(new AssistantMessage("branch result"));
+        authorBranch.finishTurn(forkedTurn, forkedConversation, cursor, AgentLoopResult.Status.COMPLETED);
+        authorBranch.reviewerCall("review system", "branch candidate", "reviewer-v1", () -> "branch verdict");
+        authorBranch.endRun();
+        Path authorBranchRun = Files.list(authorBranchRoot).filter(Files::isDirectory).findFirst().orElseThrow();
+        Path legacyCall = authorBranchRun.resolve("calls/000001.json");
+        ObjectNode legacyRecord = (ObjectNode) mapper.readTree(legacyCall.toFile());
+        legacyRecord.remove("replayAnchor");
+        byte[] legacyBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(legacyRecord);
+        Files.write(legacyCall, legacyBytes);
+        Files.writeString(legacyCall.resolveSibling("000001.json.sha256"), HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(legacyBytes)) + "\n");
+
+        Path reviewerBranchRoot = tempDirectory.resolve("nested-reviewer-branch");
+        AgentCheckpointManager reviewerBranch = new AgentCheckpointManager(mapper, reviewerBranchRoot.toString(), authorBranchRun.toString(), 0, 1, true, "");
+        reviewerBranch.beginRun("nested-reviewer-branch", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "reviewer-branch"), new ApprovedSpecRegistry());
+        AgentCheckpointManager.TurnHandle replayedTurn = reviewerBranch.beforeTurn(1, 1, "provider-v1", "tools-v1", prompt, cursor);
+        assertThat(replayedTurn.replayed()).isTrue();
+        assertThat(AgentCheckpointMessageCodec.decode(replayedTurn.replayedAfter().conversation()).stream().map(Message::getText))
+                .anyMatch(text -> text != null && text.startsWith("CHECKPOINT FORK EXPERIMENT INSTRUCTION"));
+        assertThat(reviewerBranch.reviewerCall("changed review system", "changed candidate", "reviewer-v1", () -> "new verdict")).isEqualTo("new verdict");
+        reviewerBranch.endRun();
+        Path reviewerBranchRun = Files.list(reviewerBranchRoot).filter(Files::isDirectory).findFirst().orElseThrow();
+        assertThat(mapper.readTree(reviewerBranchRun.resolve("calls/000001.json").toFile()).path("replayAnchor").isObject()).isTrue();
+
+        AgentCheckpointManager selfContainedReplay = new AgentCheckpointManager(mapper, "", reviewerBranchRun.toString(), 0, true, "");
+        selfContainedReplay.beginRun("nested-full-replay", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "full-replay"), new ApprovedSpecRegistry());
+        assertThat(selfContainedReplay.beforeTurn(1, 1, "", "tools-v1", prompt, cursor).replayed()).isTrue();
+        assertThat(selfContainedReplay.reviewerCall("changed review system", "changed candidate", "reviewer-v1", () -> "unexpected")).isEqualTo("new verdict");
+        selfContainedReplay.endRun();
+
+        AgentCheckpointManager drifted = new AgentCheckpointManager(mapper, "", authorBranchRun.toString(), 0, 1, true, "");
+        drifted.beginRun("nested-drift", exercise, new SandboxAgentTools(new InMemorySandbox(Map.of()), "drift"), new ApprovedSpecRegistry());
+        List<Message> changedPrompt = List.of(new SystemMessage("changed system"), new UserMessage("author"));
+        assertThatThrownBy(() -> drifted.beforeTurn(1, 1, "provider-v1", "tools-v1", changedPrompt, cursor)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Prompt drift");
+        drifted.endRun();
+    }
+
+    @Test
     void reviewerForkConfigurationRejectsAmbiguousOrUnsupportedModes() {
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 

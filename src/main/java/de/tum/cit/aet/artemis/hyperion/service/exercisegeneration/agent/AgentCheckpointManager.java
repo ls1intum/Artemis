@@ -72,6 +72,8 @@ public class AgentCheckpointManager {
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
+    private static final String FORK_INSTRUCTION_PREFIX = "CHECKPOINT FORK EXPERIMENT INSTRUCTION (applies from this call onward):\n";
+
     private final ObjectMapper objectMapper;
 
     private final String checkpointDirectory;
@@ -155,9 +157,7 @@ public class AgentCheckpointManager {
         }
         try {
             Path source = replaySource.isBlank() ? null : Path.of(replaySource).toAbsolutePath().normalize();
-            if (source != null) {
-                requireCompatibleRun(source, exercise);
-            }
+            RunManifest sourceManifest = source == null ? null : requireCompatibleRun(source, exercise);
             Path output = outputDirectory(jobId, source);
             if (output != null) {
                 Files.createDirectories(output.resolve("calls"));
@@ -171,7 +171,7 @@ public class AgentCheckpointManager {
             }
             currentRun.set(new RunScope(jobId, exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(), exercise.getProblemStatement(),
                     exercise.getProgrammingLanguage() == null ? null : exercise.getProgrammingLanguage().name(),
-                    exercise.getProjectType() == null ? null : exercise.getProjectType().name(), tools, approvedSpecs, source, output));
+                    exercise.getProjectType() == null ? null : exercise.getProjectType().name(), tools, approvedSpecs, source, sourceManifest, output));
             log.info("Hyperion agent checkpoints enabled for job {} ({})", jobId, output == null ? "replay only" : output);
         }
         catch (IOException | RuntimeException e) {
@@ -183,7 +183,7 @@ public class AgentCheckpointManager {
     public void endRun() {
         RunScope run = currentRun.get();
         currentRun.remove();
-        if (run != null && forkReviewAt > 0 && !run.liveSuffix) {
+        if (run != null && !run.failed && forkReviewAt > 0 && !run.liveSuffix) {
             run.failed = true;
             throw new IllegalStateException("Checkpoint has no reachable reviewer call r" + forkReviewAt + ".");
         }
@@ -287,7 +287,7 @@ public class AgentCheckpointManager {
         }
     }
 
-    private void requireCompatibleRun(Path source, ProgrammingExercise exercise) throws IOException {
+    private RunManifest requireCompatibleRun(Path source, ProgrammingExercise exercise) throws IOException {
         Path manifestPath = source.resolve("run.json");
         if (!Files.isRegularFile(manifestPath)) {
             throw new IllegalStateException("Checkpoint source has no run manifest: " + manifestPath);
@@ -305,6 +305,7 @@ public class AgentCheckpointManager {
             throw new IllegalStateException("Checkpoint exercise setup differs from the resumed exercise. Recreate it with the title, short name, package, language, and project "
                     + "type recorded in run.json.");
         }
+        return manifest;
     }
 
     TurnHandle beforeTurn(int localTurn, int maxTurns, String providerContract, String toolContract, List<Message> conversation, LoopCursor cursor) {
@@ -320,12 +321,13 @@ public class AgentCheckpointManager {
             if (run.sourceDirectory != null && (replayBeforeReviewerFork || !hasFork() || ordinal <= forkAt)) {
                 TurnRecord sourceTurn = readTurn(run.sourceDirectory, ordinal);
                 boolean selectedAuthorFork = forkAt > 0 && ordinal == forkAt;
-                requireCompatible(sourceTurn, current, providerContract, toolContract, localTurn, maxTurns, ordinal, selectedAuthorFork);
+                CheckpointState replayAnchor = replayExpectedState(run, sourceTurn, ordinal);
+                requireCompatible(sourceTurn, replayAnchor, current, providerContract, toolContract, localTurn, maxTurns, ordinal, selectedAuthorFork);
                 if (!selectedAuthorFork) {
                     if (sourceTurn.after() == null) {
                         throw new IllegalStateException("Checkpoint call " + ordinal + " has no committed post-state.");
                     }
-                    persistReplayedTurn(run, sourceTurn);
+                    persistReplayedTurn(run, withReplayAnchor(sourceTurn, replayAnchor));
                     restoreState(run, sourceTurn.after());
                     return TurnHandle.replayed(ordinal, sourceTurn);
                 }
@@ -334,16 +336,17 @@ public class AgentCheckpointManager {
                     restoreState(run, sourceTurn.before());
                     if (!forkInstruction.isBlank()) {
                         List<Message> preparedConversation = new ArrayList<>(AgentCheckpointMessageCodec.decode(sourceTurn.before().conversation()));
-                        preparedConversation.add(new UserMessage("CHECKPOINT FORK EXPERIMENT INSTRUCTION (applies from this call onward):\n" + forkInstruction));
+                        preparedConversation.add(new UserMessage(FORK_INSTRUCTION_PREFIX + forkInstruction));
                         current = captureState(run, preparedConversation, sourceTurn.before().cursor());
                         prepared = true;
                     }
                     else {
                         current = captureState(run, conversation, cursor);
                     }
+                    return new TurnHandle(true, false, prepared, ordinal, providerContract, toolContract, localTurn, maxTurns, replayAnchor, current, null);
                 }
             }
-            return new TurnHandle(true, false, prepared, ordinal, providerContract, toolContract, localTurn, maxTurns, current, null);
+            return new TurnHandle(true, false, prepared, ordinal, providerContract, toolContract, localTurn, maxTurns, null, current, null);
         }
         catch (IOException | RuntimeException e) {
             return handleTurnFailure(run, "Could not prepare checkpoint call " + ordinal, e);
@@ -358,7 +361,7 @@ public class AgentCheckpointManager {
         try {
             CheckpointState after = captureState(run, conversation, cursor);
             TurnRecord record = new TurnRecord(SCHEMA_VERSION, handle.ordinal(), handle.localTurn(), handle.maxTurns(), handle.providerContract(), handle.toolContract(),
-                    handle.before(), after, terminalStatus == null ? null : terminalStatus.name());
+                    handle.before(), after, terminalStatus == null ? null : terminalStatus.name(), handle.replayAnchor());
             if (run.outputDirectory != null) {
                 writeTurnAtomic(callPath(run.outputDirectory, handle.ordinal()), record);
             }
@@ -462,8 +465,8 @@ public class AgentCheckpointManager {
         }
     }
 
-    private void requireCompatible(TurnRecord source, CheckpointState current, String providerContract, String toolContract, int localTurn, int maxTurns, int ordinal,
-            boolean forking) {
+    private void requireCompatible(TurnRecord source, CheckpointState expected, CheckpointState current, String providerContract, String toolContract, int localTurn, int maxTurns,
+            int ordinal, boolean forking) {
         if (source.schemaVersion() != SCHEMA_VERSION) {
             throw new IllegalStateException("Checkpoint schema " + source.schemaVersion() + " is incompatible with " + SCHEMA_VERSION + ".");
         }
@@ -480,10 +483,14 @@ public class AgentCheckpointManager {
         if (!forking) {
             // RecordedMessage is the canonical provider contract. Compare it structurally: metadata maps are unordered, so hashing their incidental JSON key order creates
             // false drift after an encode/decode replay cycle.
-            if (!objectMapper.valueToTree(source.before().conversation()).equals(objectMapper.valueToTree(current.conversation()))) {
+            if (!objectMapper.valueToTree(expected.conversation()).equals(objectMapper.valueToTree(current.conversation()))) {
                 throw new IllegalStateException("Prompt drift before replayed checkpoint call " + ordinal + ". Use a fork at the first intentionally changed call.");
             }
-            Map<String, String> expectedRoots = rootHashes(source.before());
+            if (!expected.cursor().equals(current.cursor()) || !objectMapper.valueToTree(expected.tools()).equals(objectMapper.valueToTree(current.tools()))
+                    || !Objects.equals(expected.approvedSpec(), current.approvedSpec())) {
+                throw new IllegalStateException("Agent continuation state drift before replayed checkpoint call " + ordinal + "; refusing to hide a non-deterministic prefix.");
+            }
+            Map<String, String> expectedRoots = rootHashes(expected);
             Map<String, String> actualRoots = rootHashes(current);
             if (!expectedRoots.equals(actualRoots)) {
                 Set<String> roots = new LinkedHashSet<>(expectedRoots.keySet());
@@ -493,6 +500,38 @@ public class AgentCheckpointManager {
                         "Sandbox state drift before replayed checkpoint call " + ordinal + " in " + changedRoots + "; refusing to hide a non-deterministic prefix.");
             }
         }
+    }
+
+    private static CheckpointState replayExpectedState(RunScope run, TurnRecord source, int ordinal) {
+        if (source.replayAnchor() != null) {
+            return source.replayAnchor();
+        }
+        RunManifest manifest = run.sourceManifest;
+        if (manifest == null || manifest.parent() == null || manifest.forkAt() != ordinal || source.before().conversation().isEmpty()) {
+            return source.before();
+        }
+        List<RecordedMessage> conversation = source.before().conversation();
+        int anchorSize = conversation.size();
+        while (anchorSize > 0) {
+            RecordedMessage last = conversation.get(anchorSize - 1);
+            if (!"user".equals(last.role()) || last.text() == null || !last.text().startsWith(FORK_INSTRUCTION_PREFIX)) {
+                break;
+            }
+            anchorSize--;
+        }
+        if (anchorSize == conversation.size()) {
+            return source.before();
+        }
+        return new CheckpointState(List.copyOf(conversation.subList(0, anchorSize)), source.before().cursor(), source.before().tools(), source.before().roots(),
+                source.before().approvedSpec());
+    }
+
+    private static TurnRecord withReplayAnchor(TurnRecord source, CheckpointState replayAnchor) {
+        if (source.replayAnchor() != null || replayAnchor == source.before()) {
+            return source;
+        }
+        return new TurnRecord(source.schemaVersion(), source.ordinal(), source.localTurn(), source.maxTurns(), source.providerContract(), source.toolContract(), source.before(),
+                source.after(), source.terminalStatus(), replayAnchor);
     }
 
     private static Map<String, String> rootHashes(CheckpointState state) {
@@ -692,7 +731,7 @@ public class AgentCheckpointManager {
     }
 
     record TurnRecord(int schemaVersion, int ordinal, int localTurn, int maxTurns, String providerContract, String toolContract, CheckpointState before,
-            @Nullable CheckpointState after, @Nullable String terminalStatus) {
+            @Nullable CheckpointState after, @Nullable String terminalStatus, @Nullable CheckpointState replayAnchor) {
     }
 
     record ReviewerRecord(int schemaVersion, int ordinal, String systemPrompt, String userPrompt, String contract, @Nullable String response, @Nullable String errorClass,
@@ -712,14 +751,15 @@ public class AgentCheckpointManager {
     }
 
     record TurnHandle(boolean enabled, boolean replayed, boolean prepared, int ordinal, String providerContract, String toolContract, int localTurn, int maxTurns,
-            @Nullable CheckpointState before, @Nullable TurnRecord source) {
+            @Nullable CheckpointState replayAnchor, @Nullable CheckpointState before, @Nullable TurnRecord source) {
 
         static TurnHandle disabled() {
-            return new TurnHandle(false, false, false, 0, "", "", 0, 0, null, null);
+            return new TurnHandle(false, false, false, 0, "", "", 0, 0, null, null, null);
         }
 
         static TurnHandle replayed(int ordinal, TurnRecord source) {
-            return new TurnHandle(true, true, false, ordinal, source.providerContract(), source.toolContract(), source.localTurn(), source.maxTurns(), source.before(), source);
+            return new TurnHandle(true, true, false, ordinal, source.providerContract(), source.toolContract(), source.localTurn(), source.maxTurns(), source.replayAnchor(),
+                    source.before(), source);
         }
 
         CheckpointState replayedAfter() {
@@ -767,6 +807,9 @@ public class AgentCheckpointManager {
         private final Path sourceDirectory;
 
         @Nullable
+        private final RunManifest sourceManifest;
+
+        @Nullable
         private final Path outputDirectory;
 
         private final Instant startedAt = Instant.now();
@@ -783,7 +826,7 @@ public class AgentCheckpointManager {
 
         private RunScope(String jobId, @Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseShortName, @Nullable String exercisePackageName,
                 @Nullable String exerciseProblemStatement, @Nullable String programmingLanguage, @Nullable String projectType, SandboxAgentTools tools,
-                ApprovedSpecRegistry approvedSpecs, @Nullable Path sourceDirectory, @Nullable Path outputDirectory) {
+                ApprovedSpecRegistry approvedSpecs, @Nullable Path sourceDirectory, @Nullable RunManifest sourceManifest, @Nullable Path outputDirectory) {
             this.jobId = jobId;
             this.exerciseId = exerciseId;
             this.exerciseTitle = exerciseTitle;
@@ -795,6 +838,7 @@ public class AgentCheckpointManager {
             this.tools = tools;
             this.approvedSpecs = approvedSpecs;
             this.sourceDirectory = sourceDirectory;
+            this.sourceManifest = sourceManifest;
             this.outputDirectory = outputDirectory;
         }
     }
