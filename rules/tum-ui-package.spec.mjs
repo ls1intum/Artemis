@@ -47,6 +47,32 @@ const namedCatalogs = Object.fromEntries(
     ]),
 );
 
+function customProperties(marker) {
+    const start = storybookTheme.indexOf(marker);
+    const openingBrace = storybookTheme.indexOf('{', start);
+    const closingBrace = storybookTheme.indexOf('}', openingBrace);
+    return Object.fromEntries(
+        [...storybookTheme.slice(openingBrace + 1, closingBrace).matchAll(/(--[\w-]+):\s*(#[\da-f]{6});/gi)].map((match) => [match[1], match[2]]),
+    );
+}
+
+function relativeLuminance(color) {
+    const channels = color
+        .slice(1)
+        .match(/.{2}/g)
+        .map((channel) => {
+            const value = Number.parseInt(channel, 16) / 255;
+            return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(first, second) {
+    const lighter = Math.max(relativeLuminance(first), relativeLuminance(second));
+    const darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
 function dependencyCatalog(specifier) {
     const name = specifier.slice('catalog:'.length);
     return name ? namedCatalogs[name] : catalog;
@@ -214,6 +240,7 @@ describe('@tumaet/ui-angular package manifest', () => {
             expect(source).toContain('export default meta;');
             expect(source).not.toMatch(/\b(?:preview\.meta|meta\.story)\s*\(|\.extend\s*\(/);
             expect(source).not.toMatch(/\btum:/);
+            expect(source).not.toMatch(/\bglobals\s*:\s*\{[^}]*\btheme\s*:/s);
             const title = source.match(/\btitle:\s*'([^']+)'/)?.[1];
             expect(title).toMatch(/^[^/]+\/[^/]+$/);
             titles.push(title);
@@ -247,5 +274,30 @@ describe('@tumaet/ui-angular package manifest', () => {
         expect(storybookProperties).toEqual(packageProperties);
         expect(utilityColors.filter((color) => !themeColors.has(color))).toEqual([]);
         expect(hostColorUtilities).toEqual([]);
+    });
+
+    it('keeps the reference themes readable', () => {
+        const themes = {
+            light: customProperties("[data-theme='light']"),
+            dark: customProperties("[data-theme='dark']"),
+        };
+        const pairs = [
+            ['--tum-ui-primary-contrast', '--tum-ui-primary', 4.5],
+            ['--tum-ui-text-color', '--tum-ui-content-background', 4.5],
+            ['--tum-ui-muted-color', '--tum-ui-content-background', 4.5],
+            ['--tum-ui-highlight-color', '--tum-ui-highlight-background', 4.5],
+            ['--tum-ui-contrast-color', '--tum-ui-contrast-background', 4.5],
+            ['--tum-ui-tooltip-color', '--tum-ui-tooltip-background', 4.5],
+            ['--tum-ui-control-border-color', '--tum-ui-control-background', 3],
+            ['--tum-ui-control-border-hover-color', '--tum-ui-control-background', 3],
+            ...['danger', 'success', 'warning', 'info'].map((state) => [`--tum-ui-state-${state}-contrast`, `--tum-ui-state-${state}`, 4.5]),
+        ];
+
+        for (const [theme, properties] of Object.entries(themes)) {
+            for (const [foreground, background, minimum] of pairs) {
+                const actual = contrastRatio(properties[foreground], properties[background]);
+                expect(actual, `${theme}: ${foreground} on ${background}`).toBeGreaterThanOrEqual(minimum);
+            }
+        }
     });
 });

@@ -81,10 +81,3 @@ export const Multiline: Story = {
         `,
     }),
 };
-
-export const DarkTheme: Story = {
-    ...Default,
-    globals: {
-        theme: 'dark',
-    },
-};

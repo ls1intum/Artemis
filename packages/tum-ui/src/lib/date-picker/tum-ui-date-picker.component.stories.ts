@@ -38,10 +38,3 @@ export const Invalid: Story = {
         value: undefined,
     },
 };
-
-export const DarkTheme: Story = {
-    ...Default,
-    globals: {
-        theme: 'dark',
-    },
-};

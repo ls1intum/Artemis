@@ -139,6 +139,9 @@ jobs:
       - name: Build TUM UI Storybook
         run: pnpm --dir packages/tum-ui run storybook:build
         if: ${{ !cancelled() }}
+      - name: Test TUM UI AutoDocs
+        run: pnpm --dir packages/tum-ui run storybook:docs:test:built
+        if: ${{ !cancelled() }}
       - name: Validate TUM UI Package Artifact
         run: pnpm run tum-ui:pack:check
         if: ${{ !cancelled() }}

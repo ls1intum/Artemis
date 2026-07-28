@@ -1,8 +1,9 @@
 {
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
+        "jsx": "react-jsx",
         "rootDir": "..",
         "types": ["node"]
     },
-    "include": ["./**/*.ts", "../src/**/*.stories.ts", "../vitest.storybook.config.ts"]
+    "include": ["./**/*.ts", "./**/*.tsx", "../src/**/*.stories.ts", "../vitest.storybook.config.ts"]
 }

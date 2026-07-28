@@ -42,10 +42,3 @@ export const Empty: Story = {
         options: [],
     },
 };
-
-export const DarkTheme: Story = {
-    ...Default,
-    globals: {
-        theme: 'dark',
-    },
-};

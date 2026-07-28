@@ -10,10 +10,13 @@
         "directory": "packages/tum-ui"
     },
     "scripts": {
-        "storybook": "node build-styles.mjs && concurrently --kill-others --names styles,storybook \"node build-styles.mjs --watch\" \"storybook dev --port 6006 --no-open\"",
-        "storybook:build": "node build-styles.mjs && storybook build --output-dir ../../build/storybook/tum-ui",
-        "storybook:test": "node build-styles.mjs && vitest run --config vitest.storybook.config.ts --project storybook",
-        "storybook:typecheck": "tsc --noEmit --project .storybook/tsconfig.json"
+        "storybook": "node build-styles.mjs && pnpm run storybook:docs && concurrently --kill-others --names styles,docs,storybook \"node build-styles.mjs --watch\" \"pnpm run storybook:docs -- --watch\" \"storybook dev --port 6006 --no-open\"",
+        "storybook:build": "node build-styles.mjs && pnpm run storybook:docs && storybook build --output-dir ../../build/storybook/tum-ui",
+        "storybook:docs": "compodoc -p tsconfig.lib.json -e json -d . --silent",
+        "storybook:docs:test": "pnpm run storybook:build && pnpm run storybook:docs:test:built",
+        "storybook:docs:test:built": "playwright test --config .storybook/playwright.config.ts",
+        "storybook:test": "node build-styles.mjs && pnpm run storybook:docs && vitest run --config vitest.storybook.config.ts",
+        "storybook:typecheck": "pnpm run storybook:docs && tsc --noEmit --project .storybook/tsconfig.json"
     },
     "exports": {
         "./styles.css": "./styles.css"
@@ -42,6 +45,8 @@
         "@angular/compiler": "catalog:",
         "@angular/compiler-cli": "catalog:",
         "@angular/platform-browser": "catalog:",
+        "@compodoc/compodoc": "catalog:",
+        "@playwright/test": "catalog:",
         "@storybook/addon-a11y": "catalog:",
         "@storybook/addon-docs": "catalog:",
         "@storybook/addon-themes": "catalog:",
@@ -49,11 +54,13 @@
         "@storybook/angular-vite": "catalog:",
         "@tailwindcss/postcss": "catalog:",
         "@types/node": "catalog:",
+        "@types/react": "catalog:",
         "@vitest/browser": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "concurrently": "catalog:",
         "playwright": "catalog:",
         "postcss": "catalog:",
+        "react": "catalog:",
         "sass": "catalog:",
         "storybook": "catalog:",
         "tailwindcss": "catalog:",

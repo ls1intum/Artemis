@@ -109,10 +109,3 @@ export const States: Story = {
         },
     },
 };
-
-export const DarkTheme: Story = {
-    ...Variants,
-    globals: {
-        theme: 'dark',
-    },
-};

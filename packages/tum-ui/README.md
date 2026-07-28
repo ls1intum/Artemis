@@ -81,6 +81,7 @@ pnpm --dir packages/tum-ui run storybook
 pnpm --dir packages/tum-ui run storybook:typecheck
 pnpm --dir packages/tum-ui run storybook:test
 pnpm --dir packages/tum-ui run storybook:build
+pnpm --dir packages/tum-ui run storybook:docs:test
 ```
 
 `pnpm start` builds the package, watches it, and serves Artemis. An Artemis-only edit uses Angular
@@ -98,9 +99,13 @@ Storybook configuration, stories, and their direct toolchain dependencies belong
 Shared dependency versions stay synchronized with Artemis through the workspace catalog. Unit
 tests and TypeScript configurations still use the workspace test runner and compiler policy while
 the package lives in this repository. Stories use stable CSF3 with `Meta`, `StoryObj`, and
-TypeScript's `satisfies` operator. Storybook's Angular Vite integration is a preview feature, so
-its exact version stays pinned and upgrades require HMR verification, the package build, Chromium
-story tests, and the static Storybook build to pass.
+TypeScript's `satisfies` operator. The theme toolbar applies to component previews and AutoDocs;
+the manager remains independently themed by Storybook. Every story runs in both package themes,
+so theme-specific duplicate stories are unnecessary. Compodoc supplies AutoDocs API metadata;
+JSDoc should explain only non-obvious public behavior or constraints, never repeat names, types,
+or defaults. Storybook's Angular Vite integration is a preview feature, so its exact version stays
+pinned and upgrades require HMR verification, the package build, Chromium story tests, the static
+Storybook build, and the AutoDocs theme tests to pass.
 
 ## License
 

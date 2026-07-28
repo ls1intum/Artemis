@@ -43,10 +43,3 @@ export const Severities: Story = {
         },
     },
 };
-
-export const DarkTheme: Story = {
-    ...Severities,
-    globals: {
-        theme: 'dark',
-    },
-};

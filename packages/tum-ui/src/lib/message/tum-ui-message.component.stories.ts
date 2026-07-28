@@ -48,10 +48,3 @@ export const Severities: Story = {
         layout: 'padded',
     },
 };
-
-export const DarkTheme: Story = {
-    ...Severities,
-    globals: {
-        theme: 'dark',
-    },
-};

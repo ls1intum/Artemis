@@ -12,4 +12,8 @@ export default defineMain({
     core: {
         disableTelemetry: true,
     },
+    features: {
+        angularFilterNonInputControls: true,
+        backgrounds: false,
+    },
 });

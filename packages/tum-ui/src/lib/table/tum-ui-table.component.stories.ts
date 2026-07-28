@@ -72,10 +72,3 @@ export const Empty: Story = {
         totalRecords: 0,
     },
 };
-
-export const DarkTheme: Story = {
-    ...Default,
-    globals: {
-        theme: 'dark',
-    },
-};

@@ -7,20 +7,55 @@ packages:
   - 'packages/*'
 
 catalog:
+  '@analogjs/vite-plugin-angular': 2.6.4
+  '@analogjs/vitest-angular': 2.6.4
+  '@angular-devkit/architect': 0.2201.1
+  '@angular-devkit/core': 22.1.1
+  '@angular/animations': 22.1.0
+  '@angular/build': 22.1.1
   '@angular/cdk': 22.1.0
+  '@angular/cli': 22.1.1
   '@angular/common': 22.1.0
+  '@angular/compiler': 22.1.0
+  '@angular/compiler-cli': 22.1.0
   '@angular/core': 22.1.0
   '@angular/forms': 22.1.0
+  '@angular/platform-browser': 22.1.0
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
+  '@compodoc/compodoc': 2.0.0
+  '@playwright/test': 1.62.0
+  '@storybook/addon-a11y': 10.5.5
+  '@storybook/addon-docs': 10.5.5
+  '@storybook/addon-themes': 10.5.5
+  '@storybook/addon-vitest': 10.5.5
+  '@storybook/angular-vite': 10.5.5
   '@tailwindcss/postcss': 4.3.3
+  '@types/node': 24.13.3
+  '@types/react': 19.2.17
+  '@vitest/browser': 4.1.10
+  '@vitest/browser-playwright': 4.1.10
+  concurrently: 10.0.4
+  cross-env: 10.1.0
   dayjs: 1.11.21
+  jsdom: 30.0.1
   lodash-es: 4.18.1
   postcss: 8.5.25
+  playwright: 1.62.0
+  react: 19.2.7
   rxjs: 7.8.2
+  sass: 1.102.0
+  storybook: 10.5.5
   tailwindcss: 4.3.3
   tslib: 2.8.1
+  typescript: 6.0.3
+  vite: 7.3.6
+  vitest: 4.1.10
+
+catalogs:
+  storybook:
+    vite: 8.1.5
 
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches
@@ -37,6 +72,43 @@ preferFrozenLockfile: true
 
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
+
+# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
+# any lockfile entry published within the last day as a supply-chain safeguard.
+# When a freshly-published (<24h) version is pinned deliberately, list it here so the
+# frozen install passes, then remove the entry once the version has aged past the cutoff
+# (by then the gate passes on its own). Entries for versions that have already aged out
+# have been removed — keep this list minimal.
+minimumReleaseAgeExclude:
+  # Angular 22.1.0 (framework) was published 2026-07-29T20:40 and the 22.1.1 CLI/build
+  # train on 2026-07-30T09:45, both <24h before this bump. brace-expansion 5.0.9 and
+  # postcss 8.5.25 are transitive pins published in the same window. Remove each entry
+  # once its version has aged past the 24h cutoff (the gate then passes on its own).
+  - '@angular-devkit/architect@0.2201.1'
+  - '@angular-devkit/build-angular@22.1.1'
+  - '@angular-devkit/build-webpack@0.2201.1'
+  - '@angular-devkit/core@22.1.1'
+  - '@angular-devkit/schematics@22.1.1'
+  - '@angular/build@22.1.1'
+  - '@angular/cdk@22.1.0'
+  - '@angular/cli@22.1.1'
+  - '@angular/common@22.1.0'
+  - '@angular/compiler-cli@22.1.0'
+  - '@angular/compiler@22.1.0'
+  - '@angular/core@22.1.0'
+  - '@angular/forms@22.1.0'
+  - '@angular/language-service@22.1.0'
+  - '@angular/localize@22.1.0'
+  - '@angular/platform-browser-dynamic@22.1.0'
+  - '@angular/platform-browser@22.1.0'
+  - '@angular/router@22.1.0'
+  - '@angular/service-worker@22.1.0'
+  - '@angular/youtube-player@22.1.0'
+  - '@ngtools/webpack@22.1.1'
+  - '@schematics/angular@22.1.1'
+  - brace-expansion@5.0.9
+  - postcss@8.5.25
+  - '@angular/animations@22.1.0'
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
