@@ -486,8 +486,7 @@ public class AgentCheckpointManager {
             if (!objectMapper.valueToTree(expected.conversation()).equals(objectMapper.valueToTree(current.conversation()))) {
                 throw new IllegalStateException("Prompt drift before replayed checkpoint call " + ordinal + ". Use a fork at the first intentionally changed call.");
             }
-            if (!expected.cursor().equals(current.cursor()) || !objectMapper.valueToTree(expected.tools()).equals(objectMapper.valueToTree(current.tools()))
-                    || !Objects.equals(expected.approvedSpec(), current.approvedSpec())) {
+            if (!expected.cursor().equals(current.cursor()) || !expected.tools().equals(current.tools()) || !Objects.equals(expected.approvedSpec(), current.approvedSpec())) {
                 throw new IllegalStateException("Agent continuation state drift before replayed checkpoint call " + ordinal + "; refusing to hide a non-deterministic prefix.");
             }
             Map<String, String> expectedRoots = rootHashes(expected);
