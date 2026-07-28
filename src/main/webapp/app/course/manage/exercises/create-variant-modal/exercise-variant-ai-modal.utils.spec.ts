@@ -50,11 +50,16 @@ describe('supportsAiVariantGeneration', () => {
 });
 
 describe('adaptationChips', () => {
+    // Echoes key(value) so the specs assert the KEY that is looked up, not an English string.
+    const translate = (key: string, params?: Record<string, unknown>) => (params?.value === undefined ? key : `${key}(${params.value})`);
+
     it('should include a storytelling chip when a narrative style is requested', () => {
-        expect(adaptationChips({ narrativeStyle: 'IMAGINATIVE' })).toEqual(['Story: Imaginative']);
+        expect(adaptationChips({ narrativeStyle: 'IMAGINATIVE' }, translate)).toEqual([
+            'artemisApp.exerciseVariantGeneration.chip.story(artemisApp.exerciseVariantGeneration.wizard.narrative.IMAGINATIVE)',
+        ]);
     });
 
     it('should omit the storytelling chip when no narrative style is requested', () => {
-        expect(adaptationChips({ domainText: 'banking' })).toEqual(['Domain: banking']);
+        expect(adaptationChips({ domainText: 'banking' }, translate)).toEqual(['artemisApp.exerciseVariantGeneration.chip.domain(banking)']);
     });
 });

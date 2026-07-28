@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ConfirmationService } from 'primeng/api';
@@ -10,10 +10,10 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
 import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { VariantJob } from 'app/openapi/model/variant-job';
+import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { adaptationChips } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
@@ -46,7 +46,6 @@ type TrayStatus = 'running' | 'success' | 'attention';
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
     private readonly accountService = inject(AccountService);
-    private readonly router = inject(Router);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
 
@@ -80,8 +79,6 @@ export class VariantGenerationTrayComponent {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
     protected readonly runningPhases = RUNNING_PHASE_ORDER;
-    /** "What is being adapted" chips per card — same helper the generation modal uses. */
-    protected readonly adaptationChips = adaptationChips;
 
     /** Login of the user whose jobs are currently loaded — guards against redundant re-syncs. */
     private loadedForLogin?: string;
@@ -98,13 +95,21 @@ export class VariantGenerationTrayComponent {
                     return;
                 }
                 this.loadedForLogin = login;
-                if (login) {
+                // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
+                // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
+                // cannot generate variants has no jobs to show, and the tray stays hidden either way.
+                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
                     this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
                 } else {
                     this.variantGenerationService.clearJobs();
                 }
             });
         });
+    }
+
+    /** "What is being adapted" chips per card — same helper the generation modal uses. */
+    adaptationChips(request: VariantGenerationRequest | undefined): string[] {
+        return adaptationChips(request, (key, params) => this.translateService.instant(key, params));
     }
 
     /** REST re-sync on tray open — websocket events don't carry title/request updates. */
@@ -142,7 +147,7 @@ export class VariantGenerationTrayComponent {
 
     /**
      * Card click always opens the generation modal (running: live timeline; finished: summary) — navigation
-     * to the exercise happens via the modal's "Open in Editor" button only.
+     * to the exercise happens via the modal's "Open in Editor" button, which the wizard handles itself.
      */
     openJobEntry(job: VariantJob): void {
         if (!job.jobId) {
@@ -151,15 +156,5 @@ export class VariantGenerationTrayComponent {
         this.trayPopover()?.close();
         this.monitorJobId.set(job.jobId);
         this.monitorVisible.set(true);
-    }
-
-    /** The modal's "Open in Editor" — deep-link into the type-aware edit route of the created variant. */
-    onVariantConfirmed(exercise: Exercise): void {
-        const courseId = exercise.course?.id;
-        if (!courseId || !exercise.id) {
-            return;
-        }
-        const typeSegment = `${exercise.type ?? 'programming'}-exercises`;
-        void this.router.navigate(['/course-management', courseId, typeSegment, exercise.id, 'edit']);
     }
 }

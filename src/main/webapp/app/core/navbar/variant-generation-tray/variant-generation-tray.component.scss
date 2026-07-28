@@ -3,10 +3,24 @@ $purple: #8b5cf6;
 
 // ── Navbar button: base wand icon + notification-style status badge ──
 
+.variant-tray-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+
+    // Anchors the status badge to the label's top-right corner.
+    &__label {
+        position: relative;
+        display: inline-flex;
+        font-size: 0.8rem;
+    }
+}
+
 .variant-tray-status {
     position: absolute;
-    top: 1px;
-    right: -3px;
+    top: -5px;
+    right: -10px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
@@ -44,6 +58,23 @@ $purple: #8b5cf6;
         fa-icon {
             color: $purple;
         }
+    }
+
+    &__subtitle {
+        font-size: 0.75rem;
+        line-height: 1.35;
+        color: var(--p-text-muted-color);
+        margin-top: 0.15rem;
+    }
+
+    // The header stays put; only the job cards scroll once the list outgrows the viewport.
+    &__scroll {
+        max-height: min(60vh, 480px);
+        overflow-y: auto;
+
+        // Room for the entries' hover/focus outline so it is not clipped by the scroll container.
+        padding: 2px;
+        margin: -2px;
     }
 }
 

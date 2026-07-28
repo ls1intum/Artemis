@@ -32,6 +32,8 @@ describe('VariantGenerationTrayComponent', () => {
     };
     let routerMock: { navigate: ReturnType<typeof vi.fn> };
     let userIdentity: ReturnType<typeof signal<User | undefined>>;
+    /** Whether the mocked account passes the tray's IS_AT_LEAST_EDITOR check. */
+    let isEditor: boolean;
 
     const runningJob: VariantJob = { jobId: 'job-1', sourceExerciseId: 42, courseId: 7, sourceExerciseTitle: 'Sorting Basics', exerciseType: 'programming', phase: 'TRANSFORMING' };
     const completedJob: VariantJob = {
@@ -56,12 +58,13 @@ describe('VariantGenerationTrayComponent', () => {
         };
         routerMock = { navigate: vi.fn() };
         userIdentity = signal<User | undefined>({ login: 'instructor1' } as User);
+        isEditor = true;
 
         await TestBed.configureTestingModule({
             imports: [VariantGenerationTrayComponent],
             providers: [
                 { provide: ExerciseVariantGenerationService, useValue: serviceMock },
-                { provide: AccountService, useValue: { userIdentity } },
+                { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
                 { provide: Router, useValue: routerMock },
                 {
                     provide: TranslateService,
@@ -95,6 +98,16 @@ describe('VariantGenerationTrayComponent', () => {
 
         userIdentity.set(undefined);
         fixture.detectChanges();
+        expect(serviceMock.clearJobs).toHaveBeenCalled();
+    });
+
+    it('does not query the editor-only job endpoint for a student', () => {
+        // The endpoint is @EnforceAtLeastEditor; fetching as a student only produced a 403.
+        isEditor = false;
+        userIdentity.set({ login: 'student1' } as User);
+        fixture.detectChanges();
+
+        expect(serviceMock.loadJobs).not.toHaveBeenCalled();
         expect(serviceMock.clearJobs).toHaveBeenCalled();
     });
 
@@ -137,11 +150,6 @@ describe('VariantGenerationTrayComponent', () => {
         expect(component.monitorJobId()).toBe('job-2');
         expect(component.monitorVisible()).toBe(true);
         expect(routerMock.navigate).not.toHaveBeenCalled();
-    });
-
-    it('navigates to the type-aware edit route when the modal confirms the variant', () => {
-        component.onVariantConfirmed({ id: 4711, type: 'quiz', course: { id: 7 } } as never);
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'quiz-exercises', 4711, 'edit']);
     });
 
     it('flags failed jobs and drafts with warnings as needing attention', () => {

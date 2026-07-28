@@ -36,32 +36,44 @@ function quizHasDragAndDropQuestions(quiz: QuizExercise): boolean {
     return (quiz.quizQuestions ?? []).some((question) => question.type === QuizQuestionType.DRAG_AND_DROP);
 }
 
-export function difficultyLabel(d: DifficultyLevel): string {
-    return d.charAt(0) + d.slice(1).toLowerCase();
+/** Longest custom instruction rendered in a chip before it is elided — the tray card is narrow. */
+const CUSTOM_CHIP_MAX_LENGTH = 80;
+
+/** Translation key of a difficulty level — reuses the shared exercise translations. */
+export function difficultyTranslationKey(d: DifficultyLevel): string {
+    return `artemisApp.exercise.${d.toLowerCase()}`;
 }
 
-/** Human-readable label for a narrative style, e.g. WORKPLACE → "Workplace". */
-export function narrativeStyleLabel(style: string): string {
-    return style.charAt(0) + style.slice(1).toLowerCase();
+/** Translation key of a narrative style's label, e.g. CREATIVE → …wizard.narrative.CREATIVE. */
+export function narrativeStyleTranslationKey(style: string): string {
+    return `artemisApp.exerciseVariantGeneration.wizard.narrative.${style}`;
 }
+
+/**
+ * Resolves a translation key with optional interpolation parameters. Passed in by the calling component rather
+ * than resolved here, so these helpers stay pure functions (same pattern as `buildCourseExerciseCards`).
+ */
+export type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
 
 /** "What is being adapted" chips derived from a generation request — shared by the wizard modal and the tray cards. */
-export function adaptationChips(request: VariantGenerationRequest | undefined): string[] {
+export function adaptationChips(request: VariantGenerationRequest | undefined, translate: TranslateFn): string[] {
     if (!request) {
         return [];
     }
+    const chip = (name: string, value: string) => translate(`artemisApp.exerciseVariantGeneration.chip.${name}`, { value });
     const items: string[] = [];
     if (request.targetDifficulty) {
-        items.push(`Difficulty → ${difficultyLabel(request.targetDifficulty as DifficultyLevel)}`);
+        items.push(chip('difficulty', translate(difficultyTranslationKey(request.targetDifficulty as DifficultyLevel))));
     }
     if (request.domainText) {
-        items.push(`Domain: ${request.domainText}`);
+        items.push(chip('domain', request.domainText));
     }
     if (request.narrativeStyle) {
-        items.push(`Story: ${narrativeStyleLabel(request.narrativeStyle)}`);
+        items.push(chip('story', translate(narrativeStyleTranslationKey(request.narrativeStyle))));
     }
     if (request.additionalInstructions) {
-        items.push(request.additionalInstructions.length > 80 ? `Custom: ${request.additionalInstructions.slice(0, 80)}…` : `Custom: ${request.additionalInstructions}`);
+        const instructions = request.additionalInstructions;
+        items.push(chip('custom', instructions.length > CUSTOM_CHIP_MAX_LENGTH ? `${instructions.slice(0, CUSTOM_CHIP_MAX_LENGTH)}…` : instructions));
     }
     return items;
 }

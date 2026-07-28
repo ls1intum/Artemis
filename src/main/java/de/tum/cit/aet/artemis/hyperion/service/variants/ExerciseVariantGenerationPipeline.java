@@ -76,6 +76,9 @@ public class ExerciseVariantGenerationPipeline {
     /** Pipeline id for token-usage traces of the failure-summary call. */
     private static final String FAILURE_SUMMARY_PIPELINE_ID = "exercise-variant-failure-summary";
 
+    /** Pipeline id for token-usage traces of the flagged-draft summary call. */
+    private static final String WARNING_SUMMARY_PIPELINE_ID = "exercise-variant-warning-summary";
+
     /** Internal control-flow signal for cooperative cancellation. */
     private static class JobCancelledException extends RuntimeException {
     }
@@ -185,7 +188,10 @@ public class ExerciseVariantGenerationPipeline {
                 log.warn("Finalizing variant generation job {} failed; keeping the variant as a draft", jobId, e);
                 warnings.add("FINALIZING: placement failed — assign the exercise to its group manually (" + e.getMessage() + ")");
             }
-            jobService.complete(jobId, variant.getId(), warnings);
+            // A flagged draft needs the same "what happened & how to continue" guidance a failure gets: the raw
+            // gate messages are verification output, not instructions. Clean runs skip the extra LLM call.
+            String instructorSummary = warnings.isEmpty() ? null : generateWarningSummary(job, warnings);
+            jobService.complete(jobId, variant.getId(), warnings, instructorSummary);
             log.info("Variant generation job {} finished with {} for exercise {} -> variant {}", jobId, warnings.isEmpty() ? "COMPLETED" : "DRAFT_WITH_WARNINGS",
                     job.getSourceExerciseId(), variant.getId());
         }
@@ -336,31 +342,62 @@ public class ExerciseVariantGenerationPipeline {
      * the chat client is missing or the call itself errors.
      */
     private String generateFailureSummary(VariantJob job, String failureMessage) {
+        Map<String, String> variables = new HashMap<>();
+        // The local job copy never sees the phase updates (they mutate the map record) — read the live phase.
+        variables.put("failedPhase", String.valueOf(jobService.getJob(job.getJobId(), job.getInitiatorLogin()).orElse(job).getPhase()));
+        variables.put("failureDetail", orDefault(failureMessage, "(no detail)"));
+        return generateInstructorSummary(job, "prompts/hyperion/variants/failure_summary.st", FAILURE_SUMMARY_PIPELINE_ID, variables);
+    }
+
+    /**
+     * The DRAFT_WITH_WARNINGS counterpart of {@link #generateFailureSummary}: the variant exists but did not pass
+     * every gate, so the instructor needs to know what is broken and what to fix before publishing.
+     *
+     * @param job      the job that produced the flagged draft
+     * @param warnings the recorded gate warnings, never empty
+     * @return the summary, or null when it could not be produced
+     */
+    private String generateWarningSummary(VariantJob job, List<String> warnings) {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("warnings", String.join("\n", warnings));
+        return generateInstructorSummary(job, "prompts/hyperion/variants/warning_summary.st", WARNING_SUMMARY_PIPELINE_ID, variables);
+    }
+
+    /**
+     * One best-effort LLM call producing an instructor-facing post-mortem, grounded in the recorded step outputs,
+     * the change plan and the original request. Never fails the terminal handling — returns null when the chat
+     * client is missing or the call itself errors.
+     *
+     * @param job            the job the summary is written for
+     * @param templatePath   the prompt template describing the outcome (failure / flagged draft)
+     * @param pipelineId     the token-usage trace id of this outcome's summary call
+     * @param outcomeContext outcome-specific template variables, merged into the shared job context
+     * @return the summary, or null when it could not be produced
+     */
+    private String generateInstructorSummary(VariantJob job, String templatePath, String pipelineId, Map<String, String> outcomeContext) {
         if (chatClient == null) {
             return null;
         }
         try {
             // The local job copy is stale (step outputs are recorded via the job service) — read the map record.
             VariantJob currentJob = jobService.getJob(job.getJobId(), job.getInitiatorLogin()).orElse(job);
-            Map<String, String> variables = new HashMap<>();
+            Map<String, String> variables = new HashMap<>(outcomeContext);
             variables.put("exerciseType", String.valueOf(job.getExerciseType()));
             variables.put("sourceTitle", orDefault(job.getSourceExerciseTitle(), "(unknown)"));
-            variables.put("failedPhase", String.valueOf(currentJob.getPhase()));
-            variables.put("failureDetail", orDefault(failureMessage, "(no detail)"));
             variables.put("targetDifficulty", job.getRequest().targetDifficulty() != null ? job.getRequest().targetDifficulty().name() : "unchanged");
             variables.put("domainText", orDefault(job.getRequest().domainText(), "unchanged"));
             variables.put("narrativeStyle", job.getRequest().narrativeStyle() != null ? job.getRequest().narrativeStyle().name() : "consistent with the source");
             variables.put("additionalInstructions", orDefault(job.getRequest().additionalInstructions(), "none"));
             variables.put("changePlan", currentJob.getChangePlan() != null ? renderPlan(currentJob.getChangePlan()) : "No change plan was produced yet.");
             variables.put("stepOutputs", renderStepOutputs(currentJob));
-            String systemPrompt = templateService.render("prompts/hyperion/variants/failure_summary.st", variables);
+            String systemPrompt = templateService.render(templatePath, variables);
             ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user("Write the summary for the instructor now.").call().chatResponse();
-            trackTokenUsage(job, chatResponse, FAILURE_SUMMARY_PIPELINE_ID);
+            trackTokenUsage(job, chatResponse, pipelineId);
             String summary = LLMTokenUsageService.extractResponseText(chatResponse);
             return summary == null || summary.isBlank() ? null : truncate(summary.strip());
         }
         catch (Exception e) {
-            log.warn("Failure-summary generation for variant job {} failed itself — failing without a summary", job.getJobId(), e);
+            log.warn("Instructor-summary generation for variant job {} failed itself — continuing without a summary", job.getJobId(), e);
             return null;
         }
     }

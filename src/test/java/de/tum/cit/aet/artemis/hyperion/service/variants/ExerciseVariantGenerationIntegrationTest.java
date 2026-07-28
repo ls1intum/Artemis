@@ -319,6 +319,9 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(script.planningCalls()).hasValue(1);
         assertThat(script.agentRounds()).hasValue(1);
         assertThat(script.critiqueCalls()).hasValue(1);
+        // A clean run needs no post-mortem — the extra LLM call is reserved for failures and flagged drafts.
+        assertThat(script.failureSummaryCalls()).hasValue(0);
+        assertThat(job.getInstructorSummary()).isNull();
         // Planning reported usage metadata (100 + 20 tokens) — the accounting must land on the job record.
         assertThat(job.getTotalTokensUsed()).isGreaterThanOrEqualTo(120);
 
@@ -443,6 +446,10 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         // The draft is kept for the instructor to repair in the editor.
         assertThat(job.getVariantExerciseId()).isNotNull();
         assertThat(quizExerciseRepository.findById(job.getVariantExerciseId())).isPresent();
+        // A flagged draft carries the same "what happened & how to continue" post-mortem a failure does — the
+        // raw gate warnings alone do not tell the instructor what to do next.
+        assertThat(script.failureSummaryCalls()).hasValue(1);
+        assertThat(job.getInstructorSummary()).contains("AI post-mortem");
 
         // Stuck-repair-loop detection: the SAME QUIZ_CRITIQUE finding recurs every round here, so the pipeline
         // must inject the escalation note starting from the round AFTER it has recurred twice (attempt 3's

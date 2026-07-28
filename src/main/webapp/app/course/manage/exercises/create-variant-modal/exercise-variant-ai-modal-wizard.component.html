@@ -16,12 +16,12 @@
                     class="wiz-step-item"
                     [class.wiz-step-item--active]="wizardStep() === step.step"
                     [class.wiz-step-item--completed]="wizardStep() > step.step"
-                    [attr.data-testid]="'variant-wizard-indicator-' + step.label"
+                    [attr.data-testid]="'variant-wizard-indicator-' + step.id"
                 >
                     <div class="wiz-step-circle">
                         <fa-icon [icon]="step.icon" />
                     </div>
-                    <div class="wiz-step-label">{{ step.label }}</div>
+                    <div class="wiz-step-label">{{ step.labelKey | artemisTranslate }}</div>
                 </div>
                 @if (i < wizardSteps().length - 1) {
                     <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > step.step"></div>
@@ -53,19 +53,23 @@
         }
     }
 
-    <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
-    @if (wizardStep() === 1) {
+    <!-- ── Source exercise badge — shown on Select AND Configure: the configuration is meaningless without
+         knowing which exercise it applies to, and steps 4/5 have the flow card above instead. ── -->
+    @if (wizardStep() === 1 || wizardStep() === 2) {
         @if (sourceExercise(); as src) {
-            <div class="source-badge mb-4">
+            <div class="source-badge mb-4" data-testid="variant-wizard-source-badge">
                 <fa-icon [icon]="getIcon(src.type)" class="source-badge__icon" />
                 <span class="source-badge__title">{{ src.title }}</span>
                 @if (src.difficulty) {
-                    <span class="badge {{ difficultyBadgeClass(src.difficulty) }}">{{ src.difficulty }}</span>
+                    <span class="badge {{ difficultyBadgeClass(src.difficulty) }}">{{ difficultyTranslationKey(src.difficulty) | artemisTranslate }}</span>
                 }
             </div>
         }
+    }
 
-        <p class="text-muted small mb-3">Select one or more aspects you'd like the AI to change.</p>
+    <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
+    @if (wizardStep() === 1) {
+        <p class="text-muted small mb-3">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
 
         <div class="option-cards mb-4">
             <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
@@ -73,11 +77,11 @@
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
                 <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
-                <h6>Difficulty</h6>
-                <p>Change how hard the exercise is</p>
+                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficulty' | artemisTranslate }}</h6>
+                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficultyHint' | artemisTranslate }}</p>
                 <span class="option-card__cta">
                     @if (changeDifficulty()) {
-                        ✓ Selected
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
             </div>
@@ -86,11 +90,11 @@
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
                 <div class="option-card__icon"><fa-icon [icon]="faEarthAmericas" /></div>
-                <h6>Application Domain</h6>
-                <p>Move to a different real-world theme</p>
+                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domain' | artemisTranslate }}</h6>
+                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domainHint' | artemisTranslate }}</p>
                 <span class="option-card__cta">
                     @if (changeDomain()) {
-                        ✓ Selected
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
             </div>
@@ -99,11 +103,11 @@
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
                 <div class="option-card__icon"><fa-icon [icon]="faBookOpen" /></div>
-                <h6>Storytelling</h6>
-                <p>Choose the narrative style of the task</p>
+                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrative' | artemisTranslate }}</h6>
+                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrativeHint' | artemisTranslate }}</p>
                 <span class="option-card__cta">
                     @if (changeNarrative()) {
-                        ✓ Selected
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
             </div>
@@ -112,11 +116,11 @@
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
                 <div class="option-card__icon"><fa-icon [icon]="faPenToSquare" /></div>
-                <h6>Custom</h6>
-                <p>Add your own instructions</p>
+                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.custom' | artemisTranslate }}</h6>
+                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.customHint' | artemisTranslate }}</p>
                 <span class="option-card__cta">
                     @if (changeCustom()) {
-                        ✓ Selected
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
             </div>
@@ -124,7 +128,7 @@
 
         <div class="d-flex justify-content-end">
             <tum-ui-button severity="secondary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
-                Next <fa-icon [icon]="faArrowRight" class="ms-1" />
+                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ms-1" />
             </tum-ui-button>
         </div>
     }
@@ -134,7 +138,7 @@
         <div class="configure-fields">
             @if (changeDifficulty()) {
                 <div class="field-group">
-                    <p class="field-group__label">Target difficulty</p>
+                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.targetDifficulty' | artemisTranslate }}</p>
                     <div class="d-flex gap-3 flex-wrap">
                         @for (d of availableDifficulties(); track d.value) {
                             <div class="radio-item">
@@ -145,7 +149,7 @@
                                     [ngModel]="targetDifficulty()"
                                     (ngModelChange)="targetDifficulty.set($event)"
                                 />
-                                <label [for]="'wiz-diff-' + d.value">{{ d.label }}</label>
+                                <label [for]="'wiz-diff-' + d.value">{{ d.labelKey | artemisTranslate }}</label>
                             </div>
                         }
                     </div>
@@ -153,16 +157,27 @@
             }
             @if (changeDomain()) {
                 <div class="field-group">
-                    <p class="field-group__label">New domain</p>
-                    <input tumUiInput class="w-100" [ngModel]="domainText()" (ngModelChange)="domainText.set($event)" placeholder="e.g. space exploration, cooking, banking…" />
+                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.domain' | artemisTranslate }}</p>
+                    <input
+                        tumUiInput
+                        class="w-100"
+                        [ngModel]="domainText()"
+                        (ngModelChange)="domainText.set($event)"
+                        [placeholder]="'artemisApp.exerciseVariantGeneration.wizard.configure.domainPlaceholder' | artemisTranslate"
+                    />
                 </div>
             }
             @if (changeNarrative()) {
                 <div class="field-group">
-                    <p class="field-group__label">Narrative style</p>
+                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.narrative' | artemisTranslate }}</p>
                     <div class="d-flex gap-3 flex-wrap">
                         @for (style of narrativeStyles; track style.value) {
-                            <div class="radio-item" [tumUiTooltip]="style.description" tumUiTooltipPlacement="top" [attr.data-testid]="'variant-narrative-' + style.value">
+                            <div
+                                class="radio-item"
+                                [tumUiTooltip]="style.descriptionKey | artemisTranslate"
+                                tumUiTooltipPlacement="top"
+                                [attr.data-testid]="'variant-narrative-' + style.value"
+                            >
                                 <tum-ui-radio-button
                                     [inputId]="'wiz-narrative-' + style.value"
                                     name="wiz-narrative"
@@ -170,7 +185,7 @@
                                     [ngModel]="narrativeStyle()"
                                     (ngModelChange)="narrativeStyle.set($event)"
                                 />
-                                <label [for]="'wiz-narrative-' + style.value">{{ style.label }}</label>
+                                <label [for]="'wiz-narrative-' + style.value">{{ style.labelKey | artemisTranslate }}</label>
                             </div>
                         }
                     </div>
@@ -178,7 +193,7 @@
             }
             @if (changeCustom()) {
                 <div class="field-group">
-                    <p class="field-group__label">Custom instructions</p>
+                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.custom' | artemisTranslate }}</p>
                     <textarea
                         tumUiTextarea
                         rows="4"
@@ -186,16 +201,18 @@
                         style="resize: vertical"
                         [ngModel]="additionalInstructions()"
                         (ngModelChange)="additionalInstructions.set($event)"
-                        placeholder="e.g. Make the problem about sorting instead of searching. Keep the same point value."
+                        [placeholder]="'artemisApp.exerciseVariantGeneration.wizard.configure.customPlaceholder' | artemisTranslate"
                     ></textarea>
                 </div>
             }
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </tum-ui-button>
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()">
+                <fa-icon [icon]="faArrowLeft" class="me-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
+            </tum-ui-button>
             <tum-ui-button severity="secondary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
-                Next <fa-icon [icon]="faArrowRight" class="ms-1" />
+                {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ms-1" />
             </tum-ui-button>
         </div>
     }
@@ -203,7 +220,7 @@
     <!-- ── Step 3: Placement ──────────────────────────────────────────────────── -->
     @if (wizardStep() === 3) {
         <div class="placement-section">
-            <p class="small fw-semibold mb-2">Where should this variant be placed?</p>
+            <p class="small fw-semibold mb-2">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.question' | artemisTranslate }}</p>
             <div class="placement-options">
                 @if (sourceGroup(); as group) {
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'existing-group'">
@@ -215,8 +232,12 @@
                             (ngModelChange)="placementChoice.set($event)"
                         />
                         <div class="placement-option__body">
-                            <span class="placement-option__title">Add to group "{{ group.title }}"</span>
-                            <span class="placement-option__hint">Alongside {{ group.exerciseIds?.length ?? 0 }} existing variant(s)</span>
+                            <span class="placement-option__title">{{
+                                'artemisApp.exerciseVariantGeneration.wizard.placement.existingGroup' | artemisTranslate: { title: group.title }
+                            }}</span>
+                            <span class="placement-option__hint">{{
+                                'artemisApp.exerciseVariantGeneration.wizard.placement.existingGroupHint' | artemisTranslate: { count: group.exerciseIds?.length ?? 0 }
+                            }}</span>
                         </div>
                     </label>
                 }
@@ -232,17 +253,17 @@
                             (ngModelChange)="placementChoice.set($event)"
                         />
                         <div class="placement-option__body">
-                            <span class="placement-option__title">Create new group with original</span>
-                            <span class="placement-option__hint">Groups the source exercise and this variant together</span>
+                            <span class="placement-option__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroup' | artemisTranslate }}</span>
+                            <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroupHint' | artemisTranslate }}</span>
                             @if (placementChoice() === 'new-group') {
                                 <div class="new-group-settings" (click)="$event.stopPropagation()">
                                     <div class="d-flex flex-wrap gap-2 align-items-end mt-2">
                                         <div class="flex-grow-1" style="min-width: 120px">
-                                            <div class="new-group-settings__label">Group title</div>
+                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.groupTitle' | artemisTranslate }}</div>
                                             <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" class="form-control form-control-sm" />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">Max points</div>
+                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate }}</div>
                                             <input
                                                 type="number"
                                                 [ngModel]="newGroupMaxPoints()"
@@ -253,7 +274,7 @@
                                     </div>
                                     <div class="d-flex flex-wrap gap-2 mt-2">
                                         <div>
-                                            <div class="new-group-settings__label">Release</div>
+                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.release' | artemisTranslate }}</div>
                                             <input
                                                 type="datetime-local"
                                                 [ngModel]="newGroupReleaseDate()"
@@ -262,7 +283,7 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">Start</div>
+                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.start' | artemisTranslate }}</div>
                                             <input
                                                 type="datetime-local"
                                                 [ngModel]="newGroupStartDate()"
@@ -271,7 +292,7 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">Due</div>
+                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.due' | artemisTranslate }}</div>
                                             <input
                                                 type="datetime-local"
                                                 [ngModel]="newGroupDueDate()"
@@ -280,7 +301,9 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">Feedback due</div>
+                                            <div class="new-group-settings__label">
+                                                {{ 'artemisApp.exerciseVariantGeneration.wizard.placement.assessmentDue' | artemisTranslate }}
+                                            </div>
                                             <input
                                                 type="datetime-local"
                                                 [ngModel]="newGroupAssessmentDueDate()"
@@ -303,18 +326,20 @@
                         (ngModelChange)="placementChoice.set($event)"
                     />
                     <div class="placement-option__body">
-                        <span class="placement-option__title">Add as standalone exercise</span>
-                        <span class="placement-option__hint">No group — exercise appears on its own in the list</span>
+                        <span class="placement-option__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.standalone' | artemisTranslate }}</span>
+                        <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.standaloneHint' | artemisTranslate }}</span>
                     </div>
                 </label>
             </div>
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()"> <fa-icon [icon]="faArrowLeft" class="me-1" /> Back </tum-ui-button>
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()">
+                <fa-icon [icon]="faArrowLeft" class="me-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
+            </tum-ui-button>
             <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
                 <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
-                Generate Variant
+                {{ 'artemisApp.exerciseVariantGeneration.wizard.generate' | artemisTranslate }}
             </button>
         </div>
     }
@@ -414,25 +439,7 @@
                     }
                 </div>
             </div>
-            <!-- How to continue: the AI-generated post-mortem (state of the exercise + next steps) when the
-                 server could produce one, otherwise the static fallback guidance. -->
-            @if (instructorSummary(); as summary) {
-                <div class="step-summary mb-3" data-testid="variant-wizard-instructor-summary">
-                    <div class="step-summary__title">
-                        <fa-icon [icon]="faRobot" class="me-1" />
-                        {{ 'artemisApp.exerciseVariantGeneration.wizard.nextStepsTitle' | artemisTranslate }}
-                    </div>
-                    <div class="instructor-summary-text">{{ summary }}</div>
-                </div>
-            } @else {
-                <p class="small text-muted mb-3" data-testid="variant-wizard-failed-guidance">
-                    @if (generatedVariant()) {
-                        {{ 'artemisApp.exerciseVariantGeneration.wizard.failedGuidanceWithExercise' | artemisTranslate }}
-                    } @else {
-                        {{ 'artemisApp.exerciseVariantGeneration.wizard.failedGuidanceNoExercise' | artemisTranslate }}
-                    }
-                </p>
-            }
+            <ng-container *ngTemplateOutlet="nextSteps" />
             <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="d-flex justify-content-end gap-2">
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
@@ -460,25 +467,35 @@
             @if (generatedVariant(); as variant) {
                 <div class="d-flex flex-wrap align-items-center gap-1 mb-3" data-testid="variant-wizard-result">
                     @if (variant.maxPoints) {
-                        <span class="info-chip">{{ variant.maxPoints }} pts</span>
+                        <span class="info-chip">{{ 'artemisApp.exerciseVariantGeneration.wizard.points' | artemisTranslate: { points: variant.maxPoints } }}</span>
                     }
                     @if (variant.difficulty) {
-                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
+                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ difficultyTranslationKey(variant.difficulty) | artemisTranslate }}</span>
                     }
                 </div>
             }
-            @if (jobPhase() === 'DRAFT_WITH_WARNINGS' && warnings().length > 0) {
+            <!-- A flagged draft gets the same treatment as a failure: the headline states the outcome, the
+                 AI post-mortem explains how to continue, and the raw gate messages stay one click away
+                 instead of dominating the dialog as an unreadable wall of yellow. -->
+            @if (jobPhase() === 'DRAFT_WITH_WARNINGS') {
                 <div class="ai-warning mb-3" data-testid="variant-wizard-warnings">
                     <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
-                    <div>
+                    <div class="min-width-0">
                         <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
-                        <ul class="small mb-0 ps-3">
-                            @for (warning of warnings(); track warning) {
-                                <li>{{ warning }}</li>
+                        @if (warnings().length > 0) {
+                            <a class="d-block small text-decoration-none pointer" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
+                                <fa-icon [icon]="warningsExpanded() ? faChevronDown : faChevronRight" class="me-1" />
+                                {{ 'artemisApp.exerciseVariantGeneration.wizard.warningDetails' | artemisTranslate: { count: warnings().length } }}
+                            </a>
+                            @if (warningsExpanded()) {
+                                @for (warning of warnings(); track warning) {
+                                    <pre class="step-output-detail" data-testid="variant-wizard-warning-detail">{{ warning }}</pre>
+                                }
                             }
-                        </ul>
+                        }
                     </div>
                 </div>
+                <ng-container *ngTemplateOutlet="nextSteps" />
             }
             <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="ai-warning mt-3">
@@ -497,6 +514,23 @@
             </div>
         }
     }
+    <!-- ── "What happened & how to continue" — shown for every outcome that needs instructor action
+         (failed and flagged draft): the AI post-mortem when the server produced one, otherwise the static
+         guidance for that outcome. ── -->
+    <ng-template #nextSteps>
+        @if (instructorSummary(); as summary) {
+            <div class="step-summary mb-3" data-testid="variant-wizard-instructor-summary">
+                <div class="step-summary__title">
+                    <fa-icon [icon]="faRobot" class="me-1" />
+                    {{ 'artemisApp.exerciseVariantGeneration.wizard.nextStepsTitle' | artemisTranslate }}
+                </div>
+                <div class="instructor-summary-text">{{ summary }}</div>
+            </div>
+        } @else {
+            <p class="small text-muted mb-3" data-testid="variant-wizard-failed-guidance">{{ fallbackGuidanceKey() | artemisTranslate }}</p>
+        }
+    </ng-template>
+
     <!-- ── "What the AI did" summary — shared by the failed and result views ── -->
     <ng-template #stepSummary>
         @if (recordedStepOutputs().length > 0) {

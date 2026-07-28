@@ -1,5 +1,6 @@
 import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,7 +43,7 @@ import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 
 import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } from 'app/openapi/model/variant-generation-request';
 import { VariantPlacement } from 'app/openapi/model/variant-placement';
 import { StepOutput } from 'app/openapi/model/step-output';
-import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyLabel, durationDays } from './exercise-variant-ai-modal.utils';
+import { PlacementChoice, adaptationChips, difficultyBadgeClass, difficultyTranslationKey, durationDays, narrativeStyleTranslationKey } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -51,12 +52,12 @@ type WizardStep = 1 | 2 | 3 | 4 | 5;
  * derived from the array index, because the Placement step is dropped for exam exercises (see `wizardSteps`)
  * while the remaining steps keep their numbers.
  */
-const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; label: string; icon: IconDefinition }> = [
-    { step: 1, label: 'Select', icon: faWandMagicSparkles },
-    { step: 2, label: 'Configure', icon: faGears },
-    { step: 3, label: 'Placement', icon: faLayerGroup },
-    { step: 4, label: 'Generating', icon: faRobot },
-    { step: 5, label: 'Result', icon: faCircleCheck },
+const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; id: string; labelKey: string; icon: IconDefinition }> = [
+    { step: 1, id: 'Select', labelKey: 'artemisApp.exerciseVariantGeneration.wizard.step.select', icon: faWandMagicSparkles },
+    { step: 2, id: 'Configure', labelKey: 'artemisApp.exerciseVariantGeneration.wizard.step.configure', icon: faGears },
+    { step: 3, id: 'Placement', labelKey: 'artemisApp.exerciseVariantGeneration.wizard.step.placement', icon: faLayerGroup },
+    { step: 4, id: 'Generating', labelKey: 'artemisApp.exerciseVariantGeneration.wizard.step.generating', icon: faRobot },
+    { step: 5, id: 'Result', labelKey: 'artemisApp.exerciseVariantGeneration.wizard.step.result', icon: faCircleCheck },
 ];
 
 /**
@@ -64,12 +65,9 @@ const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; label: string; icon: IconD
  * fully creative storytelling, in ascending order. The tooltip carries the description; not selecting the
  * Storytelling card at all means "stay consistent with the source exercise's narrative" (server-side default).
  */
-const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequestNarrativeStyleEnum; label: string; description: string }> = [
-    { value: 'TECHNICAL', label: 'Technical', description: 'No story — a plain, concise focus on the technical concepts.' },
-    { value: 'REALISTIC', label: 'Realistic', description: 'A short real-world scenario introduces the task — the rest stays technical.' },
-    { value: 'CREATIVE', label: 'Creative', description: 'A story carries the task — themed setting, named actors, story-driven examples.' },
-    { value: 'IMAGINATIVE', label: 'Imaginative', description: 'Fully creative storytelling — the entire exercise is told inside a rich narrative world.' },
-];
+const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequestNarrativeStyleEnum; labelKey: string; descriptionKey: string }> = (
+    ['TECHNICAL', 'REALISTIC', 'CREATIVE', 'IMAGINATIVE'] as VariantGenerationRequestNarrativeStyleEnum[]
+).map((value) => ({ value, labelKey: narrativeStyleTranslationKey(value), descriptionKey: `${narrativeStyleTranslationKey(value)}_DESCRIPTION` }));
 
 /**
  * Running pipeline phases in execution order — the wizard's step timeline is derived from VariantJobPhase
@@ -102,6 +100,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly exerciseService = inject(ExerciseService);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
+    private readonly router = inject(Router);
 
     readonly visible = input<boolean>(false);
     /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
@@ -120,7 +119,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly monitorJobId = input<string | undefined>(undefined);
 
     readonly visibleChange = output<boolean>();
-    readonly variantAdded = output<Exercise>();
 
     /** Monitor mode skips the wizard chrome: no 5-step indicator, job-centric dialog title. */
     readonly isMonitorMode = computed(() => !!this.monitorJobId());
@@ -160,6 +158,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly stepOutputs = signal<Record<string, StepOutput[]>>({});
     readonly expandedPhases = signal<Record<string, boolean>>({});
     readonly warnings = signal<string[]>([]);
+    /** Raw gate messages of a flagged draft stay collapsed — the AI post-mortem above them is the primary read. */
+    readonly warningsExpanded = signal(false);
     readonly failurePhase = signal<VariantJobPhase | undefined>(undefined);
     readonly failureDetail = signal<string | undefined>(undefined);
     /** AI-generated state-and-next-steps summary for failed jobs (server-side best effort, may stay empty). */
@@ -207,11 +207,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         return true;
     });
 
-    readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; label: string }>>(() => {
+    readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; labelKey: string }>>(() => {
         const current = this.sourceExercise()?.difficulty;
         return ([DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD] as DifficultyLevel[])
             .filter((d) => d !== current)
-            .map((d) => ({ value: d, label: difficultyLabel(d) }));
+            .map((d) => ({ value: d, labelKey: difficultyTranslationKey(d) }));
     });
 
     readonly anyCardSelected = computed(() => this.changeDifficulty() || this.changeDomain() || this.changeNarrative() || this.changeCustom());
@@ -246,16 +246,20 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /** "What is being adapted" chips: the fetched request wins; a fresh wizard run uses the form state. */
     readonly adaptations = computed<string[]>(() => {
+        const translate = (key: string, params?: Record<string, unknown>) => this.translateService.instant(key, params);
         const request = this.monitorRequest();
         if (request) {
-            return adaptationChips(request);
+            return adaptationChips(request, translate);
         }
-        return adaptationChips({
-            targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
-            domainText: this.changeDomain() ? this.domainText().trim() : undefined,
-            narrativeStyle: this.changeNarrative() ? this.narrativeStyle() : undefined,
-            additionalInstructions: this.changeCustom() ? this.additionalInstructions().trim() : undefined,
-        });
+        return adaptationChips(
+            {
+                targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
+                domainText: this.changeDomain() ? this.domainText().trim() : undefined,
+                narrativeStyle: this.changeNarrative() ? this.narrativeStyle() : undefined,
+                additionalInstructions: this.changeCustom() ? this.additionalInstructions().trim() : undefined,
+            },
+            translate,
+        );
     });
 
     /**
@@ -265,6 +269,15 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly recordedStepOutputs = computed<Array<{ phase: string; outputs: StepOutput[] }>>(() => {
         const outputs = this.stepOutputs();
         return [...GENERATION_PHASES, 'REPAIRING'].filter((phase) => outputs[phase]?.length).map((phase) => ({ phase, outputs: outputs[phase] }));
+    });
+
+    /** Static "how to continue" text used when the server could not produce an AI post-mortem. */
+    readonly fallbackGuidanceKey = computed(() => {
+        const base = 'artemisApp.exerciseVariantGeneration.wizard.';
+        if (this.jobPhase() === 'DRAFT_WITH_WARNINGS') {
+            return `${base}draftGuidance`;
+        }
+        return this.generatedVariant() ? `${base}failedGuidanceWithExercise` : `${base}failedGuidanceNoExercise`;
     });
 
     readonly generationPhases = GENERATION_PHASES;
@@ -296,6 +309,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly getIcon = getIcon;
     protected readonly durationDays = durationDays;
     protected readonly difficultyBadgeClass = difficultyBadgeClass;
+    protected readonly difficultyTranslationKey = difficultyTranslationKey;
 
     private eventsSubscription?: Subscription;
 
@@ -451,18 +465,55 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         });
     }
 
-    /** Emits the REAL fetched exercise — bound in exercise-actions.component.html. */
+    /**
+     * "Open in Editor": deep-links into the edit route of the generated variant.
+     *
+     * The navigation lives HERE rather than in an output the hosts bind: the wizard is mounted from five places
+     * (exercise table row, course overview row, exam exercise-group row, the navbar tray and the exercise detail
+     * pages), and a host that forgot the binding silently degraded the button into "close the dialog" — which is
+     * exactly what happened for the exam and course-overview hosts. Owning the navigation keeps the button's
+     * behaviour identical everywhere.
+     */
     confirmVariant(): void {
         const variant = this.generatedVariant();
-        if (!variant) return;
+        if (!variant?.id) return;
 
-        this.variantAdded.emit(variant);
+        const route = this.editRouteFor(variant);
         this.close();
+        if (route) {
+            void this.router.navigate(route);
+        }
+    }
+
+    /**
+     * Type-aware edit route of a variant. Exam exercises are edited under their exercise group, course exercises
+     * directly under the course; the wizard's `courseId` input is the fallback for payloads that ship without the
+     * nested course (list endpoints strip it).
+     */
+    private editRouteFor(variant: Exercise): (string | number)[] | undefined {
+        const typeSegment = `${variant.type ?? ExerciseType.PROGRAMMING}-exercises`;
+        const group = variant.exerciseGroup;
+        if (group) {
+            // An exam variant must never fall through to the course route — that route does not exist for it.
+            const examCourseId = group.exam?.course?.id ?? this.courseId();
+            return group.id && group.exam?.id && examCourseId
+                ? ['/course-management', examCourseId, 'exams', group.exam.id, 'exercise-groups', group.id, typeSegment, variant.id!, 'edit']
+                : undefined;
+        }
+        const courseId = variant.course?.id ?? this.courseId();
+        if (!courseId) {
+            return undefined;
+        }
+        return ['/course-management', courseId, typeSegment, variant.id!, 'edit'];
     }
 
     /** A phase's panel is expandable once at least one message carries a full log detail. */
     hasAnyDetail(outputs: StepOutput[]): boolean {
         return outputs.some((output) => !!output.detail);
+    }
+
+    toggleWarnings(): void {
+        this.warningsExpanded.update((expanded) => !expanded);
     }
 
     toggleStepOutput(phase: string): void {
@@ -675,6 +726,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.stepOutputs.set({});
         this.expandedPhases.set({});
         this.warnings.set([]);
+        this.warningsExpanded.set(false);
         this.failurePhase.set(undefined);
         this.failureDetail.set(undefined);
         this.instructorSummary.set(undefined);

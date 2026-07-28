@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,7 +46,7 @@ class ProgrammingExerciseTaskServiceTest {
     private void withTestCases(String... names) {
         Set<ProgrammingExerciseTestCase> testCases = java.util.Arrays.stream(names).map(name -> new ProgrammingExerciseTestCase().testName(name).id((long) name.hashCode()))
                 .collect(java.util.stream.Collectors.toSet());
-        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(testCases);
+        when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(testCases);
     }
 
     @Test
@@ -90,15 +91,32 @@ class ProgrammingExerciseTaskServiceTest {
     @Test
     void shouldResolveATestIdReferenceTheSameWayExtractTasksDoes() {
         ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase().testName("testBubbleSort").id(7L);
-        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(testCase));
+        when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(Set.of(testCase));
         when(exercise.getProblemStatement()).thenReturn("[task][Sort](<testid>7</testid>)");
 
         assertThat(taskService.findUnresolvedTaskTestReferences(exercise)).isEmpty();
     }
 
+    /**
+     * Regression: a generated variant is cloned from its source WITH the source's test cases, so after the agent
+     * renames the tests, the source's rows survive as INACTIVE ones. A stale reference to such a name must be
+     * reported — matching it would pass the variant-generation verify gate for a task that grading (active test
+     * cases only) can never link, which is what produced a "successful" variant with every task unlinked.
+     */
+    @Test
+    void shouldReportAReferenceThatOnlyResolvesToAnInactiveTestCase() {
+        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("testLettuceSort").id(2L);
+        // The stale "testBubbleSort" row still exists on the exercise, but the current test repository no longer
+        // produces it — findByExerciseIdAndActive(.., true) therefore does not return it.
+        when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(Set.of(renamed));
+        when(exercise.getProblemStatement()).thenReturn("[task][Sort](testBubbleSort,testLettuceSort)");
+
+        assertThat(taskService.findUnresolvedTaskTestReferences(exercise)).containsExactly("testBubbleSort");
+    }
+
     @Test
     void shouldReportAnUnresolvedTestIdReference() {
-        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of());
+        when(testCaseRepository.findByExerciseIdAndActive(anyLong(), eq(true))).thenReturn(Set.of());
         when(exercise.getProblemStatement()).thenReturn("[task][Sort](<testid>999</testid>)");
 
         List<String> unresolved = taskService.findUnresolvedTaskTestReferences(exercise);

@@ -321,6 +321,20 @@ public class ExerciseVariantJobService {
      * @param warnings          non-empty for DRAFT_WITH_WARNINGS
      */
     public void complete(String jobId, Long variantExerciseId, List<String> warnings) {
+        complete(jobId, variantExerciseId, warnings, null);
+    }
+
+    /**
+     * Terminal transition to COMPLETED or DRAFT_WITH_WARNINGS with an optional AI-generated instructor summary.
+     * A flagged draft carries the same "what happened &amp; how to continue" guidance a failure does — the raw gate
+     * warnings alone do not tell the instructor what to do next.
+     *
+     * @param jobId             the job id
+     * @param variantExerciseId the created exercise
+     * @param warnings          non-empty for DRAFT_WITH_WARNINGS
+     * @param instructorSummary AI-generated next-steps summary, or null when unavailable or not needed
+     */
+    public void complete(String jobId, Long variantExerciseId, List<String> warnings, String instructorSummary) {
         VariantJobPhase terminalPhase = warnings == null || warnings.isEmpty() ? VariantJobPhase.COMPLETED : VariantJobPhase.DRAFT_WITH_WARNINGS;
         VariantJob job = mutate(jobId, mutableJob -> {
             mutableJob.setPhase(terminalPhase);
@@ -328,6 +342,7 @@ public class ExerciseVariantJobService {
             if (warnings != null) {
                 mutableJob.setWarnings(warnings);
             }
+            mutableJob.setInstructorSummary(instructorSummary);
             mutableJob.setFinishedAt(Instant.now());
         });
         logTelemetrySummary(job);

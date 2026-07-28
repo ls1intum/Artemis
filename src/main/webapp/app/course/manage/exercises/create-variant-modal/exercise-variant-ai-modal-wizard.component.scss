@@ -625,3 +625,8 @@ $purple: #8b5cf6;
         margin-top: 0.1rem;
     }
 }
+
+// Allows a flexed child to shrink so long gate messages wrap instead of widening the box.
+.min-width-0 {
+    min-width: 0;
+}
