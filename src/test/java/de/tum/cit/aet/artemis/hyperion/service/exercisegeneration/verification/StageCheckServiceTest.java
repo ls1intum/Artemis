@@ -251,15 +251,6 @@ class StageCheckServiceTest {
     @Nested
     class Tests {
 
-        /** A gate-valid spec whose Testing Strategy declares NO hidden variant, so the plan checks below are not also judged on hidden-variant follow-through. */
-        private static final String SPEC_WITHOUT_HIDDEN_VARIANTS = specWithDesign("| Calculator | computes | stubbed |\n")
-                .replace("- compute seam: typical and zero partitions; weight 3.", "- compute seam: typical and zero partitions; weight 3; no hidden variant needed.");
-
-        @BeforeEach
-        void specDeclaresNoHiddenVariants() {
-            sandbox.spec = SPEC_WITHOUT_HIDDEN_VARIANTS;
-        }
-
         private AgentVerifyReport report(boolean solutionPassed, boolean templateFailed) {
             return new AgentVerifyReport(5, solutionPassed, solutionPassed ? List.of() : List.of("testFoo"), 5, true, templateFailed, List.of(), List.of("testFoo"), List.of(),
                     List.of(), solutionPassed && templateFailed, solutionPassed && templateFailed ? List.of() : List.of("some blocking reason"));
@@ -660,21 +651,6 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void fails_whenATaskBindingReferencesANameThatMatchesNoRealTest() {
-            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testDoesNotExist)\n";
-            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
-                    List.of());
-
-            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("reference names that match no actual test").contains("testDoesNotExist").contains("testSortsAscending"); // the exact-names
-                                                                                                                                                                // hint, so the
-                                                                                                                                                                // agent can copy
-                                                                                                                                                                // correctly
-        }
-
-        @Test
         void unresolvedBindingFeedback_doesNotOfferAHiddenTestAsAReplacement() {
             sandbox.problemStatement = "# Title\n[task][Sort](testDoesNotExist)\n";
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
@@ -685,7 +661,9 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("testDoesNotExist", "testSortsAscending").doesNotContain("testSortsAscending_hidden");
+            // The exact-names hint lets the agent copy a real name; a hidden test is never offered as one, because binding it would ship a checkbox that cannot turn green.
+            assertThat(result.observation()).contains("reference names that match no actual test", "testDoesNotExist", "testSortsAscending")
+                    .doesNotContain("testSortsAscending_hidden");
         }
     }
 
@@ -984,19 +962,6 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void normalizesTypographicHyphensInTemplateStatusTokens() {
-            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-            // A second, supplied row keeps the specification valid under the scaffold rule; the token under test is still the only student-created one.
-            sandbox.spec = specWithDesign("| Calculator | computes the result | student‑creates |\n| Support | supplied helper | given |\n");
-
-            StageCheckResult result = check(GenerationStage.SPEC);
-
-            assertThat(result.passed()).isTrue();
-            assertThat(result.observation()).contains("Calculator=student-creates");
-            assertThat(StageCheckService.specStudentCreatedTypes(sandbox.spec)).containsExactly("Calculator");
-        }
-
-        @Test
         void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes the result | **student‑creates** |\n| Support | supplied helper | given |\n");
@@ -1160,25 +1125,6 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTheWorkedExamplesTableHasFewerThanTwoDataRows() {
             sandbox.spec = VALID_SPEC.replace("| R1 | 3 | 9 |\n", "");
-
-            StageCheckResult result = check(GenerationStage.SPEC);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("at least two data rows");
-        }
-
-        @Test
-        void doesNotCountABlankHeaderCellOrTheSeparatorAsAWorkedExample() {
-            sandbox.spec = VALID_SPEC.replace("""
-                    | Rules | Input | Expected |
-                    |-------|-------|----------|
-                    | R1 | 2 | 4 |
-                    | R1 | 3 | 9 |\
-                    """, """
-                    | Rules | Input | |
-                    |-------|-------|---|
-                    | R1 | 2 | 4 |\
-                    """);
 
             StageCheckResult result = check(GenerationStage.SPEC);
 

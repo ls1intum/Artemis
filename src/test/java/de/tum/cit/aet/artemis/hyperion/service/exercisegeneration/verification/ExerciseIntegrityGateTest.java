@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +13,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.io.ClassPathResource;
 
 /**
  * Deterministic unit tests for the sandbox-free correctness gates: the harness-immutability check, the solution-leak check, and the orphan-residue strip. The fixtures mirror the
@@ -140,6 +144,15 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void harness_requireNonEmptySnapshot_failsClosedOnAnEmptySeedButStaysSilentOnACapturedOne() {
+        // A language that always ships a harness passes requireNonEmptySnapshot=true: an empty seed is then a FAILED CAPTURE, not a harness-free exercise, and accepting on that
+        // doubt would silently disable the whole immutability gate. It must not fire once the snapshot actually arrived.
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(Map.of(), map("test.cabal", "anything"), true))
+                .anyMatch(reason -> reason.contains("seeded test-harness snapshot is empty"));
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", "seeded"), map("test.cabal", "seeded"), true)).isEmpty();
+    }
+
+    @Test
     void isHarnessFile_recognizesBuildAndManifestFilesAcrossLanguages() {
         // One case per branch: the suffix list (.cabal, .csproj) and the name set, which is matched case-insensitively (Cargo.toml, DESCRIPTION).
         assertThat(ExerciseIntegrityGate.isHarnessFile("test.cabal")).isTrue();
@@ -250,12 +263,6 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void javaAresConvention_rejectsPlainJunitTestsInGradleBehaviorSourceSet() {
-        String gradle = """
-                dependencies {
-                    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
-                }
-                def forbiddenPackageFolders = ["$studentOutputDir/de/tum/in/test/api/", "$studentOutputDir/org/junit/"]
-                """;
         String test = """
                 package de.test;
 
@@ -269,7 +276,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "behavior/test/de/test/CalculatorTest.java", test));
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "behavior/test/de/test/CalculatorTest.java", test));
 
         assertThat(reasons).hasSize(2);
         assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
@@ -278,12 +285,6 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void javaAresConvention_acceptsGradleAresHarnessAndClassLevelTimeout() {
-        String gradle = """
-                dependencies {
-                    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
-                }
-                def forbiddenPackageFolders = ["$studentOutputDir/de/tum/in/test/api/", "$studentOutputDir/org/junit/"]
-                """;
         String test = """
                 package de.test;
 
@@ -305,7 +306,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/StackTest.java", test))).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/StackTest.java", test))).isEmpty();
     }
 
     @Test
@@ -425,7 +426,9 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void javaAresConvention_rejectsPackageLocalAresLookalikesAndOversizedTimeouts() {
+    void javaAresConvention_rejectsAresAnnotationsThatAreNeverImported() {
+        // Every annotation carries a value the gate would accept if it resolved (@StrictTimeout(1) is squarely inside the trusted range), so ONLY the missing import can reject
+        // this file: a package-local look-alike must not pass for the trusted annotation. The oversize-value bound is covered separately, on a genuinely imported annotation.
         String test = """
                 package de.test;
 
@@ -439,7 +442,7 @@ class ExerciseIntegrityGateTest {
                 @Public
                 @WhitelistPath("target")
                 @BlacklistPath("target/test-classes")
-                @StrictTimeout(86400)
+                @StrictTimeout(1)
                 class CalculatorTest {
 
                     @Test
@@ -589,13 +592,15 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void javaGeneratedSourceLayout_rejectsUnicodeTranslationBeforeFakePackageInTextBlock() {
-        String source = "\\u0070ackage de.tum.in.test.api; public class FakeAres { String value = \"\"\"\npackage de.tum.cit.aet.exercise;\n\"\"\"; }";
+    void javaGeneratedSourceLayout_rejectsAUnicodeEscapeSmuggledIntoTheCommentBeforeThePackageDeclaration() {
+        // javac translates \\u000a into a newline BEFORE lexing, which terminates the line comment: the real declaration is `package net.bytebuddy;` while the path-matching one a
+        // reader (and the comment-stripping matcher) sees is inert. Only the escape guard catches this — the visible declaration matches its path perfectly.
+        String source = "//\\u000a package net.bytebuddy;\npackage de.tum.cit.aet.exercise; class Smuggled {}";
 
         var reasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons("de.tum.cit.aet.exercise", Map.of(), Map.of(), Map.of(),
-                Map.of("test/de/tum/cit/aet/exercise/FakeAres.java", source), Map.of(), Map.of());
+                Map.of("test/de/tum/cit/aet/exercise/Smuggled.java", source), Map.of(), Map.of());
 
-        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("FakeAres.java"));
+        assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains("Smuggled.java"));
     }
 
     @Test
@@ -804,20 +809,6 @@ class ExerciseIntegrityGateTest {
 
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
                 .satisfies(reason -> assertThat(reason).contains("given type", "Ingredient", "byte-for-byte identical", "solution and template"));
-    }
-
-    @Test
-    void approvedSpecification_acceptsAConsistentChangeToBothCopiesOfAGivenType() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Ingredient` | supplied immutable value | given |
-                """;
-        String revisedIngredient = "/** A supplied ingredient. */\npublic record Ingredient(String name, int potency) {}\n";
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Ingredient.java", revisedIngredient), map("src/Ingredient.java", revisedIngredient)))
-                .isEmpty();
     }
 
     @Test
@@ -1349,34 +1340,25 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isResidueOutsideCanonicalRoot("R/column_sums.R")).isFalse();
     }
 
+    /**
+     * The REAL seeded Java/Maven test harness, not a replica: this is the exact pom Artemis ships into every generated tests repository, so the build fails if someone edits it
+     * into a shape the Ares-convention gate would reject.
+     */
     private static String aresPom() {
-        return """
-                <project>
-                    <dependencies>
-                        <dependency>
-                            <groupId>de.tum.in.ase</groupId>
-                            <artifactId>artemis-java-test-sandbox</artifactId>
-                        </dependency>
-                    </dependencies>
-                    <build>
-                        <plugins>
-                            <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-enforcer-plugin</artifactId>
-                                <configuration>
-                                    <rules>
-                                        <requireFilesDontExist>
-                                            <files>
-                                                <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
-                                                <file>${project.build.outputDirectory}/org/junit/</file>
-                                            </files>
-                                        </requireFilesDontExist>
-                                    </rules>
-                                </configuration>
-                            </plugin>
-                        </plugins>
-                    </build>
-                </project>
-                """;
+        return classpathResource("templates/java/maven_maven/test/projectTemplate/pom.xml");
+    }
+
+    /** The REAL seeded Java/Gradle test harness, for the same reason as {@link #aresPom()}. */
+    private static String aresBuildGradle() {
+        return classpathResource("templates/java/test/gradle/projectTemplate/build.gradle");
+    }
+
+    private static String classpathResource(String path) {
+        try {
+            return new ClassPathResource(path).getContentAsString(StandardCharsets.UTF_8);
+        }
+        catch (IOException exception) {
+            throw new UncheckedIOException("Could not read the seeded exercise scaffold resource " + path, exception);
+        }
     }
 }

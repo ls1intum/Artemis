@@ -855,12 +855,6 @@ public class GenerationJobService {
         }
     }
 
-    private void releaseBudgetReservation(@Nullable String budgetReservationId) {
-        if (generationBudgetService != null) {
-            generationBudgetService.releaseReservation(budgetReservationId);
-        }
-    }
-
     private void retainUncertainBudgetReservation(JobInfo job) {
         if (isGenerationJob(job) && generationBudgetService != null) {
             generationBudgetService.retainReservationForBudgetWindow(job.budgetReservationId());

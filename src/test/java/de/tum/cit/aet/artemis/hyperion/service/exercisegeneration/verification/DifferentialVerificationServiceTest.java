@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -28,6 +30,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +134,10 @@ class DifferentialVerificationServiceTest {
 
     private static final String PROBLEM_STATEMENT_WITH_TASK = "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\nImplement sorting for unsorted arrays and duplicates.\n";
 
+    /** A grading plan mapping EVERY {@link #DEFAULT_BOUND_NAMES} test, so the approved-test-plan gate stays silent and cannot mask the gate a test is actually about. */
+    private static final String FULL_PLAN_FOR_DEFAULT_BOUND_NAMES = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+            + "{\"name\":\"sortsArrayWithDuplicates\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
     private static String aresPom() {
         return """
                 <project>
@@ -172,8 +181,19 @@ class DifferentialVerificationServiceTest {
 
         private Map<String, String> testsRepositoryFiles;
 
+        /** Served instead of the solution build's reports, for the hardened-reader rejection paths. */
+        private TarArchiveInputStream tamperedSolutionReports;
+
+        /** Every {@code exec} the verifier issued, so a test can assert it ran the PRISTINE path and never the agent's {@code /workspace} copy. */
+        private final List<String> execCommands = new ArrayList<>();
+
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
             this(solution, template, problemStatement, "build ran");
+        }
+
+        private ScriptedSandbox withTamperedSolutionReports(TarArchiveInputStream reports) {
+            this.tamperedSolutionReports = reports;
+            return this;
         }
 
         private ScriptedSandbox withTestPlan(String plan) {
@@ -203,6 +223,7 @@ class DifferentialVerificationServiceTest {
         @Override
         public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
             String joined = String.join(" ", command);
+            execCommands.add(joined);
             if ("cat".equals(command[0])) {
                 if (command.length > 1 && command[1].endsWith("test-plan.json")) {
                     return testPlanJson == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, testPlanJson, "", false);
@@ -230,25 +251,28 @@ class DifferentialVerificationServiceTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
-            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/solution") && solutionRepositoryFiles != null) {
-                return ReportTarFixtures.tar("solution", solutionRepositoryFiles.entrySet().stream()
-                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
-            }
-            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/template") && templateRepositoryFiles != null) {
-                return ReportTarFixtures.tar("template", templateRepositoryFiles.entrySet().stream()
-                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
-            }
-            if (path.equals(GenerationWorkspaceService.WORKSPACE + "/tests") && testsRepositoryFiles != null) {
-                return ReportTarFixtures.tar("tests", testsRepositoryFiles.entrySet().stream()
-                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            // A /workspace path is a REPOSITORY read-back, never a reports read: an unset repository must read back empty, not silently serve the build's JUnit reports.
+            if (path.startsWith(GenerationWorkspaceService.WORKSPACE + "/")) {
+                return switch (path.substring(GenerationWorkspaceService.WORKSPACE.length() + 1)) {
+                    case "solution" -> repositoryTar("solution", solutionRepositoryFiles);
+                    case "template" -> repositoryTar("template", templateRepositoryFiles);
+                    case "tests" -> repositoryTar("tests", testsRepositoryFiles);
+                    default -> null;
+                };
             }
             if (path.endsWith("/solution")) {
-                return solution.reportsTar("solution");
+                return tamperedSolutionReports != null ? tamperedSolutionReports : solution.reportsTar("solution");
             }
             if (path.endsWith("/template")) {
                 return template.reportsTar("template");
             }
             return null;
+        }
+
+        private static TarArchiveInputStream repositoryTar(String directory, Map<String, String> files) {
+            return files == null ? null
+                    : ReportTarFixtures.tar(directory,
+                            files.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
         }
 
         @Override
@@ -356,7 +380,8 @@ class DifferentialVerificationServiceTest {
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK,
-                "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}", false);
+                // The plan maps BOTH verified tests, so the approved-test-plan gate is silent and the scaffolded-away contract is the only failing conjunct.
+                FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
                 request, NO_RESTORE);
@@ -427,71 +452,11 @@ class DifferentialVerificationServiceTest {
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of()), NO_RESTORE);
     }
 
-    /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
-    private static final class PathDispatchingSandbox implements InteractiveSandbox {
-
-        private final BuildReportSpec pristineSolution;
-
-        private final BuildReportSpec pristineTemplate;
-
-        private final String problemStatement;
-
-        private final List<String> execCommands = new ArrayList<>();
-
-        private PathDispatchingSandbox(BuildReportSpec pristineSolution, BuildReportSpec pristineTemplate, String problemStatement) {
-            this.pristineSolution = pristineSolution;
-            this.pristineTemplate = pristineTemplate;
-            this.problemStatement = problemStatement;
-        }
-
-        @Override
-        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
-            String joined = String.join(" ", command);
-            execCommands.add(joined);
-            if ("cat".equals(command[0])) {
-                if (command.length > 1 && command[1].endsWith("test-plan.json")) {
-                    // No grading plan in these path-dispatch tests: the oracle must then behave exactly as it did before visibility existed.
-                    return new SandboxExecResultDTO(1, "", "no such file", false);
-                }
-                return new SandboxExecResultDTO(0, problemStatement, "", false);
-            }
-            if (!joined.contains("verify.sh")) {
-                return new SandboxExecResultDTO(0, "", "", false);
-            }
-            BuildReportSpec spec = joined.contains(" solution") ? pristineSolution : pristineTemplate;
-            return new SandboxExecResultDTO(spec.exitCode(), "", "", spec.timedOut());
-        }
-
-        @Override
-        public String createSession(SandboxSessionSpecDTO spec) {
-            return "s";
-        }
-
-        @Override
-        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
-        }
-
-        @Override
-        public TarArchiveInputStream copyOut(String sessionId, String path) {
-            if (path.endsWith("/solution")) {
-                return pristineSolution.reportsTar("solution");
-            }
-            if (path.endsWith("/template")) {
-                return pristineTemplate.reportsTar("template");
-            }
-            return null;
-        }
-
-        @Override
-        public void destroySession(String sessionId) {
-        }
-    }
-
     @Test
     void shouldRunThePristineScriptAndReadTheVerifierOwnedReportsDir() {
         // The verifier must run the PRISTINE verify.sh and read its verdict from the verifier-owned reports dir, never the agent's /workspace copy.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c find /opt/hyperion -mindepth 1 -delete")).hasSize(2);
@@ -502,7 +467,7 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldEvaluateTheCapturedProblemStatementThatWillBePersisted() {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), "No task bindings");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), "No task bindings");
 
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK), NO_RESTORE);
@@ -1028,37 +993,9 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldRejectWhenTheReportsArchiveContainsASymlinkedEntry() {
         // A planted symlink could redirect the verifier to an out-of-tree file; the hardened reader rejects the whole archive.
-        TarArchiveInputStream tamperedSolution = symlinkedReportsTar("solution");
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        BuildReportSpec template = resultWithFails(1, names, names);
-        InteractiveSandbox sandbox = new InteractiveSandbox() {
-
-            @Override
-            public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
-                if ("cat".equals(command[0])) {
-                    return new SandboxExecResultDTO(0, PROBLEM_STATEMENT_WITH_TASK, "", false);
-                }
-                return new SandboxExecResultDTO(0, "", "", false);
-            }
-
-            @Override
-            public String createSession(SandboxSessionSpecDTO spec) {
-                return "s";
-            }
-
-            @Override
-            public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
-            }
-
-            @Override
-            public TarArchiveInputStream copyOut(String sessionId, String path) {
-                return path.endsWith("/solution") ? tamperedSolution : template.reportsTar("template");
-            }
-
-            @Override
-            public void destroySession(String sessionId) {
-            }
-        };
+        InteractiveSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
+                .withTamperedSolutionReports(symlinkedReportsTar("solution"));
         assertThatThrownBy(() -> verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise()))
                 .isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class).hasMessageContaining("rejected the solution reports archive");
     }
@@ -1105,7 +1042,7 @@ class DifferentialVerificationServiceTest {
             return resultWithFails(1, names, names);
         }
 
-        private StaticCodeAnalysisCategory category(String name, CategoryState state, double penalty) {
+        private static StaticCodeAnalysisCategory category(String name, CategoryState state, double penalty) {
             var c = new StaticCodeAnalysisCategory();
             c.setName(name);
             c.setState(state);
@@ -1132,21 +1069,40 @@ class DifferentialVerificationServiceTest {
                     new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
         }
 
-        @Test
-        void shouldRejectWhenScaEnabledAndSolutionHasGradedViolation() {
-            // The SpotBugs STYLE finding maps to the GRADED "Code Style" category, so production would dock the score.
-            var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
-            VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("a solution with a graded SCA violation must be rejected").isFalse();
-            assertThat(result.reasons()).anyMatch(r -> r.contains("static-code-analysis findings that production would penalise"));
+        /**
+         * The distinct boundaries of {@code ScaPenaltyParity}, each of which independently decides whether production would deduct anything from the reference solution: the
+         * finding's derived category must map to a persisted category that is GRADED and positively penalised, on an exercise with SCA enabled and a positive max penalty.
+         */
+        static Stream<Arguments> scaPenaltyBoundaries() {
+            var styleFinding = Map.of("spotbugsXml.xml", SPOTBUGS_STYLE);
+            return Stream.of(
+                    Arguments.of("a SpotBugs STYLE finding mapped to the GRADED \"Code Style\" category is penalised", 50, true,
+                            Set.of(category("Code Style", CategoryState.GRADED, 0.2)), styleFinding, true),
+                    Arguments.of("a clean solution is accepted even while SCA is graded", 50, true, Set.of(category("Code Style", CategoryState.GRADED, 0.2)),
+                            Map.<String, String>of(), false),
+                    Arguments.of("static code analysis is disabled, so no finding can affect the score", 50, false, Set.of(category("Code Style", CategoryState.GRADED, 0.2)),
+                            styleFinding, false),
+                    Arguments.of("maxStaticCodeAnalysisPenalty == 0 disables the SCA penalty entirely", 0, true, Set.of(category("Code Style", CategoryState.GRADED, 0.2)),
+                            styleFinding, false),
+                    Arguments.of("the finding's category is FEEDBACK; the GRADED category is one it does not map to", 50, true,
+                            Set.of(category("Code Style", CategoryState.FEEDBACK, 0.2), category("Security", CategoryState.GRADED, 2.5)), styleFinding, false),
+                    Arguments.of("a GRADED category with a zero penalty deducts nothing", 50, true, Set.of(category("Code Style", CategoryState.GRADED, 0.0)), styleFinding,
+                            false));
         }
 
-        @Test
-        void shouldAcceptWhenScaEnabledButSolutionIsScaClean() {
-            var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
-            VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of()), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("a clean solution is still accepted when SCA is graded").isTrue();
-            assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("scaPenaltyBoundaries")
+        void rejectsExactlyTheFindingsProductionWouldPenalise(String label, Integer maxPenalty, Boolean scaEnabled, Set<StaticCodeAnalysisCategory> categories,
+                Map<String, String> scaReports, boolean penalised) {
+            VerificationResult result = verifyScaExercise(maxPenalty, scaEnabled, categories, solutionWithScaReports(scaReports), failingTemplate());
+
+            assertThat(result.mechanicallyVerified()).as(label).isEqualTo(!penalised);
+            if (penalised) {
+                assertThat(result.reasons()).anyMatch(r -> r.contains("static-code-analysis findings that production would penalise"));
+            }
+            else {
+                assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
+            }
         }
 
         @Test
@@ -1198,41 +1154,52 @@ class DifferentialVerificationServiceTest {
             assertThat(result.mechanicallyVerified()).as("a graded category with zero penalty deducts nothing => no rejection").isTrue();
         }
 
-        @Test
-        void shouldNotPenaliseWhenSarifFindingIsInANonGradedCategory() {
-            // SARIF category derivation uses the production categorizer; grading a category the ruff finding does not map to proves the real derived category is consulted
-            // (a wildcard match would over-reject).
+        /**
+         * SARIF category derivation runs through the production categorizer, which reads the rule's {@code kind} property. Both cases grade {@code pycodestyle} — a real Python
+         * default category, so the comparison is actually reached — and differ only in whether the ruff rule carries that kind. Grading a category Python does not define (the
+         * previous "Security" fixture) never got past the default-category lookup, so it could not tell a real derivation from a wildcard match.
+         */
+        @ParameterizedTest(name = "ruff rule kind {0} against a graded pycodestyle category => penalised={1}")
+        @CsvSource({ "unknown-to-python, false", "pycodestyle, true" })
+        void penalisesASarifFindingExactlyWhenItsDerivedCategoryIsGraded(String ruleKind, boolean penalised) {
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setId(7L);
             exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
             exercise.setStaticCodeAnalysisEnabled(true);
             exercise.setMaxStaticCodeAnalysisPenalty(50);
-            var graded = category("Security", CategoryState.GRADED, 2.0);
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
-            when(repo.findByExerciseId(7L)).thenReturn(Set.of(graded));
+            when(repo.findByExerciseId(7L)).thenReturn(Set.of(category("pycodestyle", CategoryState.GRADED, 2.0)));
             var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
-            BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
+            BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", ruffSarif(ruleKind)), 0);
+
             VerificationResult result = verifyGenerate(verifier, new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), exercise);
-            assertThat(result.mechanicallyVerified())
-                    .as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();
-            assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
+
+            assertThat(result.mechanicallyVerified()).as("the production-derived SARIF category decides, never a wildcard match").isEqualTo(!penalised);
+            if (penalised) {
+                assertThat(result.reasons()).anyMatch(r -> r.contains("static-code-analysis findings that production would penalise") && r.contains("pycodestyle"));
+            }
+            else {
+                assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
+            }
         }
 
-        /** A minimal ruff SARIF report with a single style ({@code E501}) finding; the production SARIF categorizer derives a concrete category, not a wildcard sentinel. */
-        private static final String RUFF_STYLE_SARIF = """
-                {
-                  "version": "2.1.0",
-                  "runs": [
+        /** A minimal ruff SARIF report with one {@code E501} finding whose rule declares the given {@code kind}, which is what the production ruff categorizer reads. */
+        private static String ruffSarif(String ruleKind) {
+            return """
                     {
-                      "tool": { "driver": { "name": "ruff", "rules": [ { "id": "E501" } ] } },
-                      "results": [
-                        { "ruleId": "E501", "level": "warning", "message": { "text": "line too long" },
-                          "locations": [ { "physicalLocation": { "artifactLocation": { "uri": "main.py" }, "region": { "startLine": 1 } } } ] }
+                      "version": "2.1.0",
+                      "runs": [
+                        {
+                          "tool": { "driver": { "name": "ruff", "rules": [ { "id": "E501", "properties": { "kind": "%s" } } ] } },
+                          "results": [
+                            { "ruleId": "E501", "level": "warning", "message": { "text": "line too long" },
+                              "locations": [ { "physicalLocation": { "artifactLocation": { "uri": "main.py" }, "region": { "startLine": 1 } } } ] }
+                          ]
+                        }
                       ]
                     }
-                  ]
-                }
-                """;
+                    """.formatted(ruleKind);
+        }
     }
 
     // Auto-seeded structural-test binding exemption: a structural-shaped binding need not resolve, but the differential stays fully enforced for every real test regardless of name
@@ -1243,7 +1210,9 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds() {
-            List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
+            // The seeded structural names are deliberately ABSENT from the build report, so only the authoritative seeded set can resolve their bindings: with them present in the
+            // report the binding would resolve against the report instead and the seeded-structural exemption would never be consulted.
+            List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String problemStatement = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n";
 
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, allNames, List.of()), resultWithFails(1, allNames, allNames), problemStatement,
@@ -1518,6 +1487,68 @@ class DifferentialVerificationServiceTest {
                     Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
             assertThat(result.mechanicallyVerified()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("retained NONE"));
+        }
+    }
+
+    // Verdict wiring. Each gate's own logic is covered where it lives; what is covered here is that its outcome actually reaches `mechanicallyVerified`. Every row perturbs exactly
+    // ONE input of the accepted baseline below, so dropping that gate's conjunct from the verdict (or forgetting to add its reasons) makes the row accept and the test fail.
+
+    @Nested
+    class VerdictWiring {
+
+        /** The accepted baseline every row perturbs: solution passes both bound tests, the template fails both, and no integrity-gate input carries a defect. */
+        private static VerificationResult verifyBaselineWith(Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
+                Set<String> extractionFailedRepositories, String problemStatement, String specDocument) {
+            List<String> names = List.of(DEFAULT_BOUND_NAMES);
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
+            if (specDocument != null) {
+                sandbox = sandbox.withSpec(specDocument);
+            }
+            return newVerifier().verify(sandbox, "s", new ProgrammingExercise(), new VerificationRequest(Map.of(), Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles,
+                    Map.of(), extractionFailedRepositories, Set.of(), Set.of(), problemStatement, null, false), NO_RESTORE);
+        }
+
+        static Stream<Arguments> singleDefects() {
+            return Stream.of(
+                    Arguments.of("a repository that could not be extracted disables the integrity gates, so the candidate cannot be trusted", Map.<String, String>of(),
+                            Map.<String, String>of(), Set.of("template"), PROBLEM_STATEMENT_WITH_TASK, null, "could not be safely extracted"),
+                    Arguments.of("a graded test drawing on unseeded randomness scores the same submission differently on re-run",
+                            Map.of("test/SortTest.java", "class SortTest { void sorts() { int pivot = new Random().nextInt(); } }"), Map.<String, String>of(), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK, null, "unseeded randomness"),
+                    Arguments.of("a template stub that walks the stack fails only the bound test and behaves implemented for every other caller", Map.<String, String>of(),
+                            Map.of("src/Sorter.java", "public class Sorter { void sort() { StackWalker.getInstance().walk(frames -> null); } }"), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK, null, "inspect the grading context"),
+                    Arguments.of("a task binding with no prose after it is grading metadata, not an exercise instruction", Map.<String, String>of(), Map.<String, String>of(),
+                            Set.<String>of(), "# Sort\n[task][Sort an array](sortsUnsortedArray,sortsArrayWithDuplicates)\n", null, "no student-facing instruction"),
+                    Arguments.of("two task lines sharing a title split one student work seam across two checkboxes", Map.<String, String>of(), Map.<String, String>of(),
+                            Set.<String>of(),
+                            "# Sort\n[task][Sort an array](sortsUnsortedArray)\nImplement sorting.\n" + "[task][Sort an array](sortsArrayWithDuplicates)\nHandle duplicates.\n",
+                            null, "share the same title"),
+                    Arguments.of("a statement written ABOUT students does not address the reader", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK + "Students must implement the comparator.\n", null, "third person"),
+                    Arguments.of("a testsColor link naming no real test renders a silently dead diagram link", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK + "@startuml\nclass Sorter {\n  <color:testsColor(noSuchTest)>+sort()</color>\n}\n@enduml\n", null, "diagram testsColor"),
+                    Arguments.of("a PlantUML directive outside the diagram block renders as stray statement text", Map.<String, String>of(), Map.<String, String>of(),
+                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK + "hide empty fields\n@startuml\nclass Sorter\n@enduml\n", null, "render as stray text"),
+                    Arguments.of("a heading repeated verbatim duplicates a section", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
+                            PROBLEM_STATEMENT_WITH_TASK + "# Sort\nMore about sorting.\n", null, "repeats these headings verbatim"),
+                    Arguments.of("a diagram promised by the approved specification cannot be dropped from the statement", Map.<String, String>of(), Map.<String, String>of(),
+                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK, "## Diagram\nyes — several collaborating types\n", "'## Diagram' section says yes"));
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("singleDefects")
+        void rejectsWithTheDefectsOwnReason(String label, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
+                Set<String> extractionFailedRepositories, String problemStatement, String specDocument, String expectedReasonFragment) {
+            VerificationResult result = verifyBaselineWith(producedTestsFiles, producedTemplateFiles, extractionFailedRepositories, problemStatement, specDocument);
+
+            assertThat(result.reasons()).as(label).singleElement().asString().contains(expectedReasonFragment);
+            assertThat(result.mechanicallyVerified()).as(label).isFalse();
+        }
+
+        @Test
+        void acceptsTheUnperturbedBaseline_soEachRowsRejectionIsAttributableToItsOwnDefect() {
+            assertThat(verifyBaselineWith(Map.of(), Map.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK, null).mechanicallyVerified()).isTrue();
         }
     }
 }

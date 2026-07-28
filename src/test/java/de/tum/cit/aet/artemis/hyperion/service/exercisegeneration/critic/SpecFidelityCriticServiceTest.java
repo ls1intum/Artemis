@@ -19,10 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -51,6 +53,19 @@ class SpecFidelityCriticServiceTest {
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
             + "sequence, CJK characters, and at least one emoji.";
+
+    /**
+     * A complete artifact set whose solution declares a {@code public} member. That is what makes the contract reviewer's {@code apiChecks} array mandatory, so an empty one is a
+     * skipped discoverability check rather than a clean verdict.
+     */
+    private static final Map<RepositoryType, Map<String, String>> PUBLIC_API_ARTIFACTS = Map.of(RepositoryType.SOLUTION,
+            Map.of("src/Graphemes.java", "class Graphemes { public int count(String value) { return value.length(); } }"), RepositoryType.TEMPLATE,
+            Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return 0; } }"), RepositoryType.TESTS,
+            Map.of("test/GraphemesTest.java", "class GraphemesTest { void cjk() { assertEquals(2, count(\"漢字\")); } }"));
+
+    /** A complete artifact set whose rendered evidence alone exceeds the reviewer's artifact budget, so the review stops at the evidence cap and not at an earlier guard. */
+    private static final Map<RepositoryType, Map<String, String>> OVERSIZED_ARTIFACTS = Map.of(RepositoryType.SOLUTION, Map.of("src/Large.java", "x".repeat(100_000)),
+            RepositoryType.TEMPLATE, Map.of("src/Large.java", "class Large {}"), RepositoryType.TESTS, Map.of("test/LargeTest.java", "class LargeTest {}"));
 
     private static final Map<RepositoryType, Map<String, String>> COMPLETE_ARTIFACTS = Map.of(RepositoryType.SOLUTION,
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return value.length(); } }"), RepositoryType.TEMPLATE,
@@ -128,11 +143,29 @@ class SpecFidelityCriticServiceTest {
     }
 
     private SpecFidelityCriticService criticReturning(ChatResponse response) {
+        return criticScripted(response).critic();
+    }
+
+    /** A critic wired to a scripted model, plus the model itself for the tests that must script consecutive responses or capture the prompts that were sent. */
+    private record ScriptedCritic(SpecFidelityCriticService critic, ChatModel model) {
+    }
+
+    private ScriptedCritic criticScripted(ChatResponse first, ChatResponse... rest) {
+        List<ChatResponse> responses = new ArrayList<>();
+        responses.add(first);
+        responses.addAll(List.of(rest));
+        return criticScripted(responses);
+    }
+
+    /** An empty response list leaves {@code call} unstubbed, for the cases that must fail closed before spending a provider call. */
+    private ScriptedCritic criticScripted(List<ChatResponse> responses) {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+        if (!responses.isEmpty()) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(responses.getFirst(), responses.subList(1, responses.size()).toArray(ChatResponse[]::new));
+        }
         // Spring AI 2.0 merges per-request options with the model defaults, so ChatClient reads getOptions() during the request.
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        return new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        return new ScriptedCritic(new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper), chatModel);
     }
 
     @Test
@@ -208,51 +241,8 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void conceptReviewPromptCountsSpecifiedMultiStepImplementationAsIntermediateWork() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
-                """
-                        {"selectedCandidate":1,"selectionReason":"The first candidate is the simplest complete fit.","evaluations":[
-                         {"candidate":1,"candidateEvidenceIds":["C1.2"],"briefCoverage":"The complete brief is covered.",
-                          "objectiveCounterfactual":"The requested central behavior remains student owned.","difficultyFit":"The implementation uses multi-step transformations.",
-                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
-                          "domainGrounding":"The behavior follows from the domain.","feasibility":"It is bounded and deterministically testable.",
-                          "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
-                         {"candidate":2,"candidateEvidenceIds":["C2.2"],"briefCoverage":"The complete brief is covered.",
-                          "objectiveCounterfactual":"The requested central behavior remains student owned.","difficultyFit":"The implementation uses multi-step transformations.",
-                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
-                          "domainGrounding":"The behavior follows from the domain.","feasibility":"It is bounded and deterministically testable.",
-                          "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
-                         {"candidate":3,"candidateEvidenceIds":["C3.2"],"briefCoverage":"The complete brief is covered.",
-                          "objectiveCounterfactual":"The requested central behavior remains student owned.","difficultyFit":"The implementation uses multi-step transformations.",
-                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
-                          "domainGrounding":"The behavior follows from the domain.","feasibility":"It is bounded and deterministically testable.",
-                          "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true}
-                        ]}
-                        """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critic.reviewConceptCandidates("brief", conceptCandidates("A complete selected concept.", "Another complete concept.", "A third complete concept."), null, () -> false);
-        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel).call(prompt.capture());
-        assertThat((prompt.getValue().getInstructions().getFirst()).getText())
-                .contains("fully specified", "can still be intermediate", "never invent or propose a replacement theme", "Evaluate EACH candidate independently")
-                .contains("Constants, labels, or thresholds", "Reconstruct the smallest plausible student implementation")
-                .contains("Lookup-table", "transcription, uniform scaling", "same responsibility for overlapping valid", "premature exact constraints")
-                .contains("requested objective", "same substantial general-purpose algorithm", "all consequential behavior in a given context", "not a numeric quota",
-                        "behaviorally identical control flow", "switch—the same", "any finite Strategy design", "strongest direct learning-objective fit", "use simplicity only",
-                        "break ties among candidates", "difficultySufficient may be true only", "lowest extraneous cognitive load")
-                .contains("Do not invent control flow, conditionals, data transformations, or decisions", "`distinct rules`", "`computes a result`")
-                .contains("Do not subtract learner-owned reasoning intrinsic", "one-to-one tag", "not meaningful interchangeability", "Do not require a separate mathematical")
-                .contains("State the caller-requested operation before and after substitution", "semantically different operations")
-                .contains("Student-owned objective` is the exhaustive ownership claim", "Do not infer that students implement a policy")
-                .doesNotContain("spacecraft docking", "artifact restoration", "Strategy learning");
-    }
-
-    @Test
     void conceptReviewCannotSelectPrescribedLeafFormulasWithSuppliedCollaboration() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"selectedCandidate":null,"selectionReason":"No candidate leaves a sufficient learner-owned objective path.","evaluations":[
                  {"candidate":1,"candidateEvidenceIds":["C1.2"],"briefCoverage":"The explicit brief is covered.",
                   "objectiveCounterfactual":"Removing Strategy leaves the same two prescribed calculations in one supplied client.",
@@ -275,8 +265,7 @@ class SpecFidelityCriticServiceTest {
                   "objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true}
                 ]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityCriticService.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate Strategy exercise.",
                 conceptCandidates("Supplied context; learners transcribe two formulas.", "Students implement Dijkstra.", "Use payment strategies."), null, () -> false);
@@ -287,23 +276,19 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void conceptReviewPromptDoesNotAskForAnalysisPlaceholdersThatItsParserRejects() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+    void conceptReviewCorrectionCallNamesTheServerValidationFailureItMustFix() {
+        // The correction call is what turns one unparseable response into a usable verdict, so it must carry the server's own diagnosis rather than silently re-ask. The concept
+        // prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
+        ScriptedCritic scripted = criticScripted(rawResponse("not json"));
 
-        critic.reviewConceptCandidates("Create an intermediate Strategy exercise.",
+        scripted.critic().reviewConceptCandidates("Create an intermediate Strategy exercise.",
                 conceptCandidates("Candidate one behavior.", "Candidate two behavior.", "Candidate three behavior."), null, () -> false);
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        String systemPrompt = prompts.getValue().getInstructions().getFirst().getText();
+        verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(1).getInstructions().get(1).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT",
                 "not valid JSON in the required object shape");
-        assertThat(systemPrompt).contains("concise brief-coverage analysis", "concise grounding analysis", "concise feasibility analysis", "same caller goal")
-                .contains("\"learnerOwnsObjectiveMechanism\":false", "\"prematureContractClosure\":true")
-                .doesNotContain("\"briefCoverage\":\"analysis\"", "\"domainGrounding\":\"analysis\"", "\"feasibility\":\"analysis\"");
+        assertThat(prompts.getValue().getInstructions().getFirst().getText()).contains("Evaluate EACH candidate independently");
     }
 
     private static Map<Integer, String> conceptCandidates(String first, String second, String third) {
@@ -339,16 +324,14 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_acceptsDefectFreeVerdictWithMiscitedEvidenceId() {
         // Evidence-ID citation is advisory grounding, so a coherent defect-free verdict that mis-cites objectiveEvidenceIds (here the
         // non-existent E999) is accepted in a single call rather than discarded and re-asked.
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+        ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E999"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"The state-preserving reroute remains after routine strategy delegation and makes the logistics domain affect the behavior.","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise about strategies in an unusual logistics theme.", """
                 # Exercise
                 ## Rules
@@ -356,7 +339,7 @@ class SpecFidelityCriticServiceTest {
                 """, null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(chatModel, times(1)).call(any(Prompt.class));
+        verify(scripted.model(), times(1)).call(any(Prompt.class));
     }
 
     @Test
@@ -442,8 +425,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewCorrectionCanSupplyAMissingConceptAlignmentWithoutDiscardingPreservedJudgments() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
+        ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
                                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -461,14 +443,13 @@ class SpecFidelityCriticServiceTest {
                                   "reason":"The specification preserves the viable fragment-reconciliation interaction through policies."},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Strategy exercise.",
                 "Restore ordered messages from overlapping radio fragments using conflict policies.", "The exercise reconciles overlapping fragments.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
+        verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat((prompts.getAllValues().get(1).getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment was missing");
     }
 
@@ -503,42 +484,21 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_explicitlyChecksOwnershipTableAgainstLaterTemplateProse() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+    void specificationReviewPromptNumbersBriefAndSpecificationEvidenceSeparately() {
+        // Every specification finding cites a [B*] or [E*] ID, so the two sources must reach the reviewer as separately numbered evidence rather than as one blended document.
+        // The prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
+        ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the cited ownership preserves the requested design work","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critic.reviewSpecification("Students create the strategy interface.", "The design table marks it student-creates.", null, () -> false);
+        scripted.critic().reviewSpecification("Students create the strategy interface.", "The design table marks it student-creates.", null, () -> false);
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel).call(prompt.capture());
-        assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("Design ownership table").contains("template supplies a type marked `student-creates`")
-                .contains("correct table does not cancel contradictory prose").contains("does not assign ownership of the strategy interface")
-                .contains("Non-student-visible harness notes are not observable constraints")
-                .contains("Package, source-root, and class-visibility choices required by the seeded build")
-                .contains("explicitly requested difficulty", "one-operation formula transcription", "Testing Strategy's Observable responsibility")
-                .contains("defect detection, not design optimization", "try to", "whole specification", "common teaching examples for the requested programming concept")
-                .contains("domain is familiar in popular culture", "theme identity from theme integration", "arbitrary formula", "constants under themed names",
-                        "itself wiring the collaboration")
-                .contains("Empty defect arrays are not sufficient evidence", "learningFit", "subtractive", "erasing the domain nouns")
-                .contains("remainingStudentReasoning", "domainGrounding", "objectiveMechanism", "objectiveEvidenceIds", "Do not invent a plausible post-hoc domain rationale",
-                        "Do not invent validation", "Do not subtract learner-owned reasoning intrinsic", "overlapping valid inputs", "handler dispatch")
-                .contains("Incidental arithmetic", "cannot rescue a hollow pattern exercise", "Do not require a separate domain algorithm")
-                .contains("ALIGNED", "SPEC_REPAIR", "CONCEPT_RESELECTION", "TOO_SHALLOW", "TOO_COMPLEX", "MISALIGNED")
-                .contains("factor", "shared work", "causally", "not unsupported merely because", "exampleChecks", "intentionally not an exhaustive executable contract")
-                .contains("independent specification evidence", "obligation cannot justify itself", "generic best practice")
-                .contains("A Java reference type does not by itself make `null` a permitted educational input")
-                .contains("representative interaction", "context or client holds or selects", "implementations only in isolation")
-                .contains("Student-owned reasoning", "collapses that explicit mechanism to labels, constants, or scalar formulas")
-                .contains("inclusive rule range", "concrete incompatibility witness", "Cite every rule").contains("complete pass", "do not stop after the first defect")
-                .contains("Return at most four", "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs")
-                .doesNotContain("compression, payment, sorting, and navigation");
+        verify(scripted.model()).call(prompt.capture());
         assertThat((prompt.getValue().getInstructions().get(1)).getText()).contains("INSTRUCTOR BRIEF EVIDENCE", "[B1] Students create the strategy interface.",
                 "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.");
+        assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("Design ownership table");
     }
 
     @Test
@@ -606,7 +566,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void rejectedSpecificationReviewReturnsToTheAuthorWithoutAnAsymmetricAppeal() {
-        ChatModel chatModel = mock(ChatModel.class);
         ChatResponse proposed = rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
@@ -615,9 +574,8 @@ class SpecFidelityCriticServiceTest {
                          "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E3"],
                           "reason":"R2 conflicts with R5 even though R5 is not cited."}]}
                         """);
-        when(chatModel.call(any(Prompt.class))).thenReturn(proposed);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(proposed);
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Strategy exercise.", """
                 | R2 | Total potency must equal the requested potency. |
@@ -627,12 +585,11 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        verify(chatModel).call(any(Prompt.class));
+        verify(scripted.model()).call(any(Prompt.class));
     }
 
     @Test
     void rejectedSpecificationReviewPreservesAGroundedBlockingFindingForTheAuthor() {
-        ChatModel chatModel = mock(ChatModel.class);
         ChatResponse groundedFinding = rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
@@ -640,9 +597,8 @@ class SpecFidelityCriticServiceTest {
                          "omissions":[],"conflicts":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"reason":"The brief requires preserving state but the specification resets it."}],
                          "internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """);
-        when(chatModel.call(any(Prompt.class))).thenReturn(groundedFinding);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(groundedFinding);
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Preserve accumulated state when strategies change.",
                 "Switching strategies resets accumulated state.", null, () -> false);
@@ -650,12 +606,11 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("preserving state", "resets");
-        verify(chatModel).call(any(Prompt.class));
+        verify(scripted.model()).call(any(Prompt.class));
     }
 
     @Test
     void malformedInitialSpecificationReviewStillUsesOneCorrectionCall() {
-        ChatModel chatModel = mock(ChatModel.class);
         ChatResponse proposed = rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
@@ -663,21 +618,19 @@ class SpecFidelityCriticServiceTest {
                          "omissions":[{"briefEvidenceIds":["B1"],"reason":"The requested behavior is absent."}],"conflicts":[],"internalConflicts":[],"exampleChecks":[],
                          "ambiguities":[],"unsupportedConstraints":[]}
                         """);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("not json"), proposed);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(rawResponse("not json"), proposed);
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create a stateful strategy exercise.", "A context invokes a strategy.", null,
                 () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void specificationReviewDerivesLearningFitFromOwnershipAndObservabilitySubchecks() {
-        ChatModel chatModel = mock(ChatModel.class);
         String contradictory = """
                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E4"],"objectiveEvidenceIds":["E4","E8"],
                  "studentOwnershipEvidenceIds":["E4"],"assessmentEvidenceIds":["E8"],
@@ -688,9 +641,8 @@ class SpecFidelityCriticServiceTest {
                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                 """;
         String corrected = contradictory.replace("\"sufficient\":true,\"direction\":\"SUFFICIENT\"", "\"sufficient\":false,\"direction\":\"TOO_SHALLOW\"");
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(contradictory), rawResponse(corrected));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(rawResponse(contradictory), rawResponse(corrected));
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Strategy exercise.", """
                 ## Design
@@ -706,7 +658,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.learningFitDirection()).isEqualTo("TOO_SHALLOW");
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -837,28 +789,25 @@ class SpecFidelityCriticServiceTest {
     void specificationReview_acceptsPositiveLearningVerdictEvenWhenEvidenceIdsAreAdvisory() {
         // A well-formed positive verdict whose learning-fit evidence IDs point at unknown lines (E99) is grounded by its booleans and prose,
         // not by the pointers, so it is accepted in a single call rather than discarded over the mis-citation.
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+        ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"the invented rule supplies depth","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null,
                 () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(chatModel, times(1)).call(any(Prompt.class));
+        verify(scripted.model(), times(1)).call(any(Prompt.class));
     }
 
     @Test
     void specificationReviewToleratesAnUnknownEvidenceIdWithoutRetrying() {
         // An unknown evidence ID (E99) inside an otherwise coherent finding is advisory: the pointer resolves to an empty quote, the finding
         // still renders, and the verdict is complete after a single call with no correction retry.
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse(
+        ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
                          "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
@@ -867,22 +816,20 @@ class SpecFidelityCriticServiceTest {
                          "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
                          "reason":"The claims conflict."}]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise with a potion theme.",
                 "R1: weak ingredients limit potency. R2: every ingredient contributes equally.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("R1: weak ingredients limit potency.", "The claims conflict.");
-        verify(chatModel, times(1)).call(any(Prompt.class));
+        verify(scripted.model(), times(1)).call(any(Prompt.class));
     }
 
     @Test
     void specificationReviewUsesTheCompleteFreshRetryVerdict() {
         // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so the reviewer makes its one
         // correction call. The fresh, complete ALIGNED retry is used verbatim rather than the discarded first verdict.
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
+        ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
                                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -901,22 +848,20 @@ class SpecFidelityCriticServiceTest {
                                   "reason":"The specification now preserves the viable selected interaction."},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise.",
                 "Restore ordered messages from overlapping fragments.", "R1: each policy returns a fixed score.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.conceptualReworkRequired()).isFalse();
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void specificationReviewDoesNotCarryAnUngroundedFirstFindingIntoTheFreshRetry() {
         // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so it is discarded before its finding
         // is ever rendered. The single correction call returns a clean, complete verdict, and none of the first response's finding leaks in.
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
+        ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
                                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -931,14 +876,13 @@ class SpecFidelityCriticServiceTest {
                                  "remainingStudentReasoning":"Students choose a meaningful strategy interaction.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                                  "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise.",
                 "R1: meaningful strategy decision. R2: contradicting strategy decision.", null, () -> false);
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The decisions conflict");
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -978,21 +922,19 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void supportedSecretInGeneratedCandidatePreventsEveryCriticProviderCall() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(List.of());
+        SpecFidelityCriticService critic = scripted.critic();
         Map<RepositoryType, Map<String, String>> artifacts = Map.of(RepositoryType.SOLUTION, Map.of("src/Fixture.java", "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"),
                 RepositoryType.TEMPLATE, Map.of("src/Fixture.java", "class Fixture {}"), RepositoryType.TESTS, Map.of("test/FixtureTest.java", "class FixtureTest {}"));
         assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class)
                 .isThrownBy(() -> critique(critic, "brief", "# Problem", List.of("fixture"), artifacts, null)).withMessageContaining("GITHUB_TOKEN")
                 .withMessageNotContaining("ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij");
-        verify(chatModel, never()).call(any(Prompt.class));
+        verify(scripted.model(), never()).call(any(Prompt.class));
     }
 
     @Test
     void blockingContractReviewMapsAcceptanceBlockersAndIncludesExecutableEvidence() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("""
                 {"exampleChecks": [{"claim": "the rover ends at (2,3) E", "computedOutcome": "the rover ends at (2,2) N", "consistent": false,
                     "reason": "replaying the command sequence gives a different state"}],
                  "apiChecks": [{"symbol": "Rover(int,int,Collection<int[]>)", "discoverable": false, "reason": "tests require it while the statement leaves the API open"}],
@@ -1005,8 +947,7 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"reject CJK characters","killed":true,"reason":"the assertion kills it"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 """
@@ -1017,7 +958,7 @@ class SpecFidelityCriticServiceTest {
                 Kind.TEMPLATE_QUALITY_GAP);
         assertThat(report.hasBlockingFindings()).isTrue();
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getAllValues())
                 .allSatisfy((value) -> assertThat(value.getContents()).contains("SOLUTION: src/Graphemes.java", "TEMPLATE: src/Graphemes.java", "TESTS: test/GraphemesTest.java")
                         .contains("assertEquals(2, count(\"漢字\"))").contains("Do not treat test names or comments as proof"));
@@ -1025,8 +966,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void templateQualityGapReviewSurfacesMissingTeachingScaffoldWithQuotedEvidence() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(
+        ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
                                 {"exampleChecks":[],
@@ -1041,8 +981,7 @@ class SpecFidelityCriticServiceTest {
                         {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
                          "uncovered":[],"weakOracle":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
@@ -1056,8 +995,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void contractReviewCannotDemandAStubForAStudentCreatedType() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[{"symbol":"FireStrategy","discoverable":true,"reason":"the statement describes it"}],
                  "templateChecks":[{"ownerType":"FireStrategy","test":"missing FireStrategy stub","targetReached":false,
                      "reason":"the template has no FireStrategy class or TODO"}],
@@ -1065,8 +1003,7 @@ class SpecFidelityCriticServiceTest {
                 """), rawResponse("""
                 {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],"uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
 
         SpecFidelityReport report = critic.critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null, """
                 ## Design
@@ -1079,36 +1016,44 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void contractReviewPromptInstructsScaffoldQualityChecks() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        assertThat((prompts.getAllValues().get(0).getInstructions().getFirst()).getText())
-                .contains("house teaching scaffold", "restate its student-visible contract", "imperative TODO", "stubbed owner", "solution/template diff", "compact API surface",
-                        "PlantUML diagram", "the template is the API reference at the point of use")
-                .contains("`student-creates` types must be described as required and", "`zero` and `non-positive`", "Reject student-facing references to SPEC.md")
-                .contains("Inheritance and realization arrows require corresponding", "association or dependency")
-                .doesNotContain("breadcrumb for a type the student must still create");
+    void contractReviewTemplateGapAgainstATypeTheDesignNeverNamesFailsClosed() {
+        // Once the approved Design fixes who owns which type, a scaffold complaint about some other type means the reviewer was not reading that contract. Surfacing it would
+        // send the repair loop after a type the design does not have, so the whole verdict is discarded instead.
+        ScriptedCritic scripted = criticScripted(jsonResponse(
+                "{\"templateChecks\":[{\"ownerType\":\"WaterStrategy\",\"test\":\"missing WaterStrategy stub\",\"targetReached\":false,\"reason\":\"the template has no WaterStrategy class or TODO\"}]}"),
+                rawResponse(COMPLETE_ORACLE_VERDICT));
+
+        SpecFidelityReport report = scripted.critic().critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                DESIGN_WITH_STUDENT_CREATED_FIRE_STRATEGY, null, null);
+
+        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
+            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
+            assertThat(finding.detail()).contains("contract reviewer");
+        });
     }
 
     @Test
-    void focusedReviewPassesAcceptOnlyTheirOwnEvidenceShape() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+    void contractReviewTemplateGapAgainstSharedScaffoldIsReportedWithoutADesignRow() {
+        // Build files, fixtures, and other shared scaffold are real and repairable but deliberately absent from the Design ownership table, so the reserved owner name must pass
+        // the guard that discards a complaint about a type the design never names.
+        ScriptedCritic scripted = criticScripted(jsonResponse(
+                "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"reason\":\"the shared fixture fails to compile before any student-owned code runs\"}]}"),
+                rawResponse(COMPLETE_ORACLE_VERDICT));
+
+        SpecFidelityReport report = scripted.critic().critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                DESIGN_WITH_STUDENT_CREATED_FIRE_STRATEGY, null, null);
+
+        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
+            assertThat(finding.kind()).isEqualTo(Kind.TEMPLATE_QUALITY_GAP);
+            assertThat(finding.requirement()).isEqualTo("buildsBeforeAnyTask");
+        });
+    }
+
+    @Test
+    void eachFullArtifactReviewPassRendersItsOwnSpecializedSystemPrompt() {
+        // The two passes are specialized only as long as each receives its own system prompt in its own call. Their audited clauses, and the cross-pass vocabulary neither may
+        // name, are pinned against the rendered templates in CriticPromptContractTest; the two sentinels here prove the routing that no resource assertion can.
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],
                  "apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
@@ -1119,90 +1064,138 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":false,"sourceQuote":"user-perceived characters","reason":"no assertion uses a surrogate pair"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+        SpecFidelityReport report = critique(scripted.critic(), UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.WEAK_TEST_ORACLE);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
-        assertThat((prompts.getAllValues().get(0).getInstructions().getFirst()).getText())
-                .contains("Return every failed check", "one representative passing check", "mandatory and unambiguous", "Do not infer task reachability",
-                        "Do not invent requirements from solution-only behavior", "claims alternatives", "one operation or the whole call", "trace each visible test", "from setup",
-                        "to assertion", "another independently actionable", "student seam")
-                .doesNotContain("first failure is the intended placeholder").contains("At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array")
-                .doesNotContain("mutantChecks", "weakOracle", "uncovered");
-        assertThat((prompts.getAllValues().get(1).getInstructions().getFirst()).getText())
-                .contains("at most six highest-risk representative mutants", "explicit boundary quantifier", "at the boundary", "immediately adjacent values")
-                .contains("only the few highest-leverage blockers that have distinct repairs")
-                .contains("must not emit uncovered", "Design owner is marked `given`", "test-controlled fake", "sentinel", "calling a production collaborator twice",
-                        "hardcoded-example mutant", "distinct representative input")
-                .doesNotContain("For every explicit rule and public operation").doesNotContain("exampleChecks", "apiChecks", "templateChecks", "contradictions");
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat((prompts.getAllValues().get(0).getInstructions().getFirst()).getText()).contains("house teaching scaffold");
+        assertThat((prompts.getAllValues().get(1).getInstructions().getFirst()).getText()).contains("at most six highest-risk representative mutants");
     }
 
-    @Test
-    void contractPassMissingRequiredEvidenceFailsClosed() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
-            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
-            assertThat(finding.detail()).contains("contract reviewer");
-        });
+    /** An approved Design whose ownership table names exactly one type, so a scaffold complaint about any other owner is unattributable. */
+    private static final String DESIGN_WITH_STUDENT_CREATED_FIRE_STRATEGY = """
+            ## Design
+            | Type | Role | Template status |
+            |---|---|---|
+            | `FireStrategy` | concrete policy | student-creates |
+            """;
+
+    /** A contract verdict answering every mandatory array, so a row can make exactly one array malformed. */
+    private static final String COMPLETE_CONTRACT_VERDICT = """
+            {"exampleChecks":[],"apiChecks":[],
+             "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
+             "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+             "unrequestedChanges":[],"missingRequestedChanges":[]}
+            """;
+
+    /** An oracle verdict answering every mandatory array, so a row can make exactly one array malformed. */
+    private static final String COMPLETE_ORACLE_VERDICT = """
+            {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion kills it"}],
+             "uncovered":[],"weakOracle":[]}
+            """;
+
+    /**
+     * One incomplete review input and the fail-closed verdict it must produce.
+     * <p>
+     * Each row kills a different conjunct of {@code CriticVerdictParser}'s malformed-verdict predicates — sixteen for the contract pass, seven for the oracle pass — or a
+     * different pre-flight guard in {@code SpecFidelityCriticService#reviewArtifacts}. They share one table because they make one claim: an incomplete review is never reported
+     * as a clean one. They stay separate rows because no row implies another.
+     *
+     * @param responses the scripted reviewer responses; {@code null} means no AI provider is configured and an empty list means the provider must never be called
+     */
+    private record FailClosedCase(String label, @Nullable List<ChatResponse> responses, boolean cancelled, Map<RepositoryType, Map<String, String>> artifacts, String brief,
+            String statement, @Nullable String adaptationChanges, Kind expectedKind, String expectedDetailFragment, int expectedFindingCount, int expectedModelCalls) {
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
-    @Test
-    void malformedInventedRequirementFailsClosed() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"invented\":[{}]}"));
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
-            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
-            assertThat(finding.detail()).contains("contract reviewer");
-        });
+    private static FailClosedCase generation(String label, @Nullable List<ChatResponse> responses, String detailFragment, int findingCount, int modelCalls) {
+        return generation(label, responses, COMPLETE_ARTIFACTS, UNICODE_BRIEF, detailFragment, findingCount, modelCalls);
     }
 
-    @Test
-    void oraclePassMissingRequiredEvidenceFailsClosed() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
-                {"exampleChecks":[],"apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
-                 "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the emoji assertion kills it"}],
-                 "uncovered":[]}
-                """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
-            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
-            assertThat(finding.detail()).contains("test-oracle reviewer");
-        });
+    private static FailClosedCase generation(String label, @Nullable List<ChatResponse> responses, Map<RepositoryType, Map<String, String>> artifacts, String brief,
+            String detailFragment, int findingCount, int modelCalls) {
+        return new FailClosedCase(label, responses, false, artifacts, brief, "Count graphemes.", null, Kind.QUALITY_REVIEW_UNAVAILABLE, detailFragment, findingCount, modelCalls);
+    }
+
+    private static FailClosedCase adaptation(String label, @Nullable List<ChatResponse> responses, String detailFragment, int findingCount, int modelCalls) {
+        return new FailClosedCase(label, responses, false, minimalArtifacts(List.of("test_x")), "Change remove(0).", "# Inventory", "- old\n+ new",
+                Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, detailFragment, findingCount, modelCalls);
+    }
+
+    private static Stream<FailClosedCase> failClosedCases() {
+        return Stream.of(
+                // --- Contract-pass verdict integrity: one mandatory array malformed at a time, with a complete oracle verdict alongside.
+                generation("contract verdict omits contradictions",
+                        List.of(rawResponse(COMPLETE_CONTRACT_VERDICT.replace("\"contradictions\":[],", "")), rawResponse(COMPLETE_ORACLE_VERDICT)), "contract reviewer", 1, 2),
+                generation("contract invented entry omits its source quote",
+                        List.of(jsonResponse("{\"invented\":[{\"requirement\":\"O(1) extra space\",\"reason\":\"the brief never constrains space complexity\"}]}")),
+                        "contract reviewer", 1, 2),
+                generation("contract invented entry is empty", List.of(jsonResponse("{\"invented\":[{}]}")), "contract reviewer", 1, 2),
+                generation("contract contradiction entry is empty", List.of(jsonResponse("{\"contradictions\":[{}]}")), "contract reviewer", 1, 2),
+                generation("contract contradiction entry omits its reason", List.of(jsonResponse("{\"contradictions\":[{\"requirement\":\"conflict\"}]}")), "contract reviewer", 1,
+                        2),
+                // A solution declaring a public member makes apiChecks mandatory, so an empty array is a skipped check rather than a clean one.
+                generation("contract api checks are empty although the solution declares a public member",
+                        List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT)), PUBLIC_API_ARTIFACTS, UNICODE_BRIEF, "contract reviewer", 1, 2),
+
+                // --- Oracle-pass verdict integrity, with a complete contract verdict alongside.
+                generation("oracle verdict omits weakOracle",
+                        List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT.replace("\"weakOracle\":[]", ""))), "test-oracle reviewer", 1, 2),
+                generation("oracle verdict omits mutantChecks", List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse("{\"uncovered\":[],\"weakOracle\":[]}")),
+                        "test-oracle reviewer", 1, 2),
+
+                // --- Responses neither pass can parse: both passes report separately, so neither is silently clean.
+                generation("response is brace-delimited but unparseable", List.of(rawResponse("{ this is not valid json }")), "contract reviewer", 2, 2),
+                generation("response is prose with no JSON at all", List.of(rawResponse("I think the tests look fine to me, no JSON here at all.")), "contract reviewer", 2, 2),
+                generation("response body is empty", List.of(rawResponse("")), "contract reviewer", 2, 2),
+                generation("response answers only the oracle's uncovered array", List.of(rawResponse("{\"uncovered\":[]}")), "test-oracle reviewer", 2, 2),
+
+                // --- Pre-flight guards: the review must fail closed before spending a provider call.
+                generation("no AI provider is configured", null, "No AI reviewer is configured.", 1, 0),
+                new FailClosedCase("cancelled before the first reviewer call", List.of(), true, COMPLETE_ARTIFACTS, UNICODE_BRIEF, "Count graphemes.", null,
+                        Kind.QUALITY_REVIEW_UNAVAILABLE, "cancelled before both review passes completed", 1, 0),
+                // The artifact set is deliberately complete, so this row reaches the evidence cap instead of stopping at the completeness guard ahead of it.
+                generation("artifact evidence exceeds its bounded size", List.of(), OVERSIZED_ARTIFACTS, "Create an exercise.", "exceeded the bounded review input", 1, 0),
+                generation("artifact set is missing a repository", List.of(),
+                        Map.of(RepositoryType.SOLUTION, Map.of("src/Exercise.java", "class Exercise {}"), RepositoryType.TESTS, Map.of("test/ExerciseTest.java", "class T {}")),
+                        "Create an exercise.", "snapshot was missing", 1, 0),
+                generation("complete review prompt exceeds its bounded size", List.of(), COMPLETE_ARTIFACTS, "x".repeat(120_000), "exceeded its bounded size", 1, 0),
+
+                // --- The same guarantees on the adaptation path, where the finding must name adaptation scope rather than exercise quality.
+                adaptation("adaptation verdict is not JSON", List.of(rawResponse("not json")), "contract reviewer", 2, 2),
+                adaptation("adaptation verdict omits the scope arrays", List.of(rawResponse("{\"uncovered\":[]}")), "contract reviewer", 2, 2),
+                adaptation("adaptation unrequested change entry omits its change",
+                        List.of(jsonResponse("{\"unrequestedChanges\":[{\"reason\":\"missing change\"}],\"missingRequestedChanges\":[]}")), "contract reviewer", 1, 2),
+                adaptation("no AI provider is configured for the adaptation review", null, "No AI reviewer is configured.", 1, 0));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("failClosedCases")
+    void incompleteReviewFailsClosedWithoutReportingACleanVerdict(FailClosedCase testCase) {
+        ScriptedCritic scripted = testCase.responses() == null ? null : criticScripted(testCase.responses());
+        SpecFidelityCriticService critic = scripted == null ? new SpecFidelityCriticService(null, objectMapper) : scripted.critic();
+        List<String> testNames = List.of("cjk");
+
+        SpecFidelityReport report = testCase.adaptationChanges() == null
+                ? critic.critique(testCase.brief(), testCase.statement(), testNames, testCase.artifacts(), null, testCase::cancelled, null, null, null, null)
+                : critic.critiqueAdaptation(testCase.brief(), testCase.statement(), testNames, testCase.adaptationChanges(), testCase.artifacts(), null, testCase::cancelled, null);
+
+        assertThat(report.findings()).as("%s must fail closed", testCase).hasSize(testCase.expectedFindingCount())
+                .allSatisfy(finding -> assertThat(finding.kind()).isEqualTo(testCase.expectedKind()))
+                .anySatisfy(finding -> assertThat(finding.detail()).contains(testCase.expectedDetailFragment()));
+        assertThat(report.hasBlockingFindings()).as("%s must block persistence", testCase).isTrue();
+        if (scripted != null) {
+            verify(scripted.model(), times(testCase.expectedModelCalls())).call(any(Prompt.class));
+        }
     }
 
     @Test
     void blockingContractFindingIsMergedWithIndependentOracleFinding() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[{"claim":"member 101 has two checkouts","computedOutcome":"member 101 has one checkout","consistent":false,
                     "reason":"the early return is ignored"}],
                  "apiChecks":[],"templateChecks":[{"ownerType":"FixtureType","test":"example","targetReached":true,"reason":"the assertion reaches the target"}],
@@ -1212,101 +1205,26 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"ignore CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Worked example: member 101 has two checkouts", List.of("example"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.CONTRACT_CONTRADICTION, Kind.WEAK_TEST_ORACLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void unavailableContractPassDoesNotSuppressOracleFinding() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":false,"sourceQuote":"user-perceived characters","reason":"no assertion uses a surrogate pair"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.QUALITY_REVIEW_UNAVAILABLE, Kind.WEAK_TEST_ORACLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
-    }
-
-    @Test
-    void unavailableOrMalformedQualityReviewFailsClosed() {
-        SpecFidelityReport unavailable = critique(new SpecFidelityCriticService(null, objectMapper),
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport malformed = critique(criticReturning(rawResponse("{\"uncovered\":[]}")),
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport malformedBlockingFinding = critique(criticReturning(jsonResponse("{\"contradictions\":[{}]}")),
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        SpecFidelityReport unsupportedBlockingFinding = critique(criticReturning(jsonResponse("{\"contradictions\":[{\"requirement\":\"conflict\"}]}")),
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Graphemes", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(unavailable.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        assertThat(malformed.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
-        assertThat(malformedBlockingFinding.findings()).singleElement()
-                .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        assertThat(unsupportedBlockingFinding.findings()).singleElement()
-                .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        assertThat(unavailable.hasBlockingFindings()).isTrue();
-        assertThat(malformed.hasBlockingFindings()).isTrue();
-        assertThat(malformedBlockingFinding.hasBlockingFindings()).isTrue();
-        assertThat(unsupportedBlockingFinding.hasBlockingFindings()).isTrue();
-    }
-
-    @Test
-    void cancelledBeforeTheFirstReviewerCall_skipsEveryProviderCallAndFailsClosed() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critic.critique(
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "# Rover", List.of("turnsLeft"), COMPLETE_ARTIFACTS, null, () -> true, null, null, null, null);
-        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        assertThat(report.hasBlockingFindings()).isTrue();
-        verify(chatModel, never()).call(any(Prompt.class));
-    }
-
-    @Test
-    void artifactSetBeyondBoundedReviewInputFailsClosedWithoutCallingTheModel() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        Map<RepositoryType, Map<String, String>> oversizedArtifacts = Map.of(RepositoryType.SOLUTION, Map.of("src/Large.java", "x".repeat(100000)));
-        SpecFidelityReport report = critique(critic, "Create an exercise.", "# Large", List.of(), oversizedArtifacts, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        verify(chatModel, never()).call(any(Prompt.class));
-    }
-
-    @Test
-    void incompleteArtifactSetFailsClosedWithoutCallingTheModel() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        Map<RepositoryType, Map<String, String>> missingTemplate = Map.of(RepositoryType.SOLUTION, Map.of("src/Exercise.java", "class Exercise {}"), RepositoryType.TESTS,
-                Map.of("test/ExerciseTest.java", "class ExerciseTest {}"));
-        SpecFidelityReport report = critique(critic, "Create an exercise.", "# Exercise", List.of("testExercise"), missingTemplate, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        verify(chatModel, never()).call(any(Prompt.class));
-    }
-
-    @Test
-    void completeReviewPromptBeyondBoundedInputFailsClosedWithoutCallingTheModel() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critique(critic, "x".repeat(120000), "# Large", List.of(), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        verify(chatModel, never()).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1322,8 +1240,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void oracleReviewCorrectsUngroundedClaimsFromEveryFindingArray() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"return UTF-16 length","killed":true,"reason":"the assertion kills it"}],
                  "uncovered":[
                     {"requirement":"CJK characters","sourceQuote":"CJK characters","reason":"no CJK assertion"},
@@ -1334,8 +1251,7 @@ class SpecFidelityCriticServiceTest {
                  "uncovered":[{"requirement":"CJK characters","sourceQuote":"CJK characters","reason":"no CJK assertion"}],
                  "weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
@@ -1343,13 +1259,12 @@ class SpecFidelityCriticServiceTest {
             assertThat(finding.kind()).isEqualTo(Kind.UNCOVERED_REQUIREMENT);
             assertThat(finding.requirement()).isEqualTo("CJK characters");
         });
-        verify(chatModel, times(3)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
     void producedStatementCannotAuthorizeAnOracleFinding() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"treat equality as not overdue","killed":false,"sourceQuote":"equal to or after dueAt",
                     "reason":"no equality assertion distinguishes the mutant"}],
                  "uncovered":[],"weakOracle":[]}
@@ -1357,26 +1272,23 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"ignore penalty records","killed":true,"reason":"the assertion kills it"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic, "Create a Java exercise about calculating member penalties from checkout records; choose coherent API and business rules.",
                 "A checkout is overdue when returnedAt is equal to or after dueAt. Add one penalty point for every overdue checkout.", List.of("countsDueDateEquality"),
                 COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).isEmpty();
-        verify(chatModel, times(3)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
     void oracleReviewPreservesGroundedRepairFeedbackWhenAnotherClaimIsUngrounded() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[
                     {"mutant":"reject CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"},
                     {"mutant":"require sorted output","killed":false,"sourceQuote":"results must be sorted","reason":"only the generated statement says this"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes and return sorted diagnostics.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
@@ -1389,8 +1301,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void oracleReviewRetriesAnUngroundedVerdictAndUsesTheCompleteCorrection() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[
                     {"mutant":"reject CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"},
                     {"mutant":"require sorted output","killed":false,"sourceQuote":"results must be sorted","reason":"only the generated statement says this"}],
@@ -1400,14 +1311,13 @@ class SpecFidelityCriticServiceTest {
                     "reason":"no assertion uses emoji input"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes and return sorted diagnostics.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("ignore emoji input");
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(3)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().get(1).getContents()).contains("PRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY",
                 "[P1] Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.");
         assertThat(prompts.getAllValues().getLast().getContents()).contains("previous verdict cited at least one unknown PRIMARY SOURCE EVIDENCE ID", "INSTRUCTOR BRIEF",
@@ -1416,30 +1326,19 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void oracleCorrectionMayReturnEmptyWhenTheOnlyInitialClaimWasUngrounded() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"reject zero fuel","killed":false,
                     "sourceQuote":"R6 | fuel-consuming strategies reject zero fuel","reason":"no assertion covers it"}],
                  "uncovered":[],"weakOracle":[]}
                 """), rawResponse("""
                 {"mutantChecks":[],"uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic, "Create a spacecraft navigation exercise.", "Use strategy objects.", List.of("navigates"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).isEmpty();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(3)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getContents()).contains("An empty mutantChecks/uncovered/weakOracle");
-    }
-
-    @Test
-    void fullyCoveredBrief_flagsNothing() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("test_cjk", "test_emoji", "test_combining", "test_cafe"));
-        assertThat(report.findings()).isEmpty();
     }
 
     @Test
@@ -1536,41 +1435,17 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void contractAdvisoryDoesNotSkipOracleReview() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class)))
-                .thenReturn(jsonResponse("{\"missingExamples\":[{\"behaviour\":\"combining marks\",\"reason\":\"a trace would clarify the rule\"}]}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{\"missingExamples\":[{\"behaviour\":\"combining marks\",\"reason\":\"a trace would clarify the rule\"}]}"),
+                rawResponse("""
                         {"mutantChecks":[{"mutant":"reject CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"}],
                          "uncovered":[],"weakOracle":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactlyInAnyOrder(Kind.MISSING_WORKED_EXAMPLE, Kind.WEAK_TEST_ORACLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
-    }
-
-    @Test
-    void criticPrompt_acceptsConcreteExamplesInTablesOrProseAndDoesNotDemandOnePerEdgeCase() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[],\"missingExamples\":[]}"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "A clean problem statement.", List.of("test_x"));
-        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompt.capture());
-        String reviewInstructions = prompt.getAllValues().stream().map((value) -> (value.getInstructions().getFirst()).getText()).collect(Collectors.joining("""
-
-                """));
-        assertThat(reviewInstructions).contains("replay every worked-example outcome", "unrequested and missing requested changes", "executable setup", "contract-breaking mutants")
-                .contains("Do not invent requirements from solution-only behavior", "Distinguish observable guarantees from pedagogical objectives",
-                        "APPROVED SPECIFICATION CONTRACT is binding authority", "input permitted by the declared contract", "mathematically redundant transformations",
-                        "states that the declared types make impossible", "The produced statement is evidence to compare against those primary sources, not authority",
-                        "If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation")
-                .doesNotContain("derived contract", "source requirements and produced statement do not require");
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1626,42 +1501,36 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void oraclePassRejectsArtifactOnlySourceQuotes() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"accept null inventory names","killed":false,"sourceQuote":"reject null inventory names",
                     "reason":"the generated tests reject null"}],"uncovered":[],"weakOracle":[]}
                 """), rawResponse("""
                 {"mutantChecks":[{"mutant":"sort descending","killed":true,"reason":"the ascending assertion kills it"}],"uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         Map<RepositoryType, Map<String, String>> artifacts = Map.of(RepositoryType.SOLUTION,
                 Map.of("src/Inventory.java", "class Inventory { String policy = \"reject null inventory names\"; }"), RepositoryType.TEMPLATE,
                 Map.of("src/Inventory.java", "class Inventory {}"), RepositoryType.TESTS, Map.of("test/InventoryTest.java", "class InventoryTest {}"));
         SpecFidelityReport report = critique(critic, "Sort integer values.", "Sort integer values in ascending order.", List.of("sortsValues"), artifacts, null);
         assertThat(report.findings()).isEmpty();
-        verify(chatModel, times(3)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
     void freeFormTemplateGapCannotOverrideSuccessfulTaskReachabilityChecks() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+        ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"templateChecks\":[{\"test\":\"summarizesEvents\",\"targetReached\":true,\"reason\":\"the intended method placeholder is reached\"}],\"templateGaps\":[{\"requirement\":\"Implement summarize\",\"reason\":\"the method is a TODO throwing UnsupportedOperationException\"}]}"),
                 jsonResponse("{}"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic, "Summarize checkout events.", "Implement summarize.", List.of("summarizesEvents"));
         assertThat(report.findings()).isEmpty();
     }
 
     @Test
     void adaptationDiff_exposesUnrequestedDeletionAsBlockingFinding() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+        ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java removed displayName(String)\",\"reason\":\"the feedback explicitly preserves it\"}],\"missingRequestedChanges\":[]}"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critiqueAdaptation(critic, "Change only remove(); preserve displayName(String).", "# Inventory", List.of("removeRejectsZero"), """
                 --- solution/src/Inventory.java
                 - String displayName(String itemId)
@@ -1672,39 +1541,35 @@ class SpecFidelityCriticServiceTest {
         });
         assertThat(report.hasBlockingFindings()).isTrue();
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getContents()).contains("ADAPTATION CHANGES").contains("- String displayName(String itemId)"));
     }
 
     @Test
     void mechanicsLeakIsMergedWithSemanticReviewFindings() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+        ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"hiddenRequirements\":[{\"requirement\":\"count_graphemes(s)\",\"sourceQuote\":\"count_graphemes(s)\",\"reason\":\"the tests require this exact signature but the statement never restates it\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"ignore CJK input","killed":false,"sourceQuote":"CJK characters","reason":"no assertion uses CJK input"}],
                          "uncovered":[],"weakOracle":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "todo!() in the template; the template must fail every test.", List.of("test_x"));
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).contains(Kind.MECHANICS_LEAK, Kind.HIDDEN_GRADED_REQUIREMENT, Kind.WEAK_TEST_ORACLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void ungroundedContradictionFinding_isExcludedFromRepairPrompt() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+        ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"contradictions\":[{\"requirement\":\"the answer is always 42\",\"sourceQuote\":\"the answer is always 42\",\"reason\":\"the solution and template disagree\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"ignore CJK input","killed":true,"reason":"the assertion kills it"}],
                          "uncovered":[],"weakOracle":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
@@ -1731,32 +1596,28 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void cancellationAfterContractResponse_skipsRemainingReviewerCalls() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"));
+        SpecFidelityCriticService critic = scripted.critic();
         AtomicBoolean cancelled = new AtomicBoolean();
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, response -> cancelled.set(true), cancelled::get, null,
                 null, null, null);
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        verify(chatModel).call(any(Prompt.class));
+        verify(scripted.model()).call(any(Prompt.class));
     }
 
     @Test
     void cancellationAfterOracleResponse_skipsCorrectionCall() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"), rawResponse("""
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"ignore CJK input","killed":false,"sourceQuote":"requirement absent from brief",
                     "reason":"the assertion does not cover it"}],"uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         AtomicBoolean cancelled = new AtomicBoolean();
         AtomicInteger responses = new AtomicInteger();
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS,
                 response -> cancelled.set(responses.incrementAndGet() == 2), cancelled::get, null, null, null, null);
         assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1803,24 +1664,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void garbageOutput_degradesGracefully() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("I think the tests look fine to me, no JSON here at all."));
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "A clean problem statement.", List.of("test_x"));
-        assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
-    }
-
-    @Test
-    void emptyOutput_degradesGracefully() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse(""));
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "A clean problem statement.", List.of("test_x"));
-        assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
-    }
-
-    @Test
     void jsonWrappedInHarmonyTokens_isStillParsed() {
         SpecFidelityCriticService critic = criticReturning(jsonResponse(
                 """
@@ -1839,52 +1682,22 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void trivialBrief_stillReviewsTheProducedArtifacts() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"));
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic, "too short", "Clean statement.", List.of("test_x"));
         assertThat(report.findings()).isEmpty();
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void adaptationWithNoChanges_blocksWithoutTrustingTheReviewer() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        ScriptedCritic scripted = criticScripted(List.of());
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), "", null);
         assertThat(report.findings()).singleElement()
                 .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.REQUESTED_ADAPTATION_CHANGE_MISSING));
         assertThat(report.hasBlockingFindings()).isTrue();
-        verify(chatModel, never()).call(any(Prompt.class));
-    }
-
-    @Test
-    void unavailableAdaptationScopeReview_blocksLivePersistence() {
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
-        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
-                - old
-                + new\
-                """, null);
-        assertThat(report.findings()).singleElement()
-                .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
-        assertThat(report.hasBlockingFindings()).isTrue();
-    }
-
-    @Test
-    void adaptationDiff_exposesUnrequestedAdditionAsBlockingFinding() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse(
-                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java added reset()\",\"reason\":\"the feedback only requests changing remove()\"}],\"missingRequestedChanges\":[]}"));
-        SpecFidelityReport report = critiqueAdaptation(critic, "Change only remove().", "# Inventory", List.of("removeRejectsZero"), """
-                --- solution/src/Inventory.java
-                + void reset()
-                """, null);
-        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
-            assertThat(finding.kind()).isEqualTo(Kind.UNREQUESTED_ADAPTATION_CHANGE);
-            assertThat(finding.requirement()).contains("added reset()");
-        });
-        assertThat(report.hasBlockingFindings()).isTrue();
+        verify(scripted.model(), never()).call(any(Prompt.class));
     }
 
     @Test
@@ -1897,37 +1710,6 @@ class SpecFidelityCriticServiceTest {
             assertThat(finding.requirement()).isEqualTo("reject zero quantities");
         });
         assertThat(report.hasBlockingFindings()).isTrue();
-    }
-
-    @Test
-    void malformedAdaptationScopeResponse_blocksLivePersistence() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("not json"));
-        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
-                - old
-                + new\
-                """, null);
-        assertThat(report.hasBlockingFindings()).isTrue();
-    }
-
-    @Test
-    void adaptationResponseMissingScopeVerdict_blocksLivePersistence() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"uncovered\":[]}"));
-        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
-                - old
-                + new\
-                """, null);
-        assertThat(report.hasBlockingFindings()).isTrue();
-    }
-
-    @Test
-    void malformedAdaptationScopeEntry_blocksLivePersistence() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"unrequestedChanges\":[{\"reason\":\"missing change\"}],\"missingRequestedChanges\":[]}"));
-        SpecFidelityReport report = critiqueAdaptation(critic, "Change remove(0).", "# Inventory", List.of("test_x"), """
-                - old
-                + new\
-                """, null);
-        assertThat(report.findings()).singleElement()
-                .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
     }
 
     @Test
@@ -1982,8 +1764,7 @@ class SpecFidelityCriticServiceTest {
                     .append("\",\"sourceQuote\":\"user-perceived characters\",\"reason\":\"statement and test disagree; align both\"}");
         }
 
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches the target"}],
                  "contradictions":[%s],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
@@ -1993,44 +1774,17 @@ class SpecFidelityCriticServiceTest {
                         {"mutantChecks":[{"mutant":"return UTF-16 length","killed":false,"sourceQuote":"user-perceived characters","reason":"test/GraphemesTest.java has no surrogate-pair assertion; add one"}],
                          "uncovered":[],"weakOracle":[]}
                         """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
         assertThat(report.findings()).hasSizeLessThanOrEqualTo(12).extracting(SpecFidelityReport.Finding::kind).contains(Kind.WEAK_TEST_ORACLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
-    }
-
-    @Test
-    void templateQualityGapReviewSurfacesStatementDuplicationOfTemplateStubWithQuotedEvidence() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
-                {"exampleChecks":[],
-                 "apiChecks":[],
-                 "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":false,
-                     "reason":"the statement fences the entire template stub verbatim instead of a compact API surface: 'public int count(String value) { return 0; }'"}],
-                 "contradictions":[],
-                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                """), rawResponse("""
-                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
-                 "uncovered":[],"weakOracle":[]}
-                """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.TEMPLATE_QUALITY_GAP);
-        assertThat(report.findings()).singleElement()
-                .satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.detail()).contains("public int count(String value) { return 0; }", "compact API surface"));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
     void continuityReview_threadsPreviousFindingsAndReVerificationInstructionIntoThePrompt() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
                  "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
@@ -2039,15 +1793,14 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport previousReport = new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
         critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, previousReport, null, null, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
+        verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("PREVIOUS REVIEW", "return the UTF-16 length",
                 "no assertion uses a surrogate pair", "adjudicate each item", "omit it if resolved", "repeat it with fresh current evidence if still open",
                 "complete review of the current candidate", "including a defect overlooked previously"));
@@ -2055,15 +1808,13 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void continuityReview_showsTheRepairDeltaBeforeAdjudicatingPriorFindings() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[],"templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"current assertion reaches count"}],
                  "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
                 """), rawResponse("""
                 {"mutantChecks":[{"mutant":"revert after first call","killed":true,"reason":"the added second assertion kills it"}],"uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport previous = new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "revert after first call", "only one call was asserted")));
         critic.critique(
@@ -2073,15 +1824,14 @@ class SpecFidelityCriticServiceTest {
                         + assertEquals(expected, callAgain());\
                         """, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
+        verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).contains("REPAIR DELTA", "+ assertEquals(expected, callAgain())",
                 "PREVIOUS REVIEW HYPOTHESES", "explicitly decide whether the added/changed assertion now kills that same mutant"));
     }
 
     @Test
     void continuityReview_resolvedPriorFindingIsNotCarriedForwardWhenTheCurrentPassOmitsIt() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
                  "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
@@ -2090,8 +1840,7 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"return the UTF-16 length","killed":true,"reason":"the assertion now kills it"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport previousReport = new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(Kind.WEAK_TEST_ORACLE, "return the UTF-16 length", "no assertion uses a surrogate pair")));
         SpecFidelityReport report = critic.critique(
@@ -2102,8 +1851,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void continuityReview_firstAttemptOmitsThePreviousReviewSection() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(rawResponse("""
+        ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"cjk","targetReached":true,"reason":"the assertion reaches count"}],
                  "contradictions":[],"hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
@@ -2112,13 +1860,12 @@ class SpecFidelityCriticServiceTest {
                 {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],
                  "uncovered":[],"weakOracle":[]}
                 """));
-        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+        SpecFidelityCriticService critic = scripted.critic();
         critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null, () -> false, SpecFidelityReport.empty(), null, null, null);
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel, times(2)).call(prompts.capture());
+        verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy((Prompt prompt) -> assertThat(prompt.getContents()).doesNotContain("PREVIOUS REVIEW"));
     }
 
@@ -2142,7 +1889,7 @@ class SpecFidelityCriticServiceTest {
     }
 
     private static ProviderFailureCooldown inMemoryCooldown() {
-        Map<String, Instant> cooldowns = new ConcurrentHashMap();
+        Map<String, Instant> cooldowns = new ConcurrentHashMap<>();
         return new ProviderFailureCooldown() {
 
             @Override
@@ -2307,6 +2054,58 @@ class SpecFidelityCriticServiceTest {
         String spec = "## Rules\nR1: must be recursive\nR2: must be recursive\nR3: must not use loops\n";
 
         assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).hasSize(2);
+    }
+
+    @Test
+    void techniqueRules_stopAtTheAdvisoryBudgetWhenASpecificationIsFullOfThem() {
+        // The findings are advisory and unrepairable, so a specification that mandates a technique in every rule must not push every other advisory finding out of the report.
+        String spec = """
+                ## Rules
+                R1: The implementation must be recursive.
+                R2: The implementation must use a Stream pipeline.
+                R3: The implementation must use lambda expressions.
+                R4: The implementation must not use loops.
+                R5: The implementation must not use recursion.
+                R6: The implementation must use a for loop.
+                """;
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).hasSize(4);
+    }
+
+    // --- Grader-mechanics leak detection ---
+
+    /**
+     * Each phrasing the deterministic, model-free leak scan must catch. Every pattern is independently deletable from
+     * {@code SpecFidelityCriticService#MECHANICS_LEAK_PATTERNS} without any other test noticing, so each one is pinned by its own row.
+     */
+    private static Stream<String> mechanicsLeakPhrasings() {
+        return Stream.of("Raise NotImplementedError from the stub.", "The starter contains todo!() where your code goes.", "These make the tests fail until you implement it.",
+                "Note that the template must fail every test before you start.", "Use the exact test name reported below.",
+                "The mismatch is reported by the test runner as a failure.", "The report is generated by the test suite after each push.",
+                "The stub lives in the template file you were given.");
+    }
+
+    @ParameterizedTest
+    @MethodSource("mechanicsLeakPhrasings")
+    void mechanicsLeak_isFlaggedInTheStudentFacingStatement(String statement) {
+        SpecFidelityReport report = critique(detector(), UNICODE_BRIEF, statement, List.of("test_x"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).as("%s describes how the exercise is rigged for grading, not the task", statement)
+                .anySatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.MECHANICS_LEAK));
+    }
+
+    /** Near misses that share vocabulary with a leak but describe the task, so flagging them would attach noise to ordinary statements. */
+    private static Stream<String> mechanicsLeakNearMisses() {
+        return Stream.of("Your tests must fail fast on invalid input.", "Return the template string that the caller supplied.",
+                "The runner reports each shipment by name in the generated manifest.");
+    }
+
+    @ParameterizedTest
+    @MethodSource("mechanicsLeakNearMisses")
+    void mechanicsLeak_staysSilentOnTaskProseThatMerelySharesItsVocabulary(String statement) {
+        SpecFidelityReport report = critique(detector(), UNICODE_BRIEF, statement, List.of("test_x"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).as("%s describes the task, not the grading rig", statement).noneSatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.MECHANICS_LEAK));
     }
 
     @Test

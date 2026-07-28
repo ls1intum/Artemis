@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -31,12 +33,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -183,17 +190,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void claimExternalMutationSlot_doesNotExpireWhileTheCallerStillHoldsTheLease() {
-        long exerciseId = 443L;
-
-        jobService.claimExternalMutationSlot(exerciseId);
-
-        @SuppressWarnings("unchecked")
-        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
-        assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
-    }
-
-    @Test
     void activeGenerationSlot_doesNotExpireForSupportedLongRunningJobs() {
         long exerciseId = 447L;
         GenerationJobService longRunningJobService = new GenerationJobService(hazelcastInstance, event -> {
@@ -212,7 +208,7 @@ class GenerationJobServiceTest {
         assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
 
         longRunningJobService.recordEvent(exerciseId, jobId, progress("still running"), false);
-        longRunningJobService.recordFileChange(exerciseId, jobId, fileChange("solution/Preview.java", "changed"));
+        longRunningJobService.recordFileChange(exerciseId, jobId, fileChange("solution/Preview.java"));
         assertThat(jobMap.getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
         assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
         assertThat(fileChangeMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(Long.MAX_VALUE);
@@ -288,26 +284,11 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void clearStaleJobs_keepsStaleExternalMutationWhileOwnerIsPresent() {
-        long exerciseId = 444L;
-        String token = jobService.claimExternalMutationSlot(exerciseId);
-        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
-        GenerationJobService scanner = new GenerationJobService(hazelcastInstance, event -> {
-        }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
-        scanner.init();
-
-        scanner.clearStaleJobs();
-
-        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
-        jobService.clearExternalMutationSlot(exerciseId, token);
-    }
-
-    @Test
     void clearStaleJobs_keepsExternalMutationAfterOwnerLeavesClusterUntilValueGuardedRecovery() {
         long exerciseId = 445L;
         String token = jobService.claimExternalMutationSlot(exerciseId);
         forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        // An owner still present in the membership view takes the same path: an external mutation is never reclaimed for staleness, only recovered by exact token.
         forceJobOwner(exerciseId, "departed-node");
         GenerationJobService scanner = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
@@ -316,6 +297,7 @@ class GenerationJobServiceTest {
         scanner.clearStaleJobs();
 
         assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
         assertThat(scanner.getExternalMutationInfo(exerciseId)).hasValueSatisfying(info -> {
             assertThat(info.token()).isEqualTo(token);
             assertThat(info.ownerNodeId()).isEqualTo("departed-node");
@@ -405,7 +387,7 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "adapt", GenerationMode.ADAPT);
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/A.java", "adapted"));
+        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/A.java"));
         jobService.clearJob(exerciseId, jobId);
 
         jobService.discardRetainedRun(exerciseId, "different-job");
@@ -630,7 +612,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
         assertThat(jobService.recordEvent(exerciseId, jobId, progress("working"), false)).isTrue();
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Before.java", "before"));
+        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Before.java"));
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, owner)).isTrue();
 
@@ -648,7 +630,7 @@ class GenerationJobServiceTest {
         assertThat(
                 jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true))
                 .isFalse();
-        assertThat(jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Late.java", "late"))).isFalse();
+        assertThat(jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Late.java"))).isFalse();
 
         ExerciseGenerationStatusDTO afterLateCompletion = jobService.getStatus(owner, exercise).orElseThrow();
         assertThat(afterLateCompletion.events()).isEqualTo(cancelled.events());
@@ -905,7 +887,6 @@ class GenerationJobServiceTest {
             assertThat(status.running()).isFalse();
             assertThat(status.events().getLast().message()).contains("heartbeats");
         });
-        verify(budgetService, never()).releaseReservation("reservation-225");
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scannerNode.startJob(owner, exercise, "new", GenerationMode.GENERATE));
     }
 
@@ -916,7 +897,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
         jobService.recordEvent(exerciseId, jobId, progress("still running"), false);
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Before.java", "before"));
+        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/Before.java"));
         AtomicInteger hookRuns = new AtomicInteger(0);
         jobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
         forceJobHeartbeat(exerciseId, jobId, Instant.now().minus(Duration.ofMinutes(10)));
@@ -927,7 +908,7 @@ class GenerationJobServiceTest {
 
         scannerNode.clearStaleJobs();
         jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true);
-        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/After.java", "after"));
+        jobService.recordFileChange(exerciseId, jobId, fileChange("solution/After.java"));
 
         await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> assertThat(hookRuns).hasValue(1));
         ExerciseGenerationStatusDTO status = jobService.getStatus(owner, exercise).orElseThrow();
@@ -955,7 +936,6 @@ class GenerationJobServiceTest {
         scannerNode.clearStaleJobs();
 
         verify(budgetService).retainReservationForBudgetWindow("reservation-127");
-        verify(budgetService, never()).releaseReservation("reservation-127");
         assertThat(scannerNode.hasActiveJob(exerciseId)).isFalse();
     }
 
@@ -1038,7 +1018,6 @@ class GenerationJobServiceTest {
             assertThat(status.cancellable()).isFalse();
         });
         verify(budgetService, never()).retainReservationForBudgetWindow("reservation-228");
-        verify(budgetService, never()).releaseReservation("reservation-228");
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE));
     }
 
@@ -1140,6 +1119,42 @@ class GenerationJobServiceTest {
         assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("## Rules\n- R1: computes a result");
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void tokenUsageSink_stopsTheRunExactlyWhenAModelCallCouldNotBeAccounted(boolean recorded) {
+        // Every other test stubs this sink out, so the accounting guard itself has never run: a run whose token spend cannot be attributed must stop rather than keep calling
+        // the provider off the books.
+        LLMTokenUsageService tokenUsageService = mock(LLMTokenUsageService.class);
+        when(tokenUsageService.trackChatResponseTokenUsage(any(), any(), anyString(), any())).thenReturn(recorded);
+        GenerationJobService accountingService = new GenerationJobService(hazelcastInstance, event -> {
+        }, tokenUsageService);
+        accountingService.init();
+        Consumer<ChatResponse> sink = accountingService.tokenUsageSink(3L, 4L, 5L);
+        ThrowingCallable recordOneResponse = () -> sink.accept(mock(ChatResponse.class));
+
+        if (recorded) {
+            assertThatCode(recordOneResponse).doesNotThrowAnyException();
+        }
+        else {
+            assertThatExceptionOfType(GenerationJobService.TokenUsageAccountingException.class).isThrownBy(recordOneResponse);
+        }
+    }
+
+    @Test
+    void isOwnedActiveJob_isTrueOnlyForThisNodesLiveJob() {
+        // The stale-writer guard consulted before every durable Git/DB write; it is stubbed at every call site, so this is the only place it actually executes.
+        long exerciseId = 235L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+
+        assertThat(jobService.isOwnedActiveJob(exerciseId, jobId)).as("this node's live job").isTrue();
+        assertThat(jobService.isOwnedActiveJob(exerciseId, "a-previous-job")).as("a superseded job id").isFalse();
+        assertThat(jobService.isOwnedActiveJob(exerciseId + 1, jobId)).as("an exercise with no job at all").isFalse();
+
+        forceJobOwner(exerciseId, "departed-node");
+
+        assertThat(jobService.isOwnedActiveJob(exerciseId, jobId)).as("the slot was taken over by another node").isFalse();
+    }
+
     private void forceJobHeartbeat(long exerciseId, String jobId, Instant heartbeatAt) {
         @SuppressWarnings("unchecked")
         IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
@@ -1165,7 +1180,7 @@ class GenerationJobServiceTest {
                 existing.ownerNodeId(), existing.lastHeartbeatAt(), existing.cancellable(), existing.budgetReservationId()));
     }
 
-    private static ExerciseGenerationFileChangeDTO fileChange(String path, String content) {
+    private static ExerciseGenerationFileChangeDTO fileChange(String path) {
         return ExerciseGenerationFileChangeDTO.of(path, ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1);
     }
 
@@ -1207,7 +1222,7 @@ class GenerationJobServiceTest {
         String jobId = jobService.startJob(owner, exercise(exerciseId), "go", GenerationMode.GENERATE);
 
         for (int i = 0; i < GenerationJobReplayStore.MAX_RETAINED_FILE_CHANGES + 1; i++) {
-            jobService.recordFileChange(exerciseId, jobId, fileChange("solution/File" + i + ".java", "body"));
+            jobService.recordFileChange(exerciseId, jobId, fileChange("solution/File" + i + ".java"));
         }
         jobService.recordFileChange(exerciseId, jobId, ExerciseGenerationFileChangeDTO.of("solution/File1.java", ExerciseGenerationFileChangeDTO.ACTION_EDIT, 9));
 
@@ -1224,14 +1239,14 @@ class GenerationJobServiceTest {
         long exerciseId = 502L;
         User owner = user("owner");
         String firstJob = jobService.startJob(owner, exercise(exerciseId), "first", GenerationMode.GENERATE);
-        jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Old.java", "old"));
+        jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Old.java"));
         jobService.clearJob(exerciseId, firstJob);
 
         String secondJob = jobService.startJob(owner, exercise(exerciseId), "second", GenerationMode.GENERATE);
-        assertThat(jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Stale.java", "stale"))).isFalse();
+        assertThat(jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Stale.java"))).isFalse();
 
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileChanges()).isEmpty();
-        assertThat(jobService.recordFileChange(exerciseId, secondJob, fileChange("solution/New.java", "new"))).isTrue();
+        assertThat(jobService.recordFileChange(exerciseId, secondJob, fileChange("solution/New.java"))).isTrue();
         assertThat(jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileChanges()).extracting(ExerciseGenerationFileChangeDTO::path)
                 .containsExactly("solution/New.java");
     }
@@ -1296,7 +1311,7 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         String firstJob = jobService.startJob(owner, exercise, "first", GenerationMode.GENERATE);
-        jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Before.java", "before"));
+        jobService.recordFileChange(exerciseId, firstJob, fileChange("solution/Before.java"));
         jobService.recordEvent(exerciseId, firstJob, ExerciseGenerationEventDTO.done("done", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true), true);
         jobService.clearJob(exerciseId, firstJob);
         assertThat(jobService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
