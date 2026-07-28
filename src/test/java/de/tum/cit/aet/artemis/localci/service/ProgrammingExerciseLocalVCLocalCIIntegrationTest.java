@@ -46,6 +46,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -121,6 +123,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @BeforeAll
     void setupAll() {
@@ -528,6 +533,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 .findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(importedExercise.getId()).orElseThrow();
         assertThat(importedWithReferences.getGradingCriteria()).hasSize(1);
         assertThat(importedWithReferences.getBuildConfig().getId()).isNotEqualTo(sourceBuildConfigId);
+
+        // The channel is created with the name the client supplied. The channel name is transient, so it does not survive
+        // the re-fetch of the imported exercise and has to be captured before it (regression guard).
+        assertThat(channelRepository.findChannelByExerciseId(importedExercise.getId())).isNotNull().extracting(Channel::getName).isEqualTo("testchannel-pe-init");
 
         // The repositories were really created on the local VCS (not mocked).
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow(),

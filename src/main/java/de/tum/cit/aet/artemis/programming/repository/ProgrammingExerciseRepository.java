@@ -89,7 +89,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig", "submissionPolicy", "gradingCriteria",
-            "gradingCriteria.structuredGradingInstructions" })
+            "gradingCriteria.structuredGradingInstructions", "competencyLinks" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
@@ -919,9 +919,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Finds a programming exercise by its id, eagerly loading the associations that make up a freshly created (or
      * imported) exercise: template and solution participation, team assignment config, categories, auxiliary
-     * repositories, plagiarism detection config, build config, submission policy and grading criteria (with their
-     * structured instructions). This is used to return a fully initialized exercise after creation or import, both of
-     * which run without an open session and would otherwise expose uninitialized proxies.
+     * repositories, plagiarism detection config, build config, submission policy, grading criteria (with their
+     * structured instructions) and competency links. This is used to return a fully initialized exercise after creation
+     * or import, both of which run without an open session and would otherwise expose uninitialized proxies (callers
+     * such as the Atlas competency import add to the returned exercise's competency links).
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

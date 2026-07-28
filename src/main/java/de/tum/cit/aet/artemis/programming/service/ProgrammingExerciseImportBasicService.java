@@ -131,6 +131,9 @@ public class ProgrammingExerciseImportBasicService {
      * @return the newly created exercise, re-fetched with its import-relevant associations initialized
      */
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
+        // The channel name is a transient, client-supplied field, so it does not survive the re-fetch at the end of this
+        // method. Capture it here to create the channel with the name the user chose during the import.
+        final String channelName = newExercise.getChannelName();
 
         prepareBasicExerciseInformation(sourceExercise, newExercise);
 
@@ -204,7 +207,7 @@ public class ProgrammingExerciseImportBasicService {
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
 
-        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(channelName));
 
         return newExercise;
     }
@@ -253,7 +256,7 @@ public class ProgrammingExerciseImportBasicService {
     private void prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        setupBuildConfig(newExercise, sourceExercise);
+        setupBuildConfig(sourceExercise, newExercise);
 
         if (sourceExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
             newExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
@@ -276,10 +279,10 @@ public class ProgrammingExerciseImportBasicService {
      * already supplied a build config (e.g. the user overrode it during import) its id and back-reference are cleared;
      * otherwise the config is copied from the source exercise, or a default config is created if the source has none.
      *
-     * @param newExercise    the exercise being imported
      * @param sourceExercise the source exercise providing the fallback build config
+     * @param newExercise    the exercise being imported
      */
-    private void setupBuildConfig(ProgrammingExercise newExercise, ProgrammingExercise sourceExercise) {
+    private void setupBuildConfig(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
         if (newExercise.getBuildConfig() != null) {
             var buildConfig = newExercise.getBuildConfig();
             buildConfig.setId(null);
@@ -440,8 +443,10 @@ public class ProgrammingExerciseImportBasicService {
 
         newExercise.disconnectRelatedEntities();
 
-        // copy the grading instructions to avoid issues with references to the original
-        // exercise
+        // copy the grading instructions to avoid issues with references to the original exercise. A caller may pass a
+        // skeleton whose collection is null (that is how the generic import services are asked to backfill the source's
+        // criteria); the programming import always takes them from the source, so start from an empty set here.
+        newExercise.ensureGradingCriteriaSet();
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
