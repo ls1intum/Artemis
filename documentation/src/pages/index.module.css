@@ -6,6 +6,7 @@
     --home-ice: #eaf4fb;
     --home-ink: #102a3d;
     --home-secondary-hover: rgba(152, 198, 234, 0.34);
+
     display: flex;
     min-height: 100vh;
     min-height: 100dvh;
@@ -106,7 +107,7 @@
 .eyebrow::before {
     width: 1.75rem;
     height: 2px;
-    background: currentColor;
+    background: currentcolor;
     content: '';
 }
 
@@ -168,8 +169,7 @@
     text-decoration: none;
 }
 
-.audienceCard:focus-visible,
-.researchLink:focus-visible {
+.audienceCard:focus-visible {
     outline: 3px solid var(--home-tum-blue);
     outline-offset: 3px;
 }
@@ -197,7 +197,7 @@
     width: 1.05rem;
     height: 1.05rem;
     fill: none;
-    stroke: currentColor;
+    stroke: currentcolor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 1.8;
@@ -218,7 +218,7 @@
     width: 100%;
     height: 100%;
     fill: none;
-    stroke: currentColor;
+    stroke: currentcolor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 1.65;
@@ -458,12 +458,14 @@
     --home-tum-blue: #98c6ea;
     --home-ink: #edf6fc;
     --home-secondary-hover: rgba(152, 198, 234, 0.1);
+
     background: linear-gradient(108deg, #101b24 0 32%, rgba(18, 36, 50, 0.98) 50%, rgba(23, 57, 80, 0.96) 72%, rgba(34, 84, 120, 0.88) 100%);
 }
 
 :global([data-theme='dark'] body:has(.homepage-landing) .navbar) {
     --ifm-navbar-link-color: #d8ebf8;
     --ifm-navbar-link-hover-color: #98c6ea;
+
     background: transparent;
 }
 

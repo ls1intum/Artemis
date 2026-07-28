@@ -79,7 +79,7 @@
 .navbarTrigger .triggerLabel svg {
     width: 1rem;
     height: 1rem;
-    stroke: currentColor;
+    stroke: currentcolor;
 }
 
 .triggerShortcut {
@@ -101,6 +101,7 @@
     --search-ink: #102a3d;
     --search-navy: #003c69;
     --search-blue: #0065bd;
+
     width: min(52rem, calc(100vw - 2rem));
     max-width: none;
     max-height: calc(100vh - 2rem);
@@ -174,7 +175,7 @@
     height: 2rem;
     padding: 0;
     place-items: center;
-    color: currentColor;
+    color: currentcolor;
     font: inherit;
     font-size: 1.5rem;
     line-height: 1;
@@ -204,6 +205,7 @@
     --search-local-hit-active-color: #fff;
     --search-local-highlight-color: var(--search-blue);
     --search-local-muted-color: #607887;
+
     width: 100%;
 }
 
