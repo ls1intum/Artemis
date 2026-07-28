@@ -95,145 +95,78 @@
         }
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
-        @if (!isExamMode()) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
-                    <jhi-date-time-picker
-                        #releaseDate
-                        class="form-element"
-                        id="pick-releaseDate"
-                        labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
-                        [(ngModel)]="fileUploadExercise().releaseDate"
-                        (valueChange)="validateDate()"
-                        [error]="false"
-                        name="releaseDate"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
-                    />
-                </div>
-                <div class="form-group flex-grow-1 ms-3">
-                    <jhi-date-time-picker
-                        #startDate
-                        class="form-element"
-                        id="pick-startDate"
-                        name="startDate"
-                        [startAt]="fileUploadExercise().releaseDate"
-                        [min]="fileUploadExercise().releaseDate"
-                        [error]="!!fileUploadExercise().startDateError"
-                        labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="fileUploadExercise().startDate"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
-                    />
-                    @if (fileUploadExercise().startDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
-                    }
-                </div>
-            </div>
-        }
-        @if (!isExamMode()) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
-                    <jhi-date-time-picker
-                        #dueDate
-                        class="form-element"
-                        id="pick-dueDate"
-                        name="dueDate"
-                        [startAt]="fileUploadExercise().startDate"
-                        [min]="fileUploadExercise().startDate"
-                        [error]="!!fileUploadExercise().dueDateError"
-                        labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="fileUploadExercise().dueDate"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
-                    />
-                    @if (fileUploadExercise().dueDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
-                    }
-                </div>
-                <div class="form-group flex-grow-1 ms-3">
-                    <jhi-date-time-picker
-                        #assessmentDueDate
-                        class="form-element"
-                        id="pick-assessmentDueDate"
-                        name="assessmentDueDate"
-                        [startAt]="fileUploadExercise().dueDate"
-                        [min]="fileUploadExercise().dueDate"
-                        [error]="!!fileUploadExercise().assessmentDueDateError"
-                        labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="fileUploadExercise().assessmentDueDate"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
-                    />
-                    @if (fileUploadExercise().assessmentDueDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
-                    }
-                </div>
-            </div>
-        }
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ fileUploadExercise().course ? 'Course' : 'Exam' }}Label"></label>
-            <div>
-                <jhi-included-in-overall-score-picker
-                    [(includedInOverallScore)]="fileUploadExercise().includedInOverallScore"
-                    (includedInOverallScoreChange)="validateDate()"
-                    [allowNotIncluded]="!isExamMode()"
+        <div class="grading-layout">
+            @if (!isExamMode()) {
+                <jhi-file-upload-exercise-timeline
+                    class="exercise-timeline"
+                    [(releaseDate)]="fileUploadExercise().releaseDate"
+                    [(startDate)]="fileUploadExercise().startDate"
+                    [(dueDate)]="fileUploadExercise().dueDate"
+                    [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
+                    (timelineStatus)="timelineStatus.set($event)"
                 />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
+            }
+            <div class="grading-options">
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
-                    <input
-                        required
-                        type="number"
-                        class="form-control"
-                        min="1"
-                        max="9999"
-                        name="points"
-                        id="field_points"
-                        [(ngModel)]="fileUploadExercise().maxPoints"
-                        #points="ngModel"
-                    />
-                    @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
-                    }
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ fileUploadExercise().course ? 'Course' : 'Exam' }}Label"></label>
+                    <div>
+                        <jhi-included-in-overall-score-picker
+                            [(includedInOverallScore)]="fileUploadExercise().includedInOverallScore"
+                            (includedInOverallScoreChange)="validateDate()"
+                            [allowNotIncluded]="!isExamMode()"
+                        />
+                    </div>
                 </div>
-            </div>
-            <div class="col">
-                <div class="form-group" [hidden]="fileUploadExercise().includedInOverallScore! !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
-                    <input
-                        type="number"
-                        [required]="fileUploadExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        class="form-control"
-                        min="0"
-                        max="9999"
-                        name="bonusPoints"
-                        id="field_bonusPoints"
-                        [(ngModel)]="fileUploadExercise().bonusPoints"
-                        #bonusPoints="ngModel"
-                    />
-                    @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div
-                            class="alert alert-danger"
-                            [hidden]="fileUploadExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            jhiTranslate="artemisApp.exercise.bonusPointsError"
-                        ></div>
-                    }
+                <div class="score-fields">
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                        <input
+                            required
+                            type="number"
+                            class="form-control"
+                            min="1"
+                            max="9999"
+                            name="points"
+                            id="field_points"
+                            [(ngModel)]="fileUploadExercise().maxPoints"
+                            #points="ngModel"
+                        />
+                        @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
+                            <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
+                        }
+                    </div>
+                    <div class="form-group" [hidden]="fileUploadExercise().includedInOverallScore! !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                        <input
+                            type="number"
+                            [required]="fileUploadExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            class="form-control"
+                            min="0"
+                            max="9999"
+                            name="bonusPoints"
+                            id="field_bonusPoints"
+                            [(ngModel)]="fileUploadExercise().bonusPoints"
+                            #bonusPoints="ngModel"
+                        />
+                        @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
+                            <div
+                                class="alert alert-danger"
+                                [hidden]="fileUploadExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                                jhiTranslate="artemisApp.exercise.bonusPointsError"
+                            ></div>
+                        }
+                    </div>
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
+                    <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise().filePattern" />
+                </div>
+                <jhi-presentation-score-checkbox [exercise]="fileUploadExercise()" />
             </div>
         </div>
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
-            <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise().filePattern" />
-        </div>
-        <jhi-presentation-score-checkbox [exercise]="fileUploadExercise()" />
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise()" />
@@ -244,14 +177,7 @@
         [isImport]="isImport()"
         [isCreation]="!fileUploadExercise().id"
         [isSaving]="isSaving()"
-        [isDisabled]="
-            !!(
-                editForm.form.invalid ||
-                fileUploadExercise().dueDateError ||
-                fileUploadExercise().assessmentDueDateError ||
-                fileUploadExercise().exampleSolutionPublicationDateError
-            )
-        "
+        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || fileUploadExercise().exampleSolutionPublicationDateError)"
         (onCancel)="previousState()"
         (save)="save()"
         [notificationText]="notificationText()"

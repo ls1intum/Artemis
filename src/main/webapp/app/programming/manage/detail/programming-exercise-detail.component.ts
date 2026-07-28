@@ -22,7 +22,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -91,7 +90,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
         AtlasOrchestrationTriggerComponent,
-        TooltipModule,
         ConsistencyCheckComponent,
         CreateVariantWithAiButtonComponent,
     ],

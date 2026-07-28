@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, model, out
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiInputNumberComponent } from 'app/shared-ui/tum-ui/input-number/tum-ui-input-number.component';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
@@ -27,7 +27,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         FormsModule,
         TumUiDialogComponent,
         TumUiInputDirective,
-        InputNumberModule,
+        TumUiInputNumberComponent,
         TumUiButtonComponent,
         TumUiMessageComponent,
         TumUiTooltipDirective,

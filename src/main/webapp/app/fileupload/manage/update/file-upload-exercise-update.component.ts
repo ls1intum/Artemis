@@ -41,10 +41,13 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/fo
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
+    styleUrl: './file-upload-exercise-update.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
@@ -67,6 +70,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        FileUploadExerciseTimelineComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {
@@ -89,10 +93,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
     solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
 
@@ -105,6 +105,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     notificationText = signal<string | undefined>(undefined);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
+    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
 
     examCourseId = signal<number | undefined>(undefined);
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -127,6 +128,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     constructor() {
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
+        });
+
+        effect(() => {
+            this.timelineStatus();
+            this.validateDate();
         });
 
         // Effect to handle route data loading
@@ -219,22 +225,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean(
-                    (this.points()?.valid ?? true) &&
-                    (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode() ||
-                        (!exercise.startDateError &&
-                            !exercise.dueDateError &&
-                            !exercise.assessmentDueDateError &&
-                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
-                            (this.startDateField()?.dateInput?.valid ?? true) &&
-                            (this.dueDateField()?.dateInput?.valid ?? true) &&
-                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
-                ),
-                empty:
-                    !this.isExamMode() &&
-                    // if a dayjs object contains an empty date, it is considered "invalid"
-                    (!exercise.startDate?.isValid() || !exercise.dueDate?.isValid() || !exercise.assessmentDueDate?.isValid() || !exercise.releaseDate?.isValid()),
+                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
     }

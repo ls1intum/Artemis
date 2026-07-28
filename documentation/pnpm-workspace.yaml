@@ -16,6 +16,7 @@ overrides:
     '@babel/plugin-transform-modules-systemjs': '7.29.4'
     # Kept on the 1.x line (docs' express 4 stack requires ^1).
     body-parser: '1.20.6'
+    brace-expansion: '5.0.8'
     # Kept on the 3.x line (consumers require ^3).
     fast-uri: '3.1.4'
     follow-redirects: '1.16.0'
@@ -25,6 +26,7 @@ overrides:
     js-yaml: '4.3.0'
     launch-editor: '2.14.1'
     minimatch: '10.2.5'
+    postcss: '8.5.23'
     qs: '6.15.2'
     serialize-javascript: '7.0.5'
     shell-quote: '1.10.0'

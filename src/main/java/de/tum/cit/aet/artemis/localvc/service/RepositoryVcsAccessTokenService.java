@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -93,17 +95,52 @@ public class RepositoryVcsAccessTokenService {
      */
     public RepositoryVCSAccessToken getOrCreateToken(User user, ProgrammingExercise exercise, RepositoryType repositoryType, Long auxiliaryRepositoryId) {
         BaseRepository baseRepository = resolveBaseRepository(exercise, repositoryType, auxiliaryRepositoryId);
-        Optional<RepositoryVCSAccessToken> existingToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), baseRepository.repositoryUri());
+        return getOrCreate(user, baseRepository.repositoryUri(), () -> buildToken(user, exercise, baseRepository));
+    }
+
+    /**
+     * Returns the existing token for the staff user and the student's assignment repository, or creates a new one if none exists. Used as the lazy fallback when a staff member
+     * clones a student repository. Authorization (at least tutor in the course and read access to the specific repository) must be checked by the caller; this method only manages
+     * the token itself, and the token never widens the caller's permissions (read/write is re-derived from the live course role on every git operation).
+     *
+     * @param user          the owning staff user
+     * @param exercise      the programming exercise the participation belongs to
+     * @param participation the student participation whose assignment repository the token grants access to
+     * @return the existing or newly created token
+     */
+    public RepositoryVCSAccessToken getOrCreateStudentRepositoryToken(User user, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        String repositoryUri = studentRepositoryUriOrElseThrow(participation);
+        return getOrCreate(user, repositoryUri, () -> buildStudentToken(user, exercise, participation, repositoryUri));
+    }
+
+    /**
+     * Returns the existing token for the staff user and the student's assignment repository, or throws if none exists (used by the read-only REST endpoint).
+     *
+     * @param user          the owning staff user
+     * @param participation the student participation whose assignment repository the token grants access to
+     * @return the existing token
+     */
+    public RepositoryVCSAccessToken findStudentRepositoryTokenOrElseThrow(User user, ProgrammingExerciseStudentParticipation participation) {
+        String repositoryUri = studentRepositoryUriOrElseThrow(participation);
+        return repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), repositoryUri)
+                .orElseThrow(() -> new EntityNotFoundException("RepositoryVCSAccessToken for repository " + repositoryUri));
+    }
+
+    /**
+     * Returns the existing token for the user and repository URI, or creates one via the given builder if none exists, retrying once on a unique-constraint race.
+     */
+    private RepositoryVCSAccessToken getOrCreate(User user, String repositoryUri, Supplier<RepositoryVCSAccessToken> tokenBuilder) {
+        Optional<RepositoryVCSAccessToken> existingToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), repositoryUri);
         if (existingToken.isPresent()) {
             return existingToken.get();
         }
         try {
-            return createToken(user, exercise, baseRepository);
+            return repositoryVCSAccessTokenRepository.save(tokenBuilder.get());
         }
         catch (DataIntegrityViolationException e) {
             // A concurrent request (e.g. a double-clicked clone dialog or a racing eager-provisioning path) inserted the token for the same (user, repository URI) first and
             // tripped the unique constraint. Re-read and return the now-existing token instead of failing the user-facing request.
-            return repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), baseRepository.repositoryUri()).orElseThrow(() -> e);
+            return repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), repositoryUri).orElseThrow(() -> e);
         }
     }
 
@@ -265,10 +302,6 @@ public class RepositoryVcsAccessTokenService {
         repositoryVCSAccessTokenRepository.deleteAllByUserId(userId);
     }
 
-    private RepositoryVCSAccessToken createToken(User user, ProgrammingExercise exercise, BaseRepository baseRepository) {
-        return repositoryVCSAccessTokenRepository.save(buildToken(user, exercise, baseRepository));
-    }
-
     private RepositoryVCSAccessToken buildToken(User user, ProgrammingExercise exercise, BaseRepository baseRepository) {
         RepositoryVCSAccessToken token = new RepositoryVCSAccessToken();
         token.setUser(user);
@@ -278,6 +311,25 @@ public class RepositoryVcsAccessTokenService {
         token.setRepositoryUri(baseRepository.repositoryUri());
         token.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
         return token;
+    }
+
+    private RepositoryVCSAccessToken buildStudentToken(User user, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, String repositoryUri) {
+        RepositoryVCSAccessToken token = new RepositoryVCSAccessToken();
+        token.setUser(user);
+        token.setExercise(exercise);
+        token.setRepositoryType(RepositoryType.USER);
+        token.setParticipation(participation);
+        token.setRepositoryUri(repositoryUri);
+        token.setVcsAccessToken(LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken());
+        return token;
+    }
+
+    private String studentRepositoryUriOrElseThrow(ProgrammingExerciseStudentParticipation participation) {
+        String repositoryUri = participation.getRepositoryUri();
+        if (!StringUtils.hasText(repositoryUri)) {
+            throw new EntityNotFoundException("No repository URI for participation " + participation.getId());
+        }
+        return repositoryUri;
     }
 
     /**
