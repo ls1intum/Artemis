@@ -3,8 +3,11 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+// TooltipModule remains for the still-PrimeNG `pTooltip`s on the label / timezone / visible-date hints; the
+// variant-group lock overlay uses the tum-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,7 +29,18 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [FaStackComponent, TooltipModule, ButtonModule, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FaStackComponent,
+        TooltipModule,
+        TumUiTooltipDirective,
+        ButtonModule,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        DatePickerModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
     protected readonly faGlobe = faGlobe;

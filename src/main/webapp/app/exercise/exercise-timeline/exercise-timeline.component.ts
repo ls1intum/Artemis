@@ -3,7 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
+// TooltipModule remains for the still-PrimeNG `pTooltip` on the per-item invalid-date info icon; the variant-group
+// lock overlay below uses the tum-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faLock } from '@fortawesome/free-solid-svg-icons';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +44,7 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-exercise-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TumUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './exercise-timeline.component.html',
     styleUrl: './exercise-timeline.component.scss',
 })
@@ -49,6 +54,7 @@ export class ExerciseTimelineComponent {
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
+    protected readonly faLock = faLock;
     /** Label keys of items whose currently-typed text is non-empty but not a valid date. Drives the
      *  invalid (red border + tooltip) state so a malformed entry is flagged instead of silently dropped. */
     private invalidInputKeys = signal<Set<string>>(new Set());

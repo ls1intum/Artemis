@@ -53,13 +53,14 @@
                         }
                         @if (showDragHandle()) {
                             <td>
-                                <span
+                                <fa-icon
                                     cdkDragHandle
                                     [cdkDragHandleDisabled]="row.isQuizNonIndividual"
-                                    class="pi pi-bars drag-handle"
+                                    [icon]="faBars"
+                                    class="drag-handle"
                                     [class.disabled]="row.isQuizNonIndividual"
                                     [title]="row.nonIndividualQuizTooltip ?? ('artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate)"
-                                ></span>
+                                />
                             </td>
                         }
                         <td class="col-title">

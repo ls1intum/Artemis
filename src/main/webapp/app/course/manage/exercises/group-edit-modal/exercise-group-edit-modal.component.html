@@ -24,7 +24,7 @@
                 />
             </div>
             <div>
-                <div class="d-flex align-items-center gap-1 fw-semibold mb-1">
+                <label class="d-flex align-items-center gap-1 fw-semibold mb-1" for="group-edit-max-points">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
                     <fa-icon
                         [icon]="faCircleInfo"
@@ -32,11 +32,13 @@
                         tumUiTooltipPlacement="top"
                         class="text-muted"
                     />
-                </div>
-                <p-inputnumber
-                    [ngModel]="draftMaxPoints() ?? null"
-                    (ngModelChange)="draftMaxPoints.set($event ?? undefined)"
+                </label>
+                <tum-ui-input-number
+                    inputId="group-edit-max-points"
+                    [ngModel]="draftMaxPoints()"
+                    (ngModelChange)="draftMaxPoints.set($event)"
                     [min]="0"
+                    [maxFractionDigits]="1"
                     [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                 />
             </div>

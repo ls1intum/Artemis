@@ -16,8 +16,9 @@ let nextInputNumberId = 0;
  * `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work. Empty input clears to `undefined`;
  * the value is clamped to `[min, max]` on blur and on every step, matching `p-inputnumber`.
  *
- * Scope: integer values (all Artemis usages are integers). Decimal / currency / fraction-digit modes are not
- * implemented; add them here if a consumer needs them.
+ * Scope: integers by default; decimals are opt-in via {@link maxFractionDigits}, which accepts the locale's decimal
+ * separator and truncates the fraction to that many digits. Currency / percent modes are not implemented; add them
+ * here if a consumer needs them.
  */
 @Component({
     selector: 'tum-ui-input-number',
@@ -49,6 +50,11 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly fluid = input(false);
     /** Locale digit grouping (parity with `[useGrouping]`); `true` shows e.g. `5,000` (en) / `5.000` (de). */
     readonly useGrouping = input(true);
+    /**
+     * Maximum fraction digits (parity with `[maxFractionDigits]`). `0` (the default) keeps the field integer-only;
+     * a positive value lets the user type a decimal separator, and the fraction is truncated to this many digits.
+     */
+    readonly maxFractionDigits = input(0);
     /**
      * Locale for number formatting. Omit (default) to follow the browser's locale like `p-inputnumber` — so a
      * German user sees `5.000`, an English user `5,000`. Pass a fixed locale (e.g. `'de'`) only to pin it.
@@ -82,6 +88,12 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
 
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
+
+    /**
+     * The locale's decimal separator (`.` in en, `,` in de). It cannot be hardcoded: `de` uses `.` as the *group*
+     * separator, so a fixed `.` would read `1.234` as a fraction instead of grouped thousands.
+     */
+    private readonly decimalSeparator = computed(() => new Intl.NumberFormat(this.locale()).formatToParts(1.1).find((part) => part.type === 'decimal')?.value ?? '.');
 
     protected readonly hostClasses = computed(() => {
         const parts = ['tum-ui-input-number'];
@@ -127,6 +139,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             this.suffix();
             this.useGrouping();
             this.locale();
+            this.maxFractionDigits();
             if (this.rawEditInProgress()) {
                 return;
             }
@@ -151,11 +164,11 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (value === undefined || value === null || Number.isNaN(value)) {
             return '';
         }
-        const formatted = new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }).format(value);
+        const formatted = new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: this.maxFractionDigits() }).format(value);
         return `${this.prefix() ?? ''}${formatted}${this.suffix() ?? ''}`;
     }
 
-    /** Extract the integer from the field text, ignoring the prefix / suffix / grouping separators. */
+    /** Extract the number from the field text, ignoring the prefix / suffix / grouping separators. */
     private parse(text: string): number | undefined {
         // Strip the configured affixes first so a digit inside `prefix`/`suffix` is never read as part of the value.
         let body = text;
@@ -167,13 +180,49 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (suffix && body.endsWith(suffix)) {
             body = body.slice(0, body.length - suffix.length);
         }
-        const digits = body.replace(/[^\d-]/g, '');
-        const normalized = digits.startsWith('-') ? '-' + digits.slice(1).replace(/-/g, '') : digits.replace(/-/g, '');
-        if (normalized === '' || normalized === '-') {
+        const fractionDigits = this.maxFractionDigits();
+        if (fractionDigits === 0) {
+            const digits = body.replace(/[^\d-]/g, '');
+            const normalized = digits.startsWith('-') ? '-' + digits.slice(1).replace(/-/g, '') : digits.replace(/-/g, '');
+            if (normalized === '' || normalized === '-') {
+                return undefined;
+            }
+            const parsed = Number.parseInt(normalized, 10);
+            return Number.isNaN(parsed) ? undefined : parsed;
+        }
+
+        // Decimal mode: keep the digits, a leading `-`, and only the FIRST decimal separator (normalised to `.`).
+        // Everything else — grouping separators included — is dropped, which is why the separator is resolved from
+        // the locale rather than assumed.
+        const separator = this.decimalSeparator();
+        const negative = body.trimStart().startsWith('-');
+        let integerPart = '';
+        let fractionPart = '';
+        let inFraction = false;
+        for (const char of body) {
+            if (char >= '0' && char <= '9') {
+                if (inFraction) {
+                    // Truncate rather than round: the user is still typing, and rounding here would fight the caret.
+                    if (fractionPart.length < fractionDigits) {
+                        fractionPart += char;
+                    }
+                } else {
+                    integerPart += char;
+                }
+            } else if (char === separator && !inFraction) {
+                inFraction = true;
+            }
+        }
+        if (integerPart === '' && fractionPart === '') {
             return undefined;
         }
-        const parsed = Number.parseInt(normalized, 10);
+        const parsed = Number.parseFloat(`${negative ? '-' : ''}${integerPart === '' ? '0' : integerPart}.${fractionPart === '' ? '0' : fractionPart}`);
         return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
+    /** Rounds to `maxFractionDigits`, so repeated stepping cannot accumulate float error (`0.1 + 0.2`). */
+    private round(value: number): number {
+        return Number(value.toFixed(this.maxFractionDigits()));
     }
 
     private clamp(value: number): number {
@@ -219,6 +268,14 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             this.rawEditInProgress.set(true);
             return;
         }
+        // Mid-typing a decimal: `12.` parses to 12, whose formatted form ("12") would drop the separator the user
+        // just typed — and `12.50` on the way to `12.505` would lose the trailing zero. Leave the raw text alone
+        // for the whole fraction; onBlurHandler reformats canonically. Live grouping pauses meanwhile, which is
+        // the same trade-off the lone `-` above already makes.
+        if (this.maxFractionDigits() > 0 && el.value.includes(this.decimalSeparator())) {
+            this.rawEditInProgress.set(true);
+            return;
+        }
         this.rawEditInProgress.set(false);
         // Reformat live (grouping + prefix / suffix) and restore the caret after the same number of digits.
         const formatted = this.format(parsed);
@@ -234,7 +291,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         // Step from `0` (not `min`) when empty, then clamp — so a first increment from an empty field lands on
         // `min` rather than `min + step`, matching p-inputnumber (which spins from `value || 0`).
         const base = this.cvaValue() ?? 0;
-        const next = this.clamp(base + delta);
+        const next = this.clamp(this.round(base + delta));
         this.rawEditInProgress.set(false);
         this.cvaValue.set(next);
         this.onModelChange(next);
@@ -259,7 +316,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         this.rawEditInProgress.set(false);
         const value = this.cvaValue();
         if (value !== undefined) {
-            const clamped = this.clamp(value);
+            const clamped = this.clamp(this.round(value));
             if (clamped !== value) {
                 this.cvaValue.set(clamped);
                 this.onModelChange(clamped);

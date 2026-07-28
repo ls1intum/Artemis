@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiInputNumberComponent } from 'app/shared-ui/tum-ui/input-number/tum-ui-input-number.component';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
@@ -46,7 +46,7 @@ describe('ExerciseGroupEditModalComponent', () => {
                         FormsModule,
                         TumUiDialogComponent,
                         TumUiInputDirective,
-                        InputNumberModule,
+                        TumUiInputNumberComponent,
                         TumUiButtonComponent,
                         TumUiMessageComponent,
                         TumUiTooltipDirective,

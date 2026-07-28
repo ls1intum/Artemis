@@ -7,10 +7,10 @@
             (click)="lockedClick.emit()"
             (keydown.enter)="lockedClick.emit()"
             (keydown.space)="lockedClick.emit()"
-            [pTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
-            tooltipPosition="top"
+            [tumUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            tumUiTooltipPlacement="top"
         >
-            <i class="pi pi-lock timeline-lock-icon"></i>
+            <fa-icon [icon]="faLock" class="timeline-lock-icon text-muted-color" />
         </div>
     }
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {

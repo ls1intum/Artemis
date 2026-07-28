@@ -2,7 +2,7 @@
     #inputEl
     tumUiInput
     type="text"
-    inputmode="numeric"
+    [attr.inputmode]="maxFractionDigits() > 0 ? 'decimal' : 'numeric'"
     class="tum-ui-input-number-input {{ inputStyleClass() }}"
     role="spinbutton"
     [id]="inputId()"

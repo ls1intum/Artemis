@@ -566,28 +566,29 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 
 ### Input number — `tum-ui-input-number`
 
-A numeric input — the drop-in for `p-inputnumber` (integer values). A token-styled field showing a locale-formatted number (optional digit grouping, optional prefix / suffix) with an optional stacked stepper. The value binds as a plain `number | undefined` through a `ControlValueAccessor`, so `[(ngModel)]`, `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work; empty input clears to `undefined`, and the value is clamped to `[min, max]` on blur and on every step. It builds on `[tumUiInput]`, so it shares the kit's input styling; compose it inside a `tum-ui-input-group` for a leading addon. The input carries WAI-ARIA `spinbutton` semantics (its value and range are announced, and Arrow Up / Down adjust it), so the stepper is fully keyboard- and screen-reader-operable even though the visible ▲/▼ buttons are mouse-only affordances.
+A numeric input — the drop-in for `p-inputnumber`. A token-styled field showing a locale-formatted number (optional digit grouping, optional prefix / suffix) with an optional stacked stepper. The value binds as a plain `number | undefined` through a `ControlValueAccessor`, so `[(ngModel)]`, `[ngModel]` + `(ngModelChange)`, and reactive `formControlName` all work; empty input clears to `undefined`, and the value is clamped to `[min, max]` on blur and on every step. It builds on `[tumUiInput]`, so it shares the kit's input styling; compose it inside a `tum-ui-input-group` for a leading addon. The input carries WAI-ARIA `spinbutton` semantics (its value and range are announced, and Arrow Up / Down adjust it), so the stepper is fully keyboard- and screen-reader-operable even though the visible ▲/▼ buttons are mouse-only affordances.
 
 <Shots light={TumuiInputNumberLight} dark={TumuiInputNumberDark} alt="tum-ui-input-number: plain, with stepper, with a leading addon, and with prefix/suffix" />
 
-| Input / Output       | Type         | Default             | Notes                                                                                                               |
-| -------------------- | ------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                     |
-| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                       |
-| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                              |
-| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                            |
-| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                             |
-| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it. |
-| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                      |
-| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                      |
-| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                          |
-| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                   |
-| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
-| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
-| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
-| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
-| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
-| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
+| Input / Output       | Type         | Default             | Notes                                                                                                                                     |
+| -------------------- | ------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `min` / `max`        | `number`     | –                   | Bounds; the value is clamped to them on blur and on every step.                                                                           |
+| `step`               | `number`     | `1`                 | Increment applied by the stepper buttons and Arrow Up / Down.                                                                             |
+| `showButtons`        | `boolean`    | `false`             | Render the stacked increment / decrement stepper on the trailing edge.                                                                    |
+| `prefix` / `suffix`  | `string`     | –                   | Text shown before / after the number, inside the field (e.g. `"every "` / `" week(s)"`).                                                  |
+| `useGrouping`        | `boolean`    | `true`              | Locale digit grouping (`true` shows e.g. `5,000` in en, `5.000` in de).                                                                   |
+| `maxFractionDigits`  | `number`     | `0`                 | `0` keeps the field integer-only. A positive value accepts the locale's decimal separator and truncates the fraction to that many digits. |
+| `locale`             | `string`     | – (browser locale)  | Locale for number formatting. Omit to follow the browser's locale like `p-inputnumber`; pass e.g. `'de'` to pin it.                       |
+| `placeholder`        | `string`     | –                   | Shown when the field is empty.                                                                                                            |
+| `disabled`           | `boolean`    | `false`             | Merged with the reactive-forms disabled state.                                                                                            |
+| `invalid`            | `boolean`    | `false`             | Danger border for an external error state.                                                                                                |
+| `fluid`              | `boolean`    | `false`             | Full-width field.                                                                                                                         |
+| `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                                               |
+| `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                                                |
+| `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                                           |
+| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                                          |
+| `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                                               |
+| `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                                               |
 
 Public methods `focus()`, `blur()`, and `select()` operate on the inner native input (e.g. for a page-navigation field that selects its text on focus).
 
@@ -600,11 +601,14 @@ Public methods `focus()`, `blur()`, and `select()` operate on the inner native i
 
 <!-- Reactive form, full width -->
 <tum-ui-input-number formControlName="score" [min]="0" [max]="100" [fluid]="true" />
+
+<!-- One decimal place, e.g. an exercise-points cap -->
+<tum-ui-input-number [(ngModel)]="maxPoints" [min]="0" [maxFractionDigits]="1" />
 ```
 
 <Callout variant={CalloutVariant.info}>
-    Scope: **integer** values (every Artemis usage is an integer). Decimal / currency / fraction-digit modes are not implemented — add them to the component if a consumer needs
-    them.
+    Scope: **integers by default**; decimals are opt-in via `maxFractionDigits`. The decimal separator follows the locale (`.` in en, `,` in de), so grouping and fraction input
+    never conflict. Currency / percent modes are not implemented — add them to the component if a consumer needs them.
 </Callout>
 
 ### Checkbox — `tum-ui-checkbox`
