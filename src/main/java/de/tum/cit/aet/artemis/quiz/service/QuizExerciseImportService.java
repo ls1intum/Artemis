@@ -99,8 +99,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
         if (files != null) {
             // This save operates on a detached entity and therefore merges into a new instance, which carries the file
-            // paths and the ids generated for the uploaded files, so it has to be returned instead of newExercise.
-            return quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
+            // paths and the ids generated for the uploaded files, so it has to be returned instead of newExercise. The
+            // transient channel name does not survive the merge, so restore it on the returned exercise.
+            QuizExercise persistedExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
+            persistedExercise.setChannelName(newExercise.getChannelName());
+            return persistedExercise;
         }
 
         return newExercise;

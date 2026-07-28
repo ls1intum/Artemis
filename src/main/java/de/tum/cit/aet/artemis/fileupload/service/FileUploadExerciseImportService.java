@@ -74,9 +74,11 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
             savedExercise = fileUploadExerciseRepository.save(savedExercise);
         }
         final FileUploadExercise persistedExercise = savedExercise;
+        // The channel name is transient, so a merged copy does not carry it. Restore it so the returned exercise - and the
+        // response and version snapshot built from it - reports the channel the caller asked for.
+        persistedExercise.setChannelName(newExercise.getChannelName());
 
-        // The channel name is transient, so it is only present on the caller's object and not on a merged copy.
-        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(newExercise.getChannelName()));
+        channelService.createExerciseChannel(persistedExercise, Optional.ofNullable(persistedExercise.getChannelName()));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedExercise));
 
