@@ -172,6 +172,27 @@ describe('CourseOnboardingComponent', () => {
         });
     });
 
+    describe('assessment step max points validation', () => {
+        it('should reject max points above the limit and not save', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 10000 } as Course);
+            comp.activeStep.set(3);
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            comp.nextStep();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should accept max points at the limit', () => {
+            comp.ngOnInit();
+            comp.course.set({ ...course, maxPoints: 9999 } as Course);
+            comp.activeStep.set(3);
+
+            expect(comp.validateCurrentStep()).toBe(true);
+        });
+    });
+
     describe('previousStep', () => {
         it('should save and go back to the previous step', () => {
             const updatedCourse = { ...course } as Course;
@@ -404,6 +425,18 @@ describe('CourseOnboardingComponent', () => {
 
             expect(comp.validateCurrentStep()).toBe(false);
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsPositive');
+        });
+
+        it('should reject a non-integer maxPoints on step 3', () => {
+            const errorSpy = vi.spyOn(alertService, 'error');
+            advanceToStep(3);
+
+            const c = comp.course();
+            c.maxPoints = 10.5;
+            comp.course.set(c);
+
+            expect(comp.validateCurrentStep()).toBe(false);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
         });
 
         it('should not advance on nextStep if validation fails', () => {

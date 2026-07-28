@@ -2627,6 +2627,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_failsWithDecimalMaxPoints() throws Exception {
+        // A fractional examMaxPoints must be rejected instead of being silently truncated on the import write path.
+        final Exam exam = ExamFactory.generateExam(course1);
+        final ObjectNode body = request.getObjectMapper().valueToTree(ExamImportDTO.of(exam, course1.getId()));
+        body.put("examMaxPoints", 10.5);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_failsWithTextTooLong() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
         exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
