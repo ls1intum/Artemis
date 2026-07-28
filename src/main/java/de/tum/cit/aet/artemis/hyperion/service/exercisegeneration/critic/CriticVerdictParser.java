@@ -7,7 +7,9 @@ import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -33,6 +35,8 @@ class CriticVerdictParser {
     static final String UNGROUNDED_ORACLE_REVIEW_DETAIL = "The test-oracle reviewer cited at least one requirement that was not present in the primary source. Grounded findings were retained for repair, but the candidate still requires a complete review.";
 
     private static final Logger log = LoggerFactory.getLogger(CriticVerdictParser.class);
+
+    private static final Pattern NULL_WORD = Pattern.compile("\\bnull\\b", Pattern.CASE_INSENSITIVE);
 
     /** The structured shape the full-artifact review parses the model JSON into. */
     private record CriticResponse(@Nullable List<ExampleCheckItem> exampleChecks, @Nullable List<ApiCheckItem> apiChecks, @Nullable List<TemplateCheckItem> templateChecks,
@@ -104,8 +108,9 @@ class CriticVerdictParser {
                 || pass == ReviewPass.ORACLE && malformedOracleVerdict(parsed, expectMutantChecks)) {
             return null;
         }
-        if (pass == ReviewPass.CONTRACT && !templateStatuses.isEmpty() && parsed.templateChecks().stream().filter(item -> !item.targetReached())
-                .map(item -> item.ownerType().strip().replace("`", "")).anyMatch(owner -> !owner.equals("shared scaffold") && !templateStatuses.containsKey(owner))) {
+        if (pass == ReviewPass.CONTRACT && !templateStatuses.isEmpty()
+                && parsed.templateChecks().stream().filter(item -> !item.targetReached()).map(item -> item.ownerType().strip().replace("`", ""))
+                        .anyMatch(owner -> !owner.equals("shared scaffold") && !owner.equals("student-creates") && !templateStatuses.containsKey(owner))) {
             return null;
         }
         boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource);
@@ -148,6 +153,10 @@ class CriticVerdictParser {
             }
             for (TemplateCheckItem item : parsed.templateChecks()) {
                 if (!item.targetReached() && findings.size() < MAX_REVIEW_FINDINGS) {
+                    if (onlyReportsTheIntendedIncompleteStub(item)) {
+                        log.info("Critic abstained on a template-gap finding that treats the intended incomplete stub as the defect: {}", item.test());
+                        continue;
+                    }
                     String ownerType = item.ownerType().strip().replace("`", "");
                     if ("student-creates".equals(templateStatuses.get(ownerType))) {
                         log.info("Critic abstained on a template-gap finding for student-created type {} because the approved Design contract requires it to be absent.",
@@ -173,6 +182,10 @@ class CriticVerdictParser {
                 if (item.killed() || findings.size() >= MAX_REVIEW_FINDINGS) {
                     continue;
                 }
+                if (unsupportedNullRequirement(item.mutant(), item.sourceQuote(), authoritativeSource)) {
+                    log.info("Critic abstained on an oracle mutant that inferred null handling from a source passage that does not mention null: {}", item.mutant());
+                    continue;
+                }
                 if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
                     abstainUngroundedFinding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, item.mutant());
                     continue;
@@ -180,7 +193,7 @@ class CriticVerdictParser {
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, truncate(item.mutant().strip()),
                         "This concrete contract-breaking implementation survives the generated suite: " + item.reason().strip()));
             }
-            appendGroundedBlockingFindings(findings, parsed.weakOracle(), authoritativeSource, SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+            appendGroundedOracleFindings(findings, parsed.weakOracle(), authoritativeSource, SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
                     "A plausible contract-breaking implementation can pass the generated tests: ");
         }
         if (pass == ReviewPass.ORACLE && findings.size() < MAX_REVIEW_FINDINGS) {
@@ -189,6 +202,10 @@ class CriticVerdictParser {
                     break;
                 }
                 if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                    continue;
+                }
+                if (unsupportedNullRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
+                    log.info("Critic abstained on an uncovered null requirement whose source passage does not mention null: {}", item.requirement());
                     continue;
                 }
                 if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
@@ -290,6 +307,16 @@ class CriticVerdictParser {
                 || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank()) || item.reason() == null || item.reason().isBlank());
     }
 
+    private static boolean onlyReportsTheIntendedIncompleteStub(TemplateCheckItem item) {
+        String reason = item.reason().toLowerCase(Locale.ROOT);
+        String evidence = item.evidenceQuote() == null ? "" : item.evidenceQuote().toLowerCase(Locale.ROOT);
+        boolean namesExpectedStub = reason.contains("todo") || reason.contains("unsupportedoperationexception") || evidence.contains("todo")
+                || evidence.contains("unsupportedoperationexception");
+        boolean namesActualReachabilityDefect = reason.contains(" before ") || reason.contains("another ") || reason.contains("different ") || reason.contains("unrelated ")
+                || reason.contains("missing ") || reason.contains("lacks ") || reason.contains("outside ");
+        return namesExpectedStub && !namesActualReachabilityDefect;
+    }
+
     private static String scalarText(JsonNode node) {
         return node.isTextual() ? node.textValue() : node.toString();
     }
@@ -324,6 +351,39 @@ class CriticVerdictParser {
             }
             findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
         }
+    }
+
+    private static void appendGroundedOracleFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
+            SpecFidelityReport.Kind kind, String detailPrefix) {
+        for (RequirementFindingItem item : items) {
+            if (findings.size() >= MAX_REVIEW_FINDINGS) {
+                return;
+            }
+            if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                continue;
+            }
+            if (unsupportedNullRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
+                log.info("Critic abstained on a weak null oracle whose source passage does not mention null: {}", item.requirement());
+                continue;
+            }
+            if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                abstainUngroundedFinding(kind, item.requirement());
+                continue;
+            }
+            findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
+        }
+    }
+
+    private static boolean unsupportedNullRequirement(String requirement, @Nullable String sourceQuote, String authoritativeSource) {
+        if (!NULL_WORD.matcher(requirement).find() || sourceQuote == null) {
+            return false;
+        }
+        String evidenceId = sourceQuote.strip().replaceFirst("^\\[", "").replaceFirst("]$", "");
+        if (evidenceId.matches("P[1-9][0-9]*")) {
+            String passage = EvidenceSource.from("P", authoritativeSource).passages().get(evidenceId);
+            return passage != null && !NULL_WORD.matcher(passage).find();
+        }
+        return !NULL_WORD.matcher(sourceQuote).find();
     }
 
     /**
