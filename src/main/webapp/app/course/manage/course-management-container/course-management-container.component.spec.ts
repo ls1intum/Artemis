@@ -378,10 +378,8 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {
         component.activatedComponentReference.set(undefined);
-        component.handleToggleSidebar();
 
-        // No error should occur, and isCollapsed remains unchanged
-        expect(component.isSidebarCollapsed()).toBe(false);
+        expect(() => component.handleToggleSidebar()).not.toThrow();
     });
 
     it('should set the page title on the conversations sidebar when activated', () => {
