@@ -1069,13 +1069,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         ExamDTO loaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
         assertThat(loaded.channelName()).isEqualTo("scientific-channel-name");
+        assertThat(loaded.examSummaryPublicationDate()).isNotNull();
 
         // Build the request the way the client's toExamUpdateDTO does: from the loaded response fields only.
         ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.testExam(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
                 loaded.endDate(), loaded.publishResultsDate(), loaded.examStudentReviewStart(), loaded.examStudentReviewEnd(), loaded.gracePeriod(), loaded.workingTime(),
                 loaded.startText(), loaded.endText(), loaded.confirmationStartText(), loaded.confirmationEndText(), loaded.examMaxPoints(), loaded.randomizeExerciseOrder(),
                 loaded.numberOfExercisesInExam(), loaded.numberOfCorrectionRoundsInExam(), loaded.examiner(), loaded.moduleNumber(), loaded.courseName(),
-                loaded.exampleSolutionPublicationDate(), loaded.channelName());
+                loaded.exampleSolutionPublicationDate(), loaded.examSummaryPublicationDate(), loaded.channelName());
         request.put("/api/exam/courses/" + course1.getId() + "/exams", clientRequest, HttpStatus.OK);
 
         // Re-load through the plain path and assert the round-tripped fields survived, channel name in particular.
@@ -1094,6 +1095,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(reloaded.confirmationEndText()).isEqualTo(loaded.confirmationEndText());
         assertThat(reloaded.startDate()).isEqualTo(loaded.startDate());
         assertThat(reloaded.endDate()).isEqualTo(loaded.endDate());
+        assertThat(reloaded.examSummaryPublicationDate()).isEqualTo(loaded.examSummaryPublicationDate());
     }
 
     @Test
@@ -2077,6 +2079,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam.setEndDate(baseTime.plusHours(1));
         exam.setExamStudentReviewStart(baseTime.plusHours(12));
         exam.setExamStudentReviewEnd(baseTime.plusDays(1));
+        exam.setExamSummaryPublicationDate(baseTime.plusHours(6));
         exam.setWorkingTime(60 * 60);
         exam.setExaminer("Prof. Dr. Stephan Krusche");
         exam.setStartText("Start Text");
@@ -2117,6 +2120,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(ChronoUnit.MILLIS.between(actualExam.getEndDate(), expectedExam.getEndDate())).isLessThan(1);
         assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewStart(), expectedExam.getExamStudentReviewStart())).isLessThan(1);
         assertThat(ChronoUnit.MILLIS.between(actualExam.getExamStudentReviewEnd(), expectedExam.getExamStudentReviewEnd())).isLessThan(1);
+        assertThat(ChronoUnit.MILLIS.between(actualExam.getExamSummaryPublicationDate(), expectedExam.getExamSummaryPublicationDate())).isLessThan(1);
 
         assertThat(actualExam.getId()).isNotNull();
     }
