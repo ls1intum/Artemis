@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -56,6 +56,7 @@ interface PresentationStudentRow {
         FormsModule,
         InputTextModule,
         ArtemisTranslatePipe,
+        RouterLink,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
@@ -143,6 +144,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     updateStudentSearch(searchTerm: string): void {
         this.studentSearchTerm.set(searchTerm);
+    }
+
+    getLinkedExerciseRoute(presentationAssessment: PresentationAssessment): (string | number)[] | undefined {
+        const exercise = this.exercises().find((candidate) => candidate.id === presentationAssessment.exerciseId);
+        if (!exercise?.id || !exercise.type) {
+            return undefined;
+        }
+        return ['/course-management', this.courseId(), `${exercise.type}-exercises`, exercise.id];
     }
 
     setInstanceTimeFilter(filter: InstanceTimeFilter): void {
@@ -269,7 +278,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 presentationAssessment,
                 instance,
                 assignedStudents: (instance?.studentLogins ?? []).map((login) => {
-                    const user: User = { login };
+                    const user = new User(undefined, login);
                     return user;
                 }),
             },

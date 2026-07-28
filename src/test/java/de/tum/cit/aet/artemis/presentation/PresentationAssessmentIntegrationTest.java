@@ -16,8 +16,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -30,6 +32,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private PresentationAssessmentRepository presentationAssessmentRepository;
+
+    @Autowired
+    private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -176,8 +181,19 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updatePresentationAssessment_shouldUpdatePresentationAssessment() throws Exception {
+        var originalExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7),
+                ZonedDateTime.now().plusDays(14));
+        var replacementExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(8),
+                ZonedDateTime.now().plusDays(15));
+        presentationAssessment.setExercise(originalExercise);
+        presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(ZonedDateTime.now().plusDays(7));
+        instance.setResultPoints(17.0);
+        instance = presentationAssessmentInstanceRepository.save(instance);
         PresentationAssessmentDTO dto = new PresentationAssessmentDTO(presentationAssessment.getId(), "Updated presentation", "Updated description", 25.0, 22.0,
-                ZonedDateTime.now().plusDays(21), course.getId(), List.of(TEST_PREFIX + "student1"));
+                ZonedDateTime.now().plusDays(21), course.getId(), List.of(TEST_PREFIX + "student1"), replacementExercise.getId(), null, List.of());
 
         PresentationAssessmentDTO result = request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.OK);
 
@@ -185,6 +201,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(result.description()).isEqualTo(dto.description());
         assertThat(result.maxPoints()).isEqualTo(dto.maxPoints());
         assertThat(result.resultPoints()).isEqualTo(dto.resultPoints());
+        assertThat(result.exerciseId()).isEqualTo(replacementExercise.getId());
+        assertThat(result.exerciseTitle()).isEqualTo(replacementExercise.getTitle());
+        assertThat(result.instances()).extracting(instanceDto -> instanceDto.id()).containsExactly(instance.getId());
         PresentationAssessment updatedAssessment = presentationAssessmentRepository.findByIdElseThrow(presentationAssessment.getId());
         assertThat(updatedAssessment.getTitle()).isEqualTo(dto.title());
         assertThat(updatedAssessment.getMaxPoints()).isEqualTo(dto.maxPoints());

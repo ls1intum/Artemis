@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -96,9 +97,10 @@ public class PresentationAssessmentService {
      * @param course       the owning course
      * @param assessmentId the presentation assessment id
      * @param dto          the updated presentation assessment data
-     * @return the persisted presentation assessment
+     * @return the persisted presentation assessment data
      */
-    public PresentationAssessment update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
+    @Transactional
+    public PresentationAssessmentDTO update(Course course, long assessmentId, PresentationAssessmentDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
         }
@@ -111,7 +113,8 @@ public class PresentationAssessmentService {
         if (students != null) {
             presentationAssessment.setStudents(students);
         }
-        return presentationAssessmentRepository.save(presentationAssessment);
+        PresentationAssessment savedPresentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+        return PresentationAssessmentDTO.of(savedPresentationAssessment);
     }
 
     /**

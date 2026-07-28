@@ -62,6 +62,13 @@
     white-space: pre-wrap;
 }
 
+.presentation-overview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+}
+
 .student-search {
     width: min(100%, 24rem);
 }

@@ -126,7 +126,7 @@ public class PresentationAssessmentResource {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
         Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(course, assessmentId, dto)));
+        return ResponseEntity.ok(presentationAssessmentService.update(course, assessmentId, dto));
     }
 
     /**

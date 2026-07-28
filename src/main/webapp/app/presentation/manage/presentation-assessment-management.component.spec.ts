@@ -14,6 +14,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -103,6 +104,12 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(component.viewMode()).toBe('students');
         expect(component.filteredStudentRows()).toEqual([{ studentLogin: 'student2', presentationAssessment, instance: presentationAssessment.instances![0] }]);
+    });
+
+    it('should create the course management route for the linked exercise', () => {
+        component.exercises.set([{ id: 7, type: ExerciseType.TEXT } as Exercise]);
+
+        expect(component.getLinkedExerciseRoute({ ...presentationAssessment, exerciseId: 7 })).toEqual(['/course-management', courseId, 'text-exercises', 7]);
     });
 
     it('should open the create dialog without persisting on cancel', () => {

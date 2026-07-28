@@ -75,12 +75,22 @@
                         <h4 jhiTranslate="artemisApp.presentationAssessment.overview"></h4>
                         <div class="presentation-description">{{ presentationAssessment.description || '-' }}</div>
 
-                        @if (presentationAssessment.exerciseTitle) {
-                            <div class="mt-3 text-right">
-                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.linkedExercise"></span>
-                                <strong class="ml-2">{{ presentationAssessment.exerciseTitle }}</strong>
+                        <div class="presentation-overview-meta mt-3">
+                            <div>
+                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>:
+                                <strong class="ml-2">{{ presentationAssessment.maxPoints }}</strong>
                             </div>
-                        }
+                            @if (presentationAssessment.exerciseTitle) {
+                                <div>
+                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.linkedExercise"></span>
+                                    @if (getLinkedExerciseRoute(presentationAssessment); as exerciseRoute) {
+                                        <a class="ml-2 font-bold" [routerLink]="exerciseRoute">{{ presentationAssessment.exerciseTitle }}</a>
+                                    } @else {
+                                        <strong class="ml-2">{{ presentationAssessment.exerciseTitle }}</strong>
+                                    }
+                                </div>
+                            }
+                        </div>
 
                         <div class="mt-5 flex items-center justify-between">
                             <h4 class="m-0" jhiTranslate="artemisApp.presentationAssessment.grading"></h4>
