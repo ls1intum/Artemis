@@ -255,7 +255,6 @@
         </div>
     }
 </div>
-<!-- Filter Modal -->
 <tum-ui-dialog [(visible)]="filterModalVisible" [style]="{ width: '50dvw' }" header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}">
     <div class="flex flex-col">
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pb-1">
@@ -298,7 +297,7 @@
             </div>
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
-            <ul class="my-0 grid grid-cols-3 gap-2 py-2 text-nowrap">
+            <ul class="my-0 grid list-none grid-cols-3 gap-2 py-2 text-nowrap">
                 @for (authority of authorityFilters; track authority) {
                     <li>
                         <label class="flex items-center gap-2">
@@ -314,7 +313,7 @@
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
-            <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
+            <ul class="my-0 flex list-none flex-wrap gap-4 py-2 text-nowrap">
                 @for (origin of originFilters; track origin) {
                     <li>
                         <label class="flex items-center gap-1">
@@ -345,7 +344,7 @@
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
-            <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
+            <ul class="my-0 flex list-none flex-wrap gap-4 py-2 text-nowrap">
                 @for (registrationNumber of registrationNumberFilters; track registrationNumber) {
                     <li>
                         <label class="flex items-center gap-1">
@@ -376,7 +375,7 @@
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
-            <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
+            <ul class="my-0 flex list-none flex-wrap gap-4 py-2 text-nowrap">
                 @for (status of statusFilters; track status) {
                     <li>
                         <label class="flex items-center gap-1">

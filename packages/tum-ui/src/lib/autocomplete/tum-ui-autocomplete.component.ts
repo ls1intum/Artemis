@@ -329,26 +329,27 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         this.overlayRef = undefined;
     }
     protected optionClasses(option: unknown, index: number): string {
-        const base = 'tum-ui-autocomplete-option flex cursor-pointer items-center px-3 py-2';
+        const base = 'tum-ui-autocomplete-option tum:flex tum:cursor-pointer tum:items-center tum:px-3 tum:py-2';
         const active = this.activeIndex() === index;
         if (this.isAlreadySelected(option)) {
-            return `${base} tum-ui-autocomplete-option-selected${active ? ' is-active' : ''}`;
+            const background = active ? 'tum:bg-tum-ui-highlight-focus-background' : 'tum:bg-tum-ui-highlight-background';
+            return `${base} tum:text-tum-ui-highlight ${background}`;
         }
-        const activeState = active ? ' bg-tum-ui-surface-100 text-tum-ui-surface-800 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0' : '';
-        return `${base} text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 hover:text-tum-ui-surface-800 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-800${activeState}`;
+        const activeState = active ? ' tum:bg-tum-ui-highlight-focus-background tum:text-tum-ui-highlight' : '';
+        return `${base} tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:hover:text-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-800${activeState}`;
     }
     protected containerClasses(): string {
-        const padding = this.multiple() && this.selectedValues().length > 0 ? 'p-1' : 'py-1 px-3';
-        const base = `tum-ui-autocomplete-container flex w-full cursor-text flex-wrap items-center gap-1 rounded-md border text-base transition-colors ${padding}`;
+        const padding = this.multiple() && this.selectedValues().length > 0 ? 'tum:p-1' : 'tum:py-1 tum:px-3';
+        const base = `tum-ui-autocomplete-container tum:flex tum:w-full tum:cursor-text tum:flex-wrap tum:items-center tum:gap-1 tum:rounded-md tum:border tum:text-base tum:transition-colors ${padding}`;
         let state: string;
         if (this.isDisabled()) {
             state =
-                'bg-tum-ui-surface-200 text-tum-ui-surface-500 border-tum-ui-surface-300 dark:bg-tum-ui-surface-700 dark:text-tum-ui-surface-400 dark:border-tum-ui-surface-600';
+                'tum:bg-tum-ui-surface-200 tum:text-tum-ui-surface-500 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-700 tum:dark:text-tum-ui-surface-400 tum:dark:border-tum-ui-surface-600';
         } else if (this.isFocused()) {
-            state = 'bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-primary dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0';
+            state = 'tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-primary tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0';
         } else {
             state =
-                'bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-surface-300 hover:border-tum-ui-surface-400 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0 dark:border-tum-ui-surface-600 dark:hover:border-tum-ui-surface-500';
+                'tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-surface-300 tum:hover:border-tum-ui-surface-400 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-600 tum:dark:hover:border-tum-ui-surface-500';
         }
         return `${base} ${state}`;
     }

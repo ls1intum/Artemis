@@ -1,0 +1,71 @@
+@import 'tailwindcss/theme.css' prefix(tum);
+@import 'tailwindcss/utilities.css' prefix(tum) source(none);
+
+@source './src';
+@source not './src/**/*.spec.ts';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme inline {
+    --color-tum-ui-primary: var(--tum-ui-primary);
+    --color-tum-ui-primary-contrast: var(--tum-ui-primary-contrast);
+    --color-tum-ui-border: var(--tum-ui-border-color);
+    --color-tum-ui-text: var(--tum-ui-text-color);
+    --color-tum-ui-muted: var(--tum-ui-muted-color);
+    --color-tum-ui-highlight: var(--tum-ui-highlight-color);
+    --color-tum-ui-highlight-background: var(--tum-ui-highlight-background);
+    --color-tum-ui-highlight-focus-background: var(--tum-ui-highlight-focus-background);
+    --color-tum-ui-state-danger: var(--tum-ui-state-danger);
+    --color-tum-ui-state-success: var(--tum-ui-state-success);
+    --color-tum-ui-state-warning: var(--tum-ui-state-warning);
+    --color-tum-ui-state-info: var(--tum-ui-state-info);
+    --color-tum-ui-surface-0: var(--tum-ui-surface-0);
+    --color-tum-ui-surface-50: var(--tum-ui-surface-50);
+    --color-tum-ui-surface-100: var(--tum-ui-surface-100);
+    --color-tum-ui-surface-200: var(--tum-ui-surface-200);
+    --color-tum-ui-surface-300: var(--tum-ui-surface-300);
+    --color-tum-ui-surface-400: var(--tum-ui-surface-400);
+    --color-tum-ui-surface-500: var(--tum-ui-surface-500);
+    --color-tum-ui-surface-600: var(--tum-ui-surface-600);
+    --color-tum-ui-surface-700: var(--tum-ui-surface-700);
+    --color-tum-ui-surface-800: var(--tum-ui-surface-800);
+    --color-tum-ui-surface-900: var(--tum-ui-surface-900);
+    --color-tum-ui-surface-950: var(--tum-ui-surface-950);
+}
+
+.tum-ui-button-group {
+    display: inline-flex;
+}
+
+.tum-ui-button-group > tum-ui-button,
+.tum-ui-button-group > button:not(.tum-ui-btn) {
+    margin: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:not(:first-of-type, :last-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn, :first-of-type, :last-of-type) {
+    border-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:first-of-type:not(:only-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):first-of-type:not(:only-of-type) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:last-of-type:not(:only-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):last-of-type:not(:only-of-type) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:not(:last-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):not(:last-of-type) {
+    border-inline-end: 0 none;
+}
+
+.tum-ui-button-group .tum-ui-btn:focus-visible,
+.tum-ui-button-group > button:not(.tum-ui-btn):focus-visible {
+    position: relative;
+    z-index: 1;
+}

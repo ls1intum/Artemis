@@ -151,10 +151,9 @@ await esbuild.build({
 });
 
 // Build the Angular Package Format artifact consumed by the application.
-const tumUiConfiguration = developFlag ? 'development' : 'production';
 const pnpmExecutable = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 await new Promise((resolve, reject) => {
-    const child = spawn(pnpmExecutable, ['exec', 'ng', 'build', 'tum-ui', '--configuration', tumUiConfiguration], {
+    const child = spawn(pnpmExecutable, ['run', `tum-ui:build${developFlag ? ':dev' : ''}`], {
         cwd: __dirname,
         stdio: 'inherit',
     });

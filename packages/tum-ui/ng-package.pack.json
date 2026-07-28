@@ -1,7 +1,6 @@
 {
     "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
-    "deleteDestPath": false,
-    "dest": "../../dist/tum-ui",
+    "dest": "../../dist/tum-ui-pack",
     "assets": ["README.md", "LICENSE"],
     "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
     "lib": {

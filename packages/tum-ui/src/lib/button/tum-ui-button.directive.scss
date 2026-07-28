@@ -4,34 +4,6 @@
     text-decoration: none;
 }
 
-:host(.text-tum-ui-surface-0) {
-    color: var(--tum-ui-surface-0);
-}
-
-:host(.text-tum-ui-muted) {
-    color: var(--tum-ui-muted-color);
-}
-
-:host(.text-tum-ui-primary) {
-    color: var(--tum-ui-primary);
-}
-
-:host(.text-tum-ui-state-success) {
-    color: var(--tum-ui-state-success);
-}
-
-:host(.text-tum-ui-state-info) {
-    color: var(--tum-ui-state-info);
-}
-
-:host(.text-tum-ui-state-warning) {
-    color: var(--tum-ui-state-warning);
-}
-
-:host(.text-tum-ui-state-danger) {
-    color: var(--tum-ui-state-danger);
-}
-
 :host {
     &::after {
         content: '';

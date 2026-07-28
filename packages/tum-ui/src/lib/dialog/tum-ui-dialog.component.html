@@ -1,11 +1,11 @@
 <ng-template #panel>
     <div
-        class="tum-ui-dialog flex max-h-[90dvh] max-w-[90dvw] flex-col overflow-hidden rounded-xl border border-tum-ui-surface-200 bg-tum-ui-surface-0 text-tum-ui-surface-700 shadow-xl dark:border-tum-ui-surface-700 dark:bg-tum-ui-surface-900 dark:text-tum-ui-surface-0"
+        class="tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-tum-ui-surface-200 tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:shadow-xl tum:dark:border-tum-ui-surface-700 tum:dark:bg-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0"
         [style]="style()"
     >
         @if (showHeader()) {
-            <div class="tum-ui-dialog-header flex shrink-0 items-center justify-between gap-2 p-4">
-                <span [id]="titleId" class="tum-ui-dialog-title text-xl font-semibold">
+            <div class="tum-ui-dialog-header tum:flex tum:shrink-0 tum:items-center tum:justify-between tum:gap-2 tum:p-4">
+                <span [id]="titleId" class="tum-ui-dialog-title tum:text-xl tum:font-semibold">
                     @if (headerTemplate(); as headerTpl) {
                         <ng-container [ngTemplateOutlet]="headerTpl" />
                     } @else {
@@ -15,7 +15,7 @@
                 @if (closable()) {
                     <button
                         type="button"
-                        class="tum-ui-dialog-close inline-flex h-8 w-8 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-full border-0 bg-transparent text-tum-ui-muted transition-colors hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800"
+                        class="tum-ui-dialog-close tum:inline-flex tum:h-8 tum:w-8 tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800"
                         [attr.aria-label]="closeButtonAriaLabel() ?? ('tumUi.dialog.close' | tumUiTranslate)"
                         (click)="close()"
                         data-testid="tum-ui-dialog-close"
@@ -26,12 +26,12 @@
             </div>
         }
 
-        <div class="tum-ui-dialog-content grow overflow-y-auto px-4 pb-4" [style]="contentStyle()">
+        <div class="tum-ui-dialog-content tum:grow tum:overflow-y-auto tum:px-4 tum:pb-4" [style]="contentStyle()">
             <ng-content />
         </div>
 
         @if (footerTemplate(); as footerTpl) {
-            <div class="tum-ui-dialog-footer flex shrink-0 justify-end gap-2 px-4 pb-4">
+            <div class="tum-ui-dialog-footer tum:flex tum:shrink-0 tum:justify-end tum:gap-2 tum:px-4 tum:pb-4">
                 <ng-container [ngTemplateOutlet]="footerTpl" />
             </div>
         }

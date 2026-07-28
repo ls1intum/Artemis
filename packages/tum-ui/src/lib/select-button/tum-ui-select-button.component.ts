@@ -70,11 +70,11 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
     });
 
     protected optionClasses(selected: boolean): string {
-        const sizeClass = this.size() === 'small' ? 'text-sm' : this.size() === 'large' ? 'text-lg' : 'text-base';
+        const sizeClass = this.size() === 'small' ? 'tum:text-sm' : this.size() === 'large' ? 'tum:text-lg' : 'tum:text-base';
         const state = selected
-            ? 'bg-tum-ui-primary text-tum-ui-surface-0 border-tum-ui-primary'
-            : 'bg-tum-ui-surface-100 text-tum-ui-muted border-tum-ui-surface-200 dark:bg-tum-ui-surface-800 dark:border-tum-ui-surface-700';
-        return `tum-ui-select-button-option ${sizeClass} ${state} ${this.effectiveDisabled() ? 'opacity-60' : ''}`.trim();
+            ? 'tum:bg-tum-ui-primary tum:text-tum-ui-primary-contrast tum:border-tum-ui-primary'
+            : 'tum:bg-tum-ui-surface-100 tum:text-tum-ui-muted tum:border-tum-ui-surface-200 tum:dark:bg-tum-ui-surface-800 tum:dark:border-tum-ui-surface-700';
+        return `tum-ui-select-button-option ${sizeClass} ${state} ${this.effectiveDisabled() ? 'tum:opacity-60' : ''}`.trim();
     }
 
     protected select(option: NormalizedOption): void {

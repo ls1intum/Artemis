@@ -16,25 +16,41 @@ import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 
 Deep imports are not supported.
 
-Import the Tailwind CSS v4 entry point from the host's Tailwind stylesheet:
+Configure the host bundler to load the precompiled stylesheet once, globally, after resets and
+framework styles. For an Angular CLI application:
 
-```css
-@import '@tumaet/ui-angular/theme.css';
+```json
+{
+    "styles": ["src/styles.scss", "node_modules/@tumaet/ui-angular/styles.css"]
+}
 ```
 
-The host must provide these CSS custom properties:
+Every component must inherit valid CSS color values for these required custom properties:
 
 - `--tum-ui-primary`
+- `--tum-ui-primary-contrast`
 - `--tum-ui-border-color`
 - `--tum-ui-text-color`
 - `--tum-ui-muted-color`
+- `--tum-ui-highlight-color`, `--tum-ui-highlight-background`,
+  `--tum-ui-highlight-focus-background`
 - `--tum-ui-focus-ring-offset-background`
 - `--tum-ui-state-danger`, `--tum-ui-state-success`, `--tum-ui-state-warning`,
   `--tum-ui-state-info`
 - `--tum-ui-surface-{0,50,100,200,300,400,500,600,700,800,900,950}`
 
-Components use Tailwind's `dark:` variant, so the host must align that variant with its theme
-selector.
+Surface tokens are a fixed ramp: `0` is always the lightest surface and `950` the darkest,
+independent of the active theme. `primary-contrast` must remain readable on `primary`. Text, muted,
+border, highlight, focus-offset, and state tokens describe the active theme and must update when
+the theme changes. The package does not provide fallback values.
+
+The stylesheet uses `tum:`-prefixed Tailwind class names to avoid unprefixed utility-selector
+collisions and does not depend on the host's Tailwind build. Dark variants activate below an
+ancestor with `data-theme="dark"`; hosts must set that attribute when dark mode is active.
+
+`styleClass` inputs append classes already defined by the host; they do not cause the package
+Tailwind build to generate utilities. Use them for non-conflicting layout hooks. Prefer component
+inputs and theme tokens over overriding internal component styles.
 
 Package text defaults to English. A translated host can replace it with an adapter:
 
@@ -68,8 +84,8 @@ Add implementation and focused behavior tests under `src/lib`. Export supported 
 explicitly from `src/public-api.ts`. Package code must not import Artemis, PrimeNG, Bootstrap, or
 ng-bootstrap; ESLint enforces the boundary.
 
-Dependency versions in `package.json` are exact because they are copied into the ng-packagr
-artifact. `pnpm-workspace.yaml` owns the matching workspace catalog, and
+Runtime and peer dependency versions are exact and synchronized with the workspace catalog.
+Tailwind and PostCSS are build-only development dependencies pinned through the same catalog.
 `rules/tum-ui-package.spec.mjs` rejects drift.
 
 ## License

@@ -29,9 +29,10 @@ export class TumUiChipComponent {
 
     protected readonly chipClasses = computed(() => {
         const small = this.size() === 'small';
-        const type = small ? 'gap-1 text-sm' : 'gap-2 text-base';
-        const padding = small ? (this.removable() ? 'py-1 pl-2 pr-1' : 'px-2 py-1') : this.removable() ? 'py-2 pl-3 pr-2' : 'px-3 py-2';
-        const base = 'inline-flex items-center rounded-2xl bg-tum-ui-surface-100 text-tum-ui-surface-800 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0';
+        const type = small ? 'tum:gap-1 tum:text-sm' : 'tum:gap-2 tum:text-base';
+        const padding = small ? (this.removable() ? 'tum:py-1 tum:pl-2 tum:pr-1' : 'tum:px-2 tum:py-1') : this.removable() ? 'tum:py-2 tum:pl-3 tum:pr-2' : 'tum:px-3 tum:py-2';
+        const base =
+            'tum:inline-flex tum:items-center tum:rounded-2xl tum:bg-tum-ui-surface-100 tum:text-tum-ui-surface-800 tum:dark:bg-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0';
         return `${base} ${type} ${padding} ${this.styleClass()}`.trim();
     });
 

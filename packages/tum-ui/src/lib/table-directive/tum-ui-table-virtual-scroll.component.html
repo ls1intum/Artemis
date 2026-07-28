@@ -1,7 +1,7 @@
 <div
     role="table"
-    class="tum-ui-vs-table flex min-h-0 flex-col"
-    [class.flex-1]="isFlexHeight()"
+    class="tum-ui-vs-table tum:flex tum:min-h-0 tum:flex-col"
+    [style.flex]="isFlexHeight() ? '1 1 0%' : null"
     [style.min-width]="minWidth()"
     [attr.aria-describedby]="ariaDescribedBy()"
     data-testid="tum-ui-vs-table"
@@ -13,8 +13,8 @@
     <cdk-virtual-scroll-viewport
         [itemSize]="itemSize()"
         class="tum-ui-vs-viewport"
-        [class.flex-1]="isFlexHeight()"
-        [class.min-h-0]="isFlexHeight()"
+        [style.flex]="isFlexHeight() ? '1 1 0%' : null"
+        [style.min-height]="isFlexHeight() ? 0 : null"
         [style.max-height]="maxHeight()"
         role="rowgroup"
         data-testid="tum-ui-vs-viewport"

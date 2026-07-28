@@ -64,25 +64,13 @@ to validate the compiled ng-packagr boundary.
 
 ### Theme contract
 
-The host imports the package Tailwind entry point:
+The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md) is
+the source of truth for stylesheet loading, token semantics, dark mode, and `styleClass`.
 
-```css
-@import '@tumaet/ui-angular/theme.css';
-```
-
-It then defines the package variables:
-
-| Purpose           | Variables                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------- |
-| Brand and text    | `--tum-ui-primary`, `--tum-ui-text-color`, `--tum-ui-muted-color`                                  |
-| Borders and focus | `--tum-ui-border-color`, `--tum-ui-focus-ring-offset-background`                                   |
-| States            | `--tum-ui-state-danger`, `--tum-ui-state-success`, `--tum-ui-state-warning`, `--tum-ui-state-info` |
-| Surfaces          | `--tum-ui-surface-{0,50,100,200,300,400,500,600,700,800,900,950}`                                  |
-
-Artemis defines this mapping in `src/main/webapp/tailwind.css`. Package styles must not read
-Artemis or PrimeNG variables directly. Components use Tailwind's `dark:` variant for alternate
-surface values, so the host must align that variant with its theme selector. Artemis configures it
-for `[data-theme='dark']` in `tailwind.css`.
+Artemis loads `dist/tum-ui/styles.css` after its framework styles in `angular.json` and maps the
+package tokens to PrimeNG and Artemis tokens in `src/main/webapp/tailwind.css`. Package styles must
+not read Artemis or PrimeNG variables directly. Artemis sets `data-theme="dark"` on the document
+element when dark mode is active.
 
 ### Translation contract
 
@@ -104,14 +92,17 @@ From the repository root:
 | Command                       | Purpose                                                                      |
 | ----------------------------- | ---------------------------------------------------------------------------- |
 | `pnpm run tum-ui:build`       | Build the production Angular package in `dist/tum-ui`                        |
-| `pnpm run tum-ui:build:watch` | Watch package sources with the development build                             |
+| `pnpm run tum-ui:build:watch` | Watch package sources and its precompiled stylesheet                         |
 | `pnpm run tum-ui:test`        | Run package Vitest specs                                                     |
 | `pnpm run tum-ui:stylelint`   | Check package CSS and SCSS                                                   |
-| `pnpm run tum-ui:pack:check`  | Build and validate the packed entry points with publint and AreTheTypesWrong |
+| `pnpm run tum-ui:pack:check`  | Build and validate an isolated artifact with publint and AreTheTypesWrong    |
 
 `pnpm start` performs the initial package build, starts the package watcher, and serves Artemis.
 Artemis-only changes use Angular HMR. Package changes rebuild incrementally and cause an application
-reload because Artemis consumes the compiled artifact.
+reload because Artemis consumes the compiled artifact. Restart `pnpm start` after changing the
+package manifest or build configuration; watch mode tracks implementation and stylesheet sources.
+Package validation writes to `dist/tum-ui-pack`, so it can run without replacing the artifact used
+by the development server.
 
 Before submitting a package change, run:
 

@@ -25,9 +25,9 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
-    small: 'min-h-8 py-1.5 pl-2.5 pr-10 text-sm',
-    default: 'min-h-10 py-2 pl-3 pr-10 text-base',
-    large: 'min-h-12 py-2.5 pl-3.5 pr-10 text-lg',
+    small: 'tum:min-h-8 tum:py-1.5 tum:pl-2.5 tum:pr-10 tum:text-sm',
+    default: 'tum:min-h-10 tum:py-2 tum:pl-3 tum:pr-10 tum:text-base',
+    large: 'tum:min-h-12 tum:py-2.5 tum:pl-3.5 tum:pr-10 tum:text-lg',
 };
 
 let nextSelectId = 0;
@@ -315,27 +315,29 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     }
 
     private buildTriggerClasses(): string {
-        const base = 'tum-ui-select-trigger flex w-full items-center border text-left transition-colors';
+        const base = 'tum-ui-select-trigger tum:flex tum:w-full tum:items-center tum:border tum:text-left tum:transition-colors';
         const size = TRIGGER_SIZE[this.size() ?? 'default'];
         let state: string;
         if (this.isDisabled()) {
             state =
-                'cursor-default bg-tum-ui-surface-200 text-tum-ui-surface-500 border-tum-ui-surface-300 dark:bg-tum-ui-surface-700 dark:text-tum-ui-surface-400 dark:border-tum-ui-surface-600';
+                'tum:cursor-default tum:bg-tum-ui-surface-200 tum:text-tum-ui-surface-500 tum:border-tum-ui-surface-300 tum:dark:bg-tum-ui-surface-700 tum:dark:text-tum-ui-surface-400 tum:dark:border-tum-ui-surface-600';
         } else if (this.isOpen()) {
-            state = 'cursor-pointer bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-primary dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0';
+            state =
+                'tum:cursor-pointer tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-primary tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0';
         } else {
             state =
-                'cursor-pointer bg-tum-ui-surface-0 text-tum-ui-surface-700 border-tum-ui-surface-300 hover:border-tum-ui-surface-400 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0 dark:border-tum-ui-surface-600 dark:hover:border-tum-ui-surface-500';
+                'tum:cursor-pointer tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:border-tum-ui-surface-300 tum:hover:border-tum-ui-surface-400 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0 tum:dark:border-tum-ui-surface-600 tum:dark:hover:border-tum-ui-surface-500';
         }
         return `${base} ${size} ${state}`;
     }
     protected optionClasses(option: unknown, index: number): string {
-        const base = 'tum-ui-select-option flex cursor-pointer items-center px-3 py-2';
+        const base = 'tum-ui-select-option tum:flex tum:cursor-pointer tum:items-center tum:px-3 tum:py-2';
         const active = this.activeIndex() === index;
         if (this.isSelected(option)) {
-            return `${base} tum-ui-select-option-selected${active ? ' is-active' : ''}`;
+            const background = active ? 'tum:bg-tum-ui-highlight-focus-background' : 'tum:bg-tum-ui-highlight-background';
+            return `${base} tum:text-tum-ui-highlight ${background}`;
         }
-        const activeState = active ? ' bg-tum-ui-surface-100 text-tum-ui-surface-800 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-0' : '';
-        return `${base} text-tum-ui-surface-700 hover:bg-tum-ui-surface-100 hover:text-tum-ui-surface-800 dark:text-tum-ui-surface-0 dark:hover:bg-tum-ui-surface-800${activeState}`;
+        const activeState = active ? ' tum:bg-tum-ui-highlight-focus-background tum:text-tum-ui-highlight' : '';
+        return `${base} tum:text-tum-ui-surface-700 tum:hover:bg-tum-ui-surface-100 tum:hover:text-tum-ui-surface-800 tum:dark:text-tum-ui-surface-0 tum:dark:hover:bg-tum-ui-surface-800${activeState}`;
     }
 }

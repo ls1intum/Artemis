@@ -8,25 +8,25 @@ export interface TumUiTableSortEvent {
 }
 
 const SIZE_PADDING: Record<TumUiTableSize, string> = {
-    small: '[&_thead_th]:px-2 [&_thead_th]:py-1.5 [&_tbody_td]:px-2 [&_tbody_td]:py-1.5',
-    normal: '[&_thead_th]:px-4 [&_thead_th]:py-3 [&_tbody_td]:px-4 [&_tbody_td]:py-3',
-    large: '[&_thead_th]:px-5 [&_thead_th]:py-4 [&_tbody_td]:px-5 [&_tbody_td]:py-4',
+    small: 'tum:[&_thead_th]:px-2 tum:[&_thead_th]:py-1.5 tum:[&_tbody_td]:px-2 tum:[&_tbody_td]:py-1.5',
+    normal: 'tum:[&_thead_th]:px-4 tum:[&_thead_th]:py-3 tum:[&_tbody_td]:px-4 tum:[&_tbody_td]:py-3',
+    large: 'tum:[&_thead_th]:px-5 tum:[&_thead_th]:py-4 tum:[&_tbody_td]:px-5 tum:[&_tbody_td]:py-4',
 };
 
 const HEADER_CLASSES =
-    '[&_thead_th]:text-left [&_thead_th]:font-semibold [&_thead_th]:whitespace-nowrap ' +
-    '[&_thead_th]:bg-tum-ui-surface-0 [&_thead_th]:text-tum-ui-surface-700 dark:[&_thead_th]:bg-tum-ui-surface-900 dark:[&_thead_th]:text-tum-ui-surface-0 ' +
-    '[&_thead_th]:border-b [&_thead_th]:border-solid [&_thead_th]:border-tum-ui-surface-200 dark:[&_thead_th]:border-tum-ui-surface-800';
+    'tum:[&_thead_th]:text-left tum:[&_thead_th]:font-semibold tum:[&_thead_th]:whitespace-nowrap ' +
+    'tum:[&_thead_th]:bg-tum-ui-surface-0 tum:[&_thead_th]:text-tum-ui-surface-700 tum:dark:[&_thead_th]:bg-tum-ui-surface-900 tum:dark:[&_thead_th]:text-tum-ui-surface-0 ' +
+    'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-solid tum:[&_thead_th]:border-tum-ui-surface-200 tum:dark:[&_thead_th]:border-tum-ui-surface-800';
 
 const BODY_CLASSES =
-    '[&_tbody_td]:text-tum-ui-surface-900 dark:[&_tbody_td]:text-tum-ui-surface-0 ' +
-    '[&_tbody_td]:border-b [&_tbody_td]:border-solid [&_tbody_td]:border-tum-ui-surface-200 dark:[&_tbody_td]:border-tum-ui-surface-800';
+    'tum:[&_tbody_td]:text-tum-ui-surface-900 tum:dark:[&_tbody_td]:text-tum-ui-surface-0 ' +
+    'tum:[&_tbody_td]:border-b tum:[&_tbody_td]:border-solid tum:[&_tbody_td]:border-tum-ui-surface-200 tum:dark:[&_tbody_td]:border-tum-ui-surface-800';
 
-const STRIPED_CLASSES = '[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950';
+const STRIPED_CLASSES = 'tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 tum:dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950';
 
-const HOVER_CLASSES = '[&_tbody_tr:hover]:bg-tum-ui-surface-100 dark:[&_tbody_tr:hover]:bg-tum-ui-surface-800';
+const HOVER_CLASSES = 'tum:[&_tbody_tr:hover]:bg-tum-ui-surface-100 tum:dark:[&_tbody_tr:hover]:bg-tum-ui-surface-800';
 
-const SCROLLABLE_CLASSES = '[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10';
+const SCROLLABLE_CLASSES = 'tum:[&_thead_th]:sticky tum:[&_thead_th]:top-0 tum:[&_thead_th]:z-10';
 
 @Directive({
     selector: 'table[tumUiTable]',
@@ -54,7 +54,7 @@ export class TumUiTableDirective {
     readonly sortChange = output<TumUiTableSortEvent>();
 
     protected readonly hostClasses = computed(() => {
-        const parts = ['tum-ui-table w-full border-collapse text-sm', SIZE_PADDING[this.size()], HEADER_CLASSES, BODY_CLASSES];
+        const parts = ['tum-ui-table tum:w-full tum:border-collapse tum:text-sm', SIZE_PADDING[this.size()], HEADER_CLASSES, BODY_CLASSES];
         if (this.striped()) {
             parts.push(STRIPED_CLASSES);
         }

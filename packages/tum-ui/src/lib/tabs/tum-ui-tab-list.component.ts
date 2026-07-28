@@ -6,12 +6,12 @@ import { TumUiTabComponent } from './tum-ui-tab.component';
     selector: 'tum-ui-tab-list',
     template: `
         <ng-content />
-        <div #activeBar class="tum-ui-tab-list-active-bar bg-tum-ui-primary" aria-hidden="true"></div>
+        <div #activeBar class="tum-ui-tab-list-active-bar tum:bg-tum-ui-primary" aria-hidden="true"></div>
     `,
     styleUrl: './tum-ui-tab-list.component.scss',
     host: {
         role: 'tablist',
-        class: 'tum-ui-tab-list relative flex border-b',
+        class: 'tum-ui-tab-list tum:relative tum:flex tum:border-b tum:border-tum-ui-border',
         '(keydown)': 'onKeydown($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,

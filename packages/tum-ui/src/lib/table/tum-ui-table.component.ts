@@ -28,11 +28,11 @@ const ACTIONS_COLUMN = '__tum_ui_actions__';
 const SEARCH_DEBOUNCE_MS = 300;
 
 const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, string> = {
-    sm: 'hidden sm:table-cell',
-    md: 'hidden md:table-cell',
-    lg: 'hidden lg:table-cell',
-    xl: 'hidden xl:table-cell',
-    '2xl': 'hidden 2xl:table-cell',
+    sm: 'tum:hidden tum:sm:table-cell',
+    md: 'tum:hidden tum:md:table-cell',
+    lg: 'tum:hidden tum:lg:table-cell',
+    xl: 'tum:hidden tum:xl:table-cell',
+    '2xl': 'tum:hidden tum:2xl:table-cell',
 };
 
 @Component({
@@ -92,8 +92,8 @@ export class TumUiTableComponent<T> {
     });
 
     protected readonly tableClasses = computed(() => {
-        const base = 'w-full border-collapse text-sm';
-        return this.striped() ? `${base} [&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950` : base;
+        const base = 'tum:w-full tum:border-collapse tum:text-sm';
+        return this.striped() ? `${base} tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-50 tum:dark:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-surface-950` : base;
     });
 
     constructor() {
@@ -134,10 +134,6 @@ export class TumUiTableComponent<T> {
         return { data: row, col, value: this.resolveValue(row, col), rowIndex };
     }
 
-    /**
-     * Responsive-visibility classes for a column's header and body cells, so a column with {@link ColumnDef.hideBelow} collapses below that breakpoint (keeping the table usable on
-     * small screens without horizontal scrolling). Empty string for always-visible columns.
-     */
     protected columnVisibilityClasses(col: ColumnDef<T>): string {
         return col.hideBelow ? HIDE_BELOW_CLASSES[col.hideBelow] : '';
     }

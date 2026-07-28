@@ -5,7 +5,7 @@ import { TumUiTabsService } from './tum-ui-tabs.service';
     selector: 'tum-ui-tabs',
     template: '<ng-content />',
     host: {
-        class: 'tum-ui-tabs flex flex-col',
+        class: 'tum-ui-tabs tum:flex tum:flex-col',
     },
     providers: [TumUiTabsService],
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -11,9 +11,9 @@
             }
         },
         {
-            "files": ["packages/tum-ui/theme.css"],
+            "files": ["src/main/webapp/tailwind.css", "packages/tum-ui/tailwind.css"],
             "rules": {
-                "scss/at-rule-no-unknown": [true, { "ignoreAtRules": ["source", "theme"] }]
+                "scss/at-rule-no-unknown": [true, { "ignoreAtRules": ["custom-variant", "plugin", "source", "theme"] }]
             }
         },
         {

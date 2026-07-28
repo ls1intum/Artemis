@@ -99,6 +99,17 @@ export default tseslint.config(
     },
     eslint.configs.recommended,
     {
+        files: ['packages/tum-ui/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                clearTimeout: 'readonly',
+                console: 'readonly',
+                process: 'readonly',
+                setTimeout: 'readonly',
+            },
+        },
+    },
+    {
         files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,

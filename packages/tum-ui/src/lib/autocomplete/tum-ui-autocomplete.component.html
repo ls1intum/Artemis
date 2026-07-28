@@ -17,7 +17,7 @@
         role="combobox"
         [id]="inputId()"
         [attr.name]="name()"
-        class="tum-ui-autocomplete-input min-w-16 flex-1 border-0 bg-transparent p-0 text-base text-inherit outline-none placeholder:text-tum-ui-muted"
+        class="tum-ui-autocomplete-input tum:min-w-16 tum:flex-1 tum:border-0 tum:bg-transparent tum:p-0 tum:text-base tum:text-inherit tum:outline-none tum:placeholder:text-tum-ui-muted"
         [attr.placeholder]="inputPlaceholder()"
         [disabled]="isDisabled()"
         autocomplete="off"
@@ -36,13 +36,13 @@
 
 <ng-template #panel>
     <div
-        class="tum-ui-autocomplete-panel rounded-md border border-tum-ui-border bg-tum-ui-surface-0 text-tum-ui-surface-700 shadow-md dark:bg-tum-ui-surface-900 dark:text-tum-ui-surface-0"
+        class="tum-ui-autocomplete-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-surface-0 tum:text-tum-ui-surface-700 tum:shadow-md tum:dark:bg-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0"
     >
         <ul
             [id]="listboxId"
             role="listbox"
             [attr.aria-label]="ariaLabel()"
-            class="m-0 flex max-h-60 list-none flex-col gap-0.5 overflow-y-auto p-1"
+            class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1"
             data-testid="tum-ui-autocomplete-listbox"
         >
             @for (option of suggestions(); track $index; let i = $index) {
@@ -56,10 +56,10 @@
                     (mouseenter)="setActive(i)"
                     data-testid="tum-ui-autocomplete-option"
                 >
-                    <span class="flex-1 truncate">{{ valueLabel(option) }}</span>
+                    <span class="tum:flex-1 tum:truncate">{{ valueLabel(option) }}</span>
                 </li>
             } @empty {
-                <li role="presentation" class="px-3 py-2 text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">
+                <li role="presentation" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted" data-testid="tum-ui-autocomplete-empty">
                     {{ emptyMessage() ?? ('tumUi.autocomplete.empty' | tumUiTranslate) }}
                 </li>
             }

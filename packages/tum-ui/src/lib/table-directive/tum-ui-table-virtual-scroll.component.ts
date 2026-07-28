@@ -4,9 +4,9 @@ import { ChangeDetectionStrategy, Component, TemplateRef, TrackByFunction, boole
 import { TumUiTableSize } from './tum-ui-table.directive';
 
 const HEADER_PADDING: Record<TumUiTableSize, string> = {
-    small: 'px-2 py-1.5',
-    normal: 'px-4 py-3',
-    large: 'px-5 py-4',
+    small: 'tum:px-2 tum:py-1.5',
+    normal: 'tum:px-4 tum:py-3',
+    large: 'tum:px-5 tum:py-4',
 };
 
 @Component({
@@ -43,18 +43,18 @@ export class TumUiTableVirtualScrollComponent<T> {
 
     protected readonly headerClasses = computed(() => {
         const base =
-            'tum-ui-vs-header flex text-sm font-semibold text-tum-ui-surface-700 bg-tum-ui-surface-0 dark:text-tum-ui-surface-0 dark:bg-tum-ui-surface-900 ' +
-            'border-b border-solid border-tum-ui-surface-200 dark:border-tum-ui-surface-800';
+            'tum-ui-vs-header tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-surface-700 tum:bg-tum-ui-surface-0 tum:dark:text-tum-ui-surface-0 tum:dark:bg-tum-ui-surface-900 ' +
+            'tum:border-b tum:border-solid tum:border-tum-ui-surface-200 tum:dark:border-tum-ui-surface-800';
         return `${base} ${HEADER_PADDING[this.size()]}`;
     });
 
     protected readonly rowClasses = computed(() => {
         const base =
-            'tum-ui-vs-row flex items-center text-sm text-tum-ui-surface-900 dark:text-tum-ui-surface-0 border-b border-solid border-tum-ui-surface-200 dark:border-tum-ui-surface-800';
-        const hover = this.rowHover() ? ' hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800' : '';
+            'tum-ui-vs-row tum:flex tum:items-center tum:text-sm tum:text-tum-ui-surface-900 tum:dark:text-tum-ui-surface-0 tum:border-b tum:border-solid tum:border-tum-ui-surface-200 tum:dark:border-tum-ui-surface-800';
+        const hover = this.rowHover() ? ' tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800' : '';
         return `${base}${hover} ${HEADER_PADDING[this.size()]}`;
     });
     protected stripeClass(index: number): string {
-        return this.striped() && index % 2 === 0 ? ' bg-tum-ui-surface-50 dark:bg-tum-ui-surface-950' : '';
+        return this.striped() && index % 2 === 0 ? ' tum:bg-tum-ui-surface-50 tum:dark:bg-tum-ui-surface-950' : '';
     }
 }

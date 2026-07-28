@@ -3,7 +3,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 @Component({
     selector: 'tum-ui-button-group',
     template: '<ng-content />',
-    styleUrl: './tum-ui-button-group.component.scss',
     host: {
         '[class]': 'hostClasses()',
     },

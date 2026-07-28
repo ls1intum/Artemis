@@ -1,9 +1,9 @@
 <div
-    class="flex flex-wrap items-center justify-center gap-1 border-t border-tum-ui-surface-200 pt-2 text-sm text-tum-ui-muted dark:border-tum-ui-surface-800"
+    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-surface-200 tum:pt-2 tum:text-sm tum:text-tum-ui-muted tum:dark:border-tum-ui-surface-800"
     data-testid="tum-ui-paginator"
 >
     @if (showCurrentPageReport()) {
-        <span class="px-2" data-testid="paginator-report">
+        <span class="tum:px-2" data-testid="paginator-report">
             {{ 'tumUi.paginator.currentPageReport' | tumUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
         </span>
     }
@@ -65,7 +65,7 @@
 
     @if (showRowsPerPage()) {
         <select
-            class="ml-1 cursor-pointer rounded-md border border-tum-ui-surface-300 bg-tum-ui-surface-0 px-2.5 py-1.5 text-sm text-tum-ui-surface-900 dark:border-tum-ui-surface-600 dark:bg-tum-ui-surface-950 dark:text-tum-ui-surface-0"
+            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-tum-ui-surface-300 tum:bg-tum-ui-surface-0 tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-tum-ui-surface-900 tum:dark:border-tum-ui-surface-600 tum:dark:bg-tum-ui-surface-950 tum:dark:text-tum-ui-surface-0"
             [ngModel]="pageSize()"
             [disabled]="disabled()"
             (ngModelChange)="onPageSizeChange($event)"

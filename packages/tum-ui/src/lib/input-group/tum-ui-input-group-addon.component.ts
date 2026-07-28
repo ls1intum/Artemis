@@ -6,9 +6,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     styleUrl: './tum-ui-input-group-addon.component.scss',
     host: {
         class:
-            'tum-ui-input-group-addon bg-tum-ui-surface-0 text-tum-ui-muted border-y border-tum-ui-surface-300 ' +
-            'first:border-s first:rounded-s-md last:border-e last:rounded-e-md ' +
-            'dark:bg-tum-ui-surface-950 dark:border-tum-ui-surface-600',
+            'tum-ui-input-group-addon tum:bg-tum-ui-surface-0 tum:text-tum-ui-muted tum:border-y tum:border-tum-ui-surface-300 ' +
+            'tum:first:border-s tum:first:rounded-s-md tum:last:border-e tum:last:rounded-e-md ' +
+            'tum:dark:bg-tum-ui-surface-950 tum:dark:border-tum-ui-surface-600',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

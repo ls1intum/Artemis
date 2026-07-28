@@ -6,7 +6,7 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 const PAGE_LINK_SIZE = 5;
 const NAV_BUTTON_CLASSES =
-    'inline-flex h-[35px] w-[35px] shrink-0 cursor-pointer appearance-none items-center justify-center rounded-full border-0 bg-transparent text-sm text-tum-ui-muted transition-colors hover:bg-tum-ui-surface-100 dark:hover:bg-tum-ui-surface-800 disabled:pointer-events-none disabled:opacity-50';
+    'tum:inline-flex tum:h-[35px] tum:w-[35px] tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-sm tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-surface-100 tum:dark:hover:bg-tum-ui-surface-800 tum:disabled:pointer-events-none tum:disabled:opacity-50';
 
 @Component({
     selector: 'tum-ui-paginator',
@@ -34,7 +34,10 @@ export class TumUiPaginatorComponent {
     protected readonly faAnglesRight = faAnglesRight;
 
     protected readonly navButtonClasses = NAV_BUTTON_CLASSES;
-    protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('bg-transparent', 'bg-tum-ui-primary/15').replace('text-tum-ui-muted', 'font-semibold text-tum-ui-primary');
+    protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('tum:bg-transparent', 'tum:bg-tum-ui-primary/15').replace(
+        'tum:text-tum-ui-muted',
+        'tum:font-semibold tum:text-tum-ui-primary',
+    );
 
     protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalRecords() / Math.max(1, this.pageSize()))));
     protected readonly clampedPage = computed(() => Math.min(Math.max(0, this.page()), this.totalPages() - 1));

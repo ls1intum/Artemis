@@ -103,6 +103,7 @@
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
                             "src/main/webapp/tailwind.css",
+                            "dist/tum-ui/styles.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
@@ -209,6 +210,10 @@
                         "development": {
                             "project": "packages/tum-ui/ng-package.dev.json",
                             "tsConfig": "packages/tum-ui/tsconfig.lib.json"
+                        },
+                        "pack": {
+                            "project": "packages/tum-ui/ng-package.pack.json",
+                            "tsConfig": "packages/tum-ui/tsconfig.lib.prod.json"
                         }
                     },
                     "defaultConfiguration": "production"

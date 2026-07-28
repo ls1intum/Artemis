@@ -29,7 +29,7 @@ export class TumUiPanelComponent {
     protected readonly faChevronUp = faChevronUp;
 
     protected readonly hostClasses = computed(() =>
-        `tum-ui-panel border border-tum-ui-border rounded-md bg-tum-ui-surface-0 dark:bg-tum-ui-surface-900 text-tum-ui-text ${this.styleClass()}`.trim(),
+        `tum-ui-panel tum:border tum:border-tum-ui-border tum:rounded-md tum:bg-tum-ui-surface-0 tum:dark:bg-tum-ui-surface-900 tum:text-tum-ui-text ${this.styleClass()}`.trim(),
     );
 
     protected toggle(): void {

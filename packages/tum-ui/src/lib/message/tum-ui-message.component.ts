@@ -11,8 +11,10 @@ const MESSAGE_SEVERITY: Record<TumUiMessageSeverity, string> = {
     success: '',
     warn: '',
     error: '',
-    secondary: 'bg-tum-ui-surface-100 text-tum-ui-surface-600 outline-tum-ui-surface-200 dark:bg-tum-ui-surface-800 dark:text-tum-ui-surface-300 dark:outline-tum-ui-surface-700',
-    contrast: 'bg-tum-ui-surface-900 text-tum-ui-surface-50 outline-tum-ui-surface-950 dark:bg-tum-ui-surface-0 dark:text-tum-ui-surface-950 dark:outline-tum-ui-surface-100',
+    secondary:
+        'tum:bg-tum-ui-surface-100 tum:text-tum-ui-surface-600 tum:outline-tum-ui-surface-200 tum:dark:bg-tum-ui-surface-800 tum:dark:text-tum-ui-surface-300 tum:dark:outline-tum-ui-surface-700',
+    contrast:
+        'tum:bg-tum-ui-surface-900 tum:text-tum-ui-surface-50 tum:outline-tum-ui-surface-950 tum:dark:bg-tum-ui-surface-0 tum:dark:text-tum-ui-surface-950 tum:dark:outline-tum-ui-surface-100',
 };
 
 @Component({
