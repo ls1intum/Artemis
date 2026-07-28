@@ -26,12 +26,6 @@ describe('TumUiButtonGroupComponent', () => {
     it('renders as an inline-flex group', () => {
         expect(host.className).toContain('tum-ui-button-group');
     });
-
-    it('forwards styleClass onto the group', () => {
-        fixture.componentRef.setInput('styleClass', 'ms-1');
-        fixture.detectChanges();
-        expect(host.className).toContain('ms-1');
-    });
 });
 
 @Component({

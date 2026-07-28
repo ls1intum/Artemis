@@ -75,13 +75,6 @@ describe('TumUiProgressBarComponent', () => {
         fixture.detectChanges();
         expect(fill().style.background).toBe('var(--success)');
     });
-
-    it('forwards styleClass onto the bar', () => {
-        fixture.componentRef.setInput('styleClass', 'mb-2 w-full');
-        fixture.detectChanges();
-        expect(host.className).toContain('mb-2');
-        expect(host.className).toContain('w-full');
-    });
 });
 
 @Component({

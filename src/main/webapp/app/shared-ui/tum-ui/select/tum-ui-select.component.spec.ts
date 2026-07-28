@@ -175,11 +175,9 @@ describe('TumUiSelectComponent', () => {
         expect((document.querySelector('[data-testid="tum-ui-select-empty"]') as HTMLElement).textContent?.trim()).toBe('Nothing here');
     });
 
-    it('forwards styleClass onto the host and sizing to the trigger', () => {
-        fixture.componentRef.setInput('styleClass', 'w-full');
+    it('forwards sizing to the trigger', () => {
         fixture.componentRef.setInput('size', 'small');
         fixture.detectChanges();
-        expect((fixture.nativeElement as HTMLElement).classList.contains('w-full')).toBe(true);
         expect(triggerButton().className).toContain('text-sm');
     });
 });

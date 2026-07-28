@@ -60,8 +60,6 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly name = input<string>();
     /** Accessible name for the inner `<input>` when there is no visible `<label>`. */
     readonly ariaLabel = input<string>();
-    /** Extra classes forwarded onto the host (drop-in for `styleClass`). */
-    readonly styleClass = input('');
     /** Extra classes forwarded onto the inner `<input>` (drop-in for `inputStyleClass`). */
     readonly inputStyleClass = input('');
 
@@ -91,8 +89,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (this.showButtons()) {
             parts.push('tum-ui-input-number-buttons');
         }
-        const style = this.styleClass();
-        return style ? `${parts.join(' ')} ${style}` : parts.join(' ');
+        return parts.join(' ');
     });
 
     // WAI-ARIA spinbutton semantics: the input announces its numeric value + range and is adjusted with the arrow

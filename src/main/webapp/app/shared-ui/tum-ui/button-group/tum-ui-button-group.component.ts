@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /**
  * Owned button group, part of the tum-aet-ui kit (future @tumaet/ui-angular).
@@ -14,13 +14,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     template: '<ng-content />',
     styleUrl: './tum-ui-button-group.component.scss',
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-button-group',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumUiButtonGroupComponent {
-    /** Extra classes forwarded onto the group (drop-in for p-buttongroup `styleClass`). */
-    readonly styleClass = input<string>('');
-
-    protected readonly hostClasses = computed(() => `tum-ui-button-group ${this.styleClass()}`.trim());
-}
+export class TumUiButtonGroupComponent {}

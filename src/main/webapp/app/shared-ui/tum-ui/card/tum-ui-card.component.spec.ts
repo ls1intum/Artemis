@@ -40,17 +40,11 @@ describe('TumUiCardComponent', () => {
         expect(subtitle.textContent?.trim()).toBe('last 30 days');
         expect(subtitle.className).toContain('text-muted-color');
     });
-
-    it('forwards styleClass onto the card root', () => {
-        fixture.componentRef.setInput('styleClass', 'iris-kpi-card');
-        fixture.detectChanges();
-        expect(host.className).toContain('iris-kpi-card');
-    });
 });
 
 @Component({
     template: `
-        <tum-ui-card styleClass="iris-kpi-card">
+        <tum-ui-card class="iris-kpi-card">
             <div tumUiCardHeader class="header-slot">Header</div>
             <span class="body-slot">Body content</span>
             <div tumUiCardFooter class="footer-slot">Footer</div>
@@ -75,6 +69,12 @@ describe('TumUiCardComponent (projection)', () => {
         const body = fixture.debugElement.query(By.css('.tum-ui-card-content .body-slot'));
         expect(body).not.toBeNull();
         expect(body.nativeElement.textContent.trim()).toBe('Body content');
+    });
+
+    it('merges a consumer class on the host with the card own classes', () => {
+        const card = fixture.debugElement.query(By.css('tum-ui-card')).nativeElement as HTMLElement;
+        expect(card.className).toContain('iris-kpi-card');
+        expect(card.className).toContain('tum-ui-card');
     });
 
     it('projects header and footer into their dedicated slots', () => {

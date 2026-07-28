@@ -82,8 +82,6 @@ export class TumUiTableDirective {
     readonly scrollable = input(false, { transform: booleanAttribute });
     /** Tint body rows on hover (parity with p-table `[rowHover]`). */
     readonly rowHover = input(false, { transform: booleanAttribute });
-    /** Extra classes forwarded onto the table (drop-in for p-table `styleClass`, e.g. `mt-3`). */
-    readonly styleClass = input('');
 
     /**
      * Active sort field (controlled, parity with p-table `[sortField]`). Drives the sortable-column
@@ -108,10 +106,6 @@ export class TumUiTableDirective {
         }
         if (this.scrollable()) {
             parts.push(SCROLLABLE_CLASSES);
-        }
-        const styleClass = this.styleClass();
-        if (styleClass) {
-            parts.push(styleClass);
         }
         return parts.join(' ');
     });

@@ -13,7 +13,7 @@ import { TumUiTableDirective, TumUiTableSize, TumUiTableSortEvent } from 'app/sh
             [striped]="striped()"
             [scrollable]="scrollable()"
             [rowHover]="rowHover()"
-            [styleClass]="styleClass()"
+            class="mt-3 shadow"
             [sortField]="sortField()"
             [sortOrder]="sortOrder()"
             (sortChange)="events.push($event)"
@@ -37,7 +37,6 @@ class HostComponent {
     readonly striped = signal(false);
     readonly scrollable = signal(false);
     readonly rowHover = signal(false);
-    readonly styleClass = signal('');
     readonly sortField = signal<string | undefined>(undefined);
     readonly sortOrder = signal(1);
     events: TumUiTableSortEvent[] = [];
@@ -113,11 +112,10 @@ describe('TumUiTableDirective', () => {
         expect(tableClass()).toContain('[&_tbody_tr:hover]:bg-surface-100');
     });
 
-    it('forwards styleClass onto the table', () => {
-        host.styleClass.set('mt-3 shadow');
-        fixture.detectChanges();
+    it('merges the consumer static class with its own host classes', () => {
         expect(tableClass()).toContain('mt-3');
         expect(tableClass()).toContain('shadow');
+        expect(tableClass()).toContain('tum-ui-table');
     });
 
     it('toggles the order when re-sorting the active field (parity with p-table single sort)', () => {

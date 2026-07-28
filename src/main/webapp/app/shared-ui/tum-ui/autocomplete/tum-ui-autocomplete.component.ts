@@ -59,9 +59,6 @@ let nextAutoCompleteId = 0;
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
     imports: [A11yModule, TumUiChipComponent],
-    host: {
-        '[class]': 'styleClass()',
-    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiAutoCompleteComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -97,8 +94,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     readonly ariaLabel = input<string>();
     /** Accessible name for each chip's remove button; overridable for i18n. */
     readonly removeAriaLabel = input<string>('Remove');
-    /** Extra classes forwarded onto the host (drop-in for `p-autocomplete styleClass`, e.g. `w-full`). */
-    readonly styleClass = input<string>('');
     /** Text shown in the panel when a search returned no suggestions. */
     readonly emptyMessage = input<string>('No results found');
 

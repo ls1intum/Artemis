@@ -45,8 +45,6 @@ export class TumUiMessageComponent {
     readonly text = input<string>();
     /** Optional leading FontAwesome icon; none is shown by default, exactly like p-message. */
     readonly icon = input<IconProp>();
-    /** Extra classes forwarded onto the message box (drop-in for p-message `styleClass`, e.g. `mb-3 w-full`). */
-    readonly styleClass = input<string>('');
 
-    protected readonly hostClasses = computed(() => `${MESSAGE_BASE} ${MESSAGE_SEVERITY[this.severity()]} ${this.styleClass()}`.trim());
+    protected readonly hostClasses = computed(() => `${MESSAGE_BASE} ${MESSAGE_SEVERITY[this.severity()]}`);
 }

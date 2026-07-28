@@ -128,7 +128,6 @@
                     <label jhiTranslate="artemisApp.userManagement.groups"></label>
                     <tum-ui-autocomplete
                         class="w-full"
-                        styleClass="w-full"
                         [multiple]="true"
                         [ngModel]="user().groups ?? []"
                         [ngModelOptions]="{ standalone: true }"
@@ -222,7 +221,7 @@
                             inputId="langKey"
                             name="langKey"
                             formControlName="langKey"
-                            styleClass="w-full"
+                            class="w-full"
                             [options]="languageOptions()"
                             optionLabel="label"
                             optionValue="value"

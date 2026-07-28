@@ -11,15 +11,7 @@
             >Datasource</tum-ui-button
         >
         @if (nodeOptions().length > 1) {
-            <tum-ui-select
-                [(ngModel)]="selectedNodeId"
-                [options]="nodeOptions()"
-                optionLabel="label"
-                optionValue="value"
-                (onChange)="onNodeChange()"
-                size="small"
-                styleClass="w-auto"
-            />
+            <tum-ui-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" class="w-auto" />
         }
         <tum-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="metrics.refresh.button"></span>

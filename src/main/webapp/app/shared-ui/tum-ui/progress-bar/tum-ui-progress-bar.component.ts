@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
  * Owned determinate progress bar, part of the tum-aet-ui kit (future @tumaet/ui-angular).
@@ -15,8 +15,10 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     selector: 'tum-ui-progress-bar',
     templateUrl: './tum-ui-progress-bar.component.html',
     styleUrl: './tum-ui-progress-bar.component.scss',
+    // Track background = Aura's content.border.color (surface.200 light / surface.800 dark, matching the
+    // Artemis theme override); the fill is bg-primary on the value element unless `color` overrides it inline.
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-progress-bar bg-surface-200 dark:bg-surface-800',
         role: 'progressbar',
         '[attr.aria-valuemin]': '0',
         '[attr.aria-valuemax]': '100',
@@ -33,10 +35,4 @@ export class TumUiProgressBarComponent {
     readonly color = input<string>();
     /** Unit appended to the default value label (parity with p-progressbar `[unit]`). */
     readonly unit = input<string>('%');
-    /** Extra classes forwarded onto the bar (drop-in for p-progressbar `styleClass`, e.g. `mb-2`). */
-    readonly styleClass = input<string>('');
-
-    // Track background = Aura's content.border.color (surface.200 light / surface.800 dark, matching the
-    // Artemis theme override); the fill is bg-primary on the value element unless `color` overrides it inline.
-    protected readonly hostClasses = computed(() => `tum-ui-progress-bar bg-surface-200 dark:bg-surface-800 ${this.styleClass()}`.trim());
 }

@@ -53,13 +53,6 @@ describe('TumUiMessageComponent', () => {
         expect(text().textContent?.trim()).toBe('Something went wrong');
     });
 
-    it('forwards styleClass onto the message box', () => {
-        fixture.componentRef.setInput('styleClass', 'mb-3 w-full');
-        fixture.detectChanges();
-        expect(host.className).toContain('mb-3');
-        expect(host.className).toContain('w-full');
-    });
-
     it('renders a leading icon only when one is provided', () => {
         expect(fixture.debugElement.query(By.css('.tum-ui-message-icon'))).toBeNull();
         fixture.componentRef.setInput('icon', faCircleInfo);

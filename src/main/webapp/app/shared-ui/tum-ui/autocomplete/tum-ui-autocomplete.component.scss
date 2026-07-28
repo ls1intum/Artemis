@@ -1,6 +1,6 @@
 // Structural styling only; colors come from the token utility classes in the template. Metrics are the exact
 // Aura `autocomplete` tokens (multi-container border / radius / focus, overlay panel, option states). The host
-// is a block so a forwarded `w-full` styleClass (and the always-`w-full` inner field) fills its column.
+// is a block so a consumer `w-full` class (and the always-`w-full` inner field) fills its column.
 :host {
     display: block;
     max-width: 100%;

@@ -58,9 +58,6 @@ let nextSelectId = 0;
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
     imports: [A11yModule, FaIconComponent],
-    host: {
-        '[class]': 'styleClass()',
-    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -88,8 +85,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     readonly appendTo = input<string>();
     /** `small` / `large`, matching the Aura form-field sizes; omit for the default size. */
     readonly size = input<TumUiSelectSize>();
-    /** Extra classes forwarded onto the host (drop-in for `p-select styleClass`, e.g. `w-full` / `w-auto`). */
-    readonly styleClass = input<string>('');
     /** `id` of the trigger `<button>` (the target of an external `<label for>`). Defaults to a unique per-instance id. */
     readonly inputId = input(`tum-ui-select-${nextSelectId++}`);
     /** Forwarded onto the trigger for template-driven-form parity; the CVA itself does not need it. */

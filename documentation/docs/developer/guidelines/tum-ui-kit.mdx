@@ -107,6 +107,9 @@ apps in the fleet mirror the same concepts with their own primitive stack.
 - **Standalone + `ChangeDetectionStrategy.OnPush`**, zoneless-safe.
 - **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens)).
   Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
+- **Native `class`, not `styleClass`** — a component styles its own host via a `host` `class` / `[class]`
+  binding, and Angular merges that with whatever `class` the consumer writes on the element. So pass extra
+  classes with plain `class="w-full"`; do not add a PrimeNG-style `styleClass` input to a new component.
 - **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, and focus
   management, all verified in tests.
 - **`@angular/cdk` is the only UI _component-library_ dependency** — no PrimeNG / Bootstrap /
@@ -506,7 +509,6 @@ A single-select dropdown on the CDK overlay — the drop-in for `p-select`. A `r
 | `disabled`          | `boolean`            | `false`                  | Merged with the reactive-forms disabled state.                                                                                                                   |
 | `showClear`         | `boolean`            | `false`                  | Renders a clear (×) button once a value is selected.                                                                                                             |
 | `size`              | `'small' \| 'large'` | –                        | Omit for the default size.                                                                                                                                       |
-| `styleClass`        | `string`             | `''`                     | Classes forwarded onto the host (e.g. `w-full`).                                                                                                                 |
 | `inputId`           | `string`             | unique per instance      | `id` of the trigger; set it for a stable `<label for>` target.                                                                                                   |
 | `ariaLabel`         | `string`             | –                        | Accessible name when there is no visible label.                                                                                                                  |
 | `name`              | `string`             | –                        | Forwarded onto the trigger for template-driven-form parity.                                                                                                      |
@@ -518,10 +520,10 @@ A single-select dropdown on the CDK overlay — the drop-in for `p-select`. A `r
 
 ```html
 <!-- Reactive form, object options -->
-<tum-ui-select inputId="langKey" formControlName="langKey" styleClass="w-full" [options]="languageOptions()" optionLabel="label" optionValue="value" />
+<tum-ui-select inputId="langKey" formControlName="langKey" class="w-full" [options]="languageOptions()" optionLabel="label" optionValue="value" />
 
 <!-- Two-way binding + change handler -->
-<tum-ui-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" styleClass="w-auto" />
+<tum-ui-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" class="w-auto" />
 ```
 
 ### Autocomplete — `tum-ui-autocomplete`
@@ -540,7 +542,6 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 | `minLength`             | `number`                    | `1`                  | Minimum typed characters before `completeMethod` fires.                                    |
 | `delay`                 | `number`                    | `300`                | Debounce (ms) before `completeMethod` fires.                                               |
 | `completeOnFocus`       | `boolean`                   | `false`              | Fire `completeMethod` (even empty) and open the panel on focus.                            |
-| `styleClass`            | `string`                    | `''`                 | Classes forwarded onto the host (e.g. `w-full`).                                           |
 | `emptyMessage`          | `string`                    | `'No results found'` | Panel text when a search returns nothing.                                                  |
 | `inputId`               | `string`                    | unique per instance  | `id` of the text input, for a stable `<label for>` target.                                 |
 | `name`                  | `string`                    | –                    | Forwarded onto the input for template-driven-form parity.                                  |
@@ -552,7 +553,7 @@ An autocomplete / combobox on the CDK overlay — the drop-in for `p-autocomplet
 
 ```html
 <tum-ui-autocomplete
-    styleClass="w-full"
+    class="w-full"
     [multiple]="true"
     [ngModel]="user().groups ?? []"
     [ngModelOptions]="{ standalone: true }"
@@ -585,7 +586,6 @@ A numeric input — the drop-in for `p-inputnumber` (integer values). A token-st
 | `inputId`            | `string`     | unique per instance | `id` of the inner `<input>`, for an external `<label for>`.                                                         |
 | `name`               | `string`     | –                   | `name` forwarded onto the inner `<input>`.                                                                          |
 | `ariaLabel`          | `string`     | –                   | Accessible name when there is no visible label.                                                                     |
-| `styleClass`         | `string`     | `''`                | Classes forwarded onto the host.                                                                                    |
 | `inputStyleClass`    | `string`     | `''`                | Classes forwarded onto the inner `<input>`.                                                                         |
 | `onBlur` / `onFocus` | `FocusEvent` | –                   | Emitted on the inner input's blur (after clamping) / focus.                                                         |
 
@@ -727,11 +727,10 @@ A content card with a surface, rounded corners, and a soft shadow — the drop-i
 
 <Shots light={TumuiCardLight} dark={TumuiCardDark} alt="tum-ui-card with a header, subheader and body" />
 
-| Input        | Type     | Default | Notes                                                     |
-| ------------ | -------- | ------- | --------------------------------------------------------- |
-| `header`     | `string` | –       | Optional title, rendered in the caption.                  |
-| `subheader`  | `string` | –       | Optional subtitle under the title, in the muted color.    |
-| `styleClass` | `string` | `''`    | Classes forwarded onto the card root (e.g. a hook class). |
+| Input       | Type     | Default | Notes                                                  |
+| ----------- | -------- | ------- | ------------------------------------------------------ |
+| `header`    | `string` | –       | Optional title, rendered in the caption.               |
+| `subheader` | `string` | –       | Optional subtitle under the title, in the muted color. |
 
 ```html
 <tum-ui-card header="Statistics" subheader="Last 30 days">
@@ -750,7 +749,6 @@ A titled, bordered content panel with an optional collapse toggle — the drop-i
 | `header`              | `string`  | `''`    | Header title text.                                                                       |
 | `toggleable`          | `boolean` | `false` | Whether the header toggle can collapse the body.                                         |
 | `collapsed` (`model`) | `boolean` | `false` | Two-way bindable as `[(collapsed)]` (or one-way `[collapsed]`). Emits `collapsedChange`. |
-| `styleClass`          | `string`  | `''`    | Classes forwarded onto the panel root.                                                   |
 
 ```html
 <tum-ui-panel [header]="'…config' | artemisTranslate" [toggleable]="true" [collapsed]="true">
@@ -791,9 +789,8 @@ A presentational wrapper — the drop-in for `p-buttongroup` — that welds proj
 
 <Shots light={TumuiButtonGroupLight} dark={TumuiButtonGroupDark} alt="tum-ui-button-group welding three buttons" />
 
-| Input        | Type     | Default | Notes                                  |
-| ------------ | -------- | ------- | -------------------------------------- |
-| `styleClass` | `string` | `''`    | Classes forwarded onto the group root. |
+| Input | Type | Default | Notes |
+| ----- | ---- | ------- | ----- |
 
 ```html
 <tum-ui-button-group>
@@ -809,16 +806,15 @@ An inline message / alert box — the drop-in for `p-message`. Colored severitie
 
 <Shots light={TumuiMessageLight} dark={TumuiMessageDark} alt="tum-ui-message in info, success, warn and error severities" />
 
-| Input        | Type                                                                    | Default  | Notes                                                                     |
-| ------------ | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
-| `severity`   | `'info' \| 'success' \| 'warn' \| 'error' \| 'secondary' \| 'contrast'` | `'info'` |                                                                           |
-| `text`       | `string`                                                                | –        | Plain-text message; when set it renders **instead of** projected content. |
-| `icon`       | `IconProp`                                                              | –        | Optional leading FontAwesome icon; none shown by default.                 |
-| `styleClass` | `string`                                                                | `''`     | Classes forwarded onto the box (e.g. `mb-3 w-full`).                      |
+| Input      | Type                                                                    | Default  | Notes                                                                     |
+| ---------- | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
+| `severity` | `'info' \| 'success' \| 'warn' \| 'error' \| 'secondary' \| 'contrast'` | `'info'` |                                                                           |
+| `text`     | `string`                                                                | –        | Plain-text message; when set it renders **instead of** projected content. |
+| `icon`     | `IconProp`                                                              | –        | Optional leading FontAwesome icon; none shown by default.                 |
 
 ```html
 <!-- Plain text via the input -->
-<tum-ui-message severity="error" [text]="error" styleClass="mb-3 w-full" aria-live="assertive" />
+<tum-ui-message severity="error" [text]="error" class="mb-3 w-full" aria-live="assertive" />
 
 <!-- Projected content -->
 <tum-ui-message severity="warn"><fa-icon [icon]="faTriangleExclamation" /> This action needs your attention.</tum-ui-message>
@@ -924,13 +920,12 @@ A determinate progress bar — the drop-in for `p-progressbar`. A `bg-primary` f
 
 <Shots light={TumuiProgressBarLight} dark={TumuiProgressBarDark} alt="tum-ui-progress-bar at 65%" />
 
-| Input        | Type      | Default | Notes                                                                     |
-| ------------ | --------- | ------- | ------------------------------------------------------------------------- |
-| `value`      | `number`  | `0`     | Current progress 0–100; drives the fill width and `aria-valuenow`.        |
-| `showValue`  | `boolean` | `true`  | Render the default `{value}{unit}` label (ignored for projected content). |
-| `color`      | `string`  | –       | CSS color for the fill, overriding the default `bg-primary`.              |
-| `unit`       | `string`  | `'%'`   | Unit appended to the default value label.                                 |
-| `styleClass` | `string`  | `''`    | Classes forwarded onto the bar (e.g. `mb-2`).                             |
+| Input       | Type      | Default | Notes                                                                     |
+| ----------- | --------- | ------- | ------------------------------------------------------------------------- |
+| `value`     | `number`  | `0`     | Current progress 0–100; drives the fill width and `aria-valuenow`.        |
+| `showValue` | `boolean` | `true`  | Render the default `{value}{unit}` label (ignored for projected content). |
+| `color`     | `string`  | –       | CSS color for the fill, overriding the default `bg-primary`.              |
+| `unit`      | `string`  | `'%'`   | Unit appended to the default value label.                                 |
 
 ```html
 <!-- Labelled percentage -->
@@ -946,16 +941,15 @@ An indeterminate loading spinner — the drop-in for `p-progressspinner`. A rota
 
 <Shots light={TumuiProgressSpinnerLight} dark={TumuiProgressSpinnerDark} alt="tum-ui-progress-spinner" />
 
-| Input               | Type               | Default  | Notes                                                   |
-| ------------------- | ------------------ | -------- | ------------------------------------------------------- |
-| `strokeWidth`       | `string \| number` | `'2'`    | Width of the circle stroke.                             |
-| `fill`              | `string`           | `'none'` | Fill of the circle interior.                            |
-| `animationDuration` | `string`           | `'2s'`   | Duration of one full rotation.                          |
-| `ariaLabel`         | `string`           | –        | Accessible label describing what is loading.            |
-| `styleClass`        | `string`           | `''`     | Classes forwarded onto the spinner (e.g. to resize it). |
+| Input               | Type               | Default  | Notes                                        |
+| ------------------- | ------------------ | -------- | -------------------------------------------- |
+| `strokeWidth`       | `string \| number` | `'2'`    | Width of the circle stroke.                  |
+| `fill`              | `string`           | `'none'` | Fill of the circle interior.                 |
+| `animationDuration` | `string`           | `'2s'`   | Duration of one full rotation.               |
+| `ariaLabel`         | `string`           | –        | Accessible label describing what is loading. |
 
 ```html
-<tum-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" styleClass="w-16 h-16" />
+<tum-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" class="w-16 h-16" />
 ```
 
 <Callout variant={CalloutVariant.info}>The visible spinner carries no text, so `ariaLabel` is the only description a screen reader gets — set it to say what is loading.</Callout>
@@ -972,7 +966,6 @@ The **low-level, hand-templated** table primitive — the drop-in for using `p-t
 | `striped`                     | `boolean`                          | `false`    | Zebra-stripe body rows.                                                                                               |
 | `scrollable`                  | `boolean`                          | `false`    | Pin the header while a bounded ancestor container scrolls.                                                            |
 | `rowHover`                    | `boolean`                          | `false`    | Tint body rows on hover.                                                                                              |
-| `styleClass`                  | `string`                           | `''`       | Classes forwarded onto the table (e.g. `mt-3`).                                                                       |
 | `sortField`                   | `string`                           | –          | Active sort field (**controlled**); drives icons + `aria-sort`.                                                       |
 | `sortOrder`                   | `number`                           | `1`        | Active sort order: `1` ascending, `-1` descending.                                                                    |
 | `defaultSortOrder`            | `number`                           | `1`        | Order applied when a previously-unsorted column is first clicked.                                                     |

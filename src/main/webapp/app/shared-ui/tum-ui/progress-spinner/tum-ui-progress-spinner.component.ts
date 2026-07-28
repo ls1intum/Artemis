@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
  * Owned indeterminate loading spinner, part of the tum-aet-ui kit (future @tumaet/ui-angular).
@@ -15,7 +15,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     templateUrl: './tum-ui-progress-spinner.component.html',
     styleUrl: './tum-ui-progress-spinner.component.scss',
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-progress-spinner',
         role: 'status',
         'aria-busy': 'true',
         '[attr.aria-label]': 'ariaLabel()',
@@ -31,8 +31,4 @@ export class TumUiProgressSpinnerComponent {
     readonly animationDuration = input<string>('2s');
     /** Accessible label describing what is loading (parity with p-progressspinner `[ariaLabel]`). */
     readonly ariaLabel = input<string>();
-    /** Extra classes forwarded onto the spinner (drop-in for p-progressspinner `styleClass`, e.g. to resize). */
-    readonly styleClass = input<string>('');
-
-    protected readonly hostClasses = computed(() => `tum-ui-progress-spinner ${this.styleClass()}`.trim());
 }

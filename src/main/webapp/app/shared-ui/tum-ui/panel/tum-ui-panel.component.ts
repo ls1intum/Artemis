@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,8 +20,10 @@ let nextPanelId = 0;
     templateUrl: './tum-ui-panel.component.html',
     styleUrl: './tum-ui-panel.component.scss',
     imports: [FaIconComponent],
+    // Panel surface = Aura content.background/border (surface.0/border light, surface.900/border dark via the
+    // Artemis theme override). `block` + radius + internal paddings live in the stylesheet.
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-panel border border-surface rounded-md bg-surface-0 dark:bg-surface-900 text-color',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,17 +35,11 @@ export class TumUiPanelComponent {
     readonly toggleable = input(false);
     /** Collapsed state; two-way so `[collapsed]` and `[(collapsed)]` both work (parity with p-panel `[(collapsed)]`). */
     readonly collapsed = model(false);
-    /** Extra classes forwarded onto the panel root (drop-in for p-panel `styleClass`). */
-    readonly styleClass = input<string>('');
 
     /** Stable id linking the toggle's `aria-controls` to the collapsible region. */
     protected readonly contentId = `tum-ui-panel-content-${nextPanelId++}`;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
-
-    // Panel surface = Aura content.background/border (surface.0/border light, surface.900/border dark via the
-    // Artemis theme override). `block` + radius + internal paddings live in the stylesheet.
-    protected readonly hostClasses = computed(() => `tum-ui-panel border border-surface rounded-md bg-surface-0 dark:bg-surface-900 text-color ${this.styleClass()}`.trim());
 
     protected toggle(): void {
         if (this.toggleable()) {
