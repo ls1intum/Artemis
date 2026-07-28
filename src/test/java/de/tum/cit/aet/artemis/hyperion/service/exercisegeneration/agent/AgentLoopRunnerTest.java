@@ -13,15 +13,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -37,8 +34,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import com.openai.errors.OpenAIIoException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
-import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
@@ -58,48 +54,6 @@ class AgentLoopRunnerTest {
 
     private static AgentLoopRunner newTestRunner(List<ChatModel> chatModels, int contextWindowTokens, Duration cooldown, ProviderFailureCooldown providerFailureCooldown) {
         return new AgentLoopRunner(chatModels, contextWindowTokens, cooldown, providerFailureCooldown);
-    }
-
-    /** In-memory fake sandbox: write/read operate on a map, bash is a no-op success. Lets us assert the agent's tool calls deterministically. */
-    private static class FakeSandbox implements InteractiveSandbox {
-
-        private final Map<String, String> files = new HashMap<>();
-
-        private final List<String> execCommands = new ArrayList<>();
-
-        @Override
-        public String createSession(SandboxSessionSpecDTO spec) {
-            return "fake-session";
-        }
-
-        @Override
-        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
-            execCommands.add(String.join(" ", command));
-            // Emulate the two operations the tools use: `cat <path>` and `sh -c "... base64 -d > <path>"`.
-            if (command.length >= 2 && "cat".equals(command[0])) {
-                String path = command[1];
-                String content = files.getOrDefault(path, null);
-                if (content == null) {
-                    return new SandboxExecResultDTO(1, "", "cat: " + path + ": No such file or directory", false);
-                }
-                return new SandboxExecResultDTO(0, content, "", false);
-            }
-            // Any other command (mkdir/base64 write, bash) succeeds.
-            return new SandboxExecResultDTO(0, "ok", "", false);
-        }
-
-        @Override
-        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
-        }
-
-        @Override
-        public TarArchiveInputStream copyOut(String sessionId, String path) {
-            return null;
-        }
-
-        @Override
-        public void destroySession(String sessionId) {
-        }
     }
 
     private static ChatResponse toolCallResponse(String name, String arguments) {
@@ -124,13 +78,13 @@ class AgentLoopRunnerTest {
         // The truncated turn carries a write_file whose content may have been cut off mid-file; it must never reach the sandbox.
         when(chatModel.call(any(Prompt.class))).thenReturn(lengthTruncatedToolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"class A {\"}"),
                 textResponse("DONE"));
-        FakeSandbox sandbox = new FakeSandbox();
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(sandbox, "fake-session"), 10, () -> false, null, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(sandbox.execCommands).isEmpty();
+        assertThat(sandbox.executedCommands()).isEmpty();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompts.capture());
         Message toolFeedback = prompts.getAllValues().get(1).getInstructions().stream().filter(ToolResponseMessage.class::isInstance).reduce((first, second) -> second)
@@ -144,7 +98,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("apply_patch", "{\"path\":\"x\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
 
@@ -156,13 +110,8 @@ class AgentLoopRunnerTest {
     void agentLoopFailsImmediatelyWhenATimedOutCommandTerminatesTheSandbox() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"sleep 999\"}"), textResponse("must not be called"));
-        FakeSandbox sandbox = new FakeSandbox() {
-
-            @Override
-            public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
-                return new SandboxExecResultDTO(-1, "", "", true);
-            }
-        };
+        // Every command reports the timed-out sandbox: the loop must give up on the first one rather than keep issuing turns against a dead session.
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(-1, "", "", true));
         List<String> steps = new ArrayList<>();
 
         Object tools = new FileChangeEmittingAgentTools(new SandboxAgentTools(sandbox, "fake-session"), ignored -> {
@@ -180,7 +129,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE<|end|>"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
 
@@ -193,7 +142,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read timed out")).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
         ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
 
@@ -216,7 +165,7 @@ class AgentLoopRunnerTest {
         ProviderUsageSink firstUsageSink = mock(ProviderUsageSink.class);
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, firstUsageSink, null);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, firstUsageSink, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
@@ -225,7 +174,8 @@ class AgentLoopRunnerTest {
         ChatModel secondChatModel = mock(ChatModel.class);
         ProviderUsageSink secondUsageSink = mock(ProviderUsageSink.class);
         AgentLoopRunner secondRunner = newTestRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5), cooldown);
-        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, secondUsageSink, null);
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, secondUsageSink,
+                null);
 
         assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(secondChatModel, times(0)).call(any(Prompt.class));
@@ -239,7 +189,7 @@ class AgentLoopRunnerTest {
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         runner.setEmptyResponseRetryTimingForTests(0L, 0L);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
         List<ChatResponse> recorded = new ArrayList<>();
 
@@ -261,7 +211,7 @@ class AgentLoopRunnerTest {
         runner.setEmptyResponseRetryTimingForTests(0L, 0L);
         List<String> steps = new ArrayList<>();
 
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, steps::add);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, null, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -280,7 +230,7 @@ class AgentLoopRunnerTest {
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         runner.setEmptyResponseRetryTimingForTests(50L, 50L); // non-zero so the backoff actually sleeps and observes the interrupt
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
@@ -299,7 +249,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash<|channel|>commentary", "{\"command\":\"ls\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
@@ -318,7 +268,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(message))));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        FakeSandbox sandbox = new FakeSandbox();
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "fake-session");
         List<String> steps = new ArrayList<>();
 
@@ -327,7 +277,7 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.turns()).isEqualTo(1);
         assertThat(steps).filteredOn("Submitting the exercise for verification."::equals).hasSize(1);
-        assertThat(sandbox.execCommands).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
+        assertThat(sandbox.executedCommands()).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
     }
 
     @Test
@@ -338,7 +288,7 @@ class AgentLoopRunnerTest {
         StageCheckService stageCheckService = mock(StageCheckService.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
 
         ChatModel chatModel = mock(ChatModel.class);
@@ -362,7 +312,7 @@ class AgentLoopRunnerTest {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), textResponse("must not be called"));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session"); // currentStage stays null: unstaged/legacy
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"); // currentStage stays null: unstaged/legacy
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
 
@@ -379,7 +329,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         runner.run("system", "do it", tools, 2, () -> false, null, null);
 
@@ -396,7 +346,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 1, () -> false, null, null);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
@@ -414,7 +364,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 1, () -> false, null, null);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
@@ -434,7 +384,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 32_000);
-        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 1, () -> false, null, null);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
@@ -449,7 +399,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 1, () -> false, null, null);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 1, () -> false, null, null);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
@@ -477,7 +427,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", args), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
 
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
@@ -495,7 +445,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", args), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<String> steps = new ArrayList<>();
 
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
@@ -509,7 +459,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("apply_patch", "{}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 20, () -> false, null, null);
 
@@ -522,7 +472,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
 
@@ -537,7 +487,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 3, () -> false, null, null);
 
@@ -551,7 +501,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> true, null, null);
 
@@ -561,7 +511,7 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_noChatModel_throws() {
         AgentLoopRunner runner = newTestRunner(List.of(), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> runner.run("system", "do it", tools, 5, () -> false, null, null))
                 .withMessageContaining("No ChatModel");
     }
@@ -571,8 +521,8 @@ class AgentLoopRunnerTest {
         ChatModel chatModel = mock(ChatModel.class);
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
-        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class)
-                .isThrownBy(() -> runner.run("system", "instruction " + GITHUB_SENTINEL, new SandboxAgentTools(new FakeSandbox(), "fake-session"), 2, () -> false, null, null))
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class).isThrownBy(
+                () -> runner.run("system", "instruction " + GITHUB_SENTINEL, new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 2, () -> false, null, null))
                 .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL);
         verify(chatModel, times(0)).call(any(Prompt.class));
     }
@@ -581,8 +531,8 @@ class AgentLoopRunnerTest {
     void agentLoop_recordingModelNeverReceivesSupportedSentinelFromToolObservation() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("read_file", "{\"path\":\"solution/src/fixture.txt\"}"), textResponse("DONE"));
-        FakeSandbox sandbox = new FakeSandbox();
-        sandbox.files.put("/workspace/solution/src/fixture.txt", GITHUB_SENTINEL);
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        sandbox.files().put("/workspace/solution/src/fixture.txt", GITHUB_SENTINEL);
 
         AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "inspect the fixture", new SandboxAgentTools(sandbox, "fake-session"), 2, () -> false,
                 null, null);
@@ -600,7 +550,7 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
         List<ChatResponse> recorded = new ArrayList<>();
 
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, null);
@@ -629,13 +579,13 @@ class AgentLoopRunnerTest {
     void runSession_nullPriorConversation_producesTheSameResultAsRun() {
         ChatModel chatModelForRun = mock(ChatModel.class);
         when(chatModelForRun.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
-        AgentLoopResult viaRun = newTestRunner(List.of(chatModelForRun), 128_000).run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false,
-                null, null);
+        AgentLoopResult viaRun = newTestRunner(List.of(chatModelForRun), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10,
+                () -> false, null, null);
 
         ChatModel chatModelForSession = mock(ChatModel.class);
         when(chatModelForSession.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
         AgentLoopRunner.AgentLoopSession viaSession = newTestRunner(List.of(chatModelForSession), 128_000).runSession("system", null, "do it",
-                new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+                new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, null, null);
 
         assertThat(viaSession.result()).as("a null prior conversation must behave exactly like run()").isEqualTo(viaRun);
         // The returned conversation excludes the system message but carries the rest of the exchange, ready to seed a later runSession call.
@@ -648,7 +598,7 @@ class AgentLoopRunnerTest {
     void runSession_continuesTheConversation_secondCallSeesTheFirstCallsAssistantTurn() {
         ChatModel firstChatModel = mock(ChatModel.class);
         when(firstChatModel.call(any(Prompt.class))).thenReturn(textResponse("MARKER_FROM_CALL_ONE"));
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopRunner.AgentLoopSession firstSession = newTestRunner(List.of(firstChatModel), 128_000).runSession("system stage 1", null, "do stage 1", tools, 10, () -> false,
                 null, null);
@@ -689,7 +639,7 @@ class AgentLoopRunnerTest {
                 textResponse("## Goal\nFinish the bubble-sort exercise.\n## Next steps\nWrite the tests.")); // the out-of-band compaction/summarization call
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), contextWindowTokens);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
 
         AgentLoopRunner.AgentLoopSession session = runner.runSession("system", priorConversation, "continue", tools, 1, () -> false, null, null);
 

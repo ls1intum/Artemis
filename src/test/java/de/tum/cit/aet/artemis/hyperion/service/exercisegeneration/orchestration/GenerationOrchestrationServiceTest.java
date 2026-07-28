@@ -1538,27 +1538,8 @@ class GenerationOrchestrationServiceTest {
         }
     }
 
-    @Test
-    void aBlockingFindingWithNoRepairSurface_isReportedAsNoSchedulableSurface() {
-        // Pinned directly on the classifier: no blocking Kind currently maps to a null surface, so the loop cannot reach this state today. That is itself the audit finding —
-        // the "no schedulable surface" condition never fired in 97 runs because it is unreachable, not only because it was unobservable.
-        SpecFidelityReport blockingWithNoSurface = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "unschedulable", "no surface owns it")));
-
-        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(blockingWithNoSurface)).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
-    }
-
-    @Test
-    void anUnschedulableReportWithoutBlockers_isReportedAsConverged() {
-        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(advisoryReportWith("a worked example would help"))).isEqualTo(TerminationReason.CONVERGED);
-        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.empty())).isEqualTo(TerminationReason.CONVERGED);
-    }
-
-    @Test
-    void anUnschedulableReportFromAFailedReview_isReportedAsReviewUnavailable() {
-        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.qualityReviewUnavailable("no verdict"))).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
-        assertThat(GenerationAttemptLoop.reasonForUnschedulableReport(SpecFidelityReport.adaptationScopeUnavailable("no verdict"))).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
-    }
+    // The unschedulable-report classifier moved to RepairRoundScheduler with the rest of the repair-phase state machine, and is covered directly (including the
+    // failed-review-outranks-a-blocker precedence, which was never pinned here) in RepairRoundSchedulerTest.
 
     // --- Per-round finding drain: the counts that tell a recurring finding apart from a fresh one of the same category ---
 

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -13,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -57,9 +55,6 @@ class GenerationAttemptLoop {
 
     /** Initial candidate plus at most three mechanical repairs. */
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
-
-    /** Bounds one finding-identity key. A reviewer that emits a whole paragraph as a "requirement" must not turn the per-round identity set into an unbounded allocation. */
-    private static final int MAX_IDENTITY_REQUIREMENT_CHARS = 300;
 
     record Dependencies(GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner, DifferentialVerificationService verifier,
             StructuralOracleSeedingService structuralOracleSeeder, SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService,
@@ -192,26 +187,13 @@ class GenerationAttemptLoop {
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
 
-    private int semanticRepairsStarted;
-
-    private final int semanticRepairLimit;
+    // The repair phase's own state machine: the semantic repair budget, the surface fairness state, the once-per-run adoption and re-review opportunities, and the per-round
+    // finding accounting. Held rather than inherited because none of it reads the sandbox, the verifier, or a model — only the review reports this loop hands it.
+    private final RepairRoundScheduler repairScheduler;
 
     private int mechanicalCorrectionsAfterRepairRemaining = 1;
 
     private int mechanicalAttemptsBeforeAnyRepair;
-
-    // At most one witness-adoption round per generation, so offering ready-to-adopt tests can never turn into repeated rewrites of a finished candidate.
-    private boolean witnessAdoptionAttempted;
-
-    private boolean reviewRetried;
-
-    // Fairness state for the surface scheduler; see SemanticRepairBatch#next.
-    private final Set<RepairSurface> repairedSurfaces = EnumSet.noneOf(RepairSurface.class);
-
-    @Nullable
-    private RepairSurface currentRepairSurface;
-
-    private int consecutiveRoundsOnSurface;
 
     // The candidate as it stood before the semantic repair now in flight; it remains the review authority until that repair completes its own review.
     @Nullable
@@ -236,12 +218,6 @@ class GenerationAttemptLoop {
     // terminal event carries it. Prose in a log line cannot answer "budget or convergence"; this can.
     @Nullable
     private TerminationReason terminationReason;
-
-    // The identities of the previous review round's findings, so drain can be measured per finding rather than per category. Survives a mechanically rejected attempt (which
-    // resets the report to empty without reviewing anything), so the next real review still compares against the last real one.
-    private Set<String> previousRoundFindingIdentities = Set.of();
-
-    private int reviewRounds;
 
     GenerationAttemptLoop(GenerationOrchestrationService service, Dependencies dependencies, RunContext context) {
         this.service = service;
@@ -278,7 +254,8 @@ class GenerationAttemptLoop {
                 && context.exercise().getProgrammingLanguage() == ProgrammingLanguage.JAVA;
         this.specStageApplies = context.specStageApplies();
         this.currentPrompt = context.firstPrompt();
-        this.semanticRepairLimit = context.mode() == GenerationMode.GENERATE ? dependencies.maxSemanticRepairs() : 1;
+        // An adaptation gets a single semantic round whatever the configured generation budget is: its scope is one requested change, not an open authoring task.
+        this.repairScheduler = new RepairRoundScheduler(context.mode() == GenerationMode.GENERATE ? dependencies.maxSemanticRepairs() : 1);
     }
 
     /**
@@ -350,10 +327,10 @@ class GenerationAttemptLoop {
 
             // A validated witness is advisory, so nothing above blocks and the loop would otherwise stop with the witness never offered to the agent. One adoption round is
             // granted instead: once per generation and only on an otherwise finished candidate, so a witness can never drive repeated rewrites.
-            boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !witnessAdoptionAttempted
-                    && attempt < maxGenerationAttempts && semanticRepairsStarted < semanticRepairLimit
-                    // An adaptation gets a single semantic round; spending it on optional tests rather than on a defect would be a poor trade.
-                    && mode == GenerationMode.GENERATE && SemanticRepairBatch.witnessAdoption(specFidelityReport).isPresent();
+            // GENERATE only: an adaptation gets a single semantic round, and spending it on optional tests rather than on a defect would be a poor trade. The once-per-run and
+            // budget guards live in the scheduler.
+            boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && attempt < maxGenerationAttempts
+                    && mode == GenerationMode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
                 break;
@@ -362,7 +339,7 @@ class GenerationAttemptLoop {
                 terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
                 break;
             }
-            if (!verification.mechanicallyVerified() && semanticRepairsStarted == 0 && ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
+            if (!verification.mechanicallyVerified() && repairScheduler.roundsStarted() == 0 && ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
                 emit("The bounded mechanical repair phase is exhausted; keeping the current candidate for instructor review.");
                 terminationReason = TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
                 break;
@@ -373,13 +350,13 @@ class GenerationAttemptLoop {
                 }
                 continue;
             }
-            if (semanticRepairsStarted > 0 && mechanicalCorrectionsAfterRepairRemaining == 0) {
+            if (repairScheduler.roundsStarted() > 0 && mechanicalCorrectionsAfterRepairRemaining == 0) {
                 emit("The one mechanical correction after semantic repair was not enough; preserving the last mechanically verified candidate instead of starting "
                         + "another open-ended repair cycle.");
                 terminationReason = TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED;
                 break;
             }
-            if (semanticRepairsStarted > 0) {
+            if (repairScheduler.roundsStarted() > 0) {
                 mechanicalCorrectionsAfterRepairRemaining--;
                 emit("The semantic repair broke mechanical verification; allowing one narrow mechanical correction without reopening semantic scope.");
             }
@@ -590,73 +567,16 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Records how this review's findings relate to the previous review's, and emits the counts on the round's progress event.
-     * <p>
-     * Only a completed review is a round: a mechanically rejected attempt resets the report to empty without asking the reviewer anything, and counting that as "every finding
-     * drained" would report the repair loop working precisely when it is not. Purely observational — no caller reads the counts.
+     * Hands this review to the round accounting and puts the resulting counts on the round's progress event.
      *
      * @param attempt the authoring attempt whose candidate was just reviewed
      */
     private void recordReviewRound(int attempt) {
-        Set<String> currentIdentities = findingIdentities(specFidelityReport);
-        int carriedOver = (int) currentIdentities.stream().filter(previousRoundFindingIdentities::contains).count();
-        int drained = (int) previousRoundFindingIdentities.stream().filter(identity -> !currentIdentities.contains(identity)).count();
-        int fresh = currentIdentities.size() - carriedOver;
-        int blocking = (int) specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).count();
-        int advisory = specFidelityReport.findings().size() - blocking;
-        previousRoundFindingIdentities = currentIdentities;
-        reviewRounds++;
-        ExerciseGenerationRepairRoundDTO round = new ExerciseGenerationRepairRoundDTO(reviewRounds, attempt, blocking, advisory, carriedOver, drained, fresh);
-        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.getId(), reviewRounds, attempt,
-                blocking, advisory, carriedOver, drained, fresh);
-        emitRound(roundMessage(round), round);
+        ExerciseGenerationRepairRoundDTO round = repairScheduler.recordReviewRound(specFidelityReport, attempt);
+        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.getId(), round.round(), attempt,
+                round.blocking(), round.advisory(), round.carriedOver(), round.drained(), round.fresh());
+        emitRound(RepairRoundScheduler.roundMessage(round), round);
     }
-
-    private static String roundMessage(ExerciseGenerationRepairRoundDTO round) {
-        int total = round.carriedOver() + round.fresh();
-        if (total == 0) {
-            return "Quality review round " + round.round() + ": no issues remain.";
-        }
-        String issues = total + (total == 1 ? " issue" : " issues");
-        if (round.round() == 1) {
-            return "Quality review round " + round.round() + ": " + issues + " found.";
-        }
-        return "Quality review round " + round.round() + ": " + issues + " — " + round.carriedOver() + " still open from the previous round, " + round.drained() + " resolved, "
-                + round.fresh() + " new.";
-    }
-
-    /**
-     * The identity of every finding in {@code report}, deduplicated.
-     * <p>
-     * Identity is the finding's {@link SpecFidelityReport.Kind} plus its normalised {@code requirement}, and deliberately not the whole record: {@code detail} is prose the
-     * reviewer rewrites freely between rounds while the underlying defect does not move, so hashing it would report every finding as fresh and make drain unmeasurable. The
-     * requirement is the defect's own name ("CJK graphemes are not counted", "throws on zero capacity"), and the kind is kept because the same requirement under a different kind
-     * is a different defect calling for a different repair.
-     * <p>
-     * Matching is exact on the normalised text, with no similarity threshold: a threshold cannot be calibrated until the reviewer's own run-to-run stability is measured, and an
-     * uncalibrated one would silently decide the very question this instrument exists to answer. The known cost is stated rather than hidden — a reviewer that rephrases the same
-     * defect registers it as one drained plus one fresh, which overstates drain. Normalisation removes the cheap half of that (casing, punctuation, quoting, whitespace).
-     */
-    private static Set<String> findingIdentities(SpecFidelityReport report) {
-        return report.findings().stream().map(GenerationAttemptLoop::findingIdentity).collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private static String findingIdentity(SpecFidelityReport.Finding finding) {
-        return finding.kind().name() + '\n' + normalizeRequirement(finding.requirement());
-    }
-
-    private static String normalizeRequirement(String requirement) {
-        String normalized = requirement.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").strip();
-        normalized = SPECIFICATION_RULE_LABEL.matcher(normalized).replaceFirst("");
-        return normalized.length() <= MAX_IDENTITY_REQUIREMENT_CHARS ? normalized : normalized.substring(0, MAX_IDENTITY_REQUIREMENT_CHARS);
-    }
-
-    /**
-     * The specification's own rule label ("R3"), which the reviewer cites for the same defect only about half the time — "R3 reverse must handle the empty string" and "reverse
-     * must handle the empty string" name one defect. Stripping the citation merges them; measured over 30 reviews of one unchanged candidate it removed three duplicate
-     * identities and raised apparent stability without merging any two distinct defects, because the label carries no information the requirement text does not.
-     */
-    private static final Pattern SPECIFICATION_RULE_LABEL = Pattern.compile("^[rs]\\d+\\s+");
 
     /**
      * Schedules the next scoped semantic repair on a mechanically verified candidate.
@@ -665,22 +585,19 @@ class GenerationAttemptLoop {
      *         never returned a verdict, or no blocking finding maps to a repairable surface
      */
     private LoopStep applySemanticRepair(int attempt, boolean adoptWitnesses, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        if (semanticRepairsStarted >= semanticRepairLimit) {
+        if (repairScheduler.budgetExhausted()) {
             emit("The bounded semantic repair phase is exhausted; keeping the latest mechanically verified candidate and its current review findings.");
             terminationReason = TerminationReason.REPAIR_BUDGET_EXHAUSTED;
             return LoopStep.STOP;
         }
-        boolean reviewUnavailable = hasReviewUnavailableFinding(specFidelityReport);
-        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? SemanticRepairBatch.witnessAdoption(specFidelityReport) : chooseRepairSurface();
+        boolean reviewUnavailable = RepairRoundScheduler.hasReviewUnavailableFinding(specFidelityReport);
+        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? repairScheduler.witnessAdoption(specFidelityReport) : repairScheduler.nextRepairBatch(specFidelityReport);
         if (adoptWitnesses) {
-            witnessAdoptionAttempted = true;
+            repairScheduler.markWitnessAdoptionAttempted();
         }
         if (reviewUnavailable && repairBatch.isEmpty()) {
-            // "The review could not complete" is not a statement about the exercise. Failing open on the VERDICT is right — a broken reviewer must never reject a mechanically
-            // sound candidate — but failing open on the WORK is not: ending with repair rounds unspent because the reviewer had a bad turn reports a quality gap the reviewer
-            // never actually found. One re-review is attempted before giving up, at most once per run.
-            if (!reviewRetried) {
-                reviewRetried = true;
+            // One re-review is attempted before giving up, at most once per run; see RepairRoundScheduler#claimReviewRetry for why the work is not allowed to fail open here.
+            if (repairScheduler.claimReviewRetry()) {
                 log.info("Exercise {}: the quality review did not complete; re-reviewing once before ending the repair phase", exercise.getId());
                 emit("The quality review did not complete; reviewing the exercise once more.");
                 String retryAdaptationChanges = mode == GenerationMode.ADAPT
@@ -692,74 +609,39 @@ class GenerationAttemptLoop {
                 lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                         specFidelityReport, specDocumentSnapshot, artifacts.testPlanJson());
                 recordReviewRound(attempt);
-                repairBatch = chooseRepairSurface();
+                repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
             }
             if (repairBatch.isEmpty()) {
-                terminationReason = reasonForUnschedulableReport(specFidelityReport);
+                terminationReason = RepairRoundScheduler.reasonForUnschedulableReport(specFidelityReport);
                 return LoopStep.STOP;
             }
         }
         if (repairBatch.isEmpty()) {
             // A blocking finding that maps to no repair surface ends the loop with budget still unspent; without this record, that is indistinguishable from an exhausted budget.
-            log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), semanticRepairsStarted,
-                    semanticRepairLimit, specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+            log.info("Exercise {} stopped repairing after {}/{} rounds with no schedulable surface; unrepaired findings {}", exercise.getId(), repairScheduler.roundsStarted(),
+                    repairScheduler.roundLimit(), specFidelityReport.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                             .collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())));
-            terminationReason = reasonForUnschedulableReport(specFidelityReport);
+            terminationReason = RepairRoundScheduler.reasonForUnschedulableReport(specFidelityReport);
             return LoopStep.STOP;
         }
         candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
-        semanticRepairsStarted++;
         pendingSemanticRepair = repairBatch.get();
-        if (!adoptWitnesses) {
-            markSurfaceRepaired(pendingSemanticRepair.surface());
+        if (adoptWitnesses) {
+            repairScheduler.recordAdoptionRound();
+        }
+        else {
+            repairScheduler.recordRepairRound(pendingSemanticRepair.surface());
         }
         // Both what the critic raised and what this attempt was given to repair: without the pair, a weakness that was found but never scheduled cannot be told apart from one
         // that was never found.
-        log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), semanticRepairsStarted, semanticRepairLimit,
-                pendingSemanticRepair.surface(), specFidelityReport.findings().stream().collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())),
+        log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), repairScheduler.roundsStarted(),
+                repairScheduler.roundLimit(), pendingSemanticRepair.surface(),
+                specFidelityReport.findings().stream().collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())),
                 pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
         emit(adoptWitnesses ? "The exercise is verified; offering the AI the contract tests an independent reviewer prepared for it."
                 : "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
         currentPrompt = adoptWitnesses ? witnessAdoptionPrompt(attempt, specSnapshot.get(), repairBatch.get()) : semanticRepairPrompt(attempt, repairBatch.get());
         return LoopStep.NEXT_ATTEMPT;
-    }
-
-    /**
-     * Why a run ends when the scheduler has no batch to offer. The three cases look identical from the outside and call for opposite fixes, so they are never collapsed:
-     * a reviewer that could not produce a verdict is an instrument failure, a candidate whose remaining findings are all advisory is a converged run, and a blocking finding that
-     * maps to no repair surface is a gap in the surface map.
-     *
-     * @param report the review the scheduler was given
-     * @return the reason to record for this exit
-     */
-    static TerminationReason reasonForUnschedulableReport(SpecFidelityReport report) {
-        if (hasReviewUnavailableFinding(report)) {
-            return TerminationReason.REVIEW_UNAVAILABLE;
-        }
-        if (!report.hasBlockingFindings()) {
-            return TerminationReason.CONVERGED;
-        }
-        return TerminationReason.NO_SCHEDULABLE_SURFACE;
-    }
-
-    /** Whether the report says "the review could not complete" rather than anything about the exercise. */
-    private static boolean hasReviewUnavailableFinding(SpecFidelityReport report) {
-        return report.findings().stream().anyMatch(
-                finding -> finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE || finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
-    }
-
-    private Optional<SemanticRepairBatch> chooseRepairSurface() {
-        return SemanticRepairBatch.next(specFidelityReport, repairedSurfaces, currentRepairSurface, consecutiveRoundsOnSurface);
-    }
-
-    /**
-     * Fairness bookkeeping over surfaces that were actually REPAIRED. A witness-adoption round only offers optional tests, so recording it here would make the scheduler believe
-     * the oracle surface already had its turn and deny it the unrepaired-surface preference when a genuine weak oracle appears; adoption rounds therefore never call this.
-     */
-    private void markSurfaceRepaired(RepairSurface surface) {
-        consecutiveRoundsOnSurface = surface == currentRepairSurface ? consecutiveRoundsOnSurface + 1 : 1;
-        currentRepairSurface = surface;
-        repairedSurfaces.add(surface);
     }
 
     /**
@@ -914,7 +796,7 @@ class GenerationAttemptLoop {
     }
 
     private String mechanicalRejectionPrompt(int completedAttempt) {
-        String semanticCorrectionGuidance = semanticRepairsStarted > 0 && lastSemanticRepair != null ? "\n\nThis rejection followed a "
+        String semanticCorrectionGuidance = repairScheduler.roundsStarted() > 0 && lastSemanticRepair != null ? "\n\nThis rejection followed a "
                 + lastSemanticRepair.surface().name().toLowerCase(Locale.ROOT)
                 + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract does not "
                 + "require, fix or remove the unsupported assertion first. " + lastSemanticRepair.guidance() : "";

@@ -16,7 +16,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -29,15 +28,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
-import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
@@ -88,7 +85,10 @@ class StagedGenerationRunnerTest {
 
     private static final BooleanSupplier NEVER_CANCELLED = () -> false;
 
-    private static final class FakeSandbox implements InteractiveSandbox {
+    /**
+     * The staged runner reads three workspace files back between stages and probes the tree layout; everything else the shared fake already models.
+     */
+    private static final class FakeSandbox extends FakeInteractiveSandbox {
 
         private String specMarkdown = VALID_SPEC_DOCUMENT;
 
@@ -96,15 +96,10 @@ class StagedGenerationRunnerTest {
 
         private String problemStatement = "# Title\n\n[task][Do the thing](testFoo)\nImplement the calculator operation.";
 
-        private String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
+        private final String layout = "solution/pom.xml\ntemplate/pom.xml\ntests/pom.xml";
 
         @Override
-        public String createSession(SandboxSessionSpecDTO spec) {
-            return "s";
-        }
-
-        @Override
-        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
+        protected SandboxExecResultDTO respond(String[] command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
                 if (path.endsWith("SPEC.md")) {
@@ -132,19 +127,6 @@ class StagedGenerationRunnerTest {
 
         private static SandboxExecResultDTO missing() {
             return new SandboxExecResultDTO(1, "", "not found", false);
-        }
-
-        @Override
-        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
-        }
-
-        @Override
-        public TarArchiveInputStream copyOut(String sessionId, String path) {
-            return null;
-        }
-
-        @Override
-        public void destroySession(String sessionId) {
         }
     }
 

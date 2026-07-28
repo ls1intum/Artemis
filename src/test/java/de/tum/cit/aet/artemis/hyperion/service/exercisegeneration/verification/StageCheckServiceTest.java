@@ -8,9 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
-import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -35,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 class StageCheckServiceTest {
 
     /** Serves canned {@code cat}/{@code diff} output; every other command succeeds with empty output. */
-    private static final class FakeSandbox implements InteractiveSandbox {
+    private static final class FakeSandbox extends FakeInteractiveSandbox {
 
         /** Defaults to a gate-valid specification: every later stage re-checks SPEC.md, so a broken default would mask each stage's own logic. */
         private String spec = specWithDesign("| Calculator | computes | stubbed |\n");
@@ -69,11 +66,6 @@ class StageCheckServiceTest {
 
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
-
-        @Override
-        public String createSession(SandboxSessionSpecDTO spec) {
-            return "s";
-        }
 
         /**
          * Answers a single type-declaration probe. The explicitly configured payload wins when it names the probed type (how a test models a leaked or present declaration);
@@ -113,7 +105,7 @@ class StageCheckServiceTest {
         }
 
         @Override
-        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
+        protected SandboxExecResultDTO respond(String[] command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
                 if (path.endsWith("SPEC.md")) {
@@ -143,18 +135,10 @@ class StageCheckServiceTest {
         }
 
         @Override
-        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
-        }
-
-        @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
             return templateRepositoryFiles.isEmpty() ? null
                     : ReportTarFixtures.tar("template", templateRepositoryFiles.entrySet().stream()
                             .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
-        }
-
-        @Override
-        public void destroySession(String sessionId) {
         }
     }
 

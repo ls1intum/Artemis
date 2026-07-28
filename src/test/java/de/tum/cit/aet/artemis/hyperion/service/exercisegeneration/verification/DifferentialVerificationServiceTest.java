@@ -10,10 +10,8 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,8 +39,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
@@ -160,7 +158,7 @@ class DifferentialVerificationServiceTest {
     }
 
     /** Serves the solution/template report tars on {@code copyOut} (routed by the reports-dir path) and the build exit code/timeout on {@code exec}. */
-    private static final class ScriptedSandbox implements InteractiveSandbox {
+    private static final class ScriptedSandbox extends FakeInteractiveSandbox {
 
         private final BuildReportSpec solution;
 
@@ -183,9 +181,6 @@ class DifferentialVerificationServiceTest {
 
         /** Served instead of the solution build's reports, for the hardened-reader rejection paths. */
         private TarArchiveInputStream tamperedSolutionReports;
-
-        /** Every {@code exec} the verifier issued, so a test can assert it ran the PRISTINE path and never the agent's {@code /workspace} copy. */
-        private final List<String> execCommands = new ArrayList<>();
 
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
             this(solution, template, problemStatement, "build ran");
@@ -221,9 +216,8 @@ class DifferentialVerificationServiceTest {
         }
 
         @Override
-        public SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
+        protected SandboxExecResultDTO respond(String[] command) {
             String joined = String.join(" ", command);
-            execCommands.add(joined);
             if ("cat".equals(command[0])) {
                 if (command.length > 1 && command[1].endsWith("test-plan.json")) {
                     return testPlanJson == null ? new SandboxExecResultDTO(1, "", "no such file", false) : new SandboxExecResultDTO(0, testPlanJson, "", false);
@@ -238,15 +232,6 @@ class DifferentialVerificationServiceTest {
             }
             BuildReportSpec spec = joined.contains("solution") ? solution : template;
             return new SandboxExecResultDTO(spec.exitCode(), buildOutput, "", spec.timedOut());
-        }
-
-        @Override
-        public String createSession(SandboxSessionSpecDTO spec) {
-            return "s";
-        }
-
-        @Override
-        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
         }
 
         @Override
@@ -273,10 +258,6 @@ class DifferentialVerificationServiceTest {
             return files == null ? null
                     : ReportTarFixtures.tar(directory,
                             files.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
-        }
-
-        @Override
-        public void destroySession(String sessionId) {
         }
     }
 
@@ -459,9 +440,9 @@ class DifferentialVerificationServiceTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.mechanicallyVerified()).isTrue();
-        assertThat(sandbox.execCommands).filteredOn(c -> c.equals("sh -c find /opt/hyperion -mindepth 1 -delete")).hasSize(2);
-        assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
-        assertThat(sandbox.execCommands).noneMatch(c -> c.contains("/workspace/verify.sh"));
+        assertThat(sandbox.executedCommands()).filteredOn(c -> c.equals("sh -c find /opt/hyperion -mindepth 1 -delete")).hasSize(2);
+        assertThat(sandbox.executedCommands()).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
+        assertThat(sandbox.executedCommands()).noneMatch(c -> c.contains("/workspace/verify.sh"));
     }
 
     @Test
