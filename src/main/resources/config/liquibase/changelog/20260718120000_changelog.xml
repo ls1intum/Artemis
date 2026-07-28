@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260718120000-1-add-participation-to-repository-vcs-access-token" author="krusche">
+        <!-- Repository-scoped staff tokens can now also be bound to a student assignment repository (repository_type = USER). participation_id links such a token to the exact
+             student participation it grants access to; it is null for base-repository tokens. Cascades on delete so that removing a student participation automatically removes
+             the staff tokens for its (then non-existent) repository. -->
+        <addColumn tableName="repository_vcs_access_token">
+            <column name="participation_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="participation_id" baseTableName="repository_vcs_access_token"
+                                 constraintName="fk_repository_vcs_access_token_participation" referencedColumnNames="id" referencedTableName="participation"
+                                 onDelete="CASCADE" onUpdate="RESTRICT" deferrable="false" initiallyDeferred="false" validate="true"/>
+
+        <createIndex indexName="fk_repository_vcs_access_token_participation" tableName="repository_vcs_access_token">
+            <column name="participation_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

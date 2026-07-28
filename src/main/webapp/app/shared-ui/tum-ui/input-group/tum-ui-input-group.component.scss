@@ -1,0 +1,7 @@
+// Layout matched to PrimeNG's p-inputgroup (Aura): a stretch flex row so addon segments match the field
+// height. Width is intentionally left to the consumer (see the component doc); no colors live on the group
+// itself — the addon carries the border/background tokens.
+:host {
+    display: flex;
+    align-items: stretch;
+}
