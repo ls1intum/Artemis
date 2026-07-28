@@ -949,6 +949,16 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedTestPlan_rejectsUnplannedTestsWithoutASpecification() {
+        String plan = """
+                {"tests":[{"name":"planned","seam":"S1","seamWeightTier":1,"visibility":"ALWAYS"}]}
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons("", plan, List.of("planned", "addedDuringRepair"))).singleElement().asString()
+                .contains("omits verified gradable test(s)", "addedDuringRepair");
+    }
+
+    @Test
     void approvedTestPlan_requiresHiddenCoverageForEveryDeclaredSeam() {
         String spec = """
                 ## Testing Strategy

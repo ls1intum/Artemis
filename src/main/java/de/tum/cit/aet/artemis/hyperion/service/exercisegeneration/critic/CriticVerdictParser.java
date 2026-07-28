@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -44,13 +45,13 @@ class CriticVerdictParser {
     private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote) {
     }
 
-    private record ExampleCheckItem(@Nullable String claim, @Nullable String computedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
+    private record ExampleCheckItem(@Nullable String claim, @Nullable JsonNode computedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
     }
 
     private record ApiCheckItem(@Nullable String symbol, @Nullable Boolean discoverable, @Nullable String reason) {
     }
 
-    private record TemplateCheckItem(@Nullable String ownerType, @Nullable String test, @Nullable Boolean targetReached, @Nullable String reason) {
+    private record TemplateCheckItem(@Nullable String ownerType, @Nullable String test, @Nullable Boolean targetReached, @Nullable String reason, @Nullable String evidenceQuote) {
     }
 
     private record MutantCheckItem(@Nullable String mutant, @Nullable Boolean killed, @Nullable String reason, @Nullable String sourceQuote) {
@@ -107,6 +108,11 @@ class CriticVerdictParser {
                 .map(item -> item.ownerType().strip().replace("`", "")).anyMatch(owner -> !owner.equals("shared scaffold") && !templateStatuses.containsKey(owner))) {
             return null;
         }
+        if (pass == ReviewPass.CONTRACT && parsed.templateChecks().stream()
+                .anyMatch(item -> !item.targetReached() && !"student-creates".equals(templateStatuses.get(item.ownerType().strip().replace("`", "")))
+                        && !sourceQuoteIsGrounded(item.evidenceQuote(), repairableDownstreamSource))) {
+            return null;
+        }
         boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         // Scope violations require instructor attention, so retain them before advisory findings consume the shared defensive cap.
@@ -136,7 +142,7 @@ class CriticVerdictParser {
                         continue;
                     }
                     findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, truncate(item.claim().strip()),
-                            "The worked example computes to \"" + truncate(item.computedOutcome().strip()) + "\": " + item.reason().strip()));
+                            "The worked example computes to \"" + truncate(scalarText(item.computedOutcome())) + "\": " + item.reason().strip()));
                 }
             }
             for (ApiCheckItem item : parsed.apiChecks()) {
@@ -270,8 +276,9 @@ class CriticVerdictParser {
     }
 
     private static boolean malformedExampleChecks(List<ExampleCheckItem> items) {
-        return items.stream().anyMatch(item -> item == null || item.claim() == null || item.claim().isBlank() || item.computedOutcome() == null || item.computedOutcome().isBlank()
-                || item.consistent() == null || item.reason() == null || item.reason().isBlank());
+        return items.stream()
+                .anyMatch(item -> item == null || item.claim() == null || item.claim().isBlank() || item.computedOutcome() == null || !item.computedOutcome().isValueNode()
+                        || scalarText(item.computedOutcome()).isBlank() || item.consistent() == null || item.reason() == null || item.reason().isBlank());
     }
 
     private static boolean malformedApiChecks(List<ApiCheckItem> items) {
@@ -280,8 +287,14 @@ class CriticVerdictParser {
     }
 
     private static boolean malformedTemplateChecks(List<TemplateCheckItem> items) {
-        return items.stream().anyMatch(item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null
-                || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank()) || item.reason() == null || item.reason().isBlank());
+        return items.stream()
+                .anyMatch(item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null
+                        || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank() || item.evidenceQuote() == null || item.evidenceQuote().isBlank())
+                        || item.reason() == null || item.reason().isBlank());
+    }
+
+    private static String scalarText(JsonNode node) {
+        return node.isTextual() ? node.textValue() : node.toString();
     }
 
     private static boolean malformedMutantChecks(List<MutantCheckItem> items) {

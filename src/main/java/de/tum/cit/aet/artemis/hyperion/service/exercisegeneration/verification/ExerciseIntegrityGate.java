@@ -290,10 +290,10 @@ public final class ExerciseIntegrityGate {
      */
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate,
             Set<String> seededStructuralTestNames) {
-        if (approvedSpec == null || approvedSpec.isBlank()) {
-            return List.of();
-        }
         if (testPlanJson == null || testPlanJson.isBlank()) {
+            if (approvedSpec == null || approvedSpec.isBlank()) {
+                return List.of();
+            }
             return List.of("the approved specification has no valid test-plan.json in the final candidate. Write the grading plan with the exact verified test names, weights, "
                     + "and visibility decisions before submitting.");
         }

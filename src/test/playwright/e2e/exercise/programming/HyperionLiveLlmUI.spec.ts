@@ -428,6 +428,17 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     report.designDocument = terminalStatus.designDocument;
                     report.specDocument = terminalStatus.specDocument;
                     expect(terminalStatus.terminal?.type).toBe('DONE');
+                    expect(terminalStatus.terminal?.liveExerciseChanged).toBe(true);
+                    // Capture the saved artifacts before judging the completion label. A PARTIAL save is still a hard test failure, but its repositories and statement are the
+                    // evidence needed to diagnose why finalization failed; asserting first used to delete that evidence in cleanup and leave only a terminal event.
+                    report.persistedExercise = await fetchPersistedExercise(page, generatedExercise.id!);
+                    report.repositories = await fetchRepositorySummaries(page, generatedExercise.id!);
+                    const persistedPackageName = (report.persistedExercise as { packageName?: string }).packageName;
+                    expect(persistedPackageName).toBe(report.proposedPackageName);
+                    assertGeneratedSourcesUseExercisePackage(report.repositories as Awaited<ReturnType<typeof fetchRepositorySummaries>>, persistedPackageName!);
+                    const candidateProblemStatement = (report.persistedExercise as any).problemStatement;
+                    report.candidateProblemStatement = candidateProblemStatement;
+                    report.generatedAssessment = assessGeneratedExercise({ problemStatement: candidateProblemStatement }, report.repositories as any, terminalStatus);
                     expect(['SUCCESS', 'NEEDS_REVIEW']).toContain(terminalStatus.terminal?.completionStatus);
                     if (terminalStatus.terminal?.completionStatus === 'SUCCESS') {
                         expect(terminalStatus.terminal?.verdict?.mechanicallyVerified).toBe(true);
@@ -437,15 +448,6 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
                     // Current save policy: a mechanically valid candidate is saved to the live exercise for BOTH SUCCESS and NEEDS_REVIEW — only unresolved spec-fidelity findings
                     // change the completion label and require instructor attention; they never hold the candidate back in a throwaway draft. So liveExerciseChanged, revert
                     // availability, and the changed-files review affordances are asserted the same way for both outcomes below; only the persistence-state wording differs.
-                    expect(terminalStatus.terminal?.liveExerciseChanged).toBe(true);
-                    report.persistedExercise = await fetchPersistedExercise(page, generatedExercise.id!);
-                    report.repositories = await fetchRepositorySummaries(page, generatedExercise.id!);
-                    const persistedPackageName = (report.persistedExercise as { packageName?: string }).packageName;
-                    expect(persistedPackageName).toBe(report.proposedPackageName);
-                    assertGeneratedSourcesUseExercisePackage(report.repositories as Awaited<ReturnType<typeof fetchRepositorySummaries>>, persistedPackageName!);
-                    const candidateProblemStatement = (report.persistedExercise as any).problemStatement;
-                    report.candidateProblemStatement = candidateProblemStatement;
-                    report.generatedAssessment = assessGeneratedExercise({ problemStatement: candidateProblemStatement }, report.repositories as any, terminalStatus);
                     const isFullSuccess = terminalStatus.terminal?.completionStatus === 'SUCCESS';
                     if (!isFullSuccess) {
                         expect(terminalStatus.terminal?.message).toMatch(/review/i);

@@ -777,7 +777,8 @@ class GenerationAttemptLoop {
                 + "Your previous attempt is fully verified and accepted; nothing is broken. An independent reviewer derived the tests below from the "
                 + "approved specification and the server has already run each one against your reference solution, which passes them. Add each test to the graded suite unless an "
                 + "existing assertion already distinguishes exactly the same wrong implementation, in which case leave the suite as it is and say which test covers it. Change "
-                + "nothing else: the solution, template, statement and every existing test stay as they are. Then call the structured `verify` tool, and call submit when it "
+                + "nothing else: the solution, template, statement and every existing test stay as they are. When you add a test, add its exact method name to test-plan.json with "
+                + "the same approved seam, weight, and visibility as the witness it strengthens. Then call the structured `verify` tool, and call submit when it "
                 + "reports MECHANICAL PRECHECK: PASS.\n\nThe instructor source requirements are:\n" + authoringBrief + specContractSection(specSnapshotForPrompt)
                 + specFidelityCritic.renderForRetryPrompt(batch.report());
     }
@@ -791,6 +792,7 @@ class GenerationAttemptLoop {
                 + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
                 + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
                 + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
+                + "If you add, rename, or remove a behavioral test, update test-plan.json in the same edit so it maps every exact test method name. "
                 + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
                 + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(batch.report());
     }

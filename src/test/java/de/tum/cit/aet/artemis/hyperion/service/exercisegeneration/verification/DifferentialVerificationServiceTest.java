@@ -457,6 +457,20 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void shouldRejectARepairAddedTestMissingFromTheCapturedPlanWithoutASpecification() {
+        List<String> names = List.of("planned", "addedDuringRepair");
+        String statement = "# Exercise\n[task][Implement both cases](planned,addedDuringRepair)\nImplement both cases.\n";
+        String plan = "{\"tests\":[{\"name\":\"planned\",\"seam\":\"S1\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
+        VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), statement, plan, false);
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(), request, NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("omits verified gradable test(s)") && reason.contains("addedDuringRepair"));
+    }
+
+    @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsSameTests() {
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1));
         assertThat(result.mechanicallyVerified()).isTrue();

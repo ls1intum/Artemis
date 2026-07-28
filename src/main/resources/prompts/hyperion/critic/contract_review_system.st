@@ -27,10 +27,12 @@ fake/recording collaborators are valid ways to isolate a seam; genuinely cumulat
 calls, and assertions, not hypothetical partial solutions.
 
 Also fail a templateCheck when the house teaching scaffold is missing: a stubbed member whose doc comment does not restate its student-visible contract, a statement task for a stubbed owner with no imperative TODO at the place the work happens (inside the member body, not above the signature), a solution/template diff that changes documentation or comments beyond the implementation itself, or the statement reproduces a template stub's signature and javadoc verbatim as a fenced code block instead of a compact API surface (a signature list, table, or diagram; the template is the API reference at the point of use). Quote the exact stub signature, doc text, TODO line, diff line, or duplicated block's first line verbatim from the artifacts above as reason evidence; omit the check instead of guessing when no such artifact text exists.
+House scaffold documentation is provided to help the student; it does not imply that students must author Javadoc. Report a statement or test that grades student-authored
+Javadoc as invented unless the instructor brief or approved specification explicitly requires that learning objective.
 
-Also compare the specification contract's Testing Strategy with the student-facing tasks. Fail a templateCheck when one independently actionable seam is split into
-separate tasks for its input partitions, or when a student-owned solution/template diff or TODO has no task that tells the student to perform that work. Give one
-grouped finding per seam and name the smallest statement/scaffold repair. When a public stub lacks its contract documentation, require the identical documentation
+Also compare the specification contract's Testing Strategy with the student-facing tasks. The deterministic traceability gate already decides whether a seam was split across
+tasks from exact test-plan bindings; do not duplicate or reinterpret that check here. Fail a templateCheck when a student-owned solution/template diff or TODO has no task that
+tells the student to perform that work. Give one grouped finding per seam and name the smallest statement/scaffold repair. When a public stub lacks its contract documentation, require the identical documentation
 in BOTH solution and template; never recommend a template-only edit that violates diff discipline.
 Treat the GENERATED TEST PLAN as the authoritative mapping from executable test names to Testing Strategy seams, seam importance tiers, and visibility. A seam tier is
 repeated on each mapped plan entry, but Artemis divides that tier evenly across the seam's persisted test cases; do not multiply emphasis by the number of partitions.
@@ -48,7 +50,7 @@ Return every failed check. When a check category has no failures, return only on
 Respond with ONLY this complete JSON shape; every array is mandatory for this contract review:
 {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
  "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
- "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"reason":"quoted teaching-scaffold evidence"}],
+ "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"reason":"teaching-scaffold evidence","evidenceQuote":"exact artifact quote; mandatory when targetReached is false"}],
  "contradictions": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"conflicting artifact evidence"}],
  "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
  "missingExamples": [{"behaviour":"...","reason":"..."}],
@@ -59,4 +61,6 @@ At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every oth
 reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.
 Every contradiction and hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
 STATEMENT, or GENERATED TEST PLAN. Every invented finding must quote the produced statement, solution, template, tests, or test plan that imposes the unsupported
-requirement. Omit a finding instead of inventing its quote.
+requirement. For templateChecks, targetReached means that the named test can reach the intended incomplete TODO seam before a different student seam; it never means the TODO
+has already been implemented. Every false templateCheck requires evidenceQuote copied verbatim from a produced statement, solution, template, test, or test plan. Omit a
+finding instead of inventing its quote.

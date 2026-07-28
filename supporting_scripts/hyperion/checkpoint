@@ -339,12 +339,20 @@ def run_scenario(scenario: str, name: str, output: Path, replay: Path | None, fo
                 env["HYPERION_CHECKPOINT_EXERCISE_STATEMENT"] = source_manifest["exerciseProblemStatement"]
         start_stack(env)
         command = ["npx", "playwright", "test", LIVE_SPEC, "--project=slow-tests", "--max-failures=1"]
-        subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=True)
-        latest = resolve_run(str(output), output.parent)
+        result = subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=False)
         report = ROOT / ".e2e-local" / "hyperion-live" / f"{name}-{repeat}" / f"{scenario}.json"
-        if not report.is_file():
+        try:
+            latest = resolve_run(str(output), output.parent)
+        except SystemExit:
+            if result.returncode != 0:
+                raise subprocess.CalledProcessError(result.returncode, command) from None
+            raise
+        if report.is_file():
+            shutil.copy2(report, latest / "evaluation.json")
+        elif result.returncode == 0:
             raise SystemExit(f"Playwright completed without its qualitative report: {report}")
-        shutil.copy2(report, latest / "evaluation.json")
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(result.returncode, command)
         print(f"recorded repeat {repeat}: {latest}")
 
 

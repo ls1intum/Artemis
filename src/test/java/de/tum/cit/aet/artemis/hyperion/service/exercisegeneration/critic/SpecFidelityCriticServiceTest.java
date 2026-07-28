@@ -938,7 +938,8 @@ class SpecFidelityCriticServiceTest {
                 {"exampleChecks": [{"claim": "the rover ends at (2,3) E", "computedOutcome": "the rover ends at (2,2) N", "consistent": false,
                     "reason": "replaying the command sequence gives a different state"}],
                  "apiChecks": [{"symbol": "Rover(int,int,Collection<int[]>)", "discoverable": false, "reason": "tests require it while the statement leaves the API open"}],
-                 "templateChecks": [{"ownerType":"FixtureType","test": "turnsLeft", "targetReached": false, "reason": "the constructor throws before the turn assertion"}],
+                 "templateChecks": [{"ownerType":"FixtureType","test": "turnsLeft", "targetReached": false, "reason": "the constructor throws before the turn assertion",
+                     "evidenceQuote":"class Graphemes"}],
                  "mutantChecks": [{"mutant": "reject CJK characters", "killed": false, "sourceQuote": "CJK characters", "reason": "no assertion exercises CJK input"}],
                  "uncovered": [{"requirement": "CJK characters", "sourceQuote": "CJK characters", "reason": "no assertion exercises CJK input"}],
                  "contradictions": [], "hiddenRequirements": [], "weakOracle": [], "templateGaps": [],
@@ -966,21 +967,19 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void templateQualityGapReviewSurfacesMissingTeachingScaffoldWithQuotedEvidence() {
-        ScriptedCritic scripted = criticScripted(
-                rawResponse(
-                        """
-                                {"exampleChecks":[],
-                                 "apiChecks":[],
-                                 "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":false,
-                                     "reason":"the stub's doc comment does not restate its contract: the solution's Javadoc reads 'Returns the number of user-perceived characters in value.' but the template's count(String value) method has no doc comment at all"}],
-                                 "contradictions":[],
-                                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
-                                 "unrequestedChanges":[],"missingRequestedChanges":[]}
-                                """),
-                rawResponse("""
-                        {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
-                         "uncovered":[],"weakOracle":[]}
-                        """));
+        ScriptedCritic scripted = criticScripted(rawResponse("""
+                {"exampleChecks":[],
+                 "apiChecks":[],
+                 "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":false,
+                     "reason":"the template's count(String value) method has no doc comment",
+                     "evidenceQuote":"int count(String value) { return 0; }"}],
+                 "contradictions":[],
+                 "hiddenRequirements":[],"templateGaps":[],"missingExamples":[],"invented":[],
+                 "unrequestedChanges":[],"missingRequestedChanges":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the cjk assertion kills it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
         SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityReport report = critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
@@ -988,7 +987,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.TEMPLATE_QUALITY_GAP);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
             assertThat(finding.requirement()).isEqualTo("count");
-            assertThat(finding.detail()).contains("Returns the number of user-perceived characters in value.", "has no doc comment at all");
+            assertThat(finding.detail()).contains("count(String value)", "has no doc comment");
         });
         assertThat(report.hasBlockingFindings()).isTrue();
     }
@@ -998,7 +997,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[{"symbol":"FireStrategy","discoverable":true,"reason":"the statement describes it"}],
                  "templateChecks":[{"ownerType":"FireStrategy","test":"missing FireStrategy stub","targetReached":false,
-                     "reason":"the template has no FireStrategy class or TODO"}],
+                     "reason":"the template has no FireStrategy class or TODO","evidenceQuote":"class Graphemes"}],
                  "contradictions":[],"hiddenRequirements":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
                 """), rawResponse("""
                 {"mutantChecks":[{"mutant":"return 0","killed":true,"reason":"the assertion kills it"}],"uncovered":[],"weakOracle":[]}
@@ -1037,7 +1036,7 @@ class SpecFidelityCriticServiceTest {
         // Build files, fixtures, and other shared scaffold are real and repairable but deliberately absent from the Design ownership table, so the reserved owner name must pass
         // the guard that discards a complaint about a type the design never names.
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"reason\":\"the shared fixture fails to compile before any student-owned code runs\"}]}"),
+                "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"reason\":\"the shared fixture fails to compile before any student-owned code runs\",\"evidenceQuote\":\"class Graphemes\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
 
         SpecFidelityReport report = scripted.critic().critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null,
@@ -1046,6 +1045,20 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
             assertThat(finding.kind()).isEqualTo(Kind.TEMPLATE_QUALITY_GAP);
             assertThat(finding.requirement()).isEqualTo("buildsBeforeAnyTask");
+        });
+    }
+
+    @Test
+    void contractReviewRejectsTemplateGapsWithoutArtifactEvidence() {
+        ScriptedCritic scripted = criticScripted(jsonResponse(
+                "{\"templateChecks\":[{\"ownerType\":\"FixtureType\",\"test\":\"imagined prerequisite\",\"targetReached\":false,\"reason\":\"another task blocks it\",\"evidenceQuote\":\"a line that is not in any artifact\"}]}"),
+                rawResponse(COMPLETE_ORACLE_VERDICT));
+
+        SpecFidelityReport report = critique(scripted.critic(), "Create an exercise.", "Implement the fixture.", List.of("fixture"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
+            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
+            assertThat(finding.detail()).contains("contract reviewer returned no verdict");
         });
     }
 
@@ -1497,6 +1510,20 @@ class SpecFidelityCriticServiceTest {
                 Example: 2 + 2 = 5\
                 """, null, null);
         assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> assertThat(finding.kind()).isEqualTo(Kind.CONTRACT_CONTRADICTION));
+    }
+
+    @Test
+    void contractReviewAcceptsScalarComputedOutcomes() {
+        SpecFidelityCriticService critic = criticReturning(
+                jsonResponse("{\"exampleChecks\":[{\"claim\":\"ready = false\",\"computedOutcome\":true,\"consistent\":false,\"reason\":\"the operation sets ready\"}]}"));
+
+        SpecFidelityReport report = critic.critique("Create a state exercise.", "Example: ready = false", List.of("setsReady"), COMPLETE_ARTIFACTS, null, () -> false, null, null,
+                null, null);
+
+        assertThat(report.findings()).singleElement().satisfies((SpecFidelityReport.Finding finding) -> {
+            assertThat(finding.kind()).isEqualTo(Kind.CONTRACT_CONTRADICTION);
+            assertThat(finding.detail()).contains("computes to \"true\"");
+        });
     }
 
     @Test

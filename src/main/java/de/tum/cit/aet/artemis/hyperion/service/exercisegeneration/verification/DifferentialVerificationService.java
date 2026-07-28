@@ -242,11 +242,9 @@ public class DifferentialVerificationService {
                 .toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        List<String> approvedTestPlanReasons = contractSpecifications.stream()
-                .flatMap(spec -> ExerciseIntegrityGate
-                        .approvedTestPlanReasons(spec, request.producedTestPlan(), solution.testNames(), exercise.getDueDate() != null, request.seededStructuralTestNames())
-                        .stream())
-                .distinct().toList();
+        String approvedSpec = String.join("\n\n", contractSpecifications);
+        List<String> approvedTestPlanReasons = ExerciseIntegrityGate.approvedTestPlanReasons(approvedSpec, request.producedTestPlan(), solution.testNames(),
+                exercise.getDueDate() != null, request.seededStructuralTestNames());
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
         List<String> statementTraceabilityReasons = ExerciseIntegrityGate.statementTraceabilityReasons(request.producedTestPlan(), request.producedProblemStatement());
@@ -330,10 +328,8 @@ public class DifferentialVerificationService {
         reasons.addAll(approvedSpecificationReasons);
         String testPlanJson = readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
         List<String> approvedTestPlanReasons = includeStatementChecks
-                ? contractSpecifications.stream()
-                        .flatMap(spec -> ExerciseIntegrityGate
-                                .approvedTestPlanReasons(spec, testPlanJson, solution.testNames(), exercise.getDueDate() != null, seededStructuralTestNames).stream())
-                        .distinct().toList()
+                ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.getDueDate() != null,
+                        seededStructuralTestNames)
                 : List.of();
         boolean approvedTestPlanHolds = approvedTestPlanReasons.isEmpty();
         reasons.addAll(approvedTestPlanReasons);
