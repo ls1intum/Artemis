@@ -24,17 +24,20 @@ public class ExerciseUpdatedNotification extends CourseNotification {
 
     protected String exerciseType;
 
+    protected String notificationText;
+
     /**
      * Default constructor used when creating a new post notification.
      */
     public ExerciseUpdatedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId,
-            String exerciseType) {
+            String exerciseType, String notificationText) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.examId = examId;
         this.exerciseGroupId = exerciseGroupId;
         this.exerciseType = exerciseType;
+        this.notificationText = notificationText;
     }
 
     /**
