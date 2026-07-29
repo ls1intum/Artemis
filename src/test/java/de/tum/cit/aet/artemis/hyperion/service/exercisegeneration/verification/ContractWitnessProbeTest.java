@@ -37,14 +37,14 @@ class ContractWitnessProbeTest {
             void testWitnessNegativeSalaryIgnored() {
                 assertEquals("Total payroll: $0", new RosterParser().formatRoster("Alice|Dev|-5"), "a negative salary is an invalid record");
             }
-            """);
+            """, "accepts negative salary records");
 
     private static final ContractWitness BLANK_LINE = new ContractWitness("R1", "testWitnessBlankLineIgnored", """
             @Test
             void testWitnessBlankLineIgnored() {
                 assertEquals("Total payroll: $0", new RosterParser().formatRoster("\\n\\n"), "blank lines are skipped");
             }
-            """);
+            """, "does not skip blank lines");
 
     @Test
     void buildProbeSource_carriesThePackageAndImportsOfTheSuiteItProbes() {
@@ -101,6 +101,19 @@ class ContractWitnessProbeTest {
     @Test
     void validated_provesNothingWhenTheBuildReportedNoTestsAtAll() {
         assertThat(ContractWitnessProbe.validated(List.of(), List.of(), List.of(NEGATIVE_SALARY))).isEmpty();
+    }
+
+    @Test
+    void discriminating_keepsOnlySolutionPassingWitnessesThatExecuteAndFailOnTheStarter() {
+        List<ContractWitness> discriminating = ContractWitnessProbe.discriminating(List.of(NEGATIVE_SALARY, BLANK_LINE),
+                List.of("HyperionContractWitnessProbeTest.testWitnessNegativeSalaryIgnored", "testWitnessBlankLineIgnored()"), List.of("testWitnessNegativeSalaryIgnored()"));
+
+        assertThat(discriminating).containsExactly(NEGATIVE_SALARY);
+    }
+
+    @Test
+    void discriminating_rejectsAStarterPassAndAWitnessTheStarterNeverRan() {
+        assertThat(ContractWitnessProbe.discriminating(List.of(NEGATIVE_SALARY, BLANK_LINE), List.of("testWitnessNegativeSalaryIgnored"), List.of())).isEmpty();
     }
 
     @Test

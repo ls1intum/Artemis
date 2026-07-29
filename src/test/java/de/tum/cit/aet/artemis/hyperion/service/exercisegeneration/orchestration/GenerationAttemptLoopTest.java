@@ -251,7 +251,7 @@ class GenerationAttemptLoopTest {
             sandbox.withFile(SPEC_PATH, "# Exercise\n\n## Rules\n- R1: computes a result.");
             when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                     .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
-            ContractWitness witness = new ContractWitness("R1", "computesTheResult", "void computesTheResult() {}");
+            ContractWitness witness = new ContractWitness("R1", "computesTheResult", "void computesTheResult() {}", "returns an incorrect result");
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
             when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(witness));
 

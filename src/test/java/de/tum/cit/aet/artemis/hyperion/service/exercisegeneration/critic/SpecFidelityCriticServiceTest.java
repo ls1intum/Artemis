@@ -1154,15 +1154,15 @@ class SpecFidelityCriticServiceTest {
 
                 // --- Oracle-pass verdict integrity, with a complete contract verdict alongside.
                 generation("oracle verdict omits weakOracle",
-                        List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT.replace("\"weakOracle\":[]", ""))), "test-oracle reviewer", 1, 2),
+                        List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT.replace("\"weakOracle\":[]", ""))), "test-oracle reviewer", 1, 3),
                 generation("oracle verdict omits mutantChecks", List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse("{\"uncovered\":[],\"weakOracle\":[]}")),
-                        "test-oracle reviewer", 1, 2),
+                        "test-oracle reviewer", 1, 3),
 
                 // --- Responses neither pass can parse: both passes report separately, so neither is silently clean.
-                generation("response is brace-delimited but unparseable", List.of(rawResponse("{ this is not valid json }")), "contract reviewer", 2, 2),
-                generation("response is prose with no JSON at all", List.of(rawResponse("I think the tests look fine to me, no JSON here at all.")), "contract reviewer", 2, 2),
-                generation("response body is empty", List.of(rawResponse("")), "contract reviewer", 2, 2),
-                generation("response answers only the oracle's uncovered array", List.of(rawResponse("{\"uncovered\":[]}")), "test-oracle reviewer", 2, 2),
+                generation("response is brace-delimited but unparseable", List.of(rawResponse("{ this is not valid json }")), "contract reviewer", 2, 3),
+                generation("response is prose with no JSON at all", List.of(rawResponse("I think the tests look fine to me, no JSON here at all.")), "contract reviewer", 2, 3),
+                generation("response body is empty", List.of(rawResponse("")), "contract reviewer", 2, 3),
+                generation("response answers only the oracle's uncovered array", List.of(rawResponse("{\"uncovered\":[]}")), "test-oracle reviewer", 2, 3),
 
                 // --- Pre-flight guards: the review must fail closed before spending a provider call.
                 generation("no AI provider is configured", null, "No AI reviewer is configured.", 1, 0),
@@ -1176,8 +1176,8 @@ class SpecFidelityCriticServiceTest {
                 generation("complete review prompt exceeds its bounded size", List.of(), COMPLETE_ARTIFACTS, "x".repeat(120_000), "exceeded its bounded size", 1, 0),
 
                 // --- The same guarantees on the adaptation path, where the finding must name adaptation scope rather than exercise quality.
-                adaptation("adaptation verdict is not JSON", List.of(rawResponse("not json")), "contract reviewer", 2, 2),
-                adaptation("adaptation verdict omits the scope arrays", List.of(rawResponse("{\"uncovered\":[]}")), "contract reviewer", 2, 2),
+                adaptation("adaptation verdict is not JSON", List.of(rawResponse("not json")), "contract reviewer", 2, 3),
+                adaptation("adaptation verdict omits the scope arrays", List.of(rawResponse("{\"uncovered\":[]}")), "contract reviewer", 2, 3),
                 adaptation("adaptation unrequested change entry omits its change",
                         List.of(jsonResponse("{\"unrequestedChanges\":[{\"reason\":\"missing change\"}],\"missingRequestedChanges\":[]}")), "contract reviewer", 1, 2),
                 adaptation("no AI provider is configured for the adaptation review", null, "No AI reviewer is configured.", 1, 0));
@@ -1629,7 +1629,7 @@ class SpecFidelityCriticServiceTest {
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"), usageSink);
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(chatModel, times(3)).call(any(Prompt.class));
         verify(usageSink, never()).markUncertain();
         verify(usageSink, never()).accept(any());
     }
@@ -2166,21 +2166,32 @@ class SpecFidelityCriticServiceTest {
     void authorContractWitnesses_parsesTheRuleNameAndMethod() {
         List<ContractWitness> witnesses = witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
-                 "code":"@Test\\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\\"a|b|-5\\"), \\"negative is invalid\\"); }"}]}
+                 "code":"@Test\\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\\"a|b|-5\\"), \\"negative is invalid\\"); }",
+                 "wrongBehavior":"accepts negative salary records"}]}
                 """);
 
         assertThat(witnesses).singleElement().satisfies(witness -> {
             assertThat(witness.ruleId()).isEqualTo("R1");
             assertThat(witness.testName()).isEqualTo("testWitnessNegativeSalary");
             assertThat(witness.code()).contains("void testWitnessNegativeSalary()");
+            assertThat(witness.wrongBehavior()).isEqualTo("accepts negative salary records");
         });
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAWitnessWithoutAConcreteWrongBehavior() {
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
+                 "code":"@Test\\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\\"a|b|-5\\"), \\"negative is invalid\\"); }"}]}
+                """)).isEmpty();
     }
 
     @Test
     void authorContractWitnesses_dropsAWitnessWhoseNameIsNotTheMethodItDeclares() {
         // The name is how a build result is attributed back to a witness, so one that does not appear in its own body would count as validated whatever the build reported.
         assertThat(witnessesFrom("""
-                {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { assertTrue(true, \\"x\\"); }"}]}
+                {"witnesses":[{"rule":"R1","testName":"testClaimedName","code":"@Test\\nvoid testActualDifferentName() { assertTrue(true, \\"x\\"); }",
+                 "wrongBehavior":"does the wrong thing"}]}
                 """)).isEmpty();
     }
 
@@ -2189,7 +2200,8 @@ class SpecFidelityCriticServiceTest {
         // A substring check would accept this: the build reports `actual`, nothing is attributed to `testClaimedName`, and it is validated on no evidence.
         assertThat(witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testClaimedName",
-                 "code":"@Test\\nvoid actual() { assertEquals(1, 1, \\"see testClaimedName\\"); } // testClaimedName"}]}
+                 "code":"@Test\\nvoid actual() { assertEquals(1, 1, \\"see testClaimedName\\"); } // testClaimedName",
+                 "wrongBehavior":"does the wrong thing"}]}
                 """)).isEmpty();
     }
 
@@ -2197,7 +2209,8 @@ class SpecFidelityCriticServiceTest {
     void authorContractWitnesses_dropsAWitnessThatAssertsNothing() {
         // A witness with no assertion passes against every implementation, correct or not, so it pins no rule.
         assertThat(witnessesFrom("""
-                {"witnesses":[{"rule":"R1","testName":"testWitnessEmpty","code":"@Test\\nvoid testWitnessEmpty() { new RosterParser().formatRoster(\\"a\\"); }"}]}
+                {"witnesses":[{"rule":"R1","testName":"testWitnessEmpty","code":"@Test\\nvoid testWitnessEmpty() { new RosterParser().formatRoster(\\"a\\"); }",
+                 "wrongBehavior":"accepts an invalid record"}]}
                 """)).isEmpty();
     }
 
@@ -2205,7 +2218,8 @@ class SpecFidelityCriticServiceTest {
     void authorContractWitnesses_dropsAWitnessForARuleTheSpecificationNeverStates() {
         // Inventing a requirement is the one thing this pass must never do: the witness would become grading material for a rule no student was told about.
         assertThat(witnessesFrom("""
-                {"witnesses":[{"rule":"R999","testName":"testWitnessInvented","code":"@Test\\nvoid testWitnessInvented() { assertEquals(1, 1, \\"invented\\"); }"}]}
+                {"witnesses":[{"rule":"R999","testName":"testWitnessInvented","code":"@Test\\nvoid testWitnessInvented() { assertEquals(1, 1, \\"invented\\"); }",
+                 "wrongBehavior":"violates an invented rule"}]}
                 """)).isEmpty();
     }
 
@@ -2213,10 +2227,10 @@ class SpecFidelityCriticServiceTest {
     void authorContractWitnesses_dropsDuplicateAndIncompleteEntries() {
         List<ContractWitness> witnesses = witnessesFrom("""
                 {"witnesses":[
-                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }"},
-                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }"},
-                 {"rule":"R1","testName":"","code":"@Test\\nvoid testWitnessB() { assertEquals(1, 1, \\"b\\"); }"},
-                 {"rule":null,"testName":"testWitnessC","code":"@Test\\nvoid testWitnessC() { assertEquals(1, 1, \\"c\\"); }"}]}
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }","wrongBehavior":"wrong A"},
+                 {"rule":"R1","testName":"testWitnessA","code":"@Test\\nvoid testWitnessA() { assertEquals(1, 1, \\"a\\"); }","wrongBehavior":"wrong A"},
+                 {"rule":"R1","testName":"","code":"@Test\\nvoid testWitnessB() { assertEquals(1, 1, \\"b\\"); }","wrongBehavior":"wrong B"},
+                 {"rule":null,"testName":"testWitnessC","code":"@Test\\nvoid testWitnessC() { assertEquals(1, 1, \\"c\\"); }","wrongBehavior":"wrong C"}]}
                 """);
 
         assertThat(witnesses).extracting(ContractWitness::testName).containsExactly("testWitnessA");
@@ -2224,9 +2238,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_capsTheBudgetBecauseEachWitnessCostsAValidatingBuild() {
-        String entries = java.util.stream.IntStream.range(0, 6).mapToObj(
-                index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness" + index + "() { assertEquals(1, 1, \\\"w\\\"); }\"}")
-                .collect(java.util.stream.Collectors.joining(","));
+        String entries = java.util.stream.IntStream.range(0, 6).mapToObj(index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness"
+                + index + "() { assertEquals(1, 1, \\\"w\\\"); }\",\"wrongBehavior\":\"wrong " + index + "\"}").collect(java.util.stream.Collectors.joining(","));
 
         assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(3);
     }
@@ -2240,8 +2253,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_authorsNothingWhenCancelled() {
-        SpecFidelityCriticService critic = criticReturning(
-                rawResponse("{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"@Test void testW() { assertEquals(1, 1, \\\"w\\\"); }\"}]}"));
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                "{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"@Test void testW() { assertEquals(1, 1, \\\"w\\\"); }\",\"wrongBehavior\":\"wrong\"}]}"));
 
         assertThat(critic.authorContractWitnesses(SPEC_WITH_RULES, "class T { }", "class S { }", null, () -> true)).isEmpty();
     }

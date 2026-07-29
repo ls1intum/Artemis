@@ -663,10 +663,10 @@ class GenerationAttemptLoop {
             }
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
             validated.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
-                    "Rule " + witness.ruleId() + " has an executable witness the reference solution already passes",
+                    "Rule " + witness.ruleId() + " has an executable counterexample witness",
                     "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
-                            + " of the approved specification by a reviewer independent of the authoring loop, and it has been run against the reference solution, which passes it:\n"
-                            + witness.code())));
+                            + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "
+                            + "starter fails at student work. It distinguishes this plausible wrong behavior: " + witness.wrongBehavior() + "\n" + witness.code())));
             emit("Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
             return new SpecFidelityReport(List.copyOf(combined));
         }

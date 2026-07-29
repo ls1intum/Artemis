@@ -146,14 +146,18 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void buildStage_everyStage_sharesTheSecurityBoundaryWorkspaceAndContractHeader() {
+    void buildStage_everyStage_sharesTheSecurityBoundaryFocusedWorkspaceAndContractHeader() {
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
         for (GenerationStage stage : GenerationStage.values()) {
             String prompt = systemPromptService.buildStage(exercise, stage);
-            assertThat(prompt).as("stage %s", stage).contains("SECURITY BOUNDARY").contains("WORKSPACE").contains("THE CONTRACT")
-                    .contains("reference/: complete non-persisted worked exercise").contains("reference/style/: per-artifact style guides")
-                    .contains("THIS EXERCISE'S BUILD CONTEXT").contains(STAGE_CLOSE_LINE_MARKER);
+            assertThat(prompt).as("stage %s", stage).contains("SECURITY BOUNDARY").contains("WORKSPACE").contains("THE CONTRACT").contains(STAGE_CLOSE_LINE_MARKER);
         }
+
+        String testsPrompt = systemPromptService.buildStage(exercise, GenerationStage.TESTS);
+        assertThat(testsPrompt).contains("reference/: complete non-persisted worked exercise").contains("reference/style/: per-artifact style guides")
+                .contains("THIS EXERCISE'S BUILD CONTEXT");
+        assertThat(systemPromptService.buildStage(exercise, GenerationStage.SPEC)).doesNotContain("THIS EXERCISE'S BUILD CONTEXT", "Ares", "verify.sh");
+        assertThat(systemPromptService.buildStage(exercise, GenerationStage.STATEMENT)).doesNotContain("THIS EXERCISE'S BUILD CONTEXT", "Ares", "Build phases");
     }
 
     @Test
@@ -161,6 +165,8 @@ class AgentSystemPromptServiceTest {
         String prompt = systemPromptService.buildStage(exerciseWith(ProgrammingLanguage.JAVA, ""), GenerationStage.SPEC).replaceAll("\\s+", " ");
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
+        assertThat(prompt).contains("## Decision Ledger", "EXPLICIT_BRIEF", "NECESSARY_OPERATIONAL_CHOICE", "PEDAGOGICAL_OBJECTIVE")
+                .contains("provenance, not permission to add requirements");
         // SPEC's guidance is inlined, so the stage must NOT send the agent to a style guide (there is none, and re-reading would burn its bounded turns).
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
@@ -194,7 +200,8 @@ class AgentSystemPromptServiceTest {
 
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, the template, and the differential tests.")
-                .contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS").contains("reference/style/final-statement.md");
+                .contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS").contains("reference/style/final-statement.md")
+                .contains("do not use graded test bodies as an example-fixture source").contains("examples independently from the rules");
     }
 
     @Test

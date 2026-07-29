@@ -132,6 +132,24 @@ public class AgentSystemPromptService {
 
             """;
 
+    private static final String SPEC_STAGE_CONTRACT = """
+            THE CONTRACT — SPECIFICATION
+            The instructor brief is the sole authority for requested scope, learning objective, and fixed boundaries. Make only the minimum operational choices needed to turn
+            underspecified behavior into a coherent, executable exercise. Record where every consequential choice came from; do not silently promote a convenient implementation
+            detail into a student requirement. Put only observable, gradeable behavior in Rules. When the brief explicitly asks for a technique that black-box behavior cannot
+            prove, preserve it as a pedagogical objective in the Decision Ledger rather than inventing brittle source-inspection grading.
+
+            """;
+
+    private static final String STATEMENT_STAGE_CONTRACT = """
+            THE CONTRACT — FINAL STATEMENT
+            Translate the approved specification and completed executable artifacts into a clear student contract without expanding either one. The statement must expose the
+            exact public API and task boundaries compactly, while leaving stub bodies and member-level Javadoc in the template where students use them. Generate explanatory
+            examples independently from the rules: do not mine graded test bodies for fixture data, and do not reuse a worked specification example when the generated tests
+            already use that witness. Replay every example and self-check table columns, arrows, maps, and before/after state in the direction a student will read them.
+
+            """;
+
     private static final String TEMPLATE_AS_TEACHING_SCAFFOLD = """
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
@@ -260,6 +278,11 @@ public class AgentSystemPromptService {
             throwing. An ordinary abstract interface method has no student-owned body: make the interface `given` when students only implement it, or `student-creates` when the
             brief actually assigns its design; do not call that declaration `stubbed` merely to manufacture a structural seam.
             Never substitute `Object` in only the template.
+            `## Decision Ledger` — a short table (| Decision | Provenance | Why necessary | Observable |) for consequential scope, domain, ownership, and contract choices.
+            Provenance is exactly one of `EXPLICIT_BRIEF`, `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Use `EXPLICIT_BRIEF` only
+            for values or constraints the brief actually fixes. A necessary choice must be the smallest proportional choice that makes the exercise executable. An input-domain
+            assumption must be surfaced in the student contract when callers need it. A `PEDAGOGICAL_OBJECTIVE` preserves an explicitly requested technique or concept, but must
+            not become behavioral grading when it is not observably distinguishable. This is provenance, not permission to add requirements; omit trivial implementation choices.
             `## Diagram` — yes/no + one-line why
             grounded in the design (yes for multiple collaborating or student-created types). No [task] bindings, no test names, no PlantUML at spec time.
             Before submitting, reconcile rules, examples, API, ownership, and testing seams. A `student-creates` declaration is never supplied by the template; every seam belongs
@@ -396,8 +419,17 @@ public class AgentSystemPromptService {
         // The TESTS-stage differential is what enforces the SCA constraint on the solution, so the solution must learn it before it is written rather than at rejection time.
         String scaGuidance = stage == GenerationStage.TESTS ? staticCodeAnalysisGuidance(exercise) : "";
         String dueDateGuidance = stage == GenerationStage.SPEC || stage == GenerationStage.TESTS ? dueDateGuidance(exercise) : "";
-        return STAGE_INTRO + SECURITY_BOUNDARY + workspaceSection(exercise, GenerationMode.GENERATE) + THE_CONTRACT + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE
-                + stageSection(stage) + dueDateGuidance + scaGuidance + LanguageGenerationProfile.guidanceFor(exercise);
+        String languageGuidance = stage == GenerationStage.TESTS ? LanguageGenerationProfile.guidanceFor(exercise) : "";
+        return STAGE_INTRO + SECURITY_BOUNDARY + stageContract(stage) + stageWorkspaceSection(exercise, stage) + STAGE_TOOLS_NOTE + STAGE_VERIFICATION_CADENCE + stageSection(stage)
+                + dueDateGuidance + scaGuidance + languageGuidance;
+    }
+
+    private static String stageContract(GenerationStage stage) {
+        return switch (stage) {
+            case SPEC -> SPEC_STAGE_CONTRACT;
+            case TESTS -> THE_CONTRACT;
+            case STATEMENT -> STATEMENT_STAGE_CONTRACT;
+        };
     }
 
     private static String dueDateGuidance(ProgrammingExercise exercise) {
@@ -447,6 +479,38 @@ public class AgentSystemPromptService {
         };
         return "STYLE GUIDE: before writing, skim `reference/style/" + styleFile + "` for this artifact's FORM conventions; imitate its FORM only, never reference/'s topic, API, "
                 + "or code.\n";
+    }
+
+    private String stageWorkspaceSection(ProgrammingExercise exercise, GenerationStage stage) {
+        if (stage == GenerationStage.TESTS) {
+            return workspaceSection(exercise, GenerationMode.GENERATE);
+        }
+        String languageName = exercise.getProgrammingLanguage() != null ? exercise.getProgrammingLanguage().toString() : "the exercise language";
+        if (stage == GenerationStage.SPEC) {
+            return """
+                    WORKSPACE
+                    - SPEC.md: the only writable artifact in this stage
+                    - problem-statement.md: placeholder or prior context, never authority over the instructor brief
+                    - reference/style/: form guidance only; do not copy its topic, API, requirements, or code
+
+                    Programming language: %s
+                    Package: %s
+
+                    """.formatted(languageName, exercise.getPackageName());
+        }
+        return """
+                WORKSPACE
+                - problem-statement.md: the only writable artifact in this stage
+                - SPEC.md: approved, read-only contract
+                - solution/ and template/: completed public API and teaching scaffold
+                - tests/ and test-plan.json: executable grading evidence and accepted task names; inspect mappings and names, but do not use graded test bodies as an example-fixture source
+                - reference/style/final-statement.md: form guidance only; do not copy its topic, API, requirements, or prose
+
+                Programming language: %s
+                Package: %s
+
+                """
+                .formatted(languageName, exercise.getPackageName());
     }
 
     private String workspaceSection(ProgrammingExercise exercise, GenerationMode mode) {

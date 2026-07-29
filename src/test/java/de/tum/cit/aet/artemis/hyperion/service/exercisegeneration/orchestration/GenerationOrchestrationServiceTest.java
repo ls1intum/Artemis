@@ -1290,7 +1290,7 @@ class GenerationOrchestrationServiceTest {
     // --- Contract witnesses ---
 
     private static final ContractWitness WITNESS = new ContractWitness("R1", "testWitnessNegativeSalary",
-            "@Test\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\"a|b|-5\"), \"negative is invalid\"); }");
+            "@Test\nvoid testWitnessNegativeSalary() { assertEquals(0, parse(\"a|b|-5\"), \"negative is invalid\"); }", "accepts negative salary records");
 
     /** An accepted candidate whose workspace holds a SPEC and one graded test, the state the witness pass needs to run at all. */
     private void acceptedCandidateWithSpecAndTests() {

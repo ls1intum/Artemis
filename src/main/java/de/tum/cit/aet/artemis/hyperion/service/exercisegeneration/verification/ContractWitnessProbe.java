@@ -82,6 +82,21 @@ public final class ContractWitnessProbe {
         return List.copyOf(validated);
     }
 
+    /**
+     * Keeps only reference-solution witnesses that demonstrably execute and fail against the starter. Passing the solution proves the proposed outcome belongs to the selected
+     * contract; failing at the template's student seam proves the witness is executable feedback rather than a vacuous assertion or given-support check.
+     *
+     * @param solutionValidated witnesses already observed passing against the reference solution
+     * @param templateTestNames tests the template build reported executing
+     * @param templateFailures  tests the template build reported failing
+     * @return witnesses that distinguish the reference solution from the starter
+     */
+    public static List<ContractWitness> discriminating(List<ContractWitness> solutionValidated, List<String> templateTestNames, List<String> templateFailures) {
+        Set<String> executed = bareNames(templateTestNames);
+        Set<String> failed = bareNames(templateFailures);
+        return solutionValidated.stream().filter(witness -> executed.contains(witness.testName()) && failed.contains(witness.testName())).toList();
+    }
+
     /** Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the bare name keeps attribution stable. */
     private static Set<String> bareNames(@Nullable List<String> reportedNames) {
         Set<String> bare = new LinkedHashSet<>();

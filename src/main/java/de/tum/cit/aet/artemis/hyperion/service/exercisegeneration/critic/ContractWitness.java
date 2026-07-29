@@ -7,9 +7,10 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
  * verdict is the reviewing model's own assertion and is never run. A witness is run: one that goes green against the reference solution is evidence that the rule holds and is
  * testable, and can then be handed to the authoring agent as a concrete test to adopt.
  *
- * @param ruleId   the rule this witness pins, spelled exactly as the approved specification writes it
- * @param testName the test method name, which must match the method declared in {@link #code()} so a validation result can be attributed to this witness
- * @param code     one complete, self-contained test method, including its annotations
+ * @param ruleId        the rule this witness pins, spelled exactly as the approved specification writes it
+ * @param testName      the test method name, which must match the method declared in {@link #code()} so a validation result can be attributed to this witness
+ * @param code          one complete, self-contained test method, including its annotations
+ * @param wrongBehavior the plausible contract-breaking behavior this witness distinguishes from the reference solution
  */
-public record ContractWitness(String ruleId, String testName, String code) {
+public record ContractWitness(String ruleId, String testName, String code, String wrongBehavior) {
 }

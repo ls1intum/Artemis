@@ -774,10 +774,10 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs candidate contract witnesses against the reference solution and returns the ones that demonstrably ran and passed, at the cost of one pristine solution build however
-     * many are offered. The witnesses ride in a single throwaway probe class beside the graded suite; because it never replaces an existing file, a crash before its removal
-     * leaves the graded suite untouched. Every failure path returns no witnesses rather than propagating: this is advisory signal on an already-passing candidate, so a broken
-     * probe must cost the exercise nothing.
+     * Runs candidate contract witnesses against the reference solution and template and returns the ones that demonstrably pass the solution and fail at the starter seam. The
+     * witnesses ride in a single throwaway probe class beside the graded suite; because it never replaces an existing file, a crash before its removal leaves the graded suite
+     * untouched. Every failure path returns no witnesses rather than propagating: this is advisory signal on an already-passing candidate, so a broken probe must cost the
+     * exercise nothing.
      *
      * @param sandbox            the open sandbox session
      * @param sessionId          the sandbox session id
@@ -807,10 +807,16 @@ public class DifferentialVerificationService {
             seedPristineVerifyScript(sandbox, sessionId, exercise);
             BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
                     GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-            List<ContractWitness> validated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), candidates);
-            log.info("Contract-witness probe for exercise {}: {} of {} candidate witnesses were satisfied by the reference solution", exercise.getId(), validated.size(),
-                    candidates.size());
-            return validated;
+            List<ContractWitness> solutionValidated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), candidates);
+            if (solutionValidated.isEmpty()) {
+                return List.of();
+            }
+            BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
+                    GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+            List<ContractWitness> discriminating = ContractWitnessProbe.discriminating(solutionValidated, template.testNames(), template.testFailedNames());
+            log.info("Contract-witness probe for exercise {}: {} of {} candidate witnesses passed the reference solution and failed at the starter seam", exercise.getId(),
+                    discriminating.size(), candidates.size());
+            return discriminating;
         }
         catch (RuntimeException e) {
             log.warn("The contract-witness probe could not run for exercise {}: {}", exercise.getId(), e.getMessage());

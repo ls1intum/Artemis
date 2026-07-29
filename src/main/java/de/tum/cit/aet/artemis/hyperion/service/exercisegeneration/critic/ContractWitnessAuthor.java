@@ -42,7 +42,7 @@ class ContractWitnessAuthor {
     private record ContractWitnessResponse(@Nullable List<ContractWitnessItem> witnesses) {
     }
 
-    private record ContractWitnessItem(@Nullable String rule, @Nullable String testName, @Nullable String code) {
+    private record ContractWitnessItem(@Nullable String rule, @Nullable String testName, @Nullable String code, @Nullable String wrongBehavior) {
     }
 
     private final ReviewerClient reviewer;
@@ -115,7 +115,7 @@ class ContractWitnessAuthor {
         List<ContractWitness> witnesses = new ArrayList<>();
         Set<String> seenNames = new HashSet<>();
         for (ContractWitnessItem item : parsed.witnesses()) {
-            if (item == null || isBlank(item.rule()) || isBlank(item.testName()) || isBlank(item.code())) {
+            if (item == null || isBlank(item.rule()) || isBlank(item.testName()) || isBlank(item.code()) || isBlank(item.wrongBehavior())) {
                 continue;
             }
             String testName = item.testName().strip();
@@ -126,7 +126,7 @@ class ContractWitnessAuthor {
             if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId) || !seenNames.add(testName)) {
                 continue;
             }
-            witnesses.add(new ContractWitness(ruleId, testName, code));
+            witnesses.add(new ContractWitness(ruleId, testName, code, item.wrongBehavior().strip()));
             if (witnesses.size() == MAX_CONTRACT_WITNESSES) {
                 break;
             }
