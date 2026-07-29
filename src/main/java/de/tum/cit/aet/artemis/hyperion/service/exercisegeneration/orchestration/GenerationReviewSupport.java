@@ -46,6 +46,27 @@ final class GenerationReviewSupport {
         }
     }
 
+    /**
+     * Keeps executable reference evidence represented in every review used for promotion or convergence. A clean text-only retry must not erase a witness merely because that
+     * retry did not execute or adjudicate it.
+     */
+    static SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report, List<ContractWitness> awaitingPass, List<ContractWitness> awaitingAdjudication) {
+        if (awaitingPass.isEmpty() && awaitingAdjudication.isEmpty()) {
+            return report;
+        }
+        boolean reviewUnavailable = report.findings().stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        boolean everyAdjudicatedWitnessRepresented = awaitingPass.stream().allMatch(witness -> report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                .anyMatch(finding -> (finding.requirement() + "\n" + finding.detail()).contains(witness.testName())));
+        if (reviewUnavailable || (awaitingAdjudication.isEmpty() && everyAdjudicatedWitnessRepresented)) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        findings.addAll(SpecFidelityReport.qualityReviewUnavailable("Executable reference evidence remains unresolved: " + awaitingPass.size()
+                + " independently adjudicated witness(es) await an " + "environment pass and " + awaitingAdjudication.size()
+                + " environment-confirmed failure(s) await an explicit independent verdict. A text-only review cannot discharge either state.").findings());
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
     static String renderArtifactSources(Map<String, String> files) {
         return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue()).collect(Collectors.joining("\n\n"));
     }

@@ -658,6 +658,7 @@ class GenerationAttemptLoop {
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), retryAdaptationChanges, null, null,
                         GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
+                specFidelityReport = preserveReferenceWitnessState(specFidelityReport);
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
                 repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
@@ -707,7 +708,7 @@ class GenerationAttemptLoop {
             boolean offerContractWitnesses, boolean probeMutants) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
-            return report;
+            return preserveReferenceWitnessState(report);
         }
         try {
             Map<String, String> solutionFiles = producedFilesByType.getOrDefault(RepositoryType.SOLUTION, Map.of());
@@ -787,7 +788,7 @@ class GenerationAttemptLoop {
                             + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "
                             + "starter fails at student work. The reviewer designed it around this plausible wrong behavior, but the environment did not execute that "
                             + "hypothetical implementation: " + witness.wrongBehavior() + "\n" + witness.code())));
-            return new SpecFidelityReport(List.copyOf(combined));
+            return preserveReferenceWitnessState(new SpecFidelityReport(List.copyOf(combined)));
         }
         catch (DifferentialVerificationService.VerificationInfrastructureException exception) {
             throw exception;
@@ -795,8 +796,12 @@ class GenerationAttemptLoop {
         catch (RuntimeException e) {
             log.warn("Executable semantic probes were unavailable for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
             emit("Executable semantic probes were unavailable; the verified candidate is preserved, but no mutation or witness evidence was inferred from that failure.");
-            return report;
+            return preserveReferenceWitnessState(report);
         }
+    }
+
+    private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {
+        return GenerationReviewSupport.preserveReferenceWitnessState(report, referenceWitnessesAwaitingPass, referenceWitnessesAwaitingAdjudication);
     }
 
     private SpecFidelityReport runSpecFidelityCritic(String problemStatement, @Nullable ProgrammingLanguage language, @Nullable String adaptationChanges,

@@ -268,6 +268,28 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void cleanTextReviewRetryCannotEraseAReferenceFailureAwaitingAdjudication() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | every admitted boundary returns the mathematically nearest value |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/NearestTest.java", "class NearestTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "extremeBoundary", "@Test void extremeBoundary() { assertEquals(0, choose()); }",
+                "uses overflowing integer subtraction");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(SpecFidelityCriticService.ReferenceWitnessReview.empty());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        assertThat(loop.specFidelityReport().findings()).anyMatch(
+                finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE && finding.detail().contains("Executable reference evidence remains unresolved"));
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     void aProbeRestoreFailureEscapesReviewWithThePreReviewCheckpointIntact() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
