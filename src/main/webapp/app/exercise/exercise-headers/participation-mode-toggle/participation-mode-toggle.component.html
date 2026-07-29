@@ -1,42 +1,38 @@
 @if (hasPractice() || hasGraded()) {
-    @if (hasPractice() && hasGraded()) {
-        <div id="participation-mode-toggle" class="segmented-control">
-            <button
-                id="practice-mode-button"
-                class="segmented-control__button"
-                [class.segmented-control__button--active]="mode() === 'practice'"
-                [class.segmented-control__button--practice]="mode() === 'practice'"
-                (click)="selectMode('practice')"
+    <div
+        class="participation-mode"
+        [class.participation-mode--practice]="canToggle() ? mode() === 'practice' : hasPractice()"
+        [class.participation-mode--graded]="canToggle() ? mode() === 'graded' : hasGraded()"
+    >
+        @if (canToggle()) {
+            <p-selectButton
+                id="participation-mode-toggle"
+                [options]="modeOptions"
+                [ngModel]="mode()"
+                (ngModelChange)="selectMode($event)"
+                [allowEmpty]="false"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
             >
-                <fa-icon [icon]="faBook" />
-                <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
-            </button>
-            <button
-                id="graded-mode-button"
-                class="segmented-control__button"
-                [class.segmented-control__button--active]="mode() === 'graded'"
-                [class.segmented-control__button--graded]="mode() === 'graded'"
-                (click)="selectMode('graded')"
-            >
-                <fa-icon [icon]="faGraduationCap" />
-                <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
-            </button>
-        </div>
-    } @else {
-        <div id="participation-mode-badge" class="segmented-control">
-            <span
-                id="mode-badge"
-                class="segmented-control__button segmented-control__button--active segmented-control__button--static"
-                [class.segmented-control__button--practice]="hasPractice()"
-                [class.segmented-control__button--graded]="hasGraded()"
-            >
-                <fa-icon [icon]="hasPractice() ? faBook : faGraduationCap" />
-                @if (hasPractice()) {
-                    <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
-                } @else {
-                    <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
-                }
-            </span>
-        </div>
-    }
+                <ng-template #item let-option>
+                    <span class="participation-mode__item" [attr.id]="option.value + '-mode-button'">
+                        <fa-icon [icon]="option.icon" />
+                        <span [jhiTranslate]="option.label"></span>
+                    </span>
+                </ng-template>
+            </p-selectButton>
+        } @else {
+            <p-tag id="participation-mode-badge" severity="secondary" [rounded]="true">
+                <span class="participation-mode__item">
+                    <fa-icon [icon]="hasPractice() ? faBook : faGraduationCap" />
+                    @if (hasPractice()) {
+                        <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>
+                    }
+                </span>
+            </p-tag>
+        }
+    </div>
 }
