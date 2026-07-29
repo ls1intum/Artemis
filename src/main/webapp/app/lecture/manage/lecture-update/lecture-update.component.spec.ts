@@ -24,7 +24,7 @@ import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-tit
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -71,7 +71,7 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(LectureAttachmentsComponent),
                 MockComponent(LectureUpdateUnitsComponent),
-                MockComponent(LectureUpdatePeriodComponent),
+                MockComponent(LectureTimelineComponent),
                 MockComponent(LectureUnitManagementComponent),
                 MockComponent(FormStatusBarComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
@@ -134,6 +134,25 @@ describe('LectureUpdateComponent', () => {
             extras: { state: { existingLectures: [] } },
         } as any);
         TestBed.inject(ActivatedRoute);
+    }
+
+    async function configureValidLectureUpdateForm() {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Test Lecture', channelName: 'test-lecture' } });
+        lectureUpdateComponent.titleSection = signal({
+            titleChannelNameComponent: () => ({
+                title: signal('Test Lecture'),
+                channelName: signal('test-lecture'),
+                isValid: () => true,
+            }),
+        } as any);
+        lectureUpdateComponent.unitSection = signal({
+            isUnitConfigurationValid: () => true,
+        } as any);
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+
+        lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
+        lectureUpdateComponentFixture.detectChanges();
     }
 
     it('should create lecture', async () => {
@@ -263,6 +282,39 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName() } });
     });
 
+    it('should disable automatic content processing when the timeline is invalid', async () => {
+        await configureValidLectureUpdateForm();
+
+        lectureUpdateComponent.fileName.set('testFile.pdf');
+        lectureUpdateComponent.processUnitMode.set(true);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.areSectionsValid()).toBe(true);
+        const processContentButton = lectureUpdateComponentFixture.debugElement.query(By.css('#process-units-entity')).nativeElement as HTMLButtonElement;
+        expect(processContentButton.disabled).toBe(false);
+
+        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(processContentButton.disabled).toBe(true);
+    });
+
+    it('should disable saving when the timeline is invalid', async () => {
+        await configureValidLectureUpdateForm();
+
+        lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.areSectionsValid()).toBe(true);
+        const saveButton = lectureUpdateComponentFixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+        expect(saveButton.disabled).toBe(false);
+
+        lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(saveButton.disabled).toBe(true);
+    });
+
     it('should call onFileChange on changed file', async () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.processUnitMode.set(false);
@@ -281,49 +333,6 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should set lecture start date and end date correctly', async () => {
-        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
-
-        await lectureUpdateComponentFixture.whenStable();
-        lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated' } as Lecture);
-
-        const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(3).date(1);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(1);
-        // endDate was before startDate, so endDate gets corrected to equal startDate
-        expect(lectureUpdateComponent.lecture().endDate).toEqual(lectureUpdateComponent.lecture().startDate);
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = undefined;
-        lectureUpdateComponent.lecture().endDate = undefined;
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(2);
-        expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
-        lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(1).date(3);
-
-        lectureUpdateComponent.onDatesValuesChanged();
-
-        expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
-            expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
-        } else {
-            throw new Error('startDate and endDate should not be undefined');
-        }
     });
 
     describe('isChangeMadeToTitleSection', () => {
@@ -357,6 +366,21 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('isChangeMadeToPeriodSection', () => {
+        it('should store the emitted timeline status and update the period change state when dates change', async () => {
+            await configureActiveRouteMockAndCompileComponents();
+            lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs().add(1, 'day') } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'days'), endDate: dayjs().add(3, 'days') } as Lecture);
+            const status = { valid: false, empty: false };
+            lectureUpdateComponentFixture.detectChanges();
+            const timeline = lectureUpdateComponentFixture.debugElement.query(By.directive(LectureTimelineComponent)).componentInstance as LectureTimelineComponent;
+
+            timeline.timelineStatusChange.emit(status);
+            timeline.datesChanged.emit();
+
+            expect(lectureUpdateComponent.timelineStatus()).toEqual(status);
+            expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(true);
+        });
+
         it('should detect changes made to the period section', async () => {
             await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
@@ -393,9 +417,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => true,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -417,9 +439,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => true,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: true, empty: false });
 
             lectureUpdateComponent.updateFormStatusBar();
 
@@ -437,9 +457,7 @@ describe('LectureUpdateComponent', () => {
                     isValid: () => false,
                 }),
             } as any);
-            lectureUpdateComponent.lecturePeriodSection = signal({
-                isPeriodSectionValid: () => false,
-            } as any);
+            lectureUpdateComponent.timelineStatus.set({ valid: false, empty: false });
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);
