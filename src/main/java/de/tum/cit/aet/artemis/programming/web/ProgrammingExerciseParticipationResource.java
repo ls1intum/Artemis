@@ -502,7 +502,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         try {
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation, null));
         }
         catch (IOException e) {
             log.error("Could not read files at commit {} for participation {}", commitId, participationId, e);
@@ -540,13 +540,13 @@ public class ProgrammingExerciseParticipationResource {
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
                 // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
+                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
             }
             else if (repositoryType != null) {
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
                 var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation));
+                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null));
             }
             else {
                 throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
@@ -597,7 +597,8 @@ public class ProgrammingExerciseParticipationResource {
                 ENTITY_NAME);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         try {
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(commitId, programmingParticipation, validFilePaths));
+            return ResponseEntity
+                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
         }
         catch (IOException e) {
             log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);

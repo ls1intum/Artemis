@@ -11,7 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import hljs from 'highlight.js';
+import hljs from 'app/foundation/util/highlight-languages.util';
 
 @Component({
     selector: 'jhi-feedback-node',

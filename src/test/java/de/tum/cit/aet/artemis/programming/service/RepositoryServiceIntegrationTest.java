@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -44,6 +46,8 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     private String seededContent;
 
+    private ProgrammingExerciseStudentParticipation participation;
+
     @BeforeEach
     void setUp() throws Exception {
         projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase();
@@ -62,6 +66,9 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
 
         repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
+        participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(new ProgrammingExercise());
+        participation.setRepositoryUri(repositoryUri);
     }
 
     @AfterEach
@@ -99,7 +106,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
                 new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
         String commitHash = commitAndPushSelectedFiles();
 
-        Map<String, String> files = repositoryService.getFilesContentFromBareRepository(localRepository.remoteBareGitRepo.getRepository(), commitHash,
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
                 Set.of(smallFilePath, largeFilePath));
 
         assertThat(files).containsOnlyKeys(smallFilePath);
@@ -116,11 +123,26 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         }
         String commitHash = commitAndPushSelectedFiles();
 
-        Map<String, String> files = repositoryService.getFilesContentFromBareRepository(localRepository.remoteBareGitRepo.getRepository(), commitHash, filePaths);
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation, filePaths);
 
         assertThat(files).hasSize(5);
         assertThat(files.values().stream().mapToLong(value -> value.getBytes(StandardCharsets.UTF_8).length).sum())
                 .isEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+    }
+
+    @Test
+    void getSelectedFilesContentDetectsBinariesByContent() throws Exception {
+        String shellScriptPath = "run.sh";
+        String binaryFilePath = "plain.txt";
+        String shellScript = "#!/bin/sh\necho hello\n";
+        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(shellScriptPath).toFile(), shellScript, StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(binaryFilePath).toFile(), new byte[] { 0, 1, 2 });
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
+                Set.of(shellScriptPath, binaryFilePath));
+
+        assertThat(files).containsOnly(Map.entry(shellScriptPath, shellScript));
     }
 
     private String commitAndPushSelectedFiles() throws Exception {
