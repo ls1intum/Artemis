@@ -622,10 +622,16 @@ public class StagedGenerationRunner {
                 }
                 boolean stageCanReenter = stageReentriesUsed == 0 && reentriesRemaining > 0;
                 if (!stageCanReenter || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
-                    // The SPEC gate is the contract checkpoint. A generic repair can safely continue after later gates because the authoritative verifier repeats their checks,
-                    // but it cannot reconstruct a specification that was never approved, so only that case fails closed.
-                    AgentLoopResult.Status exitStatus = stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus;
-                    return finish(exercise, exitStatus, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), archivedConversation, conversation);
+                    // A failed TESTS gate must not consume the statement reserve it was explicitly prevented from using. The statement can still be authored from the approved
+                    // SPEC and the exact tests that did execute; the outer authoritative verifier then gives one repair context both artifacts instead of making a missing
+                    // statement compete with the original test defect. SPEC has no safe downstream authority, and STATEMENT has no later stage, so those still stop here.
+                    if (stage == GenerationStage.TESTS) {
+                        lastFinalMessage = appendGateReport(lastFinalMessage, gate.observation());
+                        emit(progress, "The executable-build gate is still failing; preserving the reserved statement phase before authoritative repair.");
+                        break;
+                    }
+                    return finish(exercise, stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus, totalTurns,
+                            appendGateReport(lastFinalMessage, gate.observation()), archivedConversation, conversation);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {

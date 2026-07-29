@@ -223,16 +223,16 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void executableBuildFailureGetsOneBoundedReentryAndStopsBeforeStatement() {
+    void executableBuildFailureGetsOneBoundedReentryAndStillUsesTheReservedStatementPhase() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build one"),
-                completed(2, "build two"));
+                completed(2, "build two"), completed(1, "statement"));
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(failingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
-        assertThat(result.finalMessage()).contains("the solution does not pass");
-        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        assertThat(result.finalMessage()).isEqualTo("statement");
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
     }
 
     @Test
@@ -244,7 +244,8 @@ class StagedGenerationRunnerTest {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(
                 new AgentLoopRunner.AgentLoopSession(completed(1, "spec"), specificationConversation),
                 new AgentLoopRunner.AgentLoopSession(completed(2, "build one"), failedBuildConversation),
-                new AgentLoopRunner.AgentLoopSession(completed(2, "build two"), retryConversation));
+                new AgentLoopRunner.AgentLoopSession(completed(2, "build two"), retryConversation),
+                new AgentLoopRunner.AgentLoopSession(completed(1, "statement"), List.of(new UserMessage("statement trajectory"))));
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(failingReport());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Message>> priorConversations = ArgumentCaptor.forClass(List.class);
@@ -252,12 +253,12 @@ class StagedGenerationRunnerTest {
 
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
-        assertThat(result.finalMessage()).contains("the solution does not pass");
-        verify(agentLoopRunner, times(3)).runSession(anyString(), priorConversations.capture(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(result.finalMessage()).isEqualTo("statement");
+        verify(agentLoopRunner, times(4)).runSession(anyString(), priorConversations.capture(), prompts.capture(), any(), anyInt(), any(), any(), any());
         assertThat(priorConversations.getAllValues()).containsOnlyNulls();
         assertThat(prompts.getAllValues().get(2)).contains("CURRENT SPEC.md", "CURRENT WORKSPACE LAYOUT", "GATE FEEDBACK FROM THE PREVIOUS ATTEMPT", "the solution does not pass");
         verify(baseTools, times(2)).enterStage(GenerationStage.TESTS);
-        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
     }
 
     @Test

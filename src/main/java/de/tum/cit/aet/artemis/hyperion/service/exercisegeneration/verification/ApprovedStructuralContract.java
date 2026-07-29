@@ -307,6 +307,19 @@ final class ApprovedStructuralContract {
                 canonical = canonical.replaceAll("(?<![\\w$])" + Pattern.quote(exercisePackage + "." + exerciseType) + "(?![\\w$])", exerciseType);
             }
         }
+        // Public-API skeletons intentionally contain declarations only, not package/import boilerplate. QDox therefore leaves a skeleton's ordinary `List<T>` spelling
+        // unresolved while resolving the same imported type in repository source to `java.util.List<T>`. Normalize the two Java namespaces implicitly available to these
+        // skeletons, except where the exercise itself owns the colliding simple name. Other library types remain fully qualified, so unrelated same-named APIs cannot match.
+        for (String implicitPackage : List.of("java.lang.", "java.util.")) {
+            Matcher matcher = Pattern.compile("(?<![\\w$])" + Pattern.quote(implicitPackage) + "([A-Z][\\w$]*)(?![\\w$])").matcher(canonical);
+            StringBuilder normalized = new StringBuilder();
+            while (matcher.find()) {
+                String simpleName = matcher.group(1);
+                matcher.appendReplacement(normalized, Matcher.quoteReplacement(exerciseTypes.contains(simpleName) ? matcher.group() : simpleName));
+            }
+            matcher.appendTail(normalized);
+            canonical = normalized.toString();
+        }
         return canonical;
     }
 

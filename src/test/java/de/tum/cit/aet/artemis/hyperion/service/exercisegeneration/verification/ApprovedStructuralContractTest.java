@@ -153,7 +153,7 @@ class ApprovedStructuralContractTest {
         assertThat(result.errors()).isEmpty();
         assertThat(result.contract()
                 .solutionSurfaceReasons(java.util.Map.of("src/Box.java", "public class Box { public java.util.List<Integer> values() { return java.util.List.of(); } }")))
-                .singleElement().satisfies(reason -> assertThat(reason).contains("java.util.List<java.lang.String>", "java.util.List<java.lang.Integer>"));
+                .singleElement().satisfies(reason -> assertThat(reason).contains("List<String>", "List<Integer>"));
     }
 
     @Test
@@ -181,6 +181,30 @@ class ApprovedStructuralContractTest {
 
         JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise", MAPPER, Set.of("DispatchStrategy")));
         assertThat(oracle.at("/0/methods/0/parameters/0").asText()).isEqualTo("List");
+    }
+
+    @Test
+    void treatsAnUnqualifiedJdkCollectionInTheSpecAsTheImportedRepositoryType() {
+        ApprovedStructuralContract.ParseResult result = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public interface DispatchStrategy {
+                    Elevator select(List<Elevator> elevators, int callFloor);
+                }
+                ```
+                ```java
+                public class Elevator {}
+                ```
+                """, Set.of("DispatchStrategy", "Elevator"), Set.of("DispatchStrategy"));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.contract().solutionSurfaceReasons(java.util.Map.of("src/DispatchStrategy.java", """
+                package seededexercise;
+                import java.util.List;
+                public interface DispatchStrategy {
+                    Elevator select(List<Elevator> elevators, int callFloor);
+                }
+                """, "src/Elevator.java", "package seededexercise; public class Elevator {}"))).isEmpty();
     }
 
     @Test
