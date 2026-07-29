@@ -764,7 +764,7 @@ class GenerationOrchestrationServiceTest {
     void semanticRepairAddressesOneCoherentFindingSurfaceAtATime() {
         SpecFidelityReport mixedReview = new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.INVENTED_REQUIREMENT, "null inputs", "not in the brief"),
-                        new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "delegation", "does not prove forwarding"),
+                        new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "delegation", "does not prove forwarding"),
                         new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter docs", "missing point-of-use documentation")));
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
@@ -967,7 +967,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void reviewProgressDistinguishesBlockingFindingsFromAdvisories() {
         SpecFidelityReport mixedReview = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "boundary", "no boundary assertion"),
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "boundary", "no boundary assertion"),
                         new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "workflow", "an example would help")));
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
@@ -1237,10 +1237,10 @@ class GenerationOrchestrationServiceTest {
                         SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, false),
                 // Provenance is what keeps the downgrade honest: against a contract that mandates nothing the same prose describes a behavioural gap the tests can be made to
                 // see, so it keeps its round. Without this gate a misread finding would cost a round on every exercise, not only the ones carrying the defect.
-                Arguments.of("contract mandates nothing", silentContract, techniqueProse, "it survives every assertion", SpecFidelityReport.Kind.WEAK_TEST_ORACLE, true),
+                Arguments.of("contract mandates nothing", silentContract, techniqueProse, "it survives every assertion", SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, true),
                 // On a recursion exercise nearly every finding says "recursive" somewhere; an untested base case is ordinary oracle work the downgrade must not swallow.
-                Arguments.of("finding merely mentions the mandated technique", mandatingContract, behaviouralProse, "add a discriminator", SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
-                        true));
+                Arguments.of("finding merely mentions the mandated technique", mandatingContract, behaviouralProse, "add a discriminator",
+                        SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, true));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -1248,8 +1248,8 @@ class GenerationOrchestrationServiceTest {
     void aFindingIsDowngradedOnlyWhenTheContractAndTheFindingBothDemandAnUngradeableTechnique(String scenario, String rulesBody, String findingRequirement, String findingDetail,
             SpecFidelityReport.Kind expectedKind, boolean expectedBlocking) {
         acceptedCandidateWithSpecAndTests(rulesBody);
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, findingRequirement, findingDetail))));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, findingRequirement, findingDetail))));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.specFidelityReport().findings()).singleElement().satisfies(finding -> {
@@ -1290,7 +1290,7 @@ class GenerationOrchestrationServiceTest {
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
         SpecFidelityReport actionable = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "add a discriminating assertion")));
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "add a discriminating assertion")));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(unavailable, actionable, actionable);
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -1368,8 +1368,8 @@ class GenerationOrchestrationServiceTest {
         // A repair round is coming that rewrites the artifacts the witnesses were derived from, and a witness is validated against the solution as it stands, so authoring one
         // now re-pays a provider call and a full solution build for a witness that may not survive.
         acceptedCandidateWithSpecAndTests();
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
-                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives"))));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives"))));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             verify(specFidelityCritic, never()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
@@ -1397,7 +1397,7 @@ class GenerationOrchestrationServiceTest {
         // Blocking findings are defects; a witness is an offer. If both are present the defect must be scheduled first.
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport blocking = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives")));
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives")));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(blocking);
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
         when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
@@ -1695,7 +1695,8 @@ class GenerationOrchestrationServiceTest {
     @Test
     void aFindingUnderADifferentKind_isNotTheSameFinding() {
         acceptedCandidateReviewedAs(reportWith("delegation is not proven"),
-                new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "delegation is not proven", "a wrong forwarder passes"))),
+                new SpecFidelityReport(
+                        List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "delegation is not proven", "a wrong forwarder passes"))),
                 SpecFidelityReport.empty());
 
         List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;

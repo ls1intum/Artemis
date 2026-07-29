@@ -380,6 +380,15 @@ public class StagedGenerationRunner {
                     String failure = "Exercise generation reached its wall-clock budget before the next " + stage + " attempt, so no further model work was started.";
                     return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation);
                 }
+                if (continuous && gateFeedback != null) {
+                    // A failed gate is a new attempt, not another turn in the trajectory that produced the failure. Preserve the old trajectory for diagnostics, but give the
+                    // model the current artifacts plus the high-signal gate report instead of making it reason through its own stale assumptions and tool history.
+                    if (conversation != null) {
+                        archivedConversation.addAll(conversation);
+                        conversation = null;
+                    }
+                    baseTools.enterStage(stage);
+                }
                 AgentLoopResult result;
                 if (freshSemanticSpecAttempt) {
                     String userPrompt = freshSemanticSpecPrompt(sourceBrief, selectedConcept);
@@ -392,14 +401,6 @@ public class StagedGenerationRunner {
                         result = agentLoopRunner.run(systemPrompt, userPrompt, tools, allocation, cancelled, usageSink, progress);
                     }
                     freshSemanticSpecAttempt = false;
-                }
-                else if (continuous && gateFeedback != null) {
-                    // Re-entry, CONTINUOUS: the carried conversation already has everything up to the failed attempt; just hand back the gate report as the next turn.
-                    String retryUserPrompt = "The previous attempt at this stage did not pass its gate. Address this feedback, then continue:\n\n" + gateFeedback;
-                    AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, conversation, retryUserPrompt, tools, allocation, cancelled, usageSink,
-                            progress);
-                    result = session.result();
-                    conversation = session.conversation();
                 }
                 else {
                     String stageBriefPrompt = switch (stage) {
@@ -797,8 +798,7 @@ public class StagedGenerationRunner {
     /**
      * Builds a stage's user prompt. When no conversation is carried this re-injects the current SPEC.md and workspace layout; a carried conversation already has that context.
      *
-     * @param retryFeedback the previous failed attempt's gate report, folded into a {@code FRESH}-mode retry prompt. Always {@code null} under {@code continuous}, where a retry
-     *                          hands the feedback back as its own turn instead (see {@link #run}).
+     * @param retryFeedback the previous failed attempt's gate report, folded into a fresh retry prompt
      */
     private String buildStagePrompt(GenerationStage stage, String briefPrompt, InteractiveSandbox sandbox, String sessionId, boolean carriesConversation,
             @Nullable String retryFeedback) {
@@ -847,7 +847,9 @@ public class StagedGenerationRunner {
         try {
             GeneratedTestPlan plan = GeneratedTestPlan.parse(planJson);
             StringBuilder handoff = new StringBuilder("=== ACCEPTED STATEMENT HANDOFF ===\n");
-            handoff.append("Bind tasks and testsColor links only to these visible tests, grouped by specification seam:\n");
+            handoff.append("Use the exact lowercase singular Artemis task syntax `[task][Student-facing title](exactTestName)`. Bind every visible test below exactly once on "
+                    + "the one task for its specification seam; a task may list multiple names separated by commas. Any testsColor links must use only these same exact test "
+                    + "method names. Never use `[tasks]`, `[Task]`, display names, or hidden test names.\nVisible tests grouped by specification seam:\n");
             plan.visibleEntries().stream()
                     .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
                             Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toUnmodifiableList())))

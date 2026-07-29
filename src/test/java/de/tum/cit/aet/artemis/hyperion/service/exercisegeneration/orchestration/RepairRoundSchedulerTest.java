@@ -45,7 +45,7 @@ class RepairRoundSchedulerTest {
 
     /** Blocking findings on the oracle and the scaffold at once, which is what makes the scheduler's choice observable at all. */
     private static SpecFidelityReport oracleAndScaffoldBlockers() {
-        return report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
+        return report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
     }
 
     /**
@@ -76,7 +76,7 @@ class RepairRoundSchedulerTest {
             return Stream.of(
                     // One blocker, one surface: the finding's kind alone decides, and each of the three surfaces is reachable.
                     Arguments.of("a contract blocker alone", List.of(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION)), List.of(RepairSurface.CONTRACT)),
-                    Arguments.of("an oracle blocker alone", List.of(report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE)), List.of(RepairSurface.ORACLE)),
+                    Arguments.of("an oracle blocker alone", List.of(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE)), List.of(RepairSurface.ORACLE)),
                     Arguments.of("a scaffold blocker alone", List.of(report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP)), List.of(RepairSurface.SCAFFOLD)),
                     // An uncovered requirement is an oracle gap, not a contract one: the behaviour is agreed, only untested.
                     Arguments.of("an uncovered requirement", List.of(report(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)), List.of(RepairSurface.ORACLE)),
@@ -84,15 +84,16 @@ class RepairRoundSchedulerTest {
                     // null surface mapping), so no single mutation can make such a row fail. It is pinned where it is killable, in GenerationAttemptLoopTest.
                     // Declaration order in RepairSurface is the priority order, so a contract blocker outranks both others on the first round.
                     Arguments.of("contract, oracle and scaffold blockers together",
-                            List.of(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP)),
+                            List.of(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                                    SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP)),
                             List.of(RepairSurface.CONTRACT)),
                     // Both surfaces block on every round, so priority alone would give ORACLE the whole run and ship the scaffold gap unrepaired. Only the scheduler's own
                     // accumulated consecutive-round count makes the third round differ from the first two — and the fourth revert, because SCAFFOLD has now had its turn.
                     Arguments.of("a surface that has held two rounds yields to one never repaired", Collections.nCopies(4, oracleAndScaffold),
                             List.of(RepairSurface.ORACLE, RepairSurface.ORACLE, RepairSurface.SCAFFOLD, RepairSurface.ORACLE)),
                     // Yielding is only meaningful when something is waiting: with nothing else outstanding the leading surface continues rather than stalling the budget.
-                    Arguments.of("a lone blocking surface keeps working past the consecutive cap", Collections.nCopies(4, report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE)),
-                            Collections.nCopies(4, RepairSurface.ORACLE)));
+                    Arguments.of("a lone blocking surface keeps working past the consecutive cap",
+                            Collections.nCopies(4, report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE)), Collections.nCopies(4, RepairSurface.ORACLE)));
         }
 
         @ParameterizedTest(name = "{0}")
@@ -246,8 +247,8 @@ class RepairRoundSchedulerTest {
         void aFailedReviewOutranksTheFindingsItDidManageToReturn() {
             // The three reasons call for opposite fixes, and this is the only case where two of them are true at once. A partial review that also raised a blocker must still be
             // reported as an instrument failure: reporting it as a surface-map gap would send the next investigation to the wrong place.
-            SpecFidelityReport partialReview = new SpecFidelityReport(
-                    List.of(finding(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE, "the reviewer stopped"), finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "weak")));
+            SpecFidelityReport partialReview = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE, "the reviewer stopped"),
+                    finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "weak")));
 
             assertThat(RepairRoundScheduler.reasonForUnschedulableReport(partialReview)).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
             assertThat(RepairRoundScheduler.hasReviewUnavailableFinding(partialReview)).isTrue();
@@ -265,7 +266,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void theFirstRoundHasNothingToCarryOverOrDrain() {
-            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"));
+            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
             assertThat(first.round()).isEqualTo(1);
             assertThat(first.attempt()).isEqualTo(1);
@@ -285,7 +286,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void blockingAndAdvisoryFindingsAreCountedApart() {
-            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"),
+            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"),
                     finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "the statement contradicts the spec"),
                     finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "no worked example"));
 
@@ -295,9 +296,9 @@ class RepairRoundSchedulerTest {
 
         @Test
         void anUnchangedFindingIsCarriedOverRatherThanCountedTwice() {
-            round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"));
+            round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
-            ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"));
+            ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
             assertThat(second.carriedOver()).isEqualTo(1);
             assertThat(second.fresh()).isZero();
@@ -306,7 +307,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aRepairedFindingIsDrainedAndAReplacementIsFresh() {
-            round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"));
+            round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
             ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "the starter has no anchor"));
 
@@ -319,13 +320,11 @@ class RepairRoundSchedulerTest {
         void aRewrittenDetailDoesNotMakeTheSameDefectLookFresh() {
             // Detail is prose the reviewer rewrites freely between rounds while the defect does not move; hashing it would report every finding as fresh and make drain
             // unmeasurable — which is the entire question this instrument exists to answer.
-            scheduler.recordReviewRound(
-                    new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "the test only checks size"))),
-                    1);
+            scheduler.recordReviewRound(new SpecFidelityReport(
+                    List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "the test only checks size"))), 1);
 
-            ExerciseGenerationRepairRoundDTO second = scheduler.recordReviewRound(
-                    new SpecFidelityReport(List
-                            .of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "an entirely differently worded explanation"))),
+            ExerciseGenerationRepairRoundDTO second = scheduler.recordReviewRound(new SpecFidelityReport(List.of(
+                    new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "an entirely differently worded explanation"))),
                     2);
 
             assertThat(second.carriedOver()).isEqualTo(1);
@@ -360,7 +359,7 @@ class RepairRoundSchedulerTest {
             // A requirement that is uncovered and a requirement whose oracle is weak call for different repairs, so collapsing them would report a repair that never happened.
             round(1, finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "empty input is rejected"));
 
-            ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "empty input is rejected"));
+            ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "empty input is rejected"));
 
             assertThat(second.carriedOver()).isZero();
             assertThat(second.drained()).isEqualTo(1);
@@ -397,8 +396,8 @@ class RepairRoundSchedulerTest {
         void twoIdenticalFindingsInOneRoundAreOneIdentityButTwoFindings() {
             // A reviewer that lists the same defect twice must not double the fresh count, or a round would appear to have found twice the work it did. The blocking count is a
             // finding count and deliberately keeps the duplicate.
-            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"),
-                    finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"));
+            ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"),
+                    finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
             assertThat(first.fresh()).isEqualTo(1);
             assertThat(first.blocking()).isEqualTo(2);
@@ -406,7 +405,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void anEmptyReviewDrainsEverythingTheRoundBeforeItFound() {
-            round(1, finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes"),
+            round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"),
                     finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "the starter has no anchor"));
 
             ExerciseGenerationRepairRoundDTO second = round(2);

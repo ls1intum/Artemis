@@ -17,7 +17,7 @@ class SemanticRepairBatchTest {
 
     private static SpecFidelityReport oracleAndScaffoldFindings() {
         // Blocking findings on two surfaces at once, which is what makes the scheduler's choice observable.
-        return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "..."),
+        return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "..."),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter has no anchor", "...")));
     }
 
@@ -45,7 +45,8 @@ class SemanticRepairBatchTest {
     @Test
     void aSurfaceKeepsWorkingWhenEveryOtherSurfaceIsAlreadyClean() {
         // Yielding is only meaningful when something is waiting. With nothing else outstanding the leading surface continues rather than stalling the budget.
-        SpecFidelityReport oracleOnly = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a wrong parser passes", "...")));
+        SpecFidelityReport oracleOnly = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "...")));
 
         assertThat(SemanticRepairBatch.next(oracleOnly, EnumSet.of(RepairSurface.ORACLE), RepairSurface.ORACLE, 5).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
     }
@@ -55,6 +56,15 @@ class SemanticRepairBatchTest {
         // Repairs stay causally scoped: one repair is never handed every artifact's findings at once.
         SemanticRepairBatch batch = SemanticRepairBatch.next(oracleAndScaffoldFindings(), EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow();
 
-        assertThat(batch.report().findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
+        assertThat(batch.report().findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
+    }
+
+    @Test
+    void aTextOnlyOracleSuspicionDoesNotDriveAutonomousRepair() {
+        SpecFidelityReport staticReview = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a reviewer suspects a gap", "no executable evidence")));
+
+        assertThat(staticReview.hasBlockingFindings()).isFalse();
+        assertThat(SemanticRepairBatch.next(staticReview, EnumSet.noneOf(RepairSurface.class), null, 0)).isEmpty();
     }
 }

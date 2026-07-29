@@ -408,7 +408,17 @@ public class AgentLoopRunner {
                     finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
-                consecutiveToolFailures = 0;
+                if (hasRejectedToolAction(conversation)) {
+                    consecutiveToolFailures++;
+                    log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
+                    if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
+                        finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
+                        return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    }
+                }
+                else {
+                    consecutiveToolFailures = 0;
+                }
             }
             catch (RuntimeException e) {
                 if (hasCause(e, LocalCIException.class)) {
@@ -464,6 +474,24 @@ public class AgentLoopRunner {
 
         emit(stepListener, "The generation step limit was reached.");
         return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText, conversation);
+    }
+
+    private static boolean hasRejectedToolAction(List<Message> conversation) {
+        for (int i = conversation.size() - 1; i >= 0; i--) {
+            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
+                return toolResponse.getResponses().stream().anyMatch(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData()));
+            }
+        }
+        return false;
+    }
+
+    private static boolean isErrorResponse(@Nullable String responseData) {
+        if (responseData == null) {
+            return false;
+        }
+        String normalized = responseData.stripLeading();
+        // MethodToolCallback serializes String return values as JSON strings, while other callbacks may return plain text.
+        return normalized.startsWith("ERROR:") || normalized.startsWith("\"ERROR:");
     }
 
     private void finishCheckpoint(AgentCheckpointManager.TurnHandle checkpoint, List<Message> conversation, String lastAssistantText, int consecutiveToolFailures,

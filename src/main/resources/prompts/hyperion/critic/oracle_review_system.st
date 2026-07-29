@@ -50,7 +50,7 @@ Respond with ONLY this complete JSON shape; every array is mandatory for this te
 {"mutantChecks": [{"mutant":"specific plausible wrong implementation","killed":true,"sourceQuote":"P1; mandatory when killed is false","reason":"executable assertion evidence"}],
  "uncovered": [{"requirement":"...","sourceQuote":"P1","reason":"file/assertion evidence"}],
  "weakOracle": [{"requirement":"...","sourceQuote":"P1","reason":"specific wrong implementation that survives"}]}
-Across failed mutantChecks, uncovered, and weakOracle, return only the few highest-leverage blockers that have distinct repairs. A behavior with any relevant
+Across failed mutantChecks, uncovered, and weakOracle, return only the few highest-leverage findings that have distinct repairs. A behavior with any relevant
 assertion is weak, not uncovered; never report it in both categories. Group partitions of the same rule when one test change can cover them. Prioritize
 contract-breaking gaps and omit redundant lower-risk passing mutants. Every failed reason
 must name the executable setup/assertion evidence and the smallest test change that would distinguish the wrong implementation; do not answer with generic advice. A failed

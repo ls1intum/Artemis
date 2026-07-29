@@ -42,8 +42,16 @@ public record SpecFidelityReport(List<Finding> findings) {
         CONTRACT_CONTRADICTION,
         /** A graded assertion or required public symbol is not discoverable from the student-facing statement and template. */
         HIDDEN_GRADED_REQUIREMENT,
-        /** Plausible contract-breaking implementations are not distinguished by the generated assertions. */
+        /**
+         * A text-only reviewer suspects that plausible contract-breaking implementations are not distinguished by the generated assertions. Advisory until execution proves the
+         * claim: an LLM hypothesis is useful review context, but is not sufficient evidence for an autonomous repair.
+         */
         WEAK_TEST_ORACLE,
+        /**
+         * A complete contract-breaking implementation passed the generated suite while an independently authored counterexample passed on the pristine solution and failed on
+         * that implementation. This is environment-proven evidence that the oracle is weak, so it may safely drive an autonomous repair.
+         */
+        EXECUTABLE_WEAK_TEST_ORACLE,
         /**
          * The student task structure and starter scaffold disagree: provided code fails outside a student-owned seam, a required API is missing, one implementation seam is split
          * into test-shaped tasks, student work has no task/TODO anchor, stub documentation is missing or differs between solution and template, or the statement duplicates the
@@ -80,11 +88,11 @@ public record SpecFidelityReport(List<Finding> findings) {
         public boolean isBlocking() {
             return switch (kind) {
                 case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
-                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
+                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
                     true;
                 case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, CONTRACT_WITNESS_AVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> false;
             };
         }
     }

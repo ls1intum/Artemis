@@ -418,9 +418,18 @@ public class SpecFidelityCriticService {
         contractFindings = contractFindings == null ? reviewUnavailable(adaptationChanges, "The contract reviewer returned no verdict.") : contractFindings;
         oracleFindings = oracleFindings == null ? reviewUnavailable(adaptationChanges, "The test-oracle reviewer returned no verdict.") : oracleFindings;
         Map<String, SpecFidelityReport.Finding> unique = new LinkedHashMap<>();
-        // Preserve blockers from both specialized passes before advisories, while alternating each pass so neither can consume the shared cap alone.
-        addInterleaved(unique, contractFindings.stream().filter(SpecFidelityReport.Finding::isBlocking).toList(),
-                oracleFindings.stream().filter(SpecFidelityReport.Finding::isBlocking).toList());
+        List<SpecFidelityReport.Finding> contractBlockers = contractFindings.stream().filter(SpecFidelityReport.Finding::isBlocking).toList();
+        List<SpecFidelityReport.Finding> oracleBlockers = oracleFindings.stream().filter(SpecFidelityReport.Finding::isBlocking).toList();
+        // Keep at least one verdict from each independent pass even when the other floods the shared cap with blockers. A static oracle hypothesis is advisory, but silently
+        // dropping the entire oracle pass would make the saved instructor review falsely look as though that axis was clean.
+        if (contractBlockers.isEmpty() && !contractFindings.isEmpty()) {
+            addUniqueFinding(unique, contractFindings.getFirst());
+        }
+        if (oracleBlockers.isEmpty() && !oracleFindings.isEmpty()) {
+            addUniqueFinding(unique, oracleFindings.getFirst());
+        }
+        // Preserve blockers from both specialized passes before remaining advisories, while alternating each pass so neither can consume the shared cap alone.
+        addInterleaved(unique, contractBlockers, oracleBlockers);
         addInterleaved(unique, contractFindings.stream().filter(finding -> !finding.isBlocking()).toList(),
                 oracleFindings.stream().filter(finding -> !finding.isBlocking()).toList());
         return List.copyOf(unique.values());
@@ -706,8 +715,10 @@ public class SpecFidelityCriticService {
                 builder.append("\n- Resolve this cross-artifact contract contradiction: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case HIDDEN_GRADED_REQUIREMENT -> builder.append("\n- Make this graded requirement discoverable in the statement and template, or remove the assertion: \"")
                     .append(finding.requirement()).append("\". ").append(finding.detail());
-            case WEAK_TEST_ORACLE -> builder.append("\n- Strengthen the tests so this specific wrong implementation fails: \"").append(finding.requirement()).append("\". ")
-                    .append(finding.detail())
+            case WEAK_TEST_ORACLE -> builder.append("\n- A text-only review suspects this test-oracle gap; treat it as review context, not executable proof: \"")
+                    .append(finding.requirement()).append("\". ").append(finding.detail());
+            case EXECUTABLE_WEAK_TEST_ORACLE -> builder.append("\n- Strengthen the tests so this environment-proven wrong implementation fails: \"").append(finding.requirement())
+                    .append("\". ").append(finding.detail())
                     .append(" Change the test setup and assertion first; keep the verified solution unchanged unless the new witness proves it wrong. For delegation, inject a "
                             + "test-controlled fake or recording collaborator that returns one unique sentinel and records the exact input, then assert return propagation and forwarding. "
                             + "Never compare results from two independent production calls or add production caching/state to satisfy such a comparison.");

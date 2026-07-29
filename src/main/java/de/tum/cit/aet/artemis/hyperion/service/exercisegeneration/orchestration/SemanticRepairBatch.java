@@ -69,7 +69,7 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
         return switch (kind) {
             // A validated witness is a test to adopt, so it belongs to the oracle surface. Being advisory it never triggers a repair by itself (the loop stops when nothing
             // blocks); it rides along with an oracle repair that is already happening, and otherwise reaches the instructor as a review comment.
-            case UNCOVERED_REQUIREMENT, WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE -> RepairSurface.ORACLE;
+            case UNCOVERED_REQUIREMENT, WEAK_TEST_ORACLE, EXECUTABLE_WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE -> RepairSurface.ORACLE;
             case TEMPLATE_QUALITY_GAP -> RepairSurface.SCAFFOLD;
             case MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT ->
                 RepairSurface.CONTRACT;

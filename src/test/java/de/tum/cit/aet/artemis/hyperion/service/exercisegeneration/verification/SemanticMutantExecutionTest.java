@@ -74,10 +74,10 @@ class SemanticMutantExecutionTest {
     }
 
     @Test
-    void anUnrelatedFailingTestDoesNotKillTheProvenMutant() {
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("someOtherTest"), List.of("someOtherTest"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),
-                List.of(MUTANT), () -> {
-                })).containsExactly(MUTANT);
+    void anAdaptedOrRenamedFailingTestKillsTheProvenMutant() {
+        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
+                Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+                })).isEmpty();
     }
 
     @Test

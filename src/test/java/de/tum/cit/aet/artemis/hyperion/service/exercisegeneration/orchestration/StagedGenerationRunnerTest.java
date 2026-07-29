@@ -33,6 +33,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
@@ -234,6 +236,31 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void continuousGateRetryStartsFromCurrentArtifactsAndFeedbackInsteadOfTheFailedTrajectory() {
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "CONTINUOUS");
+        List<Message> specificationConversation = List.of(new UserMessage("specification trajectory"));
+        List<Message> failedBuildConversation = List.of(new UserMessage("stale build assumption"));
+        List<Message> retryConversation = List.of(new UserMessage("repaired build trajectory"));
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(
+                new AgentLoopRunner.AgentLoopSession(completed(1, "spec"), specificationConversation),
+                new AgentLoopRunner.AgentLoopSession(completed(2, "build one"), failedBuildConversation),
+                new AgentLoopRunner.AgentLoopSession(completed(2, "build two"), retryConversation));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(failingReport());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> priorConversations = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+
+        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+
+        assertThat(result.finalMessage()).contains("the solution does not pass");
+        verify(agentLoopRunner, times(3)).runSession(anyString(), priorConversations.capture(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(priorConversations.getAllValues()).containsOnlyNulls();
+        assertThat(prompts.getAllValues().get(2)).contains("CURRENT SPEC.md", "CURRENT WORKSPACE LAYOUT", "GATE FEEDBACK FROM THE PREVIOUS ATTEMPT", "the solution does not pass");
+        verify(baseTools, times(2)).enterStage(GenerationStage.TESTS);
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
     void statementReceivesOnlyTheVisibleTypedPlanHandoff() {
         sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| S1 | Calculator | typical and zero | 3 | no |", "| S1 | Calculator | typical and zero | 3 | yes |");
         sandbox.testPlanJson = "{\"tests\":[{\"name\":\"visibleCase\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
@@ -250,8 +277,9 @@ class StagedGenerationRunnerTest {
 
         verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
         String statementPrompt = prompts.getAllValues().get(2);
-        assertThat(statementPrompt).contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "S1: visibleCase").doesNotContain("INITIAL WORKSPACE LAYOUT",
-                "reference/problem-statement.md", "hiddenCase", "MECHANICAL PRECHECK");
+        assertThat(statementPrompt).contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "`[task][Student-facing title](exactTestName)`",
+                "Bind every visible test below exactly once", "S1: visibleCase")
+                .doesNotContain("INITIAL WORKSPACE LAYOUT", "reference/problem-statement.md", "hiddenCase", "MECHANICAL PRECHECK");
     }
 
     @Test

@@ -104,6 +104,7 @@ public class GenerationReviewService {
                 case CONTRACT_CONTRADICTION -> "Generated artifacts contradict the student-facing contract: \"" + finding.requirement() + "\"";
                 case HIDDEN_GRADED_REQUIREMENT -> "Graded requirement is not discoverable by students: \"" + finding.requirement() + "\"";
                 case WEAK_TEST_ORACLE -> "Generated tests allow a plausible incorrect implementation: \"" + finding.requirement() + "\"";
+                case EXECUTABLE_WEAK_TEST_ORACLE -> "Execution proved that the generated tests allow an incorrect implementation: \"" + finding.requirement() + "\"";
                 case TEMPLATE_QUALITY_GAP -> "Student task and starter scaffold need alignment: \"" + finding.requirement() + "\"";
                 case UNENFORCEABLE_TECHNIQUE_RULE -> "Students can pass without using the technique the exercise teaches: " + finding.requirement();
                 case CONTRACT_WITNESS_AVAILABLE -> "A ready-to-adopt test for a specification rule, already passing against the reference solution: " + finding.requirement();

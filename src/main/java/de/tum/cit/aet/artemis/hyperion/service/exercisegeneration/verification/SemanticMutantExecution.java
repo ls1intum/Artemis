@@ -62,8 +62,9 @@ final class SemanticMutantExecution {
                 continue;
             }
             BuildSummary result = runner.run(mutant, null);
-            // A compile-only or unrelated-test failure is not evidence that the repair adopted the environment-validated counterexample.
-            if (ContractWitnessProbe.discriminating(List.of(mutant.counterexample()), result.testNames(), result.testFailedNames()).isEmpty()) {
+            // The repair may rename, strengthen, or replace the suggested counterexample. Because the candidate already passed mechanical verification immediately before this
+            // probe, any test that executes and fails only after installing the mutant is outcome-level evidence that the suite now kills it. Compile failures execute no tests.
+            if (result.testFailedNames().isEmpty() || result.testNames().stream().noneMatch(result.testFailedNames()::contains)) {
                 surviving.add(mutant);
             }
         }

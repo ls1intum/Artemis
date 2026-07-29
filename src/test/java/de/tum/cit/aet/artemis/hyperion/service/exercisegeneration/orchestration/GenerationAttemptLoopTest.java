@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -205,7 +206,7 @@ class GenerationAttemptLoopTest {
 
         assertThatThrownBy(loop::run).isSameAs(failure);
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
-        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
     }
 
     @Test
@@ -254,14 +255,15 @@ class GenerationAttemptLoopTest {
                     Arguments.of("a contract blocker alone", report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
                             Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md")),
                     // A weak oracle is repaired by strengthening the tests, never by editing the solution it failed to distinguish.
-                    Arguments.of("an oracle blocker alone", report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE), Set.of("tests", "test-plan.json", "problem-statement.md")),
+                    Arguments.of("an oracle blocker alone", report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE), Set.of("tests", "test-plan.json", "problem-statement.md")),
                     // A template gap is repaired in the starter/reference scaffold, with the graded suite off limits.
                     Arguments.of("a scaffold blocker alone", report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP), Set.of("solution", "template", "problem-statement.md")),
                     // Declaration order in RepairSurface is the priority order, so a contract blocker outranks both others.
                     Arguments.of("contract, oracle and scaffold blockers together",
-                            report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP),
+                            report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                                    SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP),
                             Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md")),
-                    Arguments.of("oracle and scaffold blockers together", report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP),
+                    Arguments.of("oracle and scaffold blockers together", report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP),
                             Set.of("tests", "test-plan.json", "problem-statement.md")),
                     // An uncovered requirement is an oracle gap, not a contract one: the behaviour is agreed, only untested.
                     Arguments.of("an uncovered requirement", report(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT), Set.of("tests", "test-plan.json", "problem-statement.md")));
@@ -293,7 +295,7 @@ class GenerationAttemptLoopTest {
         void aSurfaceThatHasHeldTwoRoundsYieldsToOneThatHasNeverHadA() {
             // Both surfaces block on every round, so priority alone would give ORACLE the whole budget and ship the scaffold gap unrepaired. The loop's own consecutive-round
             // count is what makes the third round different from the first two.
-            reviewAlwaysReturns(report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP));
+            reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP));
 
             newGenerateLoop(5, 3).run();
 
@@ -308,7 +310,7 @@ class GenerationAttemptLoopTest {
             // appear. Because adoption is not a repair, ORACLE arrives at its first genuine repair with a fresh consecutive count, so it holds two rounds before yielding —
             // recording adoption as a repaired round would make it yield after one and hand the scaffold its round early.
             when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty(),
-                    report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP));
+                    report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP));
             sandbox.withFile(SPEC_PATH, "# Exercise\n\n## Rules\n- R1: computes a result.");
             when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                     .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
@@ -327,7 +329,7 @@ class GenerationAttemptLoopTest {
         void theRepairScopeIsLeftBehindEvenWhenTheAttemptItScopedIsTheLastOne() {
             // The barrier is entered before an attempt and must be gone after it: a scope that outlived its attempt would silently constrain the next agent call, or the
             // post-loop verify, to the previous round's surface.
-            reviewAlwaysReturns(report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
+            reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
 
             newGenerateLoop(2, 1).run();
 
@@ -344,7 +346,7 @@ class GenerationAttemptLoopTest {
         @Test
         void theSemanticRepairBudgetBoundsTheRoundsExactly() {
             // The boundary the budget names: three rounds are granted and a fourth is not, even though blockers and attempts both remain.
-            reviewAlwaysReturns(report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
+            reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
 
             GenerationAttemptLoop loop = newGenerateLoop(10, 3);
             loop.run();
@@ -357,7 +359,7 @@ class GenerationAttemptLoopTest {
         @Test
         void theAttemptCapStopsTheLoopBeforeTheRepairBudgetIsSpent() {
             // Two attempts and a budget of three: the cap is reached first, so the run is not out of repair rounds — it is out of attempts, and must say so.
-            reviewAlwaysReturns(report(SpecFidelityReport.Kind.WEAK_TEST_ORACLE));
+            reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
 
             GenerationAttemptLoop loop = newGenerateLoop(2, 3);
             loop.run();
@@ -368,6 +370,15 @@ class GenerationAttemptLoopTest {
             verify(baseTools, times(1)).enterRepairScope(any());
             assertThat(progressLines).filteredOn(line -> line.contains("asking the AI to correct them")).hasSize(1);
             assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+        }
+
+        @Test
+        void everyRepairStartsFromCurrentWorkspaceStateWithoutReplayingTheFailedConversation() {
+            reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
+
+            newGenerateLoop(3, 2).run();
+
+            verify(agentLoopRunner, times(3)).runSession(anyString(), isNull(), anyString(), any(), anyInt(), any(), any(), any());
         }
 
         @Test

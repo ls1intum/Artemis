@@ -467,6 +467,58 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_repeatedRejectedToolActions_endWithError() {
+        ChatModel chatModel = mock(ChatModel.class);
+        ChatResponse rejectedWrite = toolCallResponse("write_file", "{\"path\":\"verify.sh\",\"content\":\"replacement\"}");
+        when(chatModel.call(any(Prompt.class))).thenReturn(rejectedWrite);
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 20,
+                () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.turns()).isEqualTo(5);
+        verify(chatModel, times(5)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_successfulToolAction_resetsRejectedActionCounter() {
+        ChatModel chatModel = mock(ChatModel.class);
+        ChatResponse rejectedWrite = toolCallResponse("write_file", "{\"path\":\"verify.sh\",\"content\":\"replacement\"}");
+        ChatResponse successfulBash = toolCallResponse("bash", "{\"command\":\"ls\"}");
+        when(chatModel.call(any(Prompt.class))).thenReturn(rejectedWrite, rejectedWrite, rejectedWrite, rejectedWrite, successfulBash, rejectedWrite, rejectedWrite, rejectedWrite,
+                rejectedWrite, textResponse("DONE"));
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 20,
+                () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+        verify(chatModel, times(10)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_failedVerifyDiagnostic_resetsRejectedActionCounter() {
+        ProgrammingExercise exercise = mock(ProgrammingExercise.class);
+        StageCheckService stageCheckService = mock(StageCheckService.class);
+        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+                .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
+        tools.enterStage(GenerationStage.TESTS);
+
+        ChatModel chatModel = mock(ChatModel.class);
+        ChatResponse rejectedWrite = toolCallResponse("write_file", "{\"path\":\"verify.sh\",\"content\":\"replacement\"}");
+        ChatResponse failedVerify = toolCallResponse("verify", "{}");
+        when(chatModel.call(any(Prompt.class))).thenReturn(rejectedWrite, rejectedWrite, rejectedWrite, rejectedWrite, failedVerify, rejectedWrite, rejectedWrite, rejectedWrite,
+                rejectedWrite, textResponse("DONE"));
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", tools, 20, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+        verify(chatModel, times(10)).call(any(Prompt.class));
+    }
+
+    @Test
     void agentLoop_callsToolThenStops_completesWithinBudget() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));

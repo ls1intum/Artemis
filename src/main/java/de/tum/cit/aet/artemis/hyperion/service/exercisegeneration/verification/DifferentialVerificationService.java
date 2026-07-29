@@ -868,7 +868,9 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Rechecks proven mutants after repair; only the validated counterexample method failing is a kill, and a failed probe preserves the prior evidence by propagating.
+     * Rechecks proven mutants after repair. Any executed graded test failure is a kill because the same candidate passed ordinary mechanical verification immediately before
+     * this mutant-only probe; requiring the author's exact suggested method would reject equivalent renamed or stronger tests. A failed probe preserves the prior evidence by
+     * propagating.
      *
      * @param sandbox               the active generation sandbox
      * @param sessionId             the active sandbox session

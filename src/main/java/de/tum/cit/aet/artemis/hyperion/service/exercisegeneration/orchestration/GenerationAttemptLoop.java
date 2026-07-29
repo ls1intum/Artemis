@@ -409,8 +409,9 @@ class GenerationAttemptLoop {
                 baseTools.enterRepairScope(repairBatchForAttempt.writableRoots());
             }
             try {
-                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, carriedConversation, currentPrompt, tools, maxTurns, cancelled, usageSink,
-                        progress);
+                // A repair is a new task over durable workspace/server state, not a continuation of the failed trajectory. Re-sending old tool calls and build logs buries the
+                // current verifier evidence, grows quadratically, and encourages the model to repeat rejected actions. Checkpoints retain the complete audit trail.
+                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
                 loopResult = session.result();
                 carriedConversation = session.conversation();
                 transcriptWriter.write(exercise.getId(), "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT),
@@ -678,7 +679,8 @@ class GenerationAttemptLoop {
 
     /**
      * Adds independently proposed counterexamples only after the environment validates them. A semantic mutant becomes blocking evidence only when the ordinary suite accepts
-     * it and the exact counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at the starter
+     * it and an independently authored counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at
+     * the starter
      * seam. An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
      * mechanically verified pre-review checkpoint instead of treating missing execution as evidence.
      */
@@ -705,29 +707,25 @@ class GenerationAttemptLoop {
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
             List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate).stream()
                     .filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
+            emit("Executable semantic probes: " + mutantCandidates.size() + " mutant proposal(s), " + validatedMutants.size() + " environment-proven survivor(s); "
+                    + candidates.size() + " contract-witness proposal(s), " + validated.size() + " validated witness(es).");
             if (validated.isEmpty() && validatedMutants.isEmpty()) {
                 return report;
             }
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
-            validatedMutants.forEach(mutant -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+            validatedMutants.forEach(mutant -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                     "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                     "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
                             + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the "
-                            + "approved rule and independent review explain why that difference matters. Add the exact counterexample method below so the environment can "
-                            + "causally recheck it after repair. Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code())));
+                            + "approved rule and independent review explain why that difference matters. Add or adapt a discriminating test for the counterexample; the environment "
+                            + "will accept any executed test that kills the mutant, so preserve stronger or more idiomatic coverage rather than copying a method mechanically. "
+                            + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code())));
             validated.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
                     "Rule " + witness.ruleId() + " has an executable counterexample witness",
                     "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
                             + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "
                             + "starter fails at student work. The reviewer designed it around this plausible wrong behavior, but the environment did not execute that "
                             + "hypothetical implementation: " + witness.wrongBehavior() + "\n" + witness.code())));
-            if (!validatedMutants.isEmpty()) {
-                emit("The environment proved " + validatedMutants.size() + (validatedMutants.size() == 1 ? " semantic mutant survives" : " semantic mutants survive")
-                        + " the graded suite.");
-            }
-            if (!validated.isEmpty()) {
-                emit("Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
-            }
             return new SpecFidelityReport(List.copyOf(combined));
         }
         catch (DifferentialVerificationService.VerificationInfrastructureException exception) {
@@ -792,7 +790,8 @@ class GenerationAttemptLoop {
     /**
      * Downgrades a repairable finding that in fact demands an ungradeable implementation technique.
      * <p>
-     * {@code WEAK_TEST_ORACLE} and {@code UNCOVERED_REQUIREMENT} map to the oracle repair surface, so the loop schedules them and asks the agent to write a discriminating test.
+     * {@code EXECUTABLE_WEAK_TEST_ORACLE} and {@code UNCOVERED_REQUIREMENT} map to the oracle repair surface, so the loop schedules them and asks the agent to write a
+     * discriminating test.
      * When the "requirement" is that the implementation be recursive or use a stream pipeline, no such test exists, and the only way to appear to write one is to assert on the
      * student's source text. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
      */
@@ -819,7 +818,8 @@ class GenerationAttemptLoop {
      * the surviving mutant's description ("an iterative implementation using an explicit stack"), which is written in the critic's voice and does not contain "must".
      */
     private static boolean demandsUngradeableTechnique(SpecFidelityReport.Finding finding) {
-        return (finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
+        return (finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
+                || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
                 && ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding.requirement() + " " + finding.detail());
     }
 
