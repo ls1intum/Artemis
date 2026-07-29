@@ -215,6 +215,11 @@
                     <tum-ui-checkbox inputId="activated" name="activated" formControlName="activated" />
                     <label for="activated" jhiTranslate="artemisApp.userManagement.activated"></label>
                 </div>
+                <div class="mb-3 flex items-center gap-2">
+                    <tum-ui-checkbox inputId="isTestUser" name="isTestUser" formControlName="isTestUser" />
+                    <label for="isTestUser" jhiTranslate="artemisApp.userManagement.isTestUser"></label>
+                    <jhi-help-icon text="artemisApp.userManagement.isTestUserTooltip" />
+                </div>
                 @if (languages() && languages().length > 0) {
                     <div class="mb-3 flex flex-col gap-2">
                         <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey"></label>
