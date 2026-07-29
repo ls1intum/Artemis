@@ -62,11 +62,18 @@ public class StageCheckService {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
+    private final boolean workspaceSpecFallback;
+
     // Required: with several constructors and no annotation, Spring cannot pick one.
     @Autowired
     public StageCheckService(DifferentialVerificationService verifier, ApprovedSpecRegistry approvedSpecs) {
+        this(verifier, approvedSpecs, false);
+    }
+
+    StageCheckService(DifferentialVerificationService verifier, ApprovedSpecRegistry approvedSpecs, boolean workspaceSpecFallback) {
         this.verifier = verifier;
         this.approvedSpecs = approvedSpecs;
+        this.workspaceSpecFallback = workspaceSpecFallback;
     }
 
     /**
@@ -143,7 +150,7 @@ public class StageCheckService {
 
     /** Without a shared registry every check reads the live workspace specification. */
     StageCheckService(DifferentialVerificationService verifier) {
-        this(verifier, new ApprovedSpecRegistry());
+        this(verifier, new ApprovedSpecRegistry(), true);
     }
 
     /**
@@ -161,19 +168,27 @@ public class StageCheckService {
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
-        // Defence in depth against an out-of-band shell mutation: without re-running the cheap spec gate, a later stage could append [task] bindings or empty the Diagram decision
-        // and silently disarm every check derived from the workspace copy. Inert when there is no SPEC.md, which is the case when the instructor's statement IS the specification.
+        // A downstream or unstaged run may use only a specification frozen by the SPEC gate. Treating a candidate-authored workspace file as authority would let ADAPT define
+        // its own ownership and grading exemptions.
         if (stage != GenerationStage.SPEC && approvedSpecs.approved(sessionId).isEmpty() && !readSpec(sandbox, sessionId).isBlank()) {
-            StageCheckResult specStillValid = checkSpec(sandbox, sessionId, exercise);
-            if (!specStillValid.passed()) {
-                return StageCheckResult.failed("SPEC.md is no longer a valid specification: " + specStillValid.observation()
-                        + " The approved specification is read-only; do not mutate files through bash. Task bindings and PlantUML belong in problem-statement.md, never in SPEC.md.");
+            if (workspaceSpecFallback) {
+                StageCheckResult specStillValid = checkSpec(sandbox, sessionId, exercise);
+                if (!specStillValid.passed()) {
+                    return StageCheckResult.failed("SPEC.md is no longer a valid specification: " + specStillValid.observation()
+                            + " The approved specification is read-only; do not mutate files through bash. Task bindings and PlantUML belong in problem-statement.md, never in "
+                            + "SPEC.md.");
+                }
+            }
+            else {
+                return StageCheckResult
+                        .failed("An unapproved SPEC.md appeared after authoring began. Candidate-authored files cannot define grading authority. Delete it and preserve "
+                                + "the instructor's existing exercise contract; only the dedicated SPEC stage may freeze a new specification.");
             }
         }
         return switch (stage) {
             case SPEC -> checkSpec(sandbox, sessionId, exercise);
             case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
-            case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport);
+            case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport, seededStructuralTestNames);
         };
     }
 
@@ -220,6 +235,16 @@ public class StageCheckService {
             return StageCheckResult.failed("These '## Design' rows are marked 'student-creates' but their Type cell is not a bare type name the later gates can look for: "
                     + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
                     + "otherwise nothing can enforce that the template omits it.");
+        }
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
+                    .filter(StageCheckService::isEnforceableTypeName).collect(Collectors.toSet());
+            ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(spec, Set.copyOf(designTypes), studentCreatedTypes);
+            if (!structuralContract.valid()) {
+                return StageCheckResult.failed("The Java Public API is not a complete machine-checkable contract for student-created types: " + structuralContract.errors()
+                        + ". Put each exact type declaration and all of its public/protected constructors, methods, and deliberately exposed fields in fenced ```java blocks. "
+                        + "Use signatures only; do not replace them with prose or include private implementation details.");
+            }
         }
         // An all-student-creates design makes an empty starter repository inevitable, and the oracle's "the template must fail" then holds vacuously (nothing compiles, so
         // everything fails), scoring the degenerate candidate like a well-scaffolded one.
@@ -569,25 +594,9 @@ public class StageCheckService {
         return testingStrategyRows(spec).stream().map(TestingStrategyRow::hiddenDecision).filter(cell -> !cell.isBlank()).toList();
     }
 
-    /** Empty (fail-open) when no readable, parseable plan exists — the same contract the oracle applies. */
-    private Set<String> hiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
-        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
-        if (planJson.isBlank()) {
-            return Set.of();
-        }
-        try {
-            return GeneratedTestPlan.parse(planJson).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
-                    .collect(Collectors.toUnmodifiableSet());
-        }
-        catch (RuntimeException e) {
-            return Set.of();
-        }
-    }
-
-    /** The {@code student-creates} types from the frozen specification, falling back to the live workspace only when no spec gate ran for this session. */
+    /** The {@code student-creates} types from the frozen specification. */
     private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
-        return specStudentCreatedTypes(specification);
+        return specStudentCreatedTypes(authoritativeSpec(sandbox, sessionId));
     }
 
     /** The scaffold the template must ship to the student; only enforceable bare names count. */
@@ -598,6 +607,10 @@ public class StageCheckService {
 
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
         return execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
+    }
+
+    private String authoritativeSpec(InteractiveSandbox sandbox, String sessionId) {
+        return approvedSpecs.approved(sessionId).orElseGet(() -> workspaceSpecFallback ? readSpec(sandbox, sessionId) : "");
     }
 
     /**
@@ -651,7 +664,7 @@ public class StageCheckService {
         catch (IllegalArgumentException e) {
             return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
         }
-        String specification = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        String specification = authoritativeSpec(sandbox, sessionId);
         List<String> planReasons = ExerciseIntegrityGate.approvedTestPlanReasons(specification, planJson, report.exactTestNames(), exercise.getDueDate() != null,
                 seededStructuralTestNames);
         if (!planReasons.isEmpty()) {
@@ -662,7 +675,7 @@ public class StageCheckService {
         return new StageCheckResult(true, observation + "\n" + planSummary, report);
     }
 
-    private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport) {
+    private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
         String statement = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/problem-statement.md");
         if (statement.isBlank()) {
             return StageCheckResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
@@ -672,34 +685,60 @@ public class StageCheckService {
             return StageCheckResult.failed("The student-facing statement contains internal authoring or grading vocabulary: " + proseLeaks
                     + ". Rewrite it self-contained: describe the required behavior directly and never name internal contracts, workspace paths, reference artifacts, or test machinery.");
         }
-        Set<String> hiddenNames = hiddenTestNames(sandbox, sessionId);
+        GeneratedTestPlan plan = null;
+        Set<String> hiddenNames = Set.of();
+        if (lastTestsReport != null) {
+            String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
+            if (planJson.isBlank()) {
+                return StageCheckResult.failed("The accepted test-plan.json handoff from the TESTS stage is missing or unreadable. Stop statement authoring rather than guessing "
+                        + "task bindings; restore the accepted grading plan and retry this stage.");
+            }
+            try {
+                plan = GeneratedTestPlan.parse(planJson);
+                hiddenNames = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
+                        .collect(Collectors.toUnmodifiableSet());
+            }
+            catch (IllegalArgumentException e) {
+                return StageCheckResult.failed("The accepted test-plan.json handoff from the TESTS stage is no longer valid: " + e.getMessage()
+                        + " Restore the accepted grading plan before authoring the statement.");
+            }
+        }
         if (lastTestsReport != null) {
             List<String> exactTestNames = lastTestsReport.exactTestNames();
-            List<String> unresolved = ProblemStatementBindingChecker.unresolvedTaskBindings(statement, exactTestNames, exactTestNames.size(), Set.of());
+            List<String> unresolved = ProblemStatementBindingChecker.unresolvedTaskBindings(statement, exactTestNames, exactTestNames.size(), seededStructuralTestNames);
             if (!unresolved.isEmpty()) {
-                List<String> bindableNames = ProblemStatementBindingChecker.bindableTestNames(exactTestNames, hiddenNames);
+                List<String> bindableNames = Stream
+                        .concat(ProblemStatementBindingChecker.bindableTestNames(exactTestNames, hiddenNames).stream(), seededStructuralTestNames.stream()).distinct().sorted()
+                        .toList();
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
                         + ". A [task]'s parenthesised names must be exact, visible test names from the TESTS stage, copied verbatim: " + bindableNames + ".");
             }
             // Artemis renders testsColor links interactively (pass/fail per diagram element), so a name matching no test is a dead link the student can never satisfy and is held
             // to the same resolution standard as a [task] binding.
-            List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, exactTestNames, Set.of());
+            List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, exactTestNames, seededStructuralTestNames);
             if (!deadDiagramLinks.isEmpty()) {
                 return StageCheckResult.failed("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
                         + ". Use the exact test names from the TESTS stage (behavioural or seeded structural), or remove the link: " + exactTestNames + ".");
             }
         }
-        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
-        if (!planJson.isBlank()) {
-            try {
-                List<String> groupingReasons = ProblemStatementBindingChecker.seamTaskGroupingReasons(statement, GeneratedTestPlan.parse(planJson));
-                if (!groupingReasons.isEmpty()) {
-                    return StageCheckResult.failed("The statement must have one task per student-work seam, with all visible tests for that seam bound to that task: "
-                            + String.join(" ", groupingReasons));
-                }
+        if (!seededStructuralTestNames.isEmpty()) {
+            Set<String> boundNames = ProblemStatementBindingChecker.boundTestNames(statement).stream().map(ProblemStatementBindingChecker::normalizeTestName)
+                    .collect(Collectors.toSet());
+            List<String> missingStructural = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).filter(name -> !boundNames.contains(name))
+                    .sorted().toList();
+            Set<String> structuralNames = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+            List<String> duplicateStructural = ProblemStatementBindingChecker.duplicateTaskBindings(statement).stream().filter(structuralNames::contains).sorted().toList();
+            if (!missingStructural.isEmpty() || !duplicateStructural.isEmpty()) {
+                return StageCheckResult.failed("Every visible server-seeded structural check must be bound exactly once on the [task] that creates or declares its owner type/API."
+                        + (missingStructural.isEmpty() ? "" : " These structural checks are not bound: " + missingStructural + ".")
+                        + (duplicateStructural.isEmpty() ? "" : " These structural checks are bound more than once: " + duplicateStructural + "."));
             }
-            catch (IllegalArgumentException e) {
-                return StageCheckResult.failed("The statement cannot be checked against test-plan.json because the plan is invalid: " + e.getMessage());
+        }
+        if (plan != null) {
+            List<String> groupingReasons = ProblemStatementBindingChecker.seamTaskGroupingReasons(statement, plan);
+            if (!groupingReasons.isEmpty()) {
+                return StageCheckResult.failed(
+                        "The statement must have one task per student-work seam, with all visible tests for that seam bound to that task: " + String.join(" ", groupingReasons));
             }
         }
         List<String> hiddenMentions = ProblemStatementBindingChecker.hiddenTestMentions(statement, hiddenNames);
@@ -720,7 +759,7 @@ public class StageCheckService {
             return StageCheckResult.failed("The statement writes ABOUT students in the third person ('Students must/will/should ...'). Address the reader directly instead: "
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
-        String authoritativeSpec = approvedSpecs.approved(sessionId).orElseGet(() -> readSpec(sandbox, sessionId));
+        String authoritativeSpec = authoritativeSpec(sandbox, sessionId);
         boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(authoritativeSpec);
         if (diagramPromised && !statement.contains("@startuml")) {
             return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "

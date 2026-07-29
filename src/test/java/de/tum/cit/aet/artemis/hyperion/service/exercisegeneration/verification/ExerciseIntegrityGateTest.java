@@ -877,6 +877,63 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedSpecification_enforcesExactApisForGivenStubbedAndStudentCreatedTypes() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Input | value | given |
+                | Processor | student implementation | stubbed |
+                | Policy | student-created policy | student-creates |
+
+                ## Public API
+                ```java
+                public record Input(int value) {}
+                ```
+                ```java
+                public class Processor {
+                    public Processor(Input input);
+                    public int process();
+                }
+                ```
+                ```java
+                public interface Policy {
+                    int apply(int input);
+                }
+                ```
+                """;
+        String input = "public record Input(int value) {}";
+        Map<String, String> solution = map("src/Input.java", input, "src/Processor.java",
+                "public class Processor { public Processor(Input input) {} public int process() { return 1; } }", "src/Policy.java",
+                "public interface Policy { int apply(int input); }");
+        Map<String, String> template = map("src/Input.java", input, "src/Processor.java",
+                "public class Processor { public Processor(Input input) {} public int process() { throw new UnsupportedOperationException(); } }");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+
+        Map<String, String> driftedTemplate = map("src/Input.java", input, "src/Processor.java",
+                "public class Processor { public Processor(Input input) {} public int process() { return 0; } public int process(int mode) { return 0; } }");
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, driftedTemplate, solution))
+                .anySatisfy(reason -> assertThat(reason).contains("template public API for Processor", "extra", "process"));
+    }
+
+    @Test
+    void approvedSpecification_failsClosedWhenTheFrozenPublicApiIsInvalid() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Policy | student-created policy | student-creates |
+
+                ## Public API
+                Policy has some method.
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), map("src/Policy.java", "public interface Policy { int apply(int input); }")))
+                .anySatisfy(reason -> assertThat(reason).contains("structural contract is invalid", "cannot be replaced by candidate code"));
+    }
+
+    @Test
     void templateTodoSeams_rejectMissingAndUnknownWorkMarkers() {
         String spec = """
                 ## Design

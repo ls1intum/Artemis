@@ -242,8 +242,10 @@ public class AgentSystemPromptService {
             dependency graph rather than applying one mandatory Strategy layout. If an omitted type is referenced by a provided collaborator, omit only the dependent members
             necessary for the starter to compile and anchor that work in the statement and reflective tests. Never ship an empty supposedly student-created interface. Say who
             owns each piece of mutable state and whether it survives object replacement. `## Public API` — list the exact contract-visible constructors and methods that the
-            solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API. Include signatures only, grouped by owner type; do not
-            expose private strategy state merely for reflection or leave APIs for later stages to invent. Audit the complete declared input domain before freezing the API.
+            solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API. Give every type its own fenced `java` block containing
+            the type declaration and signatures only, grouped under a `### TypeName` heading. Use `{ ... }` for a constructor body and semicolons for method signatures; the
+            specification gate parses these blocks into the immutable structural contract. Do not expose private strategy state merely for reflection or leave APIs for later
+            stages to invent. Audit the complete declared input domain before freezing the API.
             Every value its parameter types and stated preconditions admit must have one coherent outcome: make numeric ranges exhaustive without gaps, cover every reachable
             enum/state case, and define progress for every permitted collection shape. Narrow the student-visible domain explicitly when total behavior outside it is not part of
             the exercise; do not let the reference solution silently choose behavior for an admitted input that no rule defines. `## Testing Strategy` — a table whose first column gives each independently actionable unit of student

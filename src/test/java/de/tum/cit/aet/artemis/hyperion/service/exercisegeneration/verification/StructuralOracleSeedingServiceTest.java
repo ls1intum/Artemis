@@ -48,6 +48,23 @@ class StructuralOracleSeedingServiceTest {
         return exercise;
     }
 
+    private static ApprovedSpecRegistry approvedSpec(String type, String declaration) {
+        ApprovedSpecRegistry registry = new ApprovedSpecRegistry();
+        registry.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | %s | student-owned type | student-creates |
+
+                ## Public API
+                ### %s
+                ```java
+                %s
+                ```
+                """.formatted(type, type, declaration));
+        return registry;
+    }
+
     private StructuralOracleSeedingService seederWith(InteractiveSandbox sandbox, Map<String, String> solution, Map<String, String> template, Map<String, String> tests) {
         return seederWith(sandbox, solution, template, tests, new ApprovedSpecRegistry());
     }
@@ -83,19 +100,27 @@ class StructuralOracleSeedingServiceTest {
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter { int[] sort(int[] a); }");
         Map<String, String> tests = Map.of("test/sorting/SortTest.java", "package sorting;\nclass SortTest {}");
 
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", """
+                public class MergeSort implements Sorter {
+                    public int[] sort(int[] a);
+                }
+                """);
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setPackageName("sorting");
+        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
         Map<String, String> seeded = readTar(tarCaptor.getValue());
-        assertThat(seeded).containsKeys("tests/test/sorting/ClassTest.java", "tests/test/sorting/MethodTest.java", "tests/test/sorting/test.json")
-                .doesNotContainKeys("tests/test/sorting/AttributeTest.java", "tests/test/sorting/ConstructorTest.java");
+        assertThat(seeded)
+                .containsKeys("tests/test/sorting/ClassTest.java", "tests/test/sorting/MethodTest.java", "tests/test/sorting/ConstructorTest.java", "tests/test/sorting/test.json")
+                .doesNotContainKeys("tests/test/sorting/AttributeTest.java");
         assertThat(seeded.get("tests/test/sorting/ClassTest.java")).startsWith(GENERATED_MARKER).contains("package sorting;").doesNotContain("${packageName}");
         // The oracle enforces the created class, not the already-present interface.
         assertThat(seeded.get("tests/test/sorting/test.json")).contains("MergeSort");
         // Only providers with something to check are seeded. Empty AttributeTest/ConstructorTest factories are reported by JUnit under their shared factory-method name,
         // generateTestsForAllClasses, which creates duplicate production test cases and fails an otherwise correct solution.
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
     }
 
     @Test
@@ -106,12 +131,20 @@ class StructuralOracleSeedingServiceTest {
         Map<String, String> template = Map.of("src/navigation/Strategy.java", "package navigation; public interface Strategy { double apply(double x); }");
         Map<String, String> harnessOnly = Map.of("pom.xml", "<project/>");
 
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, harnessOnly).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        ApprovedSpecRegistry approvedSpecs = approvedSpec("Warp", """
+                public class Warp implements Strategy {
+                    public double apply(double x);
+                }
+                """);
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setPackageName("navigation");
+        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, harnessOnly, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
-        assertThat(readTar(tarCaptor.getValue())).containsKeys("tests/test/navigation/ClassTest.java", "tests/test/navigation/MethodTest.java", "tests/test/navigation/test.json");
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]");
+        assertThat(readTar(tarCaptor.getValue())).containsKeys("tests/test/navigation/ClassTest.java", "tests/test/navigation/MethodTest.java",
+                "tests/test/navigation/ConstructorTest.java", "tests/test/navigation/test.json");
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]", "testConstructors[Warp]");
     }
 
     @Test
@@ -149,8 +182,12 @@ class StructuralOracleSeedingServiceTest {
 
                 ## Public API
                 ### ElevatorDispatcher
-                - `public ElevatorDispatcher(List<String> elevators, DispatchStrategy strategy)`
-                - `public String dispatchCall(int floor)`
+                ```java
+                public class ElevatorDispatcher {
+                    public ElevatorDispatcher(List<String> elevators, DispatchStrategy strategy);
+                    public String dispatchCall(int floor);
+                }
+                ```
 
                 ## Testing Strategy
                 """);
@@ -160,8 +197,10 @@ class StructuralOracleSeedingServiceTest {
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.TESTS)).thenReturn(Map.of());
         StructuralOracleSeedingService seeder = new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir), approvedSpecs);
 
-        Set<String> firstNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
-        Set<String> laterNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setPackageName("lift");
+        Set<String> firstNames = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
+        Set<String> laterNames = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox, org.mockito.Mockito.times(2)).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
@@ -204,7 +243,14 @@ class StructuralOracleSeedingServiceTest {
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter { int[] sort(int[] a); }");
         Map<String, String> tests = Map.of("test/sorting/SortTest.java", "package sorting;\nclass SortTest {}");
 
-        seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", """
+                public class MergeSort implements Sorter {
+                    public int[] sort(int[] a);
+                }
+                """);
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setPackageName("sorting");
+        seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
@@ -219,8 +265,8 @@ class StructuralOracleSeedingServiceTest {
                 producedTestsFiles.put(path.substring(workspaceTestsPrefix.length()), content);
             }
         });
-        assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java").doesNotContainKeys("test/sorting/AttributeTest.java",
-                "test/sorting/ConstructorTest.java");
+        assertThat(producedTestsFiles).containsKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/ConstructorTest.java")
+                .doesNotContainKeys("test/sorting/AttributeTest.java");
 
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(producedTestsFiles))
                 .as("the seeder's own @StrictTimeout(10) structural test classes must pass the integrity gate they are composed with in production").isEmpty();
@@ -235,7 +281,9 @@ class StructuralOracleSeedingServiceTest {
         Map<String, String> template = Map.of("src/roman/RomanNumerals.java", "package roman;\npublic class RomanNumerals {\n    public int toInteger(String r){ return 0; }\n}");
         Map<String, String> tests = Map.of("test/roman/RomanNumeralsTest.java", "package roman;\nclass RomanNumeralsTest {}");
 
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        StructuralOracleSeedingService seeder = seederWith(sandbox, solution, template, tests);
+        seeder.captureBaseline("s", tests);
+        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         assertThat(seededNames).as("a behaviour-only diff seeds nothing, so there are no exempt structural names").isEmpty();
@@ -251,7 +299,9 @@ class StructuralOracleSeedingServiceTest {
         tests.put("test/structural/test.json", "[]");
         tests.put("test/structural/ClassTest.java", "package structural;\nclass ClassTest {}");
 
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        StructuralOracleSeedingService seeder = seederWith(sandbox, solution, template, tests);
+        seeder.captureBaseline("s", tests);
+        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         verify(sandbox, never()).exec(any(), any(), any(), any(), any());
@@ -263,9 +313,9 @@ class StructuralOracleSeedingServiceTest {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort {}");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
-        Map<String, String> tests = Map.of("test/structural/test.json", "[]", "test/structural/ClassTest.java", "package structural;\nclass ClassTest {}");
-        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
-        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| MergeSort | strategy | student-creates |");
+        Map<String, String> tests = Map.of("test/structural/test.json", "[{\"class\":{\"name\":\"Legacy\"}}]", "test/structural/ClassTest.java",
+                "package structural; class ClassTest extends ClassTestProvider { void x(){ retrieveStructureOracleJSON(null); } }");
+        ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", "public class MergeSort { public void sort(); }");
 
         assertThatThrownBy(() -> seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise()))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("Refusing to overwrite").hasMessageContaining("MergeSort");
@@ -278,13 +328,13 @@ class StructuralOracleSeedingServiceTest {
         // read the surviving oracle as somebody else's grading harness and threw, which discarded the entire generation with nothing saved. Its own incomplete output is the
         // state this service exists to repair.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         Map<String, String> tests = Map.of("test/sorting/ScoreProcessorTest.java", "package sorting; class ScoreProcessorTest {}", "test/sorting/test.json",
                 "[{\"class\":{\"name\":\"ScoreProcessor\"}}]");
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
-        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| ScoreProcessor | processor | student-creates |");
+        approvedSpecs = approvedSpec("ScoreProcessor", "public class ScoreProcessor { public void process(); }");
 
         Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
@@ -296,13 +346,13 @@ class StructuralOracleSeedingServiceTest {
     void reseedsWhenOnlySomeOfTheSeededStructuralClassesSurvive() {
         // The partial case: one marked class left behind, the other deleted. Completeness is not what identifies ownership — the marker is.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         Map<String, String> tests = Map.of("test/sorting/test.json", "[{\"class\":{\"name\":\"ScoreProcessor\"},\"methods\":[{\"name\":\"process\"}]}]",
                 "test/sorting/ClassTest.java", GENERATED_MARKER + "\nclass ClassTest {}");
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
-        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| ScoreProcessor | processor | student-creates |");
+        approvedSpecs = approvedSpec("ScoreProcessor", "public class ScoreProcessor { public void process(); }");
 
         Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
@@ -313,41 +363,113 @@ class StructuralOracleSeedingServiceTest {
     @Test
     void refreshesACompleteManagedBundleWithOnlyApplicableProviders() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
+        when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort { public void sort() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         String oracle = "[{\"class\":{\"name\":\"MergeSort\"},\"methods\":[{\"name\":\"sort\"}]}]";
         Map<String, String> tests = Map.of("test/sorting/SortTest.java", "package sorting; class SortTest {}", "test/sorting/test.json", oracle, "test/sorting/ClassTest.java",
                 GENERATED_MARKER + "\nclass ClassTest {}", "test/sorting/MethodTest.java", GENERATED_MARKER + "\nclass MethodTest {}");
 
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", "public class MergeSort { public void sort(); }");
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setPackageName("sorting");
+        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
-        ArgumentCaptor<String> cleanupCommand = ArgumentCaptor.forClass(String.class);
-        verify(sandbox).exec(eq("s"), any(), eq("sh"), eq("-c"), cleanupCommand.capture());
-        assertThat(cleanupCommand.getValue()).contains("ClassTest.java", "MethodTest.java", "AttributeTest.java", "ConstructorTest.java", "test.json");
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]");
+        ArgumentCaptor<String[]> cleanupCommand = ArgumentCaptor.forClass(String[].class);
+        verify(sandbox).exec(eq("s"), any(), cleanupCommand.capture());
+        assertThat(cleanupCommand.getValue()).anyMatch(argument -> argument.contains("ClassTest.java")).anyMatch(argument -> argument.contains("MethodTest.java"))
+                .anyMatch(argument -> argument.contains("AttributeTest.java")).anyMatch(argument -> argument.contains("ConstructorTest.java"))
+                .anyMatch(argument -> argument.contains("test.json"));
+        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
     }
 
     @Test
-    void removesManagedStructuralFiles_whenStructuresAreIdentical() {
+    void restoresAnEmptyPreAuthoringBaseline_insteadOfTrustingAgentAuthoredStructuralAssets() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        when(sandbox.exec(eq("s"), any(), eq("sh"), eq("-c"), any())).thenReturn(new SandboxExecResultDTO(0, "", "", false));
-        String identical = "package sorting;\npublic class BubbleSort {\n    public int[] sort(int[] a){ return a; }\n}";
+        when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> tests = new LinkedHashMap<>();
         tests.put("test/sorting/BubbleSortTest.java", "package sorting;\nclass BubbleSortTest {}");
-        tests.put("test/structural/test.json", "[]");
+        tests.put("test/structural/test.json", "[{\"class\":{\"name\":\"Invented\"}}]");
         for (String className : java.util.List.of("ClassTest.java", "MethodTest.java", "AttributeTest.java", "ConstructorTest.java")) {
             tests.put("test/structural/" + className, GENERATED_MARKER + "\npackage structural;\nclass Test {}");
         }
-        java.util.Set<String> seededNames = seederWith(sandbox, Map.of("src/sorting/BubbleSort.java", identical), Map.of("src/sorting/BubbleSort.java", identical), tests)
-                .seedIfStructuralDiff(sandbox, "s", javaExercise());
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), tests);
+        seeder.captureBaseline("s", Map.of());
+        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         assertThat(seededNames).isEmpty();
-        ArgumentCaptor<String> cleanupCommand = ArgumentCaptor.forClass(String.class);
-        verify(sandbox).exec(eq("s"), any(), eq("sh"), eq("-c"), cleanupCommand.capture());
-        assertThat(cleanupCommand.getValue()).startsWith("rm -f").contains("/workspace/tests/test/structural/").contains("test.json").contains("ClassTest.java");
+        ArgumentCaptor<String[]> cleanupCommand = ArgumentCaptor.forClass(String[].class);
+        verify(sandbox).exec(eq("s"), any(), cleanupCommand.capture());
+        assertThat(cleanupCommand.getValue()).startsWith("rm", "-f", "--").anyMatch(argument -> argument.contains("/workspace/tests/test/structural/test.json"))
+                .anyMatch(argument -> argument.contains("ClassTest.java"));
+    }
+
+    @Test
+    void preservesOrdinaryTestsWhoseBasenamesOverlapStructuralAssets() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> ordinaryFiles = Map.of("test/helpers/ClassTest.java", "package helpers; class ClassTest {}", "fixtures/test.json",
+                "{\"description\":\"ordinary test data\"}");
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), ordinaryFiles);
+        seeder.captureBaseline("s", ordinaryFiles);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).isEmpty();
+        verify(sandbox, never()).exec(any(), any(), any(String[].class));
+        verify(sandbox, never()).copyIn(any(), any(), any());
+    }
+
+    @Test
+    void rejectsMalformedOrIncompletePreAuthoringStructuralBundles() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), Map.of());
+        String provider = "class MethodTest extends MethodTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+
+        assertThatThrownBy(() -> seeder.captureBaseline("broken", Map.of("test/x/test.json", "not-json", "test/x/MethodTest.java", provider)))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("incomplete or malformed");
+        assertThatThrownBy(() -> seeder.captureBaseline("partial",
+                Map.of("test/x/test.json", "[{\"class\":{\"name\":\"X\"},\"methods\":[{\"name\":\"work\"}]}]", "test/x/ClassTest.java",
+                        "class ClassTest extends ClassTestProvider { void load(){ retrieveStructureOracleJSON(null); } }")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("missing required provider").hasMessageContaining("MethodTest.java");
+    }
+
+    @Test
+    void preservesAValidRawBaselineByteForByte_andFreezesItOnce() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        String oracle = "[{\"class\":{\"name\":\"X\"}}]";
+        String classProvider = "class ClassTest extends ClassTestProvider { String raw = \"${studentWorkingDirectory}\"; void load(){ retrieveStructureOracleJSON(null); } }";
+        Map<String, String> baseline = Map.of("test/x/test.json", oracle, "test/x/ClassTest.java", classProvider);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
+        seeder.captureBaseline("s", baseline);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).containsExactly("testClass[X]");
+        verify(sandbox, never()).exec(any(), any(), any(String[].class));
+        verify(sandbox, never()).copyIn(any(), any(), any());
+        assertThatThrownBy(() -> seeder.captureBaseline("s", Map.of())).isInstanceOf(IllegalStateException.class).hasMessageContaining("already captured");
+    }
+
+    @Test
+    void restoresADeletedBaselineBundleExactly() throws Exception {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        String oracle = "[{\"class\":{\"name\":\"X\"}}]";
+        String classProvider = "class ClassTest extends ClassTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+        Map<String, String> baseline = Map.of("test/x/test.json", oracle, "test/x/ClassTest.java", classProvider);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), Map.of());
+        seeder.captureBaseline("s", baseline);
+
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).containsExactly("testClass[X]");
+        ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), tar.capture());
+        assertThat(readTar(tar.getValue())).containsEntry("tests/test/x/test.json", oracle).containsEntry("tests/test/x/ClassTest.java", classProvider);
+    }
+
+    @Test
+    void failsClosedWhenNoPreAuthoringBaselineWasCaptured() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), Map.of());
+
+        assertThatThrownBy(() -> seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No pre-authoring structural baseline");
     }
 
     @Test
@@ -402,7 +524,16 @@ class StructuralOracleSeedingServiceTest {
         Map<String, String> solution = Map.of("src/sorting/SolutionHelper.java", "package sorting;\npublic class SolutionHelper { public void help() {} }");
         Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
-        approvedSpecs.approve("s", "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Sorter | provided API | given |");
+        approvedSpecs.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Sorter | provided API | given |
+                ## Public API
+                ```java
+                public interface Sorter { void sort(); }
+                ```
+                """);
 
         Set<String> seededNames = seederWith(sandbox, solution, template, Map.of(), approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 

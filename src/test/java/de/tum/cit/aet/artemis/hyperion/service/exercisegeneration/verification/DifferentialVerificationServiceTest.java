@@ -73,6 +73,12 @@ class DifferentialVerificationServiceTest {
         return new DifferentialVerificationService(sandboxBuildCommandService());
     }
 
+    private static DifferentialVerificationService newVerifier(String approvedSpecification) {
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", approvedSpecification);
+        return new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
+    }
+
     /**
      * One build's report fixture: the JUnit/SCA reports the verifier {@code copyOut}s plus the build's exit code and timeout flag.
      *
@@ -1347,7 +1353,7 @@ class DifferentialVerificationServiceTest {
             ProgrammingExercise javaExercise = new ProgrammingExercise();
             javaExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             javaExercise.setPackageName("de.test");
-            DifferentialVerificationService verifier = newVerifier();
+            DifferentialVerificationService verifier = newVerifier(spec);
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan)
@@ -1510,8 +1516,11 @@ class DifferentialVerificationServiceTest {
             if (specDocument != null) {
                 sandbox = sandbox.withSpec(specDocument);
             }
-            return newVerifier().verify(sandbox, "s", new ProgrammingExercise(), new VerificationRequest(Map.of(), Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles,
-                    Map.of(), extractionFailedRepositories, Set.of(), Set.of(), problemStatement, null, false), NO_RESTORE);
+            DifferentialVerificationService verifier = specDocument == null ? newVerifier() : newVerifier(specDocument);
+            return verifier.verify(
+                    sandbox, "s", new ProgrammingExercise(), new VerificationRequest(Map.of(), Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, Map.of(),
+                            extractionFailedRepositories, Set.of(), Set.of(), problemStatement, specDocument == null ? null : FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false),
+                    NO_RESTORE);
         }
 
         static Stream<Arguments> singleDefects() {

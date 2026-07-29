@@ -213,6 +213,7 @@ public class GenerationOrchestrationService {
             workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode, statementAuthoritative);
             placeholderReplacements = ciPlaceholderReplacements(exercise);
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
+            structuralOracleSeeder.captureBaseline(sessionId, workspaceSeed.testsSeedSnapshot());
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
             if (cancelled.getAsBoolean()) {
                 return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,

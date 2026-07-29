@@ -219,6 +219,20 @@ public final class ExerciseIntegrityGate {
         List<StageCheckService.DesignRow> designRows = StageCheckService.designTableRows(approvedSpec);
         List<String> studentCreatedTypes = StageCheckService.specStudentCreatedTypes(approvedSpec);
         List<String> reasons = new ArrayList<>();
+        if (approvedSpec.contains("## Public API")) {
+            Set<String> designTypes = designRows.stream().map(StageCheckService.DesignRow::type).collect(Collectors.toSet());
+            ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes, Set.copyOf(studentCreatedTypes));
+            if (structuralContract.valid()) {
+                reasons.addAll(structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles));
+                Set<String> templateTypes = designRows.stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(StageCheckService.DesignRow::type)
+                        .collect(Collectors.toSet());
+                reasons.addAll(structuralContract.contract().templateSurfaceReasons(producedTemplateFiles, templateTypes));
+            }
+            else if (!designTypes.isEmpty()) {
+                reasons.add("the approved Java Public API structural contract is invalid: " + structuralContract.errors()
+                        + ". This frozen contract cannot be replaced by candidate code; repair or restart from a valid specification.");
+            }
+        }
         List<String> missingFromSolution = studentCreatedTypes.stream().filter(type -> !repositoryDeclaresType(producedSolutionFiles, type)).toList();
         if (!missingFromSolution.isEmpty()) {
             reasons.add("the approved specification requires students to create these types, but the reference solution does not declare them: " + missingFromSolution

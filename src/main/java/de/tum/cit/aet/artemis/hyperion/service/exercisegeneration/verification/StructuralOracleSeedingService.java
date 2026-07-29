@@ -37,17 +37,13 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Work
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
 
 /**
- * Adds Ares structural tests to a generated Java exercise exactly as a manually authored one carries them: the deterministic {@link OracleGenerator} runs over the produced
- * solution and template and, only when their structures differ, the {@code test.json} oracle and each applicable Ares provider are seeded into the tests repository. A provider
- * whose oracle section is empty is omitted, because its empty dynamic factory is reported under the shared method name {@code generateTestsForAllClasses} and would create
- * duplicate production test cases instead of a useful structural check.
+ * Adds Ares structural tests to a generated Java exercise exactly as a manually authored one carries them. For staged generation, the approved typed SPEC contract is serialized
+ * directly; agent-authored implementation code never defines or expands the grading authority. A provider whose oracle section is empty is omitted, because its empty dynamic
+ * factory is reported under the shared method name {@code generateTestsForAllClasses} and would create duplicate production test cases instead of a useful structural check.
  * <p>
- * Deliberately conservative: it seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and then only its
- * public/protected surface, so a correct behaviour-only exercise is never burdened with spurious structural requirements. Without an approved specification, seeding is
- * best-effort; once one requires student-created types, failure is explicit, since silently omitting their grading contract would publish a different exercise.
+ * Without an approved specification, candidate repository differences are never treated as authority. Existing instructor-authored structural assets remain untouched.
  */
 @Lazy
 @Service
@@ -80,10 +76,7 @@ public class StructuralOracleSeedingService {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
-    /**
-     * Immutable per-session grading contracts. A refresh repairs deleted server-owned files; it must never reinterpret the agent's latest solution as a new contract.
-     */
-    private final Map<String, FrozenOracle> frozenOracles = new ConcurrentHashMap<>();
+    private final Map<String, BaselineStructuralBundle> baselineBundles = new ConcurrentHashMap<>();
 
     @Autowired
     public StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService, ApprovedSpecRegistry approvedSpecs) {
@@ -94,6 +87,61 @@ public class StructuralOracleSeedingService {
 
     StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService) {
         this(workspace, tempFileUtilService, new ApprovedSpecRegistry());
+    }
+
+    /**
+     * Freezes the instructor-authored structural bundle before the first model call. Runs without a SPEC (ADAPT or an explicitly unstaged run) may restore this exact bundle,
+     * but can never infer a new grading contract from candidate code.
+     *
+     * @param sessionId  the sandbox session whose immutable baseline is captured
+     * @param testsFiles the complete tests repository before agent authoring
+     */
+    public void captureBaseline(String sessionId, Map<String, String> testsFiles) {
+        if (sessionId == null) {
+            return;
+        }
+        Map<String, String> files = testsFiles == null ? Map.of() : testsFiles;
+        Set<String> structuralDirectories = structuralBundleDirectories(files, true);
+        Map<String, String> assets = new LinkedHashMap<>();
+        files.forEach((path, content) -> {
+            if (structuralDirectories.contains(directory(path)) && isRecognizedStructuralAsset(path, content)) {
+                assets.put(path, content);
+            }
+        });
+        if (assets.isEmpty()) {
+            freezeBaseline(sessionId, BaselineStructuralBundle.EMPTY);
+            return;
+        }
+
+        Set<String> names = new LinkedHashSet<>();
+        boolean valid = true;
+        for (Map.Entry<String, String> oracle : assets.entrySet().stream().filter(entry -> entry.getKey().endsWith("/" + ORACLE_FILE) || ORACLE_FILE.equals(entry.getKey()))
+                .toList()) {
+            try {
+                String oracleDirectory = directory(oracle.getKey());
+                String prefix = oracleDirectory.isEmpty() ? "" : oracleDirectory + "/";
+                List<String> providers = requiredStructuralClasses(oracle.getValue());
+                if (!providers.stream().allMatch(provider -> assets.containsKey(prefix + provider))) {
+                    valid = false;
+                    log.warn("Ignoring incomplete baseline structural bundle for session {} in {}", sessionId, oracleDirectory);
+                    break;
+                }
+                names.addAll(structuralTestNames(oracle.getValue()));
+            }
+            catch (IOException | RuntimeException exception) {
+                valid = false;
+                log.warn("Ignoring malformed baseline structural oracle for session {}: {}", sessionId, exception.getMessage());
+                break;
+            }
+        }
+        freezeBaseline(sessionId, new BaselineStructuralBundle(Map.copyOf(assets), valid ? Set.copyOf(names) : Set.of()));
+    }
+
+    private void freezeBaseline(String sessionId, BaselineStructuralBundle baseline) {
+        BaselineStructuralBundle previous = baselineBundles.putIfAbsent(sessionId, baseline);
+        if (previous != null && !previous.equals(baseline)) {
+            throw new IllegalStateException("The pre-authoring structural baseline for session " + sessionId + " was already captured and cannot be replaced");
+        }
     }
 
     /**
@@ -113,22 +161,20 @@ public class StructuralOracleSeedingService {
         }
         var approvedSpecification = approvedSpecs.approved(sessionId);
         Set<String> expectedStudentCreatedTypes = approvedSpecification.map(StageCheckService::specStudentCreatedTypes).map(Set::copyOf).orElse(Set.of());
-        Path solutionDir = null;
-        Path templateDir = null;
+        if (approvedSpecification.isEmpty()) {
+            return restoreBaselineStructuralBundle(sandbox, sessionId);
+        }
+        Set<String> allowedDesignTypes = StageCheckService.designTableRows(approvedSpecification.get()).stream().map(StageCheckService.DesignRow::type)
+                .collect(java.util.stream.Collectors.toSet());
+        ApprovedStructuralContract.ParseResult parsedContract = ApprovedStructuralContract.parse(approvedSpecification.get(), allowedDesignTypes, expectedStudentCreatedTypes);
+        if (!parsedContract.valid()) {
+            throw new IllegalStateException("The approved Java Public API contract is invalid: " + parsedContract.errors());
+        }
         boolean managedAssetsDetected = false;
         try {
-            Map<String, String> solutionFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.SOLUTION);
-            Map<String, String> templateFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE);
             Map<String, String> testFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
-            if (solutionFiles.isEmpty() || templateFiles.isEmpty()) {
-                return Set.of();
-            }
-            FrozenOracle frozenOracle = sessionId == null ? null : frozenOracles.get(sessionId);
-            String packageName = frozenOracle == null ? parsePackage(solutionFiles) : frozenOracle.packageName();
+            String packageName = exercise.getPackageName() == null ? "" : exercise.getPackageName();
             String testDirectory = locateStructuralAssetDirectory(testFiles);
-            if (testDirectory == null) {
-                testDirectory = locateTestSourceDirectory(testFiles);
-            }
             if (testDirectory == null) {
                 testDirectory = canonicalJavaTestDirectory(packageName);
             }
@@ -143,21 +189,7 @@ public class StructuralOracleSeedingService {
                         + "grading harness while materializing approved student-created types " + expectedStudentCreatedTypes);
             }
 
-            String oracle;
-            if (frozenOracle != null) {
-                oracle = frozenOracle.oracle();
-            }
-            else {
-                solutionDir = materialize(solutionFiles, "hyperion-oracle-solution-");
-                templateDir = materialize(templateFiles, "hyperion-oracle-template-");
-                String generatedOracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles,
-                        expectedStudentCreatedTypes, approvedSpecification.isPresent());
-                FrozenOracle newlyFrozen = approvedSpecification.isPresent()
-                        ? freezeApprovedOracle(sessionId, generatedOracle, approvedSpecification.get(), expectedStudentCreatedTypes, packageName)
-                        : freezeFirstOracle(sessionId, generatedOracle, packageName);
-                oracle = newlyFrozen.oracle();
-                packageName = newlyFrozen.packageName();
-            }
+            String oracle = parsedContract.contract().toOracle(packageName, MAPPER, expectedStudentCreatedTypes);
 
             if (isStructurallyEmpty(oracle)) {
                 if (!expectedStudentCreatedTypes.isEmpty()) {
@@ -198,9 +230,42 @@ public class StructuralOracleSeedingService {
             }
             return Set.of();
         }
-        finally {
-            deleteQuietly(solutionDir);
-            deleteQuietly(templateDir);
+    }
+
+    private Set<String> restoreBaselineStructuralBundle(InteractiveSandbox sandbox, String sessionId) {
+        BaselineStructuralBundle baseline = sessionId == null ? null : baselineBundles.get(sessionId);
+        if (baseline == null) {
+            throw new IllegalStateException(
+                    "No pre-authoring structural baseline was captured for session " + sessionId + "; refusing to derive grading authority from mutable candidate code");
+        }
+        try {
+            Map<String, String> liveFiles = workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
+            Set<String> liveDirectories = structuralBundleDirectories(liveFiles, false);
+            Map<String, String> liveAssets = new LinkedHashMap<>();
+            liveFiles.forEach((path, content) -> {
+                if (liveDirectories.contains(directory(path)) && isRecognizedStructuralAsset(path, content)) {
+                    liveAssets.put(path, content);
+                }
+            });
+            boolean baselineIntact = baseline.assets().entrySet().stream().allMatch(entry -> entry.getValue().equals(liveFiles.get(entry.getKey())))
+                    && liveAssets.keySet().stream().allMatch(baseline.assets()::containsKey);
+            if (baselineIntact) {
+                return baseline.testNames();
+            }
+            for (String directory : liveDirectories) {
+                if (!cleanupStructuralFiles(sandbox, sessionId, directory)) {
+                    throw new IllegalStateException("The unapproved structural bundle could not be removed");
+                }
+            }
+            if (!baseline.assets().isEmpty()) {
+                Map<String, String> workspaceFiles = new LinkedHashMap<>();
+                baseline.assets().forEach((path, content) -> workspaceFiles.put(GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + path, content));
+                sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of()));
+            }
+            return baseline.testNames();
+        }
+        catch (RuntimeException exception) {
+            throw new IllegalStateException("Could not restore the pre-authoring structural grading bundle: " + exception.getMessage(), exception);
         }
     }
 
@@ -211,29 +276,13 @@ public class StructuralOracleSeedingService {
      */
     public void forget(String sessionId) {
         if (sessionId != null) {
-            frozenOracles.remove(sessionId);
+            baselineBundles.remove(sessionId);
         }
     }
 
-    private FrozenOracle freezeApprovedOracle(String sessionId, String generatedOracle, String approvedSpecification, Set<String> expectedStudentCreatedTypes, String packageName) {
-        try {
-            String approvedOracle = ApprovedStructuralOracle.project(generatedOracle, approvedSpecification, expectedStudentCreatedTypes, MAPPER);
-            return freezeFirstOracle(sessionId, approvedOracle, packageName);
-        }
-        catch (IOException e) {
-            throw new IllegalStateException("The approved Public API could not be converted into a structural grading contract: " + e.getMessage(), e);
-        }
-    }
+    private record BaselineStructuralBundle(Map<String, String> assets, Set<String> testNames) {
 
-    private FrozenOracle freezeFirstOracle(String sessionId, String oracle, String packageName) {
-        FrozenOracle candidate = new FrozenOracle(oracle, packageName);
-        if (sessionId == null || isStructurallyEmpty(oracle)) {
-            return candidate;
-        }
-        return frozenOracles.computeIfAbsent(sessionId, ignored -> candidate);
-    }
-
-    private record FrozenOracle(String oracle, String packageName) {
+        private static final BaselineStructuralBundle EMPTY = new BaselineStructuralBundle(Map.of(), Set.of());
     }
 
     /**
@@ -298,7 +347,8 @@ public class StructuralOracleSeedingService {
     }
 
     private static String locateStructuralAssetDirectory(Map<String, String> testFiles) {
-        return testFiles.keySet().stream().filter(StructuralOracleSeedingService::isStructuralAsset).map(StructuralOracleSeedingService::directory).findFirst().orElse(null);
+        Set<String> directories = structuralBundleDirectories(testFiles, false);
+        return directories.size() == 1 ? directories.iterator().next() : null;
     }
 
     /**
@@ -309,9 +359,72 @@ public class StructuralOracleSeedingService {
         return packageName.isBlank() ? "test" : "test/" + packageName.replace('.', '/');
     }
 
-    private static boolean isStructuralAsset(String path) {
+    private static boolean hasStructuralFileName(String path) {
         String fileName = path.substring(path.lastIndexOf('/') + 1);
         return ORACLE_FILE.equals(fileName) || STRUCTURAL_CLASSES.contains(fileName);
+    }
+
+    private static boolean isRecognizedStructuralAsset(String path, String content) {
+        String fileName = path.substring(path.lastIndexOf('/') + 1);
+        if (ORACLE_FILE.equals(fileName)) {
+            return isStructuralOracle(content);
+        }
+        if (!STRUCTURAL_CLASSES.contains(fileName)) {
+            return false;
+        }
+        String provider = fileName.substring(0, fileName.length() - ".java".length()) + "Provider";
+        return content != null && (content.contains(GENERATED_MARKER) || content.contains("extends " + provider) && content.contains("retrieveStructureOracleJSON"));
+    }
+
+    private static boolean isStructuralOracle(String content) {
+        try {
+            JsonNode root = MAPPER.readTree(content);
+            if (!(root instanceof ArrayNode entries) || entries.isEmpty()) {
+                return false;
+            }
+            Set<String> names = new HashSet<>();
+            for (JsonNode entry : entries) {
+                String name = entry.path("class").path("name").asText("");
+                if (name.isBlank() || !names.add(name)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        catch (IOException | RuntimeException exception) {
+            return false;
+        }
+    }
+
+    private static Set<String> structuralBundleDirectories(Map<String, String> files, boolean requireComplete) {
+        Set<String> candidates = new LinkedHashSet<>();
+        files.forEach((path, content) -> {
+            if (isRecognizedStructuralAsset(path, content)) {
+                candidates.add(directory(path));
+            }
+        });
+        for (String candidate : List.copyOf(candidates)) {
+            String prefix = candidate.isEmpty() ? "" : candidate + "/";
+            String oracle = files.get(prefix + ORACLE_FILE);
+            List<String> recognizedProviders = STRUCTURAL_CLASSES.stream().filter(name -> isRecognizedStructuralAsset(prefix + name, files.get(prefix + name))).toList();
+            boolean oracleValid = isStructuralOracle(oracle);
+            if (requireComplete && (!oracleValid || recognizedProviders.isEmpty())) {
+                throw new IllegalStateException("The pre-authoring structural bundle in '" + candidate + "' is incomplete or malformed");
+            }
+            if (requireComplete && oracleValid) {
+                try {
+                    List<String> requiredProviders = requiredStructuralClasses(oracle);
+                    if (!recognizedProviders.containsAll(requiredProviders)) {
+                        throw new IllegalStateException("The pre-authoring structural bundle in '" + candidate + "' is missing required provider(s) "
+                                + requiredProviders.stream().filter(provider -> !recognizedProviders.contains(provider)).toList());
+                    }
+                }
+                catch (IOException exception) {
+                    throw new IllegalStateException("The pre-authoring structural oracle in '" + candidate + "' is malformed", exception);
+                }
+            }
+        }
+        return Set.copyOf(candidates);
     }
 
     private static String directory(String path) {
@@ -351,8 +464,7 @@ public class StructuralOracleSeedingService {
     }
 
     private static StructuralAssetOwnership structuralAssetOwnership(Map<String, String> testFiles, String testDirectory) {
-        Set<String> assetDirectories = new HashSet<>();
-        testFiles.keySet().stream().filter(StructuralOracleSeedingService::isStructuralAsset).map(StructuralOracleSeedingService::directory).forEach(assetDirectories::add);
+        Set<String> assetDirectories = structuralBundleDirectories(testFiles, false);
         if (assetDirectories.isEmpty()) {
             return StructuralAssetOwnership.NONE;
         }
@@ -474,13 +586,16 @@ public class StructuralOracleSeedingService {
 
     private boolean cleanupStructuralFiles(InteractiveSandbox sandbox, String sessionId, String testDirectory) {
         String dir = GenerationWorkspaceService.WORKSPACE + "/" + GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + testDirectory;
-        StringBuilder command = new StringBuilder("rm -f");
-        command.append(" \"").append(dir).append("/").append(ORACLE_FILE).append("\"");
+        List<String> command = new ArrayList<>();
+        command.add("rm");
+        command.add("-f");
+        command.add("--");
+        command.add(dir + "/" + ORACLE_FILE);
         for (String className : STRUCTURAL_CLASSES) {
-            command.append(" \"").append(dir).append("/").append(className).append("\"");
+            command.add(dir + "/" + className);
         }
         try {
-            var result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c", command.toString());
+            var result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, command.toArray(String[]::new));
             return result != null && result.isSuccess();
         }
         catch (RuntimeException e) {

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
@@ -145,6 +146,8 @@ class StageCheckServiceTest {
     /** A complete, gate-valid SPEC.md whose '## Design' table carries the given data rows — every stage now re-checks the spec, so a partial fixture would fail that check. */
     private static String specWithDesign(String designRows) {
         String ownerType = designRows.split("\\|")[1].strip();
+        String publicApi = java.util.Arrays.stream(designRows.lines().toArray(String[]::new)).filter(line -> line.startsWith("|")).map(line -> line.split("\\|")[1].strip())
+                .map(StageCheckServiceTest::publicApiFor).collect(java.util.stream.Collectors.joining("\n"));
         return """
                 # Exercise
 
@@ -163,7 +166,7 @@ class StageCheckServiceTest {
                 """ + designRows + """
 
                 ## Public API
-                `%s`: `int calculate(int input)`
+                %s
 
                 ## Testing Strategy
                 | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -172,7 +175,18 @@ class StageCheckServiceTest {
 
                 ## Diagram
                 no — single-class exercise
-                """.formatted(ownerType, ownerType);
+                """.formatted(publicApi, ownerType);
+    }
+
+    private static String publicApiFor(String type) {
+        return """
+                ### %s
+                ```java
+                public class %s {
+                    public int calculate(int input);
+                }
+                ```
+                """.formatted(type, type);
     }
 
     private DifferentialVerificationService verifier;
@@ -189,7 +203,7 @@ class StageCheckServiceTest {
     void setUp() {
         verifier = mock(DifferentialVerificationService.class);
         approvedSpecs = new ApprovedSpecRegistry();
-        service = new StageCheckService(verifier, approvedSpecs);
+        service = new StageCheckService(verifier, approvedSpecs, true);
         sandbox = new FakeSandbox();
         sandbox.builtAgainstSpec = () -> approvedSpecs.approved("s").orElseGet(() -> sandbox.spec);
         exercise = new ProgrammingExercise();
@@ -200,7 +214,11 @@ class StageCheckServiceTest {
     }
 
     private StageCheckResult check(GenerationStage stage, AgentVerifyReport lastTestsReport) {
-        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, Set.of());
+        return check(stage, lastTestsReport, Set.of());
+    }
+
+    private StageCheckResult check(GenerationStage stage, AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
+        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, seededStructuralTestNames);
     }
 
     @Test
@@ -230,6 +248,18 @@ class StageCheckServiceTest {
 
         assertThat(service.approvedOwnershipViolationAfterCommand(sandbox, "s"))
                 .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy.java").contains("reflection").contains("delete_file/edit_file"));
+    }
+
+    @Test
+    void productionServiceRejectsCandidateAuthoredSpecAuthorityOutsideTheSpecStage() {
+        service = new StageCheckService(verifier, approvedSpecs);
+        sandbox.spec = specWithDesign("| CandidatePolicy | candidate authority | student-creates |\n");
+
+        StageCheckResult result = check(GenerationStage.TESTS);
+
+        assertThat(result.passed()).isFalse();
+        assertThat(result.observation()).contains("unapproved SPEC.md", "cannot define grading authority", "dedicated SPEC stage");
+        verifyNoInteractions(verifier);
     }
 
     @Nested
@@ -457,6 +487,8 @@ class StageCheckServiceTest {
         @Test
         void passes_whenEveryTaskBindingResolvesAgainstTheTestsReportsExactNames() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsDescending)\nImplement ascending and descending sorting.\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testSortsDescending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testSortsAscending", "testSortsDescending"), List.of(),
                     List.of(), true, List.of());
 
@@ -469,6 +501,7 @@ class StageCheckServiceTest {
         void fails_whenADiagramTestsColorNameMatchesNoRealTest() {
             // A dead testsColor link renders an element that can never turn green — same resolution standard as a [task] binding.
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\n@startuml\nclass A {\n  <color:testsColor(testGhost)>+sort()</color>\n}\n@enduml\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
                     List.of());
 
@@ -547,6 +580,9 @@ class StageCheckServiceTest {
         void fails_whenMultipleTaskLinesShareATitle() {
             // Observed live: 18 [task] lines split 1:1 per test with titles like "Telepathic Retrieval" repeated four times.
             sandbox.problemStatement = "# T\n[task][Telepathic](testA)\n[task][Telepathic](testB)\n[task][Crane](testC)\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testA\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testB\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testC\",\"seam\":\"S3\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(3, true, List.of(), 3, true, true, List.of(), List.of("testA", "testB", "testC"), List.of(), List.of(), true,
                     List.of());
 
@@ -604,6 +640,8 @@ class StageCheckServiceTest {
         @Test
         void fails_whenTaskBindingsHaveNoInstructionsBetweenThem() {
             sandbox.problemStatement = "# Title\n[task][First](testA)\n[task][Second](testB)\n";
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testA\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                    + "{\"name\":\"testB\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
             AgentVerifyReport lastTestsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testA", "testB"), List.of(), List.of(), true,
                     List.of());
 
@@ -624,14 +662,53 @@ class StageCheckServiceTest {
 
         @Test
         void passes_whenDiagramTestsColorNamesResolve_includingParenthesisedAndStructuralForms() {
-            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nImplement the sort operation.\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testClass[A])\nImplement the sort operation and create its owner type.\n@startuml\nclass A {\n  <color:testsColor(testSortsAscending())>+sort()</color>\n}\n"
                     + "A -up-|> B #testsColor(testClass[A])\n@enduml\n";
-            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending", "testClass[A]"), List.of(),
-                    List.of(), true, List.of());
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
+                    List.of());
 
-            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
+            StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport, Set.of("testClass[A]"));
 
             assertThat(result.passed()).isTrue();
+        }
+
+        @Test
+        void failsClosed_whenTheAcceptedTestPlanHandoffCannotBeRead() {
+            sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending)\nImplement ascending sorting.\n";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testSortsAscending"), List.of(), List.of(), true,
+                    List.of());
+
+            StageCheckResult missing = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(missing.passed()).isFalse();
+            assertThat(missing.observation()).contains("accepted test-plan.json handoff", "missing or unreadable", "rather than guessing");
+
+            sandbox.testPlanJson = "{not-json";
+            StageCheckResult invalid = check(GenerationStage.STATEMENT, lastTestsReport);
+
+            assertThat(invalid.passed()).isFalse();
+            assertThat(invalid.observation()).contains("accepted test-plan.json handoff", "no longer valid", "not valid JSON");
+        }
+
+        @Test
+        void requiresEveryAuthoritativeStructuralCheckExactlyOnce_evenWhenTheBuildReportOmitsThem() {
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testBehavior\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+            AgentVerifyReport lastTestsReport = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("testBehavior"), List.of(), List.of(), true, List.of());
+            Set<String> structuralChecks = Set.of("testClass[Strategy]", "testMethods[Strategy]");
+            sandbox.problemStatement = "# Title\n[task][Create strategy](testBehavior)\nCreate the strategy and implement its behavior.\n";
+
+            StageCheckResult missing = check(GenerationStage.STATEMENT, lastTestsReport, structuralChecks);
+
+            assertThat(missing.passed()).isFalse();
+            assertThat(missing.observation()).contains("must be bound exactly once", "testClass[Strategy]", "testMethods[Strategy]");
+
+            sandbox.problemStatement = "# Title\n[task][Create strategy](testBehavior,testClass[Strategy],testMethods[Strategy])\n"
+                    + "Create the strategy and implement its behavior.\n[task][Repeat structure](testClass[Strategy])\nDocument its public type.";
+            StageCheckResult duplicate = check(GenerationStage.STATEMENT, lastTestsReport, structuralChecks);
+
+            assertThat(duplicate.passed()).isFalse();
+            assertThat(duplicate.observation()).contains("bound more than once", "testClass[Strategy]");
         }
 
         @Test
@@ -745,7 +822,12 @@ class StageCheckServiceTest {
                 | Calculator | computes the result | stubbed |
 
                 ## Public API
-                `Calculator`: `int calculate(int input)`
+                ### Calculator
+                ```java
+                public class Calculator {
+                    public int calculate(int input);
+                }
+                ```
 
                 ## Testing Strategy
                 | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -799,7 +881,12 @@ class StageCheckServiceTest {
                     | Calculator | computes | stubbed |
 
                     ## Public API
-                    `Calculator`: `int calculate(int input)`
+                    ### Calculator
+                    ```java
+                    public class Calculator {
+                        public int calculate(int input);
+                    }
+                    ```
 
                     ## Testing Strategy
                     | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -833,7 +920,12 @@ class StageCheckServiceTest {
                     | Calculator | computes | stubbed |
 
                     ## Public API
-                    `Calculator`: `int calculate(int input)`
+                    ### Calculator
+                    ```java
+                    public class Calculator {
+                        public int calculate(int input);
+                    }
+                    ```
 
                     ## Testing Strategy
                     | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -974,13 +1066,21 @@ class StageCheckServiceTest {
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", """
                     | Calculator | given context | given |
                     | Policy | interchangeable policy | student-creates |\
-                    """).replace("`Calculator`: `int calculate(int input)`", """
+                    """).replace(publicApiFor("Calculator").strip(), """
                     ### `Calculator`
-                    - `public Calculator(Policy policy)`
-                    - `public int calculate(int input)`
+                    ```java
+                    public class Calculator {
+                        public Calculator(Policy policy);
+                        public int calculate(int input);
+                    }
+                    ```
 
                     ### `Policy`
-                    - `int calculate(int input)`\
+                    ```java
+                    public interface Policy {
+                        int calculate(int input);
+                    }
+                    ```\
                     """).replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Policy | typical and zero | 3 | yes |");
 
             StageCheckResult result = check(GenerationStage.SPEC);

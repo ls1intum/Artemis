@@ -283,15 +283,14 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void statementHandoffIncludesEveryAuthoritativeStructuralCheckGroupedByOwner() {
+    void statementHandoffAndGateUseEveryAuthoritativeStructuralCheckEvenWhenTheBuildReportOmitsThem() {
         Set<String> structuralChecks = Set.of("testMethods[Calculator]", "testClass[Calculator]", "testConstructors[Calculator]");
         when(baseTools.seededStructuralTestNames()).thenReturn(structuralChecks);
         sandbox.problemStatement = "# Title\n\n[task][Create the calculator](testFoo,testClass[Calculator],testConstructors[Calculator],testMethods[Calculator])\n"
                 + "Create the calculator type and implement its operation.";
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), eq(structuralChecks)))
-                .thenReturn(passingReport("testFoo", "testClass[Calculator]", "testConstructors[Calculator]", "testMethods[Calculator]"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), eq(structuralChecks))).thenReturn(passingReport("testFoo"));
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> structuralChecks);

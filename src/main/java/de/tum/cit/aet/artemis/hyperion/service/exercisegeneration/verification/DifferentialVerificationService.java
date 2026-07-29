@@ -417,14 +417,9 @@ public class DifferentialVerificationService {
         return normalized.equals(expected) || normalized.endsWith("." + expected);
     }
 
-    /** The frozen approved specification, falling back to the live workspace only when no spec gate ran for this session. */
+    /** The frozen approved specification. Candidate-authored workspace files never become grading authority. */
     private List<String> contractSpecifications(InteractiveSandbox sandbox, String sessionId) {
-        Optional<String> approved = approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank());
-        if (approved.isPresent()) {
-            return List.of(approved.get());
-        }
-        String liveSpec = readWorkspaceRootFile(sandbox, sessionId, "SPEC.md");
-        return liveSpec.contains("## Design") && liveSpec.contains("## Testing Strategy") ? List.of(liveSpec) : List.of();
+        return approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank()).stream().toList();
     }
 
     static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
@@ -539,8 +534,7 @@ public class DifferentialVerificationService {
         }
         // A later edit may promise a diagram but never un-promise one, so both the live and the approved specification are consulted: rewriting '## Diagram' from yes to no under
         // gate pressure must not make this pass vacuously.
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(readWorkspaceRootFile(sandbox, sessionId, "SPEC.md"))
-                || approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
+        boolean diagramPromised = approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
             statementReasons
