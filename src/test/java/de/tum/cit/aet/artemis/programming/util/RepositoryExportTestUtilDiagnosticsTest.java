@@ -10,6 +10,8 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+
 /**
  * Verifies that a {@code waitForBareRepositoryToContainCommit} timeout reports enough context to be diagnosed.
  * <p>
@@ -58,7 +60,8 @@ class RepositoryExportTestUtilDiagnosticsTest {
         Path workingDir = tempDir.resolve("work");
         String commitHash;
         try (Git git = Git.init().setDirectory(workingDir.toFile()).setInitialBranch("main").call()) {
-            commitHash = git.commit().setMessage("initial").setAllowEmpty(true).setSign(false).call().getId().getName();
+            // GitService.commit rather than Git.commit: an ArchUnit rule enforces it, so that commit signing is always disabled
+            commitHash = GitService.commit(git).setMessage("initial").setAllowEmpty(true).call().getId().getName();
         }
 
         LocalRepository repo = new LocalRepository("main");
