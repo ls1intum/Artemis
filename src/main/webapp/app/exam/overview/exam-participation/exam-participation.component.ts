@@ -38,6 +38,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { isExamSummaryPublished } from 'app/exam/overview/exam.utils';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import {
@@ -85,6 +87,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
     ],
@@ -475,6 +478,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
 
+                    // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
+                    // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
+                    // with a dead Finish button until the exam ends, which reads as if the submission had not gone through. This
+                    // signal write also re-renders the panel, which reads the (mutated) submitted flag above.
+                    this.handInEarly.set(false);
+
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
                         void this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
@@ -625,6 +634,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * Whether the student may currently see the summary (submission overview incl. exam questions, own answers and PDF export) of their submitted exam.
+     * Controlled by the optional exam.examSummaryPublicationDate; unset means the summary is available immediately after submission (default behavior).
+     */
+    isExamSummaryVisible(): boolean {
+        this.wallClockVersion();
+        return isExamSummaryPublished(!!this.testRunId(), this.exam(), this.serverDateService);
+    }
+
+    /**
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
@@ -693,9 +711,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
-        // only show the summary if the student was able to submit on time.
+        // only show the summary if the student was able to submit on time and the summary is already visible (see examSummaryPublicationDate).
         if (this.isOver() && this.studentExam().submitted) {
-            this.loadAndDisplaySummary();
+            if (this.isExamSummaryVisible()) {
+                this.loadAndDisplaySummary();
+            } else {
+                // the instructor delayed the submission overview; withhold it and only show the submission confirmation with the release date
+                this.loadingExam.set(false);
+            }
         } else {
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
@@ -950,6 +973,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // it only makes sense to set "isSynced" to false for quiz, text and modeling
                 if (activeExerciseType !== ExerciseType.PROGRAMMING && activeExerciseType !== ExerciseType.FILE_UPLOAD) {
                     activeSubmission.isSynced = false;
+                    // isSynced was mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
+                    this.examParticipationService.notifySubmissionSyncStateChanged();
                 }
             }
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
@@ -1018,6 +1043,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private onSaveSubmissionSuccess(submission: Submission) {
         submission.isSynced = true;
         submission.submitted = true;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
         // Only clear the failed-save flag once every syncable answer (quiz/text/modeling) is actually synced. Clearing it
         // after a single successful save while another exercise's answer is still unsynced would wrongly suppress the
         // restore-on-reload path for that not-yet-saved answer (a partial re-send must keep the exam marked save-failed).
@@ -1046,6 +1073,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
         this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
+        // The submission stays isSynced=false after a failed save; notify sync-state-dependent UI to re-evaluate
+        // (e.g. keep the save button enabled) since the flag was mutated in place.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
 
         if (error.status === 401) {
             // Unauthorized means the user needs to log in to resume

@@ -27,6 +27,14 @@ export class TumUiPaginatorComponent {
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
     readonly disabled = input(false);
+    /**
+     * Show the "Showing X to Y of Z" report. Default true (the smart-table look). Set false when replacing a
+     * bare PrimeNG `p-paginator` that rendered navigation only — or where a separate `jhi-item-count` already
+     * shows the count — so the migrated view stays visually identical.
+     */
+    readonly showCurrentPageReport = input(true);
+    /** Show the rows-per-page `<select>`. Default true. Set false when the original `p-paginator` had no `rowsPerPageOptions`. */
+    readonly showRowsPerPage = input(true);
 
     readonly pageChange = output<number>();
     readonly pageSizeChange = output<number>();
