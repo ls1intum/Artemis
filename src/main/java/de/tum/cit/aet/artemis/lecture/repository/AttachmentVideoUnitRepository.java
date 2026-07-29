@@ -4,10 +4,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -70,6 +73,32 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
         return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
     }
 
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+                JOIN FETCH attachmentVideoUnit.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithLectureAndCourseAndAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findByIdForUpdate(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
     /**
      * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
      * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.
@@ -91,9 +120,37 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (
                     (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
                     OR
-                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
                 )
             ORDER BY avu.id
             """)
     List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Finds active attachment video units for which no Iris synchronization state exists yet.
+     * This supports a bounded rollout backfill for units created before retryable synchronization
+     * was introduced.
+     *
+     * @param now      the current time for determining active courses
+     * @param pageable pagination to limit results
+     * @return attachment video units without an Iris synchronization state
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+            JOIN avu.lecture l
+            JOIN l.course c
+            LEFT JOIN IrisLectureUnitSyncState syncState ON syncState.lectureUnitId = avu.id AND syncState.visibilityHash IS NOT NULL
+            WHERE syncState.id IS NULL
+                AND (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = FALSE
+                AND l.isTutorialLecture = FALSE
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (avu.attachment IS NOT NULL AND LOWER(avu.attachment.link) LIKE '%.pdf')
+                )
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 }

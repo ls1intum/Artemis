@@ -567,32 +567,49 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Obtains the repository-scoped VCS access token of the current (staff) user for a base repository of a programming exercise. Returns 404 if none exists yet.
+     * Obtains the repository-scoped VCS access token of the current (staff) user for a repository of a programming exercise. Returns 404 if none exists yet.
      *
      * @param exerciseId the id of the programming exercise
-     * @param repositoryType the base repository type (TEMPLATE, SOLUTION, TESTS or AUXILIARY)
+     * @param repositoryType the repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER for a student assignment repository)
      * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     * @param participationId the id of the student participation (only relevant for USER)
      */
-    getRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number): Observable<HttpResponse<string>> {
-        let params = new HttpParams().set('exerciseId', exerciseId).set('repositoryType', repositoryType);
-        if (auxiliaryRepositoryId !== undefined) {
-            params = params.set('auxiliaryRepositoryId', auxiliaryRepositoryId);
-        }
-        return this.http.get<string>('api/programming/repository-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
+    getRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>('api/programming/repository-vcs-access-token', {
+            observe: 'response',
+            params: this.repositoryVcsAccessTokenParams(exerciseId, repositoryType, auxiliaryRepositoryId, participationId),
+            responseType: 'text' as 'json',
+        });
     }
 
     /**
-     * Obtains, creating it if necessary, the repository-scoped VCS access token of the current (staff) user for a base repository of a programming exercise.
+     * Obtains, creating it if necessary, the repository-scoped VCS access token of the current (staff) user for a repository of a programming exercise.
      *
      * @param exerciseId the id of the programming exercise
-     * @param repositoryType the base repository type (TEMPLATE, SOLUTION, TESTS or AUXILIARY)
+     * @param repositoryType the repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER for a student assignment repository)
      * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     * @param participationId the id of the student participation (only relevant for USER)
      */
-    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number): Observable<HttpResponse<string>> {
+    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): Observable<HttpResponse<string>> {
+        return this.http.put<string>('api/programming/repository-vcs-access-token', null, {
+            observe: 'response',
+            params: this.repositoryVcsAccessTokenParams(exerciseId, repositoryType, auxiliaryRepositoryId, participationId),
+            responseType: 'text' as 'json',
+        });
+    }
+
+    /**
+     * Builds the query parameters shared by the GET and PUT repository-vcs-access-token endpoints, adding the auxiliary repository id (for AUXILIARY) and the participation id (for a
+     * USER/student repository) only when they are provided.
+     */
+    private repositoryVcsAccessTokenParams(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number, participationId?: number): HttpParams {
         let params = new HttpParams().set('exerciseId', exerciseId).set('repositoryType', repositoryType);
         if (auxiliaryRepositoryId !== undefined) {
             params = params.set('auxiliaryRepositoryId', auxiliaryRepositoryId);
         }
-        return this.http.put<string>('api/programming/repository-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        if (participationId !== undefined) {
+            params = params.set('participationId', participationId);
+        }
+        return params;
     }
 }

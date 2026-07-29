@@ -14,7 +14,6 @@ on:
         required: true
         type: choice
         options:
-          - artemis-staging-localci.artemis.cit.tum.de
           - staging1.artemis.cit.tum.de
           - staging2.artemis.cit.tum.de
           - artemis.tum.de
