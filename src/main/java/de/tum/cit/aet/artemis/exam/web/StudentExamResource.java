@@ -362,6 +362,14 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
+        // If the instructor delayed the submission overview (examSummaryPublicationDate), a student who already submitted must not be able to re-fetch the exam content via
+        // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
+        // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
+        boolean conductionAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+        if (!conductionAccessAlwaysAllowed && Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
+            throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+        }
+
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
             websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
@@ -474,6 +482,13 @@ public class StudentExamResource {
         // 3rd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
             throw new AccessForbiddenException("You are not allowed to access the summary of a student exam which was NOT submitted!");
+        }
+
+        // 3.5th: if the instructor configured a summary publication date, students may only access the summary (incl. exam questions and the PDF export)
+        // from that date onwards. This protects staggered/multi-shift exams from early submitters leaking the exam content. Instructors and test runs always have access.
+        boolean summaryAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
+        if (!summaryAccessAlwaysAllowed && !studentExam.getExam().isExamSummaryPublished()) {
+            throw new AccessForbiddenException("The summary of this student exam is not available yet");
         }
 
         // 4th: Reload the Quiz-Exercises
