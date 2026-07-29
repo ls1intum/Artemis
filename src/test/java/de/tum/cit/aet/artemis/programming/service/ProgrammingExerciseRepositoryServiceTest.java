@@ -178,6 +178,24 @@ class ProgrammingExerciseRepositoryServiceTest {
     }
 
     @Test
+    void setupBuildToolProjectFile_removesTheMirrorDeclarationsForSequentialTestRuns() throws Exception {
+        Path repoPath = gradleTestRepository();
+
+        Map<String, Boolean> sequentialSections = mirrorSections(false);
+        sequentialSections.put("non-sequential", false);
+        sequentialSections.put("sequential", true);
+
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.PLAIN_GRADLE, sequentialSections);
+
+        // Sequential test runs go through the same helper, so settings.gradle must be resolved there as well - otherwise
+        // Gradle would try to resolve plugins from a repository whose URL is the literal placeholder.
+        String settingsGradle = Files.readString(repoPath.resolve("settings.gradle"));
+        assertThat(settingsGradle).doesNotContain("pluginManagement").doesNotContain("${mavenCentralMirrorUrl}").doesNotContain("%maven-central-mirror");
+        assertThat(settingsGradle).contains("rootProject.name");
+        assertThat(Files.readString(repoPath.resolve("build.gradle"))).doesNotContain("${mavenCentralMirrorUrl}").doesNotContain("%maven-central-mirror");
+    }
+
+    @Test
     void replacePlaceholders_insertsTheConfiguredMirrorUrl() throws Exception {
         ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
         Path repoPath = gradleTestRepository();

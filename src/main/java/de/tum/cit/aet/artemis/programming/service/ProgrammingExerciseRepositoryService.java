@@ -675,17 +675,10 @@ public class ProgrammingExerciseRepositoryService {
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
         final boolean isMaven = isMavenProject(projectType);
 
-        final String projectFileName;
-        if (isMaven) {
-            projectFileName = POM_XML;
-        }
-        else {
-            projectFileName = BUILD_GRADLE;
-        }
-
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        FileUtil.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
+        // Shared with the non-sequential path so that both resolve settings.gradle, and not just the main project file.
+        setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
