@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 
 /**
  * Unit tests for {@link Exam#isExamSummaryPublished()}, the server-side gate that decides whether a student may fetch the
@@ -67,7 +68,7 @@ class ExamSummaryPublicationTest {
     @Test
     void isExamSummaryPublished_testExam_neverGated() {
         Exam testExam = examWith(FUTURE, null);
-        testExam.setTestExam(true);
+        testExam.setExamMode(ExamMode.TEST);
 
         assertThat(testExam.isExamSummaryPublished()).isTrue();
     }
