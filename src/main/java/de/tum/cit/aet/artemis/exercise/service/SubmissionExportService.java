@@ -71,8 +71,15 @@ public abstract class SubmissionExportService {
      * @return the path to the zipped file with the exported submissions
      */
     public Path exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        var zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions);
+        List<String> exportErrors = new ArrayList<>();
+        var zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions, true,
+                fileService.getTemporaryUniqueSubfolderPath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES),
+                exportErrors, new ArrayList<>());
         if (zippedSubmissionsPaths.isEmpty()) {
+            if (!exportErrors.isEmpty()) {
+                String errorDetails = String.join("; ", exportErrors);
+                throw new BadRequestAlertException("Failed to export student submissions: " + errorDetails, "SubmissionExport", "exportError");
+            }
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
         return zippedSubmissionsPaths.getFirst();
