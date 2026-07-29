@@ -103,7 +103,7 @@ public class AttachmentResource {
         Attachment attachmentUpdate = toTransientAttachment(attachment);
         Attachment result = attachmentService.updateLectureAttachment(attachmentId, attachmentUpdate, file);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
         return ResponseEntity.ok(AttachmentDTO.of(result));
     }
