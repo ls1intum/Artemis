@@ -188,7 +188,13 @@
                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                 <span class="d-none d-xl-inline ms-1">Online editor</span>
             </a>
-            <jhi-iris-review-assessment-button class="me-1" [smallButtons]="true" [course]="course" [exercise]="exercise" [participation]="value" />
+            <jhi-iris-review-assessment-button
+                class="me-1"
+                [smallButton]="true"
+                [course]="course()!"
+                [exercise]="toProgrammingExercise()"
+                [participation]="toProgrammingParticipation(dto)"
+            />
         }
         <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
     </div>

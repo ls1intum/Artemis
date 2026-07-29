@@ -34,122 +34,80 @@
         </div>
     }
 </div>
-<jhi-data-table
-    [isLoading]="isLoading()"
-    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-    [allEntities]="participationRows()"
-    entityType="participation"
-    [searchEntityFilterEnabled]="false"
-    [showSearchField]="false"
-    [searchEnabled]="false"
-    [showPageSizeDropdown]="false"
->
-    <ng-template let-settings="settings" let-controls="controls">
-        <ngx-datatable
-            class="bootstrap"
-            [limit]="settings.limit"
-            [sortType]="settings.sortType"
-            [columnMode]="settings.columnMode"
-            [headerHeight]="settings.headerHeight"
-            [footerHeight]="settings.footerHeight"
-            [rowHeight]="settings.rowHeight"
-            [rows]="settings.rows"
-            [rowClass]="settings.rowClass"
-            [scrollbarH]="settings.scrollbarH"
-        >
-            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort(nameSortFieldProperty)">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.name"></span>
-                        <fa-icon [icon]="controls.iconForSortPropField(nameSortFieldProperty)" />
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    @if (exercise().isAtLeastInstructor) {
-                        <span>
-                            <a [routerLink]="value.participationLink">
-                                {{ value.student?.name }}
-                            </a>
-                        </span>
-                    }
-                    @if (!exercise().isAtLeastInstructor) {
-                        <span>
-                            {{ value.student?.name }}
-                        </span>
-                    }
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort(studentLoginSortFieldProperty)">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.studentId"></span>
-                        <fa-icon [icon]="controls.iconForSortPropField(studentLoginSortFieldProperty)" />
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value.student.login }}
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort(submissionCountSortFieldProperty)">
-                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.submissionCount"></span>
-                        <fa-icon [icon]="controls.iconForSortPropField(submissionCountSortFieldProperty)" />
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="w-100 text-center">
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th jhiTranslate="artemisApp.exercise.name"></th>
+                <th jhiTranslate="artemisApp.exercise.studentId"></th>
+                <th class="text-center" jhiTranslate="artemisApp.exercise.submissionCount"></th>
+                @if (exercise().isAtLeastInstructor) {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (participation of participationRows(); track participation.id ?? $index) {
+                <tr>
+                    <td>
                         @if (exercise().isAtLeastInstructor) {
-                            <a [routerLink]="value.participationLink">
-                                {{ value.submissionCount }}
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.student?.name }}
                             </a>
                         } @else {
-                            {{ value.submissionCount }}
+                            {{ participation.student?.name }}
                         }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            @if (exercise().isAtLeastInstructor) {
-                <ngx-datatable-column prop="" [minWidth]="350" [width]="400">
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="button-header">
-                            <div class="mb-2">
-                                @if (value.repositoryUri) {
-                                    <jhi-code-button
-                                        class="me-1"
-                                        [smallButtons]="true"
-                                        [repositoryUri]="value.repositoryUri || ''"
-                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
-                                    />
-                                }
-                                @if (value.buildPlanId && !localCIEnabled) {
-                                    <a target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
-                                        <fa-icon class="me-1" [icon]="faFileCode" />
-                                        Build plan
+                    </td>
+                    <td>{{ participation.student?.login }}</td>
+                    <td class="text-center">
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.submissionCount }}
+                            </a>
+                        } @else {
+                            {{ participation.submissionCount }}
+                        }
+                    </td>
+                    @if (exercise().isAtLeastInstructor) {
+                        <td>
+                            <div class="button-header">
+                                <div class="mb-2">
+                                    @if (participation.repositoryUri) {
+                                        <jhi-code-button
+                                            class="me-1"
+                                            [smallButtons]="true"
+                                            [repositoryUri]="participation.repositoryUri || ''"
+                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
+                                        />
+                                    }
+                                    @if (participation.buildPlanId && !localCIEnabled) {
+                                        <a target="_blank" rel="noreferrer" href="{{ participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
+                                            <fa-icon class="me-1" [icon]="faFileCode" />
+                                            Build plan
+                                        </a>
+                                    }
+                                    <a
+                                        [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
+                                        class="btn btn-info btn-sm me-1"
+                                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    >
+                                        <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
+                                        Online editor
                                     </a>
-                                }
-                                <!-- TODO This should ideally be a course management route. Used for the code editor where instructors can add commits to student repositories. -->
-                                <a
-                                    [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', value.id]"
-                                    class="btn btn-info btn-sm me-1"
-                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                >
-                                    <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
-                                    Online editor
-                                </a>
-                                <jhi-iris-review-assessment-button
-                                    class="me-1"
-                                    [smallButton]="true"
-                                    [course]="course()"
-                                    [exercise]="exercise()"
-                                    [participation]="value"
-                                    [inClass]="showStartInClassQuizButton()"
-                                />
+                                    <jhi-iris-review-assessment-button
+                                        class="me-1"
+                                        [smallButton]="true"
+                                        [course]="course()"
+                                        [exercise]="exercise()"
+                                        [participation]="participation"
+                                        [inClass]="showStartInClassQuizButton()"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </ng-template>
-                </ngx-datatable-column>
+                        </td>
+                    }
+                </tr>
             }
-        </ngx-datatable>
-    </ng-template>
-</jhi-data-table>
+        </tbody>
+    </table>
+</div>

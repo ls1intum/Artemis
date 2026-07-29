@@ -29,9 +29,11 @@ describe('IrisSettingsUpdateComponent', () => {
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
+        promptingModeEnabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
         supportLevel: 'moderate',
+        promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -103,7 +105,13 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should handle null rateLimit from server', async () => {
             const nullRateLimitResponse: IrisCourseSettingsWithRateLimitDTO = {
                 courseId: 1,
-                settings: { enabled: true, variant: 'default', rateLimit: undefined as any },
+                settings: {
+                    enabled: true,
+                    promptingModeEnabled: true,
+                    variant: 'default',
+                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: undefined as any,
+                },
                 effectiveRateLimit: { requests: 50, timeframeHours: 12 },
                 applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
             };
@@ -425,20 +433,20 @@ describe('IrisSettingsUpdateComponent', () => {
     describe('getCustomInstructionsLength', () => {
         it('should return length of custom instructions', () => {
             component.settings.set({ ...mockSettings, customInstructions: 'Test' });
-            expect(component.getCustomInstructionsLength()).toBe(4);
+            expect(component.customInstructionsLength()).toBe(4);
 
             component.settings.set({ ...mockSettings, customInstructions: 'Hello World' });
-            expect(component.getCustomInstructionsLength()).toBe(11);
+            expect(component.customInstructionsLength()).toBe(11);
         });
 
         it('should return 0 if custom instructions are undefined', () => {
             component.settings.set({ ...mockSettings, customInstructions: undefined });
-            expect(component.getCustomInstructionsLength()).toBe(0);
+            expect(component.customInstructionsLength()).toBe(0);
         });
 
         it('should return 0 if settings are undefined', () => {
             component.settings.set(undefined);
-            expect(component.getCustomInstructionsLength()).toBe(0);
+            expect(component.customInstructionsLength()).toBe(0);
         });
     });
 
@@ -556,7 +564,7 @@ describe('IrisSettingsUpdateComponent', () => {
             component.resetToDefault();
 
             const saved = updateSpy.mock.calls[0][1];
-            // mockSettings: variant 'default', rateLimit {100, 24} — must survive the reset
+            // mockSettings: variant 'default', rateLimit {100, 24} must survive the reset
             expect(saved.variant).toBe('default');
             expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
         });
@@ -593,7 +601,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
             component.resetToDefault();
 
-            // Idempotent click — no unnecessary network request
+            // Idempotent click, no unnecessary network request
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -844,6 +852,57 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.rateLimitRequestsError()).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
             expect(component.rateLimitTimeframeError()).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBe(false);
+        });
+    });
+
+    describe('prompting mode settings', () => {
+        beforeEach(async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+        });
+
+        it('should update prompting mode quiz settings', async () => {
+            component.updatePromptingModeSetting('minQuestions', 4);
+            component.updatePromptingModeSetting('maxQuestions', 8);
+            component.updatePromptingModeSetting('timeLimitQuestion', 60);
+            component.updatePromptingModeSetting('timeLimitInClass', 20);
+
+            expect(component.settings()?.promptingModeSettings).toEqual({ minQuestions: 4, maxQuestions: 8, timeLimitQuestion: 60, timeLimitInClass: 20 });
+            expect(component.isDirty()).toBe(true);
+            expect(component.isFormValid()).toBe(true);
+        });
+
+        it('should reject invalid prompting mode quiz settings while prompting mode is enabled', async () => {
+            component.updatePromptingModeSetting('minQuestions', 6);
+            component.updatePromptingModeSetting('maxQuestions', 5);
+            component.updatePromptingModeSetting('timeLimitQuestion', 181);
+            component.updatePromptingModeSetting('timeLimitInClass', 31);
+
+            expect(component.promptingModeMinQuestionsError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.promptingModeMaxQuestionsError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.promptingModeQuestionTimeLimitError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.questionTimeLimitRange');
+            expect(component.promptingModeInClassTimeLimitError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.inClassTimeLimitRange');
+            expect(component.isFormValid()).toBe(false);
+        });
+
+        it('should reset hidden invalid prompting mode quiz settings before saving disabled prompting mode', async () => {
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            component.settings.set(
+                Object.assign({}, component.settings()!, {
+                    promptingModeSettings: { minQuestions: 6, maxQuestions: 5, timeLimitQuestion: 181, timeLimitInClass: 31 },
+                }),
+            );
+            expect(component.isFormValid()).toBe(false);
+
+            component.setPromptingModeEnabled(false);
+            component.saveSettings();
+            await fixture.whenStable();
+
+            const savedSettings = updateSpy.mock.calls[0][1];
+            expect(savedSettings.promptingModeEnabled).toBe(false);
+            expect(savedSettings.promptingModeSettings).toEqual({ minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 });
+            expect(component.isFormValid()).toBe(true);
         });
     });
 

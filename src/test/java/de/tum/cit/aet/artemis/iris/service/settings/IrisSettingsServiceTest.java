@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPromptingModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
@@ -38,6 +39,8 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         var settings = irisSettingsService.getSettingsForCourse(course);
 
         assertThat(settings.enabled()).isTrue();
+        assertThat(settings.promptingModeEnabled()).isTrue();
+        assertThat(settings.promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
         assertThat(settings.customInstructions()).isNull();
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(settings.rateLimit()).isNull();
@@ -46,12 +49,15 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     @Test
     void getSettingsForCourse_returnsStoredSettings() {
         var customRateLimit = new IrisRateLimitConfiguration(12, 6);
-        var payload = IrisCourseSettings.of(false, "stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, customRateLimit);
+        var promptingModeSettings = new IrisPromptingModeSettings(2, 6, 40, 20);
+        var payload = IrisCourseSettings.of(false, false, promptingModeSettings, "stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, customRateLimit);
         irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
         var settings = irisSettingsService.getSettingsForCourse(course.getId());
 
         assertThat(settings.enabled()).isFalse();
+        assertThat(settings.promptingModeEnabled()).isFalse();
+        assertThat(settings.promptingModeSettings()).isEqualTo(promptingModeSettings);
         assertThat(settings.customInstructions()).isEqualTo("stored");
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
         assertThat(settings.rateLimit()).isEqualTo(customRateLimit);
@@ -248,10 +254,65 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void sanitizePayload_preservesPromptingModeEnabled() {
+        var payload = IrisCourseSettings.of(true, false, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.promptingModeEnabled()).isFalse();
+    }
+
+    @Test
+    void sanitizePayload_preservesPromptingModeSettings() {
+        var promptingModeSettings = new IrisPromptingModeSettings(2, 7, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, promptingModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.promptingModeSettings()).isEqualTo(promptingModeSettings);
+    }
+
+    @Test
+    void sanitizePayload_rejectsPromptingModeMinQuestionsGreaterThanMaxQuestions() {
+        var promptingModeSettings = new IrisPromptingModeSettings(7, 2, 45, 20);
+        var payload = IrisCourseSettings.of(true, true, promptingModeSettings, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
+
+        assertThatThrownBy(() -> irisSettingsService.sanitizePayload(payload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Minimum questions must not exceed maximum questions");
+    }
+
+    @Test
+    void updateCourseSettings_asInstructor_canChangePromptingModeSettings() {
+        enableIrisFor(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        var promptingModeSettings = new IrisPromptingModeSettings(2, 6, 45, 20);
+        var payload = IrisCourseSettings.of(current.enabled(), current.promptingModeEnabled(), promptingModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
+
+        assertThat(dto.settings().promptingModeSettings()).isEqualTo(promptingModeSettings);
+        assertThat(irisSettingsService.getSettingsForCourse(course.getId()).promptingModeSettings()).isEqualTo(promptingModeSettings);
+    }
+
+    @Test
+    void updateCourseSettings_asInstructor_canChangePromptingModeEnabled() {
+        enableIrisFor(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        var payload = IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
+
+        assertThat(dto.settings().promptingModeEnabled()).isFalse();
+        assertThat(irisSettingsService.getSettingsForCourse(course.getId()).promptingModeEnabled()).isFalse();
+    }
+
+    @Test
     void updateCourseSettings_asInstructor_canChangeSupportLevel() {
         enableIrisFor(course);
         var current = irisSettingsService.getSettingsForCourse(course.getId());
-        var payload = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), IrisSupportLevel.LOW, current.rateLimit());
+        var payload = IrisCourseSettings.of(current.enabled(), current.promptingModeEnabled(), current.customInstructions(), current.variant(), IrisSupportLevel.LOW,
+                current.rateLimit());
 
         // isAdmin = false: support level is intentionally instructor-editable, so this must not throw
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
@@ -355,6 +416,8 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         var settings = irisSettingsService.getSettingsForCourseOrThrow(course.getId());
 
         assertThat(settings.enabled()).isTrue();
+        assertThat(settings.promptingModeEnabled()).isTrue();
+        assertThat(settings.promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
         assertThat(settings.customInstructions()).isNull();
         assertThat(settings.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(settings.rateLimit()).isNull();

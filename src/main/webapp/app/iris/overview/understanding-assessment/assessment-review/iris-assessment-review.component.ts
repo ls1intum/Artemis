@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import { map, take } from 'rxjs';
+
 import { Course } from 'app/course/shared/entities/course.model';
 import { IrisAssessmentReviewService } from 'app/iris/overview/services/iris-assessment-review.service';
 import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
@@ -10,17 +11,15 @@ import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.mod
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { IrisAssessmentReviewResolvedData } from 'app/iris/overview/services/iris-assessment-review-resolver.service';
 
 @Component({
     selector: 'jhi-iris-assessment-review',
     templateUrl: './iris-assessment-review.component.html',
     styleUrl: './iris-assessment-review.component.scss',
-    imports: [NgxDatatableModule, DataTableComponent, TranslateDirective, ArtemisTranslatePipe, ExerciseActionButtonComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, ExerciseActionButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisAssessmentReviewComponent {

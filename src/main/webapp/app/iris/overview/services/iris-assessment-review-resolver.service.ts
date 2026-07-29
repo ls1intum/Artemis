@@ -44,7 +44,7 @@ export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentRevie
 
                 return {
                     course,
-                    exercise: exercise as ProgrammingExercise,
+                    exercise: exercise,
                     assessment,
                     rows,
                 };

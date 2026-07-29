@@ -7,7 +7,7 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentIrisAssessmentDTO(String login, String name) implements Serializable {

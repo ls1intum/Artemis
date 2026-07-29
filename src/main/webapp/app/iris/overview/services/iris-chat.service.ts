@@ -30,7 +30,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -84,10 +83,13 @@ export class IrisChatService implements OnDestroy {
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
-    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
-    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
-    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
-    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
+    runInfo: BehaviorSubject<IrisRunInfo | undefined> = new BehaviorSubject<IrisRunInfo | undefined>(undefined);
+    activities: BehaviorSubject<IrisActivityItem[]> = new BehaviorSubject<IrisActivityItem[]>([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
+    liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
     latestEvent: Subject<IrisPipeEvent | undefined> = new Subject<IrisPipeEvent | undefined>();
     stopTimer$ = new Subject<void>();
 
@@ -121,6 +123,7 @@ export class IrisChatService implements OnDestroy {
     private knownRunIds = new Set<string>();
     private terminalRunStateByRunId = new Map<string, IrisRunState>();
     private currentRunId?: string;
+    private emittedRunEvents = new Set<string>();
 
     private finalizedRunIds = new Set<string>();
     private pendingRunGeneration = signal(false);
@@ -137,7 +140,6 @@ export class IrisChatService implements OnDestroy {
         return !info.runId || !this.answeredRunIds().has(info.runId);
     });
 
-    private sessionHttpIdentifier?: string;
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
@@ -633,7 +635,7 @@ export class IrisChatService implements OnDestroy {
     public clearChat(): Promise<void> {
         this.close();
         return new Promise((resolve) => {
-            this.createNewSession().subscribe({
+            this.createCourseSession().subscribe({
                 next: (session) => {
                     this.handleNewSession().next?.(session);
                 },
@@ -668,13 +670,14 @@ export class IrisChatService implements OnDestroy {
             const merged = this.mergeCitationInfo(this.citationInfo.getValue(), payload.citationInfo);
             this.citationInfo.next(merged);
         }
-        this.applyRunState(payload);
+        const isCurrentRunPayload = !payload.runId || payload.runId === this.currentRunId;
+        if (isCurrentRunPayload) {
+            this.applyRunState(payload);
+        }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
-                if (payload.event) {
-                    this.latestEvent.next(payload.event);
-                }
                 this.handleMessageWebsocketPayload(payload);
+                this.applyPipeEvent(payload);
                 break;
             case IrisChatWebsocketPayloadType.PARTIAL:
                 this.handlePartialWebsocketMessage(payload);
@@ -686,6 +689,20 @@ export class IrisChatService implements OnDestroy {
                 }
                 break;
         }
+    }
+
+    private applyPipeEvent(payload: IrisChatWebsocketDTO): void {
+        if (!payload.event) {
+            return;
+        }
+
+        const eventKey = payload.runId ? `${payload.runId}:${payload.event}` : payload.event;
+        if (this.emittedRunEvents.has(eventKey)) {
+            return;
+        }
+
+        this.emittedRunEvents.add(eventKey);
+        this.latestEvent.next(payload.event);
     }
 
     private shouldApplyRunScopedPayload(payload: IrisChatWebsocketDTO): boolean {
@@ -704,7 +721,7 @@ export class IrisChatService implements OnDestroy {
             this.closePendingRunGeneration();
         }
         if (this.currentRunId && runId !== this.currentRunId) {
-            return false;
+            return this.isPromptingMessagePayload(payload);
         }
 
         const terminalState = this.terminalRunStateByRunId.get(runId);
@@ -712,6 +729,10 @@ export class IrisChatService implements OnDestroy {
             return false;
         }
         return true;
+    }
+
+    private isPromptingMessagePayload(payload: IrisChatWebsocketDTO): boolean {
+        return payload.type === IrisChatWebsocketPayloadType.MESSAGE && !!payload.event;
     }
 
     private applyRunState(payload: IrisChatWebsocketDTO): void {
@@ -737,6 +758,7 @@ export class IrisChatService implements OnDestroy {
 
     private handleMessageWebsocketPayload(payload: IrisChatWebsocketDTO): void {
         const isIntermediateMessage = this.isIntermediateMessagePayload(payload);
+        const isCurrentRunMessage = !payload.runId || payload.runId === this.currentRunId;
         if (payload.runId && !isIntermediateMessage) {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
@@ -746,10 +768,12 @@ export class IrisChatService implements OnDestroy {
         const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {
             if (!isIntermediateMessage && isNewMessage) {
-                this.markAnswerArrived(payload.runId);
+                if (isCurrentRunMessage) {
+                    this.markAnswerArrived(payload.runId);
+                }
                 this.numNewMessages.next(this.numNewMessages.getValue() + 1);
             }
-            if (payload.runId && !isIntermediateMessage) {
+            if (payload.runId && !isIntermediateMessage && isCurrentRunMessage) {
                 this.activities.next([]);
             }
         }
@@ -805,6 +829,7 @@ export class IrisChatService implements OnDestroy {
     private openPendingRunGeneration(): void {
         this.runInfo.next(undefined);
         this.activities.next([]);
+        this.currentRunId = undefined;
         this.pendingRunGeneration.set(true);
     }
 
@@ -827,6 +852,7 @@ export class IrisChatService implements OnDestroy {
         this.knownRunIds.clear();
         this.terminalRunStateByRunId.clear();
         this.currentRunId = undefined;
+        this.emittedRunEvents.clear();
         this.pendingRunGeneration.set(false);
         this.answeredRunIds.set(new Set<string>());
     }
@@ -1093,15 +1119,9 @@ export class IrisChatService implements OnDestroy {
         return this.latestEvent.asObservable();
     }
 
-    public startPromptingMode(): Observable<void> {
+    public startPromptingMode(exerciseId: number): Observable<void> {
         return from(this.clearChat()).pipe(
-            switchMap(() => {
-                if (!this.sessionHttpIdentifier) {
-                    throw new Error('Session http identifier not set');
-                }
-
-                return this.http.startPromptingMode(this.sessionHttpIdentifier);
-            }),
+            switchMap(() => this.irisChatHttpService.startPromptingMode(exerciseId)),
             map(() => undefined),
             catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
         );
@@ -1143,15 +1163,9 @@ export class IrisChatService implements OnDestroy {
         this.shouldReopenChatSubject.next(value);
     }
 
-    public startInClassPromptingMode(): Observable<void> {
+    public startInClassPromptingMode(exerciseId: number): Observable<void> {
         return from(this.clearChat()).pipe(
-            switchMap(() => {
-                if (!this.sessionHttpIdentifier) {
-                    throw new Error('Session http identifier not set');
-                }
-
-                return this.http.startInClassPromptingMode(this.sessionHttpIdentifier);
-            }),
+            switchMap(() => this.irisChatHttpService.startInClassPromptingMode(exerciseId)),
             map(() => undefined),
             catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
         );

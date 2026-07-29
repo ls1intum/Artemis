@@ -104,9 +104,8 @@ export class IrisStartInClassQuizButtonComponent {
         }
 
         const websocketTopic = `/topic/iris/programming-exercises/${exerciseId}/assessment-quiz/in-class/start`;
-        this.websocketService.subscribe(websocketTopic);
         const websocketSubscription = this.websocketService
-            .receive(websocketTopic)
+            .subscribe<void>(websocketTopic)
             .pipe(
                 switchMap(() =>
                     this.assessmentQuizService.getActiveInClassQuiz(exerciseId).pipe(
@@ -121,7 +120,6 @@ export class IrisStartInClassQuizButtonComponent {
 
         onCleanup(() => {
             websocketSubscription.unsubscribe();
-            this.websocketService.unsubscribe(websocketTopic);
         });
     });
 
@@ -153,7 +151,7 @@ export class IrisStartInClassQuizButtonComponent {
         this.assessmentQuizService.setInClassPromptingModeStarted(exerciseId, true);
 
         this.irisChatService
-            .startInClassPromptingMode()
+            .startInClassPromptingMode(exerciseId)
             .pipe(take(1))
             .subscribe({
                 error: () => {

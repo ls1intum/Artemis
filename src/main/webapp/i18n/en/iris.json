@@ -62,6 +62,24 @@
                 "irisDisabled": "Iris is disabled",
                 "enableSubtext": "All students in this course can use Iris when it is enabled",
                 "disabledSubtext": "Iris is inactive for this course.",
+                "promptingModeEnabled": "Prompting mode is enabled",
+                "promptingModeDisabled": "Prompting mode is disabled",
+                "promptingModeEnabledSubtext": "Students can start prompting mode in programming exercises.",
+                "promptingModeDisabledSubtext": "Prompting mode controls are hidden for students.",
+                "promptingModeSettings": {
+                    "title": "Prompting Mode Quiz",
+                    "help": "Configure how many questions Iris asks and how long students have to answer.",
+                    "minQuestions": "Minimum number of questions",
+                    "maxQuestions": "Maximum number of questions",
+                    "timeLimitQuestion": "Time per question in seconds",
+                    "timeLimitInClass": "In-class quiz duration in minutes",
+                    "validation": {
+                        "questionRange": "Question limits must be between 1 and 10.",
+                        "minQuestionsBeforeMaxQuestions": "Minimum questions must not exceed maximum questions.",
+                        "questionTimeLimitRange": "The per-question time limit must be between 1 and 180 seconds.",
+                        "inClassTimeLimitRange": "The in-class quiz duration must be between 1 and 30 minutes."
+                    }
+                },
                 "supportLevel": {
                     "title": "Level of Instructional Support",
                     "help": "Low prioritizes independent problem-solving. High adds detailed explanations, analogies, and examples.",

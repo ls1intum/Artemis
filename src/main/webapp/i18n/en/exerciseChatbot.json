@@ -50,7 +50,7 @@
                 "technicalError": "There has been a technical error. Please contact Artemis Administrators if this error message persists.",
                 "irisNotAvailable": "Iris is not available. Please try again later!",
                 "rateLimitExceeded": "You have reached the maximum number of messages you can send to Iris in a {{ hours }} hour window. Please try again later!",
-                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris."
+                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris.",
                 "startPromptingFailed": "Could not start assessment of understanding."
             },
             "disclaimer": "Iris can make mistakes. Consider checking important information.",
@@ -64,9 +64,8 @@
                 "copy": "Copy",
                 "goodResponse": "Good response",
                 "badResponse": "Bad response"
-            }
             },
-            "onlyPromptingEnabled": "Exercise Chat is disabled. I only assess your understanding."
+            "onlyPromptingEnabled": "Exercise Chat is disabled. I only assess your understanding.",
             "secondsLeft": "seconds left",
             "timeLeft": "left"
         }

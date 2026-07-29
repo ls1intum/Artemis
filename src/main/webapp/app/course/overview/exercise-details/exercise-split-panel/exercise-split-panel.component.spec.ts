@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -18,6 +19,11 @@ import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-detail
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { Subject, of } from 'rxjs';
+import { PageActivityService } from 'app/foundation/service/page-activity.service';
+import { IrisAssessmentQuizService } from 'app/iris/overview/services/iris-assessment-quiz.service';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
+import dayjs from 'dayjs/esm';
 
 class ResizeObserverMock {
     observe = vi.fn();
@@ -52,14 +58,30 @@ describe('ExerciseSplitPanelComponent', () => {
     let fixture: ComponentFixture<ExerciseSplitPanelComponent>;
     let component: ExerciseSplitPanelComponent;
     let accountService: MockAccountService;
+    let latestEventSubject: Subject<IrisPipeEvent | undefined>;
+    let stopTimerSubject: Subject<void>;
+    let pageLeavingSubject: Subject<void>;
+    let assessmentQuizService: IrisAssessmentQuizService;
 
     beforeEach(async () => {
         vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+        latestEventSubject = new Subject<IrisPipeEvent | undefined>();
+        stopTimerSubject = new Subject<void>();
+        pageLeavingSubject = new Subject<void>();
         await TestBed.configureTestingModule({
             imports: [ExerciseSplitPanelComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
+                { provide: IrisChatService, useValue: { openChat: vi.fn(), currentLatestEvent: vi.fn(() => latestEventSubject.asObservable()), stopTimer$: stopTimerSubject } },
+                { provide: PageActivityService, useValue: { pageLeaving$: pageLeavingSubject.asObservable() } },
+                {
+                    provide: IrisAssessmentQuizService,
+                    useValue: {
+                        startTimer: vi.fn(() => of(new HttpResponse({ body: { timerExpiresAt: dayjs().add(30, 'seconds'), timeLimit: 30 } }))),
+                        stopTimer: vi.fn(() => of(new HttpResponse<void>())),
+                        registerDefocusForCurrentSession: vi.fn(() => of(new HttpResponse<void>())),
+                    },
+                },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: ActivatedRoute, useValue: { parent: {}, firstChild: undefined } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -89,6 +111,7 @@ describe('ExerciseSplitPanelComponent', () => {
         fixture = TestBed.createComponent(ExerciseSplitPanelComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        assessmentQuizService = TestBed.inject(IrisAssessmentQuizService);
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('irisEnabled', true);
@@ -207,5 +230,53 @@ describe('ExerciseSplitPanelComponent', () => {
 
             expect(component.restartPractice()).toBe(false);
         });
+    });
+
+    it('should start the embedded prompt timer on the first question event', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
+
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        expect(assessmentQuizService.startTimer).toHaveBeenCalledWith(1);
+        expect((component as any).currentlyPrompting()).toBe(true);
+        expect((component as any).timeLimit()).toBe(30);
+    });
+
+    it('should not stop the backend prompt timer when the embedded timer expires locally', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        (component as any).handlePromptingTimerExpired();
+
+        expect(assessmentQuizService.stopTimer).not.toHaveBeenCalled();
+        expect((component as any).timerExpiresAt()).toBeUndefined();
+        expect((component as any).timeLimit()).toBe(0);
+    });
+
+    it('should stop the backend prompt timer when the current answer arrives', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        stopTimerSubject.next();
+
+        expect(assessmentQuizService.stopTimer).toHaveBeenCalledWith(1);
+        expect((component as any).timerExpiresAt()).toBeUndefined();
+        expect((component as any).timeLimit()).toBe(0);
+    });
+
+    it('should register defocus for the embedded prompting session when the page is left', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.detectChanges();
+        latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
+
+        pageLeavingSubject.next();
+
+        expect(assessmentQuizService.registerDefocusForCurrentSession).toHaveBeenCalledWith(1);
+        expect((component as any).currentlyPrompting()).toBe(false);
+        expect((component as any).timerExpiresAt()).toBeUndefined();
+        expect((component as any).timeLimit()).toBe(0);
     });
 });

@@ -13,15 +13,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-
-/**
- * Type guard mirroring the domain rule that a student participation is any participation that is neither a
- * template nor a solution participation. Used to soundly narrow the app-wide participation stream (which is
- * only ever fed student participations for this view) from Participation to StudentParticipation.
- */
-function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
-    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
-}
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
@@ -53,6 +44,15 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+
+/**
+ * Type guard mirroring the domain rule that a student participation is any participation that is neither a
+ * template nor a solution participation. Used to soundly narrow the app-wide participation stream (which is
+ * only ever fed student participations for this view) from Participation to StudentParticipation.
+ */
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
+}
 
 interface InstructorActionItem {
     routerLink: string;
@@ -217,6 +217,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly _irisChatEnabled = signal(false);
     readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
 
+    private readonly _irisPromptingModeEnabled = signal(false);
+    readonly irisPromptingModeEnabled = this._irisPromptingModeEnabled.asReadonly();
+
     private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
     readonly instructorActionItems = this._instructorActionItems.asReadonly();
 
@@ -299,14 +302,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._submissionPolicy.set(programmingExercise.submissionPolicy);
         }
 
+        this._irisEnabled.set(false);
+        this._irisChatEnabled.set(false);
+        this._irisPromptingModeEnabled.set(false);
+
+        const exerciseId = this.exercise?.id;
         if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
+            const courseId = this.courseId;
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
             if (this.irisEnabled()) {
                 this.irisSettingsService
-                    .getCourseSettingsWithRateLimit(this.courseId)
+                    .getCourseSettingsWithRateLimit(courseId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe((response) => {
+                        if (this.courseId !== courseId || this.exercise?.id !== exerciseId) {
+                            return;
+                        }
                         this._irisChatEnabled.set(response?.settings?.enabled ?? false);
+                        this._irisPromptingModeEnabled.set(response?.settings?.promptingModeEnabled ?? false);
                     });
             }
         }

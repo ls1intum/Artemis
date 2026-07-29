@@ -16,15 +16,20 @@ import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import {
     IRIS_PIPELINE_VARIANTS,
+    IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT,
+    IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX,
+    IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX,
     IRIS_SUPPORT_LEVELS,
     IrisCourseSettingsDTO,
     IrisCourseSettingsWithRateLimitDTO,
     IrisPipelineVariant,
+    IrisPromptingModeSettingsDTO,
     IrisRateLimitConfiguration,
     IrisSupportLevel,
     SLIDER_VALUE_TO_SUPPORT_LEVEL,
     SUPPORT_LEVEL_SLIDER_VALUES,
     createDefaultCourseSettings,
+    createDefaultPromptingModeSettings,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
@@ -198,6 +203,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
     // Character limit for custom instructions
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+    readonly PROMPTING_MODE_MAX_QUESTIONS = IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT;
+    readonly PROMPTING_MODE_QUESTION_TIME_LIMIT_MAX = IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX;
+    readonly PROMPTING_MODE_IN_CLASS_TIME_LIMIT_MAX = IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX;
 
     /**
      * Current instructional support level, defaulting to MODERATE to mirror the backend.
@@ -269,13 +277,6 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
-     * Check if the form is valid for saving
-     */
-    isFormValid(): boolean {
-        return !this.rateLimitRequestsError() && !this.rateLimitTimeframeError();
-    }
-
-    /**
      * Normalize empty values (empty string, null/undefined) to undefined for comparison
      */
     private normalizeEmpty<T>(value: T | null | undefined): T | undefined {
@@ -302,8 +303,84 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
         return cloneWith(settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions),
+            promptingModeSettings: settings.promptingModeSettings ?? createDefaultPromptingModeSettings(),
         });
     }
+
+    readonly promptingModeMinQuestionsError = computed(() => {
+        if (!this.settings()?.promptingModeEnabled) {
+            return undefined;
+        }
+        const settings = this.settings()?.promptingModeSettings;
+        if (!settings) {
+            return undefined;
+        }
+        if (settings.minQuestions < 1 || settings.minQuestions > IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.questionRange';
+        }
+        if (settings.minQuestions > settings.maxQuestions) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions';
+        }
+        return undefined;
+    });
+
+    readonly promptingModeMaxQuestionsError = computed(() => {
+        if (!this.settings()?.promptingModeEnabled) {
+            return undefined;
+        }
+        const settings = this.settings()?.promptingModeSettings;
+        if (!settings) {
+            return undefined;
+        }
+        if (settings.maxQuestions < 1 || settings.maxQuestions > IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.questionRange';
+        }
+        if (settings.minQuestions > settings.maxQuestions) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions';
+        }
+        return undefined;
+    });
+
+    readonly promptingModeQuestionTimeLimitError = computed(() => {
+        if (!this.settings()?.promptingModeEnabled) {
+            return undefined;
+        }
+        const settings = this.settings()?.promptingModeSettings;
+        if (!settings) {
+            return undefined;
+        }
+        if (settings.timeLimitQuestion < 1 || settings.timeLimitQuestion > IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.questionTimeLimitRange';
+        }
+        return undefined;
+    });
+
+    readonly promptingModeInClassTimeLimitError = computed(() => {
+        if (!this.settings()?.promptingModeEnabled) {
+            return undefined;
+        }
+        const settings = this.settings()?.promptingModeSettings;
+        if (!settings) {
+            return undefined;
+        }
+        if (settings.timeLimitInClass < 1 || settings.timeLimitInClass > IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX) {
+            return 'artemisApp.iris.settings.promptingModeSettings.validation.inClassTimeLimitRange';
+        }
+        return undefined;
+    });
+
+    /**
+     * Check if the form is valid for saving.
+     */
+    readonly isFormValid = computed(
+        () =>
+            !this.rateLimitRequestsError() &&
+            !this.rateLimitTimeframeError() &&
+            !this.promptingModeMinQuestionsError() &&
+            !this.promptingModeMaxQuestionsError() &&
+            !this.promptingModeQuestionTimeLimitError() &&
+            !this.promptingModeInClassTimeLimitError(),
+    );
 
     canDeactivateWarning?: string;
 
@@ -331,7 +408,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                         this.alertService.error('artemisApp.iris.settings.error.noSettings');
                         return;
                     }
-                    this.settings.set(response.settings);
+                    this.settings.set(this.withPromptingModeDefaults(response.settings));
                     // Extract rate limit fields for form binding
                     this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
                     this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
@@ -362,11 +439,12 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         // Normalize empty strings to undefined before saving
         const settingsToSave: IrisCourseSettingsDTO = cloneWith(currentSettings, {
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
+            promptingModeSettings: this.normalizePromptingModeSettingsForSave(currentSettings),
         });
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled, supportLevel and customInstructions.
+            // Non-admins can only change enabled, promptingModeEnabled, supportLevel and customInstructions.
             // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
                 settingsToSave.variant = originalSettingsValue.variant;
@@ -386,7 +464,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                     this.isSaving.set(false);
                     if (response.body) {
-                        this.settings.set(response.body.settings);
+                        this.settings.set(this.withPromptingModeDefaults(response.body.settings));
                         // Update local form fields from saved response
                         this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
                         this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
@@ -426,8 +504,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     /**
      * Save the enabled-state toggle without requiring a manual save.
      *
-     * The payload is built from the current `settings()` signal — not from
-     * `originalSettings()` — so that any in-progress edits to `supportLevel` or
+     * The payload is built from the current `settings()` signal, not from
+     * `originalSettings()`, so that any in-progress edits to `supportLevel` or
      * `customInstructions` are preserved rather than silently discarded when the
      * user flips the toggle. Admin-restricted fields (`variant`, `rateLimit`) are
      * still restored from the original values for non-admins, matching the server's
@@ -451,7 +529,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant or rate limits — restore the originals.
+            // Non-admins cannot change variant or rate limits, so restore the originals.
             settingsToSave.variant = originalSettingsValue.variant;
             settingsToSave.rateLimit = originalSettingsValue.rateLimit;
         } else if (this.isFormValid()) {
@@ -471,8 +549,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                     if (response.body) {
                         // Update original settings to reflect the new enabled state
-                        this.originalSettings.set(deepClone(response.body.settings));
-                        this.settings.set(deepClone(response.body.settings));
+                        const savedSettings = this.withPromptingModeDefaults(response.body.settings);
+                        this.originalSettings.set(deepClone(savedSettings));
+                        this.settings.set(deepClone(savedSettings));
                         // Reset rate limit tracking
                         this.rateLimitRequests.set(this.settings()?.rateLimit?.requests);
                         this.rateLimitTimeframeHours.set(this.settings()?.rateLimit?.timeframeHours);
@@ -496,19 +575,17 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
-     * Get the character count for custom instructions
+     * Character count for custom instructions.
      */
-    getCustomInstructionsLength(): number {
-        return this.settings()?.customInstructions?.length || 0;
-    }
+    readonly customInstructionsLength = computed(() => this.settings()?.customInstructions?.length ?? 0);
 
     /**
      * Reset the General-tab settings to their default values and persist immediately.
      *
      * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
      * the change is written to the server right away (no separate "Save Changes" step).
-     * Only the General-tab editable fields are reset: `supportLevel` and
-     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
+     * Only the General-tab editable fields are reset: `supportLevel`, `customInstructions`
+     * and prompting-mode quiz settings. The `enabled` toggle (auto-saved separately) and the
      * admin-only `variant` / `rateLimit` fields are left as they are.
      *
      * No-ops if the General-tab fields already hold their default values, so an
@@ -522,10 +599,17 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const defaults = createDefaultCourseSettings();
         const sameSupportLevel = currentSettings.supportLevel === defaults.supportLevel;
         const sameCustomInstructions = this.normalizeEmpty(currentSettings.customInstructions) === this.normalizeEmpty(defaults.customInstructions);
-        if (sameSupportLevel && sameCustomInstructions) {
+        const samePromptingModeSettings = isEqual(currentSettings.promptingModeSettings, defaults.promptingModeSettings);
+        if (sameSupportLevel && sameCustomInstructions && samePromptingModeSettings) {
             return;
         }
-        this.settings.set(cloneWith(currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
+        this.settings.set(
+            cloneWith(currentSettings, {
+                supportLevel: defaults.supportLevel,
+                customInstructions: defaults.customInstructions,
+                promptingModeSettings: defaults.promptingModeSettings,
+            }),
+        );
         this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
     }
 
@@ -537,6 +621,63 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (currentSettings) {
             this.settings.set(cloneWith(currentSettings, { customInstructions: value }));
         }
+    }
+
+    /**
+     * Updates whether students can start Iris prompting mode in programming exercises.
+     */
+    setPromptingModeEnabled(promptingModeEnabled: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            const promptingModeSettings = this.isPromptingModeSettingsValid(currentSettings.promptingModeSettings)
+                ? currentSettings.promptingModeSettings
+                : createDefaultPromptingModeSettings();
+            this.settings.set(Object.assign({}, currentSettings, { promptingModeEnabled, promptingModeSettings }));
+        }
+    }
+
+    /**
+     * Updates a numeric prompting-mode quiz setting in the settings signal.
+     */
+    updatePromptingModeSetting(field: keyof IrisPromptingModeSettingsDTO, value: number | null): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            const currentPromptingModeSettings = currentSettings.promptingModeSettings ?? createDefaultPromptingModeSettings();
+            this.settings.set(
+                Object.assign({}, currentSettings, {
+                    promptingModeSettings: Object.assign({}, currentPromptingModeSettings, { [field]: value ?? 0 }),
+                }),
+            );
+        }
+    }
+
+    private withPromptingModeDefaults(settings: IrisCourseSettingsDTO): IrisCourseSettingsDTO {
+        return Object.assign({}, settings, {
+            promptingModeSettings: settings.promptingModeSettings ?? createDefaultPromptingModeSettings(),
+        });
+    }
+
+    private normalizePromptingModeSettingsForSave(settings: IrisCourseSettingsDTO): IrisPromptingModeSettingsDTO {
+        const promptingModeSettings = settings.promptingModeSettings ?? createDefaultPromptingModeSettings();
+        if (!settings.promptingModeEnabled && !this.isPromptingModeSettingsValid(promptingModeSettings)) {
+            return createDefaultPromptingModeSettings();
+        }
+        return promptingModeSettings;
+    }
+
+    private isPromptingModeSettingsValid(settings?: IrisPromptingModeSettingsDTO): boolean {
+        return (
+            !!settings &&
+            settings.minQuestions >= 1 &&
+            settings.maxQuestions >= 1 &&
+            settings.minQuestions <= IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT &&
+            settings.maxQuestions <= IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT &&
+            settings.minQuestions <= settings.maxQuestions &&
+            settings.timeLimitQuestion >= 1 &&
+            settings.timeLimitQuestion <= IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX &&
+            settings.timeLimitInClass >= 1 &&
+            settings.timeLimitInClass <= IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX
+        );
     }
 
     /**

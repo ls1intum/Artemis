@@ -136,8 +136,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     // -------------------------------------------------------------------------
 
     @Override
-    public void sendOverWebsocket(IrisChatSession session, IrisMessage message) {
-        irisChatWebsocketService.sendMessage(session, message, null, null);
+    public void sendOverWebsocket(IrisChatSession session, IrisMessage message, String event) {
+        irisChatWebsocketService.sendMessage(session, message, null, null, null, null, null, null, null, null, event);
     }
 
     @Override
@@ -288,6 +288,23 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             return;
         }
 
+        if (shouldSendProgressStalledEvent(studentParticipation)) {
+            log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
+            var user = studentParticipation.getStudent().orElseThrow();
+            var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+            if (session.getMode() == COURSE_CHAT) {
+                applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+            }
+            rateLimitService.checkRateLimitElseThrow(session, user);
+            CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
+                    Optional.of(latestSubmission), Map.of(), List.of())).exceptionally(e -> {
+                        log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
+                        return null;
+                    });
+        }
+    }
+
+    boolean shouldSendProgressStalledEvent(ProgrammingExerciseStudentParticipation studentParticipation) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -299,30 +316,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         if (!successfulSubmission && recentSubmissions.size() >= 3) {
             var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
-            // Check if the student needs intervention based on their recent score trajectory
-            var needsIntervention = needsIntervention(listOfScores);
-            if (needsIntervention) {
-                log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var user = studentParticipation.getStudent().orElseThrow();
-                var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
-                if (session.getMode() == COURSE_CHAT) {
-                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
-                }
-                rateLimitService.checkRateLimitElseThrow(session, user);
-                CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
-                        Optional.of(settings), Optional.of(latestSubmission), Map.of(), List.of())).exceptionally(e -> {
-                            log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
-                            return null;
-                        });
-            }
+            return needsIntervention(listOfScores);
         }
-        else {
-            log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
-            if (successfulSubmission) {
-                log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
-                        studentParticipation.getParticipant().getName());
-            }
+
+        log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
+        if (successfulSubmission) {
+            log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure", studentParticipation.getParticipant().getName());
         }
+        return false;
     }
 
     private boolean hasOverallImprovement(List<Double> scores, int i, int j) {
@@ -451,7 +452,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         session.setEntityId(newEntityId);
         irisChatSessionRepository.save(session);
 
-        sendOverWebsocket(session, savedMarker);
+        sendOverWebsocket(session, savedMarker, null);
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {

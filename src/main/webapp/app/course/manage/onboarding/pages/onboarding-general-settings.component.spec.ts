@@ -40,8 +40,24 @@ describe('OnboardingGeneralSettingsComponent', () => {
                 {
                     provide: IrisSettingsService,
                     useValue: {
-                        getCourseSettingsWithRateLimit: () => of({ settings: { enabled: true } }),
-                        updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
+                        getCourseSettingsWithRateLimit: () =>
+                            of({
+                                settings: {
+                                    enabled: true,
+                                    promptingModeEnabled: true,
+                                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                },
+                            }),
+                        updateCourseSettings: () =>
+                            of({
+                                body: {
+                                    settings: {
+                                        enabled: false,
+                                        promptingModeEnabled: true,
+                                        promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                    },
+                                },
+                            }),
                     },
                 },
                 MockProvider(DialogService),

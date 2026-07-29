@@ -6,7 +6,7 @@ import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/i
 
 /**
  * Service for managing Iris course-level settings.
- * Replaces the legacy three-tier (Global → Course → Exercise) settings system.
+ * Replaces the legacy three-tier (Global to Course to Exercise) settings system.
  */
 @Injectable({ providedIn: 'root' })
 export class IrisSettingsService {

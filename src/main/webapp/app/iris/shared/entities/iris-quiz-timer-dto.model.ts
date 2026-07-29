@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 
-export class IrisQuizTimerDTO {
+export interface IrisQuizTimerDTO {
     timerExpiresAt: dayjs.Dayjs;
     timeLimit: number;
 }

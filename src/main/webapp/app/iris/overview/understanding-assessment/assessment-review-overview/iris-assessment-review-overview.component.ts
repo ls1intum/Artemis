@@ -1,22 +1,20 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, catchError, finalize, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { Observable, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faFilter, faQuestionCircle, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSync } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BaseEntity, StringBaseEntity } from 'app/foundation/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-exercise.component';
 import { FormsModule } from '@angular/forms';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssessmentReviewService } from 'app/iris/overview/services/iris-assessment-review.service';
@@ -51,17 +49,7 @@ interface FilterOption {
     templateUrl: './iris-assessment-review-overview.component.html',
     styleUrl: './iris-assessment-review-overview.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        DataTableComponent,
-        ArtemisTranslatePipe,
-        FaIconComponent,
-        TranslateDirective,
-        IrisAssessmentReviewExerciseComponent,
-        FormsModule,
-        NgxDatatableModule,
-        MultiSelectModule,
-        HelpIconComponent,
-    ],
+    imports: [ArtemisTranslatePipe, FaIconComponent, TranslateDirective, IrisAssessmentReviewExerciseComponent, FormsModule, MultiSelectModule, HelpIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisAssessmentReviewOverviewComponent {
@@ -73,7 +61,6 @@ export class IrisAssessmentReviewOverviewComponent {
 
     protected readonly faSync = faSync;
     protected readonly faFilter = faFilter;
-    protected readonly faQuestionCircle = faQuestionCircle;
 
     /**
      * An empty array means that no verdict filter is active, i.e. all participations are shown.
@@ -98,7 +85,6 @@ export class IrisAssessmentReviewOverviewComponent {
             .filter((participation) => this.filterParticipationByString(participation, normalizedSearchTerm));
     });
 
-    protected readonly isSearching = signal(false);
     protected readonly searchNoResults = computed(() => this.relevantExercises().length === 0);
 
     protected readonly relevantExercises = computed<ExerciseViewModel[]>(() => {
@@ -153,30 +139,21 @@ export class IrisAssessmentReviewOverviewComponent {
 
         const programmingExercises = course.exercises?.filter((exercise: Exercise) => exercise.type === ExerciseType.PROGRAMMING && !exercise.teamMode) ?? [];
 
-        const settingsRequests = programmingExercises.map((exercise) =>
-            this.irisSettingsService.getUncombinedExerciseSettings(exercise.id!).pipe(
-                map((settings) => ({
-                    exercise,
-                    enabled: settings?.irisPromptUserSettings?.enabled ?? false,
-                })),
-            ),
+        const enabledExercises = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).pipe(
+            map((settings) => (settings?.settings?.promptingModeEnabled ? programmingExercises : [])),
+            switchMap((exercises) => {
+                const participationRequests = exercises.map((exercise) =>
+                    this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!).pipe(
+                        map((response) => this.createExerciseViewModel(exercise, response.body ?? [])),
+                    ),
+                );
+
+                return participationRequests.length > 0 ? forkJoin(participationRequests) : of([]);
+            }),
+            finalize(() => this.isLoading.set(false)),
         );
 
-        (settingsRequests.length > 0 ? forkJoin(settingsRequests) : of([]))
-            .pipe(
-                map((results) => results.filter((result) => result.enabled).map((result) => result.exercise as ProgrammingExercise)),
-                switchMap((exercises) => {
-                    const participationRequests = exercises.map((exercise) =>
-                        this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!).pipe(
-                            map((response) => this.createExerciseViewModel(exercise, response.body ?? [])),
-                        ),
-                    );
-
-                    return participationRequests.length > 0 ? forkJoin(participationRequests) : of([]);
-                }),
-                finalize(() => this.isLoading.set(false)),
-            )
-            .subscribe((exercises) => this.exercises.set(exercises));
+        (programmingExercises.length > 0 ? enabledExercises : of([])).subscribe((exercises) => this.exercises.set(exercises));
     }
 
     updateParticipationFilters(filters: FilterProp[] | null | undefined): void {
@@ -254,63 +231,4 @@ export class IrisAssessmentReviewOverviewComponent {
 
         return name.includes(searchTerm) || login.includes(searchTerm);
     }
-
-    /**
-     * Converts a participation object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param participation
-     */
-    protected readonly searchTextFromParticipation = (participation: ProgrammingExerciseStudentParticipation): string => {
-        return participation.student?.login || '';
-    };
-
-    /**
-     * Receives the search text and entities from datatable (here this replaces the native search),
-     * filters the participations using the search text and the currently selected verdict filters,
-     * and returns the matching participations for the typeahead.
-     *
-     * @param stream$ stream of searches of the format {text, entities}
-     * @return stream of participations for the autocomplete
-     */
-    protected readonly searchAllParticipations = (
-        stream$: Observable<{
-            text: string;
-            entities: (BaseEntity | StringBaseEntity)[];
-        }>,
-    ): Observable<(BaseEntity | StringBaseEntity)[]> =>
-        stream$.pipe(
-            tap(({ text }) => {
-                this.isSearching.set(true);
-                this.searchTerm.set(text);
-            }),
-            map(({ text }) => {
-                const normalizedSearchTerm = text.trim().toLowerCase();
-                const selectedFilters = this.selectedFilters();
-
-                return this.exercises()
-                    .flatMap((viewExercise) => viewExercise.participations)
-                    .filter(
-                        (participation) =>
-                            this.filterParticipationBySelectedFilters(participation, selectedFilters) && this.filterParticipationByString(participation, normalizedSearchTerm),
-                    );
-            }),
-            tap(() => this.isSearching.set(false)),
-            catchError(() => {
-                this.isSearching.set(false);
-                return of([]);
-            }),
-        );
-
-    /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param participation
-     */
-    protected readonly searchResultFormatter = (participation: ProgrammingExerciseStudentParticipation) => {
-        const name = participation.student?.name ?? 'Unknown';
-        const login = participation.student?.login ?? '-';
-
-        return `${name} (${login})`;
-    };
 }

@@ -489,12 +489,42 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
             expect(comp.irisEnabled()).toBe(true);
             expect(comp.irisChatEnabled()).toBe(true);
+            expect(comp.irisPromptingModeEnabled()).toBe(true);
         } else {
             // Should not have called getCourseSettings if 'iris' is not active
             expect(getCourseSettingsSpy).not.toHaveBeenCalled();
             expect(comp.irisEnabled()).toBe(false);
             expect(comp.irisChatEnabled()).toBe(false);
+            expect(comp.irisPromptingModeEnabled()).toBe(false);
         }
+    });
+
+    it('should use the course Iris settings prompting mode flag', async () => {
+        vi.useFakeTimers();
+        const programmingExercise = {
+            id: 42,
+            type: ExerciseType.PROGRAMMING,
+            studentParticipations: [],
+            course: { id: 1 },
+            submissionPolicy: new LockRepositoryPolicy(),
+        } as unknown as ProgrammingExercise;
+        const fakeSettings = mockCourseSettings(1, true);
+        fakeSettings.settings.promptingModeEnabled = false;
+
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
+
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+        const irisSettingsService = TestBed.inject(IrisSettingsService);
+        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
+
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(comp.irisEnabled()).toBe(true);
+        expect(comp.irisChatEnabled()).toBe(true);
+        expect(comp.irisPromptingModeEnabled()).toBe(false);
     });
 
     it('should load iris settings for text exercise when Iris module feature is active', async () => {
@@ -522,6 +552,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
         expect(comp.irisEnabled()).toBe(true);
         expect(comp.irisChatEnabled()).toBe(true);
+        expect(comp.irisPromptingModeEnabled()).toBe(true);
     });
 
     it('should not load iris settings when exercise is in an exam group', async () => {

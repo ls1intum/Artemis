@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
@@ -87,6 +88,25 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
             return List.of();
         }
         return findSessionsWithMessagesByIdIn(ids);
+    }
+
+    /**
+     * Finds the latest completed prompting-mode chat session for a programming exercise and user.
+     *
+     * @param exerciseId the programming exercise id, stored as {@code entityId}
+     * @param userId     the user id
+     * @return the latest finished prompting-mode session
+     * @throws EntityNotFoundException if no finished prompting-mode session exists
+     */
+    default IrisChatSession findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+        var result = findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, userId, Pageable.unpaged()).stream()
+                .filter(session -> !session.isInPromptingModePipeline() && session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInPromptingMode())))
+                .findFirst();
+
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("Iris Chat Session with Prompting Mode");
+        }
+        return result.get();
     }
 
     // -------------------------------------------------------------------------

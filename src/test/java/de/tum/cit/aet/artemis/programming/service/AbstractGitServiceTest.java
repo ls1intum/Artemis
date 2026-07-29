@@ -10,6 +10,8 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.tum.cit.aet.artemis.localvc.service.AbstractGitService;
+
 class AbstractGitServiceTest {
 
     private static final String DEFAULT_BRANCH = "main";

@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -12,16 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -29,13 +27,13 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for managing client requests while the assessment quiz is running.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/programming-exercises/")
 public class IrisAssessmentQuizResource {
 
-    private final IrisExerciseChatSessionService irisExerciseChatSessionService;
+    private final IrisPromptUserService irisPromptUserService;
 
     protected final UserRepository userRepository;
 
@@ -49,10 +47,9 @@ public class IrisAssessmentQuizResource {
 
     protected final ProgrammingExerciseRepository exerciseRepository;
 
-    protected IrisAssessmentQuizResource(IrisExerciseChatSessionService irisExerciseChatSessionService, UserRepository userRepository,
-            ProgrammingExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
-        this.irisExerciseChatSessionService = irisExerciseChatSessionService;
+    protected IrisAssessmentQuizResource(IrisPromptUserService irisPromptUserService, UserRepository userRepository, ProgrammingExerciseRepository exerciseRepository,
+            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+        this.irisPromptUserService = irisPromptUserService;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -73,10 +70,10 @@ public class IrisAssessmentQuizResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        irisExerciseChatSessionService.startPromptingModeForCurrentSession(programmingExercise, user);
+        irisPromptUserService.startPromptingModeForCurrentSession(programmingExercise, user);
         return ResponseEntity.ok().build();
     }
 
@@ -93,10 +90,10 @@ public class IrisAssessmentQuizResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        irisExerciseChatSessionService.startInClassPromptingModeForCurrentSession(programmingExercise, user);
+        irisPromptUserService.startInClassPromptingModeForCurrentSession(programmingExercise, user);
         return ResponseEntity.ok().build();
     }
 
@@ -112,10 +109,10 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<Void> registerDefocusForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        irisExerciseChatSessionService.registerDefocusForCurrentSession(exercise, user);
+        irisPromptUserService.registerDefocusForCurrentSession(exercise, user);
         return ResponseEntity.ok().build();
     }
 
@@ -131,10 +128,10 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<IrisQuizTimerDTO> startTimerForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.startTimerForCurrentSession(exercise, user));
+        return ResponseEntity.ok(irisPromptUserService.startTimerForCurrentSession(exercise, user));
     }
 
     /**
@@ -148,9 +145,9 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<IrisQuizTimerDTO> startInClassQuiz(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.startInClassQuiz(exercise));
+        return ResponseEntity.ok(irisPromptUserService.startInClassQuiz(exercise));
     }
 
     /**
@@ -164,9 +161,9 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<IrisQuizTimerDTO> getActiveInClassQuiz(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.getActiveInClassQuiz(exercise));
+        return ResponseEntity.ok(irisPromptUserService.getActiveInClassQuiz(exercise));
     }
 
     /**
@@ -180,10 +177,10 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<Boolean> latestSubmissionHasPoints(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.latestSubmissionHasPoints(exercise, user));
+        return ResponseEntity.ok(irisPromptUserService.latestSubmissionHasPoints(exercise, user));
     }
 
     /**
@@ -198,10 +195,10 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<Boolean> isQuizAlreadyDone(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean inClass) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.isQuizAlreadyDone(exercise, user, inClass));
+        return ResponseEntity.ok(irisPromptUserService.isQuizAlreadyDone(exercise, user, inClass));
     }
 
     /**
@@ -215,10 +212,10 @@ public class IrisAssessmentQuizResource {
     public ResponseEntity<Void> stopTimerForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        irisExerciseChatSessionService.stopTimerForCurrentSession(exercise, user);
+        irisPromptUserService.stopTimerForCurrentSession(exercise, user);
         return ResponseEntity.ok().build();
     }
 

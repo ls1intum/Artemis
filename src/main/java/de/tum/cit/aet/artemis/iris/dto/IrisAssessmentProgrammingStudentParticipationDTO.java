@@ -16,6 +16,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer submissionCount, String repositoryUri, String buildPlanId, String buildPlanUrl,
         StudentIrisAssessmentDTO student, IrisAssessmentForParticipationDTO irisAssessment) implements Serializable {
 
+    /**
+     * Creates a DTO for a programming exercise student participation and its Iris assessment.
+     *
+     * @param participation the participation to convert
+     * @param inClass       whether to use the in-class assessment
+     * @param buildPlanUrl  optional build plan URL
+     * @return the DTO or null if the participation is null
+     */
     @Nullable
     public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, boolean inClass, @Nullable String buildPlanUrl) {
         return Optional.ofNullable(participation)
@@ -25,6 +33,13 @@ public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer 
                 .orElse(null);
     }
 
+    /**
+     * Creates a DTO for a programming exercise student participation and its Iris assessment.
+     *
+     * @param participation the participation to convert
+     * @param inClass       whether to use the in-class assessment
+     * @return the DTO or null if the participation is null
+     */
     @Nullable
     public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, boolean inClass) {
         return of(participation, inClass, null);
@@ -33,6 +48,12 @@ public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record IrisAssessmentForParticipationDTO(Long id, IrisVerdict verdict, IrisVerdictReview verdictReview) implements Serializable {
 
+        /**
+         * Creates a DTO for an Iris assessment.
+         *
+         * @param assessment the assessment to convert
+         * @return the DTO or null if the assessment is null
+         */
         @Nullable
         public static IrisAssessmentForParticipationDTO of(IrisAssessment assessment) {
             return Optional.ofNullable(assessment).map(value -> new IrisAssessmentForParticipationDTO(value.getId(), value.getVerdict(), value.getVerdictReview())).orElse(null);

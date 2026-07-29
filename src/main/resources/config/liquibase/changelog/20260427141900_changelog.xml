@@ -18,7 +18,11 @@
 
         <sql dbms="mysql,h2">
             ALTER TABLE iris_assessment
-                ADD verdict ENUM('SUSPICIOUS', 'UNSUSPICIOUS'),
+                ADD verdict ENUM('SUSPICIOUS', 'UNSUSPICIOUS');
+        </sql>
+
+        <sql dbms="mysql,h2">
+            ALTER TABLE iris_assessment
                 ADD verdict_review ENUM('ACCEPTED', 'REJECTED');
         </sql>
 

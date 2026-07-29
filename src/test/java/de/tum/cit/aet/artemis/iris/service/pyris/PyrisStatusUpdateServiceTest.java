@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisPipeEvent;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -48,6 +50,8 @@ class PyrisStatusUpdateServiceTest {
     private PyrisJobService pyrisJobService;
 
     private IrisChatSessionService irisChatSessionService;
+
+    private IrisPromptUserService irisPromptUserService;
 
     private IrisCompetencyGenerationService competencyGenerationService;
 
@@ -65,13 +69,14 @@ class PyrisStatusUpdateServiceTest {
     void setUp() {
         pyrisJobService = mock(PyrisJobService.class);
         irisChatSessionService = mock(IrisChatSessionService.class);
+        irisPromptUserService = mock(IrisPromptUserService.class);
         competencyGenerationService = mock(IrisCompetencyGenerationService.class);
         irisTutorSuggestionSessionService = mock(IrisTutorSuggestionSessionService.class);
         autonomousTutorService = mock(AutonomousTutorService.class);
         processingStateCallbackApi = mock(ProcessingStateCallbackApi.class);
         irisWebsocketService = mock(IrisWebsocketService.class);
-        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, competencyGenerationService, irisTutorSuggestionSessionService, autonomousTutorService,
-                Optional.of(processingStateCallbackApi), irisWebsocketService);
+        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, irisPromptUserService, competencyGenerationService, irisTutorSuggestionSessionService,
+                autonomousTutorService, Optional.of(processingStateCallbackApi), irisWebsocketService);
     }
 
     @ParameterizedTest
@@ -79,12 +84,56 @@ class PyrisStatusUpdateServiceTest {
     void chatJobLifecycleUsesRunState(PyrisRunState runState) {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
         var statusUpdate = new PyrisChatStatusUpdateDTO(null, runState, null, null, null, null, null, null);
-        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, null)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate);
+        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, null);
         verifyLifecycle(job, runState);
+    }
+
+    @Test
+    void chatJobResultWithPromptUserEventIsHandledByPromptUserService() {
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,
+                IrisPipeEvent.NEXT_QUESTION.name(), null);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, statusUpdate.event())).thenReturn(job);
+        when(pyrisJobService.removeJob(job)).thenReturn(job);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        var inOrder = inOrder(irisChatSessionService, irisPromptUserService, pyrisJobService);
+        inOrder.verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+        inOrder.verify(pyrisJobService).removeJob(job);
+        inOrder.verify(irisPromptUserService).handleStatusUpdate(job, statusUpdate);
+    }
+
+    @Test
+    void duplicateChatJobResultWithPromptUserEventDoesNotTriggerPromptUserServiceAgain() {
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,
+                IrisPipeEvent.USER_INITIATES_PROMPTING.name(), null);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, statusUpdate.event())).thenReturn(job);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+        verify(pyrisJobService).removeJob(job);
+        verify(irisPromptUserService, never()).handleStatusUpdate(job, statusUpdate);
+    }
+
+    @Test
+    void intermediateChatJobResultWithPromptUserEventDoesNotTriggerPromptUserService() {
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("intermediate", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null, false,
+                IrisPipeEvent.USER_INITIATES_PROMPTING.name(), null);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, statusUpdate.event())).thenReturn(job);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+        verify(pyrisJobService).updateJob(job);
+        verify(irisPromptUserService, never()).handleStatusUpdate(job, statusUpdate);
     }
 
     @ParameterizedTest
@@ -196,11 +245,11 @@ class PyrisStatusUpdateServiceTest {
         var chatJob = new ChatJob("chat-null", 1L, 2L, 3L, null, null, null);
         var chatUpdate = new PyrisChatStatusUpdateDTO("answer", null, null, null, null, null, null, null);
         var normalizedChatUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FAILED, null, null, null, null, null, null, null, null, null, null);
-        when(irisChatSessionService.handleStatusUpdate(chatJob, normalizedChatUpdate)).thenReturn(chatJob);
+        when(irisChatSessionService.handleStatusUpdate(chatJob, normalizedChatUpdate, null)).thenReturn(chatJob);
 
         service.handleStatusUpdate(chatJob, chatUpdate);
 
-        verify(irisChatSessionService).handleStatusUpdate(chatJob, normalizedChatUpdate);
+        verify(irisChatSessionService).handleStatusUpdate(chatJob, normalizedChatUpdate, null);
         verify(pyrisJobService).removeJob(chatJob);
 
         var competencyJob = new CompetencyExtractionJob("competency-null", 1L, 2L);

@@ -1,6 +1,15 @@
 <div class="d-flex flex-wrap">
     <div class="d-flex flex-fill align-items-center mr-auto">
         <div class="me-2">
+            <input
+                class="form-control form-control-sm"
+                type="search"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="searchTerm.set($event)"
+                [placeholder]="'artemisApp.exercise.searchForStudents' | artemisTranslate"
+            />
+        </div>
+        <div class="me-2">
             <div class="filter-multiselect-wrapper">
                 <fa-icon class="filter-multiselect-icon" [icon]="faFilter" />
 
@@ -54,51 +63,20 @@
     </div>
 </div>
 
-<jhi-data-table
-    [isLoading]="isLoading()"
-    entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
-    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-    searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
-    searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"
-    [allEntities]="relevantExercises()"
-    entityType="ExerciseViewModel"
-    [searchEntityFilterEnabled]="false"
-    [showPageSizeDropdown]="false"
-    [isSearching]="isSearching()"
-    [searchNoResults]="searchNoResults()"
-    [isTransitioning]="false"
-    [searchTextFromEntity]="searchTextFromParticipation"
-    [searchResultFormatter]="searchResultFormatter"
-    [onSearchWrapper]="searchAllParticipations"
->
-    <ng-template let-settings="settings">
-        <ngx-datatable
-            class="bootstrap"
-            [limit]="settings.limit"
-            [sortType]="settings.sortType"
-            [columnMode]="'force'"
-            [headerHeight]="0"
-            [footerHeight]="0"
-            [rowHeight]="'auto'"
-            [rows]="settings.rows"
-            [rowClass]="settings.rowClass"
-            [scrollbarH]="settings.scrollbarH"
-        >
-            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100">
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    @if (value.searchedAndFilteredParticipations?.length) {
-                        <jhi-iris-assessment-review-exercise
-                            style="width: 100%; display: block"
-                            [exercise]="value.exercise"
-                            [participations]="value.searchedAndFilteredParticipations"
-                            [course]="course()"
-                            [isLoading]="isLoading()"
-                            [showStartInClassQuizButton]="showStartInClassQuizButton()"
-                            (refresh)="refresh()"
-                        />
-                    }
-                </ng-template>
-            </ngx-datatable-column>
-        </ngx-datatable>
-    </ng-template>
-</jhi-data-table>
+@if (searchNoResults()) {
+    <div class="alert alert-info mt-3" jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></div>
+}
+
+@for (viewExercise of relevantExercises(); track viewExercise.id ?? viewExercise.exercise.id ?? $index) {
+    @if (viewExercise.searchedAndFilteredParticipations.length) {
+        <jhi-iris-assessment-review-exercise
+            style="width: 100%; display: block"
+            [exercise]="viewExercise.exercise"
+            [participations]="viewExercise.searchedAndFilteredParticipations"
+            [course]="course()"
+            [isLoading]="isLoading()"
+            [showStartInClassQuizButton]="showStartInClassQuizButton()"
+            (refresh)="refresh()"
+        />
+    }
+}

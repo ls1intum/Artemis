@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 
@@ -52,8 +52,8 @@ public class IrisMessageService {
         message.setSentAt(ZonedDateTime.now());
         message.setSession(session);
         message.getContent().forEach(content -> content.setMessage(message));
-        if (session instanceof IrisProgrammingExerciseChatSession programmingExerciseChatSession) {
-            message.setInPromptingMode(programmingExerciseChatSession.isInPromptingModePipeline());
+        if (session instanceof IrisChatSession chatSession) {
+            message.setInPromptingMode(chatSession.isInPromptingModePipeline());
         }
 
         session.getMessages().add(message);

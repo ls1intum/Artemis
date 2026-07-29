@@ -590,6 +590,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void createMessage_usesPromptUserPipelineWhenPromptingModeIsActive() throws Exception {
+            IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
+            session.setInPromptingModePipeline(true);
+            session.setQuestionsAsked(2);
+            irisChatSessionRepository.save(session);
+
+            irisRequestMockProvider.mockPromptUserResponse(dto -> {
+                assertThat(dto.programmingExercise()).isNotNull();
+                assertThat(dto.questionsAsked()).isEqualTo(2);
+                assertThat(dto.chatHistory()).hasSize(1);
+                pipelineDone.set(true);
+            });
+
+            IrisMessageRequestDTO requestDto = buildTextRequestDto(session, Map.of());
+            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            await().until(pipelineDone::get);
+
+            assertThat(response.id()).isNotNull();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast().getInPromptingMode()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void createMessage_preservesJsonContentPayload() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
             mockChatResponse(_ -> {

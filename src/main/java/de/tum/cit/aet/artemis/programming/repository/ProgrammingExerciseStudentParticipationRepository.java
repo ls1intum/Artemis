@@ -232,6 +232,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     void unsetIrisAssessmentInClassByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Finds Iris assessment participation projections for participations whose latest result has a positive score.
+     *
+     * @param exerciseId the exercise id
+     * @return matching participation projections
+     */
     default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
         var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);
@@ -241,6 +247,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return findAllIrisAssessmentParticipationProjectionsByIdIn(participationIds);
     }
 
+    /**
+     * Finds in-class Iris assessment participation projections for participations whose latest result has a positive score.
+     *
+     * @param exerciseId the exercise id
+     * @return matching participation projections
+     */
     default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
         var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);

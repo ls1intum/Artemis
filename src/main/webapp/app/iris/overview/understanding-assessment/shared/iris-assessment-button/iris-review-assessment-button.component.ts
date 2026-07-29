@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { faBrain } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { Course } from 'app/course/shared/entities/course.model';
-import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RouterLink } from '@angular/router';
+import { faBrain } from '@fortawesome/free-solid-svg-icons';
+
+import { Course } from 'app/course/shared/entities/course.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 
 @Component({

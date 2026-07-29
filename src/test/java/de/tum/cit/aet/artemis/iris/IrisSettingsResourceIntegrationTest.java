@@ -11,6 +11,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPromptingModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
@@ -43,6 +44,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(response).isNotNull();
         assertThat(response.settings().enabled()).isTrue();
+        assertThat(response.settings().promptingModeEnabled()).isTrue();
+        assertThat(response.settings().promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
     }
 
     @Test
@@ -118,6 +121,55 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         // Verify persistence
         var saved = irisSettingsService.getSettingsForCourse(course1);
         assertThat(saved.customInstructions()).isEqualTo("Custom instructions for this course");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_togglePromptingMode() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var update = IrisCourseSettings.of(current.enabled(), false, current.customInstructions(), current.variant(), current.supportLevel(), current.rateLimit());
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response).isNotNull();
+        assertThat(response.settings().promptingModeEnabled()).isFalse();
+
+        var saved = irisSettingsService.getSettingsForCourse(course1);
+        assertThat(saved.promptingModeEnabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_updatePromptingModeSettings() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var promptingModeSettings = new IrisPromptingModeSettings(2, 6, 45, 20);
+        var update = IrisCourseSettings.of(current.enabled(), current.promptingModeEnabled(), promptingModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response).isNotNull();
+        assertThat(response.settings().promptingModeSettings()).isEqualTo(promptingModeSettings);
+
+        var saved = irisSettingsService.getSettingsForCourse(course1);
+        assertThat(saved.promptingModeSettings()).isEqualTo(promptingModeSettings);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_rejectsInvalidPromptingModeSettings() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var promptingModeSettings = new IrisPromptingModeSettings(8, 3, 45, 20);
+        var update = IrisCourseSettings.of(current.enabled(), current.promptingModeEnabled(), promptingModeSettings, current.customInstructions(), current.variant(),
+                current.supportLevel(), current.rateLimit());
+
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

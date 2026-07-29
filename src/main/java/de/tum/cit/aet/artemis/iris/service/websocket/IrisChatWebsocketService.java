@@ -53,6 +53,19 @@ public class IrisChatWebsocketService {
     }
 
     /**
+     * Sends a message and/or a status update over the websocket with an optional event.
+     *
+     * @param session     the session to send the message to
+     * @param irisMessage that should be sent over the websocket
+     * @param runState    that should be sent over the websocket
+     * @param error       optional Pyris status error
+     * @param event       that should be sent over the socket
+     */
+    public void sendMessage(IrisSession session, IrisMessage irisMessage, PyrisRunState runState, PyrisStatusErrorDTO error, String event) {
+        this.sendMessage(session, irisMessage, runState, error, null, null, null, null, null, null, event);
+    }
+
+    /**
      * Sends a message and/or a status update over the websocket to the user
      * involved in the session. At least one of the message or the run state must be
      * non-null, otherwise there is no need to send a message.
@@ -69,6 +82,25 @@ public class IrisChatWebsocketService {
     public void sendMessage(IrisSession session, IrisMessage irisMessage, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle,
             List<IrisCitationMetaDTO> citationInfo) {
         this.sendMessage(session, irisMessage, runState, error, sessionTitle, citationInfo, null, null, null, null, null);
+    }
+
+    /**
+     * Sends a message and/or a status update over the websocket without an event.
+     *
+     * @param session      the session to send the message to
+     * @param irisMessage  that should be sent over the websocket
+     * @param runState     that should be sent over the websocket
+     * @param error        optional Pyris status error
+     * @param sessionTitle the session title to send
+     * @param citationInfo the citation metadata to send
+     * @param runId        the id of the Pyris run that produced the message
+     * @param activities   current Pyris activity snapshot
+     * @param activitySeq  monotonic sequence number for the activity snapshot
+     * @param finalResult  whether the message is the final answer for the run; false means intermediate
+     */
+    public void sendMessage(IrisSession session, IrisMessage irisMessage, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle,
+            List<IrisCitationMetaDTO> citationInfo, String runId, List<PyrisActivityDTO> activities, Integer activitySeq, Boolean finalResult) {
+        this.sendMessage(session, irisMessage, runState, error, sessionTitle, citationInfo, runId, activities, activitySeq, finalResult, null);
     }
 
     /**
@@ -124,6 +156,24 @@ public class IrisChatWebsocketService {
      */
     public void sendStatusUpdate(IrisSession session, String runId, PyrisRunState runState, PyrisStatusErrorDTO error, String event) {
         this.sendStatusUpdate(session, runId, runState, error, null, null, null, null, null, event);
+    }
+
+    /**
+     * Sends a status update over the websocket without an event.
+     *
+     * @param session      the session to send the status update to
+     * @param runId        the id of the Pyris run that produced the status update
+     * @param runState     the current Pyris run state
+     * @param error        optional Pyris status error
+     * @param sessionTitle the session title to send
+     * @param suggestions  the suggestions to send
+     * @param tokens       token usage and cost send by Pyris
+     * @param activities   current Pyris activity snapshot
+     * @param activitySeq  monotonic sequence number for the activity snapshot
+     */
+    public void sendStatusUpdate(IrisSession session, String runId, PyrisRunState runState, PyrisStatusErrorDTO error, String sessionTitle, List<String> suggestions,
+            List<LLMRequest> tokens, List<PyrisActivityDTO> activities, Integer activitySeq) {
+        this.sendStatusUpdate(session, runId, runState, error, sessionTitle, suggestions, tokens, activities, activitySeq, null);
     }
 
     /**

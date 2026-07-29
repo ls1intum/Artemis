@@ -12,7 +12,6 @@ import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-req
 import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -162,19 +161,11 @@ export class IrisChatHttpService {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
 
-    startPromptingMode(identifier: string): Response<void> {
-        const exerciseId = identifier.split('/').pop();
-        if (!exerciseId) {
-            throw new Error('Exercise id is missing from the session identifier');
-        }
+    startPromptingMode(exerciseId: number): Response<void> {
         return this.httpClient.patch<void>(`${this.apiPrefix}/programming-exercises/${exerciseId}/assessment-quiz/start`, null, { observe: 'response' });
     }
 
-    startInClassPromptingMode(identifier: string): Response<void> {
-        const exerciseId = identifier.split('/').pop();
-        if (!exerciseId) {
-            throw new Error('Exercise id is missing from the session identifier');
-        }
+    startInClassPromptingMode(exerciseId: number): Response<void> {
         return this.httpClient.patch<void>(`${this.apiPrefix}/programming-exercises/${exerciseId}/assessment-quiz/in-class/start-current-session`, null, { observe: 'response' });
     }
 }

@@ -108,9 +108,18 @@ describe('Course Management Detail Component', () => {
     it('should make iris settings call when instructor', async () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true, onboardingDone: true } });
-        const irisSpy = vi
-            .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
-            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));
+        const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(
+            of({
+                courseId: 123,
+                settings: {
+                    enabled: true,
+                    promptingModeEnabled: true,
+                    variant: 'default',
+                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: {},
+                },
+            } as IrisCourseSettingsWithRateLimitDTO),
+        );
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
     });

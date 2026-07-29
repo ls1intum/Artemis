@@ -40,7 +40,6 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
-import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -120,7 +119,6 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
 // Interval (in ms) for client-side streamed draft reveal.
 const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
 const LIVE_DRAFT_CATCH_UP_MS = 400;
-import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -144,7 +142,6 @@ import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.mode
         AsPipe,
         MarkdownDirective,
         ChatHistoryItemComponent,
-        NgClass,
         QuizTimerBarComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
@@ -337,11 +334,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
 
-
-    // Remaining seconds of quiz timer bar
-    readonly remainingSeconds = signal<number | undefined>(undefined);
-
-
     // Animation state (internal tracking)
     private shouldAnimate = false;
     // Ensures the onboarding tour is offered at most once per mount even though
@@ -379,7 +371,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly currentlyPrompting = input<boolean>(false);
     readonly promptingInitiated = input<boolean>(false);
     readonly timerExpiresAt = input<dayjs.Dayjs | undefined>(undefined);
-    readonly timeLimit = input.required<number>();
+    readonly timeLimit = input<number>(0);
     readonly timerExpired = output<void>();
 
     // ViewChilds
@@ -786,14 +778,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 untracked(() => this.interpolatedLabels.set([]));
                 return;
             }
-        }, 150);
-
-        this.updateRemainingSeconds();
-        this.timerSubscription = interval(1000).subscribe(() => {
-            if (this.currentlyPrompting) {
-                this.updateRemainingSeconds();
-            }
-        });
             const labels = keys.map((key) => this.translateService.instant(key));
             // Fisher-Yates shuffle for random display order
             for (let i = labels.length - 1; i > 0; i--) {

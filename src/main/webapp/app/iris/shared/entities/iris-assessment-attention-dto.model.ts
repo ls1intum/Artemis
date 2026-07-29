@@ -1,3 +1,3 @@
-export class IrisAssessmentAttentionDTO {
+export interface IrisAssessmentAttentionDTO {
     needsAttention: boolean;
 }

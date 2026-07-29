@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -48,6 +49,8 @@ public class PyrisStatusUpdateService {
 
     private final IrisChatSessionService irisChatSessionService;
 
+    private final IrisPromptUserService irisPromptUserService;
+
     private final IrisCompetencyGenerationService competencyGenerationService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
@@ -58,11 +61,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisPromptUserService irisPromptUserService,
+            IrisCompetencyGenerationService competencyGenerationService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
+            AutonomousTutorService autonomousTutorService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisPromptUserService = irisPromptUserService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.autonomousTutorService = autonomousTutorService;
@@ -77,11 +81,22 @@ public class PyrisStatusUpdateService {
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
+    public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+    }
+
+    /**
+     * Handles a Pyris chat status update and forwards results/status changes to the websocket layer.
+     *
+     * @param job          the chat job that is updated
+     * @param statusUpdate the status update payload
+     * @param event        optional prompting-mode event variant
+     */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
-            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate, event);
+            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
             return;
         }
         if (statusUpdate.partialResult() != null) {
@@ -89,9 +104,11 @@ public class PyrisStatusUpdateService {
             return;
         }
 
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate);
-
-        removeJobIfTerminatedElseUpdate(runState, updatedJob);
+        var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate, event);
+        var jobWasTracked = removeJobIfTerminatedElseUpdate(runState, updatedJob);
+        if (shouldHandlePromptUserPipelineEvent(normalizedStatusUpdate, jobWasTracked)) {
+            irisPromptUserService.handleStatusUpdate(updatedJob, normalizedStatusUpdate);
+        }
     }
 
     /**
@@ -149,13 +166,19 @@ public class PyrisStatusUpdateService {
      * @param runState the run state of the status update
      * @param job      the job to remove or to update
      */
-    private void removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
+    private boolean removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
         if (runState.isTerminal()) {
-            pyrisJobService.removeJob(job);
+            return pyrisJobService.removeJob(job) != null;
         }
         else {
             pyrisJobService.updateJob(job);
+            return true;
         }
+    }
+
+    private boolean shouldHandlePromptUserPipelineEvent(PyrisChatStatusUpdateDTO statusUpdate, boolean jobWasTracked) {
+        return jobWasTracked && statusUpdate.runState() == PyrisRunState.FINISHED && statusUpdate.result() != null && statusUpdate.event() != null
+                && !Boolean.FALSE.equals(statusUpdate.finalResult());
     }
 
     /**
@@ -247,7 +270,7 @@ public class PyrisStatusUpdateService {
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult());
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.event(), statusUpdate.verdict());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {

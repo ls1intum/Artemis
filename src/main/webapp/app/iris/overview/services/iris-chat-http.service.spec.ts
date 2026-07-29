@@ -100,7 +100,7 @@ describe('IrisChatHttpService', () => {
 
         it('should start in-class prompting mode', fakeAsync(() => {
             service
-                .startInClassPromptingMode(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
+                .startInClassPromptingMode(irisExercise.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toBeNull());
 
@@ -112,7 +112,7 @@ describe('IrisChatHttpService', () => {
 
         it('should start prompting mode', fakeAsync(() => {
             service
-                .startPromptingMode(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
+                .startPromptingMode(irisExercise.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toBeNull());
 

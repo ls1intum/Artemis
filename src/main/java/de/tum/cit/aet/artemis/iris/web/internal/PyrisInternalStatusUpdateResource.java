@@ -68,7 +68,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping({"pipelines/chat/runs/{runId}/status", "pipelines/prompt-user/runs/{runId}/status"})
+    @PostMapping({ "pipelines/chat/runs/{runId}/status", "pipelines/prompt-user/runs/{runId}/status" })
     @Internal
     public ResponseEntity<Void> setStatusOfChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class);
@@ -76,7 +76,7 @@ public class PyrisInternalStatusUpdateResource {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
 
-        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO, statusUpdateDTO.event());
 
         return ResponseEntity.ok().build();
     }
@@ -230,6 +230,12 @@ public class PyrisInternalStatusUpdateResource {
         }
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
+    }
+
+    private static void throwIfRunIdMismatch(String runId, PyrisJob job) {
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
     }
 
 }

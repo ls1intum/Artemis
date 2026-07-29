@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
@@ -41,16 +42,19 @@ public class IrisSessionService {
 
     private final IrisChatSessionService irisChatSessionService;
 
+    private final IrisPromptUserService irisPromptUserService;
+
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
     private final IrisSettingsService irisSettingsService;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
-            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisPromptUserService irisPromptUserService,
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisPromptUserService = irisPromptUserService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.irisSettingsService = irisSettingsService;
@@ -108,7 +112,12 @@ public class IrisSessionService {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             if (session instanceof IrisChatSession chatSession) {
-                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
+                if (chatSession.isInPromptingModePipeline()) {
+                    irisPromptUserService.requestAndHandleResponse(chatSession);
+                }
+                else {
+                    irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
+                }
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);

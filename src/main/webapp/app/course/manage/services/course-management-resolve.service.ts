@@ -16,7 +16,10 @@ export class CourseManagementResolve implements Resolve<Course> {
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         if (route.params['courseId']) {
-            const request$ = route.data['loadWithExercises'] ? this.courseManagementService.findWithExercises(Number(courseId)) : this.courseManagementService.find(Number(courseId));
+            const courseId = Number(route.params['courseId']);
+            const request$ = route.data['loadWithExercises']
+                ? this.courseManagementService.findWithExercises(Number(courseId))
+                : this.courseManagementService.find(Number(courseId));
 
             return request$.pipe(
                 filter((response: HttpResponse<Course>) => response.ok),

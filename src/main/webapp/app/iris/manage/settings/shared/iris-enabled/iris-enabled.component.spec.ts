@@ -22,8 +22,10 @@ describe('IrisEnabledComponent', () => {
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
+        promptingModeEnabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
+        promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 

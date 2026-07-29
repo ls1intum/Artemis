@@ -183,8 +183,8 @@ public class PyrisJobService {
      *
      * @param job the job to remove
      */
-    public void removeJob(PyrisJob job) {
-        getPyrisJobMap().remove(job.jobId());
+    public PyrisJob removeJob(PyrisJob job) {
+        return getPyrisJobMap().remove(job.jobId());
     }
 
     /**

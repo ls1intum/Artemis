@@ -1,35 +1,21 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.ArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisPipeEvent;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
-import de.tum.cit.aet.artemis.iris.service.session.IrisUnsupportedExerciseTypeException;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -37,41 +23,38 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisAssessmentService {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisAssessmentService.class);
 
     private final IrisAssessmentRepository irisAssessmentRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final IrisSettingsService irisSettingsService;
-
-    private final AuthorizationCheckService authCheckService;
-
-    private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
-
-    private final UserRepository userRepository;
-
-    public IrisAssessmentService(IrisAssessmentRepository irisAssessmentRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository) {
+    public IrisAssessmentService(IrisAssessmentRepository irisAssessmentRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.irisAssessmentRepository = irisAssessmentRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.irisSettingsService = irisSettingsService;
-        this.authCheckService = authCheckService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
-        this.userRepository = userRepository;
     }
 
+    /**
+     * Saves the Iris verdict for a user's regular assessment.
+     *
+     * @param user       the assessed user
+     * @param exercise   the exercise
+     * @param verdictDTO the verdict payload
+     */
     public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdictDTO) {
         saveAndHandleVerdict(user, exercise, verdictDTO, false);
     }
 
+    /**
+     * Saves the Iris verdict for a user's assessment.
+     *
+     * @param user       the assessed user
+     * @param exercise   the exercise
+     * @param verdictDTO the verdict payload
+     * @param inClass    whether to use the in-class assessment
+     */
     public void saveAndHandleVerdict(User user, Exercise exercise, IrisVerdictDTO verdictDTO, boolean inClass) {
         IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, true);
 
@@ -104,10 +87,23 @@ public class IrisAssessmentService {
         return irisAssessmentRepository.existsByCourseIdAndVerdictAndVerdictReviewIsNull(courseId, IrisVerdict.SUSPICIOUS);
     }
 
+    /**
+     * Clears verdict and reasoning for a user's regular assessment.
+     *
+     * @param user     the assessed user
+     * @param exercise the exercise
+     */
     public void resetVerdictAndReasoning(User user, Exercise exercise) {
         resetVerdictAndReasoning(user, exercise, false);
     }
 
+    /**
+     * Clears verdict and reasoning for a user's assessment.
+     *
+     * @param user     the assessed user
+     * @param exercise the exercise
+     * @param inClass  whether to use the in-class assessment
+     */
     public void resetVerdictAndReasoning(User user, Exercise exercise, boolean inClass) {
         IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, false);
 
@@ -162,74 +158,23 @@ public class IrisAssessmentService {
         irisAssessmentRepository.save(assessment);
     }
 
-    public void handleEventFromIris(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        if (statusUpdate.event() == null) {
-            return;
-        }
-
-        var session = irisExerciseChatSessionRepository.findByIdElseThrow(job.sessionId());
-        var user = userRepository.findByIdElseThrow(session.getUserId());
-        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(session.getExerciseId());
-        user.hasAcceptedExternalLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        if (exercise.isExamExercise()) {
-            throw new IrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
-        }
-
-        var inClassQuiz = session.isInClassQuiz();
-
-        switch (IrisPipeEvent.valueOf(statusUpdate.event())) {
-            case IrisPipeEvent.PROMPTING_FINISHED:
-                irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-                session.setInPromptingModePipeline(false);
-                session.setInClassQuiz(false);
-                irisExerciseChatSessionRepository.save(session);
-
-                try {
-                    if (statusUpdate.verdict() == null) {
-                        throw new Error("Prompting finished without verdict");
-                    }
-                    saveAndHandleVerdict(user, exercise, statusUpdate.verdict(), inClassQuiz);
-                }
-                catch (Exception e) {
-                    log.error("Error while processing prompting mode verdict and reasoning {}", statusUpdate.verdict(), e);
-                }
-                break;
-            case IrisPipeEvent.NEXT_QUESTION:
-                try {
-                    irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-                    if (statusUpdate.verdict() == null) {
-                        throw new Error("Answer has no verdict");
-                    }
-                    addReasoning(user, exercise, statusUpdate.verdict().reasoning(), inClassQuiz);
-
-                    session.setQuestionsAsked(session.getQuestionsAsked() + 1);
-                    irisExerciseChatSessionRepository.save(session);
-                }
-                catch (Exception e) {
-                    log.error("Error while processing prompting mode reasoning {}", statusUpdate.verdict(), e);
-                }
-                break;
-            case IrisPipeEvent.FIRST_QUESTION:
-                try {
-                    irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-
-                    session.setQuestionsAsked(session.getQuestionsAsked() + 1);
-                    irisExerciseChatSessionRepository.save(session);
-                }
-                catch (Exception e) {
-                    log.error("Error while processing first question pipeline callback {}", statusUpdate.verdict(), e);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
+    /**
+     * Creates a regular Iris assessment for the given participation.
+     *
+     * @param participation the participation
+     * @return the created assessment
+     */
     public IrisAssessment createNewAssessment(ProgrammingExerciseStudentParticipation participation) {
         return createNewAssessment(participation, false);
     }
 
+    /**
+     * Creates an Iris assessment for the given participation.
+     *
+     * @param participation the participation
+     * @param inClass       whether to create an in-class assessment
+     * @return the created assessment
+     */
     public IrisAssessment createNewAssessment(ProgrammingExerciseStudentParticipation participation, boolean inClass) {
         var student = participation.getStudent().orElseThrow();
         var exercise = participation.getExercise();
@@ -248,6 +193,11 @@ public class IrisAssessmentService {
 
     }
 
+    /**
+     * Deletes all in-class Iris assessments for an exercise and clears the participation references first.
+     *
+     * @param exercise the programming exercise
+     */
     public void deleteInClassAssessmentsForExercise(ProgrammingExercise exercise) {
         var assessmentIds = programmingExerciseStudentParticipationRepository.findIrisAssessmentInClassIdsByExerciseId(exercise.getId());
         if (assessmentIds.isEmpty()) {

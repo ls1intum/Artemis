@@ -56,8 +56,8 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/understanding-assessment/shared/iris-assessment-button/iris-review-assessment-button.component';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 /**
  * Filter properties for a result
@@ -458,6 +458,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             submissionCount: dto.submissionCount,
             submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
         };
+    }
+
+    toProgrammingExercise(): ProgrammingExercise {
+        return this.exercise() as ProgrammingExercise;
+    }
+
+    toProgrammingParticipation(dto: ParticipationScoreDTO): ProgrammingExerciseStudentParticipation {
+        return this.toParticipation(dto);
     }
 
     /**

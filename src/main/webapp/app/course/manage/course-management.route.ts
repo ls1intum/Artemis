@@ -358,10 +358,9 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: 'iris-settings',
-                        loadComponent: () =>
-                            import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                        loadComponent: () => import('app/iris/manage/settings/iris-settings-update/iris-settings-update.component').then((m) => m.IrisSettingsUpdateComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.settings.title.course',
                         },
                         canActivate: [UserRouteAccessService, IrisGuard],

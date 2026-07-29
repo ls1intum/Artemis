@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -84,12 +85,12 @@ public class CourseManagementResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final IrisAssessmentService irisAssessmentService;
+    private final Optional<IrisAssessmentService> irisAssessmentService;
 
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService, IrisAssessmentService irisAssessmentService) {
+            CourseLoadService courseLoadService, Optional<IrisAssessmentService> irisAssessmentService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -348,7 +349,8 @@ public class CourseManagementResource {
     public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
         log.debug("REST request to get assessment state of Course : {}", courseId);
 
-        return ResponseEntity.ok((new IrisAssessmentAttentionDTO(irisAssessmentService.assessmentAttentionNeededInCourse(courseId))));
+        boolean needsAttention = irisAssessmentService.map(service -> service.assessmentAttentionNeededInCourse(courseId)).orElse(false);
+        return ResponseEntity.ok(new IrisAssessmentAttentionDTO(needsAttention));
     }
 
 }

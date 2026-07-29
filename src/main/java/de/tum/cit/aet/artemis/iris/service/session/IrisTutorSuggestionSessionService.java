@@ -119,8 +119,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     }
 
     @Override
-    public void sendOverWebsocket(IrisTutorSuggestionSession session, IrisMessage message) {
-        irisChatWebsocketService.sendMessage(session, message, null, null);
+    public void sendOverWebsocket(IrisTutorSuggestionSession session, IrisMessage message, String event) {
+        irisChatWebsocketService.sendMessage(session, message, null, null, null, null, null, null, null, null, event);
     }
 
     @Override
@@ -250,7 +250,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         else {
             savedMessage = null;
             savedArtifact = null;
-            irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), null, null, statusUpdate.tokens(), null, null);
+            irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), null, null, statusUpdate.tokens(), null, null, null);
         }
 
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);

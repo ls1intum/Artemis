@@ -36,6 +36,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import dayjs from 'dayjs/esm';
 
 describe('IrisChatService', () => {
@@ -661,6 +662,88 @@ describe('IrisChatService', () => {
             ...extra,
         });
 
+        it('should emit pipe events from MESSAGE frames after applying the message', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const emittedEvents: (IrisPipeEvent | undefined)[] = [];
+            let messageCountWhenEventEmits = 0;
+            const initialMessageCount = service.messages.getValue().length;
+            service.currentLatestEvent().subscribe((event) => {
+                emittedEvents.push(event);
+                messageCountWhenEventEmits = service.messages.getValue().length;
+            });
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { event: IrisPipeEvent.FIRST_QUESTION }));
+            expect(emittedEvents).toEqual([]);
+
+            websocketSubject.next(messageFrame('run-1', { event: IrisPipeEvent.FIRST_QUESTION }));
+
+            expect(emittedEvents).toEqual([IrisPipeEvent.FIRST_QUESTION]);
+            expect(messageCountWhenEventEmits).toBe(initialMessageCount + 1);
+        });
+
+        it('should keep both prompting start messages when the first-question run starts before the first run returns', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const emittedEvents: (IrisPipeEvent | undefined)[] = [];
+            service.currentLatestEvent().subscribe((event) => emittedEvents.push(event));
+
+            websocketSubject.next(statusFrame('run-user-initiates', IrisRunState.RUNNING, { event: IrisPipeEvent.USER_INITIATES_PROMPTING }));
+            websocketSubject.next(statusFrame('run-first-question', IrisRunState.RUNNING, { event: IrisPipeEvent.FIRST_QUESTION }));
+
+            websocketSubject.next(
+                messageFrame('run-user-initiates', {
+                    event: IrisPipeEvent.USER_INITIATES_PROMPTING,
+                    message: { ...mockWebsocketServerMessage.message!, id: 401, content: [{ type: 'text', textContent: 'Prompting mode starts now.' }] },
+                }),
+            );
+            websocketSubject.next(
+                messageFrame('run-first-question', {
+                    event: IrisPipeEvent.FIRST_QUESTION,
+                    message: { ...mockWebsocketServerMessage.message!, id: 402, content: [{ type: 'text', textContent: 'First question?' }] },
+                }),
+            );
+
+            expect(emittedEvents).toEqual([IrisPipeEvent.USER_INITIATES_PROMPTING, IrisPipeEvent.FIRST_QUESTION]);
+            expect(service.messages.getValue().some((message) => message.id === 401)).toBe(true);
+            expect(service.messages.getValue().some((message) => message.id === 402)).toBe(true);
+        });
+
+        it('should accept the next user-triggered run after prompting start messages', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            websocketSubject.next(
+                messageFrame('run-user-initiates', {
+                    event: IrisPipeEvent.USER_INITIATES_PROMPTING,
+                    message: { ...mockWebsocketServerMessage.message!, id: 401 },
+                }),
+            );
+            websocketSubject.next(
+                messageFrame('run-first-question', {
+                    event: IrisPipeEvent.FIRST_QUESTION,
+                    message: { ...mockWebsocketServerMessage.message!, id: 402 },
+                }),
+            );
+
+            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            vi.spyOn(httpService, 'createMessage').mockReturnValue(inFlight.asObservable());
+            const result = firstValueFrom(service.sendMessage('answer'));
+            inFlight.next({ body: mockUserMessageWithContent('answer') } as HttpResponse<IrisMessageResponseDTO>);
+            inFlight.complete();
+            await result;
+
+            websocketSubject.next(statusFrame('run-next-question', IrisRunState.RUNNING, { activities: [runningActivity('act-next')], activitySeq: 1 }));
+            expect(service.activities.getValue()).toEqual([runningActivity('act-next')]);
+
+            websocketSubject.next(
+                messageFrame('run-next-question', {
+                    event: IrisPipeEvent.NEXT_QUESTION,
+                    message: { ...mockWebsocketServerMessage.message!, id: 403 },
+                }),
+            );
+            expect(service.awaitingAnswer()).toBe(false);
+        });
+
         it('guard: awaitingAnswer opens on local send and survives the user-message HTTP response', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);
@@ -1107,6 +1190,40 @@ describe('IrisChatService', () => {
             const courseId = service.getCourseId();
 
             expect(courseId).toBeUndefined();
+        });
+    });
+
+    describe('prompting mode start', () => {
+        it('should clear the chat before starting prompting mode', async () => {
+            const exerciseId = 42;
+            const sessionId = 777;
+            const session = { ...mockConversationWithNoMessages, id: sessionId, mode: ChatServiceMode.COURSE, entityId: courseId };
+            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            const websocketSpy = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const startSpy = vi.spyOn(httpService, 'startPromptingMode').mockReturnValueOnce(of(new HttpResponse<void>()));
+
+            await firstValueFrom(service.startPromptingMode(exerciseId));
+
+            expect(createCourseSessionSpy).toHaveBeenCalledWith(courseId);
+            expect(websocketSpy).toHaveBeenCalledWith(sessionId);
+            expect(startSpy).toHaveBeenCalledWith(exerciseId);
+        });
+
+        it('should clear the chat before starting in-class prompting mode', async () => {
+            const exerciseId = 43;
+            const sessionId = 778;
+            const session = { ...mockConversationWithNoMessages, id: sessionId, mode: ChatServiceMode.COURSE, entityId: courseId };
+            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            const websocketSpy = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const startSpy = vi.spyOn(httpService, 'startInClassPromptingMode').mockReturnValueOnce(of(new HttpResponse<void>()));
+
+            await firstValueFrom(service.startInClassPromptingMode(exerciseId));
+
+            expect(createCourseSessionSpy).toHaveBeenCalledWith(courseId);
+            expect(websocketSpy).toHaveBeenCalledWith(sessionId);
+            expect(startSpy).toHaveBeenCalledWith(exerciseId);
         });
     });
 

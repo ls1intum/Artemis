@@ -4,32 +4,6 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20260427213900" author="PeterNiedermoser">
 
-        <addColumn tableName="iris_sub_settings">
-            <column name="min_questions" type="tinyint unsigned" defaultValueNumeric="3">
-                <constraints nullable="false"/>
-            </column>
-            <column name="max_questions" type="tinyint unsigned" defaultValueNumeric="5">
-                <constraints nullable="false"/>
-            </column>
-            <column name="time_limit_question" type="int unsigned" defaultValueNumeric="20">
-                <constraints nullable="false"/>
-            </column>
-            <column name="time_limit_in_class" type="int unsigned" defaultValueNumeric="15">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
-
-        <addColumn tableName="iris_settings">
-            <column name="iris_prompt_user_settings_id" type="bigint"/>
-        </addColumn>
-        <addForeignKeyConstraint
-                baseTableName="iris_settings"
-                baseColumnNames="iris_prompt_user_settings_id"
-                referencedTableName="iris_sub_settings"
-                referencedColumnNames="id"
-                constraintName="FK_IRIS_SETTINGS_ON_IRIS_PROMPT_USER_SETTINGS"
-                onDelete="CASCADE"/>
-
         <addColumn tableName="iris_session">
             <column name="questions_asked" type="tinyint unsigned" defaultValueNumeric="0">
                 <constraints nullable="false"/>

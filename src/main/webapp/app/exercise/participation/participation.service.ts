@@ -133,7 +133,6 @@ export class ParticipationService {
             );
     }
 
-    delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
     searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,

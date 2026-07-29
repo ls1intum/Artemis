@@ -1,6 +1,6 @@
 /**
  * New simplified course-level Iris settings models matching the server DTOs.
- * These replace the legacy three-tier (Global → Course → Exercise) × 8-feature system.
+ * These replace the legacy three-tier (Global to Course to Exercise) times 8-feature system.
  */
 
 /**
@@ -36,6 +36,10 @@ export const SLIDER_VALUE_TO_SUPPORT_LEVEL: Record<number, IrisSupportLevel> = {
     100: 'high',
 };
 
+export const IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT = 10;
+export const IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX = 180;
+export const IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX = 30;
+
 /**
  * Rate limit configuration with optional per-course overrides.
  * null/undefined values indicate "use application defaults" or "unlimited".
@@ -46,6 +50,16 @@ export interface IrisRateLimitConfiguration {
 }
 
 /**
+ * Prompting-mode quiz configuration stored in the course Iris settings JSON column.
+ */
+export interface IrisPromptingModeSettingsDTO {
+    minQuestions: number;
+    maxQuestions: number;
+    timeLimitQuestion: number;
+    timeLimitInClass: number;
+}
+
+/**
  * Core settings payload stored in the course_iris_settings JSON column.
  * This is the editable portion of the settings.
  * Note: rateLimit is optional - null/undefined means "use application defaults",
@@ -53,10 +67,12 @@ export interface IrisRateLimitConfiguration {
  */
 export interface IrisCourseSettingsDTO {
     enabled: boolean;
+    promptingModeEnabled: boolean;
     customInstructions?: string;
     variant: IrisPipelineVariant;
     // Optional: absent means "use server default" (MODERATE), mirroring the @Nullable backend field.
     supportLevel?: IrisSupportLevel;
+    promptingModeSettings: IrisPromptingModeSettingsDTO;
     rateLimit?: IrisRateLimitConfiguration;
 }
 
@@ -79,12 +95,26 @@ export function createEmptyRateLimit(): IrisRateLimitConfiguration {
 }
 
 /**
+ * Helper to create default prompting-mode quiz settings.
+ */
+export function createDefaultPromptingModeSettings(): IrisPromptingModeSettingsDTO {
+    return {
+        minQuestions: 3,
+        maxQuestions: 5,
+        timeLimitQuestion: 20,
+        timeLimitInClass: 15,
+    };
+}
+
+/**
  * Helper to create default course settings.
  */
 export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
     return {
         enabled: true,
+        promptingModeEnabled: true,
         variant: 'default',
         supportLevel: 'moderate',
+        promptingModeSettings: createDefaultPromptingModeSettings(),
     };
 }
