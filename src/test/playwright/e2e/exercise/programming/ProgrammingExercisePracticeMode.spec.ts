@@ -11,6 +11,14 @@ import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
+// The graded/practice toggle renders as a PrimeNG select button; each option is a `.p-togglebutton`
+// whose active state is expressed via the `p-togglebutton-checked` class.
+const ACTIVE_MODE_CLASS = /p-togglebutton-checked/;
+
+function modeButton(page: Page, mode: 'practice' | 'graded') {
+    return page.locator(`.p-togglebutton:has(#${mode}-mode-button)`);
+}
+
 /**
  * Regression tests for the practice mode of programming exercises (issue #12780): after the due date,
  * starting practice must keep the practice mode reachable — both while switching between graded and
@@ -43,28 +51,28 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
 
-            const practiceButton = page.locator('#practice-mode-button');
-            const gradedButton = page.locator('#graded-mode-button');
+            const practiceButton = modeButton(page, 'practice');
+            const gradedButton = modeButton(page, 'graded');
             await expect(practiceButton).toBeVisible();
             await expect(gradedButton).toBeVisible();
-            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
+            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
 
             // Switching back to graded must not remove the practice option
             await gradedButton.click();
-            await expect(gradedButton).toHaveClass(/segmented-control__button--active/);
+            await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
             await expect(practiceButton).toBeVisible();
 
             // ... and practice can be selected again
             await practiceButton.click();
-            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
+            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
 
             // The toggle also survives a fresh page load, even though no practice submission exists yet
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(page.locator('#practice-mode-button')).toBeVisible({ timeout: 15000 });
-            await expect(page.locator('#graded-mode-button')).toBeVisible();
+            await expect(modeButton(page, 'practice')).toBeVisible({ timeout: 15000 });
+            await expect(modeButton(page, 'graded')).toBeVisible();
 
             // Submitting in practice mode must process the submission and update the shown result
-            await page.locator('#practice-mode-button').click();
+            await modeButton(page, 'practice').click();
             await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
                 await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
             });
@@ -87,25 +95,25 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice');
 
-            const practiceButton = page.locator('#practice-mode-button');
-            const gradedButton = page.locator('#graded-mode-button');
+            const practiceButton = modeButton(page, 'practice');
+            const gradedButton = modeButton(page, 'graded');
             await expect(practiceButton).toBeVisible();
-            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
+            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
             await expect(page.locator('.code-button')).toBeVisible();
 
             // The graded mode stays reachable, so the student can recognize that they missed the due date
             await gradedButton.click();
-            await expect(gradedButton).toHaveClass(/segmented-control__button--active/);
+            await expect(gradedButton).toHaveClass(ACTIVE_MODE_CLASS);
             await expect(page.locator('#exercise-headers-information')).toContainText('Missed due date');
 
             // ... and practice can be selected again
             await practiceButton.click();
-            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
+            await expect(practiceButton).toHaveClass(ACTIVE_MODE_CLASS);
 
             // The practice mode survives a fresh page load, even though no practice submission exists yet
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(page.locator('#practice-mode-button')).toBeVisible({ timeout: 15000 });
-            await expect(page.locator('#graded-mode-button')).toBeVisible();
+            await expect(modeButton(page, 'practice')).toBeVisible({ timeout: 15000 });
+            await expect(modeButton(page, 'graded')).toBeVisible();
             await expect(page.locator('.code-button')).toBeVisible();
         });
 
@@ -113,7 +121,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice');
-            await expect(page.locator('#practice-mode-button')).toHaveClass(/segmented-control__button--active/);
+            await expect(modeButton(page, 'practice')).toHaveClass(ACTIVE_MODE_CLASS);
 
             // The live submission state is shown in practice mode even though the due date has passed
             // (instead of a static "currently participating" text that never updates)
