@@ -18,9 +18,11 @@ a repeated-call identity or caching contract that delegation does not imply.
 Use the GENERATED TEST PLAN to locate each seam's executable tests, but never treat its labels as coverage proof. Check the actual assertions against the mapped
 Testing Strategy responsibility and visibility role; report a weak oracle when that mapping claims coverage the executable test does not provide.
 
-Coverage follows student ownership. You must not emit uncovered or weak-oracle findings for behavior whose Design owner is marked `given`; provided support is not a
+Coverage follows student ownership. Every failed mutant, uncovered finding, and weak-oracle finding must name the exact type from the approved Design table in
+`ownerType`. You must not emit uncovered or weak-oracle findings for behavior whose Design owner is marked `given`; provided support is not a
 student work seam and must not acquire a gradable task merely to make its own starter code fail. Inspect given support directly in the contract pass instead. Oracle
-findings must trace to a stubbed or student-creates owner in the approved Testing Strategy.
+findings must trace to a `stubbed` or `student-creates` owner in the approved Design table. Omit a finding when no such exact owner exists; do not use a strategy name,
+requirement ID, generic phrase, or guessed type as its owner.
 
 When a worked example gives a deterministic input and output, prioritize a hardcoded-example mutant if the executable tests merely reuse that same witness. A
 meaningful oracle should exercise at least one distinct representative input whose expected result follows from the same rule, without turning this into a
@@ -50,9 +52,9 @@ Include applicable mutantChecks even when they pass; whenever executable student
 repeated in a finding array. Do not assess examples, API wording, starter ergonomics, presentation, or adaptation scope in this pass.
 
 Respond with ONLY this complete JSON shape; every array is mandatory for this test-oracle review:
-{"mutantChecks": [{"mutant":"specific plausible wrong implementation","killed":true,"sourceQuote":"P1; mandatory when killed is false","reason":"executable assertion evidence"}],
- "uncovered": [{"requirement":"...","sourceQuote":"P1","reason":"file/assertion evidence"}],
- "weakOracle": [{"requirement":"...","sourceQuote":"P1","reason":"specific wrong implementation that survives"}]}
+{"mutantChecks": [{"mutant":"specific plausible wrong implementation","killed":true,"sourceQuote":"P1; mandatory when killed is false","ownerType":"exact Design type; mandatory when killed is false","reason":"executable assertion evidence"}],
+ "uncovered": [{"requirement":"...","sourceQuote":"P1","ownerType":"exact Design type","reason":"file/assertion evidence"}],
+ "weakOracle": [{"requirement":"...","sourceQuote":"P1","ownerType":"exact Design type","reason":"specific wrong implementation that survives"}]}
 Across failed mutantChecks, uncovered, and weakOracle, return only the few highest-leverage findings that have distinct repairs. A behavior with any relevant
 assertion is weak, not uncovered; never report it in both categories. Group partitions of the same rule when one test change can cover them. Prioritize
 contract-breaking gaps and omit redundant lower-risk passing mutants. Every failed reason

@@ -1333,6 +1333,64 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void oracleReviewUsesApprovedDesignOwnershipAndDropsGivenSupportFindings() {
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
+                {"mutantChecks":[{"mutant":"dispatcher accepts an empty list","killed":false,"sourceQuote":"empty list",
+                    "ownerType":"Dispatcher","reason":"no graded assertion rejects it"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        String specification = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Dispatcher` | provided orchestration | given |
+                | `Strategy` | selected behavior | student-creates |
+                ## Rules
+                | ID | Rule |
+                |---|---|
+                | R1 | The dispatcher rejects an empty list. |
+                """;
+
+        SpecFidelityReport report = scripted.critic().critique("Create a strategy exercise with an empty list rule.", "Implement both strategies.", List.of("selects"),
+                COMPLETE_ARTIFACTS, null, () -> false, null, specification, null, null);
+
+        assertThat(report.findings()).isEmpty();
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
+    }
+
+    @Test
+    void oracleReviewRetriesMissingOwnershipAndAcceptsCorrectedStudentOwner() {
+        ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
+                {"mutantChecks":[{"mutant":"strategy ignores CJK characters","killed":false,"sourceQuote":"CJK characters",
+                    "reason":"the test uses ASCII only"}],
+                 "uncovered":[],"weakOracle":[]}
+                """), rawResponse("""
+                {"mutantChecks":[{"mutant":"strategy ignores CJK characters","killed":false,"sourceQuote":"CJK characters",
+                    "ownerType":"Graphemes","reason":"the test uses ASCII only"}],
+                 "uncovered":[],"weakOracle":[]}
+                """));
+        String specification = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Graphemes` | counts graphemes | stubbed |
+                ## Rules
+                | ID | Rule |
+                |---|---|
+                | R1 | Count CJK characters as user-perceived characters. |
+                """;
+
+        SpecFidelityReport report = scripted.critic().critique("Support CJK characters.", "Count user-perceived characters.", List.of("countsCjk"), COMPLETE_ARTIFACTS, null,
+                () -> false, null, specification, null, null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.WEAK_TEST_ORACLE);
+            assertThat(finding.requirement()).isEqualTo("strategy ignores CJK characters");
+        });
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
+    }
+
+    @Test
     void oracleCorrectionMustStillShowThatItReviewedAnExecutableTest() {
         ScriptedCritic scripted = criticScripted(jsonResponse("{}"), rawResponse("""
                 {"mutantChecks":[{"mutant":"reject zero fuel","killed":false,

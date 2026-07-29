@@ -54,7 +54,7 @@ class CriticVerdictParser {
             @Nullable List<RequirementFindingItem> missingRequestedChanges) {
     }
 
-    private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote) {
+    private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote, @Nullable String ownerType) {
     }
 
     private record ExampleCheckItem(@Nullable String claim, @Nullable JsonNode computedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
@@ -66,7 +66,7 @@ class CriticVerdictParser {
     private record TemplateCheckItem(@Nullable String ownerType, @Nullable String test, @Nullable Boolean targetReached, @Nullable String reason, @Nullable String evidenceQuote) {
     }
 
-    private record MutantCheckItem(@Nullable String mutant, @Nullable Boolean killed, @Nullable String reason, @Nullable String sourceQuote) {
+    private record MutantCheckItem(@Nullable String mutant, @Nullable Boolean killed, @Nullable String reason, @Nullable String sourceQuote, @Nullable String ownerType) {
     }
 
     private record ContractWitnessResponse(@Nullable List<ContractWitnessItem> witnesses) {
@@ -114,7 +114,7 @@ class CriticVerdictParser {
             return null;
         }
         if (parsed == null || pass == ReviewPass.CONTRACT && malformedContractVerdict(parsed, requireScopeVerdict, expectExampleChecks, expectApiChecks, expectTemplateChecks)
-                || pass == ReviewPass.ORACLE && malformedOracleVerdict(parsed, expectMutantChecks)) {
+                || pass == ReviewPass.ORACLE && malformedOracleVerdict(parsed, expectMutantChecks, templateStatuses)) {
             return null;
         }
         if (pass == ReviewPass.CONTRACT && !templateStatuses.isEmpty()
@@ -122,7 +122,7 @@ class CriticVerdictParser {
                         .anyMatch(owner -> !owner.equals("shared scaffold") && !owner.equals("student-creates") && !templateStatuses.containsKey(owner))) {
             return null;
         }
-        boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource);
+        boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource, templateStatuses);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         // Scope violations require instructor attention, so retain them before advisory findings consume the shared defensive cap.
         if (requireScopeVerdict) {
@@ -190,6 +190,10 @@ class CriticVerdictParser {
                 if (item.killed() || findings.size() >= MAX_REVIEW_FINDINGS) {
                     continue;
                 }
+                if (!oracleTargetsStudentWork(item.ownerType(), templateStatuses)) {
+                    abstainNonStudentOracleFinding(item.ownerType(), item.mutant());
+                    continue;
+                }
                 if (unsupportedSourceRequirement(item.mutant(), item.sourceQuote(), authoritativeSource)) {
                     log.info("Critic abstained on an oracle mutant that added a contract term absent from its cited source passage: {}", item.mutant());
                     continue;
@@ -201,7 +205,7 @@ class CriticVerdictParser {
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, truncate(item.mutant().strip()),
                         "This concrete contract-breaking implementation survives the generated suite: " + item.reason().strip()));
             }
-            appendGroundedOracleFindings(findings, parsed.weakOracle(), authoritativeSource, SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+            appendGroundedOracleFindings(findings, parsed.weakOracle(), authoritativeSource, templateStatuses, SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
                     "A plausible contract-breaking implementation can pass the generated tests: ");
         }
         if (pass == ReviewPass.ORACLE && findings.size() < MAX_REVIEW_FINDINGS) {
@@ -210,6 +214,10 @@ class CriticVerdictParser {
                     break;
                 }
                 if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                    continue;
+                }
+                if (!oracleTargetsStudentWork(item.ownerType(), templateStatuses)) {
+                    abstainNonStudentOracleFinding(item.ownerType(), item.requirement());
                     continue;
                 }
                 if (unsupportedSourceRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
@@ -279,16 +287,22 @@ class CriticVerdictParser {
                         || malformedBlockingItems(parsed.missingRequestedChanges()));
     }
 
-    private static boolean malformedOracleVerdict(CriticResponse parsed, boolean expectMutantChecks) {
+    private static boolean malformedOracleVerdict(CriticResponse parsed, boolean expectMutantChecks, Map<String, String> templateStatuses) {
         return parsed.mutantChecks() == null || expectMutantChecks && parsed.mutantChecks().isEmpty() || malformedMutantChecks(parsed.mutantChecks()) || parsed.uncovered() == null
                 || parsed.mutantChecks().stream().anyMatch(item -> !item.killed() && (item.sourceQuote() == null || item.sourceQuote().isBlank())) || parsed.weakOracle() == null
-                || malformedGroundedBlockingItems(parsed.uncovered()) || malformedGroundedBlockingItems(parsed.weakOracle());
+                || malformedGroundedBlockingItems(parsed.uncovered()) || malformedGroundedBlockingItems(parsed.weakOracle())
+                || !templateStatuses.isEmpty() && (parsed.mutantChecks().stream().anyMatch(item -> !item.killed() && !knownDesignOwner(item.ownerType(), templateStatuses))
+                        || parsed.uncovered().stream().anyMatch(item -> !knownDesignOwner(item.ownerType(), templateStatuses))
+                        || parsed.weakOracle().stream().anyMatch(item -> !knownDesignOwner(item.ownerType(), templateStatuses)));
     }
 
-    private static boolean hasUngroundedOracleClaim(CriticResponse parsed, String authoritativeSource) {
-        return parsed.mutantChecks().stream().anyMatch(item -> !item.killed() && !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource))
-                || parsed.uncovered().stream().anyMatch(item -> !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource))
-                || parsed.weakOracle().stream().anyMatch(item -> !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource));
+    private static boolean hasUngroundedOracleClaim(CriticResponse parsed, String authoritativeSource, Map<String, String> templateStatuses) {
+        return parsed.mutantChecks().stream()
+                .anyMatch(item -> !item.killed() && oracleTargetsStudentWork(item.ownerType(), templateStatuses) && !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource))
+                || parsed.uncovered().stream()
+                        .anyMatch(item -> oracleTargetsStudentWork(item.ownerType(), templateStatuses) && !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource))
+                || parsed.weakOracle().stream()
+                        .anyMatch(item -> oracleTargetsStudentWork(item.ownerType(), templateStatuses) && !sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource));
     }
 
     private static boolean malformedGroundedBlockingItems(List<RequirementFindingItem> items) {
@@ -394,12 +408,16 @@ class CriticVerdictParser {
     }
 
     private static void appendGroundedOracleFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
-            SpecFidelityReport.Kind kind, String detailPrefix) {
+            Map<String, String> templateStatuses, SpecFidelityReport.Kind kind, String detailPrefix) {
         for (RequirementFindingItem item : items) {
             if (findings.size() >= MAX_REVIEW_FINDINGS) {
                 return;
             }
             if (item == null || item.requirement() == null || item.requirement().isBlank()) {
+                continue;
+            }
+            if (!oracleTargetsStudentWork(item.ownerType(), templateStatuses)) {
+                abstainNonStudentOracleFinding(item.ownerType(), item.requirement());
                 continue;
             }
             if (unsupportedSourceRequirement(item.requirement(), item.sourceQuote(), authoritativeSource)) {
@@ -412,6 +430,32 @@ class CriticVerdictParser {
             }
             findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
         }
+    }
+
+    /**
+     * Oracle review is allowed to grade only behavior the approved Design assigns to students. When no Design map exists (older/adaptation inputs), preserve the legacy
+     * source-grounded review rather than silently discarding all findings. With an authoritative map, a missing or unknown owner makes the verdict incomplete, while a known
+     * given owner is an abstention: prose review cannot create a student task for provided support.
+     */
+    private static boolean oracleTargetsStudentWork(@Nullable String ownerType, Map<String, String> templateStatuses) {
+        if (templateStatuses.isEmpty()) {
+            return true;
+        }
+        String status = templateStatuses.get(normalizeOwnerType(ownerType));
+        return "stubbed".equals(status) || "student-creates".equals(status);
+    }
+
+    private static boolean knownDesignOwner(@Nullable String ownerType, Map<String, String> templateStatuses) {
+        return templateStatuses.containsKey(normalizeOwnerType(ownerType));
+    }
+
+    private static String normalizeOwnerType(@Nullable String ownerType) {
+        return ownerType == null ? "" : ownerType.strip().replace("`", "");
+    }
+
+    private static void abstainNonStudentOracleFinding(@Nullable String ownerType, String requirement) {
+        log.info("Critic abstained on an oracle finding for Design owner {} because the approved contract does not identify it as stubbed or student-creates: {}",
+                ownerType == null || ownerType.isBlank() ? "(missing)" : ownerType.strip(), truncate(requirement.strip()));
     }
 
     private static boolean unsupportedSourceRequirement(String requirement, @Nullable String sourceQuote, String authoritativeSource) {

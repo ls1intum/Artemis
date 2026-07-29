@@ -401,7 +401,7 @@ public class SpecFidelityCriticService {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, false,
-                authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, Map.of(), usageSink);
+                authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, templateStatuses, usageSink);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
@@ -409,7 +409,7 @@ public class SpecFidelityCriticService {
                 || oracleFindings.stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         if (!cancelled.getAsBoolean() && oracleReviewInvalid && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, Map.of(), usageSink);
+                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, templateStatuses, usageSink);
             if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)
                     && correctedOracleFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
                 // The correction replaces the verdict rather than extending it: substring grounding proves provenance only, so keeping the initially grounded claims would leave

@@ -109,6 +109,90 @@ class CriticVerdictParserTest {
     }
 
     @Test
+    void oracleReviewCannotTurnGivenSupportIntoStudentWork() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "mutantChecks": [{
+                    "mutant": "given dispatcher accepts an empty list",
+                    "killed": false,
+                    "sourceQuote": "P1",
+                    "ownerType": "Dispatcher",
+                    "reason": "no graded assertion exists"
+                  }],
+                  "uncovered": [{
+                    "requirement": "given dispatcher rejects an empty list",
+                    "sourceQuote": "P1",
+                    "ownerType": "Dispatcher",
+                    "reason": "no graded assertion exists"
+                  }],
+                  "weakOracle": [{
+                    "requirement": "given dispatcher can return normally for an empty list",
+                    "sourceQuote": "P1",
+                    "ownerType": "Dispatcher",
+                    "reason": "no graded assertion exists"
+                  }]
+                }
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The dispatcher rejects an empty list.", "", "", false, false, false, true,
+                Map.of("Dispatcher", "given", "Strategy", "student-creates"));
+
+        assertThat(findings).isEmpty();
+    }
+
+    @Test
+    void oracleReviewRetainsFindingsForStudentOwnedTypes() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "mutantChecks": [{
+                    "mutant": "strategy ignores the requested floor",
+                    "killed": false,
+                    "sourceQuote": "P1",
+                    "ownerType": "Strategy",
+                    "reason": "every fixture uses floor zero"
+                  }],
+                  "uncovered": [{
+                    "requirement": "strategy uses the requested floor",
+                    "sourceQuote": "P1",
+                    "ownerType": "Strategy",
+                    "reason": "no fixture uses a nonzero floor"
+                  }],
+                  "weakOracle": [{
+                    "requirement": "strategy can always use floor zero",
+                    "sourceQuote": "P1",
+                    "ownerType": "Strategy",
+                    "reason": "every fixture uses floor zero"
+                  }]
+                }
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The strategy uses the requested floor.", "", "", false, false, false, true,
+                Map.of("Dispatcher", "given", "Strategy", "student-creates"));
+
+        assertThat(findings).hasSize(3).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+                SpecFidelityReport.Kind.WEAK_TEST_ORACLE, SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT);
+    }
+
+    @Test
+    void oracleReviewRejectsMissingOrUnknownOwnerAgainstApprovedDesign() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "mutantChecks": [{
+                    "mutant": "strategy ignores the requested floor",
+                    "killed": false,
+                    "sourceQuote": "P1",
+                    "reason": "every fixture uses floor zero"
+                  }],
+                  "uncovered": [],
+                  "weakOracle": [{
+                    "requirement": "strategy uses the requested floor",
+                    "sourceQuote": "P1",
+                    "ownerType": "UnknownType",
+                    "reason": "every fixture uses floor zero"
+                  }]
+                }
+                """, CriticVerdictParser.ReviewPass.ORACLE, false, "The strategy uses the requested floor.", "", "", false, false, false, true, Map.of("Strategy", "stubbed"));
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
     void fixedListDoesNotAuthorizeAnUnmodifiableViewRequirement() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {
