@@ -81,3 +81,9 @@
     outline: 2px solid var(--tum-ui-primary);
     outline-offset: 2px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-radio-button-icon {
+        transition-property: background;
+    }
+}

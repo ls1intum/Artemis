@@ -21,3 +21,9 @@
     font-size: 0.75rem;
     font-weight: 600;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-progress-bar-value {
+        transition: none;
+    }
+}

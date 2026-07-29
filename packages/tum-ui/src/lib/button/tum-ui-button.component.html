@@ -11,7 +11,7 @@
     (click)="onClick($event)"
 >
     @if (loading()) {
-        <fa-icon [icon]="faSpinner" class="tum:animate-spin" />
+        <fa-icon [icon]="faSpinner" class="tum:animate-spin tum:motion-reduce:animate-none" />
     } @else if (icon(); as buttonIcon) {
         <fa-icon [icon]="buttonIcon" />
     }

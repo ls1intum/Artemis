@@ -60,3 +60,9 @@
 .tum-ui-panel-content {
     padding: 0 1.125rem 1.125rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-panel-content-container {
+        transition: none;
+    }
+}

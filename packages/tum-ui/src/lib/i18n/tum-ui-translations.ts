@@ -37,9 +37,9 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
 export type TumUiTranslationKey = keyof typeof TUM_UI_DEFAULT_TRANSLATIONS;
 
 export interface TumUiTranslator {
-    /** Invalidates translated views when the active catalog changes. */
+    /** Optional invalidation signal; update it when the active translation catalog changes. */
     readonly changes?: Signal<unknown>;
-    /** Controls locale-sensitive formatting independently from translated text. */
+    /** Optional locale used by components for locale-sensitive formatting. */
     readonly locale?: Signal<string | undefined>;
 
     translate(key: string, params?: TumUiTranslationParams): string;

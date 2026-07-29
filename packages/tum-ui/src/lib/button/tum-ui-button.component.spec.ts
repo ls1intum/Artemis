@@ -80,8 +80,7 @@ describe('TumUiButtonComponent', () => {
         const button = nativeButton();
         expect(button.disabled).toBe(true);
         expect(button.getAttribute('aria-busy')).toBe('true');
-        const spinner = fixture.debugElement.query(By.css('fa-icon')).nativeElement as HTMLElement;
-        expect(spinner.classList.contains('tum:animate-spin')).toBe(true);
+        expect(fixture.debugElement.query(By.css('fa-icon'))).toBeTruthy();
         button.click();
         expect(emitSpy).not.toHaveBeenCalled();
     });

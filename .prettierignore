@@ -10,3 +10,4 @@ src/test/resources
 src/main/resources
 src/main/webapp/app/openapi
 src/main/webapp/app/**/openapi
+packages/tum-ui/documentation.json

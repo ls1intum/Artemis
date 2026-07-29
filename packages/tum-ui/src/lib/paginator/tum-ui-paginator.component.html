@@ -1,6 +1,9 @@
-<div class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-border tum:pt-2 tum:text-sm tum:text-tum-ui-muted">
+<nav
+    [attr.aria-label]="ariaLabel()"
+    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-border tum:pt-2 tum:text-sm tum:text-tum-ui-muted"
+>
     @if (showCurrentPageReport()) {
-        <span class="tum:px-2">
+        <span class="tum:px-2" aria-live="polite">
             {{ 'tumUi.paginator.currentPageReport' | tumUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
         </span>
     }
@@ -44,4 +47,4 @@
             }
         </select>
     }
-</div>
+</nav>

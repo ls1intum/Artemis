@@ -44,8 +44,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly destroyRef = inject(DestroyRef);
 
     /**
-     * Invalid text remains visible without changing this committed value.
-     * Observe {@link parseValidChange} when validity must update before a value is committed.
+     * Last committed date. Invalid text remains visible without updating it.
+     * Observe {@link parseValidChange} when validity must react to uncommitted text.
      */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
@@ -58,7 +58,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
     readonly labelName = input<string>();
     readonly ariaLabel = input<string>();
-    /** Emits input parse validity without incorporating the external {@link error} state. */
+    /** Emits whether the entered text parses successfully; the external {@link error} state is excluded. */
     readonly parseValidChange = output<boolean>();
 
     protected readonly faCalendar = faCalendar;
@@ -103,7 +103,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
             }
         });
     }
-    /** Combines input parse validity with the external {@link error} state. */
+    /** Whether the entered text parses successfully and the external {@link error} state is clear. */
     readonly isValid = computed(() => !this.error() && this.isInputValid());
     readonly hasValidInput = computed(() => this.isInputValid());
 

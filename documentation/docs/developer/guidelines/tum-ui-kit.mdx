@@ -3,9 +3,8 @@ import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # TUM UI package
 
-`@tumaet/ui-angular` is a private Angular package in `packages/tum-ui`. It isolates reusable UI code
-from Artemis so the package can be built, tested, and validated through the same public boundary an
-external consumer would use.
+`@tumaet/ui-angular` is a private Angular package in `packages/tum-ui`. Artemis production builds
+consume its compiled public entry point and stylesheet instead of application-internal sources.
 
 <Callout variant={CalloutVariant.warning}>
     New Artemis UI uses PrimeNG. This package is an extraction boundary for existing TUM UI code, not a second Artemis component standard. Do not duplicate a native HTML, PrimeNG,
@@ -25,8 +24,8 @@ Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integrat
 imports package symbols from `@tumaet/ui-angular`; deep imports and imports from the former
 in-application path are rejected by ESLint.
 
-The package is private. Removing `private: true` requires defined release ownership, versioning,
-consumer compatibility testing, and browser-level accessibility coverage.
+The package is private. Removing `private: true` requires release ownership, a versioning policy,
+and compatibility testing against supported consumers.
 
 ## Adding or changing a component
 
@@ -49,17 +48,19 @@ details or static class maps.
 
 ### Stories
 
-Colocate one `*.stories.ts` file with each public visual component or directive. Use the package's
-[stable CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
+Colocate each top-level consumer story with its component or directive. Document supporting pieces
+of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
+package's [stable CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
 TypeScript's `satisfies` operator. Keep configuration in `packages/tum-ui/.storybook`; do not add
-root Storybook configuration or import Artemis into a story. The
-[Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite) is
-still a preview integration, so validate HMR, browser tests, and the static build after upgrades.
+root Storybook configuration or import Artemis into a story.
 
 Prefer an args-driven default story and only the additional states that expose a meaningful visual
 or behavioral contract. Add a `play` function for browser-only behavior such as focus, keyboard
 navigation, overlays, or dismissal. Query by accessible role and name. Do not assert CSS classes,
 duplicate unit-test matrices, add snapshots, or disable accessibility rules to make a story pass.
+
+The [Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite) is
+a preview integration. Verify HMR, browser tests, and the static build before upgrading it.
 
 ## Consuming the package
 
@@ -110,7 +111,7 @@ From the repository root:
 | `pnpm run tum-ui:test`                               | Run package Vitest specs                                                  |
 | `pnpm run tum-ui:stylelint`                          | Check package CSS and SCSS                                                |
 | `pnpm run tum-ui:pack:check`                         | Build and validate an isolated artifact with publint and AreTheTypesWrong |
-| `pnpm --dir packages/tum-ui run storybook`           | Build package styles and start its isolated component workshop            |
+| `pnpm --dir packages/tum-ui run storybook`           | Build package styles and start its isolated Storybook                     |
 | `pnpm --dir packages/tum-ui run storybook:typecheck` | Type-check Storybook configuration and stories                            |
 | `pnpm --dir packages/tum-ui run storybook:test`      | Run stories and accessibility checks in Chromium                          |
 | `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
@@ -151,5 +152,5 @@ equivalent apart from incremental-output cleanup.
 - Styling uses semantic package tokens and works with host-provided light and dark values.
 - Stories cover representative states; unique browser behavior is tested through accessible queries.
 - Package text has an English default; host translations stay in the adapter.
-- Dependency changes update the workspace catalog and exact package manifest together.
+- Dependency changes update the appropriate workspace catalog and package manifest together.
 - The packed artifact passes `tum-ui:pack:check`.

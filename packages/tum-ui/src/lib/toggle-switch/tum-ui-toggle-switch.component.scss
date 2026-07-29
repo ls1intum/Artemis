@@ -57,3 +57,9 @@
 :host([data-checked='true']) .tum-ui-toggle-switch-handle {
     inset-inline-start: 1.25rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-toggle-switch-handle {
+        transition-property: background-color;
+    }
+}

@@ -65,8 +65,8 @@ bootstrapApplication(AppComponent, {
 ```
 
 `ApplicationTranslator` must implement `TumUiTranslator`. Its optional `changes` and `locale`
-signals keep translations and locale-sensitive formatting reactive. Artemis installs its adapter
-in `app.config.ts`; consumers must not provide a second one.
+signals keep translations and locale-sensitive formatting reactive. Register one translator
+adapter when the application starts.
 
 ## Development
 
@@ -75,6 +75,7 @@ Run commands from the Artemis repository root:
 ```bash
 pnpm run tum-ui:build
 pnpm run tum-ui:test
+pnpm run tum-ui:lint
 pnpm run tum-ui:stylelint
 pnpm run tum-ui:pack:check
 pnpm --dir packages/tum-ui run storybook
@@ -96,10 +97,8 @@ Tailwind and PostCSS are build-only development dependencies pinned through the 
 `rules/tum-ui-package.spec.mjs` rejects drift.
 
 Storybook configuration, stories, and their runtime and test toolchain dependencies belong to this
-package. The Storybook ESLint plugin stays in the root lint infrastructure because the root
-configuration imports it. Shared dependency versions stay synchronized with Artemis through the
-workspace catalog. Unit tests and TypeScript configurations still use the workspace test runner and
-compiler policy while the package lives in this repository.
+package. Repository-wide lint tooling remains root-owned. Shared dependency versions use the
+workspace catalog.
 
 Story authoring rules:
 
@@ -112,16 +111,16 @@ Story authoring rules:
   interaction contract. Do not add steps that only prove the test spy itself.
 - Keep responsive states pinned with Storybook viewport globals. Validate manager-controlled iframe
   sizing in the built Storybook Playwright suite, not in a component-test play function.
-- Do not duplicate stories by theme. Every story already runs in both package themes.
+- Do not duplicate stories by theme. The Storybook browser suite already runs every story in both
+  package themes.
 
 Stories use stable CSF3 with `Meta`, `StoryObj`, and TypeScript's `satisfies` operator. The theme
-toolbar applies to component previews and AutoDocs; the manager remains independently themed by
-Storybook. Compodoc supplies AutoDocs API metadata; JSDoc should explain only non-obvious public
-behavior or constraints, never repeat names, types, or defaults. Compodoc metadata is generated when
-Storybook starts; restart Storybook after changing public API documentation. Storybook's Angular
-Vite integration is a preview feature, so its exact version stays pinned and upgrades require HMR
-verification, the package build, Chromium story tests, the static Storybook build, and the AutoDocs
-theme tests to pass.
+toolbar applies to component previews and AutoDocs; it does not retheme the manager UI. Compodoc
+supplies AutoDocs API metadata; JSDoc should explain only non-obvious public behavior or constraints,
+never repeat names, types, or defaults. Compodoc metadata is generated when Storybook starts; restart
+Storybook after changing public API documentation. The Storybook version stays exact through the
+workspace catalog. Upgrades require HMR verification, the package build, Chromium story tests, the
+static Storybook build, and the AutoDocs theme tests to pass.
 
 ## License
 

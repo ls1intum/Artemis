@@ -15,6 +15,7 @@ const NAV_BUTTON_CLASSES =
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPaginatorComponent {
+    readonly ariaLabel = input('Pagination');
     readonly totalRecords = input(0);
     readonly page = input(0);
     readonly pageSize = input(50);

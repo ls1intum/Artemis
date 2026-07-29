@@ -75,7 +75,11 @@ describe('TumUiPaginatorComponent', () => {
 
     it('renders the current-page report element', () => {
         setInputs(130, 0);
-        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Showing 1 to 50 of 130');
+        const host = fixture.nativeElement as HTMLElement;
+        const navigation = host.querySelector('nav');
+        const report = host.querySelector('[aria-live="polite"]');
+        expect(navigation?.getAttribute('aria-label')).toBe('Pagination');
+        expect(report?.textContent).toContain('Showing 1 to 50 of 130');
     });
 
     it('renders windowed page-number buttons (max 5) and marks the current page', () => {
