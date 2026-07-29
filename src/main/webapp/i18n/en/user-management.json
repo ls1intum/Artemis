@@ -91,6 +91,8 @@
             "registrationNumber": "Registration Number",
             "activated": "Activated",
             "deactivated": "Deactivated",
+            "isTestUser": "Test user",
+            "isTestUserTooltip": "Mark this account as a test or QA account. Test users are excluded from all usage statistics (e.g. the admin charts and the active-users counts). This flag is managed explicitly and is independent of the login.",
             "globalRoles": "Global Roles",
             "roles": {
                 "superAdmin": "Super Admin",

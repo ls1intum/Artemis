@@ -178,6 +178,7 @@ public class CourseUpdateResource {
         existingCourse.validateOnlineCourseAndEnrollmentEnabled();
         existingCourse.validateShortName();
         existingCourse.validateAccuracyOfScores();
+        existingCourse.validatePointBounds();
         existingCourse.validateStartAndEndDate();
         existingCourse.validateEnrollmentStartAndEndDate();
         existingCourse.validateUnenrollmentEndDate();
