@@ -65,6 +65,74 @@ class CriticVerdictParserTest {
     }
 
     @Test
+    void contradictionRequiresGroundedEvidenceFromTheAllegedlyConflictingArtifact() {
+        String designRow = "| Dispatcher | delegates to a strategy | student-creates |";
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [],
+                  "contradictions": [{
+                    "requirement": "Dispatcher must be student-created",
+                    "sourceQuote": "| Dispatcher | delegates to a strategy | student-creates |",
+                    "evidenceArtifact": "TEMPLATE: src/Dispatcher.java",
+                    "evidenceQuote": "public class Dispatcher",
+                    "reason": "Template supplies a full implementation (or omits the stub)."
+                  }, {
+                    "requirement": "Dispatcher delegation must remain student-owned.",
+                    "sourceQuote": "| Dispatcher | delegates to a strategy | student-creates |",
+                    "evidenceArtifact": "TEMPLATE: src/Client.java",
+                    "evidenceQuote": "class Client { Dispatcher dispatch; }",
+                    "reason": "The starter's provided Client directly implements the Dispatcher responsibility instead of delegating through it."
+                  }, {
+                    "requirement": "A produced implementation authorizes its own contract.",
+                    "sourceQuote": "public class Dispatcher",
+                    "evidenceArtifact": "SOLUTION: src/Dispatcher.java",
+                    "evidenceQuote": "public class Dispatcher",
+                    "reason": "The solution conflicts with itself."
+                  }],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, designRow + "\npublic class Dispatcher", designRow,
+                "public class Dispatcher\nclass Client { Dispatcher dispatch; }",
+                Map.of("SOLUTION: src/Dispatcher.java", "public class Dispatcher", "TEMPLATE: src/Client.java", "class Client { Dispatcher dispatch; }"), "", false, false, false,
+                false, Map.of("Dispatcher", "student-creates"));
+
+        assertThat(findings).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+            assertThat(finding.requirement()).contains("Dispatcher delegation must remain student-owned");
+        });
+    }
+
+    @Test
+    void contradictionWithoutArtifactBoundEvidenceFailsClosed() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [],
+                  "contradictions": [{
+                    "requirement": "conflict",
+                    "sourceQuote": "authoritative rule",
+                    "evidenceArtifact": "TEMPLATE: src/Thing.java",
+                    "reason": "the template conflicts"
+                  }],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "authoritative rule", "template content", "", false, false, false, false, Map.of());
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
     void javaReferenceTypeDoesNotAuthorizeNullHandling() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {

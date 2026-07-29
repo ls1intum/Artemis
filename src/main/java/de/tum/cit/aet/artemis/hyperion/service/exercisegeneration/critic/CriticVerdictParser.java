@@ -54,7 +54,8 @@ class CriticVerdictParser {
             @Nullable List<RequirementFindingItem> missingRequestedChanges) {
     }
 
-    private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote, @Nullable String ownerType) {
+    private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote, @Nullable String evidenceArtifact,
+            @Nullable String evidenceQuote, @Nullable String ownerType) {
     }
 
     private record ExampleCheckItem(@Nullable String claim, @Nullable JsonNode computedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
@@ -105,6 +106,15 @@ class CriticVerdictParser {
     List<SpecFidelityReport.Finding> parseCritique(String text, ReviewPass pass, boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource,
             String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks,
             Map<String, String> templateStatuses) {
+        return parseCritique(text, pass, requireScopeVerdict, authoritativeSource, authoritativeSource, repairableDownstreamSource,
+                Map.of("DOWNSTREAM", repairableDownstreamSource), candidateProblemStatement, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks,
+                templateStatuses);
+    }
+
+    @Nullable
+    List<SpecFidelityReport.Finding> parseCritique(String text, ReviewPass pass, boolean requireScopeVerdict, String authoritativeSource, String contradictionAuthoritySource,
+            String repairableDownstreamSource, Map<String, String> downstreamEvidenceByArtifact, String candidateProblemStatement, boolean expectExampleChecks,
+            boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses) {
         CriticResponse parsed;
         try {
             parsed = objectMapper.readValue(extractJsonPayload(text), CriticResponse.class);
@@ -181,8 +191,7 @@ class CriticVerdictParser {
                             "This starter scaffold check failed: " + item.reason().strip()));
                 }
             }
-            appendGroundedBlockingFindings(findings, parsed.contradictions(), authoritativeSource, SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
-                    "The generated artifacts contradict this contract: ");
+            appendGroundedContradictions(findings, parsed.contradictions(), contradictionAuthoritySource, downstreamEvidenceByArtifact);
             appendGroundedHiddenRequirements(findings, parsed.hiddenRequirements(), authoritativeSource, candidateProblemStatement);
         }
         else {
@@ -280,7 +289,7 @@ class CriticVerdictParser {
                 || expectApiChecks && parsed.apiChecks().isEmpty() || expectTemplateChecks && parsed.templateChecks().isEmpty() || malformedExampleChecks(parsed.exampleChecks())
                 || malformedApiChecks(parsed.apiChecks()) || malformedTemplateChecks(parsed.templateChecks()) || parsed.contradictions() == null
                 || parsed.hiddenRequirements() == null || parsed.missingExamples() == null || parsed.invented() == null || parsed.unrequestedChanges() == null
-                || parsed.missingRequestedChanges() == null || malformedGroundedBlockingItems(parsed.contradictions())
+                || parsed.missingRequestedChanges() == null || malformedGroundedContradictions(parsed.contradictions())
                 || malformedGroundedBlockingItems(parsed.hiddenRequirements()) || malformedGroundedBlockingItems(parsed.invented())
                 || requireScopeVerdict && (parsed.unrequestedChanges().stream()
                         .anyMatch(item -> item == null || item.change() == null || item.change().isBlank() || item.reason() == null || item.reason().isBlank())
@@ -307,6 +316,11 @@ class CriticVerdictParser {
 
     private static boolean malformedGroundedBlockingItems(List<RequirementFindingItem> items) {
         return malformedBlockingItems(items) || items.stream().anyMatch(item -> item.sourceQuote() == null || item.sourceQuote().isBlank());
+    }
+
+    private static boolean malformedGroundedContradictions(List<RequirementFindingItem> items) {
+        return malformedGroundedBlockingItems(items) || items.stream()
+                .anyMatch(item -> item.evidenceArtifact() == null || item.evidenceArtifact().isBlank() || item.evidenceQuote() == null || item.evidenceQuote().isBlank());
     }
 
     private static boolean malformedBlockingItems(List<RequirementFindingItem> items) {
@@ -372,6 +386,31 @@ class CriticVerdictParser {
                 continue;
             }
             findings.add(new SpecFidelityReport.Finding(kind, truncate(item.requirement().strip()), detailPrefix + item.reason().strip()));
+        }
+    }
+
+    /**
+     * A contradiction needs evidence for both sides: the authority it violates and the repairable artifact that conflicts with it. Grounding only the first side lets fluent
+     * reviewer prose invent a downstream fact that is not present in any produced file.
+     */
+    private static void appendGroundedContradictions(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
+            Map<String, String> downstreamEvidenceByArtifact) {
+        for (RequirementFindingItem item : items) {
+            if (findings.size() >= MAX_REVIEW_FINDINGS) {
+                return;
+            }
+            if (!sourceQuoteIsGrounded(item.sourceQuote(), authoritativeSource)) {
+                abstainUngroundedFinding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, item.requirement());
+                continue;
+            }
+            String evidenceArtifact = item.evidenceArtifact().strip();
+            String artifactContent = downstreamEvidenceByArtifact.get(evidenceArtifact);
+            if (artifactContent == null || !sourceQuoteIsGrounded(item.evidenceQuote(), artifactContent)) {
+                log.info("Critic abstained on a contradiction whose alleged evidence was absent from {}: {}", evidenceArtifact, truncate(item.requirement().strip()));
+                continue;
+            }
+            findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, truncate(item.requirement().strip()),
+                    "The generated artifacts contradict this contract: " + item.reason().strip()));
         }
     }
 

@@ -66,7 +66,7 @@ Respond with ONLY this complete JSON shape; every array is mandatory for this co
 {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
  "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
  "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"reason":"teaching-scaffold evidence","evidenceQuote":"exact artifact quote; mandatory when targetReached is false"}],
- "contradictions": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"conflicting artifact evidence"}],
+ "contradictions": [{"requirement":"...","sourceQuote":"exact authoritative quote from INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT","evidenceArtifact":"exact artifact label, for example TEMPLATE: src/example/Thing.java","evidenceQuote":"exact quote from that conflicting artifact","reason":"why these two quotes conflict"}],
  "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
  "missingExamples": [{"behaviour":"...","reason":"..."}],
  "invented": [{"requirement":"...","sourceQuote":"exact quote from a produced downstream artifact that imposes it","reason":"why the INSTRUCTOR BRIEF does not support it"}],
@@ -74,7 +74,10 @@ Respond with ONLY this complete JSON shape; every array is mandatory for this co
  "missingRequestedChanges": [{"requirement":"...","reason":"..."}]}
 At most 6 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array. Prioritize blockers and group closely related symbols or tests. Every failed
 reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.
-Every contradiction and hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
+Every contradiction requires both sides: sourceQuote copied verbatim from the INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT, plus evidenceArtifact set to the exact
+label of one conflicting produced artifact and evidenceQuote copied verbatim from that same artifact. Valid labels are PRODUCED PROBLEM STATEMENT, GENERATED TEST PLAN, or
+the exact repository-and-path label shown after a --- separator, such as TEMPLATE: src/example/Thing.java. Never report a contradiction from an inference about an absent
+file: if no conflicting downstream quote exists, omit it. Every hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
 STATEMENT, or GENERATED TEST PLAN. Every invented finding must quote the produced statement, solution, template, tests, or test plan that imposes the unsupported
 requirement. For templateChecks, targetReached means that the named test can reach the intended incomplete TODO seam before a different student seam; it never means the TODO
 has already been implemented. Every false templateCheck requires evidenceQuote copied verbatim from a produced statement, solution, template, test, or test plan. Omit a

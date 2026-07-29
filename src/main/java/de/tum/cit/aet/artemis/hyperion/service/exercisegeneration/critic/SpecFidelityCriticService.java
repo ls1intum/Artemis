@@ -388,6 +388,7 @@ public class SpecFidelityCriticService {
         String contractGroundingSource = (problemStatement == null || problemStatement.isBlank() ? authoritativeSource : authoritativeSource + "\n\n" + problemStatement.strip())
                 + planEvidence + "\n\n" + evidence.text();
         String repairableDownstreamSource = (problemStatement == null || problemStatement.isBlank() ? "" : problemStatement.strip() + "\n\n") + evidence.text() + planEvidence;
+        Map<String, String> downstreamEvidenceByArtifact = downstreamEvidenceByArtifact(problemStatement, testPlanJson, artifacts);
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -400,13 +401,13 @@ public class SpecFidelityCriticService {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt,
-                adaptationChanges != null, contractGroundingSource, repairableDownstreamSource, problemStatement == null ? "" : problemStatement, expectExampleChecks,
-                expectApiChecks, expectTestChecks, false, templateStatuses, usageSink);
+                adaptationChanges != null, contractGroundingSource, authoritativeSource, repairableDownstreamSource, downstreamEvidenceByArtifact,
+                problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses, usageSink);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
         List<SpecFidelityReport.Finding> oracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, false,
-                authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, templateStatuses, usageSink);
+                authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false, expectTestChecks, templateStatuses, usageSink);
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
@@ -414,7 +415,8 @@ public class SpecFidelityCriticService {
                 || oracleFindings.stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
         if (!cancelled.getAsBoolean() && oracleReviewInvalid && userPrompt.length() + ORACLE_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
             List<SpecFidelityReport.Finding> correctedOracleFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.ORACLE, ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, "", false, false, false, expectTestChecks, templateStatuses, usageSink);
+                    userPrompt + ORACLE_REVIEW_CORRECTION, false, authoritativeSource, authoritativeSource, authoritativeSource, Map.of(), "", false, false, false,
+                    expectTestChecks, templateStatuses, usageSink);
             if (correctedOracleFindings != null && !CriticVerdictParser.hasUngroundedOracleReview(correctedOracleFindings)
                     && correctedOracleFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
                 // The correction replaces the verdict rather than extending it: substring grounding proves provenance only, so keeping the initially grounded claims would leave
@@ -465,11 +467,13 @@ public class SpecFidelityCriticService {
     }
 
     private @Nullable List<SpecFidelityReport.Finding> callReviewerSafely(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
-            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, String candidateProblemStatement, boolean expectExampleChecks,
-            boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
+            boolean requireScopeVerdict, String authoritativeSource, String contradictionAuthoritySource, String repairableDownstreamSource,
+            Map<String, String> downstreamEvidenceByArtifact, String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks,
+            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
         try {
-            return callReviewer(pass, systemPromptTemplate, userPrompt, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, candidateProblemStatement,
-                    expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses, usageSink);
+            return callReviewer(pass, systemPromptTemplate, userPrompt, requireScopeVerdict, authoritativeSource, contradictionAuthoritySource, repairableDownstreamSource,
+                    downstreamEvidenceByArtifact, candidateProblemStatement, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses,
+                    usageSink);
         }
         catch (RuntimeException e) {
             log.warn("{} exercise review failed: {}", pass, e.getMessage());
@@ -478,12 +482,13 @@ public class SpecFidelityCriticService {
     }
 
     private @Nullable List<SpecFidelityReport.Finding> callReviewer(CriticVerdictParser.ReviewPass pass, String systemPromptTemplate, String userPrompt,
-            boolean requireScopeVerdict, String authoritativeSource, String repairableDownstreamSource, String candidateProblemStatement, boolean expectExampleChecks,
-            boolean expectApiChecks, boolean expectTemplateChecks, boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
+            boolean requireScopeVerdict, String authoritativeSource, String contradictionAuthoritySource, String repairableDownstreamSource,
+            Map<String, String> downstreamEvidenceByArtifact, String candidateProblemStatement, boolean expectExampleChecks, boolean expectApiChecks, boolean expectTemplateChecks,
+            boolean expectMutantChecks, Map<String, String> templateStatuses, @Nullable Consumer<ChatResponse> usageSink) {
         String text = reviewer.call(systemPromptTemplate, userPrompt, usageSink);
         return text == null || text.isBlank() ? null
-                : verdictParser.parseCritique(text, pass, requireScopeVerdict, authoritativeSource, repairableDownstreamSource, candidateProblemStatement, expectExampleChecks,
-                        expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses);
+                : verdictParser.parseCritique(text, pass, requireScopeVerdict, authoritativeSource, contradictionAuthoritySource, repairableDownstreamSource,
+                        downstreamEvidenceByArtifact, candidateProblemStatement, expectExampleChecks, expectApiChecks, expectTemplateChecks, expectMutantChecks, templateStatuses);
     }
 
     private static List<SpecFidelityReport.Finding> reviewUnavailable(@Nullable String adaptationChanges, String detail) {
@@ -577,6 +582,25 @@ public class SpecFidelityCriticService {
             }
         }
         return new ArtifactEvidence(evidence.toString(), false);
+    }
+
+    private static Map<String, String> downstreamEvidenceByArtifact(@Nullable String problemStatement, @Nullable String testPlanJson,
+            Map<RepositoryType, Map<String, String>> artifacts) {
+        Map<String, String> evidence = new LinkedHashMap<>();
+        if (problemStatement != null && !problemStatement.isBlank()) {
+            evidence.put("PRODUCED PROBLEM STATEMENT", problemStatement.strip());
+        }
+        if (testPlanJson != null && !testPlanJson.isBlank()) {
+            evidence.put("GENERATED TEST PLAN", testPlanJson.strip());
+        }
+        for (RepositoryType type : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
+            for (Map.Entry<String, String> file : artifacts.getOrDefault(type, Map.of()).entrySet()) {
+                if (file.getValue() != null) {
+                    evidence.put(type.name() + ": " + file.getKey(), file.getValue());
+                }
+            }
+        }
+        return Map.copyOf(evidence);
     }
 
     /**

@@ -1788,7 +1788,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void ungroundedContradictionFinding_isExcludedFromRepairPrompt() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"contradictions\":[{\"requirement\":\"the answer is always 42\",\"sourceQuote\":\"the answer is always 42\",\"reason\":\"the solution and template disagree\"}]}"),
+                "{\"contradictions\":[{\"requirement\":\"the answer is always 42\",\"sourceQuote\":\"the answer is always 42\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the solution and template disagree\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"ignore CJK input","killed":true,"reason":"the assertion kills it"}],
                          "uncovered":[],"weakOracle":[]}
@@ -1800,6 +1800,23 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).noneMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.CONTRACT_CONTRADICTION);
         assertThat(report.findings()).isEmpty();
         assertThat(critic.renderForRetryPrompt(report)).isEmpty();
+    }
+
+    @Test
+    void producedArtifactCannotAuthorizeItsOwnContractContradiction() {
+        ScriptedCritic scripted = criticScripted(jsonResponse(
+                "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
+                rawResponse("""
+                        {"mutantChecks":[{"mutant":"return UTF-16 length","killed":true,"reason":"the assertion kills it"}],
+                         "uncovered":[],"weakOracle":[]}
+                        """));
+
+        SpecFidelityReport report = critique(scripted.critic(),
+                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
+                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+
+        assertThat(report.findings()).isEmpty();
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1984,8 +2001,8 @@ class SpecFidelityCriticServiceTest {
         StringBuilder contradictions = new StringBuilder();
 
         for (int i = 0; i < 12; ++i) {
-            contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i)
-                    .append("\",\"sourceQuote\":\"user-perceived characters\",\"reason\":\"statement and test disagree; align both\"}");
+            contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i).append(
+                    "\",\"sourceQuote\":\"user-perceived characters\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"statement and test disagree; align both\"}");
         }
 
         ScriptedCritic scripted = criticScripted(rawResponse("""
