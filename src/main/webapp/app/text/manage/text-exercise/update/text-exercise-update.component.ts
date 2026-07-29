@@ -44,7 +44,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 
@@ -72,7 +71,6 @@ import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/tex
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         TextExerciseTimelineComponent,
     ],
 })
