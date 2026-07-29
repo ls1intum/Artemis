@@ -2,7 +2,11 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -394,6 +398,7 @@ public class ProcessingStateCallbackService {
         // Update with latest data
         transcription.setLanguage(checkpoint.language());
         transcription.setSegments(checkpoint.segments());
+        bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
@@ -417,6 +422,56 @@ public class ProcessingStateCallbackService {
             // Update lastUpdated as heartbeat (prevents stuck detection)
             state.setLastUpdated(ZonedDateTime.now());
             processingStateRepository.save(state);
+        }
+    }
+
+    /**
+     * Increments the unit's transcription version when the stored segments differ from the ones written last.
+     * <p>
+     * The version is what Iris citations pin a video timestamp to, so it must change exactly when the timestamps do. Comparing the content hash first is what keeps the
+     * repeated checkpoint writes of a single transcription run from inflating the version, and keeps a re-run that produces identical segments from invalidating citations
+     * that are still perfectly accurate.
+     * <p>
+     * The counter deliberately lives on the processing state and not on the transcription: the transcription row is deleted and recreated when the video changes, which
+     * would restart the count at 1 and make a citation pinned to version 1 look unchanged.
+     *
+     * @param state    the processing state of the unit, updated in place; the caller persists it
+     * @param segments the segments about to be stored
+     */
+    static void bumpTranscriptionVersionIfContentChanged(LectureUnitProcessingState state, List<LectureTranscriptionSegment> segments) {
+        String contentHash = hashTranscriptionSegments(segments);
+        if (contentHash.equals(state.getTranscriptionContentHash())) {
+            return;
+        }
+        Integer previousVersion = state.getTranscriptionVersion();
+        state.setTranscriptionVersion(previousVersion == null ? 1 : previousVersion + 1);
+        state.setTranscriptionContentHash(contentHash);
+        log.info("Transcription content changed for unit {}, transcription version is now {}", state.getLectureUnit().getId(), state.getTranscriptionVersion());
+    }
+
+    /**
+     * Fingerprints the content of a transcription, the counterpart of {@code Attachment#sha256Hash} for a PDF.
+     * <p>
+     * The segments are serialized into a canonical string rather than reusing their JSON representation, so that the hash depends only on the transcribed content and not
+     * on how the JSON converter happens to format it.
+     *
+     * @param segments the transcription segments; may be {@code null} or empty
+     * @return the hex-encoded SHA-256 hash, or an empty string when there are no segments
+     */
+    private static String hashTranscriptionSegments(@Nullable List<LectureTranscriptionSegment> segments) {
+        if (segments == null || segments.isEmpty()) {
+            return "";
+        }
+        var canonical = new StringBuilder();
+        for (LectureTranscriptionSegment segment : segments) {
+            canonical.append(segment.startTime()).append('|').append(segment.endTime()).append('|').append(segment.slideNumber()).append('|').append(segment.text()).append('\n');
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(canonical.toString().getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
         }
     }
 

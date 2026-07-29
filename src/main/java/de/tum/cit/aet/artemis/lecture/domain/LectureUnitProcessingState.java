@@ -68,6 +68,23 @@ public class LectureUnitProcessingState extends DomainObject {
     private Integer attachmentVersion;
 
     /**
+     * Monotonic version of this unit's transcription, incremented whenever a transcription with different content is stored.
+     * <p>
+     * Iris citations pin this value so that a cited video timestamp can be checked against the transcription it was generated from.
+     * It lives here rather than on {@link LectureTranscription} because that row is deleted and recreated when the video changes,
+     * which would reset a per-row counter; this row survives.
+     */
+    @Column(name = "transcription_version")
+    private Integer transcriptionVersion;
+
+    /**
+     * Fingerprint of the stored transcription's segments, used to decide whether {@link #transcriptionVersion} has to be incremented.
+     * Without it, the repeated checkpoint writes during a transcription run would inflate the version on every checkpoint.
+     */
+    @Column(name = "transcription_content_hash")
+    private String transcriptionContentHash;
+
+    /**
      * Translation key for error message if processing failed.
      * Use i18n keys like "artemisApp.attachmentVideoUnit.processing.error.youtubePrivate".
      * Populated by the state-write boundary after translating raw Pyris {@code error_code}
@@ -159,6 +176,22 @@ public class LectureUnitProcessingState extends DomainObject {
 
     public void setAttachmentVersion(Integer attachmentVersion) {
         this.attachmentVersion = attachmentVersion;
+    }
+
+    public Integer getTranscriptionVersion() {
+        return transcriptionVersion;
+    }
+
+    public void setTranscriptionVersion(Integer transcriptionVersion) {
+        this.transcriptionVersion = transcriptionVersion;
+    }
+
+    public String getTranscriptionContentHash() {
+        return transcriptionContentHash;
+    }
+
+    public void setTranscriptionContentHash(String transcriptionContentHash) {
+        this.transcriptionContentHash = transcriptionContentHash;
     }
 
     public String getErrorKey() {

@@ -5,6 +5,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
+import { Router, provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisCitationMaterialVersionService } from './iris-citation-material-version.service';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 
 describe('IrisCitationTextComponent', () => {
@@ -70,7 +74,7 @@ describe('IrisCitationTextComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisCitationTextComponent],
-            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideHttpClient(), provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
@@ -274,6 +278,108 @@ describe('IrisCitationTextComponent', () => {
             expect(summary.classList.contains('iris-citation__summary--flipped')).toBe(false);
         });
     });
+
+    describe('Citation click', () => {
+        const meta = (): IrisCitationMetaDTO => ({
+            entityId: 42,
+            lectureTitle: 'Lecture',
+            lectureUnitTitle: 'Unit',
+            lectureId: 5,
+            courseId: 9,
+        });
+
+        let navigate: ReturnType<typeof vi.spyOn>;
+        let warning: ReturnType<typeof vi.spyOn>;
+        let getMaterialVersions: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            warning = vi.spyOn(TestBed.inject(AlertService), 'warning').mockImplementation(() => undefined as any);
+            getMaterialVersions = vi.spyOn(TestBed.inject(IrisCitationMaterialVersionService), 'getMaterialVersions');
+        });
+
+        const clickCitation = (text: string, citationInfo: IrisCitationMetaDTO[]) => {
+            const el = render(text, citationInfo);
+            const citation = el.querySelector('.iris-citation') as HTMLElement;
+            expect(citation).toBeTruthy();
+            citation.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            return citation;
+        };
+
+        it('jumps to the exact page when the slides still have the pinned version', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3 }));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+
+            expect(getMaterialVersions).toHaveBeenCalledWith(42);
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('opens the unit only and warns when the slides changed', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 4 }));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.stale');
+        });
+
+        it('jumps to the timestamp when the transcription still has the pinned version', () => {
+            getMaterialVersions.mockReturnValue(of({ videoVersion: 2 }));
+
+            clickCitation('[cite:L:42::120:180:Key:Summary::2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', timestamp: '120' } });
+            expect(warning).not.toHaveBeenCalled();
+        });
+        it('compares a video citation against the transcription, not against the slides', () => {
+            // The slides happen to sit at exactly the pinned number, which must not make the citation look unchanged
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 2 }));
+
+            clickCitation('[cite:L:42:7:120:180:Key:Summary::2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        it('opens the unit only and warns when the material is gone', () => {
+            getMaterialVersions.mockReturnValue(of({}));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        it('does not ask the server for a citation written before versions existed', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary]', [meta()]);
+
+            expect(getMaterialVersions).not.toHaveBeenCalled();
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('still navigates when the version lookup fails', () => {
+            getMaterialVersions.mockReturnValue(throwError(() => new Error('offline')));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+        });
+
+        it('does not navigate when the lecture unit is gone', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', []);
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
+
+        it('does not navigate for FAQ citations', () => {
+            clickCitation('[cite:F:9::::Key:Summary]', []);
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
+    });
 });
 
 describe('Iris citation util', () => {
@@ -359,5 +465,49 @@ describe('Iris citation util', () => {
 
     it('escapes HTML in raw text', () => {
         expect(escapeHtml('<span>"&"</span>')).toBe('&lt;span&gt;&quot;&amp;&quot;&lt;/span&gt;');
+    });
+
+    describe('Citation revisions', () => {
+        it('parses the pinned attachment version of a slide citation', () => {
+            expect(parseCitation('[cite:L:42:7:::Key:Summary:3:]')).toEqual({
+                type: 'L',
+                entityId: '42',
+                page: '7',
+                start: '',
+                end: '',
+                keyword: 'Key',
+                summary: 'Summary',
+                versions: { attachmentVersion: '3', videoVersion: undefined },
+            });
+        });
+
+        it('parses the pinned transcription version of a video citation', () => {
+            expect(parseCitation('[cite:L:42:7:120:180:Key:Summary::2]')?.versions).toEqual({
+                attachmentVersion: undefined,
+                videoVersion: '2',
+            });
+        });
+
+        it('keeps a summary containing colons intact in front of the version fields', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon:3:]');
+
+            expect(parsed?.keyword).toBe('Key');
+            expect(parsed?.summary).toBe('Summary:with:colon');
+            expect(parsed?.versions).toEqual({ attachmentVersion: '3', videoVersion: undefined });
+        });
+
+        it('treats trailing non-numeric fields as part of the summary', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon]');
+
+            expect(parsed?.versions).toBeUndefined();
+            expect(parsed?.summary).toBe('Summary:with:colon');
+        });
+
+        it('does not read two empty trailing fields as version fields', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon::]');
+
+            expect(parsed?.versions).toBeUndefined();
+            expect(parsed?.summary).toBe('Summary:with:colon::');
+        });
     });
 });

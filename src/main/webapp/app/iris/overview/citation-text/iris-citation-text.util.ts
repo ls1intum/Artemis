@@ -1,11 +1,13 @@
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-import { CITATION_REGEX, CitationRenderOptions, IrisCitationParsed } from './iris-citation-text.model';
+import { CITATION_REGEX, CITATION_VERSION_FIELD_REGEX, CitationRenderOptions, IrisCitationParsed, IrisCitationVersions } from './iris-citation-text.model';
 
 /**
  * Citation parsing constants.
  */
 const CITE_PREFIX = '[cite:';
 const CITE_AMOUNT_PARTS = 7;
+const CITE_AMOUNT_PARTS_WITH_VERSIONS = 9;
+const CITE_AMOUNT_VERSION_FIELDS = 2;
 const INDEX_TYPE_IN_CITE_PARTS = 0;
 const INDEX_ENTITY_ID_IN_CITE_PARTS = 1;
 const INDEX_PAGE_IN_CITE_PARTS = 2;
@@ -211,10 +213,39 @@ export function parseCitation(raw: string): IrisCitationParsed | undefined {
     const page = parts[INDEX_PAGE_IN_CITE_PARTS] ?? '';
     const start = parts[INDEX_START_IN_CITE_PARTS] ?? '';
     const end = parts[INDEX_END_IN_CITE_PARTS] ?? '';
-    const keyword = parts[INDEX_KEYWORD_IN_CITE_PARTS] ?? '';
-    const summary = parts.length > INDEX_SUMMARY_IN_CITE_PARTS ? parts.slice(INDEX_SUMMARY_IN_CITE_PARTS).join(':') : '';
 
-    return { type, entityId, page, start, end, keyword, summary };
+    const keyword = parts[INDEX_KEYWORD_IN_CITE_PARTS] ?? '';
+
+    // The two version fields sit at the very end, so they are read from the right. A summary may contain colons, which is why the
+    // summary is whatever remains between the keyword and the version fields. Citations written before versions existed have no
+    // such fields and keep parsing exactly as before.
+    const versions = parseTrailingVersions(parts);
+    const summaryEnd = versions ? parts.length - CITE_AMOUNT_VERSION_FIELDS : parts.length;
+    const summary = summaryEnd > INDEX_SUMMARY_IN_CITE_PARTS ? parts.slice(INDEX_SUMMARY_IN_CITE_PARTS, summaryEnd).join(':') : '';
+
+    return { type, entityId, page, start, end, keyword, summary, versions };
+}
+
+/**
+ * Reads the two trailing version fields of a citation block.
+ * A summary that itself ends in two colon-separated numbers would be misread here, but Pyris strips colons from keywords and
+ * summaries before emitting a citation, so that shape cannot occur in practice.
+ * @param parts The colon-separated parts of the citation block.
+ * @returns The parsed versions, or undefined when the block carries no version fields.
+ */
+function parseTrailingVersions(parts: string[]): IrisCitationVersions | undefined {
+    if (parts.length < CITE_AMOUNT_PARTS_WITH_VERSIONS) {
+        return undefined;
+    }
+    const attachmentVersion = parts[parts.length - CITE_AMOUNT_VERSION_FIELDS];
+    const videoVersion = parts[parts.length - 1];
+    if (!attachmentVersion && !videoVersion) {
+        return undefined;
+    }
+    if (!CITATION_VERSION_FIELD_REGEX.test(attachmentVersion) || !CITATION_VERSION_FIELD_REGEX.test(videoVersion)) {
+        return undefined;
+    }
+    return { attachmentVersion: attachmentVersion || undefined, videoVersion: videoVersion || undefined };
 }
 
 /**

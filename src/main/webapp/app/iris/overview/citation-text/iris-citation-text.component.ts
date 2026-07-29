@@ -1,12 +1,21 @@
-import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisCitationParsed } from './iris-citation-text.model';
+import { IrisCitationMaterialVersionService } from './iris-citation-material-version.service';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
+
+/**
+ * Translation keys for the warnings shown when the cited material changed after the answer was written.
+ */
+const CITATION_STALE_WARNING_KEY = 'artemisApp.iris.citation.outdated.stale';
+const CITATION_GONE_WARNING_KEY = 'artemisApp.iris.citation.outdated.gone';
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
@@ -23,6 +32,9 @@ export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
+    private readonly materialVersionService = inject(IrisCitationMaterialVersionService);
+    private readonly destroyRef = inject(DestroyRef);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -66,7 +78,7 @@ export class IrisCitationTextComponent {
         const label = formatCitationLabel(parsed);
         const typeClass = resolveCitationTypeClass(parsed);
         const hasSummary = !!parsed.summary;
-        const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!parsed.entityId && (!!parsed.page || !!parsed.start);
+        const isClickable = this.isCitationClickable(parsed, meta);
         const iconSvg = this.getIconSvg(typeClass);
         const dataAttrs = this.buildNavigationDataAttributes(parsed, meta);
 
@@ -111,7 +123,7 @@ export class IrisCitationTextComponent {
         const label = formatCitationLabel(first);
         const typeClass = resolveCitationTypeClass(first);
         const hasSummary = parsedIrisCitation.some((p) => !!p.summary);
-        const isClickable = !!firstMeta && !!firstMeta.courseId && !!firstMeta.lectureId && !!first.entityId && (!!first.page || !!first.start);
+        const isClickable = this.isCitationClickable(first, firstMeta);
         const groupClasses = `iris-citation-group ${typeClass}${hasSummary ? ' iris-citation-group--has-summary' : ''}`;
         const count = parsedIrisCitation.length - 1;
         const iconSvg = this.getIconSvg(typeClass);
@@ -194,7 +206,7 @@ export class IrisCitationTextComponent {
                 const meta = metas[index];
                 const isActive = summaryIndex === 0 ? 'is-active' : '';
                 const dataAttrs = this.buildNavigationDataAttributes(cite, meta);
-                const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!cite.entityId && (!!cite.page || !!cite.start);
+                const isClickable = this.isCitationClickable(cite, meta);
                 summaryIndex++;
 
                 return `
@@ -262,6 +274,13 @@ export class IrisCitationTextComponent {
     }
 
     /**
+     * Decides whether a citation can be navigated to.
+     */
+    private isCitationClickable(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): boolean {
+        return !!meta && !!meta.courseId && !!meta.lectureId && !!parsed.entityId && (!!parsed.page || !!parsed.start);
+    }
+
+    /**
      * Builds data attributes for navigation.
      */
     private buildNavigationDataAttributes(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
@@ -287,30 +306,74 @@ export class IrisCitationTextComponent {
         if (parsed.page) {
             attrs.push(`data-page="${escapeHtml(parsed.page)}"`);
         }
+        // Kept on the element rather than put into the link: it is only needed to compare against the version the server reports on click.
+        const pinnedVersion = parsed.start ? parsed.versions?.videoVersion : parsed.versions?.attachmentVersion;
+        if (pinnedVersion) {
+            attrs.push(`data-pinned-version="${escapeHtml(pinnedVersion)}"`);
+        }
 
         return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
     }
 
     /**
      * Navigates to the citation source.
+     * <p>
+     * A citation pinned to a material version is checked against the server first, so the decision is based on the material as it is at this very moment. Citations
+     * written before versions existed carry no pinned version and navigate straight away.
      */
     private navigateToCitation(element: HTMLElement): void {
         const courseId = element.getAttribute('data-course-id');
         const lectureId = element.getAttribute('data-lecture-id');
         const unitId = element.getAttribute('data-unit-id');
-        const timestamp = element.getAttribute('data-timestamp');
-        const page = element.getAttribute('data-page');
 
         if (!courseId || !lectureId || !unitId) {
             return;
         }
 
-        const queryParams: Record<string, string> = { unit: unitId };
-        if (timestamp) {
-            queryParams.timestamp = timestamp;
+        const pinnedVersion = element.getAttribute('data-pinned-version');
+        if (!pinnedVersion) {
+            this.navigateToLectureUnit(element, courseId, lectureId, unitId, true);
+            return;
         }
-        if (page) {
-            queryParams.page = page;
+
+        this.materialVersionService
+            .getMaterialVersions(Number(unitId))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (versions) => {
+                    // A citation is about either a video or a slide, mirroring how the citation marker discriminates the two.
+                    const currentVersion = element.getAttribute('data-timestamp') ? versions.videoVersion : versions.attachmentVersion;
+                    if (currentVersion === undefined || currentVersion === null) {
+                        // A version can only have been pinned for material that was processed, so a missing version means it is gone.
+                        this.alertService.warning(CITATION_GONE_WARNING_KEY);
+                        this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
+                        return;
+                    }
+                    const isUnchanged = String(currentVersion) === pinnedVersion;
+                    if (!isUnchanged) {
+                        this.alertService.warning(CITATION_STALE_WARNING_KEY);
+                    }
+                    this.navigateToLectureUnit(element, courseId, lectureId, unitId, isUnchanged);
+                },
+                // Losing the check must not cost the student the link; navigating as before is the safe degradation.
+                error: () => this.navigateToLectureUnit(element, courseId, lectureId, unitId, true),
+            });
+    }
+
+    /**
+     * Navigates to the cited lecture unit, jumping to the exact page or timestamp only when the material is unchanged.
+     */
+    private navigateToLectureUnit(element: HTMLElement, courseId: string, lectureId: string, unitId: string, includeExactPosition: boolean): void {
+        const queryParams: Record<string, string> = { unit: unitId };
+        if (includeExactPosition) {
+            const timestamp = element.getAttribute('data-timestamp');
+            const page = element.getAttribute('data-page');
+            if (timestamp) {
+                queryParams.timestamp = timestamp;
+            }
+            if (page) {
+                queryParams.page = page;
+            }
         }
 
         void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });

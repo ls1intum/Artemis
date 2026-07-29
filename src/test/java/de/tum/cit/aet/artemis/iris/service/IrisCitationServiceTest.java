@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 @ExtendWith(MockitoExtension.class)
 class IrisCitationServiceTest {
@@ -142,6 +143,90 @@ class IrisCitationServiceTest {
         assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isEmpty();
     }
 
+    @Test
+    void stampCitationVersions_pinsAttachmentVersionForSlideCitation() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("See [cite:L:42:7:::Deadlocks:A summary.] for details.");
+
+        assertThat(stamped).isEqualTo("See [cite:L:42:7:::Deadlocks:A summary.:3:] for details.");
+    }
+
+    @Test
+    void stampCitationVersions_pinsTranscriptionVersionForVideoCitation() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:120:180:Deadlocks:A summary.]");
+
+        // A transcript segment carries a companion page number, but only the video revision is pinned: the timestamp is what the citation points at.
+        assertThat(stamped).isEqualTo("[cite:L:42:7:120:180:Deadlocks:A summary.::2]");
+    }
+
+    /**
+     * Transcriptions that were already ingested before transcription versions existed carry no version. Citing them must stay unpinned rather than pin an empty value, so
+     * that clicking such a citation keeps behaving exactly as it did before the feature.
+     */
+    @Test
+    void stampCitationVersions_leavesVideoCitationUntouchedWhenTheTranscriptionHasNoVersionYet() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var text = "[cite:L:42:7:120:180:Deadlocks:A summary.]";
+
+        // The slides do have a version, but a video citation must not be pinned to it
+        assertThat(citationService.stampCitationVersions(text)).isEqualTo(text);
+    }
+
+    @Test
+    void stampCitationVersions_leavesCitationUntouchedWhenLectureUnitIsUnknown() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(SECOND_LECTURE_UNIT_ID, 3, null)));
+
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(citationService.stampCitationVersions(text)).isEqualTo(text);
+    }
+
+    @Test
+    void stampCitationVersions_isIdempotent() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var alreadyStamped = "[cite:L:42:7:::Deadlocks:A summary.:3:]";
+
+        assertThat(citationService.stampCitationVersions(alreadyStamped)).isEqualTo(alreadyStamped);
+    }
+
+    @Test
+    void stampCitationVersions_preservesKeywordsAndSummariesWithSpecialCharacters() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.]");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.:3:]");
+    }
+
+    @Test
+    void stampCitationVersions_stampsEveryCitationInTheText() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2), ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        var stamped = citationService.stampCitationVersions("A [cite:L:42::30:60:Locks:First.] and B [cite:L:7:2:::Threads:Second.]");
+
+        assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.::2] and B [cite:L:7:2:::Threads:Second.:8:]");
+    }
+
+    @Test
+    void stampCitationVersions_returnsTextUnchangedWhenNothingToStamp() {
+        assertThat(citationService.stampCitationVersions("No citations here.")).isEqualTo("No citations here.");
+        assertThat(citationService.stampCitationVersions(null)).isNull();
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersions_returnsTextUnchangedWhenRepositoryUnavailable() {
+        var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository);
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(serviceWithoutRepository.stampCitationVersions(text)).isEqualTo(text);
+    }
+
     private static LectureUnit lectureUnit(long id, long lectureId, long courseId, String lectureTitle, String unitTitle) {
         var course = new Course();
         course.setId(courseId);
@@ -156,5 +241,9 @@ class IrisCitationServiceTest {
         unit.setLecture(lecture);
         unit.setName(unitTitle);
         return unit;
+    }
+
+    private static LectureUnitIngestedVersionsDTO ingested(long lectureUnitId, Integer attachmentVersion, Integer videoVersion) {
+        return new LectureUnitIngestedVersionsDTO(lectureUnitId, attachmentVersion, videoVersion);
     }
 }
