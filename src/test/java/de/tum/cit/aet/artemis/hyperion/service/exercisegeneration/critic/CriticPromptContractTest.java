@@ -72,7 +72,8 @@ class CriticPromptContractTest {
                         "inclusive rule range", "concrete incompatibility witness", "Cite every rule", "complete pass", "do not stop after the first defect", "Return at most four",
                         "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs",
                         "numeric partitions for gaps and overlaps", "concrete admitted witness", "explicitly narrowed input domain", "unrelated operation advances",
-                        "object that owns", "trace a legal setup", "shifts that outcome to an earlier operation", "promised later outcome unreachable"),
+                        "object that owns", "trace a legal setup", "shifts that outcome to an earlier operation", "promised later outcome unreachable",
+                        "one boundaryChecks item for every explicit boundary", "\"timingPreserved\":true"),
 
                 // Contract review: the student-contract half of the full-artifact review.
                 rows(CONTRACT_REVIEW, "house teaching scaffold", "restate its student-visible contract", "imperative TODO", "stubbed owner", "solution/template diff",

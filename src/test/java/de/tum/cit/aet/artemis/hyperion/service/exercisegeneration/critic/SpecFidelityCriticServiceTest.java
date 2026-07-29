@@ -321,6 +321,26 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewRejectsRelocatingARequiredOperationBoundary() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],
+                         "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the public operation and its boundary behavior.",
+                         "remainingStudentReasoning":"Students must preserve the operation boundary while implementing the behavior.","domainGrounding":"The boundary is explicitly required by the domain brief.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],
+                         "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"Construction rejects the boundary input before a call can occur.","observedOperation":"call()","reachable":false,"timingPreserved":false,"reason":"The specification moves the required call-time outcome to construction."}],
+                         "exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Calling run with an empty queue is rejected.",
+                "R1: the constructor rejects an empty queue.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.findings()).singleElement().asString().contains("Boundary reachability conflict", "call()", "moves the required call-time outcome");
+    }
+
+    @Test
     void specificationReview_rejectsDefectFreeVerdictWithMiscitedEvidenceId() {
         // A positive verdict must point at evidence it actually reviewed. Otherwise fluent generic prose can approve a specification without examining its objective.
         ScriptedCritic scripted = criticScripted(rawResponse(

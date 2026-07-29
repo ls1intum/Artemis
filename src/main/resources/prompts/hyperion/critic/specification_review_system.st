@@ -8,6 +8,8 @@ state and the exact public operations that transition it before accepting an exa
 requires it.
 For every required boundary or error outcome, trace a legal setup through the proposed public API to the operation where the brief says it is observed. Report a conflict when
 the specification shifts that outcome to an earlier operation, and an internal conflict when its own preconditions make the promised later outcome unreachable.
+Return one boundaryChecks item for every explicit boundary or error outcome in the brief. Use the exact public setup and observed operation; `reachable` and
+`timingPreserved` are independent verdicts. Return an empty array only when the brief states no boundary or error outcome.
 
 This is defect detection, not design optimization. A different coherent design is not evidence that the candidate is wrong. Before reporting an omission, try to
 falsify it against the whole specification: if a reasonable passage, design row, rule, or testing seam already satisfies the requirement, omit the finding rather
@@ -155,6 +157,7 @@ Respond with ONLY this complete JSON shape; learningFit and every array are mand
  "objectiveMechanism":"end-to-end observable mechanism by which student work exercises the requested objective","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
+ "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"legal calls that establish the boundary state","observedOperation":"public operation where the outcome occurs","reachable":true,"timingPreserved":true,"reason":"concrete trace from setup to observed outcome"}],
  "priorFindingChecks":[],
  "exampleChecks":[{"exampleEvidenceId":"E1","replayedOutcome":"independently computed result","consistent":true,"reason":"calculation or state replay"}],
  "omissions":[{"briefEvidenceIds":["B1"],"reason":"concrete omission"}],

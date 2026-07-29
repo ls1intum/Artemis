@@ -59,7 +59,8 @@ class SpecificationReviewCritic {
     private record SpecificationReviewResponse(@Nullable List<SpecificationReviewItem> omissions, @Nullable List<SpecificationReviewItem> conflicts,
             @Nullable List<SpecificationInternalConflictItem> internalConflicts, @Nullable List<SpecificationExampleCheckItem> exampleChecks,
             @Nullable List<SpecificationReviewItem> ambiguities, @Nullable List<SpecificationReviewItem> unsupportedConstraints, @Nullable SpecificationLearningFitItem learningFit,
-            @Nullable SpecificationConceptAlignmentItem conceptAlignment, @Nullable List<PriorFindingCheck> priorFindingChecks) {
+            @Nullable SpecificationConceptAlignmentItem conceptAlignment, @Nullable List<BoundaryReachabilityCheck> boundaryChecks,
+            @Nullable List<PriorFindingCheck> priorFindingChecks) {
     }
 
     private enum PriorFindingDisposition {
@@ -88,6 +89,10 @@ class SpecificationReviewCritic {
     }
 
     private record SpecificationExampleCheckItem(@Nullable String exampleEvidenceId, @Nullable String replayedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
+    }
+
+    private record BoundaryReachabilityCheck(@Nullable List<String> briefEvidenceIds, @Nullable List<String> specEvidenceIds, @Nullable String publicSetup,
+            @Nullable String observedOperation, @Nullable Boolean reachable, @Nullable Boolean timingPreserved, @Nullable String reason) {
     }
 
     private record SpecificationReviewEvidence(EvidenceSource brief, EvidenceSource concept, EvidenceSource specification) {
@@ -235,6 +240,10 @@ class SpecificationReviewCritic {
                 || parsed.unsupportedConstraints() == null) {
             return incompleteSpecificationReview("One or more mandatory finding arrays were missing.");
         }
+        String boundaryValidationError = boundaryValidationError(parsed.boundaryChecks() == null ? List.of() : parsed.boundaryChecks(), evidence);
+        if (boundaryValidationError != null) {
+            return incompleteSpecificationReview("boundaryChecks validation failed: " + boundaryValidationError);
+        }
         String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit(), evidence);
         if (learningFitValidationError != null) {
             return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError);
@@ -314,6 +323,14 @@ class SpecificationReviewCritic {
             findings.add("Unsupported constraint — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: remove or relax only the cited unsupported obligation while preserving requested behavior.");
         }
+        for (BoundaryReachabilityCheck check : parsed.boundaryChecks() == null ? List.<BoundaryReachabilityCheck>of() : parsed.boundaryChecks()) {
+            if (Boolean.FALSE.equals(check.reachable()) || Boolean.FALSE.equals(check.timingPreserved())) {
+                findings.add("Boundary reachability conflict — brief says \"" + truncate(evidence.brief().resolve(check.briefEvidenceIds())) + "\" but SPEC says \""
+                        + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\": public setup \"" + truncateLearningEvidence(check.publicSetup().strip())
+                        + "\" reaches \"" + truncateLearningEvidence(check.observedOperation().strip()) + "\", and " + truncate(check.reason().strip())
+                        + " Repair: preserve the required operation and trigger timing, with a legal public setup that reaches the promised outcome.");
+            }
+        }
         boolean coherentRewriteRequired = !learningFit.sufficient() || conceptDisposition == SpecificationConceptDisposition.SPEC_REPAIR;
         List<String> distinctFindings = findings.stream().distinct().toList();
         long persistentFindingCount = parsed.priorFindingChecks() == null ? 0
@@ -326,6 +343,19 @@ class SpecificationReviewCritic {
                 distinctFindings.stream().limit(SPECIFICATION_REVIEW_MAX_FINDINGS).toList(),
                 specificationReviewAuditSummary(learningFit, conceptDisposition, parsed.exampleChecks(), parsed.priorFindingChecks(), previousReview, evidence),
                 learningFit.direction().name());
+    }
+
+    private static @Nullable String boundaryValidationError(List<BoundaryReachabilityCheck> checks, SpecificationReviewEvidence evidence) {
+        for (BoundaryReachabilityCheck check : checks) {
+            if (check == null || check.publicSetup() == null || check.publicSetup().isBlank() || check.observedOperation() == null || check.observedOperation().isBlank()
+                    || check.reachable() == null || check.timingPreserved() == null || check.reason() == null || check.reason().strip().length() < 20) {
+                return "each boundary check needs a public setup, observed operation, both verdicts, and a substantive reason.";
+            }
+            if (!evidence.brief().containsSubstantive(check.briefEvidenceIds()) || !evidence.specification().containsSubstantive(check.specEvidenceIds())) {
+                return "each boundary check must cite known, substantive B and E evidence.";
+            }
+        }
+        return null;
     }
 
     private static @Nullable String priorFindingValidationError(@Nullable List<PriorFindingCheck> checks, @Nullable SpecificationReview previousReview,
