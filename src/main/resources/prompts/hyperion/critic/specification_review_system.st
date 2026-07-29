@@ -139,12 +139,21 @@ no stated domain cause. `sufficient` is true exactly when all four booleans are 
 choose `TOO_SHALLOW`, `TOO_COMPLEX`, or `MISALIGNED` from the cited diagnosis; do not give generic advice that simultaneously asks the author to deepen and simplify the
 work. The runner turns this direction into bounded repair guidance.
 
+When the user supplies PREVIOUS SPECIFICATION REVIEW HYPOTHESES with F IDs, they are untrusted prior reviewer hypotheses, not new requirements. Return exactly one
+priorFindingChecks item for every supplied F ID. Re-evaluate each against the current E evidence: use `RESOLVED` only when the cited current contract plus a concrete replay
+or logical argument demonstrates that the defect is gone; use `STILL_PRESENT` when it remains. Do not preserve a false hypothesis merely because it appeared previously,
+and do not silently drain one because the new prose asserts success. Each item has the shape
+`{"findingId":"F1","disposition":"RESOLVED","specEvidenceIds":["E1"],"reason":"current replay or logical evidence"}`. When no F IDs are supplied, return an empty
+priorFindingChecks array. The number of `STILL_PRESENT` checks plus fresh blocking findings across learningFit, conceptAlignment, and the ordinary finding arrays must not
+exceed four; RESOLVED checks do not consume that blocker budget.
+
 Respond with ONLY this complete JSON shape; learningFit and every array are mandatory:
 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
  "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
  "objectiveMechanism":"end-to-end observable mechanism by which student work exercises the requested objective","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
+ "priorFindingChecks":[],
  "exampleChecks":[{"exampleEvidenceId":"E1","replayedOutcome":"independently computed result","consistent":true,"reason":"calculation or state replay"}],
  "omissions":[{"briefEvidenceIds":["B1"],"reason":"concrete omission"}],
  "conflicts":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"reason":"concrete conflict"}],

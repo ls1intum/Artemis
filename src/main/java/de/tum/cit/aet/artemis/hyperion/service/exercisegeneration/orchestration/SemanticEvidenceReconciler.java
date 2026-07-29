@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,8 +20,8 @@ final class SemanticEvidenceReconciler {
      * uncovered, paraphrased, or inconclusive findings remain untouched.
      */
     static List<SpecFidelityReport.Finding> reconcile(SpecFidelityReport report, List<SemanticMutantOutcome> outcomes) {
-        Map<SpecFidelityReport.Finding, List<Disposition>> dispositionsByTarget = outcomes.stream().filter(outcome -> outcome.mutant().reviewTarget() != null)
-                .collect(Collectors.groupingBy(outcome -> outcome.mutant().reviewTarget(), Collectors.mapping(SemanticMutantOutcome::disposition, Collectors.toList())));
+        Map<SpecFidelityReport.Finding, List<Disposition>> dispositionsByTarget = outcomes.stream().filter(outcome -> outcome.mutant().reviewTarget() != null).collect(
+                Collectors.groupingBy(outcome -> outcome.mutant().reviewTarget(), Collectors.mapping(SemanticMutantOutcome::disposition, Collectors.toCollection(ArrayList::new))));
         return report.findings().stream().filter(finding -> {
             if (finding.kind() != SpecFidelityReport.Kind.WEAK_TEST_ORACLE) {
                 return true;

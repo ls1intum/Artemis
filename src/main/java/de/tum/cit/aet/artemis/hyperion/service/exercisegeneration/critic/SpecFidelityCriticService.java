@@ -227,6 +227,11 @@ public class SpecFidelityCriticService {
         return specificationCritic.reviewSpecification(brief, selectedConcept, specification, usageSink, cancelled);
     }
 
+    public SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable SpecificationReview previousReview,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, usageSink, cancelled);
+    }
+
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled);
     }

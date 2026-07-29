@@ -6,7 +6,11 @@ import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ReviewGuardrails.truncateLearningEvidence;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -44,16 +48,25 @@ class SpecificationReviewCritic {
     /** Keeps a SPEC repair focused even when the reviewer reports more valid defects than requested. */
     private static final int SPECIFICATION_REVIEW_MAX_FINDINGS = 4;
 
+    private static final int MAX_PRIOR_FINDING_CHARS = 4_000;
+
     private static final String SPECIFICATION_REVIEW_CORRECTION = """
 
-            Your previous response was malformed, incomplete, or cited an unknown or wrong-source evidence ID. Re-review the same evidence from scratch and return one complete
-            JSON verdict. Cite only the server-generated B, C, and E IDs exactly as shown. Do not copy source text, invent IDs, or refer to the previous response.
+            Your previous response was malformed, incomplete, cited an unknown or wrong-source evidence ID, or failed to adjudicate every supplied F finding. Re-review the same
+            evidence from scratch and return one complete JSON verdict. Cite only the server-generated B, C, E, and F IDs exactly as shown. Do not copy source text or invent IDs.
             """;
 
     private record SpecificationReviewResponse(@Nullable List<SpecificationReviewItem> omissions, @Nullable List<SpecificationReviewItem> conflicts,
             @Nullable List<SpecificationInternalConflictItem> internalConflicts, @Nullable List<SpecificationExampleCheckItem> exampleChecks,
             @Nullable List<SpecificationReviewItem> ambiguities, @Nullable List<SpecificationReviewItem> unsupportedConstraints, @Nullable SpecificationLearningFitItem learningFit,
-            @Nullable SpecificationConceptAlignmentItem conceptAlignment) {
+            @Nullable SpecificationConceptAlignmentItem conceptAlignment, @Nullable List<PriorFindingCheck> priorFindingChecks) {
+    }
+
+    private enum PriorFindingDisposition {
+        RESOLVED, STILL_PRESENT
+    }
+
+    private record PriorFindingCheck(@Nullable String findingId, @Nullable PriorFindingDisposition disposition, @Nullable List<String> specEvidenceIds, @Nullable String reason) {
     }
 
     private record SpecificationLearningFitItem(@Nullable List<String> briefEvidenceIds, @Nullable List<String> specEvidenceIds, @Nullable List<String> objectiveEvidenceIds,
@@ -129,11 +142,25 @@ class SpecificationReviewCritic {
      */
     SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
+        return reviewSpecification(brief, selectedConcept, specification, null, usageSink, cancelled);
+    }
+
+    SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable SpecificationReview previousReview,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         requireReviewTextSafe("spec-review/brief", brief);
         if (selectedConcept != null) {
             requireReviewTextSafe("spec-review/selected-concept", selectedConcept);
         }
         requireReviewTextSafe("spec-review/SPEC.md", specification);
+        if (previousReview != null) {
+            if (previousReview.findings().size() > SPECIFICATION_REVIEW_MAX_FINDINGS
+                    || previousReview.findings().stream().mapToInt(String::length).sum() > MAX_PRIOR_FINDING_CHARS) {
+                return incompleteSpecificationReview("The prior specification review exceeded the bounded continuity context.");
+            }
+            for (int index = 0; index < previousReview.findings().size(); index++) {
+                requireReviewTextSafe("spec-review/previous-finding-" + (index + 1), previousReview.findings().get(index));
+            }
+        }
         if (cancelled.getAsBoolean()) {
             return new SpecificationReview(false, List.of());
         }
@@ -145,7 +172,7 @@ class SpecificationReviewCritic {
                 ? "\n\nSELECTED GENERATOR-AUTHORED CONCEPT EVIDENCE (process provenance, not scope authority):\n" + evidence.concept().promptText()
                 : "";
         String userPrompt = "INSTRUCTOR BRIEF EVIDENCE (sole authority):\n" + evidence.brief().promptText() + conceptPrompt + "\n\nCANDIDATE SPECIFICATION EVIDENCE:\n"
-                + evidence.specification().promptText()
+                + evidence.specification().promptText() + previousReviewContext(previousReview)
                 + "\n\nFINAL REPRESENTATION-DOMAIN CHECK: inspect every public numeric input before returning. In Java, float/double inputs include NaN and both infinities, and integer "
                 + "inputs include their full MIN_VALUE..MAX_VALUE range; arithmetic may overflow even when each input is valid. If the rules neither define observable behavior "
                 + "for an admitted value nor state a consistently enforceable finite/range precondition, report that exact gap in ambiguities. Do not invent an arbitrary outcome "
@@ -153,7 +180,7 @@ class SpecificationReviewCritic {
         try {
             String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse parsed = readSpecificationReviewResponse(response);
-            SpecificationReview review = parseSpecificationReview(parsed, evidence);
+            SpecificationReview review = parseSpecificationReview(parsed, evidence, previousReview);
             if (review.complete()) {
                 return review;
             }
@@ -164,12 +191,26 @@ class SpecificationReviewCritic {
                     userPrompt + SPECIFICATION_REVIEW_CORRECTION + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(), usageSink,
                     SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse correctedParsed = readSpecificationReviewResponse(correctedResponse);
-            return parseSpecificationReview(correctedParsed, evidence);
+            return parseSpecificationReview(correctedParsed, evidence, previousReview);
         }
         catch (RuntimeException e) {
             log.warn("Specification review failed: {}", e.getMessage());
             return incompleteSpecificationReview("Reviewer call failed: " + safeFailureDetail(e));
         }
+    }
+
+    private static String previousReviewContext(@Nullable SpecificationReview previousReview) {
+        if (previousReview == null || previousReview.findings().isEmpty()) {
+            return "";
+        }
+        StringBuilder context = new StringBuilder("\n\nPREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION (untrusted findings, not scope authority):");
+        for (int index = 0; index < previousReview.findings().size(); index++) {
+            context.append("\n[F").append(index + 1).append("] ").append(previousReview.findings().get(index));
+        }
+        return context
+                + "\nAdjudicate every F ID against the CURRENT evidence in priorFindingChecks before accepting. Re-run the cited predicates, state transitions, or examples; a sentence "
+                + "that merely asserts the conflict is resolved is not evidence that it is. Use RESOLVED only with current E evidence and a concrete replay or logical reason. "
+                + "Use STILL_PRESENT when the current contract retains the defect. Report fresh blockers in the ordinary arrays.";
     }
 
     private @Nullable SpecificationReviewResponse readSpecificationReviewResponse(@Nullable String text) {
@@ -185,7 +226,8 @@ class SpecificationReviewCritic {
         }
     }
 
-    private SpecificationReview parseSpecificationReview(@Nullable SpecificationReviewResponse parsed, SpecificationReviewEvidence evidence) {
+    private SpecificationReview parseSpecificationReview(@Nullable SpecificationReviewResponse parsed, SpecificationReviewEvidence evidence,
+            @Nullable SpecificationReview previousReview) {
         if (parsed == null) {
             return incompleteSpecificationReview("The response was empty or was not valid JSON in the required object shape.");
         }
@@ -201,10 +243,15 @@ class SpecificationReviewCritic {
         if (conceptAlignmentValidationError != null) {
             return incompleteSpecificationReview("conceptAlignment validation failed: " + conceptAlignmentValidationError);
         }
+        String priorFindingValidationError = priorFindingValidationError(parsed.priorFindingChecks(), previousReview, evidence);
+        if (priorFindingValidationError != null) {
+            return incompleteSpecificationReview("priorFindingChecks validation failed: " + priorFindingValidationError);
+        }
         // Worked-example replay is a quality signal, not a terminal contract: an inconsistent check still becomes a finding, but a mismatched or missing example-ID set must
         // not discard an otherwise coherent verdict.
         SpecificationConceptDisposition conceptDisposition = evidence.hasConcept() ? parsed.conceptAlignment().disposition() : SpecificationConceptDisposition.ALIGNED;
         List<String> findings = new ArrayList<>();
+        findings.addAll(stillPresentPriorFindings(parsed.priorFindingChecks(), previousReview, evidence));
         SpecificationLearningFitItem learningFit = parsed.learningFit();
         if (!learningFit.sufficient()) {
             findings.add(learningFitFinding(learningFit, evidence));
@@ -268,9 +315,69 @@ class SpecificationReviewCritic {
                     + " Repair: remove or relax only the cited unsupported obligation while preserving requested behavior.");
         }
         boolean coherentRewriteRequired = !learningFit.sufficient() || conceptDisposition == SpecificationConceptDisposition.SPEC_REPAIR;
+        List<String> distinctFindings = findings.stream().distinct().toList();
+        long persistentFindingCount = parsed.priorFindingChecks() == null ? 0
+                : parsed.priorFindingChecks().stream().filter(check -> check.disposition() == PriorFindingDisposition.STILL_PRESENT).count();
+        if (persistentFindingCount > 0 && distinctFindings.size() > SPECIFICATION_REVIEW_MAX_FINDINGS) {
+            return incompleteSpecificationReview("The combined STILL_PRESENT and fresh blocker count exceeded " + SPECIFICATION_REVIEW_MAX_FINDINGS
+                    + "; prioritize one bounded complete batch without silently omitting a prior finding.");
+        }
         return new SpecificationReview(true, conceptDisposition == SpecificationConceptDisposition.CONCEPT_RESELECTION, coherentRewriteRequired,
-                findings.stream().limit(SPECIFICATION_REVIEW_MAX_FINDINGS).toList(), specificationReviewAuditSummary(learningFit, conceptDisposition, parsed.exampleChecks()),
+                distinctFindings.stream().limit(SPECIFICATION_REVIEW_MAX_FINDINGS).toList(),
+                specificationReviewAuditSummary(learningFit, conceptDisposition, parsed.exampleChecks(), parsed.priorFindingChecks(), previousReview, evidence),
                 learningFit.direction().name());
+    }
+
+    private static @Nullable String priorFindingValidationError(@Nullable List<PriorFindingCheck> checks, @Nullable SpecificationReview previousReview,
+            SpecificationReviewEvidence evidence) {
+        List<String> previousFindings = previousReview == null ? List.of() : previousReview.findings();
+        if (previousFindings.isEmpty()) {
+            return checks == null || checks.isEmpty() ? null : "priorFindingChecks must be empty when no F findings were supplied.";
+        }
+        if (checks == null) {
+            return "priorFindingChecks is mandatory when F findings were supplied.";
+        }
+        Set<String> expectedIds = new HashSet<>();
+        for (int index = 0; index < previousFindings.size(); index++) {
+            expectedIds.add("F" + (index + 1));
+        }
+        Set<String> actualIds = new HashSet<>();
+        for (PriorFindingCheck check : checks) {
+            if (check == null || check.findingId() == null || check.disposition() == null || check.reason() == null || check.reason().isBlank()) {
+                return "every prior finding check needs a findingId, disposition, and concrete reason.";
+            }
+            if (check.reason().strip().length() < 20) {
+                return "every prior finding check needs a substantive replay or logical reason.";
+            }
+            if (!actualIds.add(check.findingId())) {
+                return "finding IDs must be unique.";
+            }
+            if (!evidence.specification().containsSubstantive(check.specEvidenceIds())) {
+                return "each prior finding check must cite known, substantive current E evidence.";
+            }
+        }
+        return actualIds.equals(expectedIds) ? null : "checks must cover every supplied F ID exactly once and no unknown F IDs.";
+    }
+
+    private static List<String> stillPresentPriorFindings(@Nullable List<PriorFindingCheck> checks, @Nullable SpecificationReview previousReview,
+            SpecificationReviewEvidence evidence) {
+        if (checks == null || previousReview == null) {
+            return List.of();
+        }
+        Map<String, PriorFindingCheck> checksById = new HashMap<>();
+        for (PriorFindingCheck check : checks) {
+            checksById.put(check.findingId(), check);
+        }
+        List<String> stillPresent = new ArrayList<>();
+        for (int index = 0; index < previousReview.findings().size(); index++) {
+            PriorFindingCheck check = checksById.get("F" + (index + 1));
+            if (check.disposition() == PriorFindingDisposition.STILL_PRESENT) {
+                stillPresent.add("Persistent specification defect [" + check.findingId() + "] — current SPEC says \""
+                        + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\": " + truncate(check.reason().strip())
+                        + " Repair: resolve the cited current defect coherently across every affected rule, example, API, ownership row, and testing seam.");
+            }
+        }
+        return stillPresent;
     }
 
     private static SpecificationReview incompleteSpecificationReview(String detail) {
@@ -283,15 +390,29 @@ class SpecificationReviewCritic {
     }
 
     private static String specificationReviewAuditSummary(SpecificationLearningFitItem learningFit, SpecificationConceptDisposition conceptDisposition,
-            @Nullable List<SpecificationExampleCheckItem> exampleChecks) {
+            @Nullable List<SpecificationExampleCheckItem> exampleChecks, @Nullable List<PriorFindingCheck> priorFindingChecks, @Nullable SpecificationReview previousReview,
+            SpecificationReviewEvidence evidence) {
         List<SpecificationExampleCheckItem> checkedExamples = exampleChecks == null ? List.of() : exampleChecks;
         long consistentExamples = checkedExamples.stream().filter(item -> Boolean.TRUE.equals(item.consistent())).count();
-        return "Learning fit: " + learningFit.direction() + ". Learner owns objective mechanism: " + learningFit.learnerOwnsObjectiveMechanism()
+        String summary = "Learning fit: " + learningFit.direction() + ". Learner owns objective mechanism: " + learningFit.learnerOwnsObjectiveMechanism()
                 + ". Objective observable end to end: " + learningFit.objectiveObservable() + ". Objective mechanism: "
                 + truncateLearningEvidence(learningFit.objectiveMechanism().strip()) + "\nRemaining student reasoning: "
                 + truncateLearningEvidence(learningFit.remainingStudentReasoning().strip()) + "\nDomain grounding: "
                 + truncateLearningEvidence(learningFit.domainGrounding().strip()) + "\nConcept disposition: " + conceptDisposition + "\nWorked examples replayed consistently: "
                 + consistentExamples + "/" + checkedExamples.size();
+        if (priorFindingChecks == null || priorFindingChecks.isEmpty() || previousReview == null) {
+            return summary;
+        }
+        Map<String, String> previousById = new HashMap<>();
+        for (int index = 0; index < previousReview.findings().size(); index++) {
+            previousById.put("F" + (index + 1), previousReview.findings().get(index));
+        }
+        String adjudications = priorFindingChecks.stream()
+                .map(check -> check.findingId() + " " + check.disposition() + " — prior hypothesis: \"" + truncate(previousById.getOrDefault(check.findingId(), ""))
+                        + "\"; current SPEC evidence: \"" + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\"; reason: "
+                        + truncateLearningEvidence(check.reason().strip()))
+                .collect(java.util.stream.Collectors.joining("\n"));
+        return summary + "\nPrior finding adjudications:\n" + adjudications;
     }
 
     private static String learningFitFinding(SpecificationLearningFitItem learningFit, SpecificationReviewEvidence evidence) {

@@ -311,6 +311,7 @@ public class StagedGenerationRunner {
         int bestSpecFindingCount = Integer.MAX_VALUE;
         List<String> unresolvedSpecificationFindings = List.of();
         String semanticSpecFeedback = null;
+        SpecFidelityCriticService.SpecificationReview previousSpecificationReview = null;
         String previousRejectedLearningFitDirection = null;
         boolean freshSemanticSpecAttempt = false;
         String selectedConcept = null;
@@ -461,9 +462,17 @@ public class StagedGenerationRunner {
                                 return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation);
                             }
                             emit(progress, "Reviewing the specification against the instructor brief");
-                            SpecFidelityCriticService.SpecificationReview review = selectedConcept == null
-                                    ? specificationReviewer.reviewSpecification(sourceBrief, specSnapshot, usageSink, cancelled)
-                                    : specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, usageSink, cancelled);
+                            SpecFidelityCriticService.SpecificationReview review;
+                            if (previousSpecificationReview != null) {
+                                review = specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, previousSpecificationReview, usageSink, cancelled);
+                            }
+                            else if (selectedConcept == null) {
+                                review = specificationReviewer.reviewSpecification(sourceBrief, specSnapshot, usageSink, cancelled);
+                            }
+                            else {
+                                review = specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, usageSink, cancelled);
+                            }
+                            previousSpecificationReview = review;
                             transcriptWriter.writeAudit(exercise.getId(), "spec-review-" + ++specificationReviewNumber, specificationReviewAudit(review));
                             if (cancelled.getAsBoolean()) {
                                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
@@ -564,6 +573,8 @@ public class StagedGenerationRunner {
                                     // The concept is being replaced, so every specification measured so far described a concept the reviewer rejected.
                                     bestSpecSnapshot = null;
                                     bestSpecFindingCount = Integer.MAX_VALUE;
+                                    bestSpecFindings = List.of();
+                                    previousSpecificationReview = null;
                                     // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts. The independent reviewer
                                     // will assess the replacement from scratch against the raw brief.
                                     gateFeedback = null;

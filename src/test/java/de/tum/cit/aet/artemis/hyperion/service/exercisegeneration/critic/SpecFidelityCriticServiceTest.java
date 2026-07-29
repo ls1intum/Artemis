@@ -532,6 +532,59 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReReviewCarriesPriorFindingsAndRequiresFreshAdjudication() {
+        ScriptedCritic scripted = criticScripted(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                         "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "priorFindingChecks":[{"findingId":"F1","disposition":"RESOLVED","specEvidenceIds":["E1"],"reason":"The current rule now assigns equality to exactly one region."}],
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+        SpecFidelityCriticService.SpecificationReview previous = new SpecFidelityCriticService.SpecificationReview(true, false, false,
+                List.of("Internal conflict — lower == upper satisfies both R2 and R4."), "prior audit", "SUFFICIENT");
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Classify numeric readings.", null,
+                "R2 and R4 now claim to be mutually exclusive.", previous, null, () -> false);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model()).call(prompt.capture());
+        assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("PREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION",
+                "[F1] Internal conflict — lower == upper satisfies both R2 and R4", "Adjudicate every F ID", "merely asserts the conflict is resolved is not evidence");
+        assertThat(review.accepted()).isTrue();
+        assertThat(review.auditSummary()).contains("Prior finding adjudications", "F1 RESOLVED", "current rule now assigns equality to exactly one region");
+    }
+
+    @Test
+    void specificationReReviewCannotSilentlyForgetAPriorFinding() {
+        String cleanVerdictWithoutAdjudication = """
+                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                 "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                """;
+        String correctedVerdict = """
+                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the boundary comparison.",
+                 "remainingStudentReasoning":"Students reason about equality.","domainGrounding":"The domain requires a boundary.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                 "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"Equality still satisfies both rules."}],
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                """;
+        ScriptedCritic scripted = criticScripted(rawResponse(cleanVerdictWithoutAdjudication), rawResponse(correctedVerdict));
+        String priorFinding = "Internal conflict — lower == upper satisfies both R2 and R4.";
+        SpecFidelityCriticService.SpecificationReview previous = new SpecFidelityCriticService.SpecificationReview(true, List.of(priorFinding));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Classify numeric readings.", null, "R2 and R4 still both include equality.",
+                previous, null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.findings()).singleElement().asString()
+                .contains("Persistent specification defect [F1]", "R2 and R4 still both include equality", "Equality still satisfies both rules")
+                .doesNotContain("lower == upper satisfies both R2 and R4");
+        assertThat(review.auditSummary()).contains("F1 STILL_PRESENT", "lower == upper satisfies both R2 and R4", "R2 and R4 still both include equality");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("priorFindingChecks validation failed", "mandatory when F findings were supplied");
+    }
+
+    @Test
     void specificationReview_returnsGroundedFindingsAsActionableFeedback() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """

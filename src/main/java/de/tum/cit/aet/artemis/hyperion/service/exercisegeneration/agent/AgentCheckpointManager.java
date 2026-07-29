@@ -42,6 +42,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
@@ -77,6 +78,8 @@ public class AgentCheckpointManager {
 
     private final ObjectMapper objectMapper;
 
+    private final TempFileUtilService tempFileUtilService;
+
     private final String checkpointDirectory;
 
     private final String replaySource;
@@ -92,11 +95,12 @@ public class AgentCheckpointManager {
     private final ThreadLocal<RunScope> currentRun = new ThreadLocal<>();
 
     @Autowired
-    public AgentCheckpointManager(ObjectMapper objectMapper, @Value("${artemis.hyperion.agent.checkpoint-dir:}") String checkpointDirectory,
-            @Value("${artemis.hyperion.agent.checkpoint-replay-from:}") String replaySource, @Value("${artemis.hyperion.agent.checkpoint-fork-at:0}") int forkAt,
-            @Value("${artemis.hyperion.agent.checkpoint-fork-review-at:0}") int forkReviewAt, @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict,
-            @Value("${artemis.hyperion.agent.checkpoint-fork-instruction:}") String forkInstruction) {
+    public AgentCheckpointManager(ObjectMapper objectMapper, TempFileUtilService tempFileUtilService,
+            @Value("${artemis.hyperion.agent.checkpoint-dir:}") String checkpointDirectory, @Value("${artemis.hyperion.agent.checkpoint-replay-from:}") String replaySource,
+            @Value("${artemis.hyperion.agent.checkpoint-fork-at:0}") int forkAt, @Value("${artemis.hyperion.agent.checkpoint-fork-review-at:0}") int forkReviewAt,
+            @Value("${artemis.hyperion.agent.checkpoint-strict:false}") boolean strict, @Value("${artemis.hyperion.agent.checkpoint-fork-instruction:}") String forkInstruction) {
         this.objectMapper = objectMapper;
+        this.tempFileUtilService = tempFileUtilService;
         this.checkpointDirectory = strip(checkpointDirectory);
         this.replaySource = strip(replaySource);
         this.forkAt = forkAt;
@@ -117,6 +121,12 @@ public class AgentCheckpointManager {
         }
         SECRET_MATERIAL_POLICY.requireSafe("checkpoint/fork-instruction", this.forkInstruction.getBytes(StandardCharsets.UTF_8),
                 HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
+    }
+
+    public AgentCheckpointManager(ObjectMapper objectMapper, String checkpointDirectory, String replaySource, int forkAt, int forkReviewAt, boolean strict,
+            String forkInstruction) {
+        this(objectMapper, new TempFileUtilService(Path.of(System.getProperty("java.io.tmpdir"))), checkpointDirectory, replaySource, forkAt, forkReviewAt, strict,
+                forkInstruction);
     }
 
     public AgentCheckpointManager(ObjectMapper objectMapper, String checkpointDirectory, String replaySource, int forkAt, boolean strict, String forkInstruction) {
@@ -656,7 +666,7 @@ public class AgentCheckpointManager {
         writeCheckedAtomic(target, objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(value));
     }
 
-    private static void writeCheckedAtomic(Path target, byte[] bytes) throws IOException {
+    private void writeCheckedAtomic(Path target, byte[] bytes) throws IOException {
         writeAtomicBytes(target, bytes);
         writeAtomicBytes(checksumPath(target), (sha256(bytes) + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
@@ -674,9 +684,9 @@ public class AgentCheckpointManager {
         return turnPath.resolveSibling(turnPath.getFileName() + ".sha256");
     }
 
-    private static void writeAtomicBytes(Path target, byte[] bytes) throws IOException {
+    private void writeAtomicBytes(Path target, byte[] bytes) throws IOException {
         Files.createDirectories(target.getParent());
-        Path temporary = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
+        Path temporary = tempFileUtilService.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
         try {
             File temporaryFile = temporary.toFile();
             File targetFile = target.toFile();

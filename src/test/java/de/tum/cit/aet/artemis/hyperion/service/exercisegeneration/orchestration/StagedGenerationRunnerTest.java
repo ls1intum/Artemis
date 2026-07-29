@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.mockito.stubbing.Answer;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 
@@ -319,9 +321,10 @@ class StagedGenerationRunnerTest {
     @Test
     void semanticSpecificationReviewRefinesBeforeFreezing() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(
-                new SpecFidelityCriticService.SpecificationReview(true, List.of("the collaboration is incomplete")),
-                new SpecFidelityCriticService.SpecificationReview(true, List.of()));
+        SpecFidelityCriticService.SpecificationReview firstReview = new SpecFidelityCriticService.SpecificationReview(true, List.of("the collaboration is incomplete"));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(firstReview);
+        when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), eq(firstReview), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of()));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "first spec"), completed(1, VALID_SPEC_DOCUMENT),
                 completed(3, "build"), completed(1, "statement"));
@@ -331,7 +334,8 @@ class StagedGenerationRunnerTest {
         AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(reviewer, times(2)).reviewSpecification(eq("brief"), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("brief"), isNull(), anyString(), eq(firstReview), any(), any());
         verify(agentLoopRunner, times(4)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
         assertThat(prompts.getAllValues().get(1)).contains("collaboration is incomplete");
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
@@ -340,8 +344,10 @@ class StagedGenerationRunnerTest {
     @Test
     void exhaustedSpecificationReviewFindingsRemainAttachedToTheStagedOutcome() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
-                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of("R1 still invents a source-level technique")));
+        SpecFidelityCriticService.SpecificationReview unresolvedReview = new SpecFidelityCriticService.SpecificationReview(true,
+                List.of("R1 still invents a source-level technique"));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(unresolvedReview);
+        when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenReturn(unresolvedReview);
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec one"), completed(1, "spec two"),
                 completed(1, "spec three"), completed(1, "spec four"), completed(3, "build"), completed(1, "statement"));
@@ -351,7 +357,8 @@ class StagedGenerationRunnerTest {
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(outcome.unresolvedSpecificationFindings()).containsExactly("R1 still invents a source-level technique");
-        verify(reviewer, times(4)).reviewSpecification(eq("brief"), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
+        verify(reviewer, times(3)).reviewSpecification(eq("brief"), isNull(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -362,10 +369,13 @@ class StagedGenerationRunnerTest {
         ExerciseConceptSelector.ConceptSelection replacementConcept = new ExerciseConceptSelector.ConceptSelection(true, 2, "replacement concept", 1, List.of(), "", "");
         when(conceptSelector.select(eq("brief"), any(), any(), any())).thenReturn(initialConcept);
         when(conceptSelector.select(eq("brief"), anyString(), any(), any(), any())).thenReturn(replacementConcept);
-        when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any())).thenReturn(
-                new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("too shallow once"), "", "TOO_SHALLOW"),
-                new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("too shallow again"), "", "TOO_SHALLOW"),
+        SpecFidelityCriticService.SpecificationReview firstReview = new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("too shallow once"), "",
+                "TOO_SHALLOW");
+        SpecFidelityCriticService.SpecificationReview secondReview = new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("too shallow again"), "",
+                "TOO_SHALLOW");
+        when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any())).thenReturn(firstReview,
                 new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), eq(firstReview), any(), any())).thenReturn(secondReview);
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, conceptSelector,
                 "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
@@ -376,7 +386,8 @@ class StagedGenerationRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(conceptSelector).select(eq("brief"), anyString(), any(), any(), any());
-        verify(reviewer, times(3)).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any());
+        verify(reviewer, times(2)).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any(), any());
         assertThat(approvedSpecs.approved("s")).hasValueSatisfying(specification -> assertThat(specification).contains(VALID_SPEC_DOCUMENT.strip()));
     }
 
@@ -384,9 +395,11 @@ class StagedGenerationRunnerTest {
     void authoritativeStatementRefinesItsContractWithoutReplacingTheInstructorConcept() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
-        when(reviewer.reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any())).thenReturn(
-                new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("make the global tie rule explicit"), "", "TOO_SHALLOW"),
-                new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        SpecFidelityCriticService.SpecificationReview firstReview = new SpecFidelityCriticService.SpecificationReview(true, false, true,
+                List.of("make the global tie rule explicit"), "", "TOO_SHALLOW");
+        when(reviewer.reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any())).thenReturn(firstReview);
+        when(reviewer.reviewSpecification(eq("authoritative elevator statement"), isNull(), anyString(), eq(firstReview), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, conceptSelector,
                 "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
@@ -397,7 +410,8 @@ class StagedGenerationRunnerTest {
                 Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, false, null);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(reviewer, times(2)).reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(eq("authoritative elevator statement"), isNull(), anyString(), eq(firstReview), any(), any());
         verifyNoInteractions(conceptSelector);
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
     }
@@ -450,8 +464,10 @@ class StagedGenerationRunnerTest {
         String unmeasuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- unmeasured -->\n";
         sandbox.specMarkdown = measuredDraft;
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of("measured concern")),
-                new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
+        SpecFidelityCriticService.SpecificationReview firstReview = new SpecFidelityCriticService.SpecificationReview(true, List.of("measured concern"));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(firstReview);
+        when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), eq(firstReview), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
@@ -600,7 +616,7 @@ class StagedGenerationRunnerTest {
         String draftD = VALID_SPEC_DOCUMENT + "\n<!-- draft D -->\n";
         sandbox.specMarkdown = draftA;
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
+        Answer<SpecFidelityCriticService.SpecificationReview> reviewCurrentSpecification = invocation -> {
             String current = sandbox.specMarkdown;
             if (current.equals(draftA)) {
                 sandbox.specMarkdown = draftB;
@@ -612,7 +628,9 @@ class StagedGenerationRunnerTest {
             }
             sandbox.specMarkdown = draftD;
             return new SpecFidelityCriticService.SpecificationReview(true, List.of("regressed one", "regressed two", "regressed three"));
-        });
+        };
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenAnswer(reviewCurrentSpecification);
+        when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenAnswer(reviewCurrentSpecification);
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "spec"), completed(1, "spec"),
                 completed(1, "spec"), completed(3, "build"), completed(1, "statement"));
