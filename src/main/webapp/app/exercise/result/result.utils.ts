@@ -146,7 +146,7 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
-function getAthenaFeedbackTemplateStatus(result: Result | undefined): ResultTemplateStatus | undefined {
+const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
     if (!result || !isAthenaAIResult(result)) {
         return undefined;
     }
@@ -160,7 +160,7 @@ function getAthenaFeedbackTemplateStatus(result: Result | undefined): ResultTemp
         return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
     }
     return undefined;
-}
+};
 
 export const evaluateTemplateStatus = (
     exercise: Exercise | undefined,

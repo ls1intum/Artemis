@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { BehaviorSubject, Subject, distinctUntilChanged } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -284,12 +284,15 @@ describe('ParticipationWebsocketService', () => {
         } as StudentParticipation;
         const cachedSubmission: Submission = { id: 98, participation: cachedParticipation, results: [] } as Submission;
         cachedParticipation.submissions = [cachedSubmission];
-        const finishedParticipation: StudentParticipation = {
+        const finishedParticipationPayload: Participation = {
             id: cachedParticipation.id,
-            exercise: exercise1,
+            testRun: false,
+            type: ParticipationType.STUDENT,
             initializationState: InitializationState.FINISHED,
-        } as StudentParticipation;
-        const incomingSubmission: Submission = { id: cachedSubmission.id, participation: finishedParticipation } as Submission;
+            submissionCount: 1,
+            exercise: exercise1,
+        } as Participation;
+        const incomingSubmission: Submission = { id: cachedSubmission.id, participation: finishedParticipationPayload } as Submission;
         const incomingResult: Result = { id: 99, score: 80, submission: incomingSubmission } as Result;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(cachedParticipation.id!, true);
