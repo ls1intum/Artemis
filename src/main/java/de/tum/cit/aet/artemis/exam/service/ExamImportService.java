@@ -622,4 +622,29 @@ public class ExamImportService {
         examToCopy.setCourse(targetCourse);
         return examRepository.save(examToCopy);
     }
+
+    /**
+     * Fills in the exam-import overrides the request omitted from the DB-loaded source exercise. A {@code null} on the
+     * skeleton unambiguously means "override omitted" (the import DTO only sets a field when the client sent it), so the
+     * source's value is used instead of persisting a blank title / short name. The entity-shaped course-to-course import
+     * is unaffected: those skeletons are real source exercises whose fields are already non-null.
+     *
+     * @param skeleton the exam-import skeleton to enrich in place
+     * @param source   the DB-loaded source exercise the omitted overrides are backfilled from
+     */
+    private static void backfillOmittedBasisOverridesFromSource(final Exercise skeleton, final Exercise source) {
+        if (skeleton.getTitle() == null) {
+            skeleton.setTitle(source.getTitle());
+        }
+        if (skeleton.getShortName() == null) {
+            skeleton.setShortName(source.getShortName());
+        }
+        if (skeleton.getMaxPoints() == null) {
+            skeleton.setMaxPoints(source.getMaxPoints());
+        }
+        if (skeleton.getBonusPoints() == null) {
+            skeleton.setBonusPoints(source.getBonusPoints());
+        }
+    }
+
 }

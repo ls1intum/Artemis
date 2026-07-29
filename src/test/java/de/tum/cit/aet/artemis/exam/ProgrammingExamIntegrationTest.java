@@ -254,8 +254,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         ExamImportDTO importDTO = new ExamImportDTO(base.title(), base.testExam(), base.examWithAttendanceCheck(), base.visibleDate(), base.startDate(), base.endDate(),
                 base.publishResultsDate(), base.examStudentReviewStart(), base.examStudentReviewEnd(), base.gracePeriod(), base.workingTime(), base.startText(), base.endText(),
                 base.confirmationStartText(), base.confirmationEndText(), base.examMaxPoints(), base.randomizeExerciseOrder(), base.numberOfExercisesInExam(),
-                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(), base.channelName(),
-                base.courseId(), List.of(groupDTO));
+                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(),
+                base.examSummaryPublicationDate(), base.channelName(), base.courseId(), List.of(groupDTO));
 
         // The import must NOT NPE in the precheck; it succeeds and imports the programming exercise.
         final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, HttpStatus.CREATED)
@@ -290,8 +290,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         ExamImportDTO importDTO = new ExamImportDTO(base.title(), base.testExam(), base.examWithAttendanceCheck(), base.visibleDate(), base.startDate(), base.endDate(),
                 base.publishResultsDate(), base.examStudentReviewStart(), base.examStudentReviewEnd(), base.gracePeriod(), base.workingTime(), base.startText(), base.endText(),
                 base.confirmationStartText(), base.confirmationEndText(), base.examMaxPoints(), base.randomizeExerciseOrder(), base.numberOfExercisesInExam(),
-                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(), base.channelName(),
-                base.courseId(), List.of(groupDTO));
+                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(),
+                base.examSummaryPublicationDate(), base.channelName(), base.courseId(), List.of(groupDTO));
 
         request.performMvcRequest(
                 post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(importDTO)))
