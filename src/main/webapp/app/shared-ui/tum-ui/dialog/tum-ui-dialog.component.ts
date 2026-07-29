@@ -24,6 +24,45 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 // several dialogs are declared on the same page.
 let nextDialogId = 0;
 
+// Page scroll lock, shared by every dialog instance.
+//
+// Deliberately NOT the CDK's `scrollStrategies.block()`: that one sets `position: fixed` plus
+// `top: -<scrollY>px` on <html> (see `.cdk-global-scrollblock`). A root that is both offset and a
+// containing block breaks every body-appended, absolutely-positioned overlay rendered while the dialog
+// is open — notably PrimeNG's `appendTo="body"` panels, whose `absolutePosition()` adds a scroll offset
+// that the lock has just zeroed, so the panel lands a full page-scroll away from its input.
+//
+// `overflow: hidden` locks scrolling just as effectively without moving the root, which is what PrimeNG's
+// own `blockBodyScroll()` does. The counter keeps nested dialogs (the exercise add modal opening the
+// group-edit modal) from unlocking the page when only the inner one closes.
+let openDialogCount = 0;
+let previousRootOverflow = '';
+let previousRootPaddingRight = '';
+
+function lockPageScroll(): void {
+    if (openDialogCount++ > 0) {
+        return;
+    }
+    const root = document.documentElement;
+    previousRootOverflow = root.style.overflow;
+    previousRootPaddingRight = root.style.paddingRight;
+    // Reserve the width the scrollbar occupied, so the page behind the mask does not visibly reflow.
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+    root.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+        root.style.paddingRight = `${scrollbarWidth}px`;
+    }
+}
+
+function unlockPageScroll(): void {
+    if (openDialogCount === 0 || --openDialogCount > 0) {
+        return;
+    }
+    const root = document.documentElement;
+    root.style.overflow = previousRootOverflow;
+    root.style.paddingRight = previousRootPaddingRight;
+}
+
 /**
  * Owned Artemis modal dialog on Angular CDK overlay, part of the tum-aet-ui kit (future @tumaet/ui-angular).
  *
@@ -126,13 +165,22 @@ export class TumUiDialogComponent implements OnDestroy {
         }
         this.overlayRef = this.overlay.create({
             positionStrategy: this.overlay.position().global().centerHorizontally().centerVertically(),
-            scrollStrategy: this.overlay.scrollStrategies.block(),
+            // Scrolling is locked by lockPageScroll() below instead of by the CDK strategy; see its comment.
+            scrollStrategy: this.overlay.scrollStrategies.noop(),
+            // Render inside `.cdk-overlay-container` (z-index 1060, global.scss) rather than as a native
+            // `popover`, which CDK 22 defaults to. A popover is promoted to the browser's TOP LAYER, which
+            // paints above all normal content no matter its z-index — so any overlay a dialog's own content
+            // opens outside the CDK container (a PrimeNG `appendTo="body"` datepicker panel, for instance)
+            // was unreachably behind the dialog AND dimmed by its backdrop, with no z-index able to fix it.
+            // Opting out restores ordinary stacking, which is what the container's 1060 was written for.
+            usePopover: false,
             hasBackdrop: true,
             // Reuse the kit's full-viewport, pointer-capturing backdrop (structural CSS in global.scss); the
             // visible dim is applied below so the mask can follow the Aura light/dark modal background exactly.
             backdropClass: 'tum-ui-overlay-backdrop',
         });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
+        lockPageScroll();
         this.applyMaskColor();
         this.overlayRef.backdropClick().subscribe(() => {
             if (this.dismissableMask()) {
@@ -153,6 +201,7 @@ export class TumUiDialogComponent implements OnDestroy {
         }
         this.overlayRef.dispose();
         this.overlayRef = undefined;
+        unlockPageScroll();
         this.onHide.emit();
     }
 
@@ -174,6 +223,12 @@ export class TumUiDialogComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.visibilitySync.destroy();
-        this.overlayRef?.dispose();
+        // Destroyed while open (e.g. the host route navigates away): dispose AND release the scroll lock,
+        // otherwise the counter never returns to zero and the page stays unscrollable for good.
+        if (this.overlayRef) {
+            this.overlayRef.dispose();
+            this.overlayRef = undefined;
+            unlockPageScroll();
+        }
     }
 }

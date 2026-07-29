@@ -41,6 +41,10 @@
                 }
                 <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
                 <div class="datepicker-and-info">
+                    <!-- baseZIndex: the panel is appended to the body, so it is a sibling of `.cdk-overlay-container`, which global.scss
+                         pins to z-index 1060 and which hosts every tum-ui-dialog (e.g. the exercise group edit modal). PrimeNG resolves the
+                         panel to baseZIndex + 2, so 1050 put it at 1052 — underneath that container. Matches the `jhi-date-time-picker`
+                         default. Positioning is the dialog's half of this: see the scroll-lock comment in TumUiDialogComponent. -->
                     <p-datepicker
                         styleClass="timeline-datepicker"
                         [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
@@ -61,7 +65,7 @@
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
-                        [baseZIndex]="1050"
+                        [baseZIndex]="1060"
                         [invalid]="isInvalid"
                         [disabled]="isReadonly()"
                     />
