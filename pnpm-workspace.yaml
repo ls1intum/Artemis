@@ -88,7 +88,7 @@ overrides:
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
-  brace-expansion: '5.0.7'
+  brace-expansion: '5.0.8'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
@@ -111,7 +111,7 @@ overrides:
   katex: '0.18.1'
   minimatch: '10.2.5'
   piscina: '5.2.0'
-  postcss: '8.5.14'
+  postcss: '8.5.23'
   punycode: '2.3.1'
   # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
   # Apollon but has no direct React code, so force the whole React subtree to 19
