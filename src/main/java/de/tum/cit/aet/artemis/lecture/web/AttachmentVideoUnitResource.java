@@ -187,7 +187,7 @@ public class AttachmentVideoUnitResource {
             // notifyStudentGroupAboutAttachmentChange derives the course via attachment.getLecture(); a unit attachment does not carry its lecture,
             // so set it from the (already course-loaded) unit lecture to avoid a NullPointerException.
             changedAttachment.setLecture(savedAttachmentVideoUnit.getLecture());
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(changedAttachment, notificationText);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
