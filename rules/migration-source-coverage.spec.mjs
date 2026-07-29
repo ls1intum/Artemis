@@ -11,7 +11,7 @@ import eslintConfig from '../eslint.config.mjs';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 function toAppBase(p) {
-    if (p.includes('packages/tum-ui/src/lib') || p.includes('dist/tum-ui') || p.includes('fesm2022')) {
+    if (p.includes('packages/tum-ui/src/lib') || p.includes('packages/tum-ui/dist') || p.includes('fesm2022')) {
         return '@tumaet/ui-angular';
     }
     return p

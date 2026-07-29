@@ -11,3 +11,7 @@ src/main/resources
 src/main/webapp/app/openapi
 src/main/webapp/app/**/openapi
 packages/tum-ui/documentation.json
+packages/tum-ui/coverage
+packages/tum-ui/dist
+packages/tum-ui/dist-pack
+packages/tum-ui/styles.css

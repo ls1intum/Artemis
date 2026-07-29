@@ -30,7 +30,8 @@ export const Default: Story = {
 
         const dialog = await screen.findByRole('dialog', { name: 'Open calendar' });
         await expect(within(dialog).getByRole('grid')).toBeVisible();
-        await expect(dialog.contains(document.activeElement)).toBe(true);
+        const selectedDay = within(dialog).getByRole('gridcell', { selected: true }).querySelector('button');
+        await expect(selectedDay).toHaveFocus();
 
         const dialogRemoved = waitForElementToBeRemoved(dialog);
         await userEvent.keyboard('{Escape}');

@@ -16,6 +16,7 @@ export class TumUiCalendarComponent {
 
     readonly selected = input<dayjs.Dayjs | undefined>(undefined);
     readonly activeMonth = input.required<dayjs.Dayjs>();
+    readonly focusOnInit = input(false);
     readonly daySelected = output<dayjs.Dayjs>();
     readonly monthChange = output<dayjs.Dayjs>();
 
@@ -25,6 +26,7 @@ export class TumUiCalendarComponent {
     protected readonly weeks = computed(() => buildMonthMatrix(this.activeMonth()));
     protected readonly flatDays = computed(() => this.weeks().flat());
     protected readonly weekdayLabels = computed(() => this.weeks()[0].map((day) => this.formatDate(day, { weekday: 'short' })));
+    protected readonly weekdayFullLabels = computed(() => this.weeks()[0].map((day) => this.formatDate(day, { weekday: 'long' })));
     protected readonly monthLabel = computed(() => this.formatDate(this.activeMonth(), { month: 'long', year: 'numeric' }));
     protected readonly previousMonthLabel = computed(() =>
         this.translate('tumUi.datePicker.previousMonth', { month: this.formatDate(this.activeMonth().subtract(1, 'month'), { month: 'long', year: 'numeric' }) }),
@@ -43,7 +45,8 @@ export class TumUiCalendarComponent {
             if (previous) {
                 return month.date(Math.min(previous.value.date(), month.daysInMonth()));
             }
-            return month.startOf('month');
+            const today = dayjs();
+            return today.isSame(month, 'month') ? today : month.startOf('month');
         },
     });
 
@@ -54,11 +57,19 @@ export class TumUiCalendarComponent {
     });
     private readonly today = dayjs();
     private readonly dayButtons = viewChildren<ElementRef<HTMLButtonElement>>('dayButton');
+    private focusedOnInit = false;
     private restoreFocusAfterRender = false;
 
     constructor() {
         afterRenderEffect(() => {
             this.flatDays();
+            if (this.focusOnInit() && !this.focusedOnInit) {
+                const initialButton = this.dayButtons()[this.focusedIndex()]?.nativeElement;
+                if (initialButton) {
+                    this.focusedOnInit = true;
+                    initialButton.focus();
+                }
+            }
             if (this.restoreFocusAfterRender) {
                 this.restoreFocusAfterRender = false;
                 this.dayButtons()[this.focusedIndex()]?.nativeElement.focus();
@@ -160,12 +171,20 @@ export class TumUiCalendarComponent {
             case 'PageUp':
                 event.preventDefault();
                 this.restoreFocusAfterRender = true;
-                this.previousMonth();
+                this.monthChange.emit(
+                    this.activeMonth()
+                        .subtract(event.shiftKey ? 1 : 0, 'year')
+                        .subtract(event.shiftKey ? 0 : 1, 'month'),
+                );
                 break;
             case 'PageDown':
                 event.preventDefault();
                 this.restoreFocusAfterRender = true;
-                this.nextMonth();
+                this.monthChange.emit(
+                    this.activeMonth()
+                        .add(event.shiftKey ? 1 : 0, 'year')
+                        .add(event.shiftKey ? 0 : 1, 'month'),
+                );
                 break;
         }
     }

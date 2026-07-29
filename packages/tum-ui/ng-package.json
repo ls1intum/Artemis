@@ -1,7 +1,7 @@
 {
     "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
-    "dest": "../../dist/tum-ui",
-    "assets": ["README.md", "LICENSE"],
+    "dest": "./dist",
+    "assets": ["README.md", "LICENSE", "styles.css", "themes.css"],
     "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
     "lib": {
         "entryFile": "src/public-api.ts"

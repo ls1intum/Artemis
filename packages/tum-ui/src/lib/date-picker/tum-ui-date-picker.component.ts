@@ -16,6 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { A11yModule } from '@angular/cdk/a11y';
+import { DOCUMENT } from '@angular/common';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import type { FormValueControl } from '@angular/forms/signals';
@@ -42,6 +43,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly document = inject(DOCUMENT);
 
     /**
      * Last committed date. Invalid text remains visible without updating it.
@@ -80,6 +82,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         return true;
     });
     protected readonly isOpen = signal(false);
+    protected readonly panelId = computed(() => `${this.inputId()}-dialog`);
     protected readonly activeMonth = signal(dayjs().startOf('month'));
     protected readonly timeText = signal('');
     protected readonly inputText = linkedSignal(() => this.valueKey());
@@ -215,6 +218,11 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         }
     }
 
+    protected openFromInput(event: Event): void {
+        event.preventDefault();
+        this.open();
+    }
+
     protected open(): void {
         if (this.isOpen() || this.disabled()) {
             return;
@@ -222,7 +230,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         const anchor = this.value() ?? dayjs();
         this.activeMonth.set(anchor.startOf('month'));
         this.timeText.set(this.value()?.format('HH:mm') ?? '');
-        this.restoreFocusElement = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+        const activeElement = this.document.activeElement;
+        this.restoreFocusElement = activeElement && typeof (activeElement as HTMLElement).focus === 'function' ? (activeElement as HTMLElement) : undefined;
         this.overlayRef = this.overlayService.createConnectedOverlay(this.triggerWrapper(), 'bottom', { hasBackdrop: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.overlayRef.backdropClick().subscribe(() => this.close());

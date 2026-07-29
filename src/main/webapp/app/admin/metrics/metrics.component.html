@@ -12,6 +12,7 @@
         >
         @if (nodeOptions().length > 1) {
             <tum-ui-select
+                [ariaLabel]="'metrics.filter' | artemisTranslate"
                 [(ngModel)]="selectedNodeId"
                 [options]="nodeOptions()"
                 optionLabel="label"

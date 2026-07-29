@@ -78,15 +78,19 @@ export const Disabled: Story = {
     },
 };
 
-export const KeyboardNavigation: Story = {
+export const KeyboardInteraction: Story = {
     play: async ({ args, canvas, userEvent }) => {
-        const day = canvas.getByRole('radio', { name: 'Day' });
-        const week = canvas.getByRole('radio', { name: 'Week' });
+        const day = canvas.getByRole('button', { name: 'Day' });
+        const week = canvas.getByRole('button', { name: 'Week' });
 
         await userEvent.tab();
         await expect(day).toHaveFocus();
-        await userEvent.keyboard('{ArrowRight}');
-        await expect(week).toBeChecked();
+        await expect(day).toHaveAttribute('aria-pressed', 'true');
+        await userEvent.tab();
+        await expect(week).toHaveFocus();
+        await userEvent.keyboard(' ');
+        await expect(day).toHaveAttribute('aria-pressed', 'false');
+        await expect(week).toHaveAttribute('aria-pressed', 'true');
         await expect(args.changed).toHaveBeenCalledWith('week');
     },
 };

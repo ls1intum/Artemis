@@ -9,8 +9,16 @@
         "url": "git+https://github.com/ls1intum/Artemis.git",
         "directory": "packages/tum-ui"
     },
+    "files": [
+        "fesm2022",
+        "types",
+        "styles.css",
+        "themes.css",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
-        "storybook": "node build-styles.mjs && pnpm run storybook:docs && concurrently --kill-others --names styles,storybook \"node build-styles.mjs --watch\" \"storybook dev --port 6006 --no-open\"",
+        "storybook": "node build-styles.mjs --development && pnpm run storybook:docs && concurrently --kill-others --names styles,storybook \"node build-styles.mjs --development --watch\" \"storybook dev --port 6006 --no-open\"",
         "storybook:build": "node build-styles.mjs && pnpm run storybook:docs && storybook build --output-dir ../../build/storybook/tum-ui",
         "storybook:docs": "compodoc -p tsconfig.lib.json -e json -d . --silent",
         "storybook:docs:test": "pnpm run storybook:build && pnpm run storybook:docs:test:built",
@@ -19,7 +27,8 @@
         "storybook:typecheck": "pnpm run storybook:docs && tsc --noEmit --project .storybook/tsconfig.json"
     },
     "exports": {
-        "./styles.css": "./styles.css"
+        "./styles.css": "./styles.css",
+        "./themes.css": "./themes.css"
     },
     "peerDependencies": {
         "@angular/cdk": "22.1.0",
@@ -57,6 +66,7 @@
         "@types/react": "catalog:",
         "@vitest/browser": "catalog:",
         "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-istanbul": "catalog:",
         "chokidar": "catalog:",
         "concurrently": "catalog:",
         "playwright": "catalog:",
@@ -70,6 +80,7 @@
         "vitest": "catalog:"
     },
     "sideEffects": [
-        "./styles.css"
+        "./styles.css",
+        "./themes.css"
     ]
 }

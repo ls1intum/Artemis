@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chokidar from 'chokidar';
@@ -8,27 +8,10 @@ import tailwindcss from '@tailwindcss/postcss';
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 const componentSourcePath = resolve(packageRoot, 'src');
 const sourcePath = resolve(packageRoot, 'tailwind.css');
-
-function parseOutputPaths(arguments_) {
-    const paths = [];
-    for (let index = 0; index < arguments_.length; index++) {
-        if (arguments_[index] !== '--output') {
-            continue;
-        }
-        const outputPath = arguments_[++index];
-        if (!outputPath || outputPath.startsWith('--')) {
-            throw new Error('--output requires a path');
-        }
-        paths.push(resolve(outputPath));
-    }
-    return paths;
-}
-
-const outputPaths = parseOutputPaths(process.argv);
-if (outputPaths.length === 0) {
-    outputPaths.push(resolve(packageRoot, '../../dist/tum-ui/styles.css'));
-}
+const outputPath = resolve(packageRoot, 'styles.css');
 const watching = process.argv.includes('--watch');
+const development = process.argv.includes('--development');
+const hmrStyleDelay = 1250;
 
 async function writeIfChanged(outputPath, contents) {
     try {
@@ -41,24 +24,21 @@ async function writeIfChanged(outputPath, contents) {
         }
     }
 
-    await mkdir(dirname(outputPath), { recursive: true });
-    await writeFile(outputPath, contents);
+    const temporaryPath = `${outputPath}.${process.pid}.tmp`;
+    try {
+        await writeFile(temporaryPath, contents);
+        await rename(temporaryPath, outputPath);
+    } finally {
+        await rm(temporaryPath, { force: true });
+    }
     console.log(`Built ${outputPath}`);
 }
 
 async function build() {
     const source = await readFile(sourcePath, 'utf8');
-    const result = await postcss([tailwindcss({ base: packageRoot, optimize: !watching })]).process(source, { from: sourcePath });
+    const result = await postcss([tailwindcss({ base: packageRoot, optimize: !development })]).process(source, { from: sourcePath });
     const stylesheet = postcss.parse(result.css);
 
-    // Keep component utilities above lower-specificity host resets loaded before the package stylesheet.
-    stylesheet.walkAtRules('layer', (layer) => {
-        if (layer.nodes) {
-            layer.replaceWith(...layer.nodes);
-        } else {
-            layer.remove();
-        }
-    });
     // Tailwind does not namespace its internal custom properties or keyframes when a class prefix is configured.
     stylesheet.walkDecls((declaration) => {
         declaration.prop = declaration.prop.replaceAll('--tw-', '--tum-tw-');
@@ -74,7 +54,7 @@ async function build() {
         }
     });
 
-    await Promise.all(outputPaths.map((outputPath) => writeIfChanged(outputPath, stylesheet.toString())));
+    await writeIfChanged(outputPath, stylesheet.toString());
 }
 
 await build();
@@ -103,7 +83,8 @@ if (watching) {
 
     function scheduleRebuild() {
         clearTimeout(rebuildTimer);
-        rebuildTimer = setTimeout(() => void rebuild(), 50);
+        // Separate component and generated-style changes so Angular can hot-update both without reloading the page.
+        rebuildTimer = setTimeout(() => void rebuild(), hmrStyleDelay);
     }
 
     chokidar

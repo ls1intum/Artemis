@@ -10,7 +10,7 @@
         "rootDir": ".",
         "paths": {
             "@angular/*": ["./node_modules/@angular/*"],
-            "@tumaet/ui-angular": ["./dist/tum-ui"],
+            "@tumaet/ui-angular": ["./packages/tum-ui/dist"],
             "app/*": ["./src/main/webapp/app/*"],
             "test/*": ["./src/test/javascript/spec/*"],
             "src/*": ["./src/*"]

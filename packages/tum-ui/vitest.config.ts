@@ -12,5 +12,17 @@ export default defineConfig({
         globals: true,
         include: ['src/**/*.spec.ts'],
         setupFiles: ['test-setup.ts'],
+        coverage: {
+            provider: 'istanbul',
+            include: ['src/lib/**/*.ts'],
+            exclude: ['src/**/*.spec.ts', 'src/**/*.stories.ts'],
+            reporter: ['text', 'json-summary'],
+            thresholds: {
+                lines: 90,
+                statements: 90,
+                functions: 90,
+                branches: 75,
+            },
+        },
     },
 });

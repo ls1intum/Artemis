@@ -124,8 +124,11 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Compile Artemis With TUM UI Source
+        run: pnpm run tum-ui:source:check
+        if: ${{ !cancelled() }}
       - name: Test TUM UI in Isolation
-        run: pnpm run tum-ui:test
+        run: pnpm run tum-ui:test:coverage
         if: ${{ !cancelled() }}
       - name: Type Check TUM UI Stories
         run: pnpm --dir packages/tum-ui run storybook:typecheck

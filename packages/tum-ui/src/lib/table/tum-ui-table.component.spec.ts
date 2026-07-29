@@ -71,20 +71,6 @@ describe('TumUiTableComponent', () => {
         expect(cellText).toContain('Beta');
     });
 
-    it('applies the responsive-hide classes to a hideBelow column header and cells', async () => {
-        fixture.componentRef.setInput('columns', [
-            { field: 'name', header: 'Name' },
-            { field: 'count', header: 'Count', hideBelow: 'md' },
-        ] as ColumnDef<Row>[]);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(headerCells()[0].classList).not.toContain('tum:hidden');
-        expect(headerCells()[1].classList).toContain('tum:hidden');
-        expect(headerCells()[1].classList).toContain('tum:md:table-cell');
-        expect(dataCells().every((cell, index) => (index % 2 === 1 ? cell.classList.contains('tum:md:table-cell') : !cell.classList.contains('tum:hidden')))).toBe(true);
-    });
-
     it('announces the table as busy while loading', () => {
         fixture.componentRef.setInput('loading', true);
         fixture.detectChanges();

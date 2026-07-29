@@ -116,11 +116,22 @@ describe('TumUiDatePickerComponent', () => {
         trigger.focus();
         trigger.click();
         fixture.detectChanges();
-        expect(document.querySelector('tum-ui-calendar')).not.toBeNull();
+        const dialog = document.querySelector('[role="dialog"]');
+        expect(dialog).not.toBeNull();
+        expect(dialog?.getAttribute('aria-modal')).toBe('true');
+        expect(input().getAttribute('role')).toBe('combobox');
+        expect(input().getAttribute('aria-expanded')).toBe('true');
+        expect(input().getAttribute('aria-controls')).toBe(dialog?.id);
         (document.querySelector('[role="dialog"] tum-ui-button button') as HTMLElement).click();
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
         expect(document.activeElement).toBe(trigger);
+    });
+
+    it('opens the calendar from the input with ArrowDown', () => {
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     });
 
     it('rejects trailing garbage on blur', () => {

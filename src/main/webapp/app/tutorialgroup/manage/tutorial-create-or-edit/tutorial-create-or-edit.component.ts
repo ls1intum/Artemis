@@ -178,10 +178,14 @@ export class TutorialCreateOrEditComponent {
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.header'),
             message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
-            acceptLabel: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
-            rejectLabel: this.translateService.instant('entity.action.cancel'),
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
+            acceptButtonProps: {
+                label: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
+                severity: 'danger',
+            },
+            rejectButtonProps: {
+                label: this.translateService.instant('entity.action.cancel'),
+                severity: 'secondary',
+            },
             accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupRequest }),
         });
     }

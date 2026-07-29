@@ -103,7 +103,7 @@
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
                             "src/main/webapp/tailwind.css",
-                            "src/main/webapp/generated/tum-ui.css",
+                            "@tumaet/ui-angular/styles.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",

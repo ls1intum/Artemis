@@ -6,6 +6,7 @@
         </div>
         <div class="flex items-center gap-2">
             <tum-ui-select
+                [ariaLabel]="'artemisApp.irisDashboard.title' | artemisTranslate"
                 [ngModel]="selectedTimeSpan()"
                 [options]="timeSpanOptions()"
                 optionLabel="label"

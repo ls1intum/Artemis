@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Component, signal } from '@angular/core';
+import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumUiTabsComponent } from './tum-ui-tabs.component';
 import { TumUiTabListComponent } from './tum-ui-tab-list.component';
@@ -43,9 +44,14 @@ describe('TumUiTabs family', () => {
     let fixture: ComponentFixture<TabsHostComponent>;
     let host: TabsHostComponent;
     let element: HTMLElement;
+    let directionality: { value: 'ltr' | 'rtl' };
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [TabsHostComponent] }).compileComponents();
+        directionality = { value: 'ltr' };
+        await TestBed.configureTestingModule({
+            imports: [TabsHostComponent],
+            providers: [{ provide: Directionality, useValue: directionality }],
+        }).compileComponents();
         fixture = TestBed.createComponent(TabsHostComponent);
         host = fixture.componentInstance;
         element = fixture.nativeElement as HTMLElement;
@@ -127,6 +133,14 @@ describe('TumUiTabs family', () => {
         tabs()[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
         fixture.detectChanges();
         expect(host.value()).toBe(1);
+    });
+
+    it('reverses horizontal arrow navigation in right-to-left layouts', () => {
+        directionality.value = 'rtl';
+        tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        fixture.detectChanges();
+        expect(host.value()).toBe(3);
+        expect(document.activeElement).toBe(tabs()[2]);
     });
 
     it('reflects an externally changed value (one-way [value] binding)', () => {

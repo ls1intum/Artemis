@@ -21,7 +21,7 @@ framework styles. For an Angular CLI application:
 
 ```json
 {
-    "styles": ["src/styles.scss", "node_modules/@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
 }
 ```
 
@@ -44,7 +44,19 @@ Every component must inherit valid values for the package's semantic custom prop
 
 The values describe the active theme and must change with it. Contrast tokens must remain readable
 on their matching background. The package deliberately exposes roles rather than a numbered color
-ramp, and it does not provide fallback values.
+ramp.
+
+Applications without an existing token system can load the optional reference themes before the
+component stylesheet:
+
+```json
+{
+    "styles": ["@tumaet/ui-angular/themes.css", "@tumaet/ui-angular/styles.css"]
+}
+```
+
+Set `data-theme="dark"` on the document element to activate the dark reference theme. Artemis maps
+the same contract to its own design tokens and therefore does not load this optional file.
 
 The stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and does not
 depend on the host's Tailwind build or source scanner. Theme changes flow through the semantic
@@ -68,62 +80,11 @@ bootstrapApplication(AppComponent, {
 signals keep translations and locale-sensitive formatting reactive. Register one translator
 adapter when the application starts.
 
-## Development
+## Contributing
 
-Run commands from the Artemis repository root:
-
-```bash
-pnpm run tum-ui:build
-pnpm run tum-ui:test
-pnpm run tum-ui:lint
-pnpm run tum-ui:stylelint
-pnpm run tum-ui:pack:check
-pnpm --dir packages/tum-ui run storybook
-pnpm --dir packages/tum-ui run storybook:typecheck
-pnpm --dir packages/tum-ui run storybook:test
-pnpm --dir packages/tum-ui run storybook:build
-pnpm --dir packages/tum-ui run storybook:docs:test
-```
-
-`pnpm start` builds the package and serves Artemis. During development, Artemis resolves the public
-entry point from package source so Angular HMR applies to application and package component
-templates and styles. Non-serve application builds and artifact validation continue to consume the
-compiled package. The style build writes byte-identical package and Artemis-watch outputs and skips
-unchanged writes so template-only changes remain component HMR updates.
-
-Add implementation and focused behavior tests under `src/lib`. Export supported contracts
-explicitly from `src/public-api.ts`. Package code must not import Artemis, PrimeNG, Bootstrap, or
-ng-bootstrap; ESLint enforces the boundary.
-
-Runtime and peer dependency versions are exact and synchronized with the workspace catalog.
-Tailwind and PostCSS are build-only development dependencies pinned through the same catalog.
-`rules/tum-ui-package.spec.mjs` rejects drift.
-
-Storybook configuration, stories, and their runtime and test toolchain dependencies belong to this
-package. Repository-wide lint tooling remains root-owned. Shared dependency versions use the
-workspace catalog.
-
-Story authoring rules:
-
-- Prefer serializable args so controls remain shareable. Disable or map controls for values such as
-  dates that cannot cross Storybook's URL boundary. Use `argsToTemplate` for one-way bindings and
-  bind Angular `model()` inputs explicitly with `[()]`.
-- Use the play context's `userEvent`. Query the story through `canvas` and use `screen` only for
-  content rendered in a portal.
-- In interaction stories, assert user-visible state and any public output that belongs to the
-  interaction contract. Do not add steps that only prove the test spy itself.
-- Keep responsive states pinned with Storybook viewport globals. Validate manager-controlled iframe
-  sizing in the built Storybook Playwright suite, not in a component-test play function.
-- Do not duplicate stories by theme. The Storybook browser suite already runs every story in both
-  package themes.
-
-Stories use stable CSF3 with `Meta`, `StoryObj`, and TypeScript's `satisfies` operator. The theme
-toolbar applies to component previews and AutoDocs; it does not retheme the manager UI. Compodoc
-supplies AutoDocs API metadata; JSDoc should explain only non-obvious public behavior or constraints,
-never repeat names, types, or defaults. Compodoc metadata is generated when Storybook starts; restart
-Storybook after changing public API documentation. The Storybook version stays exact through the
-workspace catalog. Upgrades require HMR verification, the package build, Chromium story tests, the
-static Storybook build, and the AutoDocs theme tests to pass.
+Contributors working in the Artemis repository should follow the
+[TUM UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit). It defines
+the ownership boundary, supported workflow, testing expectations, and Storybook conventions.
 
 ## License
 

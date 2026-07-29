@@ -38,6 +38,7 @@
             [id]="listboxId"
             role="listbox"
             [attr.aria-label]="ariaLabel()"
+            [attr.aria-multiselectable]="multiple() ? 'true' : null"
             class="tum:m-0 tum:flex tum:max-h-60 tum:list-none tum:flex-col tum:gap-0.5 tum:overflow-y-auto tum:p-1"
         >
             @for (option of suggestions(); track $index; let i = $index) {

@@ -1,4 +1,3 @@
-import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
 import { TumUiButtonDirective } from './tum-ui-button.directive';
@@ -27,7 +26,7 @@ const meta = {
     },
     render: (args) => ({
         props: args,
-        template: `<button tumUiButton ${argsToTemplate(args)}>Native button</button>`,
+        template: '<button tumUiButton [severity]="severity" [size]="size" [variant]="variant">Native button</button>',
     }),
 } satisfies Meta<TumUiButtonDirective>;
 
@@ -43,6 +42,6 @@ export const Link: Story = {
     },
     render: (args) => ({
         props: args,
-        template: `<a href="#button-directive" tumUiButton ${argsToTemplate(args)}>Course details</a>`,
+        template: '<a href="#button-directive" tumUiButton [severity]="severity" [size]="size" [variant]="variant">Course details</a>',
     }),
 };

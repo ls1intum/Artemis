@@ -31,10 +31,15 @@ describe('TumUiMessageComponent', () => {
         expect(host.getAttribute('data-severity')).toBe('info');
     });
 
+    it('announces informational messages without interrupting', () => {
+        expect(host.getAttribute('role')).toBe('status');
+    });
+
     it('reflects the severity state', () => {
         fixture.componentRef.setInput('severity', 'error');
         fixture.detectChanges();
         expect(host.getAttribute('data-severity')).toBe('error');
+        expect(host.getAttribute('role')).toBe('alert');
     });
 
     it('renders the text input', () => {

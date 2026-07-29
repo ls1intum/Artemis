@@ -93,6 +93,9 @@ catalogs:
     '@vitest/browser-playwright':
       specifier: 4.1.10
       version: 4.1.10
+    '@vitest/coverage-istanbul':
+      specifier: 4.1.10
+      version: 4.1.10
     chokidar:
       specifier: 5.0.0
       version: 5.0.0
@@ -295,6 +298,9 @@ importers:
       '@tumaet/apollon':
         specifier: 5.0.1
         version: 5.0.1(@types/react@19.2.17)(@xyflow/react@12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+      '@tumaet/ui-angular':
+        specifier: workspace:*
+        version: link:packages/tum-ui
       '@vscode/codicons':
         specifier: 0.0.45
         version: 0.0.45
@@ -444,7 +450,7 @@ importers:
         specifier: 8.65.0
         version: 8.65.0(eslint@10.8.0(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       '@vitest/coverage-istanbul':
-        specifier: 4.1.10
+        specifier: 'catalog:'
         version: 4.1.10(supports-color@10.2.2)(vitest@4.1.10)
       angular-eslint:
         specifier: 22.1.0
@@ -645,6 +651,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: 'catalog:'
         version: 4.1.10(playwright@1.62.0)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(less@4.6.7)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(vitest@4.1.10)
+      '@vitest/coverage-istanbul':
+        specifier: 'catalog:'
+        version: 4.1.10(supports-color@10.2.2)(vitest@4.1.10)
       chokidar:
         specifier: 'catalog:'
         version: 5.0.0

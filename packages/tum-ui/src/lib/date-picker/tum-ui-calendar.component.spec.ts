@@ -38,7 +38,10 @@ describe('TumUiCalendarComponent', () => {
     }
 
     it('renders 7 weekday headers and 42 day cells', () => {
-        expect(fixture.debugElement.queryAll(By.css('thead th')).length).toBe(7);
+        const headings = fixture.debugElement.queryAll(By.css('thead th'));
+        expect(headings).toHaveLength(7);
+        expect(headings.every((heading) => heading.attributes['aria-label'])).toBe(true);
+        expect(fixture.debugElement.query(By.css('[role="grid"]')).attributes['aria-label']).toContain('2026');
         expect(dayButtons().length).toBe(42);
     });
 

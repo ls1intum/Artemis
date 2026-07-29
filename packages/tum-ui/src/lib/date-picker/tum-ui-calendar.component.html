@@ -18,11 +18,11 @@
             <fa-icon [icon]="faChevronRight" />
         </button>
     </div>
-    <table role="grid" class="tum:w-full tum:border-collapse tum:text-center tum:text-sm">
+    <table role="grid" [attr.aria-label]="monthLabel()" class="tum:w-full tum:border-collapse tum:text-center tum:text-sm">
         <thead>
             <tr>
                 @for (label of weekdayLabels(); track $index) {
-                    <th scope="col" class="tum:p-1 tum:font-medium tum:text-tum-ui-muted">{{ label }}</th>
+                    <th scope="col" [attr.aria-label]="weekdayFullLabels()[$index]" class="tum:p-1 tum:font-medium tum:text-tum-ui-muted">{{ label }}</th>
                 }
             </tr>
         </thead>

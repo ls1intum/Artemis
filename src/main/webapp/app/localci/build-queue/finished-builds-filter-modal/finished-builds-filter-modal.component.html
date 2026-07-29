@@ -52,6 +52,7 @@
                 </div>
                 <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                     <tum-ui-autocomplete
+                        [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         styleClass="w-full"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"

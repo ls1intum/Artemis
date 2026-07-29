@@ -5,7 +5,8 @@ import addonThemes, { withThemeByDataAttribute } from '@storybook/addon-themes';
 import addonVitest from '@storybook/addon-vitest';
 import { definePreview } from '@storybook/angular-vite';
 
-import '../../../dist/tum-ui/styles.css';
+import '../styles.css';
+import '../themes.css';
 import documentationJson from '../documentation.json';
 import { ThemedDocsContainer } from './docs-container';
 import './theme.css';

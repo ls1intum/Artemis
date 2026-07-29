@@ -24,14 +24,19 @@
             #dateInput
             [id]="inputId()"
             type="text"
+            role="combobox"
             [value]="inputText()"
             [disabled]="disabled()"
             [placeholder]="'tumUi.datePicker.placeholder' | tumUiTranslate"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="isOpen()"
+            [attr.aria-controls]="isOpen() ? panelId() : null"
             [attr.aria-invalid]="showErrorBorder()"
             [attr.aria-label]="ariaLabel()"
             [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
             (input)="onInput(dateInput.value)"
             (blur)="onBlur(dateInput.value)"
+            (keydown.arrowdown)="openFromInput($event)"
             class="tum:w-full tum:rounded-md tum:border tum:bg-tum-ui-control-background tum:py-2 tum:pl-3 tum:pr-17 tum:text-tum-ui-text"
             [class]="showErrorBorder() ? 'tum:border-tum-ui-state-danger' : 'tum:border-tum-ui-control-border'"
         />
@@ -53,6 +58,7 @@
             [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
             aria-haspopup="dialog"
             [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+            [attr.aria-controls]="isOpen() ? panelId() : null"
         >
             <fa-icon [icon]="faCalendar" />
         </button>
@@ -67,13 +73,14 @@
 
 <ng-template #panel>
     <div
+        [id]="panelId()"
         class="tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:p-3 tum:shadow-lg"
         role="dialog"
+        aria-modal="true"
         [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
         cdkTrapFocus
-        [cdkTrapFocusAutoCapture]="true"
     >
-        <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+        <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" [focusOnInit]="true" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
         <div class="tum:mt-3 tum:flex tum:items-center tum:justify-center tum:gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate">
             <div class="tum:flex tum:flex-col tum:items-center">
                 <button

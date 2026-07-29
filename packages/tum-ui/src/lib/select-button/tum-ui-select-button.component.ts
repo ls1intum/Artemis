@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, computed, forwardRef, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, computed, forwardRef, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -22,7 +22,7 @@ interface NormalizedOption {
     styleUrl: './tum-ui-select-button.component.scss',
     imports: [NgTemplateOutlet],
     host: {
-        role: 'radiogroup',
+        role: 'group',
         class: 'tum-ui-select-button',
         '[attr.aria-disabled]': 'effectiveDisabled() || null',
     },
@@ -44,8 +44,6 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
 
     readonly changed = output<unknown>();
 
-    private readonly optionButtons = viewChildren<ElementRef<HTMLButtonElement>>('optionButton');
-
     private readonly value = signal<unknown>(undefined);
     private readonly cvaDisabled = signal(false);
     protected readonly effectiveDisabled = computed(() => this.disabled() || this.cvaDisabled());
@@ -62,11 +60,6 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
             const label = labelKey != undefined ? String((raw as Record<string, unknown>)[labelKey]) : String(raw);
             return { raw, value, label, selected: value === current };
         });
-    });
-
-    protected readonly focusableIndex = computed(() => {
-        const index = this.normalizedOptions().findIndex((option) => option.selected);
-        return index >= 0 ? index : 0;
     });
 
     protected optionClasses(selected: boolean): string {
@@ -94,41 +87,6 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
         this.onChange(next);
         this.onTouched();
         this.changed.emit(next);
-    }
-
-    protected onKeydown(event: KeyboardEvent, index: number): void {
-        if (this.effectiveDisabled()) {
-            return;
-        }
-        const options = this.normalizedOptions();
-        const count = options.length;
-        if (count === 0) {
-            return;
-        }
-        let target: number;
-        switch (event.key) {
-            case 'ArrowRight':
-            case 'ArrowDown':
-                target = (index + 1) % count;
-                break;
-            case 'ArrowLeft':
-            case 'ArrowUp':
-                target = (index - 1 + count) % count;
-                break;
-            case 'Home':
-                target = 0;
-                break;
-            case 'End':
-                target = count - 1;
-                break;
-            default:
-                return;
-        }
-        event.preventDefault();
-        if (target !== index) {
-            this.select(options[target]);
-        }
-        this.optionButtons()[target]?.nativeElement.focus();
     }
 
     writeValue(value: unknown): void {

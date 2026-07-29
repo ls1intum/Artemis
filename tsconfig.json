@@ -27,7 +27,7 @@
         "paths": {
             "app/*": ["./src/main/webapp/app/*"],
             "src/*": ["./src/*"],
-            "@tumaet/ui-angular": ["./dist/tum-ui"]
+            "@tumaet/ui-angular": ["./packages/tum-ui/dist"]
         },
         "importHelpers": true
     },

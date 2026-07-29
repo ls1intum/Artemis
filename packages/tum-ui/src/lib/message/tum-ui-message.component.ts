@@ -21,6 +21,7 @@ const MESSAGE_SEVERITY: Record<TumUiMessageSeverity, string> = {
     styleUrl: './tum-ui-message.component.scss',
     imports: [FaIconComponent],
     host: {
+        '[attr.role]': 'messageRole()',
         '[class]': 'hostClasses()',
         '[attr.data-severity]': 'severity()',
     },
@@ -34,6 +35,8 @@ export class TumUiMessageComponent {
     readonly icon = input<IconProp>();
 
     readonly styleClass = input<string>('');
+
+    protected readonly messageRole = computed(() => (this.severity() === 'error' ? 'alert' : 'status'));
 
     protected readonly hostClasses = computed(() => `${MESSAGE_BASE} ${MESSAGE_SEVERITY[this.severity()]} ${this.styleClass()}`.trim());
 }

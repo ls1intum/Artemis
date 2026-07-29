@@ -41,18 +41,11 @@ describe('TumUiSelectButtonComponent', () => {
         return Array.from(host.querySelectorAll('button'));
     }
 
-    function arrow(from: number, key: string): void {
-        buttons()[from].dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true, bubbles: true }));
-        fixture.detectChanges();
-    }
-
-    it('exposes the radiogroup / radio roles and renders one option per entry with its label', () => {
-        expect(host.getAttribute('role')).toBe('radiogroup');
+    it('exposes a toggle-button group and renders one option per entry with its label', () => {
+        expect(host.getAttribute('role')).toBe('group');
         const rendered = buttons();
         expect(rendered).toHaveLength(3);
-        expect(rendered.map((b) => b.getAttribute('role'))).toEqual(['radio', 'radio', 'radio']);
         expect(rendered.map((b) => b.textContent?.trim())).toEqual(['Day', 'Week', 'Month']);
-        expect(rendered.map((b) => b.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
     });
 
     it('selects on click, updates the CVA value, and emits', () => {
@@ -64,16 +57,15 @@ describe('TumUiSelectButtonComponent', () => {
         buttons()[1].click();
         fixture.detectChanges();
 
-        expect(buttons().map((b) => b.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+        expect(buttons().map((b) => b.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
         expect(changed).toHaveBeenCalledWith('WEEK');
         expect(onChange).toHaveBeenCalledWith('WEEK');
-        expect(buttons().map((b) => b.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
     });
 
     it('reflects the value written through the ControlValueAccessor', () => {
         component.writeValue('MONTH');
         fixture.detectChanges();
-        expect(buttons()[2].getAttribute('aria-checked')).toBe('true');
+        expect(buttons()[2].getAttribute('aria-pressed')).toBe('true');
     });
 
     it('clears the selection when the selected option is re-clicked (allowEmpty default true)', () => {
@@ -85,7 +77,7 @@ describe('TumUiSelectButtonComponent', () => {
         buttons()[1].click();
         fixture.detectChanges();
 
-        expect(buttons().every((b) => b.getAttribute('aria-checked') === 'false')).toBe(true);
+        expect(buttons().every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true);
         expect(changed).toHaveBeenCalledWith(undefined);
     });
 
@@ -97,24 +89,7 @@ describe('TumUiSelectButtonComponent', () => {
         buttons()[1].click();
         fixture.detectChanges();
 
-        expect(buttons()[1].getAttribute('aria-checked')).toBe('true');
-    });
-
-    it('roams and selects with the arrow keys', () => {
-        component.writeValue('DAY');
-        fixture.detectChanges();
-
-        arrow(0, 'ArrowRight');
-        expect(buttons()[1].getAttribute('aria-checked')).toBe('true');
-
-        arrow(1, 'ArrowRight');
-        expect(buttons()[2].getAttribute('aria-checked')).toBe('true');
-
-        arrow(2, 'ArrowRight');
-        expect(buttons()[0].getAttribute('aria-checked')).toBe('true');
-
-        arrow(0, 'ArrowLeft');
-        expect(buttons()[2].getAttribute('aria-checked')).toBe('true');
+        expect(buttons()[1].getAttribute('aria-pressed')).toBe('true');
     });
 
     it('disables every option and ignores clicks when disabled', () => {
@@ -128,7 +103,7 @@ describe('TumUiSelectButtonComponent', () => {
 
         buttons()[1].click();
         fixture.detectChanges();
-        expect(buttons().every((b) => b.getAttribute('aria-checked') === 'false')).toBe(true);
+        expect(buttons().every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true);
         expect(changed).not.toHaveBeenCalled();
     });
 });
@@ -175,7 +150,7 @@ describe('TumUiSelectButtonComponent (reactive forms)', () => {
         fixture.detectChanges();
         const rendered = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
 
-        expect(rendered[0].getAttribute('aria-checked')).toBe('true');
+        expect(rendered[0].getAttribute('aria-pressed')).toBe('true');
 
         rendered[1].click();
         fixture.detectChanges();

@@ -90,6 +90,9 @@ export default tseslint.config(
             'src/test/playwright/',
             'src/test/resources/',
             'src/test/vitest/',
+            'packages/tum-ui/coverage/',
+            'packages/tum-ui/dist/',
+            'packages/tum-ui/dist-pack/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
             'src/test/javascript/spec/stub.js',
@@ -545,6 +548,24 @@ export default tseslint.config(
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+        },
+    },
+    {
+        files: ['packages/tum-ui/src/lib/**/*.html'],
+        rules: {
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/label-has-associated-control': 'error',
+            '@angular-eslint/template/alt-text': 'error',
+            '@angular-eslint/template/elements-content': 'error',
+        },
+    },
+    {
+        // These composite widgets manage option focus through aria-activedescendant.
+        files: ['packages/tum-ui/src/lib/autocomplete/tum-ui-autocomplete.component.html', 'packages/tum-ui/src/lib/select/tum-ui-select.component.html'],
+        rules: {
+            '@angular-eslint/template/click-events-have-key-events': 'off',
+            '@angular-eslint/template/interactive-supports-focus': 'off',
         },
     },
     {

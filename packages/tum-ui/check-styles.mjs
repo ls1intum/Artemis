@@ -6,7 +6,7 @@ import postcss from 'postcss';
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 const packageDirectoryArgument = process.argv.indexOf('--package-dir');
-const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, '../../dist/tum-ui');
+const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, 'dist');
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
 const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
@@ -23,10 +23,13 @@ if (css.includes('--tw-')) {
     errors.push('an unnamespaced Tailwind custom property remains');
 }
 
-const forbiddenAtRules = new Set(['custom-variant', 'import', 'layer', 'source', 'theme']);
+const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
+    }
+    if (atRule.name === 'layer' && atRule.params !== 'properties') {
+        errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
     }
 });
 
@@ -107,8 +110,12 @@ const spinKeyframes = stylesheet.nodes.find((node) => node.type === 'atrule' && 
 if (!spinToken?.value.startsWith('tum-spin ') || !spinKeyframes) {
     errors.push('the namespaced spin animation contract is incomplete');
 }
-if (manifest.exports?.['./styles.css'] !== './styles.css' || JSON.stringify(manifest.sideEffects) !== '["./styles.css"]') {
-    errors.push('the built manifest does not expose the stylesheet contract');
+if (
+    manifest.exports?.['./styles.css'] !== './styles.css' ||
+    manifest.exports?.['./themes.css'] !== './themes.css' ||
+    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css"]'
+) {
+    errors.push('the built manifest does not expose the stylesheet and theme contracts');
 }
 if (manifest.peerDependencies?.tailwindcss) {
     errors.push('the built manifest exposes build-only Tailwind as a consumer peer');

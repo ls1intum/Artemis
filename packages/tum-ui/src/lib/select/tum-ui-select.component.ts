@@ -15,6 +15,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { DOCUMENT } from '@angular/common';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -46,6 +47,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly document = inject(DOCUMENT);
 
     readonly options = input<readonly unknown[]>([]);
 
@@ -242,7 +244,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
 
     protected setActive(index: number): void {
         this.activeIndex.set(index);
-        document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
+        this.document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
     }
 
     protected onTriggerKeydown(event: KeyboardEvent): void {
