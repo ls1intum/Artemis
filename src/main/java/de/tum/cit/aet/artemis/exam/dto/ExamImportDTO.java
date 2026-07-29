@@ -28,8 +28,8 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
         @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
         @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
-        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName, @NotNull Long courseId,
-        @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
+        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable String channelName,
+        @NotNull Long courseId, @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.
@@ -49,7 +49,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                exam.getExampleSolutionPublicationDate(), exam.getChannelName(), courseId, exerciseGroupDTOs);
+                exam.getExampleSolutionPublicationDate(), exam.getExamSummaryPublicationDate(), exam.getChannelName(), courseId, exerciseGroupDTOs);
     }
 
     /**
@@ -85,6 +85,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         exam.setModuleNumber(moduleNumber);
         exam.setCourseName(courseName);
         exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
         exam.setChannelName(channelName);
         exam.setCourse(course);
 

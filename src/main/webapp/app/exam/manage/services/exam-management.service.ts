@@ -561,6 +561,7 @@ export class ExamManagementService {
             moduleNumber: exam.moduleNumber,
             courseName: exam.courseName,
             exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
+            examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
             channelName: exam.channelName,
             courseId: courseId,
             exerciseGroups: exam.exerciseGroups?.map((group) => ({
@@ -599,6 +600,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {
             this.accountService.setAccessRightsForCourse(exam.course);
@@ -710,6 +712,7 @@ interface ExamImportDTO {
     moduleNumber?: string;
     courseName?: string;
     exampleSolutionPublicationDate?: string;
+    examSummaryPublicationDate?: string;
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
