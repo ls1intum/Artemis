@@ -104,15 +104,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
              AND result.rated = TRUE
              AND result.completionDate IS NOT NULL
              AND result.score IS NOT NULL
-             AND submission.submissionDate = (
-                 SELECT MIN(innerSubmission.submissionDate)
+             AND submission.submissionDate IS NOT NULL
+             AND NOT EXISTS (
+                 SELECT innerSubmission
                  FROM Submission innerSubmission
                  WHERE innerSubmission.participation = participation
+                 AND innerSubmission.submissionDate < submission.submissionDate
                  )
-                 AND result.completionDate = (
-                 SELECT MAX(innerResult.completionDate)
+                 AND NOT EXISTS (
+                 SELECT innerResult
                  FROM Result innerResult
                  WHERE innerResult.submission = submission
+                 AND innerResult.completionDate > result.completionDate
                  )
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
@@ -140,8 +143,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -168,8 +172,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -187,8 +192,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate < s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
 
@@ -215,8 +221,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
@@ -243,8 +250,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
@@ -272,8 +280,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentId(@Param("examId") long examId, @Param("studentId") long studentId);
 
@@ -287,7 +296,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE ex.exerciseGroup.exam.id = :examId
                 AND p.testRun = TRUE
                 AND p.student.id = :studentId
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
                 AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentIdForTestRun(@Param("examId") long examId, @Param("studentId") long studentId);
@@ -306,8 +316,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (SELECT s2 FROM Submission s2 WHERE s2.participation = p AND s2.submissionDate > s.submissionDate)
+                AND NOT EXISTS (SELECT r2 FROM Result r2 WHERE r2.submission = s AND r2.completionDate > r.completionDate)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 
@@ -412,19 +423,30 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResult(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
+    /**
+     * Get all participations of an exercise with their submissions, the results of those submissions and the participant.
+     * <p>
+     * Deliberately does <em>not</em> fetch {@code r.feedbacks}: callers select a single relevant result per participation and would discard the feedbacks of every other result.
+     * Fetch-joining three collections ({@code submissions}, {@code results}, {@code feedbacks}) multiplies the row count by the feedback fan-out (~18x in production) for rows
+     * that are thrown away. Hydrate the selected results afterwards via {@code ResultRepository#findResultsWithFeedbacksTestCaseAndAssessorByIdIn}.
+     * <p>
+     * {@code student} and {@code team} are fetched explicitly because they are {@code @ManyToOne} (i.e. eager) and would otherwise cost one extra select per participation.
+     *
+     * @param exerciseId the id of the exercise
+     * @param testRun    whether to return test run participations
+     * @return the participations with eagerly loaded submissions, results and participant
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.assessor
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = :testRun
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT DISTINCT p
