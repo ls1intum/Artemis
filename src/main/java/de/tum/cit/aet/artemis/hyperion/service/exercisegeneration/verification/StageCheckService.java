@@ -49,15 +49,6 @@ public class StageCheckService {
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
 
-    /** Below this many rules a single seam is credible; at or above it, one seam means the plan was never decomposed. */
-    private static final int MIN_RULES_REQUIRING_SEVERAL_SEAMS = 4;
-
-    /**
-     * Rule rows in the shapes generated specifications use: a markdown table row, a numbered list item (with or without an explicit R-id), a bulleted item, or a bare {@code R1:}
-     * line. Undercounting is the safe direction, because it only makes the decomposition check inert and can never cause a false rejection.
-     */
-    private static final Pattern SPEC_RULE_ROW = Pattern.compile("^(?:\\|\\s*\\**R?\\d+\\**\\s*\\||\\d+\\.\\s+|[-*]\\s+|R\\d+\\s*[:.])", Pattern.MULTILINE);
-
     private final DifferentialVerificationService verifier;
 
     private final ApprovedSpecRegistry approvedSpecs;
@@ -290,15 +281,6 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
         }
-        // A single seam covering many rules grades them as one indivisible unit, and such a suite discriminates far fewer contract-breaking implementations. The floor is
-        // deliberately low, letting a genuinely single-seam exercise of up to three rules through: the aim is to catch collapse, not to impose an unnecessary decomposition.
-        int ruleCount = specRuleCount(spec);
-        if (seamIds.size() == 1 && ruleCount >= MIN_RULES_REQUIRING_SEVERAL_SEAMS) {
-            return StageCheckResult.failed("The '## Rules' section states " + ruleCount + " rules but the '## Testing Strategy' declares a single seam, so every rule is graded "
-                    + "as one indivisible unit of student work. Split it into the independently actionable units a student really implements — one seam per behaviour a student "
-                    + "could get right or wrong on its own — and give each its own row, owner type, observable responsibility, and weight. Merge only rules that genuinely "
-                    + "cannot be completed separately.");
-        }
         List<String> malformedOwners = testingRows.stream().filter(row -> !isEnforceableTypeName(row.ownerType())).map(TestingStrategyRow::seamId).toList();
         if (!malformedOwners.isEmpty()) {
             return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
@@ -412,8 +394,11 @@ public class StageCheckService {
     /**
      * Canonicalizes punctuation only for a Design table's closed-set status cell: a Unicode dash typeset for an ASCII hyphen would otherwise make {@code student‑creates} an
      * unrelated value and silently disarm the ownership gate. The vocabulary stays closed, so prose or extended tokens still fail the specification gate.
+     *
+     * @param cell raw Design-table status cell
+     * @return canonical status token, or the normalized unrecognized value for fail-closed validation
      */
-    private static String normalizeTemplateStatus(String cell) {
+    public static String normalizeTemplateStatus(String cell) {
         String normalized = cell.replace("`", "").strip().toLowerCase(Locale.ROOT).replaceAll("[\u2010-\u2015\u2212]", "-");
         for (String emphasis : List.of("**", "__", "*", "_")) {
             if (normalized.startsWith(emphasis) && normalized.endsWith(emphasis) && normalized.length() > emphasis.length() * 2) {
@@ -680,6 +665,10 @@ public class StageCheckService {
         if (statement.isBlank()) {
             return StageCheckResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
         }
+        if (ProblemStatementBindingChecker.hasTaskBindingInsideMarkdownCode(statement)) {
+            return StageCheckResult.failed("A [task][Title](testName) marker is hidden inside Markdown code, so Artemis renders it as code instead of a task checklist item. "
+                    + "Remove the surrounding inline backticks or fenced code block and put each task marker on its own plain Markdown line.");
+        }
         List<String> proseLeaks = ProblemStatementBindingChecker.proseHygieneLeaks(statement);
         if (!proseLeaks.isEmpty()) {
             return StageCheckResult.failed("The student-facing statement contains internal authoring or grading vocabulary: " + proseLeaks
@@ -781,11 +770,6 @@ public class StageCheckService {
                     + ". Follow each task with concise imperative prose naming the types or members the student must implement; a checkbox alone is not an exercise instruction.");
         }
         return StageCheckResult.passed("");
-    }
-
-    private static int specRuleCount(String spec) {
-        String section = sectionBody(spec, "## Rules");
-        return section.isBlank() ? 0 : (int) SPEC_RULE_ROW.matcher(section).results().count();
     }
 
     /**

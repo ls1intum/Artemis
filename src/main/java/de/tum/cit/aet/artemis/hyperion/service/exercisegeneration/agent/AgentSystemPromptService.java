@@ -138,6 +138,8 @@ public class AgentSystemPromptService {
             underspecified behavior into a coherent, executable exercise. Record where every consequential choice came from; do not silently promote a convenient implementation
             detail into a student requirement. Put only observable, gradeable behavior in Rules. When the brief explicitly asks for a technique that black-box behavior cannot
             prove, preserve it as a pedagogical objective in the Decision Ledger rather than inventing brittle source-inspection grading.
+            Make every public input domain exhaustive. In particular, a floating-point type admits non-finite values unless an explicit precondition narrows it; either define
+            their observable behavior or state and consistently enforce a finite/range precondition. Do not invent edge-case behavior merely to fill a gap.
 
             """;
 
@@ -199,13 +201,11 @@ public class AgentSystemPromptService {
 
     private static final String ARTEMIS_TASK_BINDINGS = """
             ARTEMIS TASK BINDINGS
-            Use one line per independently actionable student implementation seam:
+            Use one line per student implementation seam:
               [task][Short human title](exactTestNameA,exactTestNameB)
-            Copy test names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Group ALL of a seam's test partitions under its one line; never
-            bind one task per test, and never one task for the whole exercise unless it is genuinely one seam. Bind every VISIBLE test exactly once; never bind a test the
-            grading plan marks AFTER_DUE_DATE — its task could never turn green before the deadline. Do not bind build gates,
-            aggregates, harness checks, or structural checks already satisfied by the template. Titles describe behaviour without exposing raw test names. The exact lowercase `[task]`
-            keyword is required.
+            Copy names verbatim from `verify`; never guess, rename, add parentheses, or remove prefixes. Put ALL visible partitions for one seam on its one task line, and bind
+            each visible test exactly once. Never bind AFTER_DUE_DATE tests, build gates, aggregates, harness checks, or structural checks already satisfied by the template.
+            Titles describe behaviour, not raw test names. Use exact lowercase `[task]`. Task markers must be plain Markdown lines: never wrap them in backticks or fenced code.
 
             """;
 

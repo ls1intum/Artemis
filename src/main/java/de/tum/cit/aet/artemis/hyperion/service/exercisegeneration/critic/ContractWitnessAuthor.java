@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -70,8 +71,8 @@ class ContractWitnessAuthor {
      * @param cancelled             cooperative cancellation signal
      * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty whenever the pass is unavailable, cancelled, or does not parse
      */
-    List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
-            BooleanSupplier cancelled) {
+    List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, Map<String, String> templateStatuses,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         requireReviewTextSafe("contract-witness/specification", specificationContract);
         requireReviewTextSafe("contract-witness/tests", testSources);
         // The reference solution goes to the provider like every other artifact, so it passes the same secret-material policy; an adapted exercise can carry a hard-coded key.
@@ -79,8 +80,9 @@ class ContractWitnessAuthor {
         if (cancelled.getAsBoolean() || !reviewer.configured() || specificationContract.isBlank() || testSources.isBlank()) {
             return List.of();
         }
-        String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + specificationContract.strip() + "\n\nREFERENCE SOLUTION (fixes the exact API a "
-                + "witness may call):\n" + boundedEvidence(solutionSources) + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
+        String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + specificationContract.strip() + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + renderTemplateOwnership(templateStatuses) + "\n\nREFERENCE SOLUTION (fixes the exact API a witness may call):\n" + boundedEvidence(solutionSources)
+                + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
         try {
             String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
             return parseContractWitnesses(response, specificationContract);
@@ -90,6 +92,25 @@ class ContractWitnessAuthor {
             log.warn("Contract-witness authoring failed: {}", e.getMessage());
             return List.of();
         }
+    }
+
+    static String renderTemplateOwnership(Map<String, String> statuses) {
+        if (statuses.isEmpty()) {
+            return "No Design ownership table was parsed. Infer no starter availability; follow the graded tests' compilation style and rely on environment validation.";
+        }
+        StringBuilder rendered = new StringBuilder();
+        statuses.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            rendered.append("- ").append(entry.getKey()).append(": ").append(entry.getValue());
+            if ("student-creates".equals(entry.getValue())) {
+                rendered.append(" — ABSENT from the starter. Never name this type in a declaration, constructor call, class literal, cast, or generic signature; use the shown "
+                        + "reflection/dynamic-proxy idiom so the starter compiles and the witness executes.");
+            }
+            else {
+                rendered.append(" — present in the starter and may be named directly.");
+            }
+            rendered.append('\n');
+        });
+        return rendered.toString().stripTrailing();
     }
 
     private static String boundedEvidence(String text) {

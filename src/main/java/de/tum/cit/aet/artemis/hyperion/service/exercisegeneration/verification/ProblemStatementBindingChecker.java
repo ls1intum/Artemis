@@ -177,6 +177,17 @@ final class ProblemStatementBindingChecker {
         return TASK_BINDING.matcher(withoutMarkdownCode(problemStatement)).find();
     }
 
+    /** Artemis masks Markdown code before expanding task bindings, so a syntactically correct marker inside code is still inert student-facing text. */
+    static boolean hasTaskBindingInsideMarkdownCode(String problemStatement) {
+        Matcher code = MARKDOWN_CODE.matcher(problemStatement);
+        while (code.find()) {
+            if (TASK_BINDING.matcher(code.group()).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** In encounter order, preserving duplicates so the duplicate-binding gate can see them. */
     static List<String> boundTestNames(String problemStatement) {
         List<String> names = new ArrayList<>();
@@ -221,6 +232,8 @@ final class ProblemStatementBindingChecker {
             return List.of("these visible tests have no seam in test-plan.json: " + missingSeams + ". Assign each one the stable S1/S2/... ID from SPEC.md.");
         }
 
+        Map<String, List<String>> visibleTestsBySeam = visible.stream().collect(
+                Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new, Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toUnmodifiableList())));
         Map<String, String> seamByTest = visible.stream()
                 .collect(Collectors.toMap(entry -> normalizeTestName(entry.name()), GeneratedTestPlan.Entry::seam, (first, ignored) -> first, LinkedHashMap::new));
         Set<String> boundNames = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName)
@@ -232,7 +245,8 @@ final class ProblemStatementBindingChecker {
             Set<String> seams = groups.get(index).stream().map(ProblemStatementBindingChecker::normalizeTestName).map(seamByTest::get).filter(Objects::nonNull)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             if (seams.size() > 1) {
-                reasons.add("task " + (index + 1) + " mixes tests from unrelated seams " + seams + "; use one task per seam.");
+                reasons.add("task " + (index + 1) + " mixes tests from unrelated seams " + seams + "; use one task per seam. Expected visible groups: "
+                        + expectedGroups(seams, visibleTestsBySeam) + ".");
             }
             for (String seam : seams) {
                 taskGroupsBySeam.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(index);
@@ -240,21 +254,26 @@ final class ProblemStatementBindingChecker {
         }
         for (String seam : visible.stream().map(GeneratedTestPlan.Entry::seam).distinct().toList()) {
             Set<Integer> taskGroups = taskGroupsBySeam.getOrDefault(seam, Set.of());
+            List<String> expectedTests = visibleTestsBySeam.getOrDefault(seam, List.of());
             if (taskGroups.isEmpty()) {
-                reasons.add("seam " + seam + " has visible tests but no [task] group; add one task binding all of that seam's visible tests.");
+                reasons.add("seam " + seam + " has visible tests but no [task] group; add one task binding exactly " + expectedTests + ".");
             }
             else if (taskGroups.size() > 1) {
-                reasons.add("seam " + seam + " is split across " + taskGroups.size() + " [task] lines; merge its test partitions into one student task.");
+                reasons.add("seam " + seam + " is split across " + taskGroups.size() + " [task] lines; merge them into one student task binding exactly " + expectedTests + ".");
             }
             else {
                 List<String> omittedTests = visible.stream().filter(entry -> seam.equals(entry.seam())).filter(entry -> !boundNames.contains(normalizeTestName(entry.name())))
                         .map(GeneratedTestPlan.Entry::name).toList();
                 if (!omittedTests.isEmpty()) {
-                    reasons.add("seam " + seam + "'s [task] group omits visible tests " + omittedTests + "; bind every visible test for the seam on that one task line.");
+                    reasons.add("seam " + seam + "'s [task] group omits visible tests " + omittedTests + "; its one task must bind exactly " + expectedTests + ".");
                 }
             }
         }
         return List.copyOf(reasons);
+    }
+
+    private static String expectedGroups(Set<String> seams, Map<String, List<String>> visibleTestsBySeam) {
+        return seams.stream().map(seam -> seam + "=" + visibleTestsBySeam.getOrDefault(seam, List.of())).collect(Collectors.joining(", "));
     }
 
     /** See {@link #TASK_LIKE_BINDING}. */

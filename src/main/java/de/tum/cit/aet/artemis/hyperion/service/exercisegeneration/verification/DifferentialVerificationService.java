@@ -462,7 +462,13 @@ public class DifferentialVerificationService {
 
         String problemStatement = producedProblemStatement != null ? producedProblemStatement : readProblemStatement(sandbox, sessionId);
         boolean problemStatementHasTasks = ProblemStatementBindingChecker.hasTaskBindings(problemStatement);
-        if (!problemStatementHasTasks) {
+        boolean taskBindingHiddenInMarkdownCode = ProblemStatementBindingChecker.hasTaskBindingInsideMarkdownCode(problemStatement);
+        if (taskBindingHiddenInMarkdownCode) {
+            statementReasons
+                    .add("A [task][Title](testName) marker is hidden inside Markdown code, so Artemis renders it as code instead of a task checklist item. Remove the surrounding "
+                            + "inline backticks or fenced code block and put each task marker on its own plain Markdown line.");
+        }
+        else if (!problemStatementHasTasks) {
             statementReasons
                     .add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
                             + "appear as a checklist for students.");
@@ -543,9 +549,9 @@ public class DifferentialVerificationService {
         }
 
         boolean testArtifactGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && solutionScaClean;
-        boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve && noDuplicateTaskBindings
-                && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives && headingsUnique
-                && statementHonoursDiagramPromise && noHiddenTestsExposed;
+        boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve
+                && noDuplicateTaskBindings && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives
+                && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         List<String> actionableReasons = new ArrayList<>(reasons);
@@ -865,15 +871,34 @@ public class DifferentialVerificationService {
      */
     public List<SemanticMutant> validateSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
             Map<String, String> producedSolutionFiles, List<SemanticMutant> candidates, Runnable restoreCandidate) {
+        return evaluateSemanticMutants(sandbox, sessionId, exercise, producedTestsFiles, producedSolutionFiles, candidates, restoreCandidate).stream()
+                .filter(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
+    }
+
+    /**
+     * Executes semantic-mutant proposals and preserves whether the existing suite killed them or execution was inconclusive, so orchestration can reconcile textual review
+     * hypotheses with stronger environment evidence.
+     *
+     * @param sandbox               active generation sandbox
+     * @param sessionId             active sandbox session
+     * @param exercise              exercise whose build recipe is used
+     * @param producedTestsFiles    mechanically verified graded tests
+     * @param producedSolutionFiles pristine reference-solution sources
+     * @param candidates            independently authored mutant proposals
+     * @param restoreCandidate      restores the verified candidate between probes
+     * @return one evidence disposition per examined proposal
+     */
+    public List<SemanticMutantOutcome> evaluateSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
+            Map<String, String> producedSolutionFiles, List<SemanticMutant> candidates, Runnable restoreCandidate) {
         if (candidates.isEmpty() || producedTestsFiles.isEmpty() || producedSolutionFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return List.of();
         }
         try {
-            List<SemanticMutant> validated = SemanticMutantExecution.validate(producedTestsFiles, producedSolutionFiles, candidates,
+            List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.evaluate(producedTestsFiles, producedSolutionFiles, candidates,
                     (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
-            log.info("Semantic-mutant probe for exercise {}: {} of {} proposals were proven to survive the graded suite and die on their counterexample", exercise.getId(),
-                    validated.size(), Math.min(candidates.size(), 2));
-            return validated;
+            Map<SemanticMutantOutcome.Disposition, Long> counts = outcomes.stream().collect(Collectors.groupingBy(SemanticMutantOutcome::disposition, Collectors.counting()));
+            log.info("Semantic-mutant probe for exercise {}: {} proposal outcomes {}", exercise.getId(), outcomes.size(), counts);
+            return outcomes;
         }
         catch (VerificationInfrastructureException exception) {
             throw exception;

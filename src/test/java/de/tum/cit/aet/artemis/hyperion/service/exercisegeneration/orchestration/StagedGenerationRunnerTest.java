@@ -435,12 +435,39 @@ class StagedGenerationRunnerTest {
                 completed(1, "statement"));
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
 
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive", "instructor review");
         assertThat(approvedSpecs.approved("s")).isPresent();
         verify(baseTools).enterStage(GenerationStage.TESTS);
         verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void failedBestSpecificationRestoreKeepsUncertaintyAttachedToTheDraftActuallyApproved() {
+        String measuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- measured -->\n";
+        String unmeasuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- unmeasured -->\n";
+        sandbox.specMarkdown = measuredDraft;
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of("measured concern")),
+                new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == 2) {
+                sandbox.specMarkdown = unmeasuredDraft;
+            }
+            return completed(1, "done");
+        });
+        when(baseTools.writeFile("SPEC.md", measuredDraft)).thenReturn("ERROR: workspace unavailable");
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(unmeasuredDraft);
+        assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive").doesNotContain("measured concern");
     }
 
     @Test

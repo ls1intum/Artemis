@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -699,7 +701,10 @@ class GenerationAttemptLoop {
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
             List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled);
-            List<SemanticMutant> validatedMutants = verifier.validateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates, restoreCandidate);
+            List<SemanticMutantOutcome> mutantOutcomes = verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates,
+                    restoreCandidate);
+            List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
+                    .map(SemanticMutantOutcome::mutant).toList();
             semanticMutantsAwaitingKill = validatedMutants;
 
             List<ContractWitness> candidates = specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles),
@@ -707,12 +712,12 @@ class GenerationAttemptLoop {
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
             List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate).stream()
                     .filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
-            emit("Executable semantic probes: " + mutantCandidates.size() + " mutant proposal(s), " + validatedMutants.size() + " environment-proven survivor(s); "
-                    + candidates.size() + " contract-witness proposal(s), " + validated.size() + " validated witness(es).");
-            if (validated.isEmpty() && validatedMutants.isEmpty()) {
-                return report;
-            }
-            List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+            long killedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
+            long inconclusiveMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
+            emit("Executable semantic probes: " + mutantCandidates.size() + " mutant proposal(s): " + validatedMutants.size() + " survived, " + killedMutants
+                    + " killed by existing tests, " + inconclusiveMutants + " inconclusive; " + candidates.size() + " contract-witness proposal(s), " + validated.size()
+                    + " validated witness(es).");
+            List<SpecFidelityReport.Finding> combined = new ArrayList<>(SemanticEvidenceReconciler.reconcile(report, mutantOutcomes));
             validatedMutants.forEach(mutant -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                     "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                     "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "

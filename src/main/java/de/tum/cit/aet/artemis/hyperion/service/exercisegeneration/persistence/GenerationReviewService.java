@@ -103,7 +103,8 @@ public class GenerationReviewService {
                 case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
                 case CONTRACT_CONTRADICTION -> "Generated artifacts contradict the student-facing contract: \"" + finding.requirement() + "\"";
                 case HIDDEN_GRADED_REQUIREMENT -> "Graded requirement is not discoverable by students: \"" + finding.requirement() + "\"";
-                case WEAK_TEST_ORACLE -> "Generated tests allow a plausible incorrect implementation: \"" + finding.requirement() + "\"";
+                case WEAK_TEST_ORACLE ->
+                    "An independent text review suspects the generated tests may allow an incorrect implementation (not execution-proven): \"" + finding.requirement() + "\"";
                 case EXECUTABLE_WEAK_TEST_ORACLE -> "Execution proved that the generated tests allow an incorrect implementation: \"" + finding.requirement() + "\"";
                 case TEMPLATE_QUALITY_GAP -> "Student task and starter scaffold need alignment: \"" + finding.requirement() + "\"";
                 case UNENFORCEABLE_TECHNIQUE_RULE -> "Students can pass without using the technique the exercise teaches: " + finding.requirement();

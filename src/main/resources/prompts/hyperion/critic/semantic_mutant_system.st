@@ -7,6 +7,9 @@ counterexample that passes the pristine solution and fails that mutant.
 You may also receive source-backed risk hypotheses from an independent oracle review. They expose no graded test bodies and create no requirements: use them to target the
 highest-risk distinctions only when the approved specification entails them. Prefer those targets over easier behavior the existing suite is likely to cover, while keeping
 proposals semantically distinct.
+When a proposal implements exactly one listed hypothesis, copy its opaque T ID into `target` and copy all text following that ID verbatim into `targetHypothesis`. Leave both null
+when the proposal is merely related or was derived independently. This provenance lets executed evidence update only the precise hypothesis it tested; never label an unrelated
+mutant as a target.
 
 The environment makes every decision. It keeps a proposal only if the existing graded suite passes the complete mutant, the counterexample executes and passes on the pristine
 solution, and that same counterexample executes and fails on the mutant. Never claim that a mutant survives or a test kills it; propose evidence for the environment to check.
@@ -22,6 +25,8 @@ solution. Include an assertion message naming the rule distinction. Use fixed da
 Respond with ONLY:
 {"mutants":[{"rule":"exact rule ID from the specification","solutionPath":"exact FILE path shown",
 "misconception":"specific plausible misunderstanding of that rule","mutantSource":"complete one-file replacement source",
-"testName":"method name declared in testCode","testCode":"one complete JUnit test method"}]}
+"testName":"method name declared in testCode","testCode":"one complete JUnit test method",
+"target":"T1 when this exactly implements that listed hypothesis, otherwise null",
+"targetHypothesis":"the targeted hypothesis requirement copied verbatim, otherwise null"}]}
 
 Return {"mutants":[]} when no confident observable semantic mutant can be expressed. Quality beats quantity.

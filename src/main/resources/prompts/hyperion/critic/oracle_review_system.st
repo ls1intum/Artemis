@@ -43,6 +43,9 @@ student-facing API: discard mutants that require reflection, private-state mutat
 Do not report mathematically redundant transformations or states that the declared types make impossible as coverage gaps; they cannot distinguish a wrong student
 implementation from a correct one.
 
+Your verdict is static review, not execution evidence. Phrase weak-oracle reasons as a hypothesis that a specific implementation *may* or *appears to* pass the shown
+assertions. Never claim that it definitively survives, passes, or is accepted; a separate environment pass makes that determination.
+
 Include applicable mutantChecks even when they pass; whenever executable student behavior exists, return at least one. Any false check is itself a blocker and need not be
 repeated in a finding array. Do not assess examples, API wording, starter ergonomics, presentation, or adaptation scope in this pass.
 

@@ -41,6 +41,13 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
+    void taskBindingInsideMarkdownCode_distinguishesInertMarkersFromPlainTaskLines() {
+        assertThat(ProblemStatementBindingChecker.hasTaskBindingInsideMarkdownCode("`[task][Sort an array](testSorts)`\n")).isTrue();
+        assertThat(ProblemStatementBindingChecker.hasTaskBindingInsideMarkdownCode("```markdown\n[task][Sort an array](testSorts)\n```\n")).isTrue();
+        assertThat(ProblemStatementBindingChecker.hasTaskBindingInsideMarkdownCode("[task][Sort an array](testSorts)\n")).isFalse();
+    }
+
+    @Test
     void hasTaskBindings_falseForABareTaskMarkerThatIsNotABinding() {
         assertThat(ProblemStatementBindingChecker.hasTaskBindings("## [tasks]\nImplement the sort method.\n")).isFalse();
     }
@@ -83,7 +90,8 @@ class ProblemStatementBindingCheckerTest {
                 """);
 
         assertThat(ProblemStatementBindingChecker.seamTaskGroupingReasons("[task][Typical](testTypical)\n[task][Boundary and delegation](testBoundary,testDelegates)\n", plan))
-                .anySatisfy(reason -> assertThat(reason).contains("S1", "split")).anySatisfy(reason -> assertThat(reason).contains("mixes", "S1", "S2"));
+                .anySatisfy(reason -> assertThat(reason).contains("S1", "split", "testTypical", "testBoundary"))
+                .anySatisfy(reason -> assertThat(reason).contains("mixes", "S1=[testTypical, testBoundary]", "S2=[testDelegates]"));
     }
 
     @Test
@@ -104,7 +112,7 @@ class ProblemStatementBindingCheckerTest {
                 """);
 
         assertThat(ProblemStatementBindingChecker.seamTaskGroupingReasons("[task][Compute values](testTypical)\n", plan)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("S1", "omits visible tests", "testBoundary"));
+                .satisfies(reason -> assertThat(reason).contains("S1", "omits visible tests", "testBoundary", "exactly [testTypical, testBoundary]"));
     }
 
     @Test

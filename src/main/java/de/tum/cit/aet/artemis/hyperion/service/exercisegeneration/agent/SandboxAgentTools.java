@@ -249,8 +249,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     @Tool(name = "search", description = AgentToolDescriptions.SEARCH)
     public String search(@ToolParam(description = AgentToolDescriptions.SEARCH_PATH) String path, @ToolParam(description = AgentToolDescriptions.SEARCH_QUERY) String query) {
-        String safe = workspaceRelativePath(path);
-        if (safe == null) {
+        boolean searchWorkspaceRoot = path == null || path.isBlank();
+        String safe = searchWorkspaceRoot ? "" : workspaceRelativePath(path);
+        if (!searchWorkspaceRoot && safe == null) {
             return invalidPathError(path);
         }
         if (query == null || query.isBlank() || query.contains("\n") || query.contains("\r")) {
@@ -260,13 +261,15 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
+        String target = searchWorkspaceRoot ? WORKSPACE : WORKSPACE + "/" + safe;
+        String label = searchWorkspaceRoot ? "the workspace root" : safe;
         SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "grep", "-RInFH", "--exclude-dir=.git", "--exclude-dir=target",
-                "--exclude-dir=build", "--exclude-dir=node_modules", "--", query, WORKSPACE + "/" + safe);
+                "--exclude-dir=build", "--exclude-dir=node_modules", "--", query, target);
         if (result.exitCode() == 1 && result.stdout().isBlank()) {
-            return "No matches in " + safe + ".";
+            return "No matches in " + label + ".";
         }
         if (!result.isSuccess()) {
-            return screenObservation(safe, "ERROR: could not search '" + safe + "': " + result.combinedOutput());
+            return screenObservation(safe, "ERROR: could not search '" + label + "': " + result.combinedOutput());
         }
         StringBuilder safeMatches = new StringBuilder();
         for (String line : result.stdout().replace(WORKSPACE + "/", "").lines().toList()) {
@@ -280,7 +283,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             safeMatches.append(line);
         }
         if (safeMatches.isEmpty()) {
-            return "No safe matches in " + safe + ".";
+            return "No safe matches in " + label + ".";
         }
         String output = safeMatches.toString();
         String screened = screenObservation(safe, output);

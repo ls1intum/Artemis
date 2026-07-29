@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -59,11 +60,30 @@ class SemanticMutantExecutionTest {
 
     @Test
     void rejectsAMutantTheExistingSuiteAlreadyKills() {
-        InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of("existing")));
+        InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of("existing")), reports(List.of("existing", "globalChoice"), List.of()),
+                reports(List.of("existing", "globalChoice"), List.of("existing", "globalChoice")));
         AtomicInteger restores = new AtomicInteger();
 
-        assertThat(verifier().validateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet)).isEmpty();
-        assertThat(restores).hasValue(2);
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet))
+                .singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(restores).hasValue(6);
+    }
+
+    @Test
+    void aKilledMutantWithANonDiscriminatingCounterexampleIsInconclusive() {
+        InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of("existing")), reports(List.of("existing", "globalChoice"), List.of()),
+                reports(List.of("existing", "globalChoice"), List.of("existing")));
+
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+        })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
+    }
+
+    @Test
+    void compileFailureIsInconclusiveRatherThanAKill() {
+        InteractiveSandbox sandbox = sandbox(reports(List.of(), List.of()));
+
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+        })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
     }
 
     @Test

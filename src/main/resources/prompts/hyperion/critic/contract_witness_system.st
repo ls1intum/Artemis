@@ -23,6 +23,14 @@ available in those imports or fully qualified names. More importantly, the witne
 student-created type is absent from the starter, preserve the suite's reflection/dynamic-proxy pattern instead of directly naming that type in declarations, constructors, or
 method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
 
+The user prompt includes an AUTHORITATIVE TEMPLATE OWNERSHIP map derived from the approved Design table. Treat `student-creates` as absent even though its implementation appears
+in the reference solution. Its name may occur only as a reflection string; direct imports, declarations, constructor calls, class literals, casts, and generic type arguments make
+the starter fail compilation. `given` and `stubbed` types are present and may be named normally.
+
+For numeric contracts, test the full domain admitted by the declared type unless the specification narrows it. Prefer a high-confidence representation boundary—fractional
+values, minimum/maximum values, overflow, underflow, or a non-finite value—when it distinguishes a plausible implementation and the approved rule defines the expected result.
+Do not invent behavior for a value the rules leave undefined.
+
 Give every assertion a message naming the behaviour it pins. Use fixed data only: no randomness, no shuffling, no current time — a graded test that draws on them scores the same
 submission differently on re-run. Emit ONE complete self-contained method per witness, including its annotations, and nothing else: no class declaration, no imports, no
 commentary.

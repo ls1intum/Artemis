@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentChe
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -232,7 +233,7 @@ public class SpecFidelityCriticService {
 
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
-        return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, usageSink, cancelled);
+        return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, designTemplateStatuses(specificationContract), usageSink, cancelled);
     }
 
     /**
@@ -521,7 +522,7 @@ public class SpecFidelityCriticService {
         return section.toString();
     }
 
-    private static Map<String, String> designTemplateStatuses(String specification) {
+    static Map<String, String> designTemplateStatuses(String specification) {
         Map<String, String> statuses = new LinkedHashMap<>();
         boolean inDesign = false;
         for (String rawLine : specification.lines().toList()) {
@@ -540,7 +541,7 @@ public class SpecFidelityCriticService {
             if (cells.length < 3) {
                 continue;
             }
-            String status = cells[cells.length - 1].strip().toLowerCase(Locale.ROOT);
+            String status = StageCheckService.normalizeTemplateStatus(cells[cells.length - 1]);
             if (!status.equals("given") && !status.equals("stubbed") && !status.equals("student-creates")) {
                 continue;
             }

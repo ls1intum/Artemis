@@ -485,6 +485,16 @@ class StageCheckServiceTest {
         }
 
         @Test
+        void failsWithTargetedFeedback_whenATaskMarkerIsHiddenInsideMarkdownCode() {
+            sandbox.problemStatement = "# Title\n`[task][Sort](testSortsAscending)`\nImplement ascending sorting.\n";
+
+            StageCheckResult result = check(GenerationStage.STATEMENT, null);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("hidden inside Markdown code", "inline backticks", "plain Markdown line").doesNotContain("no Artemis task bindings");
+        }
+
+        @Test
         void passes_whenEveryTaskBindingResolvesAgainstTheTestsReportsExactNames() {
             sandbox.problemStatement = "# Title\n[task][Sort](testSortsAscending,testSortsDescending)\nImplement ascending and descending sorting.\n";
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testSortsAscending\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
@@ -562,7 +572,8 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.STATEMENT, report);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("one task per student-work seam").contains("S1").contains("split");
+            assertThat(result.observation()).contains("one task per student-work seam").contains("S1").contains("split")
+                    .contains("exactly [testSortsAscending, testSortsDescending]");
         }
 
         @Test
@@ -938,15 +949,12 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void rejectsASingleSeamThatSwallowsEveryRule() {
-            // The shape the two weakest measured exercises had. One collapsed four rules into a single seam and shipped a suite rejecting two of four contract-breaking
-            // implementations; six of twenty-six generated specifications took this shape despite the authoring prompt forbidding it.
+        void acceptsOneStudentWorkSeamWithSeveralBehavioralPartitions() {
+            // Seam cardinality describes independently actionable student work, not the number of behavioral partitions. Forcing four seams here turned one classify method into
+            // four repetitive tasks in a live run. Mutation testing and contract witnesses assess whether its four rules are actually discriminated.
             sandbox.spec = specWithRulesAndSeams(4, 1);
 
-            StageCheckResult result = check(GenerationStage.SPEC);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("states 4 rules").contains("single seam").contains("independently actionable");
+            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
         }
 
         @Test
@@ -955,23 +963,6 @@ class StageCheckServiceTest {
             sandbox.spec = specWithRulesAndSeams(3, 1);
 
             assertThat(check(GenerationStage.SPEC).passed()).isTrue();
-        }
-
-        @Test
-        void countsRulesWrittenAsAPlainBulletedList() {
-            // A rules section written as bullets is as common as a table. Requiring an explicit R-id counted it as zero rules, which left the decomposition check inert on
-            // exactly the specifications that most often collapse.
-            sandbox.spec = specWithRules("""
-                    - The calculator handles the empty input.
-                    - The calculator rejects a negative operand.
-                    - The calculator rounds half up.
-                    - The calculator reports overflow.
-                    """);
-
-            StageCheckResult result = check(GenerationStage.SPEC);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("states 4 rules").contains("single seam");
         }
 
         @Test

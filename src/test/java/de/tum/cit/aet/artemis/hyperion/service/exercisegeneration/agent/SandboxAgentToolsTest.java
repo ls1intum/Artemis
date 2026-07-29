@@ -99,6 +99,15 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void search_acceptsABlankPathAsTheWorkspaceRoot() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "/workspace/solution/src/Example.java:4:find me\n", "", false));
+
+        assertThat(new SandboxAgentTools(sandbox, "s").search("", "find me")).isEqualTo("solution/src/Example.java:4:find me");
+        assertThat(sandbox.executedCommands()).singleElement().satisfies(command -> assertThat(command).endsWith("-- find me /workspace"));
+        assertThat(AgentToolDescriptions.SEARCH_PATH).contains("empty string", "entire workspace");
+    }
+
+    @Test
     void search_rejectsUnsafePathsAndMultilineQueries() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");

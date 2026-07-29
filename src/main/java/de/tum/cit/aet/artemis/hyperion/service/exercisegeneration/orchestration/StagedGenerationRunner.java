@@ -489,8 +489,20 @@ public class StagedGenerationRunner {
                                         log.warn("Could not restore the best measured specification for exercise {}: {}", exercise.getId(), restoreAfterIncompleteReview);
                                     }
                                 }
-                                String reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification. Any remaining "
-                                        + "qualitative concerns are left for instructor review.";
+                                String reviewAdvisory;
+                                if (bestSpecSnapshot != null && bestSpecSnapshot.equals(specSnapshot)) {
+                                    unresolvedSpecificationFindings = bestSpecFindings;
+                                    reviewAdvisory = bestSpecFindings.isEmpty()
+                                            ? "The latest specification review was inconclusive; continuing with the previously accepted, mechanically checked specification."
+                                            : "The latest specification review was inconclusive; continuing with the strongest measured specification and attaching its remaining "
+                                                    + "concerns for instructor review.";
+                                }
+                                else {
+                                    unresolvedSpecificationFindings = List
+                                            .of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");
+                                    reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification and attaching that "
+                                            + "uncertainty for instructor review.";
+                                }
                                 log.warn("Specification review was inconclusive for exercise {}; freezing the mechanically-valid specification and continuing", exercise.getId());
                                 emit(progress, reviewAdvisory);
                             }
@@ -856,7 +868,8 @@ public class StagedGenerationRunner {
             StringBuilder handoff = new StringBuilder("=== ACCEPTED STATEMENT HANDOFF ===\n");
             handoff.append("Use the exact lowercase singular Artemis task syntax `[task][Student-facing title](exactTestName)`. Bind every visible test below exactly once on "
                     + "the one task for its specification seam; a task may list multiple names separated by commas. Any testsColor links must use only these same exact test "
-                    + "method names. Never use `[tasks]`, `[Task]`, display names, or hidden test names.\nVisible tests grouped by specification seam:\n");
+                    + "method names. Never use `[tasks]`, `[Task]`, display names, or hidden test names. Write each task marker as plain Markdown on its own line, without inline "
+                    + "backticks or a fenced code block.\nVisible tests grouped by specification seam:\n");
             plan.visibleEntries().stream()
                     .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
                             Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toUnmodifiableList())))

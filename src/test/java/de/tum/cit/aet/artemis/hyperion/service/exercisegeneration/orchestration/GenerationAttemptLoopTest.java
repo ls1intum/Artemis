@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.Semanti
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -198,7 +200,8 @@ class GenerationAttemptLoopTest {
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("recheck failed",
                 new IllegalStateException("reports unavailable"));
         when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenThrow(failure);
@@ -220,12 +223,30 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("restore failed",
                 new IllegalStateException("session lost"));
-        when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);
         GenerationAttemptLoop loop = newGenerateLoop(2, 1);
 
         assertThatThrownBy(loop::run).isSameAs(failure);
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
         assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
+    }
+
+    @Test
+    void executedMutantEvidenceReconcilesOnlyItsExactTextHypothesis() {
+        SpecFidelityReport.Finding targeted = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "reverse the complete list",
+                "a text reviewer suspects this may pass");
+        SpecFidelityReport.Finding paraphrase = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "preserve list identity",
+                "a different hypothesis remains");
+        SpecFidelityReport.Finding uncovered = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "dispatch after switching",
+                "no assertion reaches the new strategy");
+        ContractWitness counterexample = new ContractWitness("R1", "reverse", "@Test void reverse() {}", "reverses the list");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/D.java", "class D {}", "class D { int reverse; }", counterexample, targeted);
+        SpecFidelityReport report = new SpecFidelityReport(List.of(targeted, paraphrase, uncovered));
+
+        assertThat(SemanticEvidenceReconciler.reconcile(report, List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)))).containsExactly(paraphrase,
+                uncovered);
+        assertThat(SemanticEvidenceReconciler.reconcile(report, List.of(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)))).containsExactly(targeted, paraphrase,
+                uncovered);
     }
 
     private static SpecFidelityReport report(SpecFidelityReport.Kind... kinds) {

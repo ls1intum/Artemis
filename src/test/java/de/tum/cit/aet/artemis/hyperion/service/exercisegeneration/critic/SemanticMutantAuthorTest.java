@@ -74,8 +74,21 @@ class SemanticMutantAuthorTest {
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "state preservation", "no assertion observes the transition"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE, "SchedulerTest.java", "presentation only"));
 
-        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("equality boundary", "state preservation").doesNotContain("SchedulerTest.java",
+        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("[T1] equality boundary", "[T2] state preservation").doesNotContain("SchedulerTest.java",
                 "presentation only");
+    }
+
+    @Test
+    void preservesExactReviewProvenanceAndRejectsAMismatchedEcho() {
+        SpecFidelityReport.Finding target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "an exclusive comparison may pass");
+        String targeted = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose(), \"R1 global choice\");")
+                .replace("\"testCode\":", "\"target\":\"T1\",\"targetHypothesis\":\"equality boundary: an exclusive comparison may pass\",\"testCode\":");
+
+        assertThat(author.parse(targeted, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target))).singleElement().extracting(SemanticMutant::reviewTarget)
+                .isEqualTo(target);
+
+        String mismatched = targeted.replace("\"targetHypothesis\":\"equality boundary: an exclusive comparison may pass\"", "\"targetHypothesis\":\"different claim\"");
+        assertThat(author.parse(mismatched, SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target))).singleElement().extracting(SemanticMutant::reviewTarget).isNull();
     }
 
     private static String response(String path, String rule, String assertion) {

@@ -48,7 +48,7 @@ class SemanticMutantAuthor {
     }
 
     private record Item(@Nullable String rule, @Nullable String solutionPath, @Nullable String mutantSource, @Nullable String testName, @Nullable String testCode,
-            @Nullable String misconception) {
+            @Nullable String misconception, @Nullable String target, @Nullable String targetHypothesis) {
     }
 
     private final ReviewerClient reviewer;
@@ -76,7 +76,8 @@ class SemanticMutantAuthor {
         if (renderedSolution.isBlank()) {
             return List.of();
         }
-        String targets = renderReviewTargets(reviewTargets);
+        List<SpecFidelityReport.Finding> visibleTargets = reviewTargets(reviewTargets);
+        String targets = renderReviewTargets(visibleTargets);
         if (!targets.isBlank()) {
             requireReviewTextSafe("semantic-mutant/review-targets", targets);
         }
@@ -86,7 +87,7 @@ class SemanticMutantAuthor {
                         + "behavior merely because it is easier to mutate.";
         String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt;
         try {
-            return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles);
+            return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
         }
         catch (RuntimeException exception) {
             log.warn("Semantic-mutant authoring failed: {}", exception.getMessage());
@@ -95,12 +96,16 @@ class SemanticMutantAuthor {
     }
 
     static String renderReviewTargets(List<SpecFidelityReport.Finding> reviewTargets) {
-        return reviewTargets.stream()
-                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT).limit(4)
-                .map(finding -> "- " + finding.requirement() + ": " + finding.detail()).collect(Collectors.joining("\n"));
+        List<SpecFidelityReport.Finding> targets = reviewTargets(reviewTargets);
+        return java.util.stream.IntStream.range(0, targets.size())
+                .mapToObj(index -> "- [T" + (index + 1) + "] " + targets.get(index).requirement() + ": " + targets.get(index).detail()).collect(Collectors.joining("\n"));
     }
 
     List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles) {
+        return parse(responseText, specification, solutionFiles, List.of());
+    }
+
+    List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
         if (responseText == null || responseText.isBlank()) {
             return List.of();
         }
@@ -123,12 +128,30 @@ class SemanticMutantAuthor {
             String path = item.solutionPath().strip();
             String original = solutionFiles.get(path);
             ContractWitness counterexample = new ContractWitness(item.rule().strip(), item.testName().strip(), item.testCode().strip(), item.misconception().strip());
-            accepted.add(new SemanticMutant(item.rule().strip(), path, original, item.mutantSource().strip(), counterexample));
+            accepted.add(new SemanticMutant(item.rule().strip(), path, original, item.mutantSource().strip(), counterexample, reviewTarget(item, reviewTargets)));
             if (accepted.size() == MAX_MUTANTS) {
                 break;
             }
         }
         return List.copyOf(accepted);
+    }
+
+    private static List<SpecFidelityReport.Finding> reviewTargets(List<SpecFidelityReport.Finding> findings) {
+        return findings.stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
+                .limit(4).toList();
+    }
+
+    private static SpecFidelityReport.@Nullable Finding reviewTarget(Item item, List<SpecFidelityReport.Finding> targets) {
+        if (item.target() == null || item.targetHypothesis() == null || !item.target().matches("T[1-9]\\d*")) {
+            return null;
+        }
+        int index = Integer.parseInt(item.target().substring(1)) - 1;
+        if (index < 0 || index >= targets.size()) {
+            return null;
+        }
+        SpecFidelityReport.Finding target = targets.get(index);
+        String exactHypothesis = target.requirement().strip() + ": " + target.detail().strip();
+        return item.targetHypothesis().strip().equals(exactHypothesis) ? target : null;
     }
 
     /** Selects deterministic whole source files only; a truncated Java file is misleading context and cannot produce a trustworthy complete replacement. */

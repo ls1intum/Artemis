@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 
 /** Pure decision logic around sandbox mutant builds; {@link DifferentialVerificationService} remains the sole owner of executing and restoring the workspace. */
 final class SemanticMutantExecution {
@@ -23,35 +24,51 @@ final class SemanticMutantExecution {
     }
 
     static List<SemanticMutant> validate(Map<String, String> testFiles, Map<String, String> solutionFiles, List<SemanticMutant> candidates, ProbeRunner runner) {
+        return evaluate(testFiles, solutionFiles, candidates, runner).stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
+                .map(SemanticMutantOutcome::mutant).toList();
+    }
+
+    static List<SemanticMutantOutcome> evaluate(Map<String, String> testFiles, Map<String, String> solutionFiles, List<SemanticMutant> candidates, ProbeRunner runner) {
         Optional<Map.Entry<String, String>> host = ContractWitnessProbe.host(testFiles);
         if (host.isEmpty()) {
-            return List.of();
+            return inconclusive(candidates);
         }
         String probePath = ContractWitnessProbe.probePath(host.get().getKey(), testFiles.keySet());
         if (probePath == null) {
-            return List.of();
+            return inconclusive(candidates);
         }
-        List<SemanticMutant> validated = new ArrayList<>();
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (SemanticMutant mutant : candidates.stream().limit(2).toList()) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath())) || declaresMethod(testFiles, mutant.counterexample().testName())) {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
             String source = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(mutant.counterexample()));
             if (source.isBlank() || !ExerciseIntegrityGate.nondeterministicGradedTestReasons(Map.of(probePath, source)).isEmpty()
-                    || !ExerciseIntegrityGate.gradingContextSniffingReasons(Map.of(), Map.of(mutant.solutionPath(), mutant.mutantSource())).isEmpty()
-                    || !passed(runner.run(mutant, null))) {
+                    || !ExerciseIntegrityGate.gradingContextSniffingReasons(Map.of(), Map.of(mutant.solutionPath(), mutant.mutantSource())).isEmpty()) {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
+                continue;
+            }
+            BuildSummary existingSuite = runner.run(mutant, null);
+            boolean killedByExistingSuite = !passed(existingSuite) && executedTestFailed(existingSuite);
+            if (!passed(existingSuite) && !killedByExistingSuite) {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
             BuildSummary pristine = runner.run(null, Map.entry(probePath, source));
             if (ContractWitnessProbe.validated(pristine.testNames(), pristine.testFailedNames(), List.of(mutant.counterexample())).isEmpty()) {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
             BuildSummary mutated = runner.run(mutant, Map.entry(probePath, source));
             if (!ContractWitnessProbe.discriminating(List.of(mutant.counterexample()), mutated.testNames(), mutated.testFailedNames()).isEmpty()) {
-                validated.add(mutant);
+                outcomes.add(new SemanticMutantOutcome(mutant, killedByExistingSuite ? Disposition.KILLED_BY_GRADED_SUITE : Disposition.SURVIVED_GRADED_SUITE));
+            }
+            else {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
             }
         }
-        return List.copyOf(validated);
+        return List.copyOf(outcomes);
     }
 
     static List<SemanticMutant> surviving(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
@@ -78,5 +95,13 @@ final class SemanticMutantExecution {
 
     private static boolean passed(BuildSummary summary) {
         return !summary.timedOut() && summary.exitCode() == 0 && summary.tests() > 0 && summary.failures() == 0;
+    }
+
+    private static boolean executedTestFailed(BuildSummary summary) {
+        return !summary.timedOut() && !summary.testFailedNames().isEmpty() && summary.testNames().stream().anyMatch(summary.testFailedNames()::contains);
+    }
+
+    private static List<SemanticMutantOutcome> inconclusive(List<SemanticMutant> candidates) {
+        return candidates.stream().limit(2).map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
     }
 }

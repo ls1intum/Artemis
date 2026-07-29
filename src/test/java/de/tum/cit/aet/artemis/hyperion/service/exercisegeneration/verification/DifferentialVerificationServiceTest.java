@@ -1299,7 +1299,8 @@ class DifferentialVerificationServiceTest {
             AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
 
             assertThat(report.wouldBeAccepted()).isFalse();
-            assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("no Artemis task bindings"));
+            assertThat(report.blockingReasons()).anySatisfy(reason -> assertThat(reason).contains("hidden inside Markdown code", "inline backticks", "plain Markdown line"))
+                    .noneMatch(reason -> reason.contains("no Artemis task bindings"));
         }
 
         @Test

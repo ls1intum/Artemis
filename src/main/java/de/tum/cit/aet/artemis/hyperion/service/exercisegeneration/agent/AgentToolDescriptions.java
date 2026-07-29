@@ -16,9 +16,9 @@ final class AgentToolDescriptions {
 
     static final String READ_FILE_LIMIT = "maximum number of lines to return (omit to read to the output limit)";
 
-    static final String SEARCH = "Search a UTF-8 workspace file or directory recursively for an exact text fragment. Returns paths, line numbers, and matching lines without changing the workspace. Use this instead of bash/grep.";
+    static final String SEARCH = "Search a UTF-8 workspace file or directory recursively for an exact text fragment. Returns paths, line numbers, and matching lines without changing the workspace. Use an empty path to search the entire workspace. Use this instead of bash/grep.";
 
-    static final String SEARCH_PATH = "workspace-relative file or directory path to search";
+    static final String SEARCH_PATH = "workspace-relative file or directory path to search, or an empty string to search the entire workspace";
 
     static final String SEARCH_QUERY = "exact non-empty text fragment to find on a line";
 

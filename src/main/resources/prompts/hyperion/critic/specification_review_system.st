@@ -61,6 +61,8 @@ Find only high-confidence planning defects that would make every later artifact 
 - the Testing Strategy's Observable responsibility cells do not trace the behavior counted as learner difficulty to a `stubbed` or `student-creates` owner, or give
   supporting calculations greater grading emphasis than the abstraction, interaction, state transition, or algorithm named as the learning objective. Judge emphasis
   semantically; do not apply a numeric quota or require one universal ordering.
+- the Testing Strategy collapses genuinely independent units of student implementation into one task, or splits one implementation unit's behavioral partitions into repetitive
+  tasks. Judge what a student can implement independently, never the number of rules, tests, methods, or rows. Multiple observable outcomes of one operation can share one seam.
 
 A brief can deliberately leave theme, names, API, edge behavior, and strategy computations open. Coherent choices needed to turn that open request into a deterministic,
 teachable exercise are not unsupported additions. A domain constraint or API postcondition is not unsupported merely because the terse brief did not name it. Before
@@ -154,3 +156,6 @@ blocking findings TOTAL, including an insufficient learningFit, a failed concept
 scope/ownership conflicts and wrong examples; hollow or mis-scoped learning work; unrelated observable constraints; only then a qualitative theme conflict backed by an
 explicit brief requirement. Omit uncertain findings rather than guessing.
 Diagnose properties only; never supply replacement names, domains, formulas, or APIs. The generator owns the choice and the repair.
+For every public input, check that the rules cover its admitted domain. A floating-point type admits non-finite values unless an explicit precondition narrows it; require the
+specification either to define their observable behavior or state and consistently enforce a finite/range precondition. Do not invent behavior absent from the brief when a
+narrow, explicit precondition is the coherent minimum operational choice.

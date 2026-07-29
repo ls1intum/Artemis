@@ -167,7 +167,8 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.SPEC);
         assertThat(prompt).contains("## Decision Ledger", "EXPLICIT_BRIEF", "NECESSARY_OPERATIONAL_CHOICE", "PEDAGOGICAL_OBJECTIVE")
                 .contains("provenance, not permission to add requirements")
-                .contains("complete declared input domain", "numeric ranges exhaustive without gaps", "reference solution silently choose behavior");
+                .contains("complete declared input domain", "numeric ranges exhaustive without gaps", "reference solution silently choose behavior")
+                .contains("floating-point type admits non-finite values", "finite/range precondition");
         // SPEC's guidance is inlined, so the stage must NOT send the agent to a style guide (there is none, and re-reading would burn its bounded turns).
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");
@@ -202,7 +203,8 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.STATEMENT);
         assertThat(prompt).contains("Earlier stages already produced: the specification, the reference solution, the template, and the differential tests.")
                 .contains("STUDENT-FACING STATEMENT").contains("ARTEMIS TASK BINDINGS").contains("reference/style/final-statement.md")
-                .contains("do not use graded test bodies as an example-fixture source").contains("examples independently from the rules");
+                .contains("do not use graded test bodies as an example-fixture source").contains("examples independently from the rules")
+                .contains("plain Markdown lines", "never wrap them in backticks", "fenced code");
     }
 
     @Test

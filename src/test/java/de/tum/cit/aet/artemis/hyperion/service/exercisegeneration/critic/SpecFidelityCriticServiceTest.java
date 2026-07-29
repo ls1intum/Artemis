@@ -2161,6 +2161,23 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void contractWitnessContextMakesStudentCreatedTypesExplicitlyReflectionOnly() {
+        assertThat(ContractWitnessAuthor.renderTemplateOwnership(Map.of("Elevator", "given", "ElevatorDispatcher", "student-creates")))
+                .contains("Elevator: given — present in the starter").contains("ElevatorDispatcher: student-creates — ABSENT from the starter")
+                .contains("reflection/dynamic-proxy");
+    }
+
+    @Test
+    void contractWitnessOwnershipUsesTheSameCanonicalStatusAsTheSpecGate() {
+        assertThat(SpecFidelityCriticService.designTemplateStatuses("""
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `ElevatorDispatcher` | dispatches | **student‑creates** |
+                """)).containsEntry("ElevatorDispatcher", "student-creates");
+    }
+
+    @Test
     void authorContractWitnesses_parsesTheRuleNameAndMethod() {
         List<ContractWitness> witnesses = witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
