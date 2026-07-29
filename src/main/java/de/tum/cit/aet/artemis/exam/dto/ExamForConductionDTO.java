@@ -28,9 +28,14 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * <p>
  * {@code examSummaryPublicationDate} and {@code publishResultsDate} are required by the client-side summary gate
  * ({@code isExamSummaryPublished} in {@code exam.utils.ts}), which the exam-participation component evaluates against the exam
- * it takes from this projection after a hand-in. That helper treats a missing {@code examSummaryPublicationDate} as
- * "published", so omitting either field here silently opens the gate and shows the submission overview even while it is
- * supposed to be withheld.
+ * it takes from this projection after a hand-in. Omitting them breaks the gate in opposite directions, so neither may be
+ * dropped:
+ * <ul>
+ * <li>Without {@code examSummaryPublicationDate} the gate reads the absent value as "published" and opens the submission
+ * overview immediately, defeating a configured delay.</li>
+ * <li>Without {@code publishResultsDate} the results-published fallback can never fire, so a configured future publication
+ * date keeps the overview withheld even after the grades are out.</li>
+ * </ul>
  *
  * @param id                         the id of the exam
  * @param title                      the title shown on the exam cover
