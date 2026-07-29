@@ -593,7 +593,7 @@ async function draftProblemStatementViaUi(page: Page, requirements: string) {
     expect(body.draftProblemStatement?.trim()).toBeTruthy();
     await expect(page.getByText('Problem statement has been successfully generated.')).toBeVisible({ timeout: 30_000 });
     const draft = body.draftProblemStatement!.trim();
-    await expect.poll(() => readProblemStatementEditor(page), { timeout: 30_000 }).toBe(draft);
+    await expect.poll(async () => (await readProblemStatementEditor(page))?.trim(), { timeout: 30_000 }).toBe(draft);
     return draft;
 }
 
@@ -612,7 +612,7 @@ async function seedProblemStatementViaUi(page: Page, seedText: string): Promise<
     await expect(page.locator('#userPrompt')).toBeVisible({ timeout: 90_000 });
     await page.locator('#userPrompt').fill('Seeded intermediate: the prepared statement below is authoritative.');
     await page.getByRole('button', { name: 'Generate Draft Problem Statement' }).click();
-    await expect.poll(() => readProblemStatementEditor(page), { timeout: 60_000 }).toBe(seedText.trim());
+    await expect.poll(async () => (await readProblemStatementEditor(page))?.trim(), { timeout: 60_000 }).toBe(seedText.trim());
     await page.unroute('**/api/hyperion/courses/*/problem-statements/generate');
     return seedText.trim();
 }
