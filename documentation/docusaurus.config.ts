@@ -67,7 +67,7 @@ const config: Config = {
         [
             require.resolve('@easyops-cn/docusaurus-search-local'),
             /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
-            ({
+            {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
@@ -76,23 +76,23 @@ const config: Config = {
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
-                        path: 'student'
+                        path: 'student',
                     },
                     {
                         label: 'Instructor Guide',
-                        path: 'instructor'
+                        path: 'instructor',
                     },
                     {
                         label: 'Developer Guide',
-                        path: 'developer'
+                        path: 'developer',
                     },
                     {
                         label: 'Admin Guide',
-                        path: 'admin'
-                    }
+                        path: 'admin',
+                    },
                 ],
-                hideSearchBarWithNoSearchContext: true,
-            }),
+                useAllContextsWithNoSearchContext: true,
+            },
         ],
     ],
 
@@ -156,7 +156,8 @@ const config: Config = {
             title: PAGE_TITLE,
             logo: {
                 alt: 'TUM Logo',
-                src: 'img/artemis-favicon.svg',
+                src: 'img/tum-logo-blue.svg',
+                srcDark: 'img/tum-logo-blue.svg',
             },
             items: [
                 {

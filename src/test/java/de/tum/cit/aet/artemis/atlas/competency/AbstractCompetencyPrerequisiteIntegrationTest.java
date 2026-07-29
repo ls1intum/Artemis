@@ -407,6 +407,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     void shouldImportExerciseAndLectureWithCompetency() throws Exception {
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
+        // presentationScoreEnabled has a non-null default, so it can only be preserved if it is copied explicitly onto
+        // the fresh target exercise (see LearningObjectImportService); assert that the competency import keeps it.
+        textExercise.setPresentationScoreEnabled(true);
         exerciseRepository.save(textExercise);
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
@@ -414,6 +417,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
         assertThat(course2.getExercises()).hasSize(2);
+        // Only the (non-team) text exercise had presentation scoring enabled on the source; it must survive the import.
+        assertThat(course2.getExercises()).anyMatch(exercise -> Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()));
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
     }
