@@ -168,7 +168,8 @@ class AgentSystemPromptServiceTest {
         assertThat(prompt).contains("## Decision Ledger", "EXPLICIT_BRIEF", "NECESSARY_OPERATIONAL_CHOICE", "PEDAGOGICAL_OBJECTIVE")
                 .contains("provenance, not permission to add requirements")
                 .contains("complete declared input domain", "numeric ranges exhaustive without gaps", "reference solution silently choose behavior")
-                .contains("floating-point type admits non-finite values", "finite/range precondition");
+                .contains("floating-point type admits non-finite values", "finite/range precondition")
+                .contains("Do not move a call-time rejection into construction", "legal public setup");
         // SPEC's guidance is inlined, so the stage must NOT send the agent to a style guide (there is none, and re-reading would burn its bounded turns).
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")
                 .doesNotContain("reference/style/tests.md").doesNotContain("reference/style/final-statement.md");

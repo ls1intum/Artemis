@@ -25,6 +25,11 @@ If the collaborator interface is `student-creates` and therefore absent from the
 create the recording fake with `java.lang.reflect.Proxy`. Invoke constructors and methods whose signatures
 mention that missing interface reflectively too. Merely storing an instance in an `Object` variable does not
 make a normal call to a method expecting the missing interface compile against both repositories.
+`ReflectionTestUtils.newInstance(className, arguments...)` infers exact runtime classes. It therefore does not
+match an approved constructor declared with an interface or supertype when an argument is a concrete
+implementation. Resolve the declared signature explicitly, then instantiate it:
+`newInstance(getConstructor(getClazz(ownerName), List.class, getClazz(collaboratorName)), list, proxy)`.
+Never add concrete collection or implementation overloads to production code just to satisfy the harness.
 
 ## Inputs decoupled from worked examples
 

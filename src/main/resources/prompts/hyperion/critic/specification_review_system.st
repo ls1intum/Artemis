@@ -6,6 +6,8 @@ An operational choice may fill genuine silence; it may not reinterpret the scope
 survives an unrelated operation does not imply that the unrelated operation advances or otherwise mutates that state. For every stateful rule, identify the object that owns the
 state and the exact public operations that transition it before accepting an example or Design claim. Treat an extra causal coupling as a conflict unless the brief actually
 requires it.
+For every required boundary or error outcome, trace a legal setup through the proposed public API to the operation where the brief says it is observed. Report a conflict when
+the specification shifts that outcome to an earlier operation, and an internal conflict when its own preconditions make the promised later outcome unreachable.
 
 This is defect detection, not design optimization. A different coherent design is not evidence that the candidate is wrong. Before reporting an omission, try to
 falsify it against the whole specification: if a reasonable passage, design row, rule, or testing seam already satisfies the requirement, omit the finding rather

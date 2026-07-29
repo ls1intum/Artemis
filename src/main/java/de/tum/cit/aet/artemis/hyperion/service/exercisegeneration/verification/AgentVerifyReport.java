@@ -46,6 +46,8 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
+    private static final String ARES_CONSTRUCTOR_MISMATCH = "does not have a constructor with the arguments";
+
     /** Failure evidence is optional. */
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, int templateTests, boolean templateCompiled, boolean templateFailed,
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
@@ -118,6 +120,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
         }
         appendFailureEvidence(builder, "Solution", solutionFailureEvidence);
+        appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
 
         if (!templateCompiled) {
             builder.append("Template: did NOT compile (ran no tests). It must compile and FAIL the tests — give the stubs the same signatures as the solution with wrong "
@@ -202,6 +205,18 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         if (evidence.size() > rendered) {
             builder.append("(+").append(evidence.size() - rendered).append(" more failures)\n");
         }
+    }
+
+    private static void appendReflectionConstructorGuidance(StringBuilder builder, List<TestFailureEvidence> evidence) {
+        if (evidence.stream().map(TestFailureEvidence::message).noneMatch(message -> message.contains(ARES_CONSTRUCTOR_MISMATCH))) {
+            return;
+        }
+        builder.append(
+                """
+                        REFLECTION HARNESS DIAGNOSTIC: Ares newInstance(className, arguments...) infers exact runtime argument classes. When the approved constructor declares an interface \
+                        or supertype, do NOT add concrete overloads to production code. Resolve the declared signature explicitly, for example \
+                        getConstructor(getClazz("package.Owner"), List.class, getClazz("package.Collaborator")), then pass that Constructor and the runtime arguments to newInstance.
+                        """);
     }
 
     private static void appendBuildDiagnostic(StringBuilder builder, String assignment, String diagnostic) {

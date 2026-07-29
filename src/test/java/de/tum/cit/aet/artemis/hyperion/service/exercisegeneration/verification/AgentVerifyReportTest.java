@@ -53,4 +53,24 @@ class AgentVerifyReportTest {
                 "ElevatorDispatcher.java:42: error: call to this must be first statement", "Template build diagnostic (bounded, sanitized, untrusted output)",
                 "Template.java:7: error: cannot find symbol");
     }
+
+    @Test
+    void exactRuntimeConstructorMismatchExplainsTheDeclaredSignatureReflectionPattern() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("dispatcherDelegates",
+                "Could not instantiate ElevatorDispatcher because the class does not have a constructor with the arguments: [ ArrayList, RoundRobinStrategy ]");
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("dispatcherDelegates"), List.of(failure), 1, true, true, List.of(), List.of(),
+                List.of("dispatcherDelegates"), List.of(), List.of(), false, List.of("solution failed"));
+
+        assertThat(report.toTestsStageObservation()).contains("Ares newInstance(className, arguments...) infers exact runtime argument classes",
+                "getConstructor(getClazz(\"package.Owner\"), List.class, getClazz(\"package.Collaborator\"))", "do NOT add concrete overloads to production code");
+    }
+
+    @Test
+    void unrelatedConstructorFailureDoesNotEmitAresSpecificGuidance() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("constructsDispatcher", "InvocationTargetException: constructor rejected the empty list");
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("constructsDispatcher"), List.of(failure), 1, true, true, List.of(), List.of(),
+                List.of("constructsDispatcher"), List.of(), List.of(), false, List.of("solution failed"));
+
+        assertThat(report.toTestsStageObservation()).doesNotContain("REFLECTION HARNESS DIAGNOSTIC");
+    }
 }

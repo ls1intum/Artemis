@@ -120,6 +120,8 @@ Before accepting the rules, perform a scope subtraction pass: remove validation,
 immutability, thread-safety, and architecture obligations that the brief did not request and that are not strictly
 necessary to define the chosen strategies. Choosing the theme and the strategies' contrasting computations is
 necessary when the brief leaves them open; adding unrelated defensive policy is not.
+Preserve each stated boundary's trigger and timing. Do not turn a call-time rejection into a constructor
+precondition, or approve any error path that has no legal setup through the public API.
 
 ## Testing strategy
 

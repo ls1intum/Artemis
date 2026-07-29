@@ -138,6 +138,8 @@ public class AgentSystemPromptService {
             underspecified behavior into a coherent, executable exercise. Record where every consequential choice came from; do not silently promote a convenient implementation
             detail into a student requirement. Put only observable, gradeable behavior in Rules. When the brief explicitly asks for a technique that black-box behavior cannot
             prove, preserve it as a pedagogical objective in the Decision Ledger rather than inventing brittle source-inspection grading.
+            Preserve the operation and time at which the brief says a boundary is observed. Do not move a call-time rejection into construction, or otherwise make a required
+            public outcome unreachable. For every error or boundary rule, identify a legal public setup that reaches its named operation.
             Make every public input domain exhaustive. In particular, a floating-point type admits non-finite values unless an explicit precondition narrows it; either define
             their observable behavior or state and consistently enforce a finite/range precondition. Do not invent edge-case behavior merely to fill a gap.
 
@@ -319,7 +321,9 @@ public class AgentSystemPromptService {
             forwarded inputs and returned value; testing only the known concrete implementations lets a context that duplicates their formulas pass without using the taught
             abstraction. When the collaborator type is absent from the template, create the recording fake with a Java dynamic proxy after loading the interface by name, and
             invoke every constructor or method whose signature mentions that missing type reflectively. Holding the instance as `Object` does not make a normal typed method call
-            compile. Assert exception types, never assert ON message strings, unless the statement fixes the exact message; give every assertion a failure message naming the
+            compile. Ares `newInstance(name,args)` requires exact types; for supertypes use
+            `newInstance(getConstructor(getClazz(owner), Declared.class, getClazz(collaborator)), args)`; never add harness overloads. Assert exception types, never assert
+            message strings, unless the statement fixes the exact message; give every assertion a failure message naming the
             broken behaviour — it is all a failing student sees. Then write `/workspace/test-plan.json` implementing
             the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID and
             exact tier. Include every agent-authored behavioral test, not build gates or server-seeded structural checks; Artemis manages seeded structural checks as visible,
