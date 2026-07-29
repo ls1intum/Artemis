@@ -102,13 +102,13 @@ Liquibase can generate the SQL required to roll back a set of changesets in **of
     liquibase \
         --url="offline:mysql?changelog-file=./databasechangelog.csv" \
         --driver=com.mysql.cj.jdbc.Driver \
-        --classpath="[PATH]/mysql-connector-j-9.4.0.jar" \
+        --classpath="[PATH]/mysql-connector-j-[VERSION].jar" \
         --changelog-file=src/main/resources/config/liquibase/changelog/[CHANGELOG].xml \
         rollback-count-sql [NUMBER_OF_MIGRATIONS_TO_ROLL_BACK] \
         > rollback.sql
     ```
 
-    Replace `[PATH]` with the directory holding the connector JAR, `[CHANGELOG]` with the changelog file to roll back from (usually `master.xml`), and `[NUMBER_OF_MIGRATIONS_TO_ROLL_BACK]` with the number of most recently applied changesets to revert. The generated `rollback.sql` is what you review and — after approval — apply to the target database.
+    Replace `[PATH]` with the directory holding the connector JAR, `[VERSION]` with the version of the downloaded connector JAR (e.g., `9.4.0`), `[CHANGELOG]` with the changelog file to roll back from (usually `master.xml`), and `[NUMBER_OF_MIGRATIONS_TO_ROLL_BACK]` with the number of most recently applied changesets to revert. The generated `rollback.sql` is what you review and — after approval — apply to the target database.
 
 ## Data Migration with Java
 
