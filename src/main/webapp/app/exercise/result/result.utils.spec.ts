@@ -80,6 +80,13 @@ describe('ResultUtils', () => {
             expect(evaluateTemplateStatus(programmingExercise, programmingParticipation, result, false)).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
         });
 
+        it('FEEDBACK_GENERATION_TIMED_OUT for a timed-out text Athena result submitted in due time', () => {
+            const exercise = textExerciseWith(dayjs().add(1, 'day'));
+            const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().subtract(1, 'hour') } as Result;
+            const participation = textParticipationWith(dayjs().subtract(1, 'hour'), [result]);
+            expect(evaluateTemplateStatus(exercise, participation, result, false)).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
+        });
+
         it('NO_RESULT for a programming exercise without a result', () => {
             expect(evaluateTemplateStatus(programmingExercise, programmingParticipation, undefined, false)).toBe(ResultTemplateStatus.NO_RESULT);
         });
@@ -282,6 +289,17 @@ describe('ResultUtils', () => {
             participation: {} as Participation,
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: faCircleNotch,
+        },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result timed out' }],
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            },
+            participation: {} as Participation,
+            templateStatus: ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT,
+            expected: faQuestionCircle,
         },
         {
             result: {

@@ -345,4 +345,37 @@ describe('CourseExercisesComponent', () => {
         expect(modelingSidebarParticipation?.initializationState).toBe(InitializationState.FINISHED);
         expect(modelingSidebarParticipation?.submissions?.[0].results?.[0]).toBe(modelingResult);
     });
+
+    it('should not replace a different participation with the same test run flag', () => {
+        const firstParticipation = new StudentParticipation();
+        firstParticipation.id = 1;
+        firstParticipation.testRun = false;
+        firstParticipation.initializationState = InitializationState.FINISHED;
+        firstParticipation.exercise = exercise;
+
+        const secondParticipation = new StudentParticipation();
+        secondParticipation.id = 2;
+        secondParticipation.testRun = false;
+        secondParticipation.initializationState = InitializationState.INITIALIZED;
+        secondParticipation.exercise = exercise;
+
+        exercise.studentParticipations = [firstParticipation, secondParticipation];
+        (component as any)._course.set(course);
+        component.processExercises(course.exercises!);
+
+        const updatedSecondParticipation = new StudentParticipation();
+        updatedSecondParticipation.id = secondParticipation.id;
+        updatedSecondParticipation.testRun = false;
+        updatedSecondParticipation.initializationState = InitializationState.FINISHED;
+        updatedSecondParticipation.exercise = exercise;
+
+        participationWebsocketBehaviorSubject.next(updatedSecondParticipation);
+
+        const participations = (component as any)._sortedExercises()[0].studentParticipations as StudentParticipation[];
+        expect(participations).toHaveLength(2);
+        expect(participations[0].id).toBe(firstParticipation.id);
+        expect(participations[0].initializationState).toBe(InitializationState.FINISHED);
+        expect(participations[1].id).toBe(secondParticipation.id);
+        expect(participations[1].initializationState).toBe(InitializationState.FINISHED);
+    });
 });

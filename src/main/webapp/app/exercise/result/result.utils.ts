@@ -146,6 +146,22 @@ export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
 }
 
+function getAthenaFeedbackTemplateStatus(result: Result | undefined): ResultTemplateStatus | undefined {
+    if (!result || !isAthenaAIResult(result)) {
+        return undefined;
+    }
+    if (isAIResultAndTimedOut(result)) {
+        return ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT;
+    }
+    if (result.successful === undefined) {
+        return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+    }
+    if (isAIResultAndFailed(result)) {
+        return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+    }
+    return undefined;
+}
+
 export const evaluateTemplateStatus = (
     exercise: Exercise | undefined,
     participation: Participation | undefined,
@@ -187,10 +203,9 @@ export const evaluateTemplateStatus = (
             // Submission is in due time of exercise and has a result with score
             if (!assessmentDueDate || assessmentDueDate.isBefore(dayjs()) || !isManualResult(result)) {
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
-                if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
-                    return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-                } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
-                    return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+                const athenaFeedbackStatus = getAthenaFeedbackTemplateStatus(result);
+                if (athenaFeedbackStatus) {
+                    return athenaFeedbackStatus;
                 }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -212,10 +227,9 @@ export const evaluateTemplateStatus = (
             }
         } else if (isPracticeMode(participation)) {
             // Practice mode submissions are not in due time but should show AI feedback statuses, not LATE/LATE_NO_FEEDBACK
-            if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
-                return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
-            } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
-                return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
+            const athenaFeedbackStatus = getAthenaFeedbackTemplateStatus(result);
+            if (athenaFeedbackStatus) {
+                return athenaFeedbackStatus;
             } else if (initializedResultWithScore(result)) {
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -333,6 +347,9 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        if (isAIResultAndTimedOut(result)) {
+            return faQuestionCircle;
+        }
         // result loading
         if (result.successful === undefined) {
             return faCircleNotch;

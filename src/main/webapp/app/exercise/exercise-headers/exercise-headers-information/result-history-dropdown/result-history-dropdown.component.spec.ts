@@ -335,6 +335,27 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.getResultIconAnimation(result)).toBeUndefined();
         });
 
+        it('should not spin for timed-out text Athena feedback', () => {
+            const textExercise = { id: 1, type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day'), course: { id: 1 } } as Exercise;
+            const participation: Participation = {
+                id: 1,
+                exercise: textExercise,
+                submissions: [{ id: 1, submissionDate: dayjs().subtract(1, 'hour') }],
+            } as Participation;
+            const result = {
+                id: 1,
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().subtract(5, 'minutes'),
+                submission: { id: 1, participation },
+            } as unknown as Result;
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.detectChanges();
+
+            expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+
         it('should not spin when the result has no participation', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
 

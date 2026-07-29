@@ -330,10 +330,10 @@ export class CourseExercisesComponent {
     }
 
     private isSameParticipationSlot(participation: StudentParticipation, otherParticipation: StudentParticipation): boolean {
-        return (
-            (participation.id !== undefined && otherParticipation.id !== undefined && participation.id === otherParticipation.id) ||
-            !!participation.testRun === !!otherParticipation.testRun
-        );
+        if (participation.id !== undefined && otherParticipation.id !== undefined) {
+            return participation.id === otherParticipation.id;
+        }
+        return !!participation.testRun === !!otherParticipation.testRun;
     }
 
     updateSidebarData() {
