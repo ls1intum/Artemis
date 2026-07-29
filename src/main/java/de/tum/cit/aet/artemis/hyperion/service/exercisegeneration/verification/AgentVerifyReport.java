@@ -23,10 +23,13 @@ import java.util.regex.Pattern;
  * @param possiblyDeadFiles       best-effort, language-agnostic: files present in only one assignment repository (advisory only; expected for student-created types)
  * @param wouldBeAccepted         whether the in-loop differential + actionable mechanical gates currently hold; this does not establish semantic quality or instructor approval
  * @param blockingReasons         the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
+ * @param solutionBuildDiagnostic bounded build output shown only when the solution ran no tests
+ * @param templateBuildDiagnostic bounded build output shown only when the template ran no tests
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
-        List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames) {
+        List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
+        String solutionBuildDiagnostic, String templateBuildDiagnostic) {
 
     /** The longest list rendered inline before it is truncated with a remaining-count, so a huge suite never floods the agent's context. */
     private static final int MAX_RENDERED_NAMES = 40;
@@ -48,7 +51,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
             List<String> blockingReasons) {
         this(solutionTests, solutionPassed, solutionFailedNames, List.of(), templateTests, templateCompiled, templateFailed, List.of(), templateWronglyPassing, exactTestNames,
-                unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
+                unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of(), "", "");
     }
 
     /** Hidden names are unavailable before the grading plan exists, or when none is readable. */
@@ -56,7 +59,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
             List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons) {
         this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
-                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of());
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of(), "", "");
+    }
+
+    /** Build diagnostics are unavailable to older callers and tests that construct reports directly. */
+    public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
+            boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
+            List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames) {
+        this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, hiddenTestNames, "", "");
     }
 
     /** One test failure and its first useful message, normalized to a single line. */
@@ -101,6 +112,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
         else if (solutionTests == 0) {
             builder.append("Solution FAILS: it ran no tests (it did not compile, or no test was discovered) — fix it so it builds and runs the tests.\n");
+            appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
         }
         else {
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
@@ -110,6 +122,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         if (!templateCompiled) {
             builder.append("Template: did NOT compile (ran no tests). It must compile and FAIL the tests — give the stubs the same signatures as the solution with wrong "
                     + "placeholder bodies.\n");
+            appendBuildDiagnostic(builder, "Template", templateBuildDiagnostic);
         }
         else if (!templateWronglyPassing.isEmpty()) {
             builder.append("Template WRONGLY PASSES (these must FAIL — make the stub return a value wrong for them, or throw/panic): ").append(renderNames(templateWronglyPassing))
@@ -188,6 +201,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         }
         if (evidence.size() > rendered) {
             builder.append("(+").append(evidence.size() - rendered).append(" more failures)\n");
+        }
+    }
+
+    private static void appendBuildDiagnostic(StringBuilder builder, String assignment, String diagnostic) {
+        if (diagnostic != null && !diagnostic.isBlank() && !"[no diagnostic output]".equals(diagnostic)) {
+            builder.append(assignment).append(" build diagnostic (bounded, sanitized, untrusted output):\n").append(diagnostic.strip()).append('\n');
         }
     }
 

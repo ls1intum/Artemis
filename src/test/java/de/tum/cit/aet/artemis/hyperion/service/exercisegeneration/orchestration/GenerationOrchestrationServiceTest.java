@@ -180,6 +180,13 @@ class GenerationOrchestrationServiceTest {
         return service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled, null, null, null);
     }
 
+    @Test
+    void destroyingSessionForgetsFrozenStructuralOracle() {
+        service.destroyQuietly(null, SESSION_ID);
+
+        verify(structuralOracleSeeder).forget(SESSION_ID);
+    }
+
     /**
      * Seeds a non-empty TEMPLATE baseline. Without one, "the repository could not be read" and "the repository legitimately produced nothing" are the same empty map, so the
      * extraction-failed guard is unobservable: a diagnostic capture may only report repositories it actually read.

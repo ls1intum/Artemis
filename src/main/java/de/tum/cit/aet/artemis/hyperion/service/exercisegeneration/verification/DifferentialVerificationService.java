@@ -66,6 +66,8 @@ public class DifferentialVerificationService {
 
     private static final int MAX_READINESS_DIAGNOSTIC_CHARS = 4_000;
 
+    private static final int READINESS_DIAGNOSTIC_HEAD_CHARS = 700;
+
     private static final Pattern URI_CREDENTIALS = Pattern.compile("(?i)(https?://)[^\\s/@]+@");
 
     private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*[:=]\\s*)(?:basic|bearer)?\\s*[^\\s,;]+");
@@ -348,7 +350,7 @@ public class DifferentialVerificationService {
                 includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
                 (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && approvedSpecificationHolds
                         && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
-                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)));
+                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId)), solution.buildDiagnostic(), template.buildDiagnostic());
     }
 
     /**
@@ -387,7 +389,8 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Redacts common credential forms and caps a readiness diagnostic for protected server logs. User-facing errors must stay generic and must not carry this text.
+     * Redacts common credential forms and caps a diagnostic for protected server logs or agent tool feedback. Public user-facing errors must stay generic and must not carry this
+     * text.
      *
      * @param diagnostic raw build or exception output
      * @return bounded diagnostic text safe for protected logs
@@ -404,7 +407,9 @@ public class DifferentialVerificationService {
         if (redacted.length() <= MAX_READINESS_DIAGNOSTIC_CHARS) {
             return redacted;
         }
-        return redacted.substring(0, MAX_READINESS_DIAGNOSTIC_CHARS) + " ... [truncated]";
+        String marker = "\n... [truncated] ...\n";
+        int tailChars = MAX_READINESS_DIAGNOSTIC_CHARS - READINESS_DIAGNOSTIC_HEAD_CHARS - marker.length();
+        return redacted.substring(0, READINESS_DIAGNOSTIC_HEAD_CHARS) + marker + redacted.substring(redacted.length() - tailChars);
     }
 
     private static boolean readinessNameMatches(String actual, String expected) {
@@ -602,7 +607,12 @@ public class DifferentialVerificationService {
             throw new VerificationInfrastructureException(
                     "The verifier could not retrieve the " + assignmentName + " reports archive; build process: " + boundedReadinessDiagnostic(run.combinedOutput()), e);
         }
-        return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode()), run);
+        return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode(), boundedBuildDiagnostic(run.combinedOutput())), run);
+    }
+
+    /** Build scripts put compiler failures at the end; keep that actionable tail while applying the same credential redaction as protected readiness logs. */
+    private static String boundedBuildDiagnostic(@Nullable String diagnostic) {
+        return boundedReadinessDiagnostic(diagnostic);
     }
 
     private record PristineBuildExecution(BuildSummary summary, SandboxExecResultDTO process) {

@@ -410,7 +410,8 @@ public class StagedGenerationRunner {
                         case STATEMENT -> sourceBrief;
                         default -> briefPrompt;
                     };
-                    String userPrompt = buildStagePrompt(stage, stageBriefPrompt, sandbox, sessionId, continuous && conversation != null, gateFeedback);
+                    String userPrompt = buildStagePrompt(stage, stageBriefPrompt, sandbox, sessionId, continuous && conversation != null, baseTools.seededStructuralTestNames(),
+                            gateFeedback);
                     if (continuous) {
                         AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, conversation, userPrompt, tools, allocation, cancelled, usageSink,
                                 progress);
@@ -801,7 +802,7 @@ public class StagedGenerationRunner {
      * @param retryFeedback the previous failed attempt's gate report, folded into a fresh retry prompt
      */
     private String buildStagePrompt(GenerationStage stage, String briefPrompt, InteractiveSandbox sandbox, String sessionId, boolean carriesConversation,
-            @Nullable String retryFeedback) {
+            Set<String> seededStructuralTestNames, @Nullable String retryFeedback) {
         StringBuilder prompt = new StringBuilder(briefPrompt);
         if (carriesConversation) {
             prompt.append("\n\nContinue this session for the ").append(stage.displayName())
@@ -824,7 +825,7 @@ public class StagedGenerationRunner {
             }
         }
         if (stage == GenerationStage.STATEMENT) {
-            String handoff = statementHandoff(sandbox, sessionId);
+            String handoff = statementHandoff(sandbox, sessionId, seededStructuralTestNames);
             if (!handoff.isBlank()) {
                 prompt.append("\n\n").append(handoff);
             }
@@ -836,10 +837,10 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Projects the accepted grading plan into the only facts statement authoring needs. Raw build output and TESTS-stage instructions are deliberately excluded: they are
-     * debugging context, not student-facing contract evidence.
+     * Projects the accepted grading plan and server-authored structural oracle into the only facts statement authoring needs. Raw build output and TESTS-stage instructions are
+     * deliberately excluded: they are debugging context, not student-facing contract evidence.
      */
-    private String statementHandoff(InteractiveSandbox sandbox, String sessionId) {
+    private String statementHandoff(InteractiveSandbox sandbox, String sessionId, Set<String> seededStructuralTestNames) {
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
         if (planJson.isBlank()) {
             return "";
@@ -854,9 +855,17 @@ public class StagedGenerationRunner {
                     .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
                             Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toUnmodifiableList())))
                     .forEach((seam, names) -> handoff.append("- ").append(seam).append(": ").append(String.join(", ", names)).append("\n"));
+            if (!seededStructuralTestNames.isEmpty()) {
+                handoff.append("Server-seeded structural checks grouped by owner type (all are visible and must also be bound exactly once):\n");
+                structuralTestsByOwner(seededStructuralTestNames)
+                        .forEach((owner, names) -> handoff.append("- ").append(owner).append(": ").append(String.join(", ", names)).append("\n"));
+                handoff.append("Add each structural name to the existing task whose work creates or declares that owner type/API; do not create one task per structural check. "
+                        + "If several behavioral seams share the owner, attach the checks to the task that introduces the type/API and never duplicate them. These checks may "
+                        + "carry zero score when behavioral evidence exists, but they are still visible Artemis progress checks for required student-created structure.\n");
+            }
             if (!plan.hiddenEntries().isEmpty()) {
-                handoff.append(plan.hiddenEntries().size())
-                        .append(" hidden test(s) are intentionally omitted from this handoff. Bind only the visible names above; do not inspect or reveal hidden names.\n");
+                handoff.append(plan.hiddenEntries().size()).append(
+                        " hidden behavioral test(s) are intentionally omitted from this handoff. Bind only the visible names above; do not inspect or reveal hidden names.\n");
             }
             handoff.append("Write the complete student-facing artifact with write_file(\"problem-statement.md\", ...). A prose chat response does not create the artifact.\n")
                     .append("=== END ACCEPTED STATEMENT HANDOFF ===");
@@ -866,6 +875,18 @@ public class StagedGenerationRunner {
             log.warn("Could not project the accepted test plan into the statement handoff for session {}: {}", sessionId, e.getMessage());
             return "";
         }
+    }
+
+    /** Groups authoritative Ares names by the type inside their brackets while retaining every name even if a future provider uses another shape. */
+    private static Map<String, List<String>> structuralTestsByOwner(Set<String> seededStructuralTestNames) {
+        Map<String, List<String>> grouped = new LinkedHashMap<>();
+        seededStructuralTestNames.stream().sorted().forEach(name -> {
+            int openBracket = name.indexOf('[');
+            int closeBracket = name.lastIndexOf(']');
+            String owner = openBracket >= 0 && closeBracket > openBracket + 1 ? name.substring(openBracket + 1, closeBracket) : "Other structural checks";
+            grouped.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(name);
+        });
+        return grouped;
     }
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {

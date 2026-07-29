@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,6 +80,11 @@ public class StructuralOracleSeedingService {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
+    /**
+     * Immutable per-session grading contracts. A refresh repairs deleted server-owned files; it must never reinterpret the agent's latest solution as a new contract.
+     */
+    private final Map<String, FrozenOracle> frozenOracles = new ConcurrentHashMap<>();
+
     @Autowired
     public StructuralOracleSeedingService(GenerationWorkspaceService workspace, TempFileUtilService tempFileUtilService, ApprovedSpecRegistry approvedSpecs) {
         this.workspace = workspace;
@@ -117,7 +123,8 @@ public class StructuralOracleSeedingService {
             if (solutionFiles.isEmpty() || templateFiles.isEmpty()) {
                 return Set.of();
             }
-            String packageName = parsePackage(solutionFiles);
+            FrozenOracle frozenOracle = sessionId == null ? null : frozenOracles.get(sessionId);
+            String packageName = frozenOracle == null ? parsePackage(solutionFiles) : frozenOracle.packageName();
             String testDirectory = locateStructuralAssetDirectory(testFiles);
             if (testDirectory == null) {
                 testDirectory = locateTestSourceDirectory(testFiles);
@@ -136,10 +143,21 @@ public class StructuralOracleSeedingService {
                         + "grading harness while materializing approved student-created types " + expectedStudentCreatedTypes);
             }
 
-            solutionDir = materialize(solutionFiles, "hyperion-oracle-solution-");
-            templateDir = materialize(templateFiles, "hyperion-oracle-template-");
-            String oracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles,
-                    expectedStudentCreatedTypes, approvedSpecification.isPresent());
+            String oracle;
+            if (frozenOracle != null) {
+                oracle = frozenOracle.oracle();
+            }
+            else {
+                solutionDir = materialize(solutionFiles, "hyperion-oracle-solution-");
+                templateDir = materialize(templateFiles, "hyperion-oracle-template-");
+                String generatedOracle = filterOracleToCreatedPublicApi(OracleGenerator.generateStructureOracleJSON(solutionDir, templateDir), templateFiles, solutionFiles,
+                        expectedStudentCreatedTypes, approvedSpecification.isPresent());
+                FrozenOracle newlyFrozen = approvedSpecification.isPresent()
+                        ? freezeApprovedOracle(sessionId, generatedOracle, approvedSpecification.get(), expectedStudentCreatedTypes, packageName)
+                        : freezeFirstOracle(sessionId, generatedOracle, packageName);
+                oracle = newlyFrozen.oracle();
+                packageName = newlyFrozen.packageName();
+            }
 
             if (isStructurallyEmpty(oracle)) {
                 if (!expectedStudentCreatedTypes.isEmpty()) {
@@ -184,6 +202,38 @@ public class StructuralOracleSeedingService {
             deleteQuietly(solutionDir);
             deleteQuietly(templateDir);
         }
+    }
+
+    /**
+     * Drops the immutable oracle when its sandbox session ends.
+     *
+     * @param sessionId the finished sandbox session
+     */
+    public void forget(String sessionId) {
+        if (sessionId != null) {
+            frozenOracles.remove(sessionId);
+        }
+    }
+
+    private FrozenOracle freezeApprovedOracle(String sessionId, String generatedOracle, String approvedSpecification, Set<String> expectedStudentCreatedTypes, String packageName) {
+        try {
+            String approvedOracle = ApprovedStructuralOracle.project(generatedOracle, approvedSpecification, expectedStudentCreatedTypes, MAPPER);
+            return freezeFirstOracle(sessionId, approvedOracle, packageName);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("The approved Public API could not be converted into a structural grading contract: " + e.getMessage(), e);
+        }
+    }
+
+    private FrozenOracle freezeFirstOracle(String sessionId, String oracle, String packageName) {
+        FrozenOracle candidate = new FrozenOracle(oracle, packageName);
+        if (sessionId == null || isStructurallyEmpty(oracle)) {
+            return candidate;
+        }
+        return frozenOracles.computeIfAbsent(sessionId, ignored -> candidate);
+    }
+
+    private record FrozenOracle(String oracle, String packageName) {
     }
 
     /**

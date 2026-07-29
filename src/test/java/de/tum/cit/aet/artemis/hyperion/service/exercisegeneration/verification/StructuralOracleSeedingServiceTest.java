@@ -114,6 +114,65 @@ class StructuralOracleSeedingServiceTest {
         assertThat(seededNames).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]");
     }
 
+    @Test
+    void approvedPublicApiIsFrozen_andInventedOverloadsNeverBecomeStructuralRequirements() throws Exception {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        Map<String, String> firstSolution = Map.of("src/lift/DispatchStrategy.java", "package lift; public interface DispatchStrategy {}", "src/lift/ElevatorDispatcher.java", """
+                package lift;
+                import java.util.ArrayList;
+                import java.util.List;
+                public class ElevatorDispatcher {
+                    public ElevatorDispatcher(List<String> elevators, DispatchStrategy strategy) {}
+                    public ElevatorDispatcher(ArrayList<String> elevators, DispatchStrategy strategy) {}
+                    public String dispatchCall(int floor) { return ""; }
+                    public String dispatchCall(String floor) { return ""; }
+                }
+                """);
+        Map<String, String> laterSolution = Map.of("src/lift/DispatchStrategy.java", "package lift; public interface DispatchStrategy {}", "src/lift/ElevatorDispatcher.java", """
+                package lift;
+                import java.util.Collection;
+                import java.util.List;
+                public class ElevatorDispatcher {
+                    public ElevatorDispatcher(List<String> elevators, DispatchStrategy strategy) {}
+                    public ElevatorDispatcher(Collection<String> elevators, DispatchStrategy strategy) {}
+                    public String dispatchCall(int floor) { return ""; }
+                    public String dispatchCall(long floor) { return ""; }
+                }
+                """);
+        Map<String, String> template = Map.of("src/lift/DispatchStrategy.java", "package lift; public interface DispatchStrategy {}");
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | ElevatorDispatcher | dispatcher | student-creates |
+
+                ## Public API
+                ### ElevatorDispatcher
+                - `public ElevatorDispatcher(List<String> elevators, DispatchStrategy strategy)`
+                - `public String dispatchCall(int floor)`
+
+                ## Testing Strategy
+                """);
+        GenerationWorkspaceService workspace = mock(GenerationWorkspaceService.class);
+        when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.SOLUTION)).thenReturn(firstSolution, laterSolution);
+        when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.TEMPLATE)).thenReturn(template);
+        when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryType.TESTS)).thenReturn(Map.of());
+        StructuralOracleSeedingService seeder = new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir), approvedSpecs);
+
+        Set<String> firstNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+        Set<String> laterNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox, org.mockito.Mockito.times(2)).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
+        String firstOracle = readTar(tarCaptor.getAllValues().get(0)).get("tests/test/lift/test.json");
+        String laterOracle = readTar(tarCaptor.getAllValues().get(1)).get("tests/test/lift/test.json");
+        assertThat(firstOracle).isEqualTo(laterOracle).contains("\"List\"", "\"DispatchStrategy\"", "\"int\"").doesNotContain("ArrayList", "Collection", "\"long\"",
+                "\"parameters\" : [ \"String\" ]");
+        assertThat(firstNames).isEqualTo(laterNames).containsExactlyInAnyOrder("testClass[ElevatorDispatcher]", "testMethods[ElevatorDispatcher]",
+                "testConstructors[ElevatorDispatcher]");
+    }
+
     /** A minimal Ares-compliant Maven pom, matching what the harness-convention gate demands, so the composed test isolates the timeout/annotation check under test. */
     private static final String ARES_POM = """
             <project>

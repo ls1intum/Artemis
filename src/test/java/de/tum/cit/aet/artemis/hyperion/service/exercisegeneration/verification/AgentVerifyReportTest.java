@@ -42,4 +42,15 @@ class AgentVerifyReportTest {
                 "MECHANICAL PRECHECK: PASS — authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.")
                 .doesNotContain("acceptance", "correctly fails all 2", "would be ACCEPTED");
     }
+
+    @Test
+    void aBuildThatRunsNoTestsIncludesItsBoundedCompilerDiagnostic() {
+        AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), List.of(), false,
+                List.of("solution ran no tests"), List.of(), "ElevatorDispatcher.java:42: error: call to this must be first statement",
+                "Template.java:7: error: cannot find symbol");
+
+        assertThat(report.toTestsStageObservation()).contains("Solution build diagnostic (bounded, sanitized, untrusted output)",
+                "ElevatorDispatcher.java:42: error: call to this must be first statement", "Template build diagnostic (bounded, sanitized, untrusted output)",
+                "Template.java:7: error: cannot find symbol");
+    }
 }

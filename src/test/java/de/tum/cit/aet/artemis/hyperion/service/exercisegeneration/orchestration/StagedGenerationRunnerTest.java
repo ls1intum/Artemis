@@ -283,6 +283,27 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void statementHandoffIncludesEveryAuthoritativeStructuralCheckGroupedByOwner() {
+        Set<String> structuralChecks = Set.of("testMethods[Calculator]", "testClass[Calculator]", "testConstructors[Calculator]");
+        when(baseTools.seededStructuralTestNames()).thenReturn(structuralChecks);
+        sandbox.problemStatement = "# Title\n\n[task][Create the calculator](testFoo,testClass[Calculator],testConstructors[Calculator],testMethods[Calculator])\n"
+                + "Create the calculator type and implement its operation.";
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), eq(structuralChecks)))
+                .thenReturn(passingReport("testFoo", "testClass[Calculator]", "testConstructors[Calculator]", "testMethods[Calculator]"));
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> structuralChecks);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().get(2)).contains("Server-seeded structural checks grouped by owner type", "all are visible and must also be bound exactly once",
+                "Calculator: testClass[Calculator], testConstructors[Calculator], testMethods[Calculator]", "task whose work creates or declares that owner type/API",
+                "never duplicate them");
+    }
+
+    @Test
     void specificationHasOneSharedThreeRefinementBudget() {
         sandbox.specMarkdown = "# incomplete";
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "invalid"));

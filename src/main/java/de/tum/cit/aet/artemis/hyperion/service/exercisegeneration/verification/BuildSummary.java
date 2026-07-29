@@ -27,13 +27,18 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
  * @param testFailedNames distinct names of cases that failed or errored; empty if none collected
  * @param failureEvidence bounded, sanitized names and first useful failure messages for agent feedback
  * @param scaFindings     SCA findings (tool plus the category {@link ReportParser} derives); empty unless SCA reports were collected
+ * @param buildDiagnostic bounded, credential-redacted process output, used only when the build ran no tests
  */
 record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
-        List<AgentVerifyReport.TestFailureEvidence> failureEvidence, List<ScaPenaltyParity.ScaFinding> scaFindings) {
+        List<AgentVerifyReport.TestFailureEvidence> failureEvidence, List<ScaPenaltyParity.ScaFinding> scaFindings, String buildDiagnostic) {
 
     private static final Logger log = LoggerFactory.getLogger(BuildSummary.class);
 
     static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
+        return fromReports(reports, exitCode, "");
+    }
+
+    static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode, String buildDiagnostic) {
         List<LocalCITestJobDTO> failed = new ArrayList<>();
         List<LocalCITestJobDTO> successful = new ArrayList<>();
         List<ScaPenaltyParity.ScaFinding> scaFindings = new ArrayList<>();
@@ -62,7 +67,8 @@ record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, Lis
         });
         successful.forEach(job -> testNames.add(job.name()));
         int tests = failed.size() + successful.size();
-        return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(failureEvidence), List.copyOf(scaFindings));
+        return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(failureEvidence), List.copyOf(scaFindings),
+                buildDiagnostic);
     }
 
     private static void parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {

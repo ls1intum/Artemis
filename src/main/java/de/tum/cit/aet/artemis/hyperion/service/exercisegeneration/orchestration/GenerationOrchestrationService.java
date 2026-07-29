@@ -619,6 +619,7 @@ public class GenerationOrchestrationService {
     }
 
     void destroyQuietly(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+        structuralOracleSeeder.forget(sessionId);
         approvedSpecs.forget(sessionId);
         if (sandbox != null && sessionId != null) {
             try {
