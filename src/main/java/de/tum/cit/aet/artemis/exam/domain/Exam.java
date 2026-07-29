@@ -82,6 +82,13 @@ public class Exam extends DomainObject {
     private ZonedDateTime examStudentReviewEnd;
 
     /**
+     * The date from which students can see the summary (submission overview) of their submitted exam.
+     * If null, the summary is available immediately after submission (default behavior).
+     */
+    @Column(name = "exam_summary_publication_date")
+    private ZonedDateTime examSummaryPublicationDate;
+
+    /**
      * The duration in which the students can do final submissions before the exam ends in seconds
      */
     @Column(name = "grace_period", columnDefinition = "integer default 180")
@@ -254,6 +261,14 @@ public class Exam extends DomainObject {
 
     public void setExamStudentReviewEnd(ZonedDateTime examStudentReviewEnd) {
         this.examStudentReviewEnd = examStudentReviewEnd;
+    }
+
+    public ZonedDateTime getExamSummaryPublicationDate() {
+        return examSummaryPublicationDate;
+    }
+
+    public void setExamSummaryPublicationDate(ZonedDateTime examSummaryPublicationDate) {
+        this.examSummaryPublicationDate = examSummaryPublicationDate;
     }
 
     public Integer getGracePeriod() {
@@ -482,6 +497,23 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to students.
+     * <p>
+     * If no publication date is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once the publication
+     * date has passed. As a safeguard it is always available once the results are published, so a misconfigured date can never hide the overview after grades are out.
+     *
+     * @return true if the exam summary may be shown to students, false otherwise
+     */
+    @JsonIgnore
+    public boolean isExamSummaryPublished() {
+        // test exams are self-service practice with no shift concern; their summary is always available
+        if (isTestExam() || examSummaryPublicationDate == null) {
+            return true;
+        }
+        return examSummaryPublicationDate.isBefore(ZonedDateTime.now()) || resultsPublished();
     }
 
     /**

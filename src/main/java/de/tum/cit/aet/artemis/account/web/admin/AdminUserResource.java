@@ -302,6 +302,9 @@ public class AdminUserResource {
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * <p>
+     * For every user that is found, a non-null {@code isTestUser} value in the DTO is applied to that user, so test/QA accounts can be marked (or unmarked) via the user CSV
+     * import and excluded from usage statistics. When the field is omitted, the existing flag is left unchanged.
      *
      * @param userDtos the list of users (with at one unique user identifier) who should be imported to Artemis
      * @return the list of users who could not be imported, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
