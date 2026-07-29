@@ -310,6 +310,30 @@ class GenerationAttemptLoopTest {
                 uncovered);
     }
 
+    @Test
+    void blockingReviewStillExecutesAndDrainsAFalseOracleHypothesis() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | choose the nearest value |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/NearestTest.java", "class NearestTest {}"), false));
+        SpecFidelityReport.Finding weakOracle = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equal distances may choose the later value",
+                "the reviewer suspects the suite does not distinguish this behavior");
+        SpecFidelityReport.Finding scaffoldGap = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter documentation is incomplete",
+                "the TODO does not explain the contract");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new SpecFidelityReport(List.of(weakOracle, scaffoldGap)));
+        ContractWitness counterexample = new ContractWitness("R1", "keepsEarlierTie", "@Test void keepsEarlierTie() {}", "chooses the later equal-distance value");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Nearest.java", "class Nearest {}", "class Nearest { int later; }", counterexample, weakOracle);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(1, 0);
+        loop.run();
+
+        assertThat(loop.specFidelityReport().findings()).containsExactly(scaffoldGap);
+        verify(specFidelityCritic, never()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
+    }
+
     private static SpecFidelityReport report(SpecFidelityReport.Kind... kinds) {
         return new SpecFidelityReport(
                 List.of(kinds).stream().map(kind -> new SpecFidelityReport.Finding(kind, "requirement for " + kind.name(), "detail for " + kind.name())).toList());

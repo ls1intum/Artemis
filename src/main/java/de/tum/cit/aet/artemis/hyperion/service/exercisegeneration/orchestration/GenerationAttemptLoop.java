@@ -585,10 +585,11 @@ class GenerationAttemptLoop {
                             + "retained so the saved exercise remains NEEDS_REVIEW rather than silently treating the contract as fully approved.")));
             specFidelityReport = new SpecFidelityReport(List.copyOf(combined));
         }
-        // Skipped while anything still blocks: a repair round is coming that will rewrite the very artifacts a witness is derived from and validated against, so one authored
-        // now could stop passing before it is ever offered.
-        if (!specFidelityReport.hasBlockingFindings()) {
-            specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
+        boolean offerContractWitnesses = !specFidelityReport.hasBlockingFindings();
+        boolean checkOracleHypotheses = specFidelityReport.findings().stream()
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT);
+        if (offerContractWitnesses || checkOracleHypotheses) {
+            specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot, offerContractWitnesses);
         }
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
@@ -692,11 +693,13 @@ class GenerationAttemptLoop {
     /**
      * Adds independently proposed counterexamples only after the environment validates them. A semantic mutant becomes blocking evidence only when the ordinary suite accepts
      * it and an independently authored counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at
-     * the starter
-     * seam. An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
+     * the starter seam. Text-only oracle hypotheses are executed even when a separate blocker exists, so false coverage findings cannot consume a repair round merely because
+     * another artifact also needs work. Optional witnesses remain deferred until the candidate has no blockers because an imminent repair could invalidate them before adoption.
+     * An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
      * mechanically verified pre-review checkpoint instead of treating missing execution as evidence.
      */
-    private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+    private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot,
+            boolean offerContractWitnesses) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
             return report;
@@ -717,8 +720,10 @@ class GenerationAttemptLoop {
                     .map(SemanticMutantOutcome::mutant).toList();
             semanticMutantsAwaitingKill = validatedMutants;
 
-            List<ContractWitness> candidates = specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles),
-                    renderArtifactSources(solutionFiles), usageSink, cancelled);
+            List<ContractWitness> candidates = offerContractWitnesses
+                    ? specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles), renderArtifactSources(solutionFiles), usageSink,
+                            cancelled)
+                    : List.of();
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
             List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate).stream()
                     .filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
