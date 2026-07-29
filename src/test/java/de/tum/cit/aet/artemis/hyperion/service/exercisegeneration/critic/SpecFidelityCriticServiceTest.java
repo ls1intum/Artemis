@@ -100,6 +100,13 @@ class SpecFidelityCriticServiceTest {
     }
 
     private static ChatResponse rawResponse(String body) {
+        if (body.startsWith("{") && body.contains("\"learningFit\"") && !body.contains("\"boundaryChecks\"")) {
+            body = "{\"boundaryChecks\":[]," + body.substring(1);
+        }
+        return exactRawResponse(body);
+    }
+
+    private static ChatResponse exactRawResponse(String body) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(body))));
     }
 
@@ -328,7 +335,7 @@ class SpecFidelityCriticServiceTest {
                          "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the public operation and its boundary behavior.",
                          "remainingStudentReasoning":"Students must preserve the operation boundary while implementing the behavior.","domainGrounding":"The boundary is explicitly required by the domain brief.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
                          "omissions":[],"conflicts":[],"internalConflicts":[],
-                         "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"Construction rejects the boundary input before a call can occur.","observedOperation":"call()","reachable":false,"timingPreserved":false,"reason":"The specification moves the required call-time outcome to construction."}],
+                         "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"Attempt to construct an empty queue and then invoke call().","observedOperation":"call()","reachable":false,"timingPreserved":false,"reason":"The specification moves the required call-time outcome to construction."}],
                          "exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
 
@@ -338,6 +345,24 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.findings()).singleElement().asString().contains("Boundary reachability conflict", "call()", "moves the required call-time outcome");
+    }
+
+    @Test
+    void specificationReviewCorrectsAMissingBoundaryInventory() {
+        String verdict = """
+                {"learningFit":{"briefEvidenceIds":["B1"],
+                 "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the requested public operation.",
+                 "remainingStudentReasoning":"Students implement the operation and its observable behavior.","domainGrounding":"The brief directly motivates the operation.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                """;
+        ScriptedCritic scripted = criticScripted(exactRawResponse(verdict), rawResponse(verdict));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Process one value.", "R1: process returns that value.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("One or more mandatory finding arrays were missing");
     }
 
     @Test

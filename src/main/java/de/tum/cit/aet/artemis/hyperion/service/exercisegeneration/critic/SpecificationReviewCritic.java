@@ -38,7 +38,8 @@ class SpecificationReviewCritic {
     private static final String SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/specification_review_system.st";
 
     /**
-     * Sized for the declared response shape: six finding arrays (omissions, conflicts, internal conflicts, example checks, ambiguities, unsupported constraints), each entry
+     * Sized for the declared response shape: seven finding arrays (omissions, conflicts, internal conflicts, boundary checks, example checks, ambiguities, unsupported
+     * constraints), each entry
      * carrying evidence IDs and one short reason, plus the learning-fit object (five ID lists, three prose fields, five booleans, one direction) and the concept-alignment
      * object. Findings are capped at {@link #SPECIFICATION_REVIEW_MAX_FINDINGS} anyway, so a full critic-sized budget would buy length rather than evidence — but the cap covers
      * hidden reasoning too, and a response cut off by it is unparseable and costs the correction pass below.
@@ -237,10 +238,10 @@ class SpecificationReviewCritic {
             return incompleteSpecificationReview("The response was empty or was not valid JSON in the required object shape.");
         }
         if (parsed.omissions() == null || parsed.conflicts() == null || parsed.internalConflicts() == null || parsed.ambiguities() == null
-                || parsed.unsupportedConstraints() == null) {
+                || parsed.unsupportedConstraints() == null || parsed.boundaryChecks() == null) {
             return incompleteSpecificationReview("One or more mandatory finding arrays were missing.");
         }
-        String boundaryValidationError = boundaryValidationError(parsed.boundaryChecks() == null ? List.of() : parsed.boundaryChecks(), evidence);
+        String boundaryValidationError = boundaryValidationError(parsed.boundaryChecks(), evidence);
         if (boundaryValidationError != null) {
             return incompleteSpecificationReview("boundaryChecks validation failed: " + boundaryValidationError);
         }
@@ -276,6 +277,16 @@ class SpecificationReviewCritic {
             findings.add("Concept viability — brief says \"" + truncate(evidence.brief().resolve(alignment.briefEvidenceIds())) + "\"; selected concept says \""
                     + truncate(evidence.concept().resolve(alignment.conceptEvidenceIds())) + "\": " + truncateLearningEvidence(alignment.reason().strip())
                     + " Repair: return to reviewed concept selection; do not try to rescue an unviable central interaction by adding unrelated types, validations, or edge cases.");
+        }
+        for (BoundaryReachabilityCheck check : parsed.boundaryChecks()) {
+            if (Boolean.FALSE.equals(check.reachable()) || Boolean.FALSE.equals(check.timingPreserved())) {
+                String verdict = Boolean.FALSE.equals(check.reachable()) ? "the required outcome is unreachable" : "the required trigger timing is not preserved";
+                findings.add("Boundary reachability conflict — brief says \"" + truncate(evidence.brief().resolve(check.briefEvidenceIds())) + "\" but SPEC says \""
+                        + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\": attempted public setup \""
+                        + truncateLearningEvidence(check.publicSetup().strip()) + "\" targets \"" + truncateLearningEvidence(check.observedOperation().strip()) + "\"; " + verdict
+                        + " because " + truncate(check.reason().strip())
+                        + " Repair: preserve the required operation and trigger timing, with a legal public setup that reaches the promised outcome.");
+            }
         }
         for (SpecificationExampleCheckItem item : parsed.exampleChecks() == null ? List.<SpecificationExampleCheckItem>of() : parsed.exampleChecks()) {
             if (item == null || !Boolean.FALSE.equals(item.consistent()) || item.replayedOutcome() == null || item.replayedOutcome().isBlank() || item.reason() == null
@@ -322,14 +333,6 @@ class SpecificationReviewCritic {
             }
             findings.add("Unsupported constraint — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip())
                     + " Repair: remove or relax only the cited unsupported obligation while preserving requested behavior.");
-        }
-        for (BoundaryReachabilityCheck check : parsed.boundaryChecks() == null ? List.<BoundaryReachabilityCheck>of() : parsed.boundaryChecks()) {
-            if (Boolean.FALSE.equals(check.reachable()) || Boolean.FALSE.equals(check.timingPreserved())) {
-                findings.add("Boundary reachability conflict — brief says \"" + truncate(evidence.brief().resolve(check.briefEvidenceIds())) + "\" but SPEC says \""
-                        + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\": public setup \"" + truncateLearningEvidence(check.publicSetup().strip())
-                        + "\" reaches \"" + truncateLearningEvidence(check.observedOperation().strip()) + "\", and " + truncate(check.reason().strip())
-                        + " Repair: preserve the required operation and trigger timing, with a legal public setup that reaches the promised outcome.");
-            }
         }
         boolean coherentRewriteRequired = !learningFit.sufficient() || conceptDisposition == SpecificationConceptDisposition.SPEC_REPAIR;
         List<String> distinctFindings = findings.stream().distinct().toList();
