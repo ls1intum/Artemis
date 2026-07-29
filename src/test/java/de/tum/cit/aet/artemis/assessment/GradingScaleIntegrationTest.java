@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
@@ -87,10 +89,14 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     private GradingScaleUpdateDTO toDTO(GradingScale gradingScale, Integer coursePresentationScore) {
+        return toDTO(gradingScale, coursePresentationScore, null, null);
+    }
+
+    private GradingScaleUpdateDTO toDTO(GradingScale gradingScale, Integer coursePresentationScore, Integer courseMaxPoints, Integer examMaxPoints) {
         Set<GradingScaleUpdateDTO.GradeStepDTO> gradeStepDTOs = gradingScale.getGradeSteps().stream().map(gs -> new GradingScaleUpdateDTO.GradeStepDTO(gs.getLowerBoundPercentage(),
                 gs.isLowerBoundInclusive(), gs.getUpperBoundPercentage(), gs.isUpperBoundInclusive(), gs.getGradeName(), gs.getIsPassingGrade())).collect(Collectors.toSet());
         return new GradingScaleUpdateDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
-                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs, null, coursePresentationScore, null);
+                gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight(), gradeStepDTOs, courseMaxPoints, coursePresentationScore, examMaxPoints);
     }
 
     /**
@@ -341,6 +347,217 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
                 .isEqualTo(expectedDto);
+    }
+
+    /**
+     * A course max points value above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 10000, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsCoursePresentationScoreAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 10000), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A presentations number above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsPresentationsNumberAboveLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPresentationsNumber(10000);
+        courseGradingScale.setPresentationsWeight(50.0);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, course.getPresentationScore()), HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * An exam max points value above the allowed limit must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 10000);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score of 0 is valid (it disables the feature) and must stay accepted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseAllowsCoursePresentationScoreZero() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.CREATED);
+    }
+
+    /**
+     * A course max points value exactly at the allowed limit must be accepted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseAcceptsCourseMaxPointsAtLimit() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 9999, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * An exam max points value exactly at the allowed limit must be accepted through the grading scale path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForExamAcceptsExamMaxPointsAtLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 9999);
+        request.post("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.CREATED);
+    }
+
+    /**
+     * A negative course max points value must be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsNegativeCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), -1, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course max points value above the allowed limit must also be rejected on the update path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 10000, null);
+        request.put("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * An exam max points value above the allowed limit must also be rejected on the update path, which otherwise
+     * writes the value directly to the exam and bypasses the numeric limit check in ExamResource.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
+        exam.setExamMaxPoints(null);
+        examRepository.save(exam);
+        gradingScaleRepository.save(examGradingScale);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(examGradingScale, null, null, 10000);
+        request.put("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course max points value of 0 must be rejected, because the lower bound is now 1 (0 points is not a meaningful
+     * grading configuration and would divide by zero in downstream score calculations).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsCourseMaxPointsZero() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        GradingScaleUpdateDTO dto = toDTO(courseGradingScale, course.getPresentationScore(), 0, null);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", dto, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A course presentation score exactly at the new limit (100) must be accepted, one above it (101) rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseHandlesCoursePresentationScoreBoundary() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 101), HttpStatus.BAD_REQUEST);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 100), HttpStatus.CREATED);
+    }
+
+    /**
+     * A presentations number exactly at the new limit (100) must be accepted, one above it (101) rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseHandlesPresentationsNumberBoundary() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPresentationsWeight(50.0);
+
+        // Graded presentations require basic presentations (course presentation score) to be disabled, so pass 0.
+        courseGradingScale.setPresentationsNumber(101);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.BAD_REQUEST);
+
+        courseGradingScale.setPresentationsNumber(100);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", toDTO(courseGradingScale, 0), HttpStatus.CREATED);
+    }
+
+    /**
+     * A fractional JSON number for an integer point field must be rejected instead of being silently truncated.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsDecimalCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        ObjectNode body = request.getObjectMapper().valueToTree(toDTO(courseGradingScale, course.getPresentationScore(), 10, null));
+        body.put("courseMaxPoints", 10.5);
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", body, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * A decimal value passed as a JSON string for an integer point field must also be rejected.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleForCourseRejectsDecimalStringCourseMaxPoints() throws Exception {
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+
+        ObjectNode body = request.getObjectMapper().valueToTree(toDTO(courseGradingScale, course.getPresentationScore(), 10, null));
+        body.put("courseMaxPoints", "10.5");
+        request.post("/api/assessment/courses/" + course.getId() + "/grading-scale", body, HttpStatus.BAD_REQUEST);
     }
 
     /**
