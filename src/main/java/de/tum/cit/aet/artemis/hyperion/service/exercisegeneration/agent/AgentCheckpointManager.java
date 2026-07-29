@@ -38,6 +38,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -131,7 +132,16 @@ public class AgentCheckpointManager {
     }
 
     String providerContract(@Nullable ChatModel chatModel, int contextWindowTokens) {
-        return enabled() && chatModel != null ? chatModel.getClass().getName() + "\ncontextWindow=" + contextWindowTokens + "\noptions=" + chatModel.getOptions() : "";
+        if (!enabled() || chatModel == null) {
+            return "";
+        }
+        try {
+            ObjectMapper canonicalMapper = objectMapper.copy().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+            return chatModel.getClass().getName() + "\ncontextWindow=" + contextWindowTokens + "\noptions=" + canonicalMapper.writeValueAsString(chatModel.getOptions());
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("The configured provider options cannot be fingerprinted safely for checkpointing.", e);
+        }
     }
 
     String toolContract(ToolCallback[] callbacks) {

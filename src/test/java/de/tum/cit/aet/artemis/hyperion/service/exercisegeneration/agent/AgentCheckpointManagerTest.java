@@ -30,6 +30,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,6 +46,21 @@ class AgentCheckpointManagerTest {
 
     @TempDir
     private Path tempDirectory;
+
+    @Test
+    void providerContractSerializesOptionValuesWithoutObjectIdentity() {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        AgentCheckpointManager manager = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
+        ChatModel first = mock(ChatModel.class);
+        ChatModel second = mock(ChatModel.class);
+        when(first.getOptions()).thenReturn(OpenAiChatOptions.builder().model("gpt-test").temperature(1.0).build());
+        when(second.getOptions()).thenReturn(OpenAiChatOptions.builder().model("gpt-test").temperature(1.0).build());
+
+        String firstContract = manager.providerContract(first, 128_000);
+        String secondContract = manager.providerContract(second, 128_000);
+
+        assertThat(firstContract).isEqualTo(secondContract).contains("\"model\":\"gpt-test\"").doesNotContainPattern("@[0-9a-f]+");
+    }
 
     @Test
     void replayRestoresTheCommittedPostTurnWithoutExecutingTheTurnAgain() throws IOException {

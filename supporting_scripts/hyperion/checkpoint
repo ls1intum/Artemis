@@ -329,6 +329,31 @@ def run_scenario(
     (output / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     for repeat in range(1, repeats + 1):
         env = load_local_env()
+        local_defaults = {
+            "SPRING_PROFILES_ACTIVE": "artemis,scheduling,localvc,localci,buildagent,core,dev",
+            "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5432/Artemis?sslmode=disable",
+            "SPRING_DATASOURCE_USERNAME": "Artemis",
+            "SPRING_DATASOURCE_PASSWORD": "",
+            "SPRING_LIQUIBASE_CONTEXTS": "dev,e2e",
+            "ARTEMIS_BCRYPTSALTROUNDS": "4",
+            "ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME": "artemis_admin",
+            "ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD": "artemis_admin",
+            "ARTEMIS_USERMANAGEMENT_USEEXTERNAL": "false",
+            "ARTEMIS_VERSIONCONTROL_URL": "http://localhost:8080",
+            "ARTEMIS_VERSIONCONTROL_USER": "artemis_admin",
+            "ARTEMIS_VERSIONCONTROL_PASSWORD": "artemis_admin",
+            "ARTEMIS_CONTINUOUSINTEGRATION_ARTEMISAUTHENTICATIONTOKENVALUE": "demo",
+            "ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI": "unix:///var/run/docker.sock",
+            "ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS": "1",
+            "ARTEMIS_HYPERION_ENABLED": "true",
+            "ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED": "true",
+            # Checkpoint experiments intentionally revisit the same local instructor and course; production admission limits are not meaningful for this isolated dev stack.
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSPERUSER": "0",
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSPERCOURSE": "0",
+            "ARTEMIS_HYPERION_AGENT_ADMISSIONMAXTOKENSGLOBAL": "0",
+        }
+        for key, value in local_defaults.items():
+            env.setdefault(key, value)
         env.update(
             {
                 "ARTEMIS_HYPERION_AGENT_CHECKPOINT_DIR": str(output),
