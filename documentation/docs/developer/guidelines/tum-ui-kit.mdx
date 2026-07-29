@@ -121,11 +121,11 @@ From the repository root:
 
 `pnpm start` performs the initial package build and serves Artemis. Its serve-only TypeScript
 configuration resolves the package's public entry point from source so Angular HMR covers
-application and package components. The default TypeScript path and non-serve application builds
-resolve the compiled artifact instead. The package stylesheet watcher writes only when generated CSS
-changes, keeping template-only edits eligible for component HMR. Restart `pnpm start` after changing
-the package manifest or build configuration. Package validation writes to `dist/tum-ui-pack`, so it
-cannot replace the artifact used by other commands.
+application and package component templates and styles. The default TypeScript path and non-serve
+application builds resolve the compiled artifact instead. The package stylesheet watcher writes only
+when generated CSS changes, so template-only edits remain component HMR updates. Restart `pnpm start`
+after changing the package manifest or build configuration. Package validation writes to
+`dist/tum-ui-pack`, so it cannot replace the artifact used by other commands.
 
 Before submitting a package change, run:
 
