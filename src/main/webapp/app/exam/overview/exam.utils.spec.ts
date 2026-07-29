@@ -88,7 +88,7 @@ describe('ExamUtils', () => {
         });
 
         it('should always be true for test exams regardless of the summary publication date', () => {
-            const exam = { testExam: true, examSummaryPublicationDate: dayjs().add(5, 'days') } as Exam;
+            const exam = { examMode: ExamMode.TEST, examSummaryPublicationDate: dayjs().add(5, 'days') } as Exam;
 
             expect(isExamSummaryPublished(false, exam, artemisServerDateService)).toBe(true);
         });

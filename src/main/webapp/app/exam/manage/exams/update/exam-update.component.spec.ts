@@ -267,6 +267,7 @@ describe('ExamUpdateComponent', () => {
             const newExam = new Exam();
             newExam.id = 3;
             component.exam = newExam;
+            component.examConductionValid.set(true);
 
             const now = dayjs();
             newExam.visibleDate = now.add(2, 'hours');
