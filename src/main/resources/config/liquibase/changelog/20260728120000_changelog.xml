@@ -100,7 +100,11 @@
     </changeSet>
 
     <!-- LLM cost-per-course sum: covering index so the SUM over the token/cost columns needs no row lookups.
-         The FK-backing index on (trace_id) is intentionally kept. -->
+         Because trace_id is the leftmost column, MySQL/InnoDB treats this index as the backing index of the
+         FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE foreign key and silently drops the previous single-column FK index. That is
+         harmless (the constraint stays enforced and covered), but it means this index cannot be dropped again on MySQL
+         without first recreating an index on (trace_id), otherwise the drop fails with ERROR 1553. PostgreSQL does not
+         fold FK indexes this way, so there both indexes remain. -->
     <changeSet id="20260728120000-09-create-idx-llm-token-usage-request-trace-cost" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
