@@ -1570,6 +1570,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam.setConfirmationStartText("I-confirm-start");
         exam.setConfirmationEndText("I-confirm-submit");
         exam.setExamMaxPoints(42);
+        // a delayed submission overview, so the summary-gate fields below are asserted against real values and not against null
+        ZonedDateTime summaryPublicationDate = ZonedDateTime.now().plusDays(1);
+        ZonedDateTime publishResultsDate = ZonedDateTime.now().plusDays(2);
+        exam.setExamSummaryPublicationDate(summaryPublicationDate);
+        exam.setPublishResultsDate(publishResultsDate);
         examRepository.save(exam);
 
         StudentExamForConductionDTO response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK,
@@ -1592,6 +1597,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(examDTO.confirmationStartText()).isEqualTo("I-confirm-start");
         assertThat(examDTO.confirmationEndText()).isEqualTo("I-confirm-submit");
         assertThat(examDTO.examMaxPoints()).isEqualTo(42);
+        // the client-side summary gate (isExamSummaryPublished) evaluates these two off this projection after a hand-in and
+        // treats a missing examSummaryPublicationDate as "published", so both have to survive the DTO conversion
+        assertThat(examDTO.examSummaryPublicationDate()).isNotNull();
+        assertThat(examDTO.examSummaryPublicationDate().toInstant()).isCloseTo(summaryPublicationDate.toInstant(), within(1, ChronoUnit.SECONDS));
+        assertThat(examDTO.publishResultsDate()).isNotNull();
+        assertThat(examDTO.publishResultsDate().toInstant()).isCloseTo(publishResultsDate.toInstant(), within(1, ChronoUnit.SECONDS));
         // exam-cover reads exam.course.id for the attendance-check / conduction links
         assertThat(examDTO.course()).isNotNull();
         assertThat(examDTO.course().id()).isEqualTo(course1.getId());
