@@ -493,15 +493,33 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         if (repositoryType != RepositoryType.TEMPLATE) {
             return buildGate.target() + " Current result: " + fullResult;
         }
+        // Score 0 with ZERO executed tests is not "almost there": the gate wants 0% WITH tests running, and a
+        // template that runs no test at all is nearly always broken (compile error, or a tests/build change that
+        // stopped discovering them). Without this branch the finding reads "Score: 0.0% (0/0 tests passed)"
+        // against a target demanding 0%, which invites the repair round to conclude nothing is wrong.
+        Integer testCaseCount = outcome.result() != null ? outcome.result().getTestCaseCount() : null;
+        if (testCaseCount != null && testCaseCount == 0) {
+            return "The template build executed NO tests at all (0 of 0). Scoring 0% this way does NOT satisfy the gate: the template must COMPILE and RUN the test suite, and "
+                    + "fail it on the student's missing work. Zero executed tests means the build broke — a compile error in the template or the test repository, or a build-file "
+                    + "or test-discovery change. Read the build logs below, fix the compile/build error, and leave the tests themselves alone. Current result: " + fullResult;
+        }
         List<String> unexpectedPasses = buildVerificationService.unexpectedlyPassingTestNames(outcome.result());
         if (unexpectedPasses.isEmpty()) {
             return buildGate.target() + " Current result: " + fullResult;
         }
         return buildGate.target() + " Every OTHER test failing in the template below is CORRECT and expected — the template intentionally has nothing implemented yet, so do "
                 + "NOT implement anything to make a failing test pass. The actual problem is the opposite: " + unexpectedPasses.size()
-                + " test(s) unexpectedly PASSED against the unimplemented template and must be prevented from passing (harden or simplify whatever accidentally satisfies "
-                + "them — e.g. make a stub throw instead of silently doing nothing — never add scaffolding to make other tests fail instead): "
-                + String.join(", ", unexpectedPasses) + ".\n\nFull result for reference:\n" + fullResult;
+                + " test(s) unexpectedly PASSED against the unimplemented template: " + String.join(", ", unexpectedPasses)
+                + ".\n\nFirst, what is NOT the fix: the classes the failing structural tests look for are SUPPOSED to be missing from the template — that is the student's work. Never "
+                + "create them, and never add stub classes so tests \"can run and fail\". Adding scaffolding to the template always makes this gate worse, never better.\n\n"
+                + "Both plausible causes are things the transformation ADDED — fix the cause, never the tests' subject matter:\n"
+                + "1. A student-owned class/file was created in TEMPLATE that the source template does not ship. Compare the TEMPLATE tree with the source template tree and "
+                + "delete what was added (deleteFiles).\n"
+                + "2. A class the template legitimately ships (a new given domain type) was added to the structure oracle or gained a structural test. Remove that oracle entry "
+                + "or test — the template implements the class, so such a test can only ever pass.\n"
+                + "Do NOT manufacture failure to force the score down: a throwing static initializer or constructor, an intentionally broken block, a stub that throws where the "
+                + "source's stub returned silently, or a name mismatch between template and solution are all rejected. The template must compile cleanly and fail only because "
+                + "the student's work is genuinely missing.\n\nFull result for reference:\n" + fullResult;
     }
 
     /**
@@ -514,9 +532,18 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     private void checkTestReferences(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
         List<String> unresolved = programmingExerciseTaskService.findUnresolvedTaskTestReferences(exercise);
         if (!unresolved.isEmpty()) {
+            // A reference that is <testid>-wrapped but unresolved is a different defect from a wrong name, and the
+            // generic "use the exact current test name" advice does not describe its fix at all — spell the format
+            // contract out instead, or the repair round keeps re-emitting the same malformed tag.
+            boolean malformedTestId = unresolved.stream().anyMatch(reference -> reference.startsWith("<testid>"));
+            String hint = malformedTestId
+                    ? " A <testid> tag may ONLY contain a numeric test-case id (<testid>27</testid>); the references above wrap something else, so they can never resolve. "
+                            + "Do not write <testid> tags at all — put the plain test name in the marker instead, e.g. \"[task][Implement Bubble Sort](testBubbleSort())\", "
+                            + "and Artemis converts it to an id itself."
+                    : " Update the task marker(s) to use the exact current test name(s).";
             findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.TEST_REFERENCES,
-                    "The problem statement references test(s) that do not exist in the test repository: " + String.join(", ", unresolved)
-                            + ". Update the task marker(s) to use the exact current test name(s) — call listTestCases to see what actually exists."));
+                    "The problem statement references test(s) that do not exist in the test repository: " + String.join(", ", unresolved) + "." + hint
+                            + " Call listTestCases to see what actually exists."));
         }
     }
 

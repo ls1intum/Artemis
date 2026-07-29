@@ -95,6 +95,9 @@ class ProgrammingVariantTools implements VariantToolset {
     /** Matches backtick-quoted identifiers in a ChangePlan's intendedChanges, e.g. "rename `BankAccount` to `CargoBay`". */
     private static final Pattern BACKTICKED_IDENTIFIER = Pattern.compile("`([^`]+)`");
 
+    /** A {@code <testid>} tag whose content is not a plain number — see {@link #normalizeTestIdReferences}. */
+    private static final Pattern MALFORMED_TESTID = Pattern.compile("<testid>\\s*(?!\\d+\\s*</testid>)([^<]*?)\\s*</testid>");
+
     private final ProgrammingExercise exercise;
 
     private final User user;
@@ -122,6 +125,11 @@ class ProgrammingVariantTools implements VariantToolset {
 
     /** Read-only checkouts of the source exercise's repositories, lazily resolved by {@link #diffFile}. */
     private final Map<RepositoryType, Repository> sourceCheckouts = new EnumMap<>(RepositoryType.class);
+
+    /** Lazily resolved source file paths backing {@link #studentOwnedTemplateRefusal}; null until first read. */
+    private Set<String> sourceTemplatePaths;
+
+    private Set<String> sourceSolutionPaths;
 
     private boolean touchedTestRepo;
 
@@ -174,20 +182,49 @@ class ProgrammingVariantTools implements VariantToolset {
                 context.append("=== ").append(repositoryType).append(" file tree ===\n").append(tree).append('\n');
             }
         }
+        // The SOURCE template's file list is the ground truth for the "template gains no implemented pieces"
+        // invariant — the single hardest rule to satisfy blind, since the agent otherwise cannot tell which
+        // classes the source deliberately leaves for the student to create. Observed live: without it, rounds
+        // create student-owned classes in TEMPLATE, the template scores far above its required 0%, and repair
+        // rounds patch the stubs instead of deleting the files they added.
+        String sourceTemplateTree = sourceFileTree(RepositoryType.TEMPLATE);
+        if (sourceTemplateTree != null) {
+            context.append("=== SOURCE TEMPLATE file tree (the exercise this variant is generated from) ===\n")
+                    .append("These are the ONLY files the source template ships. Every other class the tests reference is written by the student and must have NO file in the "
+                            + "variant's TEMPLATE either — renaming such a class does not give it a template file. The variant's TEMPLATE must hold the same set, modulo the "
+                            + "renames the plan requires and any new given domain type the plan introduces.\n")
+                    .append(sourceTemplateTree).append('\n');
+        }
         appendPlannedFileContents(context, plan);
         return context.toString();
     }
 
     /** @return the sorted, newline-joined file paths of a repository, or {@code null} when it could not be read. */
     private String fileTree(RepositoryType repositoryType) {
+        return fileTree(() -> checkout(repositoryType));
+    }
+
+    /** {@link #fileTree(RepositoryType)} for the SOURCE exercise's repositories. */
+    private String sourceFileTree(RepositoryType repositoryType) {
+        return fileTree(() -> checkoutSource(repositoryType));
+    }
+
+    private String fileTree(CheckoutSupplier checkoutSupplier) {
         try {
-            Repository checkout = checkout(repositoryType);
+            Repository checkout = checkoutSupplier.get();
             return repositoryService.getFiles(checkout).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).sorted()
                     .collect(Collectors.joining("\n"));
         }
         catch (Exception e) {
             return null;
         }
+    }
+
+    /** Resolves a repository checkout, so {@link #fileTree(CheckoutSupplier)} can serve the variant and the source alike. */
+    @FunctionalInterface
+    private interface CheckoutSupplier {
+
+        Repository get() throws GitAPIException;
     }
 
     /**
@@ -581,6 +618,14 @@ class ProgrammingVariantTools implements VariantToolset {
             }
             try {
                 Repository checkout = checkout(repositoryType);
+                // Checked BEFORE the write: creating a student-owned class in the template is refused outright
+                // (see studentOwnedTemplateRefusal), not merely warned about.
+                boolean newTemplateFile = repositoryType == RepositoryType.TEMPLATE && gitService.getFileByName(checkout, normalizedPath).isEmpty();
+                String refusal = newTemplateFile ? studentOwnedTemplateRefusal(normalizedPath) : null;
+                if (refusal != null) {
+                    report.append(refusal).append('\n');
+                    continue;
+                }
                 writeFileContent(checkout, normalizedPath, write.content());
                 touchedRepositoryTypes.add(repositoryType);
                 appliedCount++;
@@ -593,6 +638,56 @@ class ProgrammingVariantTools implements VariantToolset {
         touchedRepositoryTypes.forEach(this::markTouched);
         report.append(appliedCount).append(" of ").append(writes.size()).append(" file(s) written.");
         return report.toString();
+    }
+
+    /**
+     * Refuses creating a file in the TEMPLATE repository that holds a class the STUDENT is meant to write.
+     * <p>
+     * This is by far the most damaging thing a round can do, and it is unrecoverable within the attempt budget:
+     * the template then passes the structural tests it is required to fail, so the "template scores exactly 0%"
+     * gate can never go green however many repair rounds follow. It kept happening across runs even with the rule
+     * stated in the system prompt, the source template's file tree supplied as context, and the failing build
+     * naming the cause — including on runs whose plan correctly scoped nothing to the template. Prompt text alone
+     * does not hold here, so this is enforced rather than advised.
+     * <p>
+     * The discriminator is exact and needs no LLM judgement: a student-owned class is one the SOURCE SOLUTION has
+     * and the SOURCE TEMPLATE deliberately lacks. A genuinely new given domain type the plan introduces (a
+     * {@code Patient}/{@code Order}/{@code Flight} for a re-theme) exists in NEITHER source repository, so it is
+     * still allowed through — which is why this cannot simply reject every new template file.
+     *
+     * @param path the normalized repository-relative path the round is trying to create in the template
+     * @return the refusal to report for this entry, or {@code null} when the write is legitimate
+     */
+    private String studentOwnedTemplateRefusal(String path) {
+        if (!sourceSolutionPaths().contains(path) || sourceTemplatePaths().contains(path)) {
+            return null;
+        }
+        return "REFUSED: '" + path + "' exists in the source SOLUTION but deliberately NOT in the source TEMPLATE — it is a class the student has to write from scratch, so the "
+                + "variant's template must not contain it either. Creating it makes the template pass the structural tests it is required to fail, which no later repair round "
+                + "can undo. Nothing was written. Apply this change to the SOLUTION and TESTS repositories only; in the template, reflect it in Client.java's TODO comments.";
+    }
+
+    /** The source template's file paths, resolved once per round; empty when the source template cannot be read. */
+    private Set<String> sourceTemplatePaths() {
+        if (sourceTemplatePaths == null) {
+            sourceTemplatePaths = sourcePaths(RepositoryType.TEMPLATE);
+        }
+        return sourceTemplatePaths;
+    }
+
+    /** The source solution's file paths, resolved once per round; empty when the source solution cannot be read. */
+    private Set<String> sourceSolutionPaths() {
+        if (sourceSolutionPaths == null) {
+            sourceSolutionPaths = sourcePaths(RepositoryType.SOLUTION);
+        }
+        return sourceSolutionPaths;
+    }
+
+    private Set<String> sourcePaths(RepositoryType repositoryType) {
+        String tree = sourceFileTree(repositoryType);
+        // An unreadable source repository must not silently turn the refusal above into a no-op OR into a blanket
+        // block: an empty solution set means nothing is ever classified student-owned, which fails open.
+        return tree == null ? Set.of() : Set.copyOf(List.of(tree.split("\n")));
     }
 
     /** One delete entry for the batch {@link #deleteFiles} tool, targeting its own repository. */
@@ -666,8 +761,12 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
-            + "so every test referenced in the tasks actually exists in the test repository.")
-    public String updateProblemStatement(@ToolParam(description = "the full new problem statement in Artemis Markdown") String problemStatement) {
+            + "so every test referenced in the tasks actually exists in the test repository. Task markers reference tests BY NAME: "
+            + "\"[task][Implement Bubble Sort](testBubbleSort())\", several separated by commas. Write plain test names exactly as listTestCases reports them and never write "
+            + "a <testid> tag yourself — Artemis converts names to ids on its own. A <testid> tag may only ever contain a NUMBER, so wrapping a name in one "
+            + "(<testid>testBubbleSort()</testid>) resolves to nothing and silently unlinks that task from grading.")
+    public String updateProblemStatement(
+            @ToolParam(description = "the full new problem statement in Artemis Markdown; task markers reference tests by plain name") String problemStatement) {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
@@ -676,17 +775,42 @@ class ProgrammingVariantTools implements VariantToolset {
             return "Error: the problem statement must not be empty.";
         }
         try {
+            // Repair the one malformed shape that is both common and silently fatal (see normalizeTestIdReferences).
+            String normalized = normalizeTestIdReferences(problemStatement);
+            boolean repaired = !normalized.equals(problemStatement);
             ProgrammingExercise persisted = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
-            persisted.setProblemStatement(ProgrammingVariantAdapters.stripPlantUmlCodeFences(problemStatement));
+            persisted.setProblemStatement(ProgrammingVariantAdapters.stripPlantUmlCodeFences(normalized));
             programmingExerciseRepository.save(persisted);
             // Keep the task/test-case mapping in sync, exactly like the regular problem-statement update endpoint.
             programmingExerciseTaskService.updateTasksFromProblemStatement(persisted);
             exercise.setProblemStatement(persisted.getProblemStatement());
-            return "Problem statement updated.";
+            return repaired ? "Problem statement updated. NOTE: task markers contained <testid> tags wrapping test NAMES — a <testid> tag may only contain a numeric id, so those "
+                    + "would have unlinked their tasks from grading. They were rewritten to plain test names for you. Reference tests by plain name; never emit <testid> yourself."
+                    : "Problem statement updated.";
         }
         catch (Exception e) {
             return "Error: could not update the problem statement: " + e.getMessage();
         }
+    }
+
+    /**
+     * Unwraps {@code <testid>} tags whose content is not a numeric test-case id, keeping the inner text.
+     * <p>
+     * Artemis resolves a task marker's test reference either by plain NAME or, when it is wrapped in
+     * {@code <testid>}, by parsing the content as a numeric id
+     * ({@code ProgrammingExerciseTaskService#findTestCaseFromProblemStatement}). A saved statement therefore shows
+     * {@code <testid>27</testid>}, and models reproduce that syntax while filling in the only thing they know — the
+     * test NAME. The resulting {@code <testid>testBubbleSort()</testid>} matches neither branch: the id parse fails
+     * and no name comparison is ever attempted, so every task silently loses its grading link and the
+     * TEST_REFERENCES gate reports the whole tag as an unresolved test. Observed burning an entire 5-attempt
+     * budget on one variant. The rewrite is unambiguous — a non-numeric payload is never a valid id — and yields
+     * exactly the name form Artemis converts back to ids on its own.
+     *
+     * @param problemStatement the statement as written by the model
+     * @return the statement with non-numeric {@code <testid>} wrappers removed
+     */
+    static String normalizeTestIdReferences(String problemStatement) {
+        return MALFORMED_TESTID.matcher(problemStatement).replaceAll(matchResult -> Matcher.quoteReplacement(matchResult.group(1).strip()));
     }
 
     @Tool(description = "Show a unified diff between a file's ORIGINAL content in the SOURCE exercise this variant was generated from and its CURRENT content in this variant. "

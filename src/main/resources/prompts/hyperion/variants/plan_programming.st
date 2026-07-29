@@ -30,21 +30,52 @@ Requested changes (a field marked "unchanged"/"none" must not drive any modifica
   must be preserved exactly across a rename: do not plan for the template to gain or lose implemented pieces
   unless a difficulty change intends it. When a difficulty change does intend it, list the added/removed
   scaffolding explicitly as an intended change, the same way new/removed tests are listed below.
-- Before writing "in template, solution, and test repositories" for a rename, check the source repository trees
-  below: a class/interface the student is meant to write from scratch typically has no file in TEMPLATE at all and
-  is referenced from tests only by name (reflection, a structure-oracle JSON) — never as a compile-time type. If
-  the class has no file in TEMPLATE in the source, its rename must say so explicitly ("in solution and test
-  repositories only — TEMPLATE has no file for this class and must gain none") instead of listing all three;
-  creating it in TEMPLATE would violate the already-implemented-pieces rule above and make the template pass tests
-  it must fail.
+- **Repository scoping is checked per file, for EVERY intended change — not just renames.** Before you scope any
+  change to the template repository, find that exact file in the TEMPLATE tree in the source context below. A
+  class/interface the student writes from scratch has no file in TEMPLATE at all and is referenced from tests only
+  by name (reflection, a structure-oracle JSON), never as a compile-time type. If the file is not in the source
+  TEMPLATE tree, you must NOT write an intended change scoped to the template for it — not for a rename, not for a
+  type change, not for a signature change, not for "apply the same changes to the template". Say so explicitly
+  instead ("in solution and test repositories only — TEMPLATE ships no file for this class and must gain none").
+  This is the single most common way a variant fails: a plan step like "template repository: change `Context`'s
+  field type" makes the transformation agent CREATE `Context` in the template, the template then passes the
+  structural tests it must fail, and the whole variant is rejected however many repair rounds it gets.
+- A data-model change therefore reaches the template only through the files the template actually ships. Work out
+  which those are from the source TEMPLATE tree and scope the template-side work to exactly them; everything else
+  the change touches is solution- and test-scoped, and the student writes the template side themselves.
+- Inside those template files, a student-owned class may appear only where it already does in the source: in TODO
+  comments and prose, never as a declared, imported, instantiated or called compile-time type. Check the source
+  template's own files before planning an edit to them — they are written precisely so the template compiles
+  without the student's classes existing. An intended change that has template code use such a class forces the
+  transformation agent to create that class in the template just to restore compilation, which fails the variant.
+  Phrase the template-side step as updating the TODO comments' wording instead.
 
 **Renames (domain change):**
 - Renaming comments, Javadoc, or string literals alone does not satisfy a domain re-theme. Its intendedChanges
   must rename the domain-bearing identifiers the new theme implies — classes, interfaces, fields, local variables,
-  user-facing strings — and, where the new domain implies a different shape, adapt the data model/types (e.g. a
-  date-based domain becoming a sensor-reading domain: a `Date`-typed field becomes a domain-specific reading type,
-  a `dates` field becomes `readings`). Comments follow the renamed code, not the other way around. Tested public
-  method signatures and test names stay unchanged unless explicitly listed as an intended change.
+  user-facing strings — AND adapt the data model to the new domain. Comments follow the renamed code, not the
+  other way around. Tested public method signatures and test names stay unchanged unless explicitly listed as an
+  intended change.
+- **The data model carries the theme, not just the names.** Ask what the exercise's central data actually IS in
+  the new domain. When the new domain's entity is a thing with properties — a patient, a parcel, a coffee order —
+  renaming a field while leaving its element type a raw library type (`List<Date> orders`, `List<String> parcels`)
+  is exactly the cosmetic re-theme forbidden above: "coffee orders" that are literally `Date` objects are still
+  the old exercise with new labels. Plan a real domain type in that case. Keep the raw type ONLY when the new
+  domain's data genuinely is that raw thing (e.g. re-theming "course dates" to "flight departure times" — both
+  are plain points in time and a `Date` remains honest); say so explicitly in the plan when you make that call,
+  so it reads as a decision rather than an omission.
+- **Exactly two things are off-limits to a re-theme, and nothing else is.** Protected: identifiers naming the
+  algorithm, data structure, design pattern or pattern role the exercise teaches — `BubbleSort`/`MergeSort` stay
+  exactly that under every theme, as do a Strategy's `SortStrategy`/`Context`/`Policy`, an Observer's `Subject`,
+  and so on. Renaming those ("SpaghettiSort", "FusilliSort") destroys what the task is about; a student cannot be
+  asked to implement "Fusilli Sort".
+  This protection covers ONLY those names. It is NOT a reason to leave the rest of the exercise alone — the data
+  the algorithm operates on, the fields holding it, the helper methods producing it, and the narrative around it
+  all still change, exactly as the data-model rule below requires. Concretely, for a pasta theme: `BubbleSort`
+  keeps its name AND `List<Date> dates` still becomes `List<PastaDish> pastaDishes`, `createRandomDatesList`
+  becomes `createRandomPastaDishesList`, `getDates`/`setDates` become `getPastaDishes`/`setPastaDishes`.
+  Protecting the algorithm names while leaving the data as raw `Date`s produces exactly the hollow, statement-only
+  re-theme this prompt forbids.
 - Only rename a namespace segment (Java package, Python module/package directory, C#/C++ namespace, Go module
   path, ...) when it names the exercise's old subject matter — the thing being re-themed. A segment that
   identifies who is hosting or authoring the exercise (an institution's or organization's own reverse-domain-style
@@ -60,9 +91,35 @@ Requested changes (a field marked "unchanged"/"none" must not drive any modifica
   leaving the two permanently mismatched.
 - Plan renames consistently across all three repositories and the problem statement.
 
+**Introducing a new domain type** (only when the rule above calls for one). The new type is scaffolding the
+exercise GIVES the student, not something they implement, and every item below must appear in intendedChanges —
+each one is a gate the variant fails without:
+- Value semantics: it must override `equals` and `hashCode` (or be a record/data class that gets them) over the
+  fields that identify it. Behaviour tests compare whole collections for equality after sorting; a type with
+  identity-only equality makes a perfectly correct sort compare unequal, and the solution build fails with a
+  misleading "does not sort correctly".
+- Ordering: sorting must compare the domain-meaningful field. If the source sorted its elements by natural
+  ordering, the new type implements `Comparable` consistently with `equals`; otherwise name the comparator the
+  algorithms use. State which field defines the order (e.g. a patient's arrival time).
+- Placement: it belongs in the SOLUTION and TEMPLATE repositories (given code, fully implemented in BOTH — it is
+  not student work, so the template's copy is complete, not a stub), plus any copy the test repository needs to
+  compile against.
+- **It must NOT appear in the structure oracle and must gain no structural test.** Structural tests
+  (testClass/testAttributes/testMethods/testConstructors) exist to check what the STUDENT writes. The template
+  ships this class fully implemented, so a structural test for it PASSES against the template — and the
+  template's "scores 0%" invariant becomes impossible to satisfy, failing the whole variant no matter what the
+  transformation agent does afterwards. Say this explicitly as an intended change ("do not add `Patient` to the
+  structure oracle test.json; it is given code, not student work").
+
 **Difficulty changes** adjust scope (add/remove a subtask, tighten or relax edge-case requirements, add/remove
 scaffolding per the rule above) and keep the theme; domain changes re-theme identifiers, texts, and example data
 and keep the algorithmic core and grading structure.
+- Prefer difficulty changes that do NOT alter the signature of anything the structural tests already grade. Adding
+  a constructor parameter or changing a method's parameter list to a class covered by the structure oracle breaks
+  those tests unless the oracle is updated in lockstep — and structural tests match by reflection, where a boxed
+  type and its primitive are DIFFERENT signatures (`Policy(Context, Integer)` does not match `Policy(Context, int)`).
+  When a signature change really is the point of the difficulty shift, list the matching oracle update as its own
+  intended change, naming the data file and the exact new signature, and keep the two spellings identical.
 - A difficulty increase may add new tests: list each new test as an intended change with its exact test name and
   what it asserts, and reference it by that exact name in the problem statement's task markers — the new
   requirement must be graded, not just described. A new test must never be written as a literal, compile-time
@@ -74,6 +131,19 @@ and keep the algorithmic core and grading structure.
 - A difficulty decrease may remove tests: list each removed test by its exact name as an intended change, and drop
   every reference to it from the problem statement's task markers and diagrams — never leave a task pointing at a
   test that no longer exists.
+- **A difficulty change re-tunes the exercise; it never dismantles it.** The variant is graded interchangeably
+  with the source, so the concept being taught and the bulk of the grading must survive: trim ONE subtask or a
+  few edge-case assertions, and keep the clear majority of the source's tests. Deleting the design pattern, the
+  second algorithm, or most of the graded classes to make things "easier" leaves a different, much smaller
+  exercise that can no longer stand in for the source — if the only way you can see to hit the requested
+  difficulty is to remove the exercise's core, keep the core and make the change a modest one instead.
+- **Scaffolding you hand the student must never satisfy a graded test.** The template is required to score exactly
+  0%, so "make it easier" can never mean implementing graded functionality there — pre-filling a sorting algorithm,
+  or adding an interface/class a structural test checks for, makes those tests pass against the template and the
+  variant is rejected outright. An easier variant instead: narrows scope by REMOVING a task together with its test
+  (per the rule above), simplifies the data or the algorithm the remaining tests grade, or gives more guidance in
+  the problem statement and the template's TODO comments — guidance is free, implementation is not. The one thing
+  the template may legitimately gain is a new given domain type that no test grades structurally.
 
 **Narrative style (storytelling):** the requested narrative style is a STRENGTH SCALE — how creatively the task
 is written, from plain technical wording to full storytelling:
@@ -97,8 +167,16 @@ Produce a change plan with:
 1. variantTitle — a new title fitting the transformed exercise. For a domain change, re-theme the title; never
    reuse the source title verbatim.
 2. problemStatement — the fully rewritten problem statement in the same Markdown structure as the source.
-   Preserve all Artemis task markers ("[task][...](testName,...)") and PlantUML blocks structurally: every task
-   must reference test names that will exist in the variant's test repository after the plan is applied.
+   Preserve all Artemis task markers and PlantUML blocks structurally: every task must reference test names that
+   will exist in the variant's test repository after the plan is applied.
+   **Task markers reference tests BY NAME**: "[task][Implement Bubble Sort](testBubbleSort())", with several
+   tests separated by commas: "[task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])".
+   Write the plain test name and NEVER write a "<testid>" tag yourself. Artemis stores resolved references as
+   "<testid>27</testid>" and the source statement you were given may well show them that way, but the tag holds a
+   NUMERIC id that only Artemis assigns — it converts your names into those ids automatically. Copying the tag
+   shape and filling it with a name ("<testid>testBubbleSort()</testid>") matches no test at all: the id parse
+   fails, no name lookup is attempted, and the task loses its grading link silently. Copying the source's ID
+   NUMBERS is just as wrong — they belong to the source exercise's test cases, not the variant's.
    PlantUML diagrams should be adapted alongside the exercise (renamed classes, added/removed members) so the
    diagram matches the variant's code and tasks exactly. Two hard rules: (1) keep the block bare — @startuml on
    its own line through @enduml, never wrapped in Markdown code fences (```), or Artemis renders raw markup

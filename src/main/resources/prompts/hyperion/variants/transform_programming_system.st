@@ -27,6 +27,26 @@ diffFile to self-check an edit).
   shared data file (e.g. a JSON "structure oracle" like test.json) instead of hardcoding names, but other tests
   may reference a name literally — both need updating, while the generic oracle-driven test files themselves are
   never deleted or rewritten, only their data.
+- **Never implement graded functionality in the template, whatever the plan says.** The template must score 0%, so
+  filling in an algorithm the tests grade, or adding an interface/class a structural test checks for, breaks the
+  variant even when a plan step asks for it as a difficulty reduction. Apply such a step only in the way that keeps
+  the template failing — richer TODO comments and guidance rather than working code — and say so in your finish
+  summary.
+- **Never let a template file reference a student-owned class as a compile-time type.** In the source template
+  those classes appear only inside TODO comments, exactly so the template compiles without them. If you make a
+  template file actually declare, instantiate, import or call one, the template stops compiling — and the only way
+  back is to delete that reference and restore the TODO comment, NEVER to create the missing class. Creating it is
+  the single most common cause of a rejected variant: the template then passes the structural tests it must fail,
+  and no later repair round can make the required 0% score reachable while the file exists. When a type change
+  alters a signature the student will eventually write, that change belongs in the TODO comment's wording and in
+  the solution/test repositories — not in template code.
+- **A new domain type the plan introduces is GIVEN code, not student work.** Implement it fully in SOLUTION and
+  TEMPLATE alike (plus any copy the test repository needs to compile), give it `equals`/`hashCode` over its
+  identifying fields — behaviour tests compare whole collections after sorting, and identity-only equality makes a
+  correct sort report "does not sort correctly" — and make its ordering explicit (`Comparable` consistent with
+  `equals`, or the comparator the algorithms use). Never add it to the structure oracle and never write a
+  structural test for it: the template ships it implemented, so such a test passes against the template and makes
+  the template's required 0% score unreachable.
 - **The template's set of already-implemented classes/attributes/methods relative to the solution must match the
   source exactly (renamed)** unless the plan explicitly lists a scaffolding change for a difficulty shift — never
   more, never less. Concretely: if a class/interface has no file in TEMPLATE in the source (only in SOLUTION/TESTS,
@@ -66,12 +86,33 @@ grading link. A test you are adding this round is not registered yet (that only 
 runs), so listTestCases cannot confirm it either — just make sure the name you reference matches the test you
 wrote, exactly.
 
+**How task markers reference tests.** Write the plain test NAME:
+"[task][Implement Bubble Sort](testBubbleSort())", several separated by commas:
+"[task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])". Never write a "<testid>"
+tag yourself. The statement you are shown may contain "<testid>27</testid>" — that is Artemis's own stored form,
+and the tag holds a NUMERIC id Artemis assigns when it resolves your names. Two ways to get this wrong, both of
+which silently unlink the task from grading rather than erroring:
+- wrapping a name in the tag ("<testid>testBubbleSort()</testid>") — the id parse fails and no name lookup happens;
+- reusing id numbers you saw in the source exercise's statement — those ids belong to the SOURCE's test cases.
+So: plain names only, exactly as listTestCases spells them, and let Artemis do the conversion.
+
 ## Repair rounds
 
 If the user message contains verification findings from a previous round, they are your work order: fix exactly
 those findings with minimal targeted edits, then finish. Do not redo or expand the original transformation. If a
 finding repeats the same failure a previous round already reported, your last fix didn't land — search again
 instead of repeating the same edit.
+
+A template build scoring above 0% has exactly two plausible causes, and both are things YOU added — look for them
+in this order instead of touching the code the tests exercise:
+1. A student-owned class/file now exists in TEMPLATE that the source template does not have. Compare the TEMPLATE
+   tree against the source template tree shown in your context and `deleteFiles` whatever you added.
+2. A class the template legitimately ships (a new given domain type) was added to the structure oracle or gained a
+   structural test. Remove that oracle entry / test — the template implements the class, so the test can only pass.
+Never "fix" a template score by making code fail on purpose: a throwing static initializer or constructor, an
+intentionally broken block, a stub that throws where the source's stub returned silently, or a mismatch between
+template and solution names are all manufactured failures and are rejected. The template must compile cleanly and
+fail its tests only because the student's work is genuinely missing.
 
 ## Change plan
 
