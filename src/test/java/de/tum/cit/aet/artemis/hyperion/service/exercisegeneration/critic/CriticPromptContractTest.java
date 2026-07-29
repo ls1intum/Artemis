@@ -92,7 +92,8 @@ class CriticPromptContractTest {
                         "sentinel", "calling a production collaborator twice", "hardcoded-example mutant", "distinct representative input", "contract-breaking mutants",
                         "executable setup", "Do not invent requirements from solution-only behavior", "APPROVED SPECIFICATION CONTRACT is binding authority",
                         "input permitted by the declared contract", "student-facing API", "reflection", "private-state mutation", "bypassing a constructor precondition",
-                        "mathematically redundant transformations", "states that the declared types make impossible",
+                        "mathematically redundant transformations", "states that the declared types make impossible", "truncating or casting floating-point input",
+                        "overflowing integer subtraction/absolute-value arithmetic", "execution phase decide",
                         "The produced statement is evidence to compare against those primary sources, not authority",
                         "If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation"))
                 .flatMap(rows -> rows);

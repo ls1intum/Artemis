@@ -145,7 +145,11 @@ class SpecificationReviewCritic {
                 ? "\n\nSELECTED GENERATOR-AUTHORED CONCEPT EVIDENCE (process provenance, not scope authority):\n" + evidence.concept().promptText()
                 : "";
         String userPrompt = "INSTRUCTOR BRIEF EVIDENCE (sole authority):\n" + evidence.brief().promptText() + conceptPrompt + "\n\nCANDIDATE SPECIFICATION EVIDENCE:\n"
-                + evidence.specification().promptText() + "\n\nReturn the complete JSON verdict specified by the system prompt.";
+                + evidence.specification().promptText()
+                + "\n\nFINAL REPRESENTATION-DOMAIN CHECK: inspect every public numeric input before returning. In Java, float/double inputs include NaN and both infinities, and integer "
+                + "inputs include their full MIN_VALUE..MAX_VALUE range; arithmetic may overflow even when each input is valid. If the rules neither define observable behavior "
+                + "for an admitted value nor state a consistently enforceable finite/range precondition, report that exact gap in ambiguities. Do not invent an arbitrary outcome "
+                + "when a narrow precondition is sufficient.\n\nReturn the complete JSON verdict specified by the system prompt.";
         try {
             String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse parsed = readSpecificationReviewResponse(response);
@@ -193,8 +197,9 @@ class SpecificationReviewCritic {
         if (learningFitValidationError != null) {
             return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError);
         }
-        if (!validConceptAlignment(parsed.conceptAlignment(), evidence)) {
-            return incompleteSpecificationReview("conceptAlignment was missing a disposition or reason for the supplied concept.");
+        String conceptAlignmentValidationError = conceptAlignmentValidationError(parsed.conceptAlignment(), evidence);
+        if (conceptAlignmentValidationError != null) {
+            return incompleteSpecificationReview("conceptAlignment validation failed: " + conceptAlignmentValidationError);
         }
         // Worked-example replay is a quality signal, not a terminal contract: an inconsistent check still becomes a finding, but a mismatched or missing example-ID set must
         // not discard an otherwise coherent verdict.
@@ -352,12 +357,29 @@ class SpecificationReviewCritic {
         return null;
     }
 
-    private static boolean validConceptAlignment(@Nullable SpecificationConceptAlignmentItem item, SpecificationReviewEvidence evidence) {
+    private static @Nullable String conceptAlignmentValidationError(@Nullable SpecificationConceptAlignmentItem item, SpecificationReviewEvidence evidence) {
         if (!evidence.hasConcept()) {
-            return item == null;
+            return item == null ? null : "conceptAlignment must be null when no selected concept was supplied.";
         }
-        return item != null && item.disposition() != null && item.reason() != null && !item.reason().isBlank() && evidence.brief().containsSubstantive(item.briefEvidenceIds())
-                && evidence.concept().containsSubstantive(item.conceptEvidenceIds()) && evidence.specification().containsSubstantive(item.specEvidenceIds());
+        if (item == null) {
+            return "the mandatory conceptAlignment object is missing.";
+        }
+        if (item.disposition() == null) {
+            return "disposition is mandatory.";
+        }
+        if (item.reason() == null || item.reason().isBlank()) {
+            return "reason is mandatory.";
+        }
+        if (!evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+            return "briefEvidenceIds must cite known, substantive B evidence from this review.";
+        }
+        if (!evidence.concept().containsSubstantive(item.conceptEvidenceIds())) {
+            return "conceptEvidenceIds must cite known, substantive C evidence from this review; a candidate heading alone is not evidence.";
+        }
+        if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+            return "specEvidenceIds must cite known, substantive E evidence from this review.";
+        }
+        return null;
     }
 
     private static boolean validSpecificationReviewItem(@Nullable SpecificationReviewItem item) {

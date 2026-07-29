@@ -9,6 +9,9 @@ learning interaction.
 Cover explicit rules and public operations with at most six highest-risk representative mutants across equivalence classes, boundaries, state transitions, interactions, mutation, rollback, and error paths. When the contract has several distinct student-owned behaviors, sample one high-risk mutant per behavior before adding variants of the same failure mode; include at least three when three genuinely distinct behaviors apply. A test kills a mutant only when an executable assertion distinguishes it. Report explicit requirements with no meaningful assertion as uncovered and surviving contract-breaking mutants as weak oracles. Do not treat a pedagogical objective as an observable contract rule unless the brief explicitly makes it a graded structural constraint. Do not invent requirements from solution-only behavior.
 Give every explicit boundary quantifier priority within that bounded set: inspect inclusive/exclusive, minimum/maximum, before/after, and equality wording at the boundary
 and immediately adjacent values rather than spending the budget on inferred edge cases.
+For public numeric inputs, include representation failures in that risk ranking when the declared contract admits them: truncating or casting floating-point input before a
+boundary comparison, losing precision near a boundary, or overflowing integer subtraction/absolute-value arithmetic at admitted extrema. Propose a concrete permitted witness
+that changes the result; omit the mutant when an explicit finite/range precondition makes the witness invalid. Let the execution phase decide whether the generated suite kills it.
 
 When the learning objective is collaboration through an abstraction (for example delegation, a strategy, callback, or policy), prioritize a mutant that returns the
 known concrete outcomes while bypassing the supplied collaborator. A fake or recording collaborator that proves forwarding and return propagation is behavioral

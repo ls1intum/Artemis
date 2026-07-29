@@ -450,7 +450,37 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.accepted()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat((prompts.getAllValues().get(1).getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment was missing");
+        assertThat((prompts.getAllValues().get(1).getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment validation failed",
+                "mandatory conceptAlignment object is missing");
+    }
+
+    @Test
+    void specificationReviewCorrectionExplainsThatAConceptHeadingIsNotEvidence() {
+        ScriptedCritic scripted = criticScripted(
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
+                                 "remainingStudentReasoning":"Students place the exact boundary comparison.","domainGrounding":"The domain makes the boundary meaningful.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"The boundary behavior is preserved."},
+                                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                                """),
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the comparison.",
+                                 "remainingStudentReasoning":"Students place the exact boundary comparison.","domainGrounding":"The domain makes the boundary meaningful.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C2"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"The boundary behavior is preserved."},
+                                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                                """));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Create a boundary exercise.", """
+                ## Candidate 1
+                Students implement the exact boundary comparison.
+                """, "Students implement the exact boundary comparison.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("candidate heading alone is not evidence");
     }
 
     @Test
@@ -497,7 +527,7 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model()).call(prompt.capture());
         assertThat((prompt.getValue().getInstructions().get(1)).getText()).contains("INSTRUCTOR BRIEF EVIDENCE", "[B1] Students create the strategy interface.",
-                "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.");
+                "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.", "FINAL REPRESENTATION-DOMAIN CHECK", "NaN", "MIN_VALUE..MAX_VALUE");
         assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("Design ownership table");
     }
 
