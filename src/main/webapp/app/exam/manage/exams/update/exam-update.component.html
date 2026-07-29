@@ -278,6 +278,18 @@
                                 />
                             </div>
                         </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <jhi-date-time-picker
+                                    labelName="{{ 'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate }}"
+                                    labelTooltip="{{ 'artemisApp.examManagement.examSummaryPublicationDateTooltip' | artemisTranslate }}"
+                                    [(ngModel)]="exam.examSummaryPublicationDate"
+                                    [error]="!isValidExamSummaryPublicationDate"
+                                    name="examSummaryPublicationDate"
+                                    id="examSummaryPublicationDate"
+                                />
+                            </div>
+                        </div>
                     }
                     <div class="row mb-3">
                         <div class="col-sm-6">
