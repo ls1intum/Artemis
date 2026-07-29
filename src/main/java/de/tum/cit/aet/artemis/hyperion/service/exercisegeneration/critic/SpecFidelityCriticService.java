@@ -166,6 +166,8 @@ public class SpecFidelityCriticService {
 
     private final ContractWitnessAuthor witnessAuthor;
 
+    private final SemanticMutantAuthor semanticMutantAuthor;
+
     @Autowired
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
             @Value("${spring.ai.openai.chat.model:}") String configuredModel,
@@ -197,6 +199,7 @@ public class SpecFidelityCriticService {
         this.conceptCritic = new ConceptSelectionCritic(reviewer, objectMapper);
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);
         this.witnessAuthor = new ContractWitnessAuthor(reviewer, objectMapper);
+        this.semanticMutantAuthor = new SemanticMutantAuthor(reviewer, objectMapper);
     }
 
     /**
@@ -230,6 +233,20 @@ public class SpecFidelityCriticService {
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
         return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, usageSink, cancelled);
+    }
+
+    /**
+     * Authors complete semantic mutants without exposing the graded tests to the author. The caller must execute every proposal before treating it as evidence.
+     *
+     * @param specificationContract the approved specification that is the sole rule authority
+     * @param solutionFiles         the pristine reference-solution sources
+     * @param usageSink             receives token-usage responses, or {@code null} to skip accounting
+     * @param cancelled             reports whether generation has been cancelled
+     * @return at most two structurally valid proposals; none have environment evidence yet
+     */
+    public List<SemanticMutant> authorSemanticMutants(String specificationContract, Map<String, String> solutionFiles, @Nullable Consumer<ChatResponse> usageSink,
+            BooleanSupplier cancelled) {
+        return semanticMutantAuthor.author(specificationContract, solutionFiles, usageSink, cancelled);
     }
 
     /**
@@ -697,6 +714,9 @@ public class SpecFidelityCriticService {
             case TEMPLATE_QUALITY_GAP ->
                 builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");
+            case SPECIFICATION_REVIEW_FINDING -> builder.append("\n- The frozen specification still carries this pre-freeze review finding: \"").append(finding.requirement())
+                    .append("\". It cannot be repaired downstream without changing the approved contract; preserve it for explicit instructor review rather than disguising it "
+                            + "with artifact changes.");
         }
     }
 }

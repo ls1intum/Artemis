@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -137,10 +140,14 @@ class GenerationAttemptLoopTest {
      * @param maxSemanticRepairs    the semantic repair budget a GENERATE run gets
      */
     private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs) {
+        return newLoop(mode, maxGenerationAttempts, maxSemanticRepairs, false);
+    }
+
+    private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs, boolean stagedGenerationEnabled) {
         GenerationAttemptLoop.Dependencies dependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
-                jobService, stagedGenerationRunner, new AgentTranscriptWriter(""), false, 100, maxGenerationAttempts, maxSemanticRepairs);
+                jobService, stagedGenerationRunner, new AgentTranscriptWriter(""), stagedGenerationEnabled, 100, maxGenerationAttempts, maxSemanticRepairs);
         GenerationAttemptLoop.RunContext context = new GenerationAttemptLoop.RunContext(exercise, mode, "job-1", sandbox, SESSION_ID,
-                new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()), Map.of(), Map.of(), Map.of(), null, Set.of(), "Build a bubble sort exercise.", true,
+                new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()), Map.of(), Map.of(), Map.of(), null, Set.of(), "Build a bubble sort exercise.", true, true,
                 "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, () -> false, progressLines::add, response -> {
                 });
         return new GenerationAttemptLoop(service, dependencies, context);
@@ -164,6 +171,60 @@ class GenerationAttemptLoopTest {
 
     private static VerificationResult rejected(String reason) {
         return new VerificationResult(false, false, true, 5, List.of(reason));
+    }
+
+    @Test
+    void unresolvedPreFreezeSpecificationFindingsCannotDisappearFromTheFinalReview() {
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("R1 mandates an unrequested implementation technique")));
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
+        loop.run();
+
+        assertThat(loop.specFidelityReport().findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING);
+            assertThat(finding.requirement()).contains("unrequested implementation technique");
+        });
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
+    void aFailedRecheckCannotEraseAProvenSemanticSurvivorOrConverge() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
+                "chooses within the first batch");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("recheck failed",
+                new IllegalStateException("reports unavailable"));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenThrow(failure);
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+
+        assertThatThrownBy(loop::run).isSameAs(failure);
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE);
+    }
+
+    @Test
+    void aProbeRestoreFailureEscapesReviewWithThePreReviewCheckpointIntact() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
+                "chooses within the first batch");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int changed; }", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any())).thenReturn(List.of(mutant));
+        DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("restore failed",
+                new IllegalStateException("session lost"));
+        when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+
+        assertThatThrownBy(loop::run).isSameAs(failure);
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
     }
 
     private static SpecFidelityReport report(SpecFidelityReport.Kind... kinds) {
@@ -253,7 +314,7 @@ class GenerationAttemptLoopTest {
                     .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
             ContractWitness witness = new ContractWitness("R1", "computesTheResult", "void computesTheResult() {}", "returns an incorrect result");
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-            when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(witness));
+            when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(witness));
 
             newGenerateLoop(6, 4).run();
 

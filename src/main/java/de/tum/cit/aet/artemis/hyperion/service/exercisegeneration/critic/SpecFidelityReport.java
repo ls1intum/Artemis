@@ -63,7 +63,9 @@ public record SpecFidelityReport(List<Finding> findings) {
          */
         CONTRACT_WITNESS_AVAILABLE,
         /** The automated full-artifact quality review could not produce a complete verdict. */
-        QUALITY_REVIEW_UNAVAILABLE
+        QUALITY_REVIEW_UNAVAILABLE,
+        /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
+        SPECIFICATION_REVIEW_FINDING
     }
 
     /**
@@ -80,6 +82,7 @@ public record SpecFidelityReport(List<Finding> findings) {
                 case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
                         CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
                     true;
+                case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
                 case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, CONTRACT_WITNESS_AVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> false;
             };

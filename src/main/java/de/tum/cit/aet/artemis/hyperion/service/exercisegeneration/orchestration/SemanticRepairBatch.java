@@ -75,7 +75,9 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
                 RepairSurface.CONTRACT;
             // A technique mandate is advisory precisely because no repair surface can fix it: no assertion distinguishes a recursive implementation from an
             // iterative one with the same results, so scheduling it would burn rounds on work that cannot succeed.
-            case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> null;
+            case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE,
+                    SPECIFICATION_REVIEW_FINDING ->
+                null;
         };
     }
 

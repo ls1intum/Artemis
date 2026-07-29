@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -136,5 +138,11 @@ public final class ContractWitnessProbe {
         String path = existingTestPath.substring(0, lastSlash + 1) + PROBE_CLASS_NAME + ".java";
         // The name is distinctive, not reserved: overwriting a generated test of the same name would destroy graded work, and removing the probe would then delete it.
         return existingFilePaths.contains(path) ? null : path;
+    }
+
+    /** Finds a normal packaged Java test whose package and imports a throwaway probe can safely reuse. */
+    static Optional<Map.Entry<String, String>> host(Map<String, String> testFiles) {
+        return testFiles.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java") && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null
+                && entry.getValue().contains("package ")).min(Map.Entry.comparingByKey());
     }
 }

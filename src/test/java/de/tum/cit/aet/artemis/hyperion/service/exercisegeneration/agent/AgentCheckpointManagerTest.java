@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -20,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -96,7 +98,7 @@ class AgentCheckpointManagerTest {
         assertThat(replaySandbox.text("/workspace", "SPEC.md")).isEqualTo("after");
         replayer.endRun();
 
-        Files.writeString(recordedRun.resolve("calls/000001.json"), "\n", java.nio.file.StandardOpenOption.APPEND);
+        FileUtils.writeStringToFile(recordedRun.resolve("calls/000001.json").toFile(), "\n", StandardCharsets.UTF_8, true);
         AgentCheckpointManager tampered = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true, "");
         tampered.beginRun("job-tampered", exercise, new SandboxAgentTools(replaySandbox, "tampered"), new ApprovedSpecRegistry());
         assertThatThrownBy(() -> tampered.beforeTurn(1, 5, "", "tools-v1", prompt, beforeCursor)).isInstanceOf(IllegalStateException.class).hasMessageContaining("integrity check");
@@ -124,8 +126,9 @@ class AgentCheckpointManagerTest {
         ((ObjectNode) record.path("before").path("roots")).remove("/tmp/hyperion");
         ((ObjectNode) record.path("after").path("roots")).remove("/tmp/hyperion");
         byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(record);
-        Files.write(call, bytes);
-        Files.writeString(call.resolveSibling("000001.json.sha256"), HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)) + "\n");
+        FileUtils.writeByteArrayToFile(call.toFile(), bytes);
+        FileUtils.writeStringToFile(call.resolveSibling("000001.json.sha256").toFile(), HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)) + "\n",
+                StandardCharsets.UTF_8);
 
         AgentCheckpointManager replayer = new AgentCheckpointManager(mapper, "", run.toString(), 0, true, "");
         replayer.beginRun("legacy-replay", exercise, new SandboxAgentTools(sandbox, "replay"), new ApprovedSpecRegistry());
@@ -284,8 +287,9 @@ class AgentCheckpointManagerTest {
         ObjectNode legacyRecord = (ObjectNode) mapper.readTree(legacyCall.toFile());
         legacyRecord.remove("replayAnchor");
         byte[] legacyBytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(legacyRecord);
-        Files.write(legacyCall, legacyBytes);
-        Files.writeString(legacyCall.resolveSibling("000001.json.sha256"), HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(legacyBytes)) + "\n");
+        FileUtils.writeByteArrayToFile(legacyCall.toFile(), legacyBytes);
+        FileUtils.writeStringToFile(legacyCall.resolveSibling("000001.json.sha256").toFile(),
+                HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(legacyBytes)) + "\n", StandardCharsets.UTF_8);
 
         Path reviewerBranchRoot = tempDirectory.resolve("nested-reviewer-branch");
         AgentCheckpointManager reviewerBranch = new AgentCheckpointManager(mapper, reviewerBranchRoot.toString(), authorBranchRun.toString(), 0, 1, true, "");

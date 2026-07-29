@@ -274,7 +274,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void stagedGenerationEnabled_generateJava_delegatesToStagedGenerationRunnerInsteadOfTheSingleAgentLoopCall() {
         GenerationOrchestrationService stagedService = newService(true);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
@@ -282,7 +282,8 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
 
-        verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any());
+        verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
+                anyBoolean(), any());
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
@@ -292,12 +293,13 @@ class GenerationOrchestrationServiceTest {
         String draft = "# Draft playlist exercise\n\nThis generated draft is long enough to look authoritative but may have omitted explicit requirements.";
         String sourceBrief = "Teach Strategy with three playlist strategies. Students must create the interface. Include a UML diagram.";
         when(exercise.getProblemStatement()).thenReturn(draft);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any()))
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> rawBrief = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Boolean> specStageApplies = ArgumentCaptor.forClass(Boolean.class);
+        ArgumentCaptor<Boolean> conceptSelectionApplies = ArgumentCaptor.forClass(Boolean.class);
 
         try (GenerationOutcome outcome = stagedService.generate(exercise, user, "resolved instruction", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null,
                 sourceBrief)) {
@@ -305,11 +307,36 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(),
-                specStageApplies.capture(), any());
+                specStageApplies.capture(), conceptSelectionApplies.capture(), any());
         assertThat(specStageApplies.getValue()).isTrue();
+        assertThat(conceptSelectionApplies.getValue()).isTrue();
         assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief).doesNotContain("CURRENT AI-GENERATED DRAFT", draft);
         assertThat(rawBrief.getValue()).isEqualTo(sourceBrief);
         verify(workspace).seedWorkspace(any(), anyString(), eq(exercise), eq(GenerationMode.GENERATE), eq(false));
+    }
+
+    @Test
+    void authoritativeStatement_compilesReviewedSpecWithoutInventingACompetingConcept() {
+        GenerationOrchestrationService stagedService = newService(true);
+        String statement = "# Elevator dispatch\n\nUse the supplied strategies to choose one reachable request globally, with deterministic ties.";
+        when(exercise.getProblemStatement()).thenReturn(statement);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        ArgumentCaptor<String> rawBrief = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> specStageApplies = ArgumentCaptor.forClass(Boolean.class);
+        ArgumentCaptor<Boolean> conceptSelectionApplies = ArgumentCaptor.forClass(Boolean.class);
+
+        try (GenerationOutcome outcome = stagedService.generate(exercise, user, "", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+        }
+
+        verify(stagedGenerationRunner).run(any(), any(), any(), anyString(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(), specStageApplies.capture(),
+                conceptSelectionApplies.capture(), any());
+        assertThat(specStageApplies.getValue()).isTrue();
+        assertThat(conceptSelectionApplies.getValue()).isFalse();
+        assertThat(rawBrief.getValue()).contains("STARTING PROBLEM STATEMENT", statement);
+        verify(workspace).seedWorkspace(any(), anyString(), eq(exercise), eq(GenerationMode.GENERATE), eq(true));
     }
 
     @Test
@@ -324,8 +351,9 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
-        // The 14-argument overload is the one the attempt loop actually calls; verifying the 13-argument convenience overload would pass even with the flag on.
-        verify(stagedGenerationRunner, never()).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), any());
+        // The full overload is the one the attempt loop actually calls; verifying a convenience overload would pass even with the flag on.
+        verify(stagedGenerationRunner, never()).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
+                anyBoolean(), any());
     }
 
     @Test
@@ -1312,7 +1340,7 @@ class GenerationOrchestrationServiceTest {
     void validatedContractWitness_reachesTheReportWithoutFlippingTheVerdict() {
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).as("an advisory witness never unseats an accepted candidate").isTrue();
@@ -1328,7 +1356,7 @@ class GenerationOrchestrationServiceTest {
     void contractWitnessThatTheReferenceSolutionDoesNotSatisfy_neverReachesTheReport() {
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of());
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
@@ -1354,7 +1382,7 @@ class GenerationOrchestrationServiceTest {
         // exercise.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
@@ -1372,7 +1400,7 @@ class GenerationOrchestrationServiceTest {
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives")));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(blocking);
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
@@ -1711,14 +1739,29 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void aFailingContractWitnessPassCostsTheExerciseNothing() {
-        // The pass is advisory scaffolding on an already-accepted candidate; a provider or probe failure must not disturb the verdict.
+    void aFailingContractWitnessAuthoringPassCostsTheExerciseNothing() {
+        // The model proposal is advisory scaffolding on an already-accepted candidate; an unavailable proposal must not disturb the verdict.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenThrow(new IllegalStateException("provider down"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
             assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        }
+    }
+
+    @Test
+    void aContractWitnessProbeInfrastructureFailurePreservesTheVerifiedPreReviewCheckpoint() {
+        acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenThrow(new DifferentialVerificationService.VerificationInfrastructureException("restore failed", new IllegalStateException("session lost")));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isMechanicallyVerified()).isTrue();
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
+            assertThat(outcome.specFidelityReport().findings()).singleElement()
+                    .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE));
         }
     }
 }

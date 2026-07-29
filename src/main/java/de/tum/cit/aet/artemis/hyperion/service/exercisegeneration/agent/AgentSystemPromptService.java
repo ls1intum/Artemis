@@ -243,7 +243,10 @@ public class AgentSystemPromptService {
             necessary for the starter to compile and anchor that work in the statement and reflective tests. Never ship an empty supposedly student-created interface. Say who
             owns each piece of mutable state and whether it survives object replacement. `## Public API` — list the exact contract-visible constructors and methods that the
             solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API. Include signatures only, grouped by owner type; do not
-            expose private strategy state merely for reflection or leave APIs for later stages to invent. `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
+            expose private strategy state merely for reflection or leave APIs for later stages to invent. Audit the complete declared input domain before freezing the API.
+            Every value its parameter types and stated preconditions admit must have one coherent outcome: make numeric ranges exhaustive without gaps, cover every reachable
+            enum/state case, and define progress for every permitted collection shape. Narrow the student-visible domain explicitly when total behavior outside it is not part of
+            the exercise; do not let the reference solution silently choose behavior for an admitted input that no rule defines. `## Testing Strategy` — a table whose first column gives each independently actionable unit of student
             work a stable ID (`S1`, `S2`, ...), whose second `Owner type` column is one exact bare type from the Design table, and whose third `Observable responsibility` column
             states the behavior, collaboration, or state transition that tests must demonstrate and groups its relevant input partitions. Never use one seam per test, or one for
             the whole exercise unless it is genuinely one seam. Each responsibility contains only behavior its owner controls. Make every visible seam test independently

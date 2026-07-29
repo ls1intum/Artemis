@@ -2,12 +2,11 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointMessageCodec.RecordedMessage;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
@@ -24,6 +23,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -678,12 +678,14 @@ public class AgentCheckpointManager {
         Files.createDirectories(target.getParent());
         Path temporary = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
         try {
-            Files.write(temporary, bytes);
-            try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
-            }
-            catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+            File temporaryFile = temporary.toFile();
+            File targetFile = target.toFile();
+            FileUtils.writeByteArrayToFile(temporaryFile, bytes);
+            // The temporary file is created beside the target, so renameTo is atomic on the Unix filesystems used by the development runner. Windows does not replace an
+            // existing target this way; retain a portable FileUtils fallback there rather than fail the entire development-only recording.
+            if (!temporaryFile.renameTo(targetFile)) {
+                FileUtils.delete(targetFile);
+                FileUtils.moveFile(temporaryFile, targetFile);
             }
         }
         finally {

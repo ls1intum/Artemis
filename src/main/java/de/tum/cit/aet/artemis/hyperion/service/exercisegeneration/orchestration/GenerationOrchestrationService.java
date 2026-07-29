@@ -248,8 +248,8 @@ public class GenerationOrchestrationService {
 
             attemptLoop = new GenerationAttemptLoop(this, attemptLoopDependencies,
                     new GenerationAttemptLoop.RunContext(exercise, mode, jobId, sandbox, sessionId, workspaceSeed, testsSeedSnapshot, placeholderReplacements,
-                            baselineRepositoryFiles, baselineProblemStatement, baselineGradedTestNames, sourceBrief, !statementAuthoritative, systemPrompt, firstPrompt, baseTools,
-                            tools, cancelled, progress, effectiveUsageSink));
+                            baselineRepositoryFiles, baselineProblemStatement, baselineGradedTestNames, sourceBrief, mode == GenerationMode.GENERATE, !statementAuthoritative,
+                            systemPrompt, firstPrompt, baseTools, tools, cancelled, progress, effectiveUsageSink));
             GenerationOutcome decidedInLoop = attemptLoop.run();
             if (decidedInLoop != null) {
                 return decidedInLoop.withTermination(attemptLoop.terminationReason());

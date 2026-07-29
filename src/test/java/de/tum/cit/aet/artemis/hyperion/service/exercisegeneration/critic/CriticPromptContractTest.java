@@ -68,7 +68,8 @@ class CriticPromptContractTest {
                         "A Java reference type does not by itself make `null` a permitted educational input", "representative interaction", "context or client holds or selects",
                         "implementations only in isolation", "Student-owned reasoning", "collapses that explicit mechanism to labels, constants, or scalar formulas",
                         "inclusive rule range", "concrete incompatibility witness", "Cite every rule", "complete pass", "do not stop after the first defect", "Return at most four",
-                        "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs"),
+                        "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs",
+                        "numeric partitions for gaps and overlaps", "concrete admitted witness", "explicitly narrowed input domain"),
 
                 // Contract review: the student-contract half of the full-artifact review.
                 rows(CONTRACT_REVIEW, "house teaching scaffold", "restate its student-visible contract", "imperative TODO", "stubbed owner", "solution/template diff",

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import path from 'node:path';
 import { Browser, expect, Page } from '@playwright/test';
 
@@ -1050,12 +1050,41 @@ function liveReportMetadata() {
     return {
         gitSha: safeShell('git rev-parse HEAD'),
         gitDiffHash: safeShell("git diff HEAD -- | sha256sum | cut -d' ' -f1"),
+        gitStatus: safeShell('git status --porcelain=v2 --untracked-files=all'),
+        untrackedFilesHash: hashUntrackedFiles(),
         draftPromptHash: fileHash(path.join(repoRoot, 'src/main/resources/prompts/hyperion/generate_draft_problem_statement_system.st')),
         liveModel: process.env.SPRING_AI_OPENAI_CHAT_MODEL,
         concurrentJobs,
         concurrentRunId,
-        validatorVersion: 'artifact-integrity-v5',
+        validatorVersion: 'artifact-integrity-v6',
     };
+}
+
+function hashUntrackedFiles() {
+    let listed: Buffer;
+    try {
+        listed = execFileSync('git', ['ls-files', '-z', '--others', '--exclude-standard'], { cwd: repoRoot });
+    } catch {
+        return undefined;
+    }
+    const hash = createHash('sha256');
+    for (const relativePath of listed.toString('utf8').split('\0').filter(Boolean).sort()) {
+        const absolutePath = path.join(repoRoot, relativePath);
+        const stat = fs.lstatSync(absolutePath);
+        hash.update(relativePath);
+        hash.update('\0');
+        hash.update(String(stat.mode));
+        hash.update('\0');
+        if (stat.isSymbolicLink()) {
+            hash.update(fs.readlinkSync(absolutePath));
+        } else if (stat.isFile()) {
+            hash.update(fs.readFileSync(absolutePath));
+        } else {
+            throw new Error(`Cannot record reproducible live-run provenance for non-file untracked path: ${relativePath}`);
+        }
+        hash.update('\0');
+    }
+    return hash.digest('hex');
 }
 
 function fileHash(file: string) {

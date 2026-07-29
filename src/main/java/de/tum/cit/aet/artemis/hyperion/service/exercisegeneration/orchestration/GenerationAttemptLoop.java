@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -69,8 +70,8 @@ class GenerationAttemptLoop {
     record RunContext(ProgrammingExercise exercise, GenerationMode mode, String jobId, InteractiveSandbox sandbox, String sessionId,
             GenerationWorkspaceService.WorkspaceSeed workspaceSeed, Map<String, String> testsSeedSnapshot, Map<String, String> placeholderReplacements,
             Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement, Set<String> baselineGradedTestNames, String sourceBrief,
-            boolean specStageApplies, String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools, BooleanSupplier cancelled,
-            @Nullable GenerationProgressSink progress, Consumer<ChatResponse> usageSink) {
+            boolean specStageApplies, boolean conceptSelectionApplies, String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools,
+            BooleanSupplier cancelled, @Nullable GenerationProgressSink progress, Consumer<ChatResponse> usageSink) {
     }
 
     private record CandidateArtifacts(Map<RepositoryType, Map<String, String>> candidateFiles, Set<String> extractionFailed, VerificationRequest verificationRequest,
@@ -153,9 +154,11 @@ class GenerationAttemptLoop {
     // Java/GENERATE is the only contract StagedGenerationRunner supports (see its javadoc); every other mode and language uses the single, open-ended agent-loop call.
     private final boolean useStagedGeneration;
 
-    // The SPEC stage runs only when the instructor gave no real statement: an existing non-trivial statement IS the specification, and a competing SPEC.md would at best
-    // duplicate it and at worst drift from it.
+    // GENERATE always compiles a reviewed internal contract. An authoritative statement fixes that contract's content but does not make its operational seams implicit.
     private final boolean specStageApplies;
+
+    // Concept invention is distinct from contract compilation: an authoritative statement already fixes the concept, while a brief-only run still needs selection.
+    private final boolean conceptSelectionApplies;
 
     // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair prompt so
     // scope-cutting under repair pressure faces the contract it is cutting.
@@ -183,6 +186,12 @@ class GenerationAttemptLoop {
     private String producedProblemStatement = "";
 
     private SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
+
+    /** Exact findings left by the completed pre-freeze SPEC review; downstream review must not silently erase them. */
+    private List<String> unresolvedSpecificationFindings = List.of();
+
+    /** Mutants already proven to survive the ordinary suite; convergence is forbidden until a later ordinary verification kills them. */
+    private List<SemanticMutant> semanticMutantsAwaitingKill = List.of();
 
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
@@ -253,6 +262,7 @@ class GenerationAttemptLoop {
         this.useStagedGeneration = dependencies.stagedGenerationEnabled() && context.mode() == GenerationMode.GENERATE
                 && context.exercise().getProgrammingLanguage() == ProgrammingLanguage.JAVA;
         this.specStageApplies = context.specStageApplies();
+        this.conceptSelectionApplies = context.conceptSelectionApplies();
         this.currentPrompt = context.firstPrompt();
         // An adaptation gets a single semantic round whatever the configured generation budget is: its scope is one requested change, not an open authoring task.
         this.repairScheduler = new RepairRoundScheduler(context.mode() == GenerationMode.GENERATE ? dependencies.maxSemanticRepairs() : 1);
@@ -382,12 +392,14 @@ class GenerationAttemptLoop {
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
         if (stagedAttempt) {
             StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox,
-                    sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, spec -> {
+                    sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies,
+                    conceptSelectionApplies, spec -> {
                         specSnapshot.set(spec);
                         jobService.recordSpecDocument(exercise.getId(), jobId, spec);
                     });
             loopResult = stagedOutcome.result();
             carriedConversation = stagedOutcome.conversation();
+            unresolvedSpecificationFindings = stagedOutcome.unresolvedSpecificationFindings();
         }
         else {
             SemanticRepairBatch repairBatchForAttempt = pendingSemanticRepair;
@@ -503,7 +515,20 @@ class GenerationAttemptLoop {
             workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
-        return verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
+        VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
+        if (!result.mechanicallyVerified() || semanticMutantsAwaitingKill.isEmpty()) {
+            return result;
+        }
+        List<SemanticMutant> surviving = verifier.checkSemanticMutants(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()),
+                semanticMutantsAwaitingKill, restoreCandidate);
+        if (surviving.isEmpty()) {
+            semanticMutantsAwaitingKill = List.of();
+            return result;
+        }
+        List<String> reasons = new ArrayList<>(result.reasons());
+        surviving.forEach(mutant -> reasons.add("The graded suite still passes the environment-proven semantic mutant for rule " + mutant.ruleId() + " ("
+                + mutant.counterexample().wrongBehavior() + "). Add a focused assertion that kills this plausible wrong implementation; keep the verified solution unchanged."));
+        return new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), List.copyOf(reasons));
     }
 
     private VerificationResult verifyWithInfrastructureRetry(VerificationRequest request, Runnable restoreCandidate) {
@@ -550,10 +575,17 @@ class GenerationAttemptLoop {
         SpecFidelityReport previousReview = candidateBeforeCurrentRepair == null ? specFidelityReport : candidateBeforeCurrentRepair.reviewReport();
         specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), adaptationChanges, repairDelta, previousReview,
                 effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
+        if (!unresolvedSpecificationFindings.isEmpty()) {
+            List<SpecFidelityReport.Finding> combined = new ArrayList<>(specFidelityReport.findings());
+            unresolvedSpecificationFindings.forEach(finding -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, finding,
+                    "The independent pre-freeze review completed and still rejected this compiled specification after its bounded refinement budget. The exact finding is "
+                            + "retained so the saved exercise remains NEEDS_REVIEW rather than silently treating the contract as fully approved.")));
+            specFidelityReport = new SpecFidelityReport(List.copyOf(combined));
+        }
         // Skipped while anything still blocks: a repair round is coming that will rewrite the very artifacts a witness is derived from and validated against, so one authored
         // now could stop passing before it is ever offered.
         if (!specFidelityReport.hasBlockingFindings()) {
-            specFidelityReport = adoptContractWitnesses(specFidelityReport, specDocumentSnapshot);
+            specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         }
         lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement, specFidelityReport,
                 specDocumentSnapshot, artifacts.testPlanJson());
@@ -645,31 +677,61 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Adds any contract witness the reference solution actually satisfied to the report, as advisory findings the agent can adopt. The executable counterpart to the oracle
-     * review, which reasons about wrong implementations but never runs one, so its {@code killed} flag is only the reviewing model's own claim. A witness is offered only once
-     * it has passed against the reference solution, so a mistaken one never reaches the agent, and any failure along the way leaves the report exactly as it was.
+     * Adds independently proposed counterexamples only after the environment validates them. A semantic mutant becomes blocking evidence only when the ordinary suite accepts
+     * it and the exact counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at the starter
+     * seam. An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
+     * mechanically verified pre-review checkpoint instead of treating missing execution as evidence.
      */
-    private SpecFidelityReport adoptContractWitnesses(SpecFidelityReport report, @Nullable String specDocumentSnapshot) {
+    private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
             return report;
         }
         try {
+            Map<String, String> solutionFiles = producedFilesByType.getOrDefault(RepositoryType.SOLUTION, Map.of());
+            Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
+            String candidateProblemStatement = producedProblemStatement;
+            Runnable restoreCandidate = () -> {
+                sandbox.resetSession(sessionId);
+                workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
+                        candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
+            };
+            List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, usageSink, cancelled);
+            List<SemanticMutant> validatedMutants = verifier.validateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates, restoreCandidate);
+            semanticMutantsAwaitingKill = validatedMutants;
+
             List<ContractWitness> candidates = specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles),
-                    renderArtifactSources(producedFilesByType.getOrDefault(RepositoryType.SOLUTION, Map.of())), usageSink, cancelled);
-            List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates);
-            if (validated.isEmpty()) {
+                    renderArtifactSources(solutionFiles), usageSink, cancelled);
+            Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
+            List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate).stream()
+                    .filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
+            if (validated.isEmpty() && validatedMutants.isEmpty()) {
                 return report;
             }
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+            validatedMutants.forEach(mutant -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+                    "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
+                    "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
+                            + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the "
+                            + "approved rule and independent review explain why that difference matters. Add the exact counterexample method below so the environment can "
+                            + "causally recheck it after repair. Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code())));
             validated.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
                     "Rule " + witness.ruleId() + " has an executable counterexample witness",
                     "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
                             + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "
                             + "starter fails at student work. The reviewer designed it around this plausible wrong behavior, but the environment did not execute that "
                             + "hypothetical implementation: " + witness.wrongBehavior() + "\n" + witness.code())));
-            emit("Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
+            if (!validatedMutants.isEmpty()) {
+                emit("The environment proved " + validatedMutants.size() + (validatedMutants.size() == 1 ? " semantic mutant survives" : " semantic mutants survive")
+                        + " the graded suite.");
+            }
+            if (!validated.isEmpty()) {
+                emit("Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
+            }
             return new SpecFidelityReport(List.copyOf(combined));
+        }
+        catch (DifferentialVerificationService.VerificationInfrastructureException exception) {
+            throw exception;
         }
         catch (RuntimeException e) {
             log.warn("Contract witnesses could not be produced for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());

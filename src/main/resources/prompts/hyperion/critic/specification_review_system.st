@@ -35,6 +35,9 @@ Find only high-confidence planning defects that would make every later artifact 
   that the template supplies a type marked `student-creates`). Compare the whole specification; a correct table does not cancel contradictory prose;
 - the Public API does not pin the exact constructors and members the described rules, ownership, and testing seams require, leaving later artifacts to invent a
   graded interface after approval;
+- the Public API and stated preconditions admit an input for which the Rules define no coherent observable outcome. Audit numeric partitions for gaps and overlaps, every
+  reachable enum/state case, and collection progress or termination. Give one concrete admitted witness. Do not infer that Java reference types admit null when the
+  specification does not say so, and do not demand behavior outside an explicitly narrowed input domain;
 - the specification adds an observable validation, exception, state, purity, immutability, thread-safety, or architecture constraint that is unrelated to the requested
   objective and central interaction, gratuitously narrows an explicit instructor choice, or creates disproportionate student work.
 - an explicitly requested difficulty is clearly contradicted by the reasoning left to students. Judge the actual student-owned decisions and collaboration, not file,

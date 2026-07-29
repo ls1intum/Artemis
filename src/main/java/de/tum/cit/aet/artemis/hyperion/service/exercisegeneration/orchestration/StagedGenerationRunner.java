@@ -231,7 +231,15 @@ public class StagedGenerationRunner {
      * The staged run's aggregated loop result together with the conversation it produced ({@code null} under {@link StagedContext#FRESH}), so the outer repair-attempt loop can
      * continue the same logical conversation instead of starting each repair blind.
      */
-    public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
+    public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
+
+        public StagedRunOutcome {
+            unresolvedSpecificationFindings = List.copyOf(unresolvedSpecificationFindings);
+        }
+
+        public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
+            this(result, conversation, List.of());
+        }
     }
 
     StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles,
@@ -244,7 +252,14 @@ public class StagedGenerationRunner {
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         return run(exercise, baseTools, tools, briefPrompt, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
-                specSink);
+                specStageApplies, specSink);
+    }
+
+    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+            Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
+        return run(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
+                specStageApplies, specSink);
     }
 
     /**
@@ -252,29 +267,30 @@ public class StagedGenerationRunner {
      * cooperative cancellation between stages, with the raw source brief kept separate from the authoring context for the pre-freeze semantic review. Every shorter overload
      * delegates here.
      *
-     * @param exercise           the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
-     * @param baseTools          the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
-     * @param tools              the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
-     * @param briefPrompt        the current authoring context — the instructor brief or an outer-attempt repair prompt — injected fresh into every stage's user prompt
-     * @param sourceBrief        the raw instructor brief, used as review authority and as the clean student-statement authoring context
-     * @param seedTestsFiles     the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
-     * @param sandbox            the open sandbox session
-     * @param sessionId          the sandbox session id
-     * @param cancelled          polled between stages (and inside each stage's own agent loop)
-     * @param usageSink          receives token usage for every model call; may be {@code null}
-     * @param progress           receives one short progress line per stage; may be {@code null}
-     * @param structuralSeedHook refreshes generated Java structural tests during executable-build verification (the orchestrator's post-loop call remains the final source of
-     *                               truth)
-     * @param specStageApplies   whether to run the SPEC stage; {@code false} when the instructor already provided a non-trivial problem statement — that statement IS the
-     *                               specification, and the model must not overwrite it with a restatement
-     * @param specSink           receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen copy
-     *                               for the critic and repair prompts); may be {@code null}
+     * @param exercise                the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
+     * @param baseTools               the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
+     * @param tools                   the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
+     * @param briefPrompt             the current authoring context — the instructor brief or an outer-attempt repair prompt — injected fresh into every stage's user prompt
+     * @param sourceBrief             the raw instructor brief, used as review authority and as the clean student-statement authoring context
+     * @param seedTestsFiles          the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
+     * @param sandbox                 the open sandbox session
+     * @param sessionId               the sandbox session id
+     * @param cancelled               polled between stages (and inside each stage's own agent loop)
+     * @param usageSink               receives token usage for every model call; may be {@code null}
+     * @param progress                receives one short progress line per stage; may be {@code null}
+     * @param structuralSeedHook      refreshes generated Java structural tests during executable-build verification (the orchestrator's post-loop call remains the final source of
+     *                                    truth)
+     * @param specStageApplies        whether to compile and review an internal executable specification
+     * @param conceptSelectionApplies whether the model must invent a concept first; false when an authoritative statement already fixes it
+     * @param specSink                receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen
+     *                                    copy
+     *                                    for the critic and repair prompts); may be {@code null}
      * @return one aggregated {@link AgentLoopResult} — summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the last
      *         stage's final message (with the failing gate's report appended, if a gate failed) — together with the carried conversation
      */
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
-            Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
+            Supplier<Set<String>> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
         Instant startedAt = clock.get();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
         int remainingPool = POOL_HARD_CAP;
@@ -291,7 +307,9 @@ public class StagedGenerationRunner {
         // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic, so a later draft can be worse than an earlier one and the
         // loop keeps the best rather than the most recent. Reset whenever the concept is replaced: a specification written for a rejected concept must never come back.
         String bestSpecSnapshot = null;
+        List<String> bestSpecFindings = List.of();
         int bestSpecFindingCount = Integer.MAX_VALUE;
+        List<String> unresolvedSpecificationFindings = List.of();
         String semanticSpecFeedback = null;
         String previousRejectedLearningFitDirection = null;
         boolean freshSemanticSpecAttempt = false;
@@ -299,7 +317,7 @@ public class StagedGenerationRunner {
         int specificationReviewNumber = 0;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
 
-        if (specStageApplies && conceptSelector != null) {
+        if (conceptSelectionApplies && conceptSelector != null) {
             ExerciseConceptSelector.ConceptSelection selection = conceptSelector.select(sourceBrief, cancelled, usageSink, progress);
             totalTurns += selection.turns();
             remainingPool = Math.max(0, remainingPool - selection.turns());
@@ -326,7 +344,7 @@ public class StagedGenerationRunner {
         for (int index = 0; index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
             if (stage == GenerationStage.SPEC && !specStageApplies) {
-                // The instructor's existing statement is the specification; writing a competing SPEC.md would at best duplicate it and at worst drift from it.
+                // Non-generation callers do not compile a new authoring contract.
                 continue;
             }
             if (cancelled.getAsBoolean()) {
@@ -451,6 +469,7 @@ public class StagedGenerationRunner {
                             if (review.complete() && review.findings().size() < bestSpecFindingCount) {
                                 bestSpecFindingCount = review.findings().size();
                                 bestSpecSnapshot = specSnapshot;
+                                bestSpecFindings = review.findings();
                             }
                             if (!review.complete()) {
                                 // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
@@ -482,7 +501,7 @@ public class StagedGenerationRunner {
                                 String rejectedDirection = "SUFFICIENT".equals(review.learningFitDirection()) ? null : review.learningFitDirection();
                                 boolean repeatedLearningFitFailure = rejectedDirection != null && rejectedDirection.equals(previousRejectedLearningFitDirection);
                                 previousRejectedLearningFitDirection = rejectedDirection;
-                                if (review.conceptualReworkRequired() || repeatedLearningFitFailure) {
+                                if (conceptSelectionApplies && (review.conceptualReworkRequired() || repeatedLearningFitFailure)) {
                                     // The selected concept itself failed the pre-freeze review. Re-enter the same context-separated discovery boundary rather than let the SPEC
                                     // agent privately replace its own plan. A repeated learning-fit direction also triggers reselection: rewriting a second time against an
                                     // unchanged qualitative proxy optimizes the proxy instead of the concept.
@@ -555,11 +574,15 @@ public class StagedGenerationRunner {
                                         log.info("Restored the best reviewed specification for exercise {} ({} findings) over the final refinement ({} findings)", exercise.getId(),
                                                 bestSpecFindingCount, review.findings().size());
                                         specSnapshot = bestSpecSnapshot;
+                                        unresolvedSpecificationFindings = bestSpecFindings;
                                         emit(progress, "Keeping the strongest reviewed specification this concept produced.");
                                     }
                                     else {
                                         log.warn("Could not restore the best reviewed specification for exercise {}: {}", exercise.getId(), restore);
                                     }
+                                }
+                                if (unresolvedSpecificationFindings.isEmpty()) {
+                                    unresolvedSpecificationFindings = review.findings();
                                 }
                                 emit(progress, "Continuing with the reviewed specification; remaining concerns are attached for instructor review.");
                             }
@@ -614,7 +637,7 @@ public class StagedGenerationRunner {
             }
 
         }
-        return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation);
+        return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
     }
 
     private static String semanticSpecRefinementPrompt(String reviewFeedback) {
@@ -684,12 +707,17 @@ public class StagedGenerationRunner {
     /** Builds the outcome on every exit path and writes the session transcript (best-effort, no-op unless a transcript directory is configured). */
     private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
             @Nullable List<Message> conversation) {
+        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, List.of());
+    }
+
+    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
+            @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
         List<Message> transcriptConversation = new ArrayList<>(archivedConversation);
         if (conversation != null) {
             transcriptConversation.addAll(conversation);
         }
         transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), transcriptConversation);
-        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation);
+        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings);
     }
 
     /** A gate that reused the tools' cached check instead of re-running it says so, to keep the transcript honest about why it was instant. */

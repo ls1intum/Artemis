@@ -14,6 +14,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -288,6 +289,23 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void exhaustedSpecificationReviewFindingsRemainAttachedToTheStagedOutcome() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, List.of("R1 still invents a source-level technique")));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec one"), completed(1, "spec two"),
+                completed(1, "spec three"), completed(1, "spec four"), completed(3, "build"), completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.unresolvedSpecificationFindings()).containsExactly("R1 still invents a source-level technique");
+        verify(reviewer, times(4)).reviewSpecification(eq("brief"), anyString(), any(), any());
+    }
+
+    @Test
     void repeatedLearningFitDirectionReselectsInsteadOfOptimizingAnotherRewrite() {
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
@@ -311,6 +329,28 @@ class StagedGenerationRunnerTest {
         verify(conceptSelector).select(eq("brief"), anyString(), any(), any(), any());
         verify(reviewer, times(3)).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any());
         assertThat(approvedSpecs.approved("s")).hasValueSatisfying(specification -> assertThat(specification).contains(VALID_SPEC_DOCUMENT.strip()));
+    }
+
+    @Test
+    void authoritativeStatementRefinesItsContractWithoutReplacingTheInstructorConcept() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
+        when(reviewer.reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any())).thenReturn(
+                new SpecFidelityCriticService.SpecificationReview(true, false, true, List.of("make the global tie rule explicit"), "", "TOO_SHALLOW"),
+                new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, conceptSelector,
+                "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
+                completed(3, "build"), completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "authoritative elevator statement", "authoritative elevator statement",
+                Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, false, null);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(reviewer, times(2)).reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any());
+        verifyNoInteractions(conceptSelector);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
     }
 
     @Test

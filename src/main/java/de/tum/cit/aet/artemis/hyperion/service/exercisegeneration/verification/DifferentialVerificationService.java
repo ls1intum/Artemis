@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
@@ -775,24 +776,23 @@ public class DifferentialVerificationService {
 
     /**
      * Runs candidate contract witnesses against the reference solution and template and returns the ones that demonstrably pass the solution and fail at the starter seam. The
-     * witnesses ride in a single throwaway probe class beside the graded suite; because it never replaces an existing file, a crash before its removal leaves the graded suite
-     * untouched. Every failure path returns no witnesses rather than propagating: this is advisory signal on an already-passing candidate, so a broken probe must cost the
-     * exercise nothing.
+     * witnesses ride in a single throwaway probe class beside the graded suite. The canonical restore runs before and after the probe so an infrastructure failure can never leave
+     * advisory work in the live authoring session.
      *
      * @param sandbox            the open sandbox session
      * @param sessionId          the sandbox session id
      * @param exercise           the exercise being built (drives the build recipe)
      * @param producedTestsFiles the tests repository as produced, providing both the collision check and the source of the probe's package and imports
      * @param candidates         the unvalidated witnesses
+     * @param restoreCandidate   restores the mechanically verified candidate and removes all probe residue
      * @return the witnesses the reference solution actually satisfied
      */
     public List<ContractWitness> validateContractWitnesses(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
-            List<ContractWitness> candidates) {
+            List<ContractWitness> candidates, Runnable restoreCandidate) {
         if (candidates.isEmpty() || producedTestsFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return List.of();
         }
-        Optional<Map.Entry<String, String>> host = producedTestsFiles.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java")
-                && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null && entry.getValue().contains("package ")).min(Map.Entry.comparingByKey());
+        Optional<Map.Entry<String, String>> host = ContractWitnessProbe.host(producedTestsFiles);
         if (host.isEmpty()) {
             return List.of();
         }
@@ -801,8 +801,9 @@ public class DifferentialVerificationService {
         if (probePath == null || probeSource.isBlank()) {
             return List.of();
         }
-        String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
         try {
+            restoreCandidate.run();
+            String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
             sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
             seedPristineVerifyScript(sandbox, sessionId, exercise);
             BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
@@ -818,27 +819,79 @@ public class DifferentialVerificationService {
                     discriminating.size(), candidates.size());
             return discriminating;
         }
-        catch (RuntimeException e) {
-            log.warn("The contract-witness probe could not run for exercise {}: {}", exercise.getId(), e.getMessage());
-            return List.of();
+        catch (VerificationInfrastructureException exception) {
+            throw exception;
+        }
+        catch (RuntimeException exception) {
+            throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
         }
         finally {
-            removeContractWitnessProbe(sandbox, sessionId, workspacePath);
+            try {
+                restoreCandidate.run();
+            }
+            catch (RuntimeException exception) {
+                throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
+            }
         }
     }
 
-    /** Safe against deleting graded work: the path was rejected earlier if any produced file already used it, so only this probe's own file can be removed. */
-    private void removeContractWitnessProbe(InteractiveSandbox sandbox, String sessionId, String workspacePath) {
+    /**
+     * Executes the three restored builds that turn an authored semantic mutant into environment evidence; probe infrastructure failures propagate.
+     *
+     * @param sandbox               the active generation sandbox
+     * @param sessionId             the active sandbox session
+     * @param exercise              the exercise whose build commands should run
+     * @param producedTestsFiles    the mechanically verified graded tests
+     * @param producedSolutionFiles the pristine reference-solution sources
+     * @param candidates            independently authored mutant proposals
+     * @param restoreCandidate      restores the mechanically verified workspace
+     * @return mutants proven to survive the graded suite and fail their own counterexample
+     */
+    public List<SemanticMutant> validateSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
+            Map<String, String> producedSolutionFiles, List<SemanticMutant> candidates, Runnable restoreCandidate) {
+        if (candidates.isEmpty() || producedTestsFiles.isEmpty() || producedSolutionFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return List.of();
+        }
         try {
-            SandboxExecResultDTO removal = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f",
-                    GenerationWorkspaceService.WORKSPACE + "/" + workspacePath);
-            if (!removal.isSuccess()) {
-                log.warn("The contract-witness probe {} could not be removed; the read-back residue strip is the remaining guard", workspacePath);
-            }
+            List<SemanticMutant> validated = SemanticMutantExecution.validate(producedTestsFiles, producedSolutionFiles, candidates,
+                    (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
+            log.info("Semantic-mutant probe for exercise {}: {} of {} proposals were proven to survive the graded suite and die on their counterexample", exercise.getId(),
+                    validated.size(), Math.min(candidates.size(), 2));
+            return validated;
         }
-        catch (RuntimeException e) {
-            log.warn("The contract-witness probe {} could not be removed: {}", workspacePath, e.getMessage());
+        catch (VerificationInfrastructureException exception) {
+            throw exception;
         }
+        catch (RuntimeException exception) {
+            throw new VerificationInfrastructureException("The semantic-mutant probe could not restore the verified candidate", exception);
+        }
+    }
+
+    /**
+     * Rechecks proven mutants after repair; only the validated counterexample method failing is a kill, and a failed probe preserves the prior evidence by propagating.
+     *
+     * @param sandbox               the active generation sandbox
+     * @param sessionId             the active sandbox session
+     * @param exercise              the exercise whose build commands should run
+     * @param producedSolutionFiles the current reference-solution sources
+     * @param provenMutants         mutants previously proven by the three-probe validation
+     * @param restoreCandidate      restores the mechanically verified workspace
+     * @return the proven mutants that remain unresolved
+     */
+    public List<SemanticMutant> checkSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedSolutionFiles,
+            List<SemanticMutant> provenMutants, Runnable restoreCandidate) {
+        if (provenMutants.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return List.of();
+        }
+        return SemanticMutantExecution.surviving(producedSolutionFiles, provenMutants,
+                (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
+    }
+
+    private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, @Nullable SemanticMutant mutant,
+            Map.@Nullable Entry<String, String> counterexampleProbe, Runnable restoreCandidate) {
+        return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate, () -> seedPristineVerifyScript(sandbox, sessionId, exercise),
+                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION)));
     }
 
     /**

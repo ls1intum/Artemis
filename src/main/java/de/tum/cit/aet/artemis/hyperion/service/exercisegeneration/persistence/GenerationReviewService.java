@@ -108,6 +108,7 @@ public class GenerationReviewService {
                 case UNENFORCEABLE_TECHNIQUE_RULE -> "Students can pass without using the technique the exercise teaches: " + finding.requirement();
                 case CONTRACT_WITNESS_AVAILABLE -> "A ready-to-adopt test for a specification rule, already passing against the reference solution: " + finding.requirement();
                 case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
+                case SPECIFICATION_REVIEW_FINDING -> "The compiled exercise specification still has an unresolved review finding: " + finding.requirement();
             };
             Severity severity = finding.isBlocking() ? Severity.HIGH : Severity.MEDIUM;
             ArtifactLocationDTO location = new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", ANCHOR_LINE, ANCHOR_LINE);
