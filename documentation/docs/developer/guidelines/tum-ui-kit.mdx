@@ -82,10 +82,12 @@ to validate the compiled ng-packagr boundary.
 The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md) is
 the source of truth for stylesheet loading, token semantics, dark mode, and `styleClass`.
 
-Artemis loads `dist/tum-ui/styles.css` after its framework styles in `angular.json` and maps the
-package tokens to PrimeNG and Artemis tokens in `src/main/webapp/tailwind.css`. Package styles must
-not read Artemis or PrimeNG variables directly. Artemis sets `data-theme="dark"` on the document
-element when dark mode is active.
+The style build emits the package stylesheet to `dist/tum-ui/styles.css` and to the ignored
+Artemis-watch input `src/main/webapp/generated/tum-ui.css`. Artemis loads the latter after its
+framework styles in `angular.json` and maps package tokens to PrimeNG and Artemis tokens in
+`src/main/webapp/tailwind.css`. Both outputs contain the same CSS. Package styles must not read
+Artemis or PrimeNG variables directly. Artemis sets `data-theme="dark"` on the document element
+when dark mode is active.
 
 ### Translation contract
 
@@ -117,12 +119,13 @@ From the repository root:
 | `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
 | `pnpm --dir packages/tum-ui run storybook:docs:test` | Build Storybook and test AutoDocs themes and responsive viewports         |
 
-`pnpm start` performs the initial package build, starts the package watcher, and serves Artemis.
-Artemis-only changes use Angular HMR. Package changes rebuild incrementally and cause an application
-reload because Artemis consumes the compiled artifact. Restart `pnpm start` after changing the
-package manifest or build configuration; watch mode tracks implementation and stylesheet sources.
-Package validation writes to `dist/tum-ui-pack`, so it can run without replacing the artifact used
-by the development server.
+`pnpm start` performs the initial package build and serves Artemis. Its serve-only TypeScript
+configuration resolves the package's public entry point from source so Angular HMR covers
+application and package components. The default TypeScript path and non-serve application builds
+resolve the compiled artifact instead. The package stylesheet watcher writes only when generated CSS
+changes, keeping template-only edits eligible for component HMR. Restart `pnpm start` after changing
+the package manifest or build configuration. Package validation writes to `dist/tum-ui-pack`, so it
+cannot replace the artifact used by other commands.
 
 Before submitting a package change, run:
 

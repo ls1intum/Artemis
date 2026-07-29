@@ -1,14 +1,50 @@
-import { mkdir, readFile, watch, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import chokidar from 'chokidar';
 import postcss from 'postcss';
 import tailwindcss from '@tailwindcss/postcss';
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
+const componentSourcePath = resolve(packageRoot, 'src');
 const sourcePath = resolve(packageRoot, 'tailwind.css');
-const outputArgument = process.argv.indexOf('--output');
-const outputPath = outputArgument >= 0 ? resolve(process.argv[outputArgument + 1]) : resolve(packageRoot, '../../dist/tum-ui/styles.css');
+
+function parseOutputPaths(arguments_) {
+    const paths = [];
+    for (let index = 0; index < arguments_.length; index++) {
+        if (arguments_[index] !== '--output') {
+            continue;
+        }
+        const outputPath = arguments_[++index];
+        if (!outputPath || outputPath.startsWith('--')) {
+            throw new Error('--output requires a path');
+        }
+        paths.push(resolve(outputPath));
+    }
+    return paths;
+}
+
+const outputPaths = parseOutputPaths(process.argv);
+if (outputPaths.length === 0) {
+    outputPaths.push(resolve(packageRoot, '../../dist/tum-ui/styles.css'));
+}
 const watching = process.argv.includes('--watch');
+
+async function writeIfChanged(outputPath, contents) {
+    try {
+        if ((await readFile(outputPath, 'utf8')) === contents) {
+            return;
+        }
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            throw error;
+        }
+    }
+
+    await mkdir(dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, contents);
+    console.log(`Built ${outputPath}`);
+}
 
 async function build() {
     const source = await readFile(sourcePath, 'utf8');
@@ -38,9 +74,7 @@ async function build() {
         }
     });
 
-    await mkdir(dirname(outputPath), { recursive: true });
-    await writeFile(outputPath, stylesheet.toString());
-    console.log(`Built ${outputPath}`);
+    await Promise.all(outputPaths.map((outputPath) => writeIfChanged(outputPath, stylesheet.toString())));
 }
 
 await build();
@@ -67,18 +101,19 @@ if (watching) {
         rebuilding = false;
     }
 
-    for await (const event of watch(packageRoot, { recursive: true })) {
-        const relativePath = event.filename?.replaceAll('\\', '/');
-        if (
-            !relativePath ||
-            (relativePath !== 'tailwind.css' && !relativePath.startsWith('src/')) ||
-            relativePath.endsWith('.spec.ts') ||
-            relativePath.endsWith('.stories.ts') ||
-            (!relativePath.endsWith('.html') && !relativePath.endsWith('.ts') && !relativePath.endsWith('.css') && !relativePath.endsWith('.scss'))
-        ) {
-            continue;
-        }
+    function scheduleRebuild() {
         clearTimeout(rebuildTimer);
         rebuildTimer = setTimeout(() => void rebuild(), 50);
     }
+
+    chokidar
+        .watch([componentSourcePath, sourcePath], {
+            ignoreInitial: true,
+            ignored: (path, stats) =>
+                stats?.isFile() &&
+                (path.endsWith('.spec.ts') ||
+                    path.endsWith('.stories.ts') ||
+                    (!path.endsWith('.html') && !path.endsWith('.ts') && !path.endsWith('.css') && !path.endsWith('.scss'))),
+        })
+        .on('all', scheduleRebuild);
 }

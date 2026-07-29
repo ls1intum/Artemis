@@ -11,6 +11,7 @@ const angularWorkspace = JSON.parse(readFileSync(resolve(repoRoot, 'angular.json
 const productionBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-ui/ng-package.json'), 'utf8'));
 const developmentBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-ui/ng-package.dev.json'), 'utf8'));
 const packBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-ui/ng-package.pack.json'), 'utf8'));
+const serveTsconfig = JSON.parse(readFileSync(resolve(repoRoot, 'tsconfig.serve.json'), 'utf8'));
 const rootTsconfigPath = resolve(repoRoot, 'tsconfig.json');
 const { config: rootTsconfig, error: rootTsconfigError } = ts.readConfigFile(rootTsconfigPath, ts.sys.readFile);
 if (rootTsconfigError) {
@@ -203,15 +204,22 @@ describe('@tumaet/ui-angular package manifest', () => {
         expect(productionBuild.assets).not.toContain('styles.css');
     });
 
-    it('makes Artemis consume only the built public entry point', () => {
+    it('keeps production on the built entry point and development on the public source entry point', () => {
         expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['./dist/tum-ui']);
         expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toBeUndefined();
+        expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['./packages/tum-ui/src/public-api.ts']);
+        expect(angularWorkspace.projects.artemis.architect.build.configurations['tum-ui-source'].tsConfig).toBe('tsconfig.serve.json');
+        expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
+        expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle.exclude).toContain('@tumaet/ui-angular');
+        expect(rootPackageJson.scripts.start).toContain('tum-ui:build:styles -- --watch');
+        expect(rootPackageJson.scripts['tum-ui:build:styles']).toContain('--output src/main/webapp/generated/tum-ui.css');
+        expect(rootPackageJson.scripts.start).not.toContain('tum-ui:build:watch');
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
     });
 
     it('loads the validated package stylesheet after host framework styles', () => {
         const styles = angularWorkspace.projects.artemis.architect.build.options.styles;
-        const packageStylesheet = 'dist/tum-ui/styles.css';
+        const packageStylesheet = 'src/main/webapp/generated/tum-ui.css';
 
         expect(styles.filter((style) => style === packageStylesheet)).toHaveLength(1);
         expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/scss/themes/theme-default.scss'));

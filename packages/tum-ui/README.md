@@ -85,8 +85,11 @@ pnpm --dir packages/tum-ui run storybook:build
 pnpm --dir packages/tum-ui run storybook:docs:test
 ```
 
-`pnpm start` builds the package, watches it, and serves Artemis. An Artemis-only edit uses Angular
-HMR. A package-source edit rebuilds the package and reloads the application.
+`pnpm start` builds the package and serves Artemis. During development, Artemis resolves the public
+entry point from package source so Angular HMR applies to application and package components.
+Non-serve application builds and artifact validation continue to consume the compiled package. The
+style build writes byte-identical package and Artemis-watch outputs and skips unchanged writes so
+template-only changes remain component HMR updates.
 
 Add implementation and focused behavior tests under `src/lib`. Export supported contracts
 explicitly from `src/public-api.ts`. Package code must not import Artemis, PrimeNG, Bootstrap, or

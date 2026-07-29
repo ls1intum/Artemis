@@ -103,7 +103,7 @@
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
                             "src/main/webapp/tailwind.css",
-                            "dist/tum-ui/styles.css",
+                            "src/main/webapp/generated/tum-ui.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
@@ -166,6 +166,9 @@
                                     "with": "src/main/webapp/app/core/environments/environment.override.ts"
                                 }
                             ]
+                        },
+                        "tum-ui-source": {
+                            "tsConfig": "tsconfig.serve.json"
                         }
                     },
                     "defaultConfiguration": "production"
@@ -173,7 +176,10 @@
                 "serve": {
                     "builder": "@angular/build:dev-server",
                     "options": {
-                        "buildTarget": "artemis:build:development",
+                        "buildTarget": "artemis:build:development,tum-ui-source",
+                        "prebundle": {
+                            "exclude": ["@tumaet/ui-angular"]
+                        },
                         "proxyConfig": "proxy.conf.mjs",
                         "port": 9000
                     },
@@ -182,7 +188,7 @@
                             "buildTarget": "artemis:build:production"
                         },
                         "development": {
-                            "buildTarget": "artemis:build:development"
+                            "buildTarget": "artemis:build:development,tum-ui-source"
                         }
                     },
                     "defaultConfiguration": "development"

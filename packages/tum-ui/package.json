@@ -57,6 +57,7 @@
         "@types/react": "catalog:",
         "@vitest/browser": "catalog:",
         "@vitest/browser-playwright": "catalog:",
+        "chokidar": "catalog:",
         "concurrently": "catalog:",
         "playwright": "catalog:",
         "postcss": "catalog:",
