@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -199,22 +200,23 @@ public class LearningObjectImportService {
             case FileUploadExercise fileUploadExercise -> {
                 FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
-                        api::importFileUploadExercise);
+                        FileUploadExercise::new, api::importFileUploadExercise);
             }
             case ModelingExercise modelingExercise -> {
                 var api = modelingExerciseImportApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingExerciseImportApi.class));
                 yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithExampleSubmissionsAndResultsElseThrow,
-                        api::importModelingExercise);
+                        ModelingExercise::new, api::importModelingExercise);
             }
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
-                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
+                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, TextExercise::new, api::importTextExercise);
             }
             case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
+                    quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, QuizExercise::new,
+                    (newQuizExercise, source) -> {
                         try {
-                            return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
+                            return quizExerciseImportService.importQuizExercise(newQuizExercise, source, null);
                         }
                         catch (IOException e) {
                             throw new RuntimeException(e);
@@ -277,28 +279,49 @@ public class LearningObjectImportService {
     /**
      * Imports or loads an exercise.
      *
-     * @param exercise       The source exercise for the import
-     * @param course         The course to import the exercise into
-     * @param findFunction   The function to find an existing exercise by title
-     * @param loadForImport  The function to load an exercise for import
-     * @param importFunction The function to import the exercise
+     * @param exercise            The source exercise for the import
+     * @param course              The course to import the exercise into
+     * @param findFunction        The function to find an existing exercise by title
+     * @param loadForImport       The function to load the source exercise (with its content) for import
+     * @param newExerciseSupplier Supplier for a fresh target exercise of the concrete type
+     * @param importFunction      The function to import the exercise: {@code (newExercise, sourceExercise)}
      * @return The imported or loaded exercise
      * @param <E> The type of the exercise
      */
     private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, ThrowingBiFunction<String, Long, Optional<E>> findFunction,
-            Function<Long, E> loadForImport, BiFunction<E, E, E> importFunction) {
+            Function<Long, E> loadForImport, Supplier<E> newExerciseSupplier, BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
         }
-        else {
-            exercise = loadForImport.apply(exercise.getId());
-            exercise.setCourse(course);
-            exercise.setId(null);
-            exercise.setCompetencyLinks(new HashSet<>());
-
-            return importFunction.apply(exercise, exercise);
-        }
+        E sourceExercise = loadForImport.apply(exercise.getId());
+        // Build a fresh target carrying the destination and the fields the import service's backfill cannot recover from
+        // a fresh entity (non-null defaults on a new exercise); all remaining content is copied from the source by the
+        // import service. newExercise and sourceExercise must be distinct instances so copying children does not mutate
+        // the source's collections in place.
+        E newExercise = newExerciseSupplier.get();
+        newExercise.setCourse(course);
+        // The fresh target has no grading criteria of its own; null asks the import service to deep-copy the source's (an
+        // initialized empty collection would count as "the caller wants none", see ExerciseImportService#copyExerciseBasis).
+        newExercise.setGradingCriteria(null);
+        newExercise.setTitle(sourceExercise.getTitle());
+        newExercise.setMaxPoints(sourceExercise.getMaxPoints());
+        newExercise.setBonusPoints(sourceExercise.getBonusPoints());
+        newExercise.setIncludedInOverallScore(sourceExercise.getIncludedInOverallScore());
+        // presentationScoreEnabled has a non-null default (false) on a fresh exercise, so the import service's backfill
+        // cannot recover it; copy it explicitly so a source with presentation scoring enabled is not silently disabled.
+        newExercise.setPresentationScoreEnabled(sourceExercise.getPresentationScoreEnabled());
+        // mode also has a non-null default, so the import service's backfill cannot recover it; copy it explicitly so a
+        // TEAM source is not silently imported as INDIVIDUAL (the import service then copies the team config).
+        newExercise.setMode(sourceExercise.getMode());
+        // Competency import replicates the source dates (they are optionally shifted afterwards, relative to the new
+        // reference date), unlike the other import paths that intentionally reset dates. The import service keeps the
+        // dates already present on newExercise, so copy them from the source here.
+        newExercise.setReleaseDate(sourceExercise.getReleaseDate());
+        newExercise.setStartDate(sourceExercise.getStartDate());
+        newExercise.setDueDate(sourceExercise.getDueDate());
+        newExercise.setAssessmentDueDate(sourceExercise.getAssessmentDueDate());
+        return importFunction.apply(newExercise, sourceExercise);
     }
 
     /**
