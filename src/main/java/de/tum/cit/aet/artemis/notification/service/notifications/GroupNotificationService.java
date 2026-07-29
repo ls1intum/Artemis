@@ -66,7 +66,7 @@ public class GroupNotificationService {
 
         if (notificationText != null) {
             // sends an exercise-update notification
-            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
+            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }
     }
 
@@ -75,7 +75,7 @@ public class GroupNotificationService {
      *
      * @param attachment that has been changed
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment) {
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
         // Do not send a notification before the release date of the attachment.
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
@@ -86,7 +86,8 @@ public class GroupNotificationService {
 
         var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(),
                 attachment.getExercise() == null ? attachment.getLecture().getTitle() : attachment.getExercise().getTitle(),
-                attachment.getExercise() == null ? null : attachment.getExercise().getId(), attachment.getLecture() == null ? null : attachment.getLecture().getId());
+                attachment.getExercise() == null ? null : attachment.getExercise().getId(), attachment.getLecture() == null ? null : attachment.getLecture().getId(),
+                notificationText);
 
         courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
     }
@@ -153,7 +154,7 @@ public class GroupNotificationService {
      *
      * @param exercise that has been updated
      */
-    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         if (exercise.isExamExercise()) {
             // Do not send exercise update notifications to students for exam exercises.
             // The notification URL points to the course-management page which students cannot access.
@@ -171,7 +172,7 @@ public class GroupNotificationService {
                 Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
+                exercise.getExerciseNotificationTitle(), null, null, exercise.getType(), notificationText);
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
