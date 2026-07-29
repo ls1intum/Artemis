@@ -801,27 +801,39 @@ public class DifferentialVerificationService {
             return List.of();
         }
         String probePath = ContractWitnessProbe.probePath(host.get().getKey(), producedTestsFiles.keySet());
-        String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), candidates);
-        if (probePath == null || probeSource.isBlank()) {
+        if (probePath == null) {
             return List.of();
         }
         try {
-            restoreCandidate.run();
-            String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
-            sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
-            seedPristineVerifyScript(sandbox, sessionId, exercise);
-            BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
-                    GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-            List<ContractWitness> solutionValidated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), candidates);
-            if (solutionValidated.isEmpty()) {
-                return List.of();
+            List<ContractWitness> discriminating = new ArrayList<>();
+            for (ContractWitness candidate : candidates) {
+                restoreCandidate.run();
+                String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(candidate));
+                String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
+                sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
+                seedPristineVerifyScript(sandbox, sessionId, exercise);
+                BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+                List<ContractWitness> solutionValidated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), List.of(candidate));
+                if (solutionValidated.isEmpty()) {
+                    log.info("Contract-witness {} for exercise {} was rejected before starter comparison: solution tests={}, failures={}, exit={}; diagnostic={}",
+                            candidate.testName(), exercise.getId(), solution.tests(), solution.failures(), solution.exitCode(), solution.buildDiagnostic());
+                    continue;
+                }
+                BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+                List<ContractWitness> result = ContractWitnessProbe.discriminating(solutionValidated, template.testNames(), template.testFailedNames());
+                if (result.isEmpty()) {
+                    log.info(
+                            "Contract-witness {} for exercise {} passed the solution but did not execute and fail at the starter seam: starter tests={}, failures={}, exit={}; "
+                                    + "diagnostic={}",
+                            candidate.testName(), exercise.getId(), template.tests(), template.failures(), template.exitCode(), template.buildDiagnostic());
+                }
+                discriminating.addAll(result);
             }
-            BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
-                    GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
-            List<ContractWitness> discriminating = ContractWitnessProbe.discriminating(solutionValidated, template.testNames(), template.testFailedNames());
             log.info("Contract-witness probe for exercise {}: {} of {} candidate witnesses passed the reference solution and failed at the starter seam", exercise.getId(),
                     discriminating.size(), candidates.size());
-            return discriminating;
+            return List.copyOf(discriminating);
         }
         catch (VerificationInfrastructureException exception) {
             throw exception;

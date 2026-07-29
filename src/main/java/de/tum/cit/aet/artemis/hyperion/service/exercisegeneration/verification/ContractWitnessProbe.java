@@ -140,9 +140,15 @@ public final class ContractWitnessProbe {
         return existingFilePaths.contains(path) ? null : path;
     }
 
-    /** Finds a normal packaged Java test whose package and imports a throwaway probe can safely reuse. */
+    /**
+     * Finds a normal assertion-based Java test whose package and imports a throwaway probe can safely reuse. Structural {@code @TestFactory} harnesses are deliberately excluded:
+     * they sort before most behavioral tests but do not import {@code @Test}, assertions, or the domain helpers a model-authored witness is instructed to reuse.
+     */
     static Optional<Map.Entry<String, String>> host(Map<String, String> testFiles) {
-        return testFiles.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java") && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null
-                && entry.getValue().contains("package ")).min(Map.Entry.comparingByKey());
+        return testFiles.entrySet().stream()
+                .filter(entry -> entry.getKey().endsWith(".java") && !ExerciseIntegrityGate.isHarnessFile(entry.getKey()) && entry.getValue() != null
+                        && entry.getValue().contains("package ") && entry.getValue().contains("@Test") && !entry.getValue().contains("@TestFactory")
+                        && entry.getValue().matches("(?s).*\\b(assert\\w*|verify|expect)\\s*\\(.*"))
+                .min(Map.Entry.comparingByKey());
     }
 }

@@ -306,8 +306,29 @@ public class GenerationTaskService {
                             return;
                         }
                         if (isNoOpPersist(persistResult)) {
-                            emitter.milestone(ExerciseGenerationEventDTO.done("The generated exercise already matched the current exercise. No changes were needed.",
-                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, false, Map.of()).withTerminationReason(terminationReason));
+                            boolean instructorReviewRequired = outcome.specFidelityReport().hasBlockingFindings();
+                            int reviewNoteCount = outcome.specFidelityReport().findings().isEmpty() ? 0
+                                    : reviewService.attachFindings(exerciseToPersist, user, outcome.specFidelityReport());
+                            String message = "The generated exercise already matched the current exercise. No changes were needed.";
+                            if (instructorReviewRequired) {
+                                message += " Automated quality review found issues that require instructor review.";
+                            }
+                            if (reviewNoteCount == GenerationReviewService.REVIEW_COMMENTS_FAILED) {
+                                message += " Review notes could not be attached; inspect the exercise manually.";
+                            }
+                            else if (reviewNoteCount == 1) {
+                                message += " 1 review note was added for your attention.";
+                            }
+                            else if (reviewNoteCount > 1) {
+                                message += " " + reviewNoteCount + " review notes were added for your attention.";
+                            }
+                            emitter.milestone(
+                                    ExerciseGenerationEventDTO
+                                            .done(message,
+                                                    instructorReviewRequired ? ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW
+                                                            : ExerciseGenerationEventDTO.CompletionStatus.SUCCESS,
+                                                    verdict, false, Map.of())
+                                            .withTerminationReason(terminationReason));
                             return;
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
@@ -574,7 +595,9 @@ public class GenerationTaskService {
      * baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save, and would discard an earlier run's still-valid baseline.
      */
     private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
-        return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged();
+        // A test-plan-only save changes weights/visibility without a repository commit or metadata update. Persistence records an exercise version for that durable change, so
+        // the version id is part of the no-op decision; otherwise the UI would claim nothing changed and skip revert/review setup after mutating grading.
+        return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged() && persistResult.savedExerciseVersionId() == null;
     }
 
     private static ExerciseGenerationVerdictDTO toVerdict(VerificationResult verification) {

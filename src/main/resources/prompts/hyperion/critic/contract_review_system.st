@@ -17,7 +17,17 @@ Treat the specification's Decision Ledger as provenance, not authority. Verify t
 `NECESSARY_OPERATIONAL_CHOICE` or `INPUT_DOMAIN_ASSUMPTION` is proportional and surfaced wherever callers need it, and that a `PEDAGOGICAL_OBJECTIVE` is not converted into
 behavioral grading when the implementation choice cannot be observed robustly. A ledger label cannot legitimize an invented downstream requirement.
 
-Independently replay every worked-example outcome command by command. Compare all normative statements with one another and with the executable tests, especially error behaviour and state atomicity. Resolve scopes and quantifiers precisely, such as whether failure rolls back one operation or the whole call. A tested API is discoverable only when the statement makes its exact signature and types mandatory and unambiguous; "suggested", optional, or alternative APIs are hidden when the tests require one choice. If the statement claims alternatives but the starter or tests require one, report that conflict as a contradiction. Do not invent requirements from solution-only behavior.
+Independently replay every worked-example outcome command by command against the actual reference-solution control flow, not against nearby prose that repeats the claimed
+answer. Return one exampleCheck for every distinct deterministic example claim (up to six), including each stateful sequence; do not select only the examples already mirrored by
+tests. For stateful examples, name the object that owns the state and count only operations that actually transition that object. A promise that state survives an unrelated
+operation does not imply that the unrelated operation advances it. If an example needs such an unstated coupling, or the solution stores/transitions the state differently,
+report a contradiction even when the frozen specification repeats the erroneous example: the downstream statement and executable solution are repairable and cannot both be
+correct.
+
+Compare all normative statements with one another and with the executable tests, especially error behaviour and state atomicity. Resolve scopes and quantifiers precisely, such
+as whether failure rolls back one operation or the whole call. A tested API is discoverable only when the statement makes its exact signature and types mandatory and unambiguous;
+"suggested", optional, or alternative APIs are hidden when the tests require one choice. If the statement claims alternatives but the starter or tests require one, report that
+conflict as a contradiction. Do not invent requirements from solution-only behavior.
 Extra defensive behavior in the reference solution is not an invented student requirement when no statement promise, test assertion, or task makes the student reproduce it.
 Compare the approved Design ownership rows with the statement's availability claims and the actual starter: `student-creates` types must be described as required and
 absent, never provided. Compare boundary predicates and quantifiers literally across the approved rules, statement, and executable assertions; `zero` and `non-positive`,
@@ -62,7 +72,7 @@ Respond with ONLY this complete JSON shape; every array is mandatory for this co
  "invented": [{"requirement":"...","sourceQuote":"exact quote from a produced downstream artifact that imposes it","reason":"why the INSTRUCTOR BRIEF does not support it"}],
  "unrequestedChanges": [{"change":"path and change","reason":"..."}],
  "missingRequestedChanges": [{"requirement":"...","reason":"..."}]}
-At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array. Prioritize blockers and group closely related symbols or tests. Every failed
+At most 6 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array. Prioritize blockers and group closely related symbols or tests. Every failed
 reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.
 Every contradiction and hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
 STATEMENT, or GENERATED TEST PLAN. Every invented finding must quote the produced statement, solution, template, tests, or test plan that imposes the unsupported

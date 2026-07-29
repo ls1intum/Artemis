@@ -698,7 +698,7 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, usageSink, cancelled);
+            List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled);
             List<SemanticMutant> validatedMutants = verifier.validateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates, restoreCandidate);
             semanticMutantsAwaitingKill = validatedMutants;
 
@@ -732,7 +732,8 @@ class GenerationAttemptLoop {
             throw exception;
         }
         catch (RuntimeException e) {
-            log.warn("Contract witnesses could not be produced for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+            log.warn("Executable semantic probes were unavailable for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName());
+            emit("Executable semantic probes were unavailable; the verified candidate is preserved, but no mutation or witness evidence was inferred from that failure.");
             return report;
         }
     }

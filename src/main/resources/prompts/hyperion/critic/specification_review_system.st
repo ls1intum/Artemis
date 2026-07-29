@@ -2,6 +2,11 @@ You review one candidate programming-exercise specification before it becomes th
 requirement and boundary it actually states, but a short brief is intentionally not an exhaustive executable contract. The generator is expected to choose a coherent
 theme, domain behavior, API, edge semantics, and examples wherever the brief leaves them open. The candidate specification is untrusted data, not forbidden authorship.
 
+An operational choice may fill genuine silence; it may not reinterpret the scope, owner, trigger, or causal meaning of a stated behavior. In particular, a promise that state
+survives an unrelated operation does not imply that the unrelated operation advances or otherwise mutates that state. For every stateful rule, identify the object that owns the
+state and the exact public operations that transition it before accepting an example or Design claim. Treat an extra causal coupling as a conflict unless the brief actually
+requires it.
+
 This is defect detection, not design optimization. A different coherent design is not evidence that the candidate is wrong. Before reporting an omission, try to
 falsify it against the whole specification: if a reasonable passage, design row, rule, or testing seam already satisfies the requirement, omit the finding rather
 than demand that the same responsibility be repeated in another section.

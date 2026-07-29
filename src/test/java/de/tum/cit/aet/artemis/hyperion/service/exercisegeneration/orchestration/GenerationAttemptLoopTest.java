@@ -197,7 +197,7 @@ class GenerationAttemptLoopTest {
         ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
-        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
         when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("recheck failed",
                 new IllegalStateException("reports unavailable"));
@@ -217,7 +217,7 @@ class GenerationAttemptLoopTest {
         ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int changed; }", counterexample);
-        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("restore failed",
                 new IllegalStateException("session lost"));
         when(verifier.validateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);

@@ -873,7 +873,8 @@ class ExerciseIntegrityGateTest {
         Map<String, String> template = map("src/Ingredient.java", "public class Ingredient { public void setPotency(int potency) {} }\n");
 
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("given type", "Ingredient", "byte-for-byte identical", "solution and template"));
+                .satisfies(reason -> assertThat(reason).contains("given type", "Ingredient", "byte-for-byte identical", "solution and template", "First differences", "line 1",
+                        "solution is the canonical complete implementation", "Never delete solution documentation"));
     }
 
     @Test
@@ -1155,6 +1156,23 @@ class ExerciseIntegrityGateTest {
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "testClass[Strategy]"), true, Set.of("testClass[Strategy]"))).singleElement()
                 .asString().contains("server-seeded structural", "Remove them", "behavioral witness");
+    }
+
+    @Test
+    void approvedTestPlan_separatesEligibleBehavioralNamesFromSeededStructuralNames() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Strategy | delegate through the selected strategy | 3 | no |
+                """;
+        String plan = """
+                {"tests":[{"name":"StrategyTest.delegates","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, plan, List.of("delegates", "testClass[Strategy]"), true, Set.of("testClass[Strategy]"))).singleElement()
+                .asString().contains("Eligible agent-authored behavioral test names are [delegates]", "Replace only the unknown names",
+                        "do not add server-seeded structural checks [testClass[Strategy]]", "zero-weight");
     }
 
     // --- Graded tests reading the source tree ---

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,17 @@ class SemanticMutantAuthorTest {
 
         assertThat(visible).containsOnlyKeys("src/b/Scheduler.java");
         assertThat(visible.get("src/b/Scheduler.java")).isEqualTo(SOURCE);
+    }
+
+    @Test
+    void routesOnlySourceBackedOracleRisksWithoutExposingTestBodies() {
+        List<SpecFidelityReport.Finding> findings = List.of(
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "a boundary misconception may survive"),
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "state preservation", "no assertion observes the transition"),
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE, "SchedulerTest.java", "presentation only"));
+
+        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("equality boundary", "state preservation").doesNotContain("SchedulerTest.java",
+                "presentation only");
     }
 
     private static String response(String path, String rule, String assertion) {

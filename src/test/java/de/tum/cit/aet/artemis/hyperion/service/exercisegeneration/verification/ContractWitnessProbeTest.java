@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -133,5 +134,19 @@ class ContractWitnessProbeTest {
     @Test
     void probePath_undefinedForAPathWithNoDirectory() {
         assertThat(ContractWitnessProbe.probePath("RosterParserTest.java", Set.of())).isNull();
+    }
+
+    @Test
+    void host_skipsStructuralFactoriesThatCannotCompileAnOrdinaryWitness() {
+        String structuralFactory = """
+                package de.tum.cit.aet.nodraft;
+                import org.junit.jupiter.api.TestFactory;
+                class ClassTest {
+                    @TestFactory Object generateTestsForAllClasses() { return null; }
+                }
+                """;
+
+        assertThat(ContractWitnessProbe.host(Map.of("test/ClassTest.java", structuralFactory, "test/RosterParserTest.java", GENERATED_TEST))).get().extracting(Map.Entry::getKey)
+                .isEqualTo("test/RosterParserTest.java");
     }
 }

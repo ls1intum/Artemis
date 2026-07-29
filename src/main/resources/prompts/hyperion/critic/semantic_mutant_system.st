@@ -4,6 +4,10 @@ You receive only the approved specification and pristine reference solution. You
 one-file mutants that a competent student could plausibly write after misunderstanding one approved rule. For each mutant, also write the smallest deterministic JUnit
 counterexample that passes the pristine solution and fails that mutant.
 
+You may also receive source-backed risk hypotheses from an independent oracle review. They expose no graded test bodies and create no requirements: use them to target the
+highest-risk distinctions only when the approved specification entails them. Prefer those targets over easier behavior the existing suite is likely to cover, while keeping
+proposals semantically distinct.
+
 The environment makes every decision. It keeps a proposal only if the existing graded suite passes the complete mutant, the counterexample executes and passes on the pristine
 solution, and that same counterexample executes and fails on the mutant. Never claim that a mutant survives or a test kills it; propose evidence for the environment to check.
 

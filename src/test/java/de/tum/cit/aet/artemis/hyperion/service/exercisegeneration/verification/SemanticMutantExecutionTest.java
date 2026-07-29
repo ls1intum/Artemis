@@ -35,8 +35,14 @@ class SemanticMutantExecutionTest {
 
     private static final SemanticMutant MUTANT = new SemanticMutant("R1", PATH, ORIGINAL, MUTANT_SOURCE, COUNTEREXAMPLE);
 
-    private static final Map<String, String> TESTS = Map.of("test/example/SchedulerTest.java",
-            "package example; import org.junit.jupiter.api.Test; import static org.junit.jupiter.api.Assertions.*; class SchedulerTest {}");
+    private static final Map<String, String> TESTS = Map.of("test/example/SchedulerTest.java", """
+            package example;
+            import org.junit.jupiter.api.Test;
+            import static org.junit.jupiter.api.Assertions.*;
+            class SchedulerTest {
+                @Test void existing() { assertEquals(1, new Scheduler().choose(), "existing behavior"); }
+            }
+            """);
 
     @Test
     void validatesOnlyAfterAllThreeEnvironmentProbesAndRestoresAroundEach() {

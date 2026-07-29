@@ -60,7 +60,8 @@ class SemanticMutantAuthor {
         this.objectMapper = objectMapper;
     }
 
-    List<SemanticMutant> author(String specification, Map<String, String> solutionFiles, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+    List<SemanticMutant> author(String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets, @Nullable Consumer<ChatResponse> usageSink,
+            BooleanSupplier cancelled) {
         requireReviewTextSafe("semantic-mutant/specification", specification);
         solutionFiles.forEach((path, source) -> {
             requireReviewTextSafe("semantic-mutant/path", path);
@@ -75,7 +76,15 @@ class SemanticMutantAuthor {
         if (renderedSolution.isBlank()) {
             return List.of();
         }
-        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution;
+        String targets = renderReviewTargets(reviewTargets);
+        if (!targets.isBlank()) {
+            requireReviewTextSafe("semantic-mutant/review-targets", targets);
+        }
+        String targetPrompt = targets.isBlank() ? ""
+                : "\n\nINDEPENDENT REVIEW TARGETS (source-backed risk hypotheses, not new authority):\n" + targets
+                        + "\nPrioritize semantically distinct proposals for these risks when the approved specification entails them. Do not repeat an already-covered "
+                        + "behavior merely because it is easier to mutate.";
+        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt;
         try {
             return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles);
         }
@@ -83,6 +92,12 @@ class SemanticMutantAuthor {
             log.warn("Semantic-mutant authoring failed: {}", exception.getMessage());
             return List.of();
         }
+    }
+
+    static String renderReviewTargets(List<SpecFidelityReport.Finding> reviewTargets) {
+        return reviewTargets.stream()
+                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT).limit(4)
+                .map(finding -> "- " + finding.requirement() + ": " + finding.detail()).collect(Collectors.joining("\n"));
     }
 
     List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles) {

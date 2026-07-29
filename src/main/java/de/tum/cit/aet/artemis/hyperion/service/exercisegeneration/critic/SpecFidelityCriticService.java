@@ -240,13 +240,14 @@ public class SpecFidelityCriticService {
      *
      * @param specificationContract the approved specification that is the sole rule authority
      * @param solutionFiles         the pristine reference-solution sources
+     * @param reviewTargets         source-grounded oracle risks from the independent contract review
      * @param usageSink             receives token-usage responses, or {@code null} to skip accounting
      * @param cancelled             reports whether generation has been cancelled
      * @return at most two structurally valid proposals; none have environment evidence yet
      */
-    public List<SemanticMutant> authorSemanticMutants(String specificationContract, Map<String, String> solutionFiles, @Nullable Consumer<ChatResponse> usageSink,
-            BooleanSupplier cancelled) {
-        return semanticMutantAuthor.author(specificationContract, solutionFiles, usageSink, cancelled);
+    public List<SemanticMutant> authorSemanticMutants(String specificationContract, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return semanticMutantAuthor.author(specificationContract, solutionFiles, reviewTargets, usageSink, cancelled);
     }
 
     /**

@@ -17,7 +17,15 @@ kills them.
 
 The approved specification is the only authority. Never invent a requirement it does not state, never assert behaviour that is merely how the reference solution happens to work, and never assert on private state, timing, or anything a caller cannot observe through the public API the reference solution declares.
 
-Write each witness in the SAME language, package, imports, and test framework as the graded tests you were shown, calling only the public API the reference solution declares. Give every assertion a message naming the behaviour it pins. Use fixed data only: no randomness, no shuffling, no current time — a graded test that draws on them scores the same submission differently on re-run. Emit ONE complete self-contained method per witness, including its annotations, and nothing else: no class declaration, no imports, no commentary.
+Write each witness in the SAME language, package, available imports, test framework, and compilation style as the graded tests you were shown, calling only the public API the
+reference solution declares. The method is inserted into a wrapper that copies imports from one existing graded test; it does not infer new imports. Use only simple names already
+available in those imports or fully qualified names. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
+student-created type is absent from the starter, preserve the suite's reflection/dynamic-proxy pattern instead of directly naming that type in declarations, constructors, or
+method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
+
+Give every assertion a message naming the behaviour it pins. Use fixed data only: no randomness, no shuffling, no current time — a graded test that draws on them scores the same
+submission differently on re-run. Emit ONE complete self-contained method per witness, including its annotations, and nothing else: no class declaration, no imports, no
+commentary.
 
 Respond with ONLY this complete JSON shape:
 {"witnesses": [{"rule":"the rule ID exactly as the specification writes it, e.g. R1",

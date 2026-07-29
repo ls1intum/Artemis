@@ -568,6 +568,39 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void noOpPersist_preservesBlockingReviewVerdictAndAttachesFindingsToTheCurrentExercise() {
+        SpecFidelityReport report = SpecFidelityReport.qualityReviewUnavailable("The reviewer returned no usable verdict.");
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null));
+        when(reviewService.attachFindings(exercise, user, report)).thenReturn(1);
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.liveExerciseChanged()).isFalse();
+        assertThat(terminal.message()).contains("No changes were needed", "instructor review", "1 review note");
+        verify(reviewService).attachFindings(exercise, user, report);
+        verify(generationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString());
+    }
+
+    @Test
+    void testPlanOnlyPersistIsReportedAsALiveChangeWhenItCreatesAnExerciseVersion() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, 23L));
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(terminal.savedExerciseVersionId()).isEqualTo(23L);
+        assertThat(terminal.message()).contains("adapted and saved").doesNotContain("No changes were needed");
+        verify(generationRevertService).recordBaseline(any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), anyString());
+    }
+
+    @Test
     void mechanicallyVerifiedRun_whenRevertCheckpointFails_reportsSuccessfulSaveWithoutHidingTheDegradation() {
         when(generationRevertService.recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyString())).thenReturn(false);
 

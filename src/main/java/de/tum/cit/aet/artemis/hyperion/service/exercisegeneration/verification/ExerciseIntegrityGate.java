@@ -261,10 +261,11 @@ public final class ExerciseIntegrityGate {
         List<String> divergentGivenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(StageCheckService.DesignRow::type)
                 .filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
         if (!divergentGivenTypes.isEmpty()) {
+            List<String> firstDifferences = divergentGivenTypes.stream().map(type -> canonicalGivenFileDifference(type, producedTemplateFiles, producedSolutionFiles)).toList();
             reasons.add("the approved specification marks these as given types, but their canonical Java source is not byte-for-byte identical in the solution and template: "
-                    + divergentGivenTypes
-                    + ". A given type is supplied rather than student work. Keep exactly the same canonical <Type>.java file in both repositories; repair both copies together "
-                    + "instead of weakening the starter merely to make a test fail.");
+                    + divergentGivenTypes + ". First differences: " + firstDifferences
+                    + ". A given type is supplied rather than student work. The solution is the canonical complete implementation: repair its public documentation first when "
+                    + "needed, then copy the whole canonical file to the template. Never delete solution documentation or weaken either copy merely to make the bytes match.");
         }
         return List.copyOf(reasons);
     }
@@ -278,6 +279,34 @@ public final class ExerciseIntegrityGate {
         List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
         return templateMatches.size() == 1 && solutionMatches.size() == 1 && templateMatches.getFirst().getKey().equals(solutionMatches.getFirst().getKey())
                 && templateMatches.getFirst().getValue().equals(solutionMatches.getFirst().getValue());
+    }
+
+    private static String canonicalGivenFileDifference(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
+        String suffix = "/" + type + ".java";
+        List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
+        List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
+        if (templateMatches.size() != 1 || solutionMatches.size() != 1) {
+            return type + " (expected one canonical file in each repository; found solution=" + solutionMatches.size() + ", template=" + templateMatches.size() + ")";
+        }
+        Map.Entry<String, String> solution = solutionMatches.getFirst();
+        Map.Entry<String, String> template = templateMatches.getFirst();
+        if (!solution.getKey().equals(template.getKey())) {
+            return type + " (path: solution " + solution.getKey() + ", template " + template.getKey() + ")";
+        }
+        List<String> solutionLines = solution.getValue().lines().toList();
+        List<String> templateLines = template.getValue().lines().toList();
+        int shared = Math.min(solutionLines.size(), templateLines.size());
+        for (int index = 0; index < shared; index++) {
+            if (!solutionLines.get(index).equals(templateLines.get(index))) {
+                return type + " (line " + (index + 1) + ": solution `" + boundedLine(solutionLines.get(index)) + "`, template `" + boundedLine(templateLines.get(index)) + "`)";
+            }
+        }
+        return type + " (line " + (shared + 1) + ": solution has " + solutionLines.size() + " lines, template has " + templateLines.size() + ")";
+    }
+
+    private static String boundedLine(String line) {
+        String stripped = line.strip();
+        return stripped.length() <= 120 ? stripped : stripped.substring(0, 117) + "...";
     }
 
     private static List<Map.Entry<String, String>> canonicalJavaFiles(Map<String, String> files, String type, String suffix) {
@@ -319,16 +348,19 @@ public final class ExerciseIntegrityGate {
             return List.of("the final test-plan.json is invalid: " + exception.getMessage());
         }
         Set<String> knownNames = verifiedTestNames == null ? Set.of() : Set.copyOf(verifiedTestNames);
+        Set<String> structuralNames = seededStructuralTestNames == null ? Set.of() : Set.copyOf(seededStructuralTestNames);
+        List<String> behavioralNames = knownNames.stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !structuralNames.contains(name)).sorted().toList();
         List<String> unknownNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
         if (!unknownNames.isEmpty()) {
-            return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Use only exact verified test names: " + knownNames + ".");
+            return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Eligible agent-authored behavioral test names are "
+                    + behavioralNames + ". Replace only the unknown names; do not add server-seeded structural checks " + structuralNames
+                    + " (Artemis keeps those visible and zero-weight).");
         }
         List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
         if (!plannedBuildGates.isEmpty()) {
             return List.of("the final test-plan.json includes build-gate test(s) " + plannedBuildGates
                     + ". Build gates are zero-weight infrastructure checks and cannot satisfy an approved learning seam, visible evidence, or hidden coverage.");
         }
-        Set<String> structuralNames = seededStructuralTestNames == null ? Set.of() : Set.copyOf(seededStructuralTestNames);
         List<String> plannedStructuralTests = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(structuralNames::contains).sorted().toList();
         if (!plannedStructuralTests.isEmpty()) {
             return List.of("the final test-plan.json includes server-seeded structural test(s) " + plannedStructuralTests

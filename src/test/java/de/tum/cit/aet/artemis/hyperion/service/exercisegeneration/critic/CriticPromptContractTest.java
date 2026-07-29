@@ -31,13 +31,15 @@ class CriticPromptContractTest {
 
     private static final String ORACLE_REVIEW = "/prompts/hyperion/critic/oracle_review_system.st";
 
+    private static final String CONTRACT_WITNESS = "/prompts/hyperion/critic/contract_witness_system.st";
+
     private final HyperionPromptTemplateService templateService = new HyperionPromptTemplateService();
 
     /**
      * Clauses each reviewer prompt must state. A missing clause means the audit fix that introduced it has been edited away.
      */
     private static Stream<Arguments> requiredClauses() {
-        return Stream.of(
+        Stream<Arguments> reviewClauses = Stream.of(
                 // Concept selection: evaluate the generator's candidates on properties, never author a replacement design.
                 rows(CONCEPT_REVIEW, "fully specified", "can still be intermediate", "never invent or propose a replacement theme", "Evaluate EACH candidate independently",
                         "Constants, labels, or thresholds", "Reconstruct the smallest plausible student implementation", "Lookup-table", "transcription, uniform scaling",
@@ -69,7 +71,8 @@ class CriticPromptContractTest {
                         "implementations only in isolation", "Student-owned reasoning", "collapses that explicit mechanism to labels, constants, or scalar formulas",
                         "inclusive rule range", "concrete incompatibility witness", "Cite every rule", "complete pass", "do not stop after the first defect", "Return at most four",
                         "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs",
-                        "numeric partitions for gaps and overlaps", "concrete admitted witness", "explicitly narrowed input domain"),
+                        "numeric partitions for gaps and overlaps", "concrete admitted witness", "explicitly narrowed input domain", "unrelated operation advances",
+                        "object that owns"),
 
                 // Contract review: the student-contract half of the full-artifact review.
                 rows(CONTRACT_REVIEW, "house teaching scaffold", "restate its student-visible contract", "imperative TODO", "stubbed owner", "solution/template diff",
@@ -79,12 +82,13 @@ class CriticPromptContractTest {
                         "mandatory and unambiguous", "Do not infer task reachability", "Do not invent requirements from solution-only behavior", "claims alternatives",
                         "Extra defensive behavior in the reference solution is not an invented student requirement", "one operation or the whole call", "trace each visible test",
                         "from setup", "to assertion", "another independently actionable", "student seam",
-                        "At most 3 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array", "replay every worked-example outcome",
-                        "unrequested and missing requested changes", "executable setup", "Distinguish observable guarantees from pedagogical objectives"),
+                        "At most 6 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array", "replay every worked-example outcome",
+                        "unrequested and missing requested changes", "executable setup", "Distinguish observable guarantees from pedagogical objectives",
+                        "actual reference-solution control flow", "every distinct deterministic example claim", "object that owns the state"),
 
                 // Oracle review: the executable-test-oracle half of the full-artifact review.
                 rows(ORACLE_REVIEW, "at most six highest-risk representative mutants", "explicit boundary quantifier", "at the boundary", "immediately adjacent values",
-                        "only the few highest-leverage blockers that have distinct repairs", "must not emit uncovered", "Design owner is marked `given`", "test-controlled fake",
+                        "only the few highest-leverage findings that have distinct repairs", "must not emit uncovered", "Design owner is marked `given`", "test-controlled fake",
                         "sentinel", "calling a production collaborator twice", "hardcoded-example mutant", "distinct representative input", "contract-breaking mutants",
                         "executable setup", "Do not invent requirements from solution-only behavior", "APPROVED SPECIFICATION CONTRACT is binding authority",
                         "input permitted by the declared contract", "student-facing API", "reflection", "private-state mutation", "bypassing a constructor precondition",
@@ -92,6 +96,8 @@ class CriticPromptContractTest {
                         "The produced statement is evidence to compare against those primary sources, not authority",
                         "If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation"))
                 .flatMap(rows -> rows);
+        return Stream.concat(reviewClauses, rows(CONTRACT_WITNESS, "compilation style as the graded tests", "wrapper that copies imports", "compile against the student starter",
+                "reflection/dynamic-proxy pattern", "never executes and is discarded"));
     }
 
     /**
