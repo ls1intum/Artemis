@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { vi } from 'vitest';
 import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -40,7 +40,6 @@ describe('UnifiedFeedbackComponent', () => {
 
     it('should have editable-mode defaults', () => {
         expect(component.editable()).toBe(false);
-        expect(component.isSuggestion()).toBe(false);
         expect(component.readOnly()).toBe(false);
         expect(component.useDefaultFeedbackSuggestionBadgeText()).toBe(false);
         expect(component.feedbackTitle()).toBeUndefined();
@@ -379,22 +378,6 @@ describe('UnifiedFeedbackComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should render suggestion accept/discard buttons and emit their events', () => {
-        fixture.componentRef.setInput('editable', true);
-        fixture.componentRef.setInput('isSuggestion', true);
-        fixture.detectChanges();
-        const acceptSpy = vi.fn();
-        const discardSpy = vi.fn();
-        component.onAcceptSuggestion.subscribe(acceptSpy);
-        component.onDiscardSuggestion.subscribe(discardSpy);
-
-        (fixture.nativeElement.querySelector('#accept-suggestion') as HTMLButtonElement).click();
-        (fixture.nativeElement.querySelector('#discard-suggestion') as HTMLButtonElement).click();
-
-        expect(acceptSpy).toHaveBeenCalledOnce();
-        expect(discardSpy).toHaveBeenCalledOnce();
-    });
-
     it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
@@ -410,26 +393,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(pointsInput.disabled).toBe(true);
     });
 
-    it('should render the AI suggestion badge inside a footer when the feedback is a suggestion', () => {
-        fixture.componentRef.setInput('isSuggestion', true);
-        fixture.componentRef.setInput('feedback', new Feedback());
-        fixture.detectChanges();
-
-        const footer = fixture.nativeElement.querySelector('.unified-feedback-footer');
-        expect(footer).toBeTruthy();
-        expect(footer.querySelector('jhi-feedback-suggestion-badge')).toBeTruthy();
-    });
-
     it('should not render a footer when the feedback is not a suggestion', () => {
-        fixture.componentRef.setInput('isSuggestion', false);
         fixture.componentRef.setInput('feedback', undefined);
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('.unified-feedback-footer')).toBeNull();
     });
 
-    it('should render the footer when feedback.text carries a suggestion prefix even if isSuggestion is false', () => {
-        fixture.componentRef.setInput('isSuggestion', false);
+    it('should render the AI suggestion badge inside a footer when feedback.text carries a suggestion prefix', () => {
         fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Missing null check` } as any);
         fixture.detectChanges();
 

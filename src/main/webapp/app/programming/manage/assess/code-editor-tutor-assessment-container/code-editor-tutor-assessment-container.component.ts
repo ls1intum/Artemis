@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, ou
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
+import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -40,8 +40,6 @@ import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
@@ -80,7 +78,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
 
@@ -134,8 +131,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Not template-read — only used in component code, may stay plain.
     referencedFeedback: Feedback[] = [];
     readonly automaticFeedback = signal<Feedback[]>([]);
-    // all pending Athena feedback suggestions (neither accepted nor rejected yet)
-    readonly feedbackSuggestions = signal<Feedback[]>([]);
+    // whether Athena feedback suggestions were auto-accepted into the feedback lists for this submission
+    readonly hasAcceptedFeedbackSuggestions = signal(false);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
     isFirstAssessment = false;
@@ -155,12 +152,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     faTimesCircle = faTimesCircle;
     faExternalLink = faExternalLink;
 
-    /**
-     * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
-     */
-    readonly unreferencedFeedbackSuggestions = computed(() => this.feedbackSuggestions().filter((feedback) => !feedback.reference));
-
-    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
+    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.hasAcceptedFeedbackSuggestions());
 
     readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
 
@@ -336,11 +328,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
             const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
-            this.feedbackSuggestions.set(
-                feedbackSuggestions.filter((suggestion) =>
-                    allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
-                ),
+            const newSuggestions = feedbackSuggestions.filter((suggestion) =>
+                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
             );
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
+            if (newSuggestions.length > 0) {
+                const manualResult = this.manualResult();
+                if (manualResult) {
+                    manualResult.feedbacks = [...(manualResult.feedbacks ?? []), ...newSuggestions];
+                }
+                this.hasAcceptedFeedbackSuggestions.set(true);
+                this.handleFeedback();
+            }
         } finally {
             this.loadingFeedbackSuggestions.set(false);
         }
@@ -401,35 +400,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Show confirmation dialog for discarding suggestions before submitting (if there are any)
-     * @return true if the user confirmed the discard (=> continue to submit), false otherwise
-     */
-    async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
-        if (this.feedbackSuggestions().length > 0) {
-            const dialogRef = this.dialogService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, {
-                showHeader: false,
-                width: '50rem',
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                dismissableMask: false,
-            });
-            const suggestionsDiscardConfirmed: boolean | undefined = await firstValueFrom(dialogRef?.onClose ?? of(undefined));
-            if (!suggestionsDiscardConfirmed) {
-                return false;
-            }
-            this.feedbackSuggestions.set([]); // Discard all pending suggestions
-        }
-        return true;
-    }
-
-    /**
      * Submit the assessment
      */
     async submit(): Promise<void> {
-        if (!(await this.discardPendingSubmissionsWithConfirmation())) {
-            return;
-        }
         this.submitBusy.set(true);
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
     }
@@ -598,16 +571,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Filter out other feedback than manual feedback
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
-        this.hasPendingChanges = true;
-    }
-
-    /**
-     * Remove a feedback suggestion because it was accepted or discarded.
-     * The actual feedback creation when accepting happens in code-editor-monaco-component/unreferenced-feedback because they have full control over the suggestion cards.
-     * @param feedback Feedback suggestion that is removed
-     */
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((feedbackSuggestion) => !Feedback.areIdentical(feedbackSuggestion, feedback)));
         this.hasPendingChanges = true;
     }
 

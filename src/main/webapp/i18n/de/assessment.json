@@ -21,11 +21,6 @@
                 "accepted": "Automatisch erstellter angenommener Vorschlag",
                 "adapted": "Automatisch erstellter bearbeiteter Vorschlag"
             },
-            "suggestionPendingDialog": {
-                "title": "Ausstehende Feedback-Vorschläge",
-                "description": "Es sind ausstehende Feedback-Vorschläge verfügbar. Diese werden beim Absenden verworfen. Wirklich absenden?",
-                "discardAndSubmit": "Vorschläge verwerfen & absenden"
-            },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
@@ -61,9 +56,6 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
-                "feedbackSuggestion": "Feedback-Vorschlag:",
-                "accept": "Annehmen",
-                "discard": "Verwerfen",
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"

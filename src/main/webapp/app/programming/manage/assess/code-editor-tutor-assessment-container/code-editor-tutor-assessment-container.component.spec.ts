@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -63,7 +63,6 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
  */
 type ContainerInternalsOverrides = {
     athenaService: AthenaService;
-    dialogService: DialogService;
     loadFeedbackSuggestions: () => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
 };
@@ -314,7 +313,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should update assessor correctly if the manual assessment is overridden', async () => {
         const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
-        const discardPendingSubmissionsWithConfirmationStub = vi.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;
         result.hasComplaint = false;
@@ -328,7 +326,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(alertElementSubmit).not.toBeNull();
 
         expect(getIdentityStub).toHaveBeenCalled();
-        expect(discardPendingSubmissionsWithConfirmationStub).toHaveBeenCalled();
         expect(updateAfterNewAssessment).toHaveBeenCalledOnce();
         expect(comp.isAssessor()).toBe(true);
     });
@@ -347,45 +344,44 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.canOverride).toBe(true);
     });
 
-    it('should show unreferenced feedback suggestions', () => {
-        comp.feedbackSuggestions.set([{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }]);
-        expect(comp.unreferencedFeedbackSuggestions()).toHaveLength(1);
-    });
+    it('should merge new feedback suggestions directly into the editable feedback, skipping duplicates of existing manual feedback', async () => {
+        const existingUnreferenced = { text: 'unreferenced test', detailText: 'some detail', reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED, credits: 1 } as Feedback;
+        const existingReferenced = {
+            text: 'referenced test',
+            detailText: 'some detail',
+            reference: 'file:src/Test.java_line:1',
+            type: FeedbackType.MANUAL,
+            credits: 1,
+        } as Feedback;
+        comp.unreferencedFeedback.set([existingUnreferenced]);
+        comp.referencedFeedback = [existingReferenced];
+        comp.manualResult.set({ feedbacks: [existingUnreferenced, existingReferenced] } as Result);
 
-    it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
-        comp.unreferencedFeedback.set([{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }]);
-        comp.referencedFeedback = [
-            {
-                text: 'referenced test',
-                detailText: 'some detail',
-                reference: 'file:src/Test.java_line:1',
-            },
-        ];
         const feedbackSuggestionsStub = vi.spyOn(internals(comp).athenaService, 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
-                { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
+                { text: 'FeedbackSuggestion:accepted:unreferenced test', detailText: 'some detail' },
                 {
-                    text: 'FeedbackSuggestion:referenced test',
+                    text: 'FeedbackSuggestion:accepted:referenced test',
                     detailText: 'some detail',
                     reference: 'file:src/Test.java_line:1',
                 },
                 {
-                    text: 'FeedbackSuggestion:suggestion to pass',
+                    text: 'FeedbackSuggestion:accepted:suggestion to pass',
                     detailText: 'some detail',
                     reference: 'file:src/Test.java_line:2',
+                    type: FeedbackType.MANUAL,
+                    credits: 1,
                 },
             ] as Feedback[]),
         );
         comp.submission.set({ id: undefined } as ProgrammingSubmission); // Needed for loadFeedbackSuggestions
         await internals(comp).loadFeedbackSuggestions();
-        expect(comp.feedbackSuggestions()).toStrictEqual([
-            {
-                text: 'FeedbackSuggestion:suggestion to pass',
-                detailText: 'some detail',
-                reference: 'file:src/Test.java_line:2',
-            },
-        ]);
+
+        // Only the genuinely new suggestion is merged in, directly as editable feedback - no separate pending/accept-discard state.
+        expect(comp.referencedFeedback).toContainEqual(expect.objectContaining({ text: 'FeedbackSuggestion:accepted:suggestion to pass', reference: 'file:src/Test.java_line:2' }));
+        expect(comp.unreferencedFeedback()).toEqual([existingUnreferenced]);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(true);
     });
 
     it('should show complaint for result with complaint and check assessor', async () => {
@@ -854,48 +850,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(validateFeedbackStub).toHaveBeenCalled();
     });
 
-    it('should correctly remove feedback suggestions', () => {
-        const feedbackSuggestion1 = { id: 1, credits: 1 };
-        const feedbackSuggestion2 = { id: 2, credits: 2 };
-        const feedbackSuggestion3 = { id: 3, credits: 3 };
-        comp.feedbackSuggestions.set([feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3]);
-        comp.removeSuggestion(feedbackSuggestion2);
-        expect(comp.feedbackSuggestions()).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
-    });
-
-    it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef); // Confirm dismissal
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-        await comp.discardPendingSubmissionsWithConfirmation();
-        expect(modalOpenStub).toHaveBeenCalled();
-        // Dismissal should clear all feedback suggestions
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
-    });
-
-    it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(false) } as DynamicDialogRef); // Cancel suggestion dismissal
-        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-        await comp.discardPendingSubmissionsWithConfirmation();
-        expect(modalOpenStub).toHaveBeenCalled();
-        // Cancelling should keep everything intact
-        expect(comp.feedbackSuggestions()).not.toHaveLength(0);
-    });
-
-    it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
-        const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open');
-        comp.feedbackSuggestions.set([]);
-        await comp.discardPendingSubmissionsWithConfirmation();
-        expect(modalOpenStub).not.toHaveBeenCalled();
-    });
-
     it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
         comp.automaticFeedback.set([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
         expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
-    it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
+    it('should return false for hasAutomaticFeedback when automaticFeedback is empty and no suggestions were accepted', () => {
         comp.automaticFeedback.set([]);
         expect(comp.hasAutomaticFeedback()).toBe(false);
+    });
+
+    it('should return true for hasAutomaticFeedback when Athena feedback suggestions were accepted', () => {
+        comp.automaticFeedback.set([]);
+        comp.hasAcceptedFeedbackSuggestions.set(true);
+        expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {

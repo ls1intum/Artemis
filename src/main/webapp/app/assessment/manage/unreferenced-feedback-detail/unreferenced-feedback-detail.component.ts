@@ -15,15 +15,12 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
 
     public readonly feedback = model.required<Feedback>();
     readonly resultId = input.required<number>();
-    readonly isSuggestion = input<boolean>();
     public readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);
     readonly useDefaultFeedbackSuggestionBadgeText = input.required<boolean>();
 
     public readonly onFeedbackChange = output<Feedback>();
     public readonly onFeedbackDelete = output<Feedback>();
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
     private feedbackService = inject(FeedbackService);
 
     ngOnInit() {

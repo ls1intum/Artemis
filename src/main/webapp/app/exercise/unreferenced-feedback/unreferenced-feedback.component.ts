@@ -1,5 +1,5 @@
-import { Component, inject, input, model, output } from '@angular/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Component, inject, input, model } from '@angular/core';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
@@ -30,9 +30,6 @@ export class UnreferencedFeedbackComponent {
     readonly addReferenceIdForExampleSubmission = input(false);
 
     readonly feedbacks = model<Feedback[]>([]);
-    readonly feedbackSuggestions = model<Feedback[]>([]);
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
 
     get unreferencedFeedback(): Feedback[] {
         return this.feedbacks();
@@ -114,28 +111,6 @@ export class UnreferencedFeedbackComponent {
             return id;
         });
         return Math.max(...references.concat([0])) + 1;
-    }
-
-    /**
-     * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
-     */
-    acceptSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
-        // and will be filtered out in all kinds of places
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-        // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback); // Make it "real" feedback
-        this.onAcceptSuggestion.emit(feedback);
-    }
-
-    /**
-     * Discard a feedback suggestion: Remove the suggestion card and emit the event
-     */
-    discardSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
-        this.onDiscardSuggestion.emit(feedback);
     }
 
     createAssessmentOnDrop(event: Event) {

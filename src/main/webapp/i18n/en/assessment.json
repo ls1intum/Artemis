@@ -21,11 +21,6 @@
                 "accepted": "Automatically generated accepted suggestion",
                 "adapted": "Automatically generated suggestion, manually adapted"
             },
-            "suggestionPendingDialog": {
-                "title": "Pending Feedback Suggestions",
-                "description": "There are pending feedback suggestions available. They will be discarded when submitting. Do you really want to submit?",
-                "discardAndSubmit": "Discard suggestions & submit"
-            },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
@@ -61,9 +56,6 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:",
-                "feedbackSuggestion": "Feedback Suggestion:",
-                "accept": "Accept",
-                "discard": "Discard",
                 "points": {
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"

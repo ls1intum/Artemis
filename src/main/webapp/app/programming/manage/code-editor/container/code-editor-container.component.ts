@@ -89,7 +89,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isTutorAssessment = input<boolean>(false);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
-    feedbackSuggestions = input<Feedback[]>([]);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -105,8 +104,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
-    onAcceptSuggestion = output<Feedback>();
-    onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -211,9 +208,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
-        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
-        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
-        for (const feedback of allFeedbacks) {
+        for (const feedback of this.feedbackForSubmission()) {
+            if (!Feedback.isFeedbackSuggestion(feedback)) {
+                continue;
+            }
             const filePath = Feedback.getReferenceFilePath(feedback);
             if (!filePath) {
                 continue;

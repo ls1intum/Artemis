@@ -60,12 +60,9 @@
                     <jhi-unreferenced-feedback
                         [feedbacks]="unreferencedFeedback()"
                         (feedbacksChange)="unreferencedFeedback.set($event)"
-                        [feedbackSuggestions]="unreferencedFeedbackSuggestions"
                         (feedbacksChange)="validateFeedback()"
                         [readOnly]="readOnly"
                         [highlightDifferences]="highlightDifferences"
-                        (onAcceptSuggestion)="removeSuggestion($event)"
-                        (onDiscardSuggestion)="removeSuggestion($event)"
                         [resultId]="result()!.id!"
                     />
                 }

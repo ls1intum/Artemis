@@ -44,26 +44,7 @@
                             @if (feedback()?.gradingInstruction) {
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
                             }
-                            @if (isSuggestion()) {
-                                <button
-                                    type="button"
-                                    id="accept-suggestion"
-                                    class="unified-feedback-icon-btn"
-                                    [attr.aria-label]="acceptSuggestionAriaLabel()"
-                                    (click)="onAcceptSuggestion.emit()"
-                                >
-                                    <fa-icon [icon]="faCheck" />
-                                </button>
-                                <button
-                                    type="button"
-                                    id="discard-suggestion"
-                                    class="unified-feedback-icon-btn"
-                                    [attr.aria-label]="discardSuggestionAriaLabel()"
-                                    (click)="onDiscardSuggestion.emit()"
-                                >
-                                    <fa-icon [icon]="faTimes" />
-                                </button>
-                            } @else if (!readOnly()) {
+                            @if (!readOnly()) {
                                 @if (canDismissWithoutConfirm()) {
                                     <button
                                         type="button"
@@ -127,7 +108,7 @@
             } @else if (feedbackContent()) {
                 <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
-            @if (feedback() && (isSuggestion() || Feedback.isFeedbackSuggestion(feedback()!))) {
+            @if (feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {
                 <div class="unified-feedback-footer">
                     <jhi-feedback-suggestion-badge [feedback]="feedback()!" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" variant="footer" />
                 </div>

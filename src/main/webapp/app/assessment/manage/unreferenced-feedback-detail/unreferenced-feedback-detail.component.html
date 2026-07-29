@@ -1,7 +1,6 @@
 <div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
     <jhi-unified-feedback
         [editable]="true"
-        [isSuggestion]="isSuggestion() ?? false"
         [readOnly]="readOnly()"
         [feedback]="feedback()"
         [highlightDifferences]="highlightDifferences()"
@@ -13,7 +12,5 @@
         (feedbackDetailChange)="emitChanges()"
         (feedbackCreditsChange)="emitChanges()"
         (onDelete)="delete()"
-        (onAcceptSuggestion)="onAcceptSuggestion.emit(feedback())"
-        (onDiscardSuggestion)="onDiscardSuggestion.emit(feedback())"
     />
 </div>

@@ -235,6 +235,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.submission()).toBe(mockSubmission);
             expect(component.assessmentsAreValid()).toBe(false);
         });
+
+        it('should merge unreferenced Athena feedback suggestions directly into the editable unreferenced feedback list', async () => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                        feedbackSuggestionModule: 'modeling',
+                    } as unknown as Exercise,
+                },
+                results: [{ id: 55, feedbacks: [] } as unknown as Result],
+            } as ModelingSubmission;
+
+            const unreferencedSuggestion = { id: 42, credits: 1, text: 'FeedbackSuggestion:accepted:Suggestion', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([unreferencedSuggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion must land directly in the editable feedback list (auto-accepted), not in a separate pending list.
+            expect(component.unreferencedFeedback()).toHaveLength(1);
+            expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
+            expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
+        });
     });
 
     describe('should test the overwrite access rights and return true', () => {
@@ -597,22 +633,5 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
         expect(component.isFeedbackSuggestionsEnabled).toBe(true);
-    });
-
-    it('should return unreferenced feedback only', () => {
-        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
-        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
-        component.ngOnInit();
-
-        const unreferencedFeedback = createTestFeedback();
-        const referencedFeedback = createTestFeedback();
-
-        referencedFeedback.type = FeedbackType.MANUAL;
-        referencedFeedback.reference = 'element_id';
-
-        component.feedbackSuggestions = [unreferencedFeedback, referencedFeedback];
-
-        expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
-        expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
     });
 });

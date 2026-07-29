@@ -76,7 +76,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly highlightedElements = signal<Map<string, string>>(undefined!); // map elementId -> highlight color
     readonly highlightMissingFeedback = signal(false);
 
@@ -116,14 +115,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     private get feedback(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
-    }
-
-    /**
-     * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
-     * The suggestions are displayed in cards underneath the modeling editor canvas.
-     */
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
     /**
@@ -285,9 +276,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
-            this.feedbackSuggestions = suggestions;
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (this.result()) {
-                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...suggestions];
             }
             this.handleFeedback(this.result()?.feedbacks);
         } finally {
@@ -384,14 +375,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
-    }
-
-    /**
-     * Remove a feedback suggestion because it was accepted or discarded.
-     * @param feedback Feedback suggestion to remove
-     */
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     get readOnly(): boolean {

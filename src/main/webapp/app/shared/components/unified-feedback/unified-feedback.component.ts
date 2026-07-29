@@ -66,7 +66,6 @@ export class UnifiedFeedbackComponent {
     showReference = input<boolean>(true);
 
     editable = input<boolean>(false);
-    isSuggestion = input<boolean>(false);
     readOnly = input<boolean>(false);
     useDefaultFeedbackSuggestionBadgeText = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
@@ -76,8 +75,6 @@ export class UnifiedFeedbackComponent {
     feedbackCredits = model<number>(0);
 
     readonly onDelete = output<void>();
-    readonly onAcceptSuggestion = output<void>();
-    readonly onDiscardSuggestion = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
@@ -173,8 +170,6 @@ export class UnifiedFeedbackComponent {
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
     readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
-    readonly acceptSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.accept'));
-    readonly discardSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.discard'));
     readonly gradingInstructionText = computed(() => this.feedback()?.gradingInstruction?.feedback);
     readonly correctionStatusLabel = computed(() => {
         const status = this.feedback()?.correctionStatus;

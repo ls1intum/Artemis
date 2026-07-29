@@ -32,16 +32,6 @@
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
             }
-            <!-- feedback suggestions -->
-            @for (suggestion of feedbackSuggestionsForSelectedFile(); track suggestion.id + suggestion.reference) {
-                <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
-                    [codeLine]="suggestion.line"
-                    [feedback]="suggestion"
-                    [course]="course()"
-                    (onAcceptSuggestion)="acceptSuggestion($event)"
-                    (onDiscardSuggestion)="discardSuggestion($event)"
-                />
-            }
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
