@@ -24,6 +24,8 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
   bandit: # Python security scanning
     exclude_paths:
       - "src/test/**"
@@ -43,6 +45,8 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
   trivy: # dependency-vulnerability / secret scanning
     exclude_paths:
       - "src/test/**"
@@ -51,6 +55,8 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
   codenarc: # Groovy linting — exercise-template Jenkins pipelines + docker Jenkins init scripts are scaffolding/infra, not app code
     exclude_paths:
       - "src/main/resources/templates/**"

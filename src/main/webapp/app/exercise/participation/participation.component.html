@@ -110,6 +110,8 @@
     @if (cell.data.repositoryUri) {
         <jhi-code-button
             [smallButtons]="true"
+            [exerciseId]="exercise()?.id"
+            [participationId]="cell.data.participationId"
             [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [repositoryUri]="cell.data.repositoryUri"
         />
