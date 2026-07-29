@@ -64,9 +64,9 @@ public final class LanguageGenerationProfile {
         return """
 
 
-                For this Maven Java exercise the conventional Artemis layout is:
+                Maven Java layout:
                 - solution/src/<package path>/*
-                - template/src/<package path>/* (identical signatures, placeholder bodies)
+                - template/src/<package path>/* (given/stubbed files; student-creates absent)
                 - tests/test/<package path>/* (the test sources directory is `test`, NOT `src/test/java`)
                 The directory below each source root MUST match the Java package declaration exactly. Never put a package-declared test directly in tests/test/ and never create
                 tests/src/test/java/.

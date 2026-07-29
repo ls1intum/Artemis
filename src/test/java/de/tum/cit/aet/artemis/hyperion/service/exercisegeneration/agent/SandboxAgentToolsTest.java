@@ -319,7 +319,7 @@ class SandboxAgentToolsTest {
 
         String result = tools.writeFile("template/src/FuelStrategy.java", "public interface FuelStrategy {}");
 
-        assertThat(result).contains("approved specification assigns FuelStrategy to the student");
+        assertThat(result).contains("approved specification assigns FuelStrategy to the student", "No file was written", "workspace is unchanged", "Do not delete");
         assertThat(sandbox.execCount()).isZero();
     }
 
@@ -364,12 +364,21 @@ class SandboxAgentToolsTest {
 
     @Test
     void deleteFile_removesOnlyGeneratedWorkspaceFiles() {
-        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "DELETED", "", false));
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
 
         assertThat(tools.deleteFile("solution/src/main/java/Wrong.java")).isEqualTo("Deleted solution/src/main/java/Wrong.java");
         assertThat(tools.deleteFile("../secret")).startsWith("ERROR: invalid path");
         assertThat(tools.deleteFile("tests/pom.xml")).startsWith("ERROR: do not modify tests/pom.xml");
+        assertThat(sandbox.execCount()).isOne();
+    }
+
+    @Test
+    void deleteFile_reportsAnAbsentPathAsANoOp() {
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "ABSENT", "", false));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.deleteFile("template/src/FuelStrategy.java")).isEqualTo("No change: 'template/src/FuelStrategy.java' does not exist.");
         assertThat(sandbox.execCount()).isOne();
     }
 
@@ -774,7 +783,7 @@ class SandboxAgentToolsTest {
 
     @Test
     void reuseCachedPassingCheck_afterAPassingVerify_isInvalidatedByDeleteFile() {
-        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "DELETED", "", false));
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));

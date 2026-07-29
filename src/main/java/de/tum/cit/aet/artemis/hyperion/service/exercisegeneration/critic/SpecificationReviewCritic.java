@@ -189,7 +189,7 @@ class SpecificationReviewCritic {
                 || parsed.unsupportedConstraints() == null) {
             return incompleteSpecificationReview("One or more mandatory finding arrays were missing.");
         }
-        String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit());
+        String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit(), evidence);
         if (learningFitValidationError != null) {
             return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError);
         }
@@ -307,12 +307,10 @@ class SpecificationReviewCritic {
         };
     }
 
-    private static @Nullable String specificationLearningFitValidationError(@Nullable SpecificationLearningFitItem item) {
+    private static @Nullable String specificationLearningFitValidationError(@Nullable SpecificationLearningFitItem item, SpecificationReviewEvidence evidence) {
         if (item == null) {
             return "the mandatory learningFit object is missing.";
         }
-        // Evidence-ID citation is advisory grounding only: line indices renumber on every SPEC rewrite, so demanding exact IDs would discard defect-free specifications over a
-        // self-report slip. The verdict's integrity lives in its booleans, direction, and prose reasoning, which stay mandatory below.
         if (item.objectiveMechanism() == null || item.objectiveMechanism().isBlank()) {
             return "objectiveMechanism is mandatory.";
         }
@@ -336,6 +334,21 @@ class SpecificationReviewCritic {
         if (derivedSufficient != (item.direction() == SpecificationLearningFitDirection.SUFFICIENT)) {
             return "direction must be SUFFICIENT exactly when sufficient is true.";
         }
+        if (!evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+            return "briefEvidenceIds must cite known, substantive B evidence from this review.";
+        }
+        if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+            return "specEvidenceIds must cite known, substantive E evidence from this review.";
+        }
+        if (!evidence.specification().containsSubstantive(item.objectiveEvidenceIds())) {
+            return "objectiveEvidenceIds must cite known, substantive E evidence from this review.";
+        }
+        if (!evidence.specification().containsSubstantive(item.studentOwnershipEvidenceIds())) {
+            return "studentOwnershipEvidenceIds must cite known, substantive E evidence from this review.";
+        }
+        if (!evidence.specification().containsSubstantive(item.assessmentEvidenceIds())) {
+            return "assessmentEvidenceIds must cite known, substantive E evidence from this review.";
+        }
         return null;
     }
 
@@ -343,12 +356,11 @@ class SpecificationReviewCritic {
         if (!evidence.hasConcept()) {
             return item == null;
         }
-        // Evidence IDs are advisory grounding; a supplied concept's alignment only needs a coherent disposition and reason.
-        return item != null && item.disposition() != null && item.reason() != null && !item.reason().isBlank();
+        return item != null && item.disposition() != null && item.reason() != null && !item.reason().isBlank() && evidence.brief().containsSubstantive(item.briefEvidenceIds())
+                && evidence.concept().containsSubstantive(item.conceptEvidenceIds()) && evidence.specification().containsSubstantive(item.specEvidenceIds());
     }
 
     private static boolean validSpecificationReviewItem(@Nullable SpecificationReviewItem item) {
-        // Evidence IDs are advisory; a finding is usable as long as it states a concrete reason. Malformed items are skipped, never terminal.
         return item != null && item.reason() != null && !item.reason().isBlank();
     }
 

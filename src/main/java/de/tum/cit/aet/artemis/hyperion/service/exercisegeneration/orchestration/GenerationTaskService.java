@@ -363,8 +363,10 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
         }
-        catch (RuntimeException e) {
-            log.error("Exercise generation job {} failed before producing an outcome", jobId, e);
+        catch (RuntimeException | LinkageError e) {
+            // A live-development rebuild can briefly invalidate a lazily loaded class in bootRun. Linkage errors are not recoverable inside this worker, but they must still
+            // terminalize the durable job instead of leaving every status client polling forever. Production classpath failures receive the same honest terminal result.
+            log.error("Exercise generation job {} failed before producing a terminal outcome", jobId, e);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
         }
         finally {

@@ -321,9 +321,8 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_acceptsDefectFreeVerdictWithMiscitedEvidenceId() {
-        // Evidence-ID citation is advisory grounding, so a coherent defect-free verdict that mis-cites objectiveEvidenceIds (here the
-        // non-existent E999) is accepted in a single call rather than discarded and re-asked.
+    void specificationReview_rejectsDefectFreeVerdictWithMiscitedEvidenceId() {
+        // A positive verdict must point at evidence it actually reviewed. Otherwise fluent generic prose can approve a specification without examining its objective.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],
@@ -337,9 +336,10 @@ class SpecFidelityCriticServiceTest {
                 ## Rules
                 - R1: rerouting transfers the undelivered cargo without losing already delivered parcels.\
                 """, null, () -> false);
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isTrue();
-        verify(scripted.model(), times(1)).call(any(Prompt.class));
+        assertThat(review.complete()).isFalse();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.auditSummary()).contains("objectiveEvidenceIds", "known, substantive E evidence");
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -716,9 +716,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_distinguishesMalformedFromUngroundedVerdicts() {
-        // A malformed verdict — missing a mandatory boolean or direction, or unparseable JSON — is discarded as incomplete, because the
-        // verdict's integrity lives in its booleans, direction, and prose. An ungrounded one, coherent but citing an unknown evidence ID, is
-        // accepted, because evidence-ID citation is advisory grounding rather than a terminal contract.
+        // A malformed verdict and a fluent but ungrounded verdict are both incomplete. Neither may freeze the generation contract.
         SpecFidelityCriticService malformedCritic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
@@ -732,8 +730,8 @@ class SpecFidelityCriticServiceTest {
                          "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
                         """));
         SpecFidelityCriticService.SpecificationReview ungrounded = ungroundedCritic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
-        assertThat(ungrounded.complete()).isTrue();
-        assertThat(ungrounded.accepted()).isTrue();
+        assertThat(ungrounded.complete()).isFalse();
+        assertThat(ungrounded.accepted()).isFalse();
 
         SpecFidelityCriticService groundedFindingCritic = criticReturning(rawResponse(
                 """
@@ -786,9 +784,8 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReview_acceptsPositiveLearningVerdictEvenWhenEvidenceIdsAreAdvisory() {
-        // A well-formed positive verdict whose learning-fit evidence IDs point at unknown lines (E99) is grounded by its booleans and prose,
-        // not by the pointers, so it is accepted in a single call rather than discarded over the mis-citation.
+    void specificationReview_rejectsPositiveLearningVerdictWithoutGroundedEvidenceIds() {
+        // Booleans and plausible prose are self-reports. The reviewer must cite evidence from this prompt before its positive verdict can freeze the SPEC.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -798,9 +795,10 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate exercise.", "R1: meaningful domain interaction", null,
                 () -> false);
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isTrue();
-        verify(scripted.model(), times(1)).call(any(Prompt.class));
+        assertThat(review.complete()).isFalse();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.auditSummary()).contains("known, substantive E evidence");
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test

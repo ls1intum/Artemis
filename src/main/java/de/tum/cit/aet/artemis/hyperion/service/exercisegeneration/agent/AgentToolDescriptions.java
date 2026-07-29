@@ -36,7 +36,9 @@ final class AgentToolDescriptions {
 
     static final String EDIT_FILE_NEW_TEXT = "the replacement text";
 
-    static final String DELETE_FILE = "Delete one generated workspace file. Use this when a file was created at the wrong path or is no longer part of the exercise. The path is workspace-relative; directories and Artemis-managed build infrastructure cannot be deleted.";
+    static final String DELETE_FILE = "Delete one generated workspace file. Deleting an absent file is a reported no-op. Rejected writes are atomic, so never delete a path "
+            + "after write_file says the workspace is unchanged. Use this when a file was created at the wrong path or is no longer part of the exercise. The path is "
+            + "workspace-relative; directories and Artemis-managed build infrastructure cannot be deleted.";
 
     static final String DELETE_FILE_PATH = "workspace-relative path to delete";
 

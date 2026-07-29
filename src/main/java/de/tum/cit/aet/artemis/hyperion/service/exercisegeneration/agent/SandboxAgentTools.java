@@ -365,7 +365,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         String contractRejection = approvedContractWriteRejection(safe, content);
         if (contractRejection != null) {
-            return contractRejection;
+            return contractRejection + " No file was written; the workspace is unchanged. Do not delete or retry this path.";
         }
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
@@ -539,9 +539,16 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 return contractRejection;
             }
         }
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "rm", "-f", "--", WORKSPACE + "/" + safe);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
+                "if [ -e \"$1\" ] || [ -L \"$1\" ]; then rm -- \"$1\" && printf DELETED; else printf ABSENT; fi", "sh", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return "ERROR: could not delete '" + safe + "': " + result.combinedOutput();
+        }
+        if ("ABSENT".equals(result.stdout())) {
+            return "No change: '" + safe + "' does not exist.";
+        }
+        if (!"DELETED".equals(result.stdout())) {
+            return "ERROR: could not determine whether '" + safe + "' was deleted.";
         }
         markDirty();
         return "Deleted " + safe;

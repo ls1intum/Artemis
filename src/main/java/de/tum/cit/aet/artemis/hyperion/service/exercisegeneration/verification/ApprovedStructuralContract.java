@@ -19,6 +19,7 @@ import com.thoughtworks.qdox.model.JavaConstructor;
 import com.thoughtworks.qdox.model.JavaField;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
+import com.thoughtworks.qdox.model.JavaType;
 
 /**
  * Typed structural contract parsed and validated at the SPEC gate.
@@ -175,8 +176,8 @@ final class ApprovedStructuralContract {
             if (actual == null) {
                 continue; // The existing ownership gate reports a missing solution type more directly.
             }
-            Set<String> expectedSurface = canonicalSurface(expected.getValue());
-            Set<String> actualSurface = canonicalSurface(actual);
+            Set<String> expectedSurface = canonicalSurface(expected.getValue(), types.keySet());
+            Set<String> actualSurface = canonicalSurface(actual, types.keySet());
             Set<String> missing = new LinkedHashSet<>(expectedSurface);
             missing.removeAll(actualSurface);
             Set<String> extra = new LinkedHashSet<>(actualSurface);
@@ -227,26 +228,30 @@ final class ApprovedStructuralContract {
         return entry;
     }
 
-    private static Set<String> canonicalSurface(JavaClass type) {
+    private static Set<String> canonicalSurface(JavaClass type, Set<String> exerciseTypes) {
+        String exercisePackage = type.getPackageName();
         Set<String> surface = new LinkedHashSet<>();
         surface.add("type:" + typeKind(type) + ":modifiers=" + type.getModifiers().stream().sorted().toList() + ":parameters="
-                + type.getTypeParameters().stream().map(parameter -> parameter.getGenericValue()).toList() + ":extends=" + superclass(type) + ":implements="
-                + type.getInterfaces().stream().map(JavaClass::getGenericValue).sorted().toList());
+                + type.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":extends="
+                + superclass(type) + ":implements="
+                + type.getInterfaces().stream().map(interfaceType -> canonicalType(interfaceType, exerciseTypes, exercisePackage)).sorted().toList());
         type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible)
                 .map(method -> "method:" + relevantModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()) + ":"
-                        + method.getTypeParameters().stream().map(parameter -> parameter.getGenericValue()).toList() + ":" + method.getReturnType().getGenericValue() + ":"
-                        + method.getName() + exactParameterTypes(method.getParameters()) + ":throws="
-                        + method.getExceptionTypes().stream().map(exception -> exception.getGenericValue()).sorted().toList())
+                        + method.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":"
+                        + canonicalType(method.getReturnType(), exerciseTypes, exercisePackage) + ":" + method.getName()
+                        + exactParameterTypes(method.getParameters(), exerciseTypes, exercisePackage) + ":throws="
+                        + method.getExceptionTypes().stream().map(exception -> canonicalType(exception, exerciseTypes, exercisePackage)).sorted().toList())
                 .forEach(surface::add);
         type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
                 .map(field -> "field:" + relevantModifiers(field.getModifiers(), field.getDeclaringClass().isInterface(), false, field.isStatic()) + ":"
-                        + field.getType().getGenericValue() + ":" + field.getName())
+                        + canonicalType(field.getType(), exerciseTypes, exercisePackage) + ":" + field.getName())
                 .forEach(surface::add);
         List<JavaConstructor> visibleConstructors = type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).toList();
         visibleConstructors.stream()
                 .map(constructor -> "constructor:" + relevantModifiers(constructor.getModifiers(), false, false, false)
-                        + constructor.getTypeParameters().stream().map(parameter -> parameter.getGenericValue()).toList() + exactParameterTypes(constructor.getParameters())
-                        + ":throws=" + constructor.getExceptionTypes().stream().map(exception -> exception.getGenericValue()).sorted().toList())
+                        + constructor.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList()
+                        + exactParameterTypes(constructor.getParameters(), exerciseTypes, exercisePackage) + ":throws="
+                        + constructor.getExceptionTypes().stream().map(exception -> canonicalType(exception, exerciseTypes, exercisePackage)).sorted().toList())
                 .forEach(surface::add);
         if (visibleConstructors.isEmpty() && !type.isInterface() && !type.isEnum()) {
             surface.add("constructor:[public][]");
@@ -282,8 +287,27 @@ final class ApprovedStructuralContract {
         return parameters.stream().map(parameter -> parameter.getType().getValue()).toList();
     }
 
-    private static List<String> exactParameterTypes(List<JavaParameter> parameters) {
-        return parameters.stream().map(parameter -> parameter.getType().getGenericValue() + (parameter.isVarArgs() ? "..." : "")).toList();
+    private static List<String> exactParameterTypes(List<JavaParameter> parameters, Set<String> exerciseTypes, String exercisePackage) {
+        return parameters.stream().map(parameter -> canonicalType(parameter.getType(), exerciseTypes, exercisePackage) + (parameter.isVarArgs() ? "..." : "")).toList();
+    }
+
+    /**
+     * QDox preserves the spelling used at each source site in {@code getGenericValue()}. The approved SPEC commonly uses a fully qualified JDK type while normal Java source
+     * imports it, so comparing that spelling rejects a semantically identical API. Compare resolved generic names instead, while reducing exercise-owned types back to their
+     * stable simple names because SPEC blocks intentionally have no package declaration.
+     */
+    private static String canonicalType(JavaType type, Set<String> exerciseTypes, String exercisePackage) {
+        return canonicalTypeName(type.getGenericCanonicalName(), exerciseTypes, exercisePackage);
+    }
+
+    private static String canonicalTypeName(String typeName, Set<String> exerciseTypes, String exercisePackage) {
+        String canonical = typeName;
+        if (exercisePackage != null && !exercisePackage.isBlank()) {
+            for (String exerciseType : exerciseTypes) {
+                canonical = canonical.replaceAll("(?<![\\w$])" + Pattern.quote(exercisePackage + "." + exerciseType) + "(?![\\w$])", exerciseType);
+            }
+        }
+        return canonical;
     }
 
     private static ObjectNode methodJson(JavaMethod method, ObjectMapper mapper) {
@@ -291,7 +315,7 @@ final class ApprovedStructuralContract {
         node.put("name", method.getName());
         node.set("modifiers", mapper.valueToTree(effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic())));
         putParameters(node, method.getParameters(), mapper);
-        node.put("returnType", method.getReturnType().getValue());
+        node.put("returnType", simpleErasedType(method.getReturnType()));
         return node;
     }
 
@@ -299,7 +323,7 @@ final class ApprovedStructuralContract {
         ObjectNode node = mapper.createObjectNode();
         node.put("name", field.getName());
         node.set("modifiers", mapper.valueToTree(effectiveFieldModifiers(field)));
-        node.put("type", field.getType().getValue());
+        node.put("type", simpleErasedType(field.getType()));
         return node;
     }
 
@@ -312,8 +336,21 @@ final class ApprovedStructuralContract {
 
     private static void putParameters(ObjectNode node, List<JavaParameter> parameters, ObjectMapper mapper) {
         if (!parameters.isEmpty()) {
-            node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> parameter.getType().getValue()).toList()));
+            node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> simpleErasedType(parameter.getType())).toList()));
         }
+    }
+
+    /**
+     * Ares's structural oracle schema uses erased simple Java names (for example {@code List}, not {@code java.util.List<String>}). Exact source-surface comparison separately
+     * uses resolved canonical generic names; conflating the two representations makes ordinary imported collection APIs impossible to satisfy.
+     */
+    private static String simpleErasedType(JavaType type) {
+        String name = type.getFullyQualifiedName();
+        int array = name.indexOf('[');
+        String suffix = array < 0 ? "" : name.substring(array);
+        String component = array < 0 ? name : name.substring(0, array);
+        int packageSeparator = component.lastIndexOf('.');
+        return (packageSeparator < 0 ? component : component.substring(packageSeparator + 1)) + suffix;
     }
 
     private static List<String> effectiveModifiers(List<String> declared, boolean interfaceOwner, boolean defaultMethod, boolean staticMethod) {

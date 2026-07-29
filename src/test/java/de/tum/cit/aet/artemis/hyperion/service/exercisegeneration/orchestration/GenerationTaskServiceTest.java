@@ -1045,6 +1045,19 @@ class GenerationTaskServiceTest {
         assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
     }
 
+    @Test
+    void linkageFailureBeforeAnOutcome_stillTerminalizesTheJob() {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new NoClassDefFoundError("GenerationAttemptLoop$ExtractedCandidate"));
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.message()).isEqualTo("Generation failed.");
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.RUN_FAILED);
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
     /**
      * The attempt loop sees only a cooperative stop flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@code CANCELLED}; only the task knows
      * which fired. Every other reason is the loop's own conclusion about the candidate and must survive untouched — a run that converged before the deadline fired terminated by
