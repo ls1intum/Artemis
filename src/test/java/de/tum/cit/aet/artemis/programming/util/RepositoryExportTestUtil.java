@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,16 +16,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +157,7 @@ public final class RepositoryExportTestUtil {
         if (contentInitializer != null) {
             contentInitializer.accept(target.workingCopyGitRepo);
             // push initialized content so the bare repo has a default branch/history
-            target.workingCopyGitRepo.push().setRemote("origin").call();
+            assertPushDelivered(target.workingCopyGitRepo.push().setRemote("origin").call());
             // Wait for the bare repository to be fully ready
             waitForBareRepositoryReady(target);
         }
@@ -387,12 +392,38 @@ public final class RepositoryExportTestUtil {
         }
         repo.workingCopyGitRepo.add().addFilepattern(".").call();
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
-        repo.workingCopyGitRepo.push().setRemote("origin").call();
+        assertPushDelivered(repo.workingCopyGitRepo.push().setRemote("origin").call());
 
         // Wait for the bare repository to be fully ready for cloning operations
         waitForBareRepositoryReady(repo);
 
         return commit;
+    }
+
+    /**
+     * Fails immediately if a push did not actually update the remote refs.
+     * <p>
+     * {@code PushCommand.call()} only throws when the transport itself fails. A push whose individual ref updates were
+     * rejected (non-fast-forward, lock failure, hook rejection, ...) completes normally and returns those per-ref
+     * statuses, which callers here previously discarded. The pushed commit then never reaches the bare repository, and
+     * because {@link #waitForBareRepositoryReady(LocalRepository)} only checks that HEAD resolves (already true from the
+     * initial commit), the problem surfaced much later as an unexplained 60-second timeout in
+     * {@link #waitForBareRepositoryToContainCommit(LocalRepository, String)}. Checking the statuses here turns that into
+     * an immediate failure that names the rejected ref and its reason.
+     *
+     * @param pushResults the results returned by the push command
+     */
+    private static void assertPushDelivered(Iterable<PushResult> pushResults) {
+        List<String> rejected = new ArrayList<>();
+        for (PushResult pushResult : pushResults) {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    rejected.add("%s -> %s: %s%s".formatted(update.getSrcRef(), update.getRemoteName(), update.getStatus(),
+                            update.getMessage() == null ? "" : " (" + update.getMessage() + ")"));
+                }
+            }
+        }
+        assertThat(rejected).as("push did not update the remote refs, so the bare repository never received the commit").isEmpty();
     }
 
     /**
@@ -404,25 +435,84 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+        waitForBareRepositoryToContainCommit(repo, commitHash, Duration.ofSeconds(60));
+    }
+
+    /**
+     * Same as {@link #waitForBareRepositoryToContainCommit(LocalRepository, String)} with an explicit timeout.
+     * Package-private so the timeout diagnostics can be tested without waiting a minute.
+     *
+     * @param repo       the local repository whose bare repo should be verified
+     * @param commitHash the commit hash that must be resolvable
+     * @param timeout    how long to wait for the commit to appear
+     */
+    static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash, Duration timeout) {
         if (commitHash == null || commitHash.length() != 40) {
             throw new IllegalArgumentException("Expected a full 40-character commit hash but got: " + commitHash);
         }
         ObjectId commitId = ObjectId.fromString(commitHash);
-        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
-            // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
-            // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
-            // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
-            // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
-            // it confirms the commit landed without mapping the pack data.
-            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                return git.getRepository().getObjectDatabase().has(commitId);
-            }
-            catch (Exception e) {
-                log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
-                return false;
-            }
-        });
+        // Remembers why the last poll failed. Awaitility only reports "condition was not fulfilled within 60 seconds",
+        // so without this the underlying cause is lost and the failure is undiagnosable after the fact.
+        AtomicReference<Exception> lastPollFailure = new AtomicReference<>();
+        try {
+            Awaitility.await().atMost(timeout).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
+                // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
+                // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
+                // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
+                // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
+                // it confirms the commit landed without mapping the pack data.
+                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                    boolean present = git.getRepository().getObjectDatabase().has(commitId);
+                    if (present) {
+                        lastPollFailure.set(null);
+                    }
+                    return present;
+                }
+                catch (Exception e) {
+                    lastPollFailure.set(e);
+                    log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
+                    return false;
+                }
+            });
+        }
+        catch (ConditionTimeoutException conditionTimeout) {
+            throw new AssertionError(describeMissingCommit(repo, commitHash, lastPollFailure.get(), timeout), lastPollFailure.get());
+        }
+    }
+
+    /**
+     * Builds a diagnosable message for a {@link #waitForBareRepositoryToContainCommit} timeout.
+     * <p>
+     * Reports whether the bare repository directory exists at all, which refs it currently holds and, when the polls kept
+     * throwing, the last exception. Previously the only evidence was Awaitility's bare "condition was not fulfilled",
+     * which is not enough to tell a genuinely missing commit apart from a repository that could not be opened.
+     *
+     * @param repo            the local repository whose bare repo was polled
+     * @param commitHash      the commit that never appeared
+     * @param lastPollFailure the exception thrown by the last poll, or {@code null} if the polls returned cleanly
+     * @param timeout         how long the wait lasted before giving up
+     * @return the failure message
+     */
+    private static String describeMissingCommit(LocalRepository repo, String commitHash, Exception lastPollFailure, Duration timeout) {
+        StringBuilder message = new StringBuilder("Commit %s never appeared in the bare repository %s within %s.".formatted(commitHash, repo.remoteBareGitRepoFile, timeout));
+        if (!repo.remoteBareGitRepoFile.exists()) {
+            message.append(" The bare repository directory does not exist.");
+            return message.toString();
+        }
+        try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+            message.append(" Refs present: ").append(git.getRepository().getRefDatabase().getRefs().stream().map(ref -> ref.getName() + "=" + ref.getObjectId()).toList());
+        }
+        catch (Exception e) {
+            message.append(" The bare repository could not be opened for diagnostics: ").append(e);
+        }
+        if (lastPollFailure != null) {
+            message.append(" Last poll failed with: ").append(lastPollFailure);
+        }
+        else {
+            message.append(" Every poll completed without error, so the commit was simply absent (most likely the push did not deliver it).");
+        }
+        return message.toString();
     }
 
     /**
