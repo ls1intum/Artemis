@@ -367,6 +367,27 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetResultsWithPointsWithoutSubmissions() throws Exception {
+        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
+        addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
+
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion?withSubmissions=false", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
+
+        assertThat(resultsWithPoints).hasSize(NUMBER_OF_STUDENTS / 2);
+
+        final GradingCriterion criterion1 = GradingCriterionUtil.findGradingCriterionByTitle(fileUploadExercise, "test title");
+        for (final var resultWithPoints : resultsWithPoints) {
+            // The points are derived from the feedbacks, so they are only correct if the feedbacks were loaded even though the submissions were not requested.
+            assertThat(resultWithPoints.result().getScore()).isEqualTo(10.0);
+            assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
+            assertThat(resultWithPoints.pointsPerCriterion()).hasSize(1).containsEntry(criterion1.getId(), 5.0);
+        }
+    }
+
     private FileUploadExercise setupFileUploadExerciseWithResults() {
         var now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
