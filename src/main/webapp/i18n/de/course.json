@@ -216,7 +216,10 @@
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Max. Punktzahl des Kurses",
-                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet."
+                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet.",
+                "min": "Die maximale Punktzahl muss mindestens 1 betragen.",
+                "max": "Die maximale Punktzahl darf {{ max }} nicht überschreiten.",
+                "wholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein."
             },
             "accuracyOfScores": {
                 "title": "Nachkommastellen für Ergebnisberechnungen",
@@ -425,7 +428,9 @@
                     "unenrollmentAfterEnrollmentEnd": "Das Abmeldungsenddatum muss nach dem Einschreibungsenddatum liegen.",
                     "unenrollmentBeforeCourseEndDate": "Das Abmeldungsenddatum darf nicht nach dem Kursenddatum liegen.",
                     "accuracyOfScoresRange": "Dezimalstellen für Bewertungsberechnungen müssen zwischen 0 und 5 liegen.",
-                    "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein."
+                    "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein.",
+                    "maxPointsWholeNumber": "Die maximale Punktzahl muss eine ganze Zahl sein.",
+                    "maxPointsTooHigh": "Die maximale Punktzahl darf {{ max }} nicht überschreiten."
                 },
                 "generalSettings": {
                     "title": "Allgemein",
