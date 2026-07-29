@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.Contrac
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -194,6 +194,12 @@ class GenerationAttemptLoop {
 
     /** Mutants already proven to survive the ordinary suite; convergence is forbidden until a later ordinary verification kills them. */
     private List<SemanticMutant> semanticMutantsAwaitingKill = List.of();
+
+    /** Independently adjudicated reference defects remain executable acceptance checks until a later candidate makes their exact witnesses pass. */
+    private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
+
+    /** Executed reference failures remain pending until independent review explicitly supports or invalidates them. */
+    private List<ContractWitness> referenceWitnessesAwaitingAdjudication = List.of();
 
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
@@ -577,7 +583,7 @@ class GenerationAttemptLoop {
         // mechanical-correction prompt cannot reopen semantic scope, and the previous verdict would be lost with it.
         SpecFidelityReport previousReview = candidateBeforeCurrentRepair == null ? specFidelityReport : candidateBeforeCurrentRepair.reviewReport();
         specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), adaptationChanges, repairDelta, previousReview,
-                effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
+                GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
         if (!unresolvedSpecificationFindings.isEmpty()) {
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(specFidelityReport.findings());
             unresolvedSpecificationFindings.forEach(finding -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, finding,
@@ -588,9 +594,8 @@ class GenerationAttemptLoop {
         boolean offerContractWitnesses = !specFidelityReport.hasBlockingFindings();
         boolean checkOracleHypotheses = specFidelityReport.findings().stream()
                 .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT);
-        if (offerContractWitnesses || checkOracleHypotheses) {
-            specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot, offerContractWitnesses);
-        }
+        specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot, offerContractWitnesses,
+                offerContractWitnesses || checkOracleHypotheses);
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         if (cancelled.getAsBoolean()) {
@@ -652,7 +657,7 @@ class GenerationAttemptLoop {
                         : null;
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), retryAdaptationChanges, null, null,
-                        effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
+                        GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
                 repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
@@ -693,13 +698,13 @@ class GenerationAttemptLoop {
     /**
      * Adds independently proposed counterexamples only after the environment validates them. A semantic mutant becomes blocking evidence only when the ordinary suite accepts
      * it and an independently authored counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at
-     * the starter seam. Text-only oracle hypotheses are executed even when a separate blocker exists, so false coverage findings cannot consume a repair round merely because
-     * another artifact also needs work. Optional witnesses remain deferred until the candidate has no blockers because an imminent repair could invalidate them before adoption.
+     * the starter seam. Text-only oracle hypotheses and reference-correctness witnesses are executed even when a separate blocker exists, so independent defects are found before
+     * the repair budget is spent. Optional witness adoption remains deferred until the candidate has no blockers.
      * An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
      * mechanically verified pre-review checkpoint instead of treating missing execution as evidence.
      */
     private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot,
-            boolean offerContractWitnesses) {
+            boolean offerContractWitnesses, boolean probeMutants) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
             return report;
@@ -713,26 +718,62 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled);
+            List<SemanticMutant> mutantCandidates = probeMutants
+                    ? specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled)
+                    : List.of();
             List<SemanticMutantOutcome> mutantOutcomes = verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates,
                     restoreCandidate);
             List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
                     .map(SemanticMutantOutcome::mutant).toList();
             semanticMutantsAwaitingKill = validatedMutants;
 
-            List<ContractWitness> candidates = offerContractWitnesses
-                    ? specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, renderArtifactSources(testsFiles), renderArtifactSources(solutionFiles), usageSink,
-                            cancelled)
-                    : List.of();
+            Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
+            Set<String> pendingAdjudicationNames = referenceWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
+            List<ContractWitness> candidates = new ArrayList<>(referenceWitnessesAwaitingPass);
+            referenceWitnessesAwaitingAdjudication.stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName())))
+                    .forEach(candidates::add);
+            specFidelityCritic
+                    .authorContractWitnesses(specDocumentSnapshot, GenerationReviewSupport.renderArtifactSources(testsFiles),
+                            GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled)
+                    .stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName()))).forEach(candidates::add);
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
-            List<ContractWitness> validated = verifier.validateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate).stream()
-                    .filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
+            List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate);
+            List<ContractWitness> validated = offerContractWitnesses
+                    ? witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED)
+                            .map(ContractWitnessOutcome::witness).filter(witness -> !mutatedRules.contains(witness.ruleId())).toList()
+                    : List.of();
+            List<ContractWitnessOutcome> freshReferenceFailures = witnessOutcomes.stream()
+                    .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
+                    .filter(outcome -> !pendingWitnessNames.contains(outcome.witness().testName())).toList();
+            SpecFidelityCriticService.ReferenceWitnessReview referenceReview = Optional.ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specDocumentSnapshot,
+                    GenerationReviewSupport.renderArtifactSources(solutionFiles), freshReferenceFailures, usageSink, cancelled))
+                    .orElseGet(SpecFidelityCriticService.ReferenceWitnessReview::empty);
+            Set<String> adjudicatedNames = java.util.stream.Stream
+                    .of(referenceReview.supportedWitnesses(), referenceReview.invalidWitnesses(), referenceReview.unresolvedWitnesses()).flatMap(List::stream)
+                    .map(ContractWitness::testName).collect(Collectors.toSet());
+            List<ContractWitness> omittedFromAdjudication = freshReferenceFailures.stream().map(ContractWitnessOutcome::witness)
+                    .filter(witness -> !adjudicatedNames.contains(witness.testName())).toList();
+            List<ContractWitness> stillFailing = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
+                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingWitnessNames.contains(witness.testName())).toList();
+            List<ContractWitness> pendingInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE)
+                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingWitnessNames.contains(witness.testName())).toList();
+            List<ContractWitness> adjudicationInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE)
+                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingAdjudicationNames.contains(witness.testName())).toList();
+            referenceWitnessesAwaitingPass = java.util.stream.Stream
+                    .concat(java.util.stream.Stream.concat(stillFailing.stream(), pendingInconclusive.stream()), referenceReview.supportedWitnesses().stream()).distinct().toList();
+            referenceWitnessesAwaitingAdjudication = java.util.stream.Stream
+                    .concat(java.util.stream.Stream.concat(adjudicationInconclusive.stream(), referenceReview.unresolvedWitnesses().stream()), omittedFromAdjudication.stream())
+                    .distinct().toList();
             long killedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
             long inconclusiveMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
             emit("Executable semantic probes: " + mutantCandidates.size() + " mutant proposal(s): " + validatedMutants.size() + " survived, " + killedMutants
                     + " killed by existing tests, " + inconclusiveMutants + " inconclusive; " + candidates.size() + " contract-witness proposal(s), " + validated.size()
-                    + " validated witness(es).");
+                    + " validated witness(es), " + freshReferenceFailures.size() + " reference test failure(s) awaiting review, " + referenceWitnessesAwaitingPass.size()
+                    + " adjudicated reference defect(s) still failing, " + referenceWitnessesAwaitingAdjudication.size() + " unresolved adjudication(s).");
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(SemanticEvidenceReconciler.reconcile(report, mutantOutcomes));
+            combined.addAll(referenceReview.findings());
+            GenerationReviewSupport.addReferenceUnavailability(combined, omittedFromAdjudication.size(), pendingInconclusive.size(), adjudicationInconclusive.size());
+            stillFailing.forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
             validatedMutants.forEach(mutant -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                     "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                     "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
@@ -758,10 +799,6 @@ class GenerationAttemptLoop {
         }
     }
 
-    private static String renderArtifactSources(Map<String, String> files) {
-        return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue()).collect(Collectors.joining("\n\n"));
-    }
-
     private SpecFidelityReport runSpecFidelityCritic(String problemStatement, @Nullable ProgrammingLanguage language, @Nullable String adaptationChanges,
             @Nullable String repairDelta, @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshotForReview, @Nullable String testPlanSnapshot) {
         try {
@@ -783,7 +820,7 @@ class GenerationAttemptLoop {
                 combined.addAll(messageless);
                 report = new SpecFidelityReport(combined);
             }
-            report = reclassifyUngradeableTechniqueFindings(report, specSnapshotForReview);
+            report = GenerationReviewSupport.reclassifyUngradeableTechniqueFindings(report, specSnapshotForReview);
             // Same channel, same advisory weight: a technique the exercise requires but cannot grade is something the instructor must know before releasing it.
             List<SpecFidelityReport.Finding> techniqueRules = specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview);
             if (!techniqueRules.isEmpty()) {
@@ -808,42 +845,6 @@ class GenerationAttemptLoop {
         }
     }
 
-    /**
-     * Downgrades a repairable finding that in fact demands an ungradeable implementation technique.
-     * <p>
-     * {@code EXECUTABLE_WEAK_TEST_ORACLE} and {@code UNCOVERED_REQUIREMENT} map to the oracle repair surface, so the loop schedules them and asks the agent to write a
-     * discriminating test.
-     * When the "requirement" is that the implementation be recursive or use a stream pipeline, no such test exists, and the only way to appear to write one is to assert on the
-     * student's source text. The finding is real and worth telling the instructor — it just cannot be repaired, so it must not hold a repair round.
-     */
-    private static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report, @Nullable String specSnapshot) {
-        // Provenance first: unless the frozen contract actually mandates a technique, no finding is downgraded. This is what keeps the reclassification honest — it can only
-        // fire on exercises that carry the defect, so a misread finding on any other exercise costs nothing.
-        if (ExerciseIntegrityGate.techniqueMandatesInRules(specSnapshot).isEmpty()) {
-            return report;
-        }
-        if (report.findings().stream().noneMatch(GenerationAttemptLoop::demandsUngradeableTechnique)) {
-            return report;
-        }
-        List<SpecFidelityReport.Finding> reclassified = report.findings().stream()
-                .map(finding -> demandsUngradeableTechnique(finding)
-                        ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
-                                "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail())
-                        : finding)
-                .toList();
-        return new SpecFidelityReport(reclassified);
-    }
-
-    /**
-     * Whether a finding asks the tests to grade how the code is written. Read the finding's own prose, not a specification rule: for a weak-oracle finding the requirement is
-     * the surviving mutant's description ("an iterative implementation using an explicit stack"), which is written in the critic's voice and does not contain "must".
-     */
-    private static boolean demandsUngradeableTechnique(SpecFidelityReport.Finding finding) {
-        return (finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
-                || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
-                && ExerciseIntegrityGate.describesTechniqueRatherThanBehaviour(finding.requirement() + " " + finding.detail());
-    }
-
     /** Frames the prompt built after {@code completedAttempt}, which drives the attempt after it. */
     private String attemptFraming(int completedAttempt) {
         int upcomingAttempt = completedAttempt + 1;
@@ -863,8 +864,8 @@ class GenerationAttemptLoop {
                 + "existing assertion already distinguishes exactly the same wrong implementation, in which case leave the suite as it is and say which test covers it. Change "
                 + "nothing else: the solution, template, statement and every existing test stay as they are. When you add a test, add its exact method name to test-plan.json with "
                 + "the same approved seam, weight, and visibility as the witness it strengthens. Then call the structured `verify` tool, and call submit when it "
-                + "reports MECHANICAL PRECHECK: PASS.\n\nThe instructor source requirements are:\n" + authoringBrief + specContractSection(specSnapshotForPrompt)
-                + specFidelityCritic.renderForRetryPrompt(batch.report());
+                + "reports MECHANICAL PRECHECK: PASS.\n\nThe instructor source requirements are:\n" + authoringBrief
+                + GenerationReviewSupport.specContractSection(specSnapshotForPrompt) + specFidelityCritic.renderForRetryPrompt(batch.report());
     }
 
     private String semanticRepairPrompt(int completedAttempt, SemanticRepairBatch batch) {
@@ -878,7 +879,7 @@ class GenerationAttemptLoop {
                 + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
                 + "If you add, rename, or remove a behavioral test, update test-plan.json in the same edit so it maps every exact test method name. "
                 + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
-                + specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(batch.report());
+                + GenerationReviewSupport.specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(batch.report());
     }
 
     private String mechanicalRejectionPrompt(int completedAttempt) {
@@ -890,28 +891,8 @@ class GenerationAttemptLoop {
                 + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
                 + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                 + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
-                + authoringBrief + specContractSection(specSnapshot.get()) + semanticCorrectionGuidance + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
-    }
-
-    /**
-     * The frozen, gate-approved specification appended to every repair prompt, so a repair under verification pressure faces the behavioural contract it might otherwise
-     * silently cut. Empty when no spec was captured, either because the stage was skipped or because the run was not staged.
-     */
-    private static String specContractSection(@Nullable String specSnapshot) {
-        if (specSnapshot == null || specSnapshot.isBlank()) {
-            return "";
-        }
-        return "\n\nTHE SPECIFICATION (frozen at the spec gate — the read-only behavioural contract; repair downstream artifacts against it):\n" + specSnapshot.strip();
-    }
-
-    /** The frozen contract is what the semantic critic reviews against; the live workspace copy is a fallback only when no specification gate ran. */
-    private static String effectiveSpecReviewContext(@Nullable String approvedSpec, @Nullable String liveSpec) {
-        String approved = approvedSpec == null ? "" : approvedSpec.strip();
-        String live = liveSpec == null ? "" : liveSpec.strip();
-        if (approved.isEmpty()) {
-            return live;
-        }
-        return approved;
+                + authoringBrief + GenerationReviewSupport.specContractSection(specSnapshot.get()) + semanticCorrectionGuidance
+                + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
     }
 
     private GenerationOutcome cancelledOutcome(AgentLoopResult cancelledResult) {

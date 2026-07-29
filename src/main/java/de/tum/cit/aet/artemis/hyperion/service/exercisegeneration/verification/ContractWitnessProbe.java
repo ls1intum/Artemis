@@ -99,6 +99,24 @@ public final class ContractWitnessProbe {
         return solutionValidated.stream().filter(witness -> executed.contains(witness.testName()) && failed.contains(witness.testName())).toList();
     }
 
+    static boolean executed(ContractWitness witness, List<String> testNames) {
+        return bareNames(testNames).contains(witness.testName());
+    }
+
+    static boolean failed(ContractWitness witness, List<String> failedTestNames) {
+        return bareNames(failedTestNames).contains(witness.testName());
+    }
+
+    static String failureDiagnostic(ContractWitness witness, BuildSummary summary) {
+        return summary.failureEvidence().stream().filter(evidence -> bareNames(List.of(evidence.testName())).contains(witness.testName()))
+                .map(AgentVerifyReport.TestFailureEvidence::message).filter(message -> !message.isBlank()).findFirst().orElse(summary.buildDiagnostic());
+    }
+
+    static boolean collidesWithExistingTest(ContractWitness witness, Map<String, String> testSources) {
+        Pattern declaration = Pattern.compile("\\bvoid\\s+" + Pattern.quote(witness.testName()) + "\\s*\\(");
+        return testSources.values().stream().anyMatch(source -> declaration.matcher(source).find());
+    }
+
     /** Report forms differ per framework ({@code testFoo}, {@code testFoo()}, {@code ClassName.testFoo}), so matching on the bare name keeps attribution stable. */
     private static Set<String> bareNames(@Nullable List<String> reportedNames) {
         Set<String> bare = new LinkedHashSet<>();

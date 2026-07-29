@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport.Kind;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -627,6 +628,29 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("priorFindingChecks validation failed", "mandatory when F findings were supplied");
+    }
+
+    @Test
+    void specificationReReviewReopensARiskThatAnIntermediateRevisionResolved() {
+        ScriptedCritic scripted = criticScripted(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement nearest selection.",
+                         "remainingStudentReasoning":"Students reason about numeric distance.","domainGrounding":"Floors are integer positions.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"The current int contract again admits extrema whose subtraction overflows before absolute value."}],
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+        String overflowRisk = "Ambiguous contract — full int floors can overflow distance subtraction.";
+        SpecFidelityCriticService.SpecificationReview intermediateAccepted = new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "resolved by a range",
+                "SUFFICIENT", List.of(overflowRisk));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Choose the mathematically nearest elevator.", null,
+                "R1 accepts every int floor and minimizes absolute distance.", intermediateAccepted, null, () -> false);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model()).call(prompt.capture());
+        assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("SPECIFICATION RISK HISTORY", "[F1] " + overflowRisk);
+        assertThat(review.findings()).singleElement().asString().contains("Persistent specification defect [F1]", "subtraction overflows");
+        assertThat(review.riskHistory()).contains(overflowRisk);
     }
 
     @Test
@@ -2475,6 +2499,75 @@ class SpecFidelityCriticServiceTest {
                 "{\"witnesses\":[{\"rule\":\"R1\",\"testName\":\"testW\",\"code\":\"@Test void testW() { assertEquals(1, 1, \\\"w\\\"); }\",\"wrongBehavior\":\"wrong\"}]}"));
 
         assertThat(critic.authorContractWitnesses(SPEC_WITH_RULES, "class T { }", "class S { }", null, () -> true)).isEmpty();
+    }
+
+    @Test
+    void referenceWitnessAdjudicationRequiresGroundedIndependentSupportBeforeRepair() {
+        ContractWitness witness = new ContractWitness("R1", "extremeDistance", "@Test void extremeDistance() { assertEquals(\"zero\", choose()); }",
+                "subtracts int floors before widening");
+        ContractWitnessOutcome failure = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED,
+                "extremeDistance expected zero but was minimum");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"outcomes":[{"testName":"extremeDistance","verdict":"SUPPORTED_REFERENCE_DEFECT",
+                "sourceQuote":"R1 accepts every int floor and chooses the mathematically nearest elevator.",
+                "reason":"MIN_VALUE to MAX_VALUE overflows int subtraction, so the observed minimum-floor choice is not mathematically nearest."}]}
+                """));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses(
+                "## Rules\nR1 accepts every int floor and chooses the mathematically nearest elevator.", "class NearestStrategy {}", List.of(failure), null, () -> false);
+
+        assertThat(review.supportedWitnesses()).containsExactly(witness);
+        assertThat(review.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.CONTRACT_CONTRADICTION);
+            assertThat(finding.detail()).contains("extremeDistance", "environment", "R1 accepts every int floor");
+        });
+    }
+
+    @Test
+    void referenceWitnessAdjudicationCannotRepairFromAnInvalidOrUngroundedWitness() {
+        ContractWitness witness = new ContractWitness("R1", "invented", "@Test void invented() { assertEquals(7, choose()); }", "returns another value");
+        ContractWitnessOutcome failure = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "invented expected 7 but was 3");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"outcomes":[{"testName":"invented","verdict":"INVALID_WITNESS","sourceQuote":"",
+                "reason":"The specification never requires the arbitrary value seven."}]}
+                """));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses("## Rules\nR1 returns a selected value.", "class Selector {}",
+                List.of(failure), null, () -> false);
+
+        assertThat(review.findings()).isEmpty();
+        assertThat(review.supportedWitnesses()).isEmpty();
+        assertThat(review.invalidWitnesses()).containsExactly(witness);
+        assertThat(review.unresolvedWitnesses()).isEmpty();
+    }
+
+    @Test
+    void malformedReferenceWitnessAdjudicationFailsClosed() {
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() { assertTrue(check()); }", "rejects a legal boundary");
+        ContractWitnessOutcome failure = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "boundary failed");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"outcomes\":[]}"));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses("## Rules\nR1 accepts the boundary.", "class Checker {}", List.of(failure),
+                null, () -> false);
+
+        assertThat(review.supportedWitnesses()).isEmpty();
+        assertThat(review.unresolvedWitnesses()).containsExactly(witness);
+        assertThat(review.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
+    }
+
+    @Test
+    void referenceWitnessInvalidationWithoutRationaleFailsClosedAndRemainsUnresolved() {
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() { assertTrue(check()); }", "rejects a legal boundary");
+        ContractWitnessOutcome failure = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "boundary failed");
+        SpecFidelityCriticService critic = criticReturning(
+                rawResponse("{\"outcomes\":[{\"testName\":\"boundary\",\"verdict\":\"INVALID_WITNESS\",\"sourceQuote\":\"\",\"reason\":\"\"}]}"));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses("## Rules\nR1 accepts the boundary.", "class Checker {}", List.of(failure),
+                null, () -> false);
+
+        assertThat(review.invalidWitnesses()).isEmpty();
+        assertThat(review.unresolvedWitnesses()).containsExactly(witness);
+        assertThat(review.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
     }
 
 }

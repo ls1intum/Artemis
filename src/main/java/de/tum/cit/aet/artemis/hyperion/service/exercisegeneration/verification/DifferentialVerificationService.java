@@ -785,76 +785,31 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs candidate contract witnesses against the reference solution and template and returns the ones that demonstrably pass the solution and fail at the starter seam. The
-     * witnesses ride in a single throwaway probe class beside the graded suite. The canonical restore runs before and after the probe so an infrastructure failure can never leave
-     * advisory work in the live authoring session.
+     * Runs every candidate witness against the reference solution and, when it passes there, the template. It preserves a named test failure in the reference solution as
+     * evidence for later independent adjudication instead of silently discarding it.
      *
      * @param sandbox            the open sandbox session
      * @param sessionId          the sandbox session id
-     * @param exercise           the exercise being built (drives the build recipe)
-     * @param producedTestsFiles the tests repository as produced, providing both the collision check and the source of the probe's package and imports
+     * @param exercise           the exercise being built
+     * @param producedTestsFiles the tests repository used to host the throwaway probe
      * @param candidates         the unvalidated witnesses
-     * @param restoreCandidate   restores the mechanically verified candidate and removes all probe residue
-     * @return the witnesses the reference solution actually satisfied
+     * @param restoreCandidate   restores the mechanically verified candidate and removes probe residue
+     * @return one environment outcome per candidate, or an empty list when there are no candidates
      */
-    public List<ContractWitness> validateContractWitnesses(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
-            List<ContractWitness> candidates, Runnable restoreCandidate) {
-        if (candidates.isEmpty() || producedTestsFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+    public List<ContractWitnessOutcome> evaluateContractWitnesses(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
+            Map<String, String> producedTestsFiles, List<ContractWitness> candidates, Runnable restoreCandidate) {
+        if (candidates.isEmpty()) {
             return List.of();
         }
-        Optional<Map.Entry<String, String>> host = ContractWitnessProbe.host(producedTestsFiles);
-        if (host.isEmpty()) {
-            return List.of();
+        if (producedTestsFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return ContractWitnessEvaluator.inconclusive(candidates, "No executable Java test host was available.");
         }
-        String probePath = ContractWitnessProbe.probePath(host.get().getKey(), producedTestsFiles.keySet());
-        if (probePath == null) {
-            return List.of();
-        }
-        try {
-            List<ContractWitness> discriminating = new ArrayList<>();
-            for (ContractWitness candidate : candidates) {
-                restoreCandidate.run();
-                String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(candidate));
-                String workspacePath = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + probePath;
-                sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
-                seedPristineVerifyScript(sandbox, sessionId, exercise);
-                BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
-                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-                List<ContractWitness> solutionValidated = ContractWitnessProbe.validated(solution.testNames(), solution.testFailedNames(), List.of(candidate));
-                if (solutionValidated.isEmpty()) {
-                    log.info("Contract-witness {} for exercise {} was rejected before starter comparison: solution tests={}, failures={}, exit={}; diagnostic={}",
-                            candidate.testName(), exercise.getId(), solution.tests(), solution.failures(), solution.exitCode(), solution.buildDiagnostic());
-                    continue;
-                }
-                BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
-                        GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
-                List<ContractWitness> result = ContractWitnessProbe.discriminating(solutionValidated, template.testNames(), template.testFailedNames());
-                if (result.isEmpty()) {
-                    log.info(
-                            "Contract-witness {} for exercise {} passed the solution but did not execute and fail at the starter seam: starter tests={}, failures={}, exit={}; "
-                                    + "diagnostic={}",
-                            candidate.testName(), exercise.getId(), template.tests(), template.failures(), template.exitCode(), template.buildDiagnostic());
-                }
-                discriminating.addAll(result);
-            }
-            log.info("Contract-witness probe for exercise {}: {} of {} candidate witnesses passed the reference solution and failed at the starter seam", exercise.getId(),
-                    discriminating.size(), candidates.size());
-            return List.copyOf(discriminating);
-        }
-        catch (VerificationInfrastructureException exception) {
-            throw exception;
-        }
-        catch (RuntimeException exception) {
-            throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
-        }
-        finally {
-            try {
-                restoreCandidate.run();
-            }
-            catch (RuntimeException exception) {
-                throw new VerificationInfrastructureException("The contract-witness probe could not restore the verified candidate", exception);
-            }
-        }
+        return ContractWitnessEvaluator.evaluate(sandbox, sessionId, exercise.getId(), producedTestsFiles, candidates, restoreCandidate,
+                () -> seedPristineVerifyScript(sandbox, sessionId, exercise),
+                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION)),
+                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE)));
     }
 
     /**

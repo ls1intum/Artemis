@@ -165,8 +165,8 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     static ChatResponse cleanSpecificationReview() {
-        return text("{\"learningFit\":{\"briefEvidenceIds\":[\"B1\"],\"specEvidenceIds\":[\"E16\"],\"objectiveEvidenceIds\":[\"E16\",\"E23\"],"
-                + "\"studentOwnershipEvidenceIds\":[\"E15\"],\"assessmentEvidenceIds\":[\"E23\"],"
+        return text("{\"learningFit\":{\"briefEvidenceIds\":[\"B1\"],\"specEvidenceIds\":[\"E16\"],\"objectiveEvidenceIds\":[\"E16\",\"E25\"],"
+                + "\"studentOwnershipEvidenceIds\":[\"E15\"],\"assessmentEvidenceIds\":[\"E25\"],"
                 + "\"objectiveMechanism\":\"The cited student work exercises the requested objective through an observable collaboration.\","
                 + "\"remainingStudentReasoning\":\"The boundary decisions remain after routine implementation is subtracted.\","
                 + "\"domainGrounding\":\"The brief requests no qualitative theme; the counter domain directly motivates boundary behavior.\","
@@ -176,7 +176,15 @@ final class HyperionMockedLlmE2eSupport {
                 + "\"disposition\":\"ALIGNED\",\"reason\":\"The specification preserves bounded increment and decrement state transitions.\"}," + "\"exampleChecks\":["
                 + "{\"exampleEvidenceId\":\"E10\",\"replayedOutcome\":\"value 2\",\"consistent\":true,\"reason\":\"the third increment clamps at two\"},"
                 + "{\"exampleEvidenceId\":\"E11\",\"replayedOutcome\":\"value 0 and an exception\",\"consistent\":true,\"reason\":\"both boundary cases follow the rules\"}],"
-                + "\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"ambiguities\":[],\"unsupportedConstraints\":[]}");
+                + "\"boundaryChecks\":[],\"omissions\":[],\"conflicts\":[],\"internalConflicts\":[],\"ambiguities\":[],\"unsupportedConstraints\":[]}");
+    }
+
+    static ChatResponse noSemanticMutants() {
+        return text("{\"mutants\":[]}");
+    }
+
+    static ChatResponse noContractWitnesses() {
+        return text("{\"witnesses\":[]}");
     }
 
     static ChatResponse conceptCandidates() {

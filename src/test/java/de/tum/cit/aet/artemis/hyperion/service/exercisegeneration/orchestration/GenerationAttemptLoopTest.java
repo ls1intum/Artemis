@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.Contrac
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
@@ -220,6 +221,53 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void adjudicatedReferenceFailureBlocksConvergenceUntilTheExactWitnessPasses() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | every admitted boundary returns the mathematically nearest value |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/NearestTest.java", "class NearestTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "extremeBoundary", "@Test void extremeBoundary() { assertEquals(0, choose()); }",
+                "uses overflowing integer subtraction");
+        SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
+                "Reference solution violates R1 in executable witness extremeBoundary", "the named reference assertion failed and independent review grounded it");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ReferenceWitnessReview(List.of(defect), List.of(witness)), SpecFidelityCriticService.ReferenceWitnessReview.empty());
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
+    }
+
+    @Test
+    void inconclusiveRecheckCannotEraseAnAdjudicatedReferenceFailure() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | every admitted boundary returns the mathematically nearest value |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/NearestTest.java", "class NearestTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "extremeBoundary", "@Test void extremeBoundary() { assertEquals(0, choose()); }",
+                "uses overflowing integer subtraction");
+        SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
+                "Reference solution violates R1 in executable witness extremeBoundary", "the named reference assertion failed and independent review grounded it");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.INCONCLUSIVE, "test report unavailable")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ReferenceWitnessReview(List.of(defect), List.of(witness)), SpecFidelityCriticService.ReferenceWitnessReview.empty());
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+    }
+
+    @Test
     void aProbeRestoreFailureEscapesReviewWithThePreReviewCheckpointIntact() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
@@ -342,7 +390,7 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         assertThat(loop.specFidelityReport().findings()).containsExactly(scaffoldGap);
-        verify(specFidelityCritic, never()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
+        verify(specFidelityCritic).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
     }
 
     private static SpecFidelityReport report(SpecFidelityReport.Kind... kinds) {
@@ -433,7 +481,8 @@ class GenerationAttemptLoopTest {
                     .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
             ContractWitness witness = new ContractWitness("R1", "computesTheResult", "void computesTheResult() {}", "returns an incorrect result");
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-            when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(witness));
+            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                    .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
 
             newGenerateLoop(6, 4).run();
 

@@ -100,6 +100,14 @@ class ContractWitnessProbeTest {
     }
 
     @Test
+    void witnessNameCollisionWithAnExistingGradedTestIsDetectedBeforeAttribution() {
+        ContractWitness collision = new ContractWitness("R1", "testValidInput", "@Test void testValidInput() { fail(); }", "collides");
+
+        assertThat(ContractWitnessProbe.collidesWithExistingTest(collision, Map.of("test/RosterParserTest.java", GENERATED_TEST))).isTrue();
+        assertThat(ContractWitnessProbe.collidesWithExistingTest(NEGATIVE_SALARY, Map.of("test/RosterParserTest.java", GENERATED_TEST))).isFalse();
+    }
+
+    @Test
     void validated_provesNothingWhenTheBuildReportedNoTestsAtAll() {
         assertThat(ContractWitnessProbe.validated(List.of(), List.of(), List.of(NEGATIVE_SALARY))).isEmpty();
     }

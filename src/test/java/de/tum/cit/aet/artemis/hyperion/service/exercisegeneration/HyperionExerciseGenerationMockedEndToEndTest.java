@@ -226,7 +226,9 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             `BoundedCounter` owns its mutable value for its whole lifetime.
 
             ## Public API
-            `BoundedCounter`: `BoundedCounter(int maximum)`, `int getValue()`, `void increment()`, `void decrement()`
+            ```java
+            public class BoundedCounter { public BoundedCounter(int maximum); public int getValue(); public void increment(); public void decrement(); }
+            ```
 
             ## Testing Strategy
             | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -330,7 +332,8 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
                 HyperionMockedLlmE2eSupport.writeFile(testPath, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.writeFile(TEST_PLAN_PATH, TEST_PLAN),
                 HyperionMockedLlmE2eSupport.submit("Tests"), HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
-                HyperionMockedLlmE2eSupport.submit("Statement"), HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview());
+                HyperionMockedLlmE2eSupport.submit("Statement"), HyperionMockedLlmE2eSupport.cleanQualityReview(), HyperionMockedLlmE2eSupport.cleanQualityReview(),
+                HyperionMockedLlmE2eSupport.noSemanticMutants(), HyperionMockedLlmE2eSupport.noContractWitnesses());
     }
 
     private void script(ChatResponse... responses) {

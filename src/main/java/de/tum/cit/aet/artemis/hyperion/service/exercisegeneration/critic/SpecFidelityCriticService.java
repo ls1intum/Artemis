@@ -84,26 +84,51 @@ public class SpecFidelityCriticService {
 
     private static final String ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/oracle_review_system.st";
 
+    public record ReferenceWitnessReview(List<SpecFidelityReport.Finding> findings, List<ContractWitness> supportedWitnesses, List<ContractWitness> invalidWitnesses,
+            List<ContractWitness> unresolvedWitnesses) {
+
+        public ReferenceWitnessReview {
+            findings = List.copyOf(findings);
+            supportedWitnesses = List.copyOf(supportedWitnesses);
+            invalidWitnesses = List.copyOf(invalidWitnesses);
+            unresolvedWitnesses = List.copyOf(unresolvedWitnesses);
+        }
+
+        public ReferenceWitnessReview(List<SpecFidelityReport.Finding> findings, List<ContractWitness> supportedWitnesses) {
+            this(findings, supportedWitnesses, List.of(), List.of());
+        }
+
+        public static ReferenceWitnessReview empty() {
+            return new ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of());
+        }
+    }
+
     /** A complete, evidence-grounded brief-to-spec verdict. Incomplete means the provider returned no trustworthy verdict, so the runner must not freeze the contract. */
     public record SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
-            @Nullable String learningFitDirection) {
+            @Nullable String learningFitDirection, List<String> riskHistory) {
 
         public SpecificationReview {
             findings = List.copyOf(findings);
             auditSummary = auditSummary == null ? "" : auditSummary.strip();
             learningFitDirection = learningFitDirection == null ? null : learningFitDirection.strip();
+            riskHistory = List.copyOf(riskHistory);
+        }
+
+        public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
+                @Nullable String learningFitDirection) {
+            this(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, learningFitDirection, findings);
         }
 
         public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary) {
-            this(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, null);
+            this(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, null, findings);
         }
 
         public SpecificationReview(boolean complete, List<String> findings) {
-            this(complete, false, !findings.isEmpty(), findings, "", null);
+            this(complete, false, !findings.isEmpty(), findings, "", null, findings);
         }
 
         public SpecificationReview(boolean complete, boolean conceptualReworkRequired, List<String> findings) {
-            this(complete, conceptualReworkRequired, !findings.isEmpty(), findings, "", null);
+            this(complete, conceptualReworkRequired, !findings.isEmpty(), findings, "", null, findings);
         }
 
         public boolean accepted() {
@@ -169,6 +194,8 @@ public class SpecFidelityCriticService {
 
     private final SemanticMutantAuthor semanticMutantAuthor;
 
+    private final ReferenceWitnessCritic referenceWitnessCritic;
+
     @Autowired
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
             @Value("${spring.ai.openai.chat.model:}") String configuredModel,
@@ -201,6 +228,7 @@ public class SpecFidelityCriticService {
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);
         this.witnessAuthor = new ContractWitnessAuthor(reviewer, objectMapper);
         this.semanticMutantAuthor = new SemanticMutantAuthor(reviewer, objectMapper);
+        this.referenceWitnessCritic = new ReferenceWitnessCritic(reviewer, objectMapper);
     }
 
     /**
@@ -239,6 +267,12 @@ public class SpecFidelityCriticService {
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
         return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, designTemplateStatuses(specificationContract), usageSink, cancelled);
+    }
+
+    public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources,
+            List<de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome> outcomes, @Nullable Consumer<ChatResponse> usageSink,
+            BooleanSupplier cancelled) {
+        return referenceWitnessCritic.adjudicate(specificationContract, solutionSources, outcomes, usageSink, cancelled);
     }
 
     /**

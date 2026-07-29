@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -1347,7 +1348,8 @@ class GenerationOrchestrationServiceTest {
     void validatedContractWitness_reachesTheReportWithoutFlippingTheVerdict() {
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(WITNESS, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).as("an advisory witness never unseats an accepted candidate").isTrue();
@@ -1363,7 +1365,7 @@ class GenerationOrchestrationServiceTest {
     void contractWitnessThatTheReferenceSolutionDoesNotSatisfy_neverReachesTheReport() {
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of());
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
@@ -1371,15 +1373,14 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void witnessesAreNotAuthoredWhileSomethingStillBlocks() {
-        // A repair round is coming that rewrites the artifacts the witnesses were derived from, and a witness is validated against the solution as it stands, so authoring one
-        // now re-pays a provider call and a full solution build for a witness that may not survive.
+    void witnessesProbeReferenceCorrectnessWhileSomethingElseStillBlocks() {
+        // Optional adoption waits, but reference-correctness probing must not: another blocker cannot be allowed to hide a broken reference implementation.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives"))));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
-            verify(specFidelityCritic, never()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
+            verify(specFidelityCritic, atLeastOnce()).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
         }
     }
 
@@ -1389,7 +1390,8 @@ class GenerationOrchestrationServiceTest {
         // exercise.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(WITNESS, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
@@ -1407,7 +1409,8 @@ class GenerationOrchestrationServiceTest {
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "rollback", "a plausible wrong implementation survives")));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(blocking);
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(WITNESS));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(WITNESS, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
@@ -1762,7 +1765,7 @@ class GenerationOrchestrationServiceTest {
     void aContractWitnessProbeInfrastructureFailurePreservesTheVerifiedPreReviewCheckpoint() {
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
-        when(verifier.validateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
                 .thenThrow(new DifferentialVerificationService.VerificationInfrastructureException("restore failed", new IllegalStateException("session lost")));
 
         try (GenerationOutcome outcome = generate(() -> false)) {

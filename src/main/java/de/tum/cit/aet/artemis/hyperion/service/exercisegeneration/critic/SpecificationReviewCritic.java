@@ -49,7 +49,9 @@ class SpecificationReviewCritic {
     /** Keeps a SPEC repair focused even when the reviewer reports more valid defects than requested. */
     private static final int SPECIFICATION_REVIEW_MAX_FINDINGS = 4;
 
-    private static final int MAX_PRIOR_FINDING_CHARS = 4_000;
+    private static final int MAX_PRIOR_FINDING_CHARS = 8_000;
+
+    private static final int MAX_RISK_HISTORY = 8;
 
     private static final String SPECIFICATION_REVIEW_CORRECTION = """
 
@@ -159,19 +161,18 @@ class SpecificationReviewCritic {
         }
         requireReviewTextSafe("spec-review/SPEC.md", specification);
         if (previousReview != null) {
-            if (previousReview.findings().size() > SPECIFICATION_REVIEW_MAX_FINDINGS
-                    || previousReview.findings().stream().mapToInt(String::length).sum() > MAX_PRIOR_FINDING_CHARS) {
-                return incompleteSpecificationReview("The prior specification review exceeded the bounded continuity context.");
+            if (previousReview.riskHistory().size() > MAX_RISK_HISTORY || previousReview.riskHistory().stream().mapToInt(String::length).sum() > MAX_PRIOR_FINDING_CHARS) {
+                return incompleteSpecificationReview("The prior specification review exceeded the bounded continuity context.", previousReview);
             }
-            for (int index = 0; index < previousReview.findings().size(); index++) {
-                requireReviewTextSafe("spec-review/previous-finding-" + (index + 1), previousReview.findings().get(index));
+            for (int index = 0; index < previousReview.riskHistory().size(); index++) {
+                requireReviewTextSafe("spec-review/previous-risk-" + (index + 1), previousReview.riskHistory().get(index));
             }
         }
         if (cancelled.getAsBoolean()) {
-            return new SpecificationReview(false, List.of());
+            return incompleteSpecificationReview("The specification review was cancelled.", previousReview);
         }
         if (!reviewer.configured() || brief.isBlank() || specification.isBlank()) {
-            return new SpecificationReview(false, List.of());
+            return incompleteSpecificationReview("The specification reviewer or required evidence was unavailable.", previousReview);
         }
         SpecificationReviewEvidence evidence = SpecificationReviewEvidence.from(brief, selectedConcept, specification);
         String conceptPrompt = evidence.hasConcept()
@@ -201,17 +202,18 @@ class SpecificationReviewCritic {
         }
         catch (RuntimeException e) {
             log.warn("Specification review failed: {}", e.getMessage());
-            return incompleteSpecificationReview("Reviewer call failed: " + safeFailureDetail(e));
+            return incompleteSpecificationReview("Reviewer call failed: " + safeFailureDetail(e), previousReview);
         }
     }
 
     private static String previousReviewContext(@Nullable SpecificationReview previousReview) {
-        if (previousReview == null || previousReview.findings().isEmpty()) {
+        if (previousReview == null || previousReview.riskHistory().isEmpty()) {
             return "";
         }
-        StringBuilder context = new StringBuilder("\n\nPREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION (untrusted findings, not scope authority):");
-        for (int index = 0; index < previousReview.findings().size(); index++) {
-            context.append("\n[F").append(index + 1).append("] ").append(previousReview.findings().get(index));
+        StringBuilder context = new StringBuilder(
+                "\n\nPREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION — SPECIFICATION RISK HISTORY (including risks once resolved; untrusted, not scope authority):");
+        for (int index = 0; index < previousReview.riskHistory().size(); index++) {
+            context.append("\n[F").append(index + 1).append("] ").append(previousReview.riskHistory().get(index));
         }
         return context
                 + "\nAdjudicate every F ID against the CURRENT evidence in priorFindingChecks before accepting. Re-run the cited predicates, state transitions, or examples; a sentence "
@@ -235,27 +237,27 @@ class SpecificationReviewCritic {
     private SpecificationReview parseSpecificationReview(@Nullable SpecificationReviewResponse parsed, SpecificationReviewEvidence evidence,
             @Nullable SpecificationReview previousReview) {
         if (parsed == null) {
-            return incompleteSpecificationReview("The response was empty or was not valid JSON in the required object shape.");
+            return incompleteSpecificationReview("The response was empty or was not valid JSON in the required object shape.", previousReview);
         }
         if (parsed.omissions() == null || parsed.conflicts() == null || parsed.internalConflicts() == null || parsed.ambiguities() == null
                 || parsed.unsupportedConstraints() == null || parsed.boundaryChecks() == null) {
-            return incompleteSpecificationReview("One or more mandatory finding arrays were missing.");
+            return incompleteSpecificationReview("One or more mandatory finding arrays were missing.", previousReview);
         }
         String boundaryValidationError = boundaryValidationError(parsed.boundaryChecks(), evidence);
         if (boundaryValidationError != null) {
-            return incompleteSpecificationReview("boundaryChecks validation failed: " + boundaryValidationError);
+            return incompleteSpecificationReview("boundaryChecks validation failed: " + boundaryValidationError, previousReview);
         }
         String learningFitValidationError = specificationLearningFitValidationError(parsed.learningFit(), evidence);
         if (learningFitValidationError != null) {
-            return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError);
+            return incompleteSpecificationReview("learningFit validation failed: " + learningFitValidationError, previousReview);
         }
         String conceptAlignmentValidationError = conceptAlignmentValidationError(parsed.conceptAlignment(), evidence);
         if (conceptAlignmentValidationError != null) {
-            return incompleteSpecificationReview("conceptAlignment validation failed: " + conceptAlignmentValidationError);
+            return incompleteSpecificationReview("conceptAlignment validation failed: " + conceptAlignmentValidationError, previousReview);
         }
         String priorFindingValidationError = priorFindingValidationError(parsed.priorFindingChecks(), previousReview, evidence);
         if (priorFindingValidationError != null) {
-            return incompleteSpecificationReview("priorFindingChecks validation failed: " + priorFindingValidationError);
+            return incompleteSpecificationReview("priorFindingChecks validation failed: " + priorFindingValidationError, previousReview);
         }
         // Worked-example replay is a quality signal, not a terminal contract: an inconsistent check still becomes a finding, but a mismatched or missing example-ID set must
         // not discard an otherwise coherent verdict.
@@ -340,12 +342,13 @@ class SpecificationReviewCritic {
                 : parsed.priorFindingChecks().stream().filter(check -> check.disposition() == PriorFindingDisposition.STILL_PRESENT).count();
         if (persistentFindingCount > 0 && distinctFindings.size() > SPECIFICATION_REVIEW_MAX_FINDINGS) {
             return incompleteSpecificationReview("The combined STILL_PRESENT and fresh blocker count exceeded " + SPECIFICATION_REVIEW_MAX_FINDINGS
-                    + "; prioritize one bounded complete batch without silently omitting a prior finding.");
+                    + "; prioritize one bounded complete batch without silently omitting a prior finding.", previousReview);
         }
+        List<String> riskHistory = riskHistory(previousReview, distinctFindings);
         return new SpecificationReview(true, conceptDisposition == SpecificationConceptDisposition.CONCEPT_RESELECTION, coherentRewriteRequired,
                 distinctFindings.stream().limit(SPECIFICATION_REVIEW_MAX_FINDINGS).toList(),
                 specificationReviewAuditSummary(learningFit, conceptDisposition, parsed.exampleChecks(), parsed.priorFindingChecks(), previousReview, evidence),
-                learningFit.direction().name());
+                learningFit.direction().name(), riskHistory);
     }
 
     private static @Nullable String boundaryValidationError(List<BoundaryReachabilityCheck> checks, SpecificationReviewEvidence evidence) {
@@ -363,7 +366,7 @@ class SpecificationReviewCritic {
 
     private static @Nullable String priorFindingValidationError(@Nullable List<PriorFindingCheck> checks, @Nullable SpecificationReview previousReview,
             SpecificationReviewEvidence evidence) {
-        List<String> previousFindings = previousReview == null ? List.of() : previousReview.findings();
+        List<String> previousFindings = previousReview == null ? List.of() : previousReview.riskHistory();
         if (previousFindings.isEmpty()) {
             return checks == null || checks.isEmpty() ? null : "priorFindingChecks must be empty when no F findings were supplied.";
         }
@@ -402,7 +405,7 @@ class SpecificationReviewCritic {
             checksById.put(check.findingId(), check);
         }
         List<String> stillPresent = new ArrayList<>();
-        for (int index = 0; index < previousReview.findings().size(); index++) {
+        for (int index = 0; index < previousReview.riskHistory().size(); index++) {
             PriorFindingCheck check = checksById.get("F" + (index + 1));
             if (check.disposition() == PriorFindingDisposition.STILL_PRESENT) {
                 stillPresent.add("Persistent specification defect [" + check.findingId() + "] — current SPEC says \""
@@ -414,7 +417,21 @@ class SpecificationReviewCritic {
     }
 
     private static SpecificationReview incompleteSpecificationReview(String detail) {
-        return new SpecificationReview(false, false, false, List.of(), truncateLearningEvidence(detail));
+        return incompleteSpecificationReview(detail, null);
+    }
+
+    private static SpecificationReview incompleteSpecificationReview(String detail, @Nullable SpecificationReview previousReview) {
+        return new SpecificationReview(false, false, false, List.of(), truncateLearningEvidence(detail), null, previousReview == null ? List.of() : previousReview.riskHistory());
+    }
+
+    private static List<String> riskHistory(@Nullable SpecificationReview previousReview, List<String> currentFindings) {
+        List<String> combined = new ArrayList<>(previousReview == null ? List.of() : previousReview.riskHistory());
+        for (String finding : currentFindings) {
+            if (!combined.contains(finding)) {
+                combined.add(finding);
+            }
+        }
+        return List.copyOf(combined.subList(0, Math.min(combined.size(), MAX_RISK_HISTORY)));
     }
 
     private static String safeFailureDetail(RuntimeException exception) {
@@ -437,8 +454,8 @@ class SpecificationReviewCritic {
             return summary;
         }
         Map<String, String> previousById = new HashMap<>();
-        for (int index = 0; index < previousReview.findings().size(); index++) {
-            previousById.put("F" + (index + 1), previousReview.findings().get(index));
+        for (int index = 0; index < previousReview.riskHistory().size(); index++) {
+            previousById.put("F" + (index + 1), previousReview.riskHistory().get(index));
         }
         String adjudications = priorFindingChecks.stream()
                 .map(check -> check.findingId() + " " + check.disposition() + " — prior hypothesis: \"" + truncate(previousById.getOrDefault(check.findingId(), ""))

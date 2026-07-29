@@ -221,9 +221,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path,
             @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_OFFSET) Integer offset,
             @ToolParam(required = false, description = AgentToolDescriptions.READ_FILE_LIMIT) Integer limit) {
-        String safe = workspaceRelativePath(path);
+        String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
-            return invalidPathError(path);
+            return SandboxPathPolicy.invalidPathError(path);
         }
         HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
         if (!pathAssessment.isSafe()) {
@@ -251,9 +251,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "search", description = AgentToolDescriptions.SEARCH)
     public String search(@ToolParam(description = AgentToolDescriptions.SEARCH_PATH) String path, @ToolParam(description = AgentToolDescriptions.SEARCH_QUERY) String query) {
         boolean searchWorkspaceRoot = path == null || path.isBlank();
-        String safe = searchWorkspaceRoot ? "" : workspaceRelativePath(path);
+        String safe = searchWorkspaceRoot ? "" : SandboxPathPolicy.workspaceRelativePath(path);
         if (!searchWorkspaceRoot && safe == null) {
-            return invalidPathError(path);
+            return SandboxPathPolicy.invalidPathError(path);
         }
         if (query == null || query.isBlank() || query.contains("\n") || query.contains("\r")) {
             return "ERROR: query must be non-empty text from a single line.";
@@ -353,19 +353,19 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "write_file", description = AgentToolDescriptions.WRITE_FILE)
     public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.WRITE_FILE_CONTENT) String content) {
-        String safe = workspaceRelativePath(path);
+        String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
-            return invalidPathError(path);
+            return SandboxPathPolicy.invalidPathError(path);
         }
-        if (!isWritableGenerationPath(safe)) {
+        if (!SandboxPathPolicy.isWritableGenerationPath(safe)) {
             return "ERROR: write only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         String stageRejection = stageWriteRejection(safe);
         if (stageRejection != null) {
             return stageRejection;
         }
-        if (isManagedBuildInfrastructurePath(safe)) {
-            return immutableHarnessError(safe);
+        if (SandboxPathPolicy.isManagedBuildInfrastructurePath(safe)) {
+            return SandboxPathPolicy.immutableHarnessError(safe);
         }
         String contractRejection = approvedContractWriteRejection(safe, content);
         if (contractRejection != null) {
@@ -398,9 +398,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "edit_file", description = AgentToolDescriptions.EDIT_FILE)
     public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.EDIT_FILE_OLD_TEXT) String oldText, @ToolParam(description = AgentToolDescriptions.EDIT_FILE_NEW_TEXT) String newText) {
-        String safe = workspaceRelativePath(path);
+        String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
-            return invalidPathError(path);
+            return SandboxPathPolicy.invalidPathError(path);
         }
         if (oldText.isEmpty()) {
             return "ERROR: oldText must not be empty.";
@@ -527,19 +527,19 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
     public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
-        String safe = workspaceRelativePath(path);
+        String safe = SandboxPathPolicy.workspaceRelativePath(path);
         if (safe == null) {
-            return invalidPathError(path);
+            return SandboxPathPolicy.invalidPathError(path);
         }
-        if (!isWritableGenerationPath(safe)) {
+        if (!SandboxPathPolicy.isWritableGenerationPath(safe)) {
             return "ERROR: delete only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
         }
         String stageRejection = stageWriteRejection(safe);
         if (stageRejection != null) {
             return stageRejection;
         }
-        if (isManagedBuildInfrastructurePath(safe)) {
-            return immutableHarnessError(safe);
+        if (SandboxPathPolicy.isManagedBuildInfrastructurePath(safe)) {
+            return SandboxPathPolicy.immutableHarnessError(safe);
         }
         if ("SPEC.md".equals(safe)) {
             String contractRejection = approvedContractWriteRejection(safe, "");
@@ -581,7 +581,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
-        if (mutatesManagedBuildInfrastructure(command)) {
+        if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
         // Even a read-only inspection invalidates the cached passing check, because a shell command can mutate the workspace outside the file tools' guardrails. The case the
@@ -953,41 +953,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return RENDERED_ARGV_ARRAY.matcher(command.strip()).matches();
     }
 
-    private static boolean isManagedBuildInfrastructurePath(String safe) {
-        for (String repository : List.of("solution/", "template/", "tests/")) {
-            if (safe.startsWith(repository)) {
-                String repositoryPath = safe.substring(repository.length());
-                return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
-                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
-            }
-        }
-        return false;
-    }
-
-    /** {@code SPEC.md} is a workspace-root planning artifact that repository extraction never reads, so it stays writable from any stage that forces a design change. */
-    private static boolean isWritableGenerationPath(String safe) {
-        return safe.equals("SPEC.md") || safe.equals("test-plan.json") || safe.equals("problem-statement.md") || safe.startsWith("solution/") || safe.startsWith("template/")
-                || safe.startsWith("tests/");
-    }
-
-    private static String immutableHarnessError(String safe) {
-        return "ERROR: do not modify " + safe + ". Repository build infrastructure is seeded and managed by Artemis; edit only the problem statement and exercise source files.";
-    }
-
     static boolean mutatesManagedBuildInfrastructure(String command) {
-        String lower = command.toLowerCase();
-        if (!lower.matches(
-                "(?s).*(?:tests|solution|template)/(buildsrc/.*|gradle/.*|pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
-                        + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {
-            return false;
-        }
-        return lower.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ") || lower.contains(" rm ")
-                || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
-    }
-
-    private static String invalidPathError(String path) {
-        String safePath = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION).safePath();
-        return "ERROR: invalid path '" + safePath + "'. Use a workspace-relative path containing only letters, digits, '_', '.', '/', '-' and no '..'.";
+        return SandboxPathPolicy.mutatesManagedBuildInfrastructure(command);
     }
 
     /**
@@ -997,16 +964,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * @return the relative path, or {@code null} if it is unsafe
      */
     static String workspaceRelativePath(String path) {
-        if (path == null || path.isBlank()) {
-            return null;
-        }
-        String trimmed = path.trim();
-        if (trimmed.startsWith(WORKSPACE + "/")) {
-            trimmed = trimmed.substring((WORKSPACE + "/").length());
-        }
-        if (trimmed.startsWith("/") || trimmed.contains("..") || !trimmed.matches("[a-zA-Z0-9_./-]+")) {
-            return null;
-        }
-        return trimmed;
+        return SandboxPathPolicy.workspaceRelativePath(path);
     }
 }
