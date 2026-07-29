@@ -185,6 +185,7 @@ data-exports/
 # Docker
 ######################
 /docker/.env
+/.env.hyperion.local
 /docker/playwright-local-override.yml
 /docker/.docker-data/artemis-data/*
 !/docker/.docker-data/artemis-data/.gitkeep
