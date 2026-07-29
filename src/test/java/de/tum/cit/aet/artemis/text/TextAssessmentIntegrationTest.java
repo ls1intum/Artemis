@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -1352,10 +1353,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // check properties set
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("withExerciseGroups", "true");
-        Exam examReturned = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        examReturned.getExerciseGroups().getFirst().getExercises().forEach(exerciseExamReturned -> {
-            assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
-            assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
+        ExamWithExerciseGroupsDTO examReturned = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK,
+                ExamWithExerciseGroupsDTO.class, params);
+        examReturned.exerciseGroups().getFirst().exercises().forEach(exerciseExamReturned -> {
+            assertThat(exerciseExamReturned.numberOfParticipations()).isNotNull();
+            assertThat(exerciseExamReturned.numberOfParticipations()).isEqualTo(1);
         });
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 

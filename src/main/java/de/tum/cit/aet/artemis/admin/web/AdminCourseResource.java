@@ -200,6 +200,7 @@ public class AdminCourseResource {
         CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
         CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
         CourseValidator.validateAccuracyOfScores(course);
+        CourseValidator.validatePointBounds(course);
         CourseValidator.validateStartAndEndDate(course);
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {

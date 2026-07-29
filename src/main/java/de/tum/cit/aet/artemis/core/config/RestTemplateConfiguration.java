@@ -84,7 +84,7 @@ public class RestTemplateConfiguration {
     @Bean
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
+        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
