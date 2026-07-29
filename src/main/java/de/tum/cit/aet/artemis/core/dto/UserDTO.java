@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
@@ -67,6 +68,13 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean internal;
 
+    /**
+     * Marks accounts used only for testing/load-testing (e.g. QA or synthetic users). These are excluded from usage statistics.
+     * The wire name is pinned so that it matches {@link StudentDTO#isTestUser()} used by the user CSV import.
+     */
+    @JsonProperty("isTestUser")
+    private boolean isTestUser;
+
     private Set<String> authorities = new HashSet<>();
 
     private Set<String> groups = new HashSet<>();
@@ -106,6 +114,7 @@ public class UserDTO extends AuditingEntityDTO {
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
                 user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
                 user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
+        this.isTestUser = user.isTestUser();
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
@@ -298,6 +307,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setInternal(boolean internal) {
         this.internal = internal;
+    }
+
+    public boolean isTestUser() {
+        return isTestUser;
+    }
+
+    public void setTestUser(boolean isTestUser) {
+        this.isTestUser = isTestUser;
     }
 
     public AiSelectionDecision getSelectedLLMUsage() {

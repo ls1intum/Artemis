@@ -5,11 +5,13 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Observable, filter, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
     private courseManagementService = inject(CourseManagementService);
     private router = inject(Router);
+    private alertService = inject(AlertService);
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         return this.courseManagementService.find(route.params['courseId']).pipe(
@@ -25,7 +27,12 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 }
                 // user has not completed all necessary configuration steps
                 if (!course.tutorialGroupsConfiguration || !course.timeZone) {
-                    void this.router.navigate(['/course-management', course.id!, 'tutorial-groups-checklist']);
+                    if (course.isAtLeastInstructor) {
+                        void this.router.navigate(['/course-management', course.id!, 'tutorial-groups-checklist']);
+                    } else {
+                        this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
+                        void this.router.navigate(['/course-management']);
+                    }
                 }
             }),
         );
