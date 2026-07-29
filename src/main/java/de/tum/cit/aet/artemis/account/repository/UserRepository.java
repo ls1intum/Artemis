@@ -1751,7 +1751,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     /**
      * Get the IDs of users who have submitted at least one submission since the given date.
-     * Excludes users with 'test' in their login (case-insensitive).
+     * Excludes users flagged as test users, i.e. those whose {@code isTestUser} flag is set. That flag is managed
+     * explicitly (admins can set or clear it independently of the login), so this no longer depends on the login
+     * containing 'test'.
      * <p>
      * This is used as the first step in the optimized active students count:
      * 1. Get active user IDs (this query)
@@ -1766,7 +1768,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN p.submissions s
                 JOIN p.student u
             WHERE s.submissionDate >= :activeSince
-                AND LOWER(u.login) NOT LIKE '%test%'
+                AND u.isTestUser = FALSE
             """)
     Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
 
