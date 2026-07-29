@@ -653,8 +653,37 @@ public final class ExerciseIntegrityGate {
         String behaviorTestPackageRoot = "tests/behavior/test/" + packagePath + "/";
         String structuralTestPackageRoot = "tests/structural/test/" + packagePath + "/";
         return List.of("Generated Java files must stay inside the exercise package's canonical source roots. Use solution/src/" + packagePath + "/, template/src/" + packagePath
-                + "/, and " + testPackageRoot + " (or " + behaviorTestPackageRoot + " / " + structuralTestPackageRoot + "), not tests/src/test/java/. Move, remove, or restore "
-                + sampleNames(invalidChanges) + ".");
+                + "/, and " + testPackageRoot + " (or " + behaviorTestPackageRoot + " / " + structuralTestPackageRoot
+                + "), not tests/src/test/java/; each package declaration must match its directory. Move, remove, or restore " + sampleNames(invalidChanges) + ".");
+    }
+
+    /**
+     * Applies the canonical generated-source layout gate to one proposed workspace write, so the agent receives the same verdict immediately that final verification would
+     * otherwise report at the stage boundary.
+     *
+     * @param packageName configured base package
+     * @param path        workspace-relative path including its repository root
+     * @param content     proposed Java source
+     * @return the canonical rejection reason, or {@code null} when this is not a Java repository source or the write is valid
+     */
+    public static @Nullable String javaGeneratedSourceWriteReason(String packageName, String path, String content) {
+        if (path == null || !path.endsWith(".java")) {
+            return null;
+        }
+        List<String> reasons;
+        if (path.startsWith("solution/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(path.substring("solution/".length()), content));
+        }
+        else if (path.startsWith("template/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(path.substring("template/".length()), content), Map.of());
+        }
+        else if (path.startsWith("tests/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(path.substring("tests/".length()), content), Map.of(), Map.of());
+        }
+        else {
+            return null;
+        }
+        return reasons.isEmpty() ? null : reasons.getFirst();
     }
 
     private static void collectInvalidGeneratedChanges(Set<String> target, String repository, Map<String, String> seedFiles, Map<String, String> producedFiles,

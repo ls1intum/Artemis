@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (it holds the session id), so not a Spring bean.
@@ -369,6 +370,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         String contractRejection = approvedContractWriteRejection(safe, content);
         if (contractRejection != null) {
             return contractRejection + " No file was written; the workspace is unchanged. Do not delete or retry this path.";
+        }
+        String packageRejection = javaPackageWriteRejection(safe, content);
+        if (packageRejection != null) {
+            return packageRejection + " No file was written; the workspace is unchanged.";
         }
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
@@ -752,6 +757,20 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     private @Nullable String approvedContractWriteRejection(String path, String content) {
         return stageCheckService == null ? null : stageCheckService.validateArtifactWrite(sessionId, path, content).orElse(null);
+    }
+
+    /**
+     * Rejects a Java source before it can enter a package that the grader cannot compile. This is build-contract feedback, not a semantic policy: the exact package comes from
+     * the exercise configuration and the same source layout is shown to the model. Returning it on the write that introduced the mismatch avoids hiding a deterministic error
+     * until the end-of-stage build.
+     */
+    private @Nullable String javaPackageWriteRejection(String path, String content) {
+        if (exercise == null || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA || exercise.getPackageName() == null || exercise.getPackageName().isBlank()
+                || !path.endsWith(".java")) {
+            return null;
+        }
+        String reason = ExerciseIntegrityGate.javaGeneratedSourceWriteReason(exercise.getPackageName().strip(), path, content);
+        return reason == null ? null : "ERROR: Java build contract mismatch for '" + path + "'. " + reason;
     }
 
     /**

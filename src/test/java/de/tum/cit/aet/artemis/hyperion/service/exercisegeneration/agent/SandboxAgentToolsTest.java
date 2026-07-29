@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * Unit tests for the agent tools, focused on the security-relevant path allowlist and the all-or-nothing edit semantics. A fake sandbox records the commands it is asked to run
@@ -323,12 +324,16 @@ class SandboxAgentToolsTest {
         StageCheckService stageChecks = mock(StageCheckService.class);
         when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy {}"))
                 .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setPackageName("seededexercise");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, exercise, Map.of(), false, stageChecks);
         tools.enterStage(GenerationStage.TESTS);
 
         String result = tools.writeFile("template/src/FuelStrategy.java", "public interface FuelStrategy {}");
 
         assertThat(result).contains("approved specification assigns FuelStrategy to the student", "No file was written", "workspace is unchanged", "Do not delete");
+        assertThat(result).doesNotContain("Java build contract mismatch", "template/src/seededexercise");
         assertThat(sandbox.execCount()).isZero();
     }
 
@@ -343,6 +348,31 @@ class SandboxAgentToolsTest {
 
         assertThat(tools.writeFile("template/src/FuelStrategy.java", "// TODO: create this type")).contains("assigns FuelStrategy to the student");
         assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
+    void writeFile_rejectsJavaPackageMismatchesAtTheWriteThatIntroducesThem() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setPackageName("seededexercise");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, exercise, Map.of(), false, null);
+        tools.enterStage(GenerationStage.TESTS);
+
+        assertThat(tools.writeFile("solution/src/Dispatcher.java", "public class Dispatcher {}")).contains("Java build contract mismatch", "solution/src/seededexercise/",
+                "package declaration must match its directory", "workspace is unchanged");
+        assertThat(tools.writeFile("tests/src/test/java/DispatcherTest.java", "package seededexercise;\nclass DispatcherTest {}")).contains("Java build contract mismatch",
+                "not tests/src/test/java");
+        assertThat(tools.writeFile("solution/src/seededexercise/Dispatcher.java", "public class Dispatcher {}")).contains("Java build contract mismatch",
+                "package declaration must match its directory");
+        assertThat(sandbox.execCount()).isZero();
+
+        assertThat(tools.writeFile("solution/src/seededexercise/Dispatcher.java", "package seededexercise;\npublic class Dispatcher {}")).startsWith("Wrote ");
+        assertThat(tools.writeFile("solution/src/seededexercise/internal/Helper.java", "package seededexercise.internal;\nclass Helper {}")).startsWith("Wrote ");
+        assertThat(tools.writeFile("tests/behavior/test/seededexercise/BehaviorTest.java", "package/* separator */ seededexercise;\nclass BehaviorTest {}")).startsWith("Wrote ");
+        assertThat(tools.writeFile("tests/structural/test/seededexercise/StructureTest.java", "/* package wrong; */\npackage seededexercise;\nclass StructureTest {}"))
+                .startsWith("Wrote ");
+        assertThat(tools.writeFile("template/src/seededexercise/internal/Helper.java", "package seededexercise;\nclass Helper {}")).contains("Java build contract mismatch");
     }
 
     @Test
