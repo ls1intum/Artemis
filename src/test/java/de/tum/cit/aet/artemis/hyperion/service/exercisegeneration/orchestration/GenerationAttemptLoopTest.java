@@ -311,6 +311,17 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void killedMutantDrainsItsExactUncoveredRequirementHypothesis() {
+        SpecFidelityReport.Finding uncovered = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "dispatch after switching",
+                "the reviewer suspects no assertion reaches the new strategy");
+        ContractWitness counterexample = new ContractWitness("R4", "dispatchesAfterSwitch", "@Test void dispatchesAfterSwitch() {}", "keeps using the old strategy");
+        SemanticMutant mutant = new SemanticMutant("R4", "src/Dispatcher.java", "class Dispatcher {}", "class Dispatcher { int old; }", counterexample, uncovered);
+
+        assertThat(SemanticEvidenceReconciler.reconcile(new SpecFidelityReport(List.of(uncovered)), List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE))))
+                .isEmpty();
+    }
+
+    @Test
     void blockingReviewStillExecutesAndDrainsAFalseOracleHypothesis() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | choose the nearest value |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
