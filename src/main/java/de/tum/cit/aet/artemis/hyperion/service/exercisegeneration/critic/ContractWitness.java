@@ -10,7 +10,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
  * @param ruleId        the rule this witness pins, spelled exactly as the approved specification writes it
  * @param testName      the test method name, which must match the method declared in {@link #code()} so a validation result can be attributed to this witness
  * @param code          one complete, self-contained test method, including its annotations
- * @param wrongBehavior the plausible contract-breaking behavior this witness distinguishes from the reference solution
+ * @param wrongBehavior the plausible contract-breaking behavior the reviewer designed this witness to distinguish; the environment validates the witness, not this hypothesis
  */
 public record ContractWitness(String ruleId, String testName, String code, String wrongBehavior) {
 }

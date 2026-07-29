@@ -666,7 +666,8 @@ class GenerationAttemptLoop {
                     "Rule " + witness.ruleId() + " has an executable counterexample witness",
                     "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
                             + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "
-                            + "starter fails at student work. It distinguishes this plausible wrong behavior: " + witness.wrongBehavior() + "\n" + witness.code())));
+                            + "starter fails at student work. The reviewer designed it around this plausible wrong behavior, but the environment did not execute that "
+                            + "hypothetical implementation: " + witness.wrongBehavior() + "\n" + witness.code())));
             emit("Adding " + validated.size() + (validated.size() == 1 ? " contract witness" : " contract witnesses") + " the reference solution already passes.");
             return new SpecFidelityReport(List.copyOf(combined));
         }

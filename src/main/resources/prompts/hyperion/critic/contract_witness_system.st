@@ -22,7 +22,7 @@ Write each witness in the SAME language, package, imports, and test framework as
 Respond with ONLY this complete JSON shape:
 {"witnesses": [{"rule":"the rule ID exactly as the specification writes it, e.g. R1",
  "testName":"the method name declared in code",
- "wrongBehavior":"specific plausible contract-breaking implementation this input distinguishes",
+ "wrongBehavior":"specific plausible contract-breaking implementation this input is designed to distinguish",
  "code":"one complete test method"}]}
 Return at most three semantically distinct witnesses. One strong witness is enough when the remaining rules are already pinned. Return {"witnesses": []} rather than inventing
 behavior or emitting a witness you are not confident passes the reference solution.
