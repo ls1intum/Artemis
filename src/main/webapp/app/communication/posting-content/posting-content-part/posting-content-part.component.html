@@ -33,7 +33,7 @@
 }
 @if (postingContentPart()?.slideToReference) {
     <div style="max-width: 400px">
-        <a class="reference" (click)="enlargeImage(postingContentPart()?.slideToReference || '')">
+        <a class="reference" (click)="enlargeImage(postingContentPart()?.slideToReference || '', postingContentPart()?.referenceStr)">
             @if (postingContentPart()?.slideToReference && !imageNotFound()) {
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
@@ -57,7 +57,7 @@
 @if (postingContentPart()?.imageToReference) {
     <div [style.user-select]="'none'" [style.max-width.px]="400">
         @if (postingContentPart()?.imageToReference && !imageNotFound()) {
-            <a class="reference" (click)="enlargeImage(postingContentPart()?.imageToReference || '')">
+            <a class="reference" (click)="enlargeImage(postingContentPart()?.imageToReference || '', postingContentPart()?.referenceStr)">
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
                     [src]="postingContentPart()?.imageToReference"
