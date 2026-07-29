@@ -21,7 +21,12 @@
       4. result_rating       - a unique constraint the consolidation lost; Rating.result is @OneToOne
     -->
 
-    <!-- information_schema is portable but the "current schema" function is not. -->
+    <!--
+    information_schema is portable but the "current schema" function is not. Because the property is
+    only defined for these two engines, every changeset below that interpolates ${lbSchema} must carry
+    dbms="mysql,postgresql" - otherwise the placeholder reaches H2 verbatim and the precondition fails
+    with a syntax error instead of being skipped, which aborts startup.
+    -->
     <property name="lbSchema" value="DATABASE()" dbms="mysql"/>
     <property name="lbSchema" value="current_schema()" dbms="postgresql"/>
 
@@ -34,7 +39,7 @@
     inspects the actual precision, so this runs only where it is wrong.
     -->
 
-    <changeSet id="20260728220917-01-science-event-timestamp-precision" author="krusche">
+    <changeSet id="20260728220917-01-science-event-timestamp-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
@@ -47,7 +52,7 @@
         <addNotNullConstraint tableName="science_event" columnName="timestamp" columnDataType="datetime(3)"/>
     </changeSet>
 
-    <changeSet id="20260728220917-02-llm-token-usage-trace-time-precision" author="krusche">
+    <changeSet id="20260728220917-02-llm-token-usage-trace-time-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
@@ -58,7 +63,7 @@
         <modifyDataType tableName="llm_token_usage_trace" columnName="time" newDataType="datetime(3)"/>
     </changeSet>
 
-    <changeSet id="20260728220917-03-file-upload-creation-date-precision" author="krusche">
+    <changeSet id="20260728220917-03-file-upload-creation-date-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
@@ -69,7 +74,7 @@
         <modifyDataType tableName="file_upload" columnName="creation_date" newDataType="datetime(3)"/>
     </changeSet>
 
-    <changeSet id="20260728220917-04-saved-post-completed-at-precision" author="krusche">
+    <changeSet id="20260728220917-04-saved-post-completed-at-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
@@ -80,7 +85,7 @@
         <modifyDataType tableName="saved_post" columnName="completed_at" newDataType="datetime(3)"/>
     </changeSet>
 
-    <changeSet id="20260728220917-05-push-notification-expiration-date-precision" author="krusche">
+    <changeSet id="20260728220917-05-push-notification-expiration-date-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
@@ -91,7 +96,7 @@
         <modifyDataType tableName="push_notification_device_configuration" columnName="expiration_date" newDataType="datetime(3)"/>
     </changeSet>
 
-    <changeSet id="20260728220917-06-migration-changelog-date-executed-precision" author="krusche">
+    <changeSet id="20260728220917-06-migration-changelog-date-executed-precision" author="krusche" dbms="mysql,postgresql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM information_schema.columns
