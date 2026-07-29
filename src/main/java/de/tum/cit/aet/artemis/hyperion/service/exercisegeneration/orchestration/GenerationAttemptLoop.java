@@ -590,15 +590,26 @@ class GenerationAttemptLoop {
         if (!specFidelityReport.hasBlockingFindings()) {
             specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         }
-        lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement, specFidelityReport,
-                specDocumentSnapshot, artifacts.testPlanJson());
+        promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         if (cancelled.getAsBoolean()) {
-            CandidateSnapshot safeCheckpoint = candidateBeforeCurrentRepair == null ? lastMechanicallyVerifiedCandidate : candidateBeforeCurrentRepair;
             terminationReason = TerminationReason.CANCELLED;
-            return service.preserveCandidate(safeCheckpoint, sandbox, sessionId, workspaceSeed);
+            return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
         return null;
+    }
+
+    /**
+     * Promotes the candidate only after its review and executable probes have completed. Clearing the repair predecessor here is part of the invariant: a later deadline must
+     * preserve the candidate that was just verified and reviewed, while {@link #applySemanticRepair} records it again if another repair actually starts.
+     */
+    private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+        if (candidateBeforeCurrentRepair != null && RepairRoundScheduler.hasReviewUnavailableFinding(specFidelityReport)) {
+            return;
+        }
+        lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement, specFidelityReport,
+                specDocumentSnapshot, artifacts.testPlanJson());
+        candidateBeforeCurrentRepair = null;
     }
 
     /**
@@ -641,8 +652,7 @@ class GenerationAttemptLoop {
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), retryAdaptationChanges, null, null,
                         effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-                lastMechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                        specFidelityReport, specDocumentSnapshot, artifacts.testPlanJson());
+                promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
                 repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
             }

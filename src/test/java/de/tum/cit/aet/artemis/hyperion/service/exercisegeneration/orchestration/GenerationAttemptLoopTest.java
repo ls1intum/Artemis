@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -147,11 +150,15 @@ class GenerationAttemptLoopTest {
     }
 
     private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs, boolean stagedGenerationEnabled) {
+        return newLoop(mode, maxGenerationAttempts, maxSemanticRepairs, stagedGenerationEnabled, () -> false);
+    }
+
+    private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs, boolean stagedGenerationEnabled, BooleanSupplier cancelled) {
         GenerationAttemptLoop.Dependencies dependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
                 jobService, stagedGenerationRunner, new AgentTranscriptWriter(""), stagedGenerationEnabled, 100, maxGenerationAttempts, maxSemanticRepairs);
         GenerationAttemptLoop.RunContext context = new GenerationAttemptLoop.RunContext(exercise, mode, "job-1", sandbox, SESSION_ID,
                 new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()), Map.of(), Map.of(), Map.of(), null, Set.of(), "Build a bubble sort exercise.", true, true,
-                "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, () -> false, progressLines::add, response -> {
+                "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, cancelled, progressLines::add, response -> {
                 });
         return new GenerationAttemptLoop(service, dependencies, context);
     }
@@ -229,6 +236,60 @@ class GenerationAttemptLoopTest {
         assertThatThrownBy(loop::run).isSameAs(failure);
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
         assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
+    }
+
+    @Test
+    void cancellationAfterRepairReviewPreservesTheNewlyReviewedCandidate() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        AtomicInteger testsExtraction = new AtomicInteger();
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any())).thenAnswer(invocation -> {
+            String path = testsExtraction.getAndIncrement() == 0 ? "test/OriginalTest.java" : "test/ImprovedTest.java";
+            return new GenerationWorkspaceService.RepositoryExtraction(Map.of(path, "class Test {}"), false);
+        });
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(new VerificationResult(true, true, true, 7, List.of()),
+                new VerificationResult(true, true, true, 8, List.of()));
+        SpecFidelityReport firstReview = report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(firstReview).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return SpecFidelityReport.empty();
+        });
+        when(service.preserveCandidate(any(), any(), anyString(), any())).thenReturn(mock(GenerationOutcome.class));
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, false, cancelled::get);
+
+        loop.run();
+
+        ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> preserved = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
+        verify(service).preserveCandidate(preserved.capture(), any(), anyString(), any());
+        assertThat(preserved.getValue().verification().testCount()).isEqualTo(8);
+        assertThat(preserved.getValue().producedFiles().get(RepositoryType.TESTS)).containsKey("test/ImprovedTest.java").doesNotContainKey("test/OriginalTest.java");
+        assertThat(preserved.getValue().reviewReport().hasFindings()).isFalse();
+    }
+
+    @Test
+    void unavailableRepairReviewPreservesThePreviouslyReviewedCandidate() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        AtomicInteger testsExtraction = new AtomicInteger();
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any())).thenAnswer(invocation -> {
+            String path = testsExtraction.getAndIncrement() == 0 ? "test/ReviewedTest.java" : "test/UnreviewedRepairTest.java";
+            return new GenerationWorkspaceService.RepositoryExtraction(Map.of(path, "class Test {}"), false);
+        });
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(new VerificationResult(true, true, true, 7, List.of()),
+                new VerificationResult(true, true, true, 8, List.of()));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE)).thenAnswer(invocation -> {
+                    cancelled.set(true);
+                    return SpecFidelityReport.qualityReviewUnavailable("review interrupted");
+                });
+        when(service.preserveCandidate(any(), any(), anyString(), any())).thenReturn(mock(GenerationOutcome.class));
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, false, cancelled::get);
+
+        loop.run();
+
+        ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> preserved = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
+        verify(service).preserveCandidate(preserved.capture(), any(), anyString(), any());
+        assertThat(preserved.getValue().verification().testCount()).isEqualTo(7);
+        assertThat(preserved.getValue().producedFiles().get(RepositoryType.TESTS)).containsKey("test/ReviewedTest.java").doesNotContainKey("test/UnreviewedRepairTest.java");
+        assertThat(preserved.getValue().reviewReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
     }
 
     @Test
