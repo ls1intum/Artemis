@@ -2,28 +2,23 @@
 description: Ownership, integration, contribution, and testing rules for the existing TUM UI component package and Storybook reference.
 ---
 
-import Link from '@docusaurus/Link';
 import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # TUM UI package
 
-`@tumaet/ui-angular` is a private Angular package in `packages/tum-ui`. Artemis production builds
-consume its compiled public entry point and stylesheet instead of application-internal sources.
+`@tumaet/ui-angular` is a private Angular package in `packages/tum-ui` that contains existing,
+reusable TUM UI components. Artemis production builds consume its compiled public entry point and
+stylesheet.
 
 <Callout variant={CalloutVariant.warning}>
-    New Artemis UI uses PrimeNG. This package is an extraction boundary for existing TUM UI code, not a second Artemis component standard. Do not duplicate a native HTML, PrimeNG,
-    Angular CDK, or Angular Aria control to expand the package.
+    New Artemis UI uses PrimeNG. Do not add a package component for an Artemis-only need. A new public contract requires a concrete cross-application use case in the pull request.
+    Delegate interaction behavior to native HTML, Angular CDK, or Angular Aria instead of reimplementing it.
 </Callout>
 
-<Callout variant={CalloutVariant.info}>
-    **Interactive component catalog**
-
-    <Link to="pathname:///developer/tum-ui/?path=/docs/actions-button--docs" target="_self">Existing TUM UI components</Link> provides
-    supported states, controls, accessibility results, and rendered API details. This guide owns
-    architecture and contribution policy; Storybook owns the live component reference.
-
-</Callout>
+Use the [TUM UI component reference](/developer/tum-ui/?path=/docs/actions-button--docs) to inspect
+supported states, controls, accessibility results, and APIs. This guide covers package architecture
+and contribution rules.
 
 ## Ownership boundary
 
@@ -46,7 +41,7 @@ and compatibility testing against supported consumers.
 Before writing code:
 
 1. For Artemis-only UI, use the PrimeNG component selected by
-   [Client Development](/developer/guidelines/client-development).
+   [Client development](/developer/guidelines/client-development).
 2. For package work, confirm that a reusable TUM UI contract is required and that an existing
    native, CDK, or Angular Aria primitive cannot supply the behavior.
 3. Keep host policy outside the package. Add an adapter in Artemis when integration requires
@@ -64,7 +59,7 @@ details or static class maps.
 
 Colocate each top-level consumer story with its component or directive. Document supporting pieces
 of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
-package's [stable CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
+package's [CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
 TypeScript's `satisfies` operator. Keep configuration in `packages/tum-ui/.storybook`; do not add
 root Storybook configuration or import Artemis into a story.
 
@@ -73,8 +68,9 @@ or behavioral contract. Add a `play` function for browser-only behavior such as 
 navigation, overlays, or dismissal. Query by accessible role and name. Do not assert CSS classes,
 duplicate unit-test matrices, add snapshots, or disable accessibility rules to make a story pass.
 
-The [Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite) is
-a preview integration. Verify HMR, browser tests, and the static build before upgrading it.
+Before upgrading Storybook or its
+[Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite),
+verify the browser tests and static build.
 
 ## Consuming the package
 
@@ -128,28 +124,29 @@ From the repository root:
 | `pnpm run tum-ui:test:coverage`                      | Run package specs with the CI coverage thresholds                         |
 | `pnpm run tum-ui:stylelint`                          | Check package CSS and SCSS                                                |
 | `pnpm run tum-ui:pack:check`                         | Build and validate an isolated artifact with publint and AreTheTypesWrong |
+| `pnpm run tum-ui:source:check`                       | Build Artemis against the package source entry point                      |
 | `pnpm --dir packages/tum-ui run storybook`           | Build package styles and start its isolated Storybook                     |
 | `pnpm --dir packages/tum-ui run storybook:typecheck` | Type-check Storybook configuration and stories                            |
 | `pnpm --dir packages/tum-ui run storybook:test`      | Run stories and accessibility checks in Chromium                          |
 | `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
 | `pnpm --dir packages/tum-ui run storybook:docs:test` | Build Storybook and test AutoDocs themes and responsive viewports         |
 
-`pnpm start` and the shared IntelliJ client configuration generate the package stylesheet and serve
-Artemis through the same command. Serve mode resolves the public entry point from source and polls
-workspace files because native Angular watching does not report package changes reliably. Generated
-styles are staged after component changes so Angular can hot-update the template and global
-stylesheet separately. This adds up to one polling interval to package updates, while every
-non-serve build continues to compile and consume `packages/tum-ui/dist`. Restart the client after
-changing the package manifest or build configuration. Package validation writes to
-`packages/tum-ui/dist-pack`, so it cannot replace the artifact used by other commands.
+`pnpm start` and the shared IntelliJ client configuration use the same HMR-enabled workflow. Changes
+to package sources and styles update the running Artemis client. Restart the client after changing
+the package manifest or build configuration. Non-serve builds continue to compile and consume
+`packages/tum-ui/dist`; package validation writes to `packages/tum-ui/dist-pack`.
 
-Before submitting a package change, run:
+### Validation
+
+Before submitting a package change, run the relevant focused checks during development and this
+complete package validation:
 
 ```bash
 pnpm run tum-ui:test:coverage
 pnpm run lint
 pnpm run tum-ui:stylelint
 pnpm run tum-ui:pack:check
+pnpm run tum-ui:source:check
 pnpm run test:rules
 pnpm run compile:tests
 pnpm --dir packages/tum-ui run storybook:typecheck
@@ -164,12 +161,11 @@ equivalent apart from incremental-output cleanup.
 ## Review checklist
 
 - The need belongs in this package rather than PrimeNG or Artemis application code.
-- Public imports resolve through `@tumaet/ui-angular`.
+- Consumer imports use the `@tumaet/ui-angular` package entry point.
 - The public API contains only supported symbols.
+- Host-specific translations, routes, services, theme values, and request types stay in Artemis.
 - Interaction behavior delegates to native HTML, CDK, or Angular Aria where available.
 - Accessible names, keyboard behavior, focus, and forms integration have behavioral tests.
-- Styling uses semantic package tokens and works with host-provided light and dark values.
-- Stories cover representative states; unique browser behavior is tested through accessible queries.
-- Package text has an English default; host translations stay in the adapter.
-- Dependency changes update the appropriate workspace catalog and package manifest together.
-- The packed artifact passes `tum-ui:pack:check`.
+- Stories cover representative states without duplicating unit tests.
+- Styling and text remain host-independent through semantic tokens and the translation adapter.
+- Dependency changes keep the workspace catalog and package manifest in sync.

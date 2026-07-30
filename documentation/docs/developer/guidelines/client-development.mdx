@@ -1,4 +1,3 @@
-import Link from '@docusaurus/Link';
 import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
@@ -77,10 +76,9 @@ applicable component, document the gap before introducing Angular CDK or Angular
 not implement custom keyboard, focus, overlay, or selection behavior when a maintained library
 supplies it.
 
-The private TUM UI package isolates existing reusable components. It does not change the PrimeNG
-policy, and adding a new Artemis component to that package requires an explicit reusable-package
-need. When working with it, browse the{' '}<Link to="pathname:///developer/tum-ui/?path=/docs/actions-button--docs" target="_self">Existing TUM UI components</Link>{' '}
-and follow the [TUM UI package guide](/developer/guidelines/tum-ui-kit).
+The private TUM UI package contains existing cross-application components. It does not change the
+PrimeNG policy. When maintaining an existing `@tumaet/ui-angular` use or contributing an agreed
+cross-application contract, follow the [TUM UI package guide](/developer/guidelines/tum-ui-kit).
 
 For dialogs, use PrimeNG `DialogService` from `primeng/dynamicdialog`. Pass inputs through its `data`
 configuration instead of assigning `componentInstance` fields.

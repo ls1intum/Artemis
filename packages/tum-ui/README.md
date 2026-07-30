@@ -1,10 +1,10 @@
 # @tumaet/ui-angular
 
-Private Angular component package maintained in the Artemis workspace.
+Internal Angular component package maintained in the Artemis workspace and designed for eventual
+independent publication.
 
-The package is an extraction boundary for reusable TUM UI code. It is not the default component
-library for new Artemis UI; Artemis uses PrimeNG according to the repository's client-development
-guidelines.
+The package contains reusable TUM UI code. It is not the default component library for new Artemis
+UI; Artemis uses PrimeNG according to the repository's client-development guidelines.
 
 ## Consumer setup
 

@@ -4,7 +4,25 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
-        'artemis-client',
+        {
+            type: 'category',
+            label: 'Artemis client',
+            link: {
+                type: 'doc',
+                id: 'artemis-client',
+            },
+            items: [
+                'guidelines/client-development',
+                'guidelines/client-theming',
+                'guidelines/client-tests',
+                'guidelines/tum-ui-kit',
+                {
+                    type: 'link',
+                    label: 'TUM UI component reference',
+                    href: '/developer/tum-ui/?path=/docs/actions-button--docs',
+                },
+            ],
+        },
         'development-process',
         'reviewer-guidelines',
         {
@@ -15,16 +33,6 @@ const sidebars: SidebarsConfig = {
                 id: 'guidelines/index',
             },
             items: [
-                {
-                    type: 'category',
-                    label: 'Client Guidelines',
-                    items: [
-                        'guidelines/client-development',
-                        'guidelines/client-theming',
-                        'guidelines/client-tests',
-                        'guidelines/tum-ui-kit',
-                    ],
-                },
                 {
                     type: 'category',
                     label: 'Server Guidelines',

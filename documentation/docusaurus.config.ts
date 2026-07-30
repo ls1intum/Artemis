@@ -15,6 +15,7 @@ const config: Config = {
 
     customFields: {
         pageTitle: PAGE_TITLE,
+        tumUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_UI === 'true',
     },
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future

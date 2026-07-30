@@ -23,6 +23,10 @@ const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
+const packageTemplates = globSync('packages/tum-ui/src/**/*.html', { cwd: repoRoot }).map((file) => ({
+    file,
+    source: readFileSync(resolve(repoRoot, file), 'utf8'),
+}));
 const packageStyles = globSync(['packages/tum-ui/src/**/*.{css,scss}', 'packages/tum-ui/tailwind.css', 'packages/tum-ui/themes.css'], { cwd: repoRoot })
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
@@ -156,6 +160,17 @@ describe('@tumaet/ui-angular package manifest', () => {
         expect(packageTailwind).toContain("@source './src'");
         expect(packageTailwind).toContain("@source not './src/**/*.spec.ts'");
         expect(packageTailwind).toContain("@source not './src/**/*.stories.ts'");
+    });
+
+    it('prefixes every static template class', () => {
+        const invalidClasses = packageTemplates.flatMap(({ file, source }) =>
+            [...source.matchAll(/\bclass="([^"]*)"/g)]
+                .flatMap((match) => match[1].split(/\s+/))
+                .filter((className) => className && !className.startsWith('tum:') && !className.startsWith('tum-ui-'))
+                .map((className) => `${file}: ${className}`),
+        );
+
+        expect(invalidClasses).toEqual([]);
     });
 
     it('keeps the package theme namespaced and fully mapped by Artemis', () => {
