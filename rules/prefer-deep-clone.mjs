@@ -43,13 +43,14 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  *   an object into a new one. It is a `RestElement` in an `ObjectPattern`, a different node than the
  *   `SpreadElement` in an `ObjectExpression` that this rule reports.
  *
- * ## Escape hatch
+ * ## If you only need a signal to emit
  *
- * A few call sites legitimately need a shallow copy — most often because a nested value must stay
- * reference-identical (an RxJS `Subject` whose subscribers would be lost, a value compared by identity in
- * a template `track`), or because the object is copied in a hot path where a deep clone measurably costs.
- * Use `// eslint-disable-next-line localRules/prefer-deep-clone -- <why the shallow copy is required>`
- * with a real justification; a bare disable is not acceptable.
+ * Some call sites do not want a copy at all: an object was mutated in place and a signal has to emit so the view
+ * updates. Copying it to change its identity detaches the nested associations, which re-creates `track`-by-identity
+ * rows and re-notifies child inputs on every change-detection pass (ending in NG0103). Declare the signal with
+ * `equal: () => false` and re-set the same reference instead — see `CourseUpdateComponent.commitCourse`. Where the
+ * state is not signal-backed, build the replacement object explicitly, field by field, as
+ * `MetisService.rebuildPostReference` does.
  *
  * Full rationale and examples:
  * documentation/docs/developer/guidelines/client-development.mdx ("Cloning objects").

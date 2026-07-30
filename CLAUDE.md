@@ -210,7 +210,8 @@ Organized by feature module:
     - Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }` in a single expression (source deep-cloned, overrides applied by reference), and `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server DTO a prototype
     - Enforced by `localRules/prefer-deep-clone` (error, production client TS; specs exempt). Importing `cloneDeep` from `lodash-es` is blocked by `no-restricted-imports` so all copying goes through the wrappers
     - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably, as does object rest in destructuring (`const { id, ...rest } = post`)
-    - Rare exceptions — where only the top-level reference may change, or a nested value cannot survive cloning — need `// eslint-disable-next-line localRules/prefer-deep-clone -- <reason>` with the reason stated
+    - When you only need a signal to emit after mutating an object in place, do not copy it at all: declare the signal with `equal: () => false` and re-set the same reference (see `CourseUpdateComponent.commitCourse`). Copying detaches the nested objects children hold and can end in `NG0103`
+    - Where the state is not signal-backed, build the replacement object explicitly field by field (see `MetisService.rebuildPostReference`) rather than reaching for a shallow copy
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
 - **UI components: Use PrimeNG instead of Bootstrap components**
