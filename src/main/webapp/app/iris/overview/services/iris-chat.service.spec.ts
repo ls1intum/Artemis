@@ -1203,11 +1203,52 @@ describe('IrisChatService', () => {
             const unsubscribeSpy = vi.spyOn(wsMock, 'unsubscribeFromSession');
             await startSessionWithWebsocket(new Subject<IrisChatWebsocketDTO>());
             expect(service.sessionId).toBe(id);
+            const messagesBefore = service.messages.getValue();
+            expect(messagesBefore).not.toHaveLength(0);
 
             service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
 
             expect(unsubscribeSpy).not.toHaveBeenCalled();
             expect(service.sessionId).toBe(id);
+            // The reported symptom was an empty chat, so assert on what the user actually sees.
+            expect(service.messages.getValue()).toEqual(messagesBefore);
+        });
+
+        it('should roll back to the last server-confirmed decision, not to a previous unpersisted one', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
+            // The first request never settles (it is cancelled by the second call), so CLOUD_AI is never persisted.
+            userMock.updateLLMSelectionDecision
+                .mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable())
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+            service.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Reverting to CLOUD_AI would claim a decision the server may never have stored, which would
+            // suppress the AI-selection modal forever while the server keeps rejecting session creation.
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+        });
+
+        it('should keep the decision cached after it was persisted successfully', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        /**
+         * Right after the decision is cached the chat renders, but the session only exists once the consent request
+         * has landed. A send in that window must report the failure — the caller clears the textarea either way.
+         */
+        it('should surface an error instead of silently dropping a message sent before a session exists', async () => {
+            const errors: (IrisErrorMessageKey | undefined)[] = [];
+            service.currentError().subscribe((error) => errors.push(error));
+
+            await expect(firstValueFrom(service.sendMessage('hello'))).rejects.toThrow('Not initialized');
+
+            expect(errors).toContain(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         });
 
         it('should revert the cached decision to the previous one when persisting a change fails', () => {

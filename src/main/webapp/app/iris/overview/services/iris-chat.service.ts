@@ -143,6 +143,13 @@ export class IrisChatService implements OnDestroy {
     hasJustAcceptedLLMUsage = false;
 
     /**
+     * The AI-experience decision as last confirmed by the server, captured before an optimistic update so a failed
+     * update can be rolled back. Set while a consent request is in flight and cleared once it settles, so a rapid
+     * second choice does not overwrite it with the first choice's unpersisted value.
+     */
+    private lastConfirmedDecision?: { decision?: LLMSelectionDecision; timestamp?: dayjs.Dayjs };
+
+    /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
      *
      * @deprecated do not use this property directly, use {@link getCourseId()} instead.
@@ -301,6 +308,9 @@ export class IrisChatService implements OnDestroy {
      */
     public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {
+            // Surface this instead of failing silently: onSend() clears the textarea regardless of the
+            // outcome, so a swallowed error drops the user's message without telling them anything.
+            this.error.next(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
             return throwError(() => new Error('Not initialized'));
         }
 
@@ -452,9 +462,17 @@ export class IrisChatService implements OnDestroy {
         // gates the "Choose Your AI Experience" modal on `userIdentity().selectedLLMUsage`, so a chat that is
         // (re-)opened while the request is still in flight would otherwise read the stale value and ask the user
         // to choose again. Reverted in the error handlers below if persisting the decision fails.
-        const previousDecision = this.accountService.userIdentity()?.selectedLLMUsage;
-        const previousDecisionTimestamp = this.accountService.userIdentity()?.selectedLLMUsageTimestamp;
-        const revertDecision = () => this.accountService.restoreUserLLMSelectionDecision(previousDecision, previousDecisionTimestamp);
+        //
+        // The snapshot is only taken when nothing is in flight. A second choice made while the first request is
+        // still running would otherwise capture that first, unpersisted decision as its "previous" value and
+        // roll back to something the server may never have stored.
+        const identity = this.accountService.userIdentity();
+        this.lastConfirmedDecision ??= { decision: identity?.selectedLLMUsage, timestamp: identity?.selectedLLMUsageTimestamp };
+        const snapshot = this.lastConfirmedDecision;
+        const revertDecision = () => {
+            this.lastConfirmedDecision = undefined;
+            this.accountService.restoreUserLLMSelectionDecision(snapshot.decision, snapshot.timestamp);
+        };
         this.accountService.setUserLLMSelectionDecision(accepted);
 
         if (accepted === LLMSelectionDecision.NO_AI) {
@@ -462,6 +480,7 @@ export class IrisChatService implements OnDestroy {
             this.acceptSubscription?.unsubscribe();
             this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
                 next: () => {
+                    this.lastConfirmedDecision = undefined;
                     this.llmOptedOutSubject.next();
                     this.close();
                 },
@@ -476,6 +495,7 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
             next: () => {
+                this.lastConfirmedDecision = undefined;
                 this.hasJustAcceptedLLMUsage = true;
                 // Only start the session that could not be created before the user opted in (the server rejects
                 // session creation without consent). If one is already established — the chat was reopened right

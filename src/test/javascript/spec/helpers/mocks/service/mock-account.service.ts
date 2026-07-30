@@ -44,6 +44,9 @@ export class MockAccountService implements IAccountService {
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
     // Both mirror the real service so specs can observe the cached decision (the Iris chatbot gates its
     // AI-selection modal on it). restore… keeps an absent timestamp absent, exactly like production.
+    // Caveat: a spec that stubs reads via `vi.spyOn(accountService, 'userIdentity')` will not see these
+    // writes — they land on the real signal while reads come from the spy. Set `userIdentity` directly
+    // instead when the spec needs to observe a decision change.
     setUserLLMSelectionDecision = (accepted: LLMSelectionDecision) => this.applyLLMSelectionDecision(accepted, dayjs());
 
     restoreUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => this.applyLLMSelectionDecision(accepted, timestamp);
