@@ -101,22 +101,12 @@ controller generates through an **`EnvoyProxy`** resource referenced from the `G
 Prerequisites:
 
 - The cluster is dual-stack (kube-apiserver / kube-proxy configured with both IPv4 and IPv6 `--service-cluster-ip-range`).
-- Your MetalLB `IPAddressPool` contains **both** an IPv4 and an IPv6 range, so MetalLB can hand out one of each:
+- You already have a MetalLB `IPAddressPool` that contains **both** an IPv4 and an IPv6 range, so MetalLB can hand out
+  one of each. This guide references that pool by name; it does **not** create one (most clusters already have a pool,
+  and adding another risks conflicts). Check what you have with `kubectl -n metallb-system get ipaddresspools`.
 
-  ```yaml
-  apiVersion: metallb.io/v1beta1
-  kind: IPAddressPool
-  metadata:
-    name: artemis-pool
-    namespace: metallb-system
-  spec:
-    addresses:
-      - 192.0.2.240-192.0.2.250      # IPv4 range
-      - 2001:db8:42::/120            # IPv6 range
-  ```
-
-Create an `EnvoyProxy` in the Envoy Gateway namespace. It sets the MetalLB pool annotation and patches the service to
-request dual-stack (there is no dedicated field for `ipFamilies`, so use a strategic-merge `patch`):
+Create an `EnvoyProxy` in the Envoy Gateway namespace. It pins the service to your existing MetalLB pool and patches it
+to request dual-stack (there is no dedicated field for `ipFamilies`, so use a strategic-merge `patch`):
 
 ```yaml
 # envoyproxy.yaml
@@ -131,8 +121,8 @@ spec:
     kubernetes:
       envoyService:
         annotations:
-          # Pin the LB address to a specific MetalLB pool.
-          metallb.universe.tf/address-pool: artemis-pool
+          # Pin the LB address to one of your EXISTING MetalLB pools.
+          metallb.universe.tf/address-pool: <your-metallb-pool>   # FIXME
           # Optional: request specific IPs from that pool (comma-separated, one per family).
           # metallb.universe.tf/loadBalancerIPs: 192.0.2.240,2001:db8:42::1
         patch:
@@ -163,7 +153,8 @@ spec:
 ```
 
 ```bash
-# Applies the IPAddressPool, EnvoyProxy, and the GatewayClass wired to it.
+# Set the pool name in cluster-setup/metallb-dualstack/envoyproxy.yaml first.
+# Applies the EnvoyProxy and the GatewayClass wired to it.
 kubectl apply -f cluster-setup/metallb-dualstack/
 ```
 
@@ -176,7 +167,7 @@ kubectl -n envoy-gateway-system get svc \
   -o custom-columns='NAME:.metadata.name,IP-FAMILIES:.spec.ipFamilies,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip'
 ```
 
-You should see both an IPv4 and an IPv6 external address from `artemis-pool`. Create DNS A **and** AAAA records for
+You should see both an IPv4 and an IPv6 external address from your pool. Create DNS A **and** AAAA records for
 `gateway.hostname` pointing at them (see [section 5](#5-dns)).
 
 > `RequireDualStack` fails service creation if the cluster is not dual-stack; use `PreferDualStack` if you want it to

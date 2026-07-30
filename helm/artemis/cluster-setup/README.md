@@ -8,11 +8,13 @@ name) before applying.
 cluster-setup/
 ├── gatewayclass.yaml                 # plain Envoy Gateway GatewayClass
 ├── clusterissuer-letsencrypt.yaml    # optional: cert-manager Let's Encrypt issuer
-└── metallb-dualstack/                # MetalLB pool + dual-stack Envoy LB
-    ├── ipaddresspool.yaml
-    ├── envoyproxy.yaml
+└── metallb-dualstack/                # dual-stack Envoy LB pinned to a MetalLB pool
+    ├── envoyproxy.yaml               # references an EXISTING MetalLB pool by name
     └── gatewayclass.yaml             # GatewayClass wired to the EnvoyProxy
 ```
+
+> These manifests reference an **existing** MetalLB `IPAddressPool` (by name, in `envoyproxy.yaml`); they do not create
+> one. The pool must contain both an IPv4 and an IPv6 range for dual-stack to work.
 
 ## What to apply
 
@@ -27,7 +29,8 @@ Pick **one** GatewayClass:
 kubectl apply -f cluster-setup/gatewayclass.yaml
 ```
 
-**B. MetalLB pool + dual-stack** (applies the pool, the EnvoyProxy, and a GatewayClass that references it):
+**B. MetalLB pool + dual-stack** (applies the EnvoyProxy and a GatewayClass that references it; set the pool name in
+`envoyproxy.yaml` first):
 
 ```bash
 kubectl apply -f cluster-setup/metallb-dualstack/
