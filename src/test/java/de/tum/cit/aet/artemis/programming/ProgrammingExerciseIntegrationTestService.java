@@ -2257,11 +2257,10 @@ public class ProgrammingExerciseIntegrationTestService {
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Create student participation with LocalVC repo
-        // Use a unique student to avoid repo collisions with other tests in this class
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
@@ -2301,10 +2300,10 @@ public class ProgrammingExerciseIntegrationTestService {
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
         programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Forbidden Test", "CLF");
 
-        // Seed LocalVC repo for a dedicated participation and create a submission for its latest commit
         var studentLogin = testPrefix + "student1";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files, commit, and push via util
