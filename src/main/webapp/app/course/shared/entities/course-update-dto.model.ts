@@ -182,6 +182,9 @@ export interface CourseUpdateDTO {
 
     // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
     gradeRelevant: boolean;
+
+    // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
+    dataRetentionHold: boolean;
 }
 
 /**
@@ -248,5 +251,8 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
 
         // Grade-relevance defaults to true when the course has no explicit configuration yet.
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // A course without an explicit configuration is not under a retention hold.
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
     };
 }

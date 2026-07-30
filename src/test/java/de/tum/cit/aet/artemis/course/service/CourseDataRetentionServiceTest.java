@@ -31,8 +31,9 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 
 /**
  * Pure unit tests for the two-phase, data-privacy retention selection and gating logic (grade vs non-grade cutoffs, grace
- * anchored to the actual warning, test-course skip, one-shot warned→reset lifecycle). Collaborators are mocked so no
- * archiving/reset/mail actually happens.
+ * anchored to the actual warning, test-course and retention-hold skips, one-shot warned→reset lifecycle, withdrawal of
+ * warnings for courses that left the scope during the grace period). Collaborators are mocked so no archiving/reset/mail
+ * actually happens.
  */
 @ExtendWith(MockitoExtension.class)
 class CourseDataRetentionServiceTest {
@@ -217,5 +218,70 @@ class CourseDataRetentionServiceTest {
         verify(courseResetService).resetStudentData(2L);
         assertThat(failing.getCourseConfiguration().getStudentDataResetDate()).isNull();
         assertThat(succeeding.getCourseConfiguration().getStudentDataResetDate()).isNotNull();
+    }
+
+    @Test
+    void doesNotResetAWarnedCourseWhoseEndDateMovedIntoTheFutureAndWithdrawsItsWarning() {
+        ZonedDateTime now = ZonedDateTime.now();
+        // Warned and past the grace period, but an instructor has since moved the end date forward, so the course is no
+        // longer past its retention deadline and must not be reset before the new deadline.
+        Course extended = course(1, now.minusMonths(2), false, false, now.minusDays(40), null);
+        when(courseRepository.findAllWithResetWarningSent()).thenReturn(List.of(extended));
+
+        int reset = service().resetDueCourses();
+
+        assertThat(reset).isZero();
+        verifyNoInteractions(courseResetService);
+        // The stale warning is withdrawn, so becoming eligible again later requires a new warning and a full grace period.
+        assertThat(extended.getCourseConfiguration().getResetWarningSentDate()).isNull();
+        assertThat(extended.getCourseConfiguration().getStudentDataResetDate()).isNull();
+        verify(courseRepository).save(extended);
+    }
+
+    @Test
+    void doesNotResetAWarnedCourseThatBecameGradeRelevantAndWithdrawsItsWarning() {
+        ZonedDateTime now = ZonedDateTime.now();
+        // Warned while non-grade-relevant (1 year), then marked grade-relevant during the grace period, which extends the
+        // retention period to 5 years. The course ended 2 years ago, so it is not due any more.
+        Course nowGradeRelevant = course(1, now.minusYears(2), true, false, now.minusDays(40), null);
+        when(courseRepository.findAllWithResetWarningSent()).thenReturn(List.of(nowGradeRelevant));
+
+        int reset = service().resetDueCourses();
+
+        assertThat(reset).isZero();
+        verifyNoInteractions(courseResetService);
+        assertThat(nowGradeRelevant.getCourseConfiguration().getResetWarningSentDate()).isNull();
+        verify(courseRepository).save(nowGradeRelevant);
+    }
+
+    @Test
+    void doesNotWarnCoursesUnderADataRetentionHold() {
+        ZonedDateTime now = ZonedDateTime.now();
+        Course held = onHold(course(1, now.minusYears(2), false, false, null, null));
+        Course due = course(2, now.minusYears(2), false, false, null, null);
+        when(courseRepository.findAllWithCourseConfigurationByEndDateBefore(any())).thenReturn(List.of(held, due));
+
+        assertThat(service().findCoursesDueForWarning()).extracting(Course::getId).containsExactly(2L);
+    }
+
+    @Test
+    void doesNotResetCoursesUnderADataRetentionHoldAndWithdrawsTheirWarning() {
+        ZonedDateTime now = ZonedDateTime.now();
+        // A hold placed after the warning (e.g. an objection was raised during the grace period) must stop the reset.
+        Course held = onHold(course(1, now.minusYears(2), false, false, now.minusDays(40), null));
+        when(courseRepository.findAllWithResetWarningSent()).thenReturn(List.of(held));
+
+        int reset = service().resetDueCourses();
+
+        assertThat(reset).isZero();
+        verifyNoInteractions(courseResetService);
+        // Lifting the hold later must not resume a grace period that ran while the proceeding was pending.
+        assertThat(held.getCourseConfiguration().getResetWarningSentDate()).isNull();
+        verify(courseRepository).save(held);
+    }
+
+    private Course onHold(Course course) {
+        course.getCourseConfiguration().setDataRetentionHold(true);
+        return course;
     }
 }

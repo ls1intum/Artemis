@@ -19,7 +19,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * only materialized when explicitly accessed (e.g. the course settings form or the data-privacy cleanup logic).
  * <p>
  * Currently stores the grade-relevance flag that drives the GDPR retention period for a course's student data
- * (grade-relevant courses are retained longer than non-grade-relevant ones).
+ * (grade-relevant courses are retained longer than non-grade-relevant ones), the data-retention hold that suspends that
+ * cleanup entirely, and the timestamps recording the retention lifecycle.
  */
 @Entity
 @Table(name = "course_configuration")
@@ -39,6 +40,14 @@ public class CourseConfiguration extends DomainObject {
      */
     @Column(name = "grade_relevant", nullable = false)
     private boolean gradeRelevant = true;
+
+    /**
+     * Whether the course is under a data-retention hold. A pending objection or legal proceeding legally extends the
+     * retention period until it concludes, so a held course is excluded from both phases of the data-privacy cleanup: it
+     * is neither warned nor reset for as long as the hold lasts. Defaults to {@code false}.
+     */
+    @Column(name = "data_retention_hold", nullable = false)
+    private boolean dataRetentionHold = false;
 
     /**
      * When the data-privacy cleanup sent the instructors the "student data will be deleted after the grace period"
@@ -72,6 +81,14 @@ public class CourseConfiguration extends DomainObject {
 
     public void setGradeRelevant(boolean gradeRelevant) {
         this.gradeRelevant = gradeRelevant;
+    }
+
+    public boolean isDataRetentionHold() {
+        return dataRetentionHold;
+    }
+
+    public void setDataRetentionHold(boolean dataRetentionHold) {
+        this.dataRetentionHold = dataRetentionHold;
     }
 
     @JsonIgnore

@@ -249,6 +249,7 @@ export class CourseUpdateComponent implements OnInit {
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
+                dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
@@ -358,8 +359,12 @@ export class CourseUpdateComponent implements OnInit {
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
 
-        // Map the flat grade-relevance form control into the nested course configuration expected by the update DTO mapper.
-        course.courseConfiguration = { id: this.course.courseConfiguration?.id, gradeRelevant: rawValue.gradeRelevant ?? true };
+        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        course.courseConfiguration = {
+            id: this.course.courseConfiguration?.id,
+            gradeRelevant: rawValue.gradeRelevant ?? true,
+            dataRetentionHold: rawValue.dataRetentionHold ?? false,
+        };
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;

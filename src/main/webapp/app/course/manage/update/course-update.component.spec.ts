@@ -189,6 +189,28 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get('gradeRelevant')?.value).toBe(true);
         });
 
+        it('should load an active data-retention hold as a checked control', () => {
+            // A course held because of a pending objection must load checked, otherwise saving the form would silently
+            // lift the hold and expose the course to the automatic student-data reset again.
+            course.courseConfiguration = { dataRetentionHold: true };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(true);
+        });
+
+        it('should default the data-retention hold control to unchecked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(false);
+        });
+
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -268,8 +290,8 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
-            // save() maps the grade-relevance form control into the course configuration (defaults to grade-relevant)
-            entity.courseConfiguration = { gradeRelevant: true };
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -306,8 +328,8 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            // save() maps the grade-relevance form control into the course configuration (defaults to grade-relevant)
-            entity.courseConfiguration = { gradeRelevant: true };
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({

@@ -153,6 +153,9 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         configuration.setGradeRelevant(false);
         configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40)); // warned > grace (30d) ago -> due
         course.setCourseConfiguration(configuration);
+        // Eligibility is re-checked at reset time, so the course also has to be past its retention deadline (1 year for
+        // a non-grade-relevant course); the fixture course ends far in the future.
+        course.setEndDate(ZonedDateTime.now().minusYears(2));
         courseRepository.save(course);
 
         scheduleService(false, true, false, false, false, false, false).resetOldCourses();

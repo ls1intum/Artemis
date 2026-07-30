@@ -67,7 +67,11 @@ public record CourseUpdateDTO(
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
-        Boolean gradeRelevant) {
+        Boolean gradeRelevant,
+
+        // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
+        // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
+        Boolean dataRetentionHold) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -144,6 +148,9 @@ public record CourseUpdateDTO(
         }
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
+        // the cleanup again.
+        configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
 
         return course;
     }
@@ -162,6 +169,6 @@ public record CourseUpdateDTO(
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(),
-                course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone(), course.isGradeRelevant());
+                course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold());
     }
 }

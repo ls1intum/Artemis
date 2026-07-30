@@ -161,9 +161,25 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         StudentParticipation neverWarnedParticipation = participationUtilService.createAndSaveParticipationForExercise(neverWarnedCourse.getExercises().iterator().next(),
                 TEST_PREFIX + "student1");
 
+        // Warned 40 days ago, but an instructor has since moved the end date into the future -> no longer past its
+        // retention deadline, so it must be spared and its now-stale warning withdrawn.
+        Course extendedCourse = courseUtilService.addCourseWithModelingAndTextExercise();
+        StudentParticipation extendedParticipation = participationUtilService.createAndSaveParticipationForExercise(extendedCourse.getExercises().iterator().next(),
+                TEST_PREFIX + "student1");
+        attachConfig(extendedCourse, now.minusDays(40), null, now.plusYears(1));
+
+        // Warned 40 days ago, but placed under a data-retention hold (e.g. an objection was raised) -> must be spared.
+        Course heldCourse = courseUtilService.addCourseWithModelingAndTextExercise();
+        StudentParticipation heldParticipation = participationUtilService.createAndSaveParticipationForExercise(heldCourse.getExercises().iterator().next(),
+                TEST_PREFIX + "student1");
+        attachConfig(heldCourse, now.minusDays(40), null);
+        heldCourse.getCourseConfiguration().setDataRetentionHold(true);
+        courseRepository.save(heldCourse);
+
         // The count preview and the actual selection must agree (both derive from findCoursesDueForReset).
         List<Course> dueForReset = courseDataRetentionService.findCoursesDueForReset();
-        assertThat(dueForReset).extracting(Course::getId).contains(dueCourse.getId()).doesNotContain(withinGraceCourse.getId(), neverWarnedCourse.getId());
+        assertThat(dueForReset).extracting(Course::getId).contains(dueCourse.getId()).doesNotContain(withinGraceCourse.getId(), neverWarnedCourse.getId(), extendedCourse.getId(),
+                heldCourse.getId());
         assertThat(dataCleanupService.countOldCoursesReset().courses()).isEqualTo(dueForReset.size());
 
         int reset = courseDataRetentionService.resetDueCourses();
@@ -180,6 +196,15 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentParticipationRepository.findById(withinGraceParticipation.getId())).isPresent();
         assertThat(courseConfigurationRepository.findByCourseId(withinGraceCourse.getId())).get().extracting(CourseConfiguration::getStudentDataResetDate).isNull();
         assertThat(studentParticipationRepository.findById(neverWarnedParticipation.getId())).isPresent();
+
+        // Courses that left the scope after being warned keep their student data, and their stale warning is withdrawn
+        // so that becoming due again later requires a new warning and a full grace period.
+        assertThat(studentParticipationRepository.findById(extendedParticipation.getId())).isPresent();
+        assertThat(courseConfigurationRepository.findByCourseId(extendedCourse.getId())).get()
+                .satisfies(configuration -> assertThat(configuration.getResetWarningSentDate()).isNull()).extracting(CourseConfiguration::getStudentDataResetDate).isNull();
+        assertThat(studentParticipationRepository.findById(heldParticipation.getId())).isPresent();
+        assertThat(courseConfigurationRepository.findByCourseId(heldCourse.getId())).get().satisfies(configuration -> assertThat(configuration.getResetWarningSentDate()).isNull())
+                .extracting(CourseConfiguration::getStudentDataResetDate).isNull();
     }
 
     @Test
@@ -481,13 +506,23 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         return courseRepository.save(course);
     }
 
+    /**
+     * Marks the course non-grade-relevant (1-year retention) and stamps the given lifecycle dates. The end date is moved
+     * two years back as well: eligibility is re-evaluated at reset time, so a warned course only stays due while it is
+     * also past its retention deadline, and the fixture courses end far in the future.
+     */
     private void attachConfig(Course course, ZonedDateTime warnedDate, ZonedDateTime resetDate) {
+        attachConfig(course, warnedDate, resetDate, ZonedDateTime.now().minusYears(2));
+    }
+
+    private void attachConfig(Course course, ZonedDateTime warnedDate, ZonedDateTime resetDate, ZonedDateTime endDate) {
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setCourse(course);
         configuration.setGradeRelevant(false);
         configuration.setResetWarningSentDate(warnedDate);
         configuration.setStudentDataResetDate(resetDate);
         course.setCourseConfiguration(configuration);
+        course.setEndDate(endDate);
         courseRepository.save(course);
     }
 

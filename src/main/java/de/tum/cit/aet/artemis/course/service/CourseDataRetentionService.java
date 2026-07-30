@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,10 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
  * from the actual warning ({@code resetWarningSentDate}), so it is always honored regardless of scheduling/backlog, and a
  * course is never reset before its instructors were warned and given a backup.
  * <p>
- * Test courses and courses without an end date are always skipped. Courses are never deleted, only reset.
+ * Test courses, courses without an end date, and courses under a data-retention hold (a pending objection or legal
+ * proceeding, see {@link CourseConfiguration#isDataRetentionHold()}) are always skipped. Eligibility is re-evaluated at
+ * reset time rather than trusted from the warning, so a course that leaves the scope during the grace period has its
+ * warning withdrawn instead of being reset before its current retention deadline. Courses are never deleted, only reset.
  */
 @Service
 @Profile(PROFILE_CORE)
@@ -83,22 +87,22 @@ public class CourseDataRetentionService {
         ZonedDateTime candidateCutoff = now.minusYears(shortestRetentionYears);
         // A title is required to build the warning email; skip the (anomalous) title-less course rather than fail it forever.
         return courseRepository.findAllWithCourseConfigurationByEndDateBefore(candidateCutoff).stream().filter(course -> course.getTitle() != null)
-                .filter(course -> !course.isTestCourse()).filter(this::notYetWarnedOrReset).filter(course -> isPastRetentionDeadline(course, now)).toList();
+                .filter(this::notYetWarnedOrReset).filter(course -> isEligibleForReset(course, now)).toList();
     }
 
     /**
-     * @return the courses that were warned (and archived), whose grace period has elapsed, and that have not yet been
-     *         reset. The grace is measured from the actual warning event ({@code resetWarningSentDate}), not the course
-     *         end date, so it is always honored and a course can never be reset before its instructors were warned.
+     * @return the courses that were warned (and archived), whose grace period has elapsed, that are still eligible, and
+     *         that have not yet been reset. The grace is measured from the actual warning event
+     *         ({@code resetWarningSentDate}), not the course end date, so it is always honored and a course can never be
+     *         reset before its instructors were warned. Eligibility is re-evaluated here rather than trusted from the
+     *         warning, because a course can be moved out of scope after it was warned, see
+     *         {@link #withdrawStaleResetWarnings()}.
      */
     public List<Course> findCoursesDueForReset() {
         ZonedDateTime now = ZonedDateTime.now();
         long graceDays = dataCleanupProperties.resetWarningGracePeriodDays();
-        return courseRepository.findAllWithResetWarningSent().stream().filter(course -> !course.isTestCourse()).filter(course -> {
-            CourseConfiguration configuration = course.getCourseConfiguration();
-            return configuration != null && configuration.getStudentDataResetDate() == null && configuration.getResetWarningSentDate() != null
-                    && configuration.getResetWarningSentDate().plusDays(graceDays).isBefore(now);
-        }).toList();
+        return warnedCoursesAwaitingReset().filter(course -> isEligibleForReset(course, now))
+                .filter(course -> course.getCourseConfiguration().getResetWarningSentDate().plusDays(graceDays).isBefore(now)).toList();
     }
 
     /**
@@ -110,6 +114,7 @@ public class CourseDataRetentionService {
      * @return the number of courses whose instructors were warned
      */
     public int warnAndArchiveDueCourses() {
+        withdrawStaleResetWarnings();
         List<Course> dueCourses = findCoursesDueForWarning();
         log.info("Found {} old course(s) due for a student-data reset warning", dueCourses.size());
         int warned = 0;
@@ -159,6 +164,7 @@ public class CourseDataRetentionService {
      * @return the number of courses whose student data was reset
      */
     public int resetDueCourses() {
+        withdrawStaleResetWarnings();
         List<Course> dueCourses = findCoursesDueForReset();
         log.info("Found {} old course(s) due for a student-data reset", dueCourses.size());
         int reset = 0;
@@ -178,9 +184,54 @@ public class CourseDataRetentionService {
         return reset;
     }
 
+    /**
+     * Withdraws the warning of every course that was warned but has since left the scope of the cleanup, because an
+     * instructor moved its end date into the future, marked it grade-relevant (which lengthens the retention period),
+     * turned it into a test course, or placed it under a retention hold. Without this, such a course would keep its
+     * warning and be reset at the end of the original grace period, before its current retention deadline.
+     * <p>
+     * Clearing the warning returns the course to the start of the lifecycle: if it becomes eligible again later, it has
+     * to be warned again and gets a full grace period, rather than inheriting a warning its instructors received for a
+     * deadline that no longer applies.
+     *
+     * @return the number of courses whose warning was withdrawn
+     */
+    private int withdrawStaleResetWarnings() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<Course> staleCourses = warnedCoursesAwaitingReset().filter(course -> !isEligibleForReset(course, now)).toList();
+        for (Course staleCourse : staleCourses) {
+            log.info("Withdrawing the student-data reset warning of course {}: it is no longer due for a reset", staleCourse.getId());
+            staleCourse.getCourseConfiguration().setResetWarningSentDate(null);
+            courseRepository.save(staleCourse);
+        }
+        return staleCourses.size();
+    }
+
+    /**
+     * @return the warned courses that have not been reset yet, with their configuration guaranteed to be present
+     */
+    private Stream<Course> warnedCoursesAwaitingReset() {
+        return courseRepository.findAllWithResetWarningSent().stream().filter(course -> {
+            CourseConfiguration configuration = course.getCourseConfiguration();
+            return configuration != null && configuration.getResetWarningSentDate() != null && configuration.getStudentDataResetDate() == null;
+        });
+    }
+
     private boolean notYetWarnedOrReset(Course course) {
         CourseConfiguration configuration = course.getCourseConfiguration();
         return configuration == null || (configuration.getResetWarningSentDate() == null && configuration.getStudentDataResetDate() == null);
+    }
+
+    /**
+     * Whether the course is currently in scope for the data-privacy reset. Evaluated from the course's present state, so
+     * it is equally valid before the warning and at reset time.
+     *
+     * @param course the course to check
+     * @param now    the point in time to evaluate the retention deadline against
+     * @return {@code true} if the course may be warned and, after the grace period, reset
+     */
+    private boolean isEligibleForReset(Course course, ZonedDateTime now) {
+        return !course.isTestCourse() && !course.isDataRetentionHold() && isPastRetentionDeadline(course, now);
     }
 
     private boolean isPastRetentionDeadline(Course course, ZonedDateTime now) {

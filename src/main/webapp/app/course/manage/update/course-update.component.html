@@ -180,6 +180,11 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.gradeRelevant.title" for="field_gradeRelevant"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.gradeRelevant.description' | artemisTranslate }}" />
                 </div>
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" name="dataRetentionHold" id="field_dataRetentionHold" formControlName="dataRetentionHold" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.dataRetentionHold.title" for="field_dataRetentionHold"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.dataRetentionHold.description' | artemisTranslate }}" />
+                </div>
                 <div class="form-group">
                     <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
                     <select id="semester" class="form-select" formControlName="semester">

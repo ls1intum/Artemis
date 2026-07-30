@@ -519,6 +519,19 @@ public class Course extends DomainObject {
         return configuration == null || configuration.isGradeRelevant();
     }
 
+    /**
+     * Whether the course is under a data-retention hold, which suspends the GDPR cleanup of its student data for as long
+     * as it lasts (e.g. a pending objection or legal proceeding). A course without an explicit
+     * {@link CourseConfiguration} is not held. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if an administrator or instructor placed the course under a retention hold
+     */
+    public boolean isDataRetentionHold() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isDataRetentionHold();
+    }
+
     public Integer getMaxComplaints() {
         return maxComplaints;
     }
