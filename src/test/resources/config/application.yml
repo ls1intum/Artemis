@@ -203,7 +203,15 @@ spring:
         execution:
             thread-name-prefix: artemis-task-
             pool:
-                core-size: 1
+                # core-size must stay >= the number of test classes that run in parallel (junit-platform.properties enables
+                # parallel execution with the default strategy, i.e. one thread per core).
+                #
+                # ThreadPoolExecutor only grows past core-size once the queue is FULL, so with a 10000-deep queue max-size
+                # below is unreachable and core-size alone is the effective pool size. At 1, every @Async task of every
+                # test sharing a Spring context was serialized on one thread: a test awaiting its own background work
+                # could sit behind unrelated tests' tasks far longer than Awaitility's 10s default while the runner idled
+                # at ~67%. That is what made slide-splitting assertions flaky under suite load (#13341).
+                core-size: 8
                 max-size: 50
                 queue-capacity: 10000
         scheduling:
