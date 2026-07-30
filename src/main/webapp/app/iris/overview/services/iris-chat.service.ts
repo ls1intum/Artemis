@@ -222,6 +222,9 @@ export class IrisChatService implements OnDestroy {
         // Plain fields.
         this.latestStartedSession = undefined;
         this.hasJustAcceptedLLMUsage = false;
+        // The snapshot belongs to the user whose consent request was just cancelled above. Keeping it would
+        // make the next user's rollback restore the previous user's decision into their identity cache.
+        this.lastConfirmedDecision = undefined;
         this.rateLimitInfo = undefined;
     }
 

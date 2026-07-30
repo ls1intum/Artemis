@@ -1496,5 +1496,31 @@ describe('IrisChatService', () => {
 
             expect(scopedService.error.getValue()).toBeUndefined();
         });
+
+        /**
+         * The rollback snapshot is captured per consent request and deliberately not overwritten while one is in
+         * flight. It therefore has to be discarded when a logout cancels that request, or the next user's failed
+         * consent update would restore the previous user's decision into their identity cache.
+         */
+        it("should not restore a previous user's decision after an authentication reset cancelled their consent request", () => {
+            customAccountService.userIdentity.set({ id: 99, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            userMock.updateLLMSelectionDecision.mockReset();
+            userMock.updateLLMSelectionDecision.mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable());
+
+            // First user picks a decision; the request never settles.
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            // They log out, which cancels the in-flight consent request, and a different user logs in.
+            authState.next(undefined);
+            customAccountService.userIdentity.set({ id: 100, selectedLLMUsage: undefined } as User);
+            authState.next({ id: 100 } as User);
+
+            // The new user's consent update fails, triggering a rollback.
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Must roll back to the NEW user's own previous state, never to NO_AI from the first user.
+            expect(customAccountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+        });
     });
 });
