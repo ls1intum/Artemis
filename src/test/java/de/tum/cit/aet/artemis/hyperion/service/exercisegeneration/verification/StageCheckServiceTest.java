@@ -175,7 +175,7 @@ class StageCheckServiceTest {
                 ## Contract Risk Inventory
                 | Seam | Rules | Admitted partitions | Excluded inputs |
                 |------|-------|---------------------|-----------------|
-                | S1 | R1 | typical; zero; negative; int extrema | none |
+                | S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |
 
                 ## Diagram
                 no — single-class exercise
@@ -854,7 +854,7 @@ class StageCheckServiceTest {
                 ## Contract Risk Inventory
                 | Seam | Rules | Admitted partitions | Excluded inputs |
                 |------|-------|---------------------|-----------------|
-                | S1 | R1 | typical; zero; negative; int extrema | none |
+                | S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |
 
                 ## Diagram
                 no — single-class exercise
@@ -883,7 +883,8 @@ class StageCheckServiceTest {
             StringBuilder riskRows = new StringBuilder();
             for (int seam = 1; seam <= seams; seam++) {
                 seamRows.append("| S").append(seam).append(" | Calculator | behaviour ").append(seam).append(" | 3 | no |\n");
-                riskRows.append("| S").append(seam).append(" | R").append(Math.min(seam, rules)).append(" | typical; zero; int extrema | none |\n");
+                riskRows.append("| S").append(seam).append(" | R").append(Math.min(seam, rules)).append(" | S").append(seam)
+                        .append(".P1: typical, zero, and int extrema | none |\n");
             }
             return """
                     # Exercise
@@ -964,7 +965,7 @@ class StageCheckServiceTest {
                     ## Contract Risk Inventory
                     | Seam | Rules | Admitted partitions | Excluded inputs |
                     |------|-------|---------------------|-----------------|
-                    | S1 | R1 | typical; zero; int extrema | none |
+                    | S1 | R1 | S1.P1: typical, zero, and int extrema | none |
 
                     ## Diagram
                     no — single-class exercise
@@ -1213,15 +1214,28 @@ class StageCheckServiceTest {
         @Test
         void rejectsAnIncompleteOrUnauthorizedContractRiskInventory() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
-            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S2 | R1 | typical | none |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |", "| S2 | R1 | S2.P1: typical | none |");
             assertThat(check(GenerationStage.SPEC).observation()).contains("cover every Testing Strategy seam exactly once").contains("Missing seams: [S1]")
                     .contains("unknown seams: [S2]");
 
-            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S1 | R9 | typical | none |");
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |", "| S1 | R9 | S1.P1: typical | none |");
             assertThat(check(GenerationStage.SPEC).observation()).contains("do not cite a declared rule", "S1");
 
-            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S1 | R1 |  | none |");
-            assertThat(check(GenerationStage.SPEC).observation()).contains("concrete admitted partitions", "S1");
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |", "| S1 | R1 |  | none |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("stable admitted-partition IDs", "S1");
+        }
+
+        @Test
+        void rejectsUnstableCrossSeamOrDuplicateRiskPartitionIds() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", "typical; zero");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("stable admitted-partition IDs", "S1.P1");
+
+            sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", "S2.P1: typical");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("stable admitted-partition IDs", "S1");
+
+            sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", "S1.P1: typical; S1.P1: extrema");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("reuses partition IDs", "S1.P1");
         }
 
         @Test

@@ -15,14 +15,30 @@ class GeneratedTestPlanTest {
     void parsesSeamWeightTiersAndVisibility() {
         GeneratedTestPlan plan = GeneratedTestPlan.parse("""
                 {"tests":[
-                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"earn_subDollarPurchaseEarnsZeroPoints","seam":"S1","riskPartitions":["S1.P1","S1.P2"],"seamWeightTier":3,"visibility":"ALWAYS"},
                   {"name":"redeem_throwsWhenPointsInsufficient","seam":"S2","seamWeightTier":1.5,"visibility":"AFTER_DUE_DATE"}
                 ]}
                 """);
 
-        assertThat(plan.tests().getFirst()).isEqualTo(new GeneratedTestPlan.Entry("earn_subDollarPurchaseEarnsZeroPoints", "S1", 3.0, "ALWAYS"));
+        assertThat(plan.tests().getFirst())
+                .isEqualTo(new GeneratedTestPlan.Entry("earn_subDollarPurchaseEarnsZeroPoints", "S1", 3.0, "ALWAYS", java.util.List.of("S1.P1", "S1.P2")));
         assertThat(plan.hiddenEntries()).singleElement().extracting(GeneratedTestPlan.Entry::name).isEqualTo("redeem_throwsWhenPointsInsufficient");
         assertThat(plan.visibleEntries()).singleElement().extracting(GeneratedTestPlan.Entry::seam).isEqualTo("S1");
+    }
+
+    @Test
+    void rejectsMalformedDuplicateOrCrossSeamRiskPartitions() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> GeneratedTestPlan
+                        .parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"riskPartitions\":[\"ordinary\"],\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}"))
+                .withMessageContaining("invalid risk partition").withMessageContaining("S1.P1");
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> GeneratedTestPlan.parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"riskPartitions\":[\"S2.P1\"],\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}"))
+                .withMessageContaining("own seam").withMessageContaining("S2.P1");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> GeneratedTestPlan
+                        .parse("{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"riskPartitions\":[\"S1.P1\",\"S1.P1\"],\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}"))
+                .withMessageContaining("more than once").withMessageContaining("S1.P1");
     }
 
     @Test

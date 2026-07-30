@@ -340,11 +340,18 @@ public class StageCheckService {
                 .collect(Collectors.toSet());
         List<String> invalidRiskRows = riskRows.stream().filter(row -> {
             List<String> citedRules = Pattern.compile("R[1-9][0-9]*").matcher(row.ruleIds()).results().map(java.util.regex.MatchResult::group).toList();
-            return row.admittedPartitions().isBlank() || citedRules.isEmpty() || citedRules.stream().anyMatch(rule -> !declaredRuleIds.contains(rule));
+            return riskPartitionIds(row).isEmpty() || citedRules.isEmpty() || citedRules.stream().anyMatch(rule -> !declaredRuleIds.contains(rule));
         }).map(RiskInventoryRow::seamId).toList();
         if (!invalidRiskRows.isEmpty()) {
-            return StageCheckResult.failed("These Contract Risk Inventory rows do not cite a declared rule and state concrete admitted partitions: " + invalidRiskRows
-                    + ". Cite exact R IDs and enumerate the legal boundary, state, collection, interaction, or representation partitions that tests must distinguish.");
+            return StageCheckResult.failed("These Contract Risk Inventory rows do not cite a declared rule and enumerate stable admitted-partition IDs: " + invalidRiskRows
+                    + ". Cite exact R IDs and write every semicolon-delimited partition as <seam>.P<n>: <concrete legal distinction>, for example S1.P1: ordinary values; "
+                    + "S1.P2: integer extrema.");
+        }
+        List<String> allRiskPartitionIds = riskRows.stream().flatMap(row -> riskPartitionIds(row).stream()).toList();
+        List<String> duplicateRiskPartitionIds = allRiskPartitionIds.stream().filter(id -> Collections.frequency(allRiskPartitionIds, id) > 1).distinct().toList();
+        if (!duplicateRiskPartitionIds.isEmpty()) {
+            return StageCheckResult.failed("The Contract Risk Inventory reuses partition IDs " + duplicateRiskPartitionIds
+                    + ". Give every admitted partition one unique stable ID so executable tests can trace to it.");
         }
         // Echo the parsed plan back so the agent sees exactly what the later gates will hold it to, rather than only the absence of errors.
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
@@ -640,6 +647,25 @@ public class StageCheckService {
             }
         }
         return List.copyOf(rows);
+    }
+
+    static List<String> riskPartitionIds(String spec) {
+        return riskInventoryRows(spec).stream().flatMap(row -> riskPartitionIds(row).stream()).toList();
+    }
+
+    private static List<String> riskPartitionIds(RiskInventoryRow row) {
+        if (row.admittedPartitions().isBlank()) {
+            return List.of();
+        }
+        List<String> ids = new ArrayList<>();
+        for (String partition : row.admittedPartitions().split(";")) {
+            java.util.regex.Matcher matcher = Pattern.compile("(S[1-9][0-9]*\\.P[1-9][0-9]*):\\s*\\S.*").matcher(partition.strip());
+            if (!matcher.matches() || !matcher.group(1).startsWith(row.seamId() + ".")) {
+                return List.of();
+            }
+            ids.add(matcher.group(1));
+        }
+        return List.copyOf(ids);
     }
 
     private static String section(String document, String heading) {

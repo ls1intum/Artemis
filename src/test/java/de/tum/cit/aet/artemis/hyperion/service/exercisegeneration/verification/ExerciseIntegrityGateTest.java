@@ -1007,6 +1007,38 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedTestPlan_requiresTraceableCoverageForEveryContractRiskPartition() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Calculator | classify the complete input domain | 3 | no |
+
+                ## Contract Risk Inventory
+                | Seam | Rules | Admitted partitions | Excluded inputs |
+                |---|---|---|---|
+                | S1 | R1 | S1.P1: ordinary values; S1.P2: integer extrema | none |
+                """;
+        String validPlan = """
+                {"tests":[
+                  {"name":"ordinary","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"extrema","seam":"S1","riskPartitions":["S1.P2"],"seamWeightTier":3,"visibility":"ALWAYS"}
+                ]}
+                """;
+        String missingClaims = validPlan.replace(",\"riskPartitions\":[\"S1.P1\"]", "").replace(",\"riskPartitions\":[\"S1.P2\"]", "");
+        String unmappedExtrema = validPlan.replace("[\"S1.P2\"]", "[\"S1.P1\"]");
+        String unknownPartition = validPlan.replace("[\"S1.P2\"]", "[\"S1.P9\"]");
+
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, validPlan, List.of("ordinary", "extrema"))).isEmpty();
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, missingClaims, List.of("ordinary", "extrema"))).singleElement().asString().contains("does not say which",
+                "ordinary", "extrema", "riskPartitions");
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, unmappedExtrema, List.of("ordinary", "extrema"))).singleElement().asString()
+                .contains("without executable evidence", "S1.P2");
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, unknownPartition, List.of("ordinary", "extrema"))).singleElement().asString().contains("never declared",
+                "S1.P9");
+    }
+
+    @Test
     void approvedTestPlan_rejectsUnplannedTestsWithoutASpecification() {
         String plan = """
                 {"tests":[{"name":"planned","seam":"S1","seamWeightTier":1,"visibility":"ALWAYS"}]}

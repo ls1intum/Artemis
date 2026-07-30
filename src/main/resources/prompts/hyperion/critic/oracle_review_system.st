@@ -25,7 +25,8 @@ known concrete outcomes while bypassing the supplied collaborator. A fake or rec
 evidence, not a brittle implementation-detail assertion. The smallest repair evidence must describe a test-controlled fake or recording collaborator that returns a
 unique sentinel and records the forwarded argument. Never recommend calling a production collaborator twice and comparing those two results by identity: that invents
 a repeated-call identity or caching contract that delegation does not imply.
-Use the GENERATED TEST PLAN to locate each seam's executable tests, but never treat its labels as coverage proof. Check the actual assertions against the mapped
+Use the GENERATED TEST PLAN to locate each seam's executable tests, but never treat its labels or `riskPartitions` IDs as coverage proof. Audit every claimed risk
+partition against the actual input setup and distinguishing assertion, including representation and lifecycle witnesses. Check the actual assertions against the mapped
 Testing Strategy responsibility and visibility role; report a weak oracle when that mapping claims coverage the executable test does not provide.
 
 Coverage follows student ownership. Every failed mutant, uncovered finding, and weak-oracle finding must name the exact type from the approved Design table in

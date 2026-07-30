@@ -397,6 +397,34 @@ public final class ExerciseIntegrityGate {
                 return List.of("the final test-plan.json weights do not match the approved Testing Strategy: " + wrongWeights
                         + ". Carry each seam's approved 1/2/3 weight into every mapped test.");
             }
+            List<String> declaredRiskPartitions = StageCheckService.riskPartitionIds(approvedSpec);
+            if (!declaredRiskPartitions.isEmpty()) {
+                Map<String, List<String>> partitionsBySeam = declaredRiskPartitions.stream()
+                        .collect(Collectors.groupingBy(partition -> partition.substring(0, partition.indexOf('.')), LinkedHashMap::new, Collectors.toList()));
+                // Older programmatic plans can infer a seam's sole partition. Multiple partitions require explicit claims so broad test names cannot silently collapse them.
+                List<String> testsWithoutRiskPartitions = plan.tests().stream().filter(entry -> entry.riskPartitions().isEmpty())
+                        .filter(entry -> partitionsBySeam.getOrDefault(entry.seam(), List.of()).size() != 1).map(GeneratedTestPlan.Entry::name).toList();
+                if (!testsWithoutRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json does not say which Contract Risk Inventory partitions test(s) " + testsWithoutRiskPartitions
+                            + " witness. Add non-empty riskPartitions arrays using the approved IDs for each test's seam.");
+                }
+                List<String> mappedRiskPartitions = plan.tests().stream().flatMap(entry -> {
+                    if (!entry.riskPartitions().isEmpty()) {
+                        return entry.riskPartitions().stream();
+                    }
+                    return partitionsBySeam.getOrDefault(entry.seam(), List.of()).stream();
+                }).distinct().toList();
+                List<String> unknownRiskPartitions = mappedRiskPartitions.stream().filter(partition -> !declaredRiskPartitions.contains(partition)).toList();
+                if (!unknownRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json claims Contract Risk Inventory partition(s) the approved specification never declared: " + unknownRiskPartitions
+                            + ". Use only " + declaredRiskPartitions + ".");
+                }
+                List<String> unmappedRiskPartitions = declaredRiskPartitions.stream().filter(partition -> !mappedRiskPartitions.contains(partition)).toList();
+                if (!unmappedRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json leaves approved Contract Risk Inventory partition(s) without executable evidence: " + unmappedRiskPartitions
+                            + ". Map each partition to at least one verified behavioral test; do not collapse it into an untraceable seam label.");
+                }
+            }
         }
         Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
         Set<String> hiddenVariantSeams = StageCheckService.hiddenVariantSeamIds(approvedSpec);

@@ -241,10 +241,10 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             ## Contract Risk Inventory
             | Seam | Rules | Admitted partitions | Excluded inputs |
             |------|-------|---------------------|-----------------|
-            | S1 | R1 | newly constructed counter | none |
-            | S2 | R2 | below maximum; at maximum; repeated increments | none |
-            | S3 | R3 | above zero; at zero; repeated decrements | none |
-            | S4 | R4 | zero maximum; negative maximum | positive maximum |
+            | S1 | R1 | S1.P1: newly constructed counter | none |
+            | S2 | R2 | S2.P1: below maximum; S2.P2: at maximum; S2.P3: repeated increments | none |
+            | S3 | R3 | S3.P1: above zero; S3.P2: at zero; S3.P3: repeated decrements | none |
+            | S4 | R4 | S4.P1: zero maximum; S4.P2: negative maximum | positive maximum |
 
             ## Diagram
             no — one class with no structural relationship to explain.
@@ -252,10 +252,10 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private static final String TEST_PLAN = """
             {"tests":[
-              {"name":"startsAtZeroAndExposesValue","seam":"S1","seamWeightTier":1,"visibility":"ALWAYS"},
-              {"name":"incrementsUntilMaximum","seam":"S2","seamWeightTier":3,"visibility":"ALWAYS"},
-              {"name":"decrementNeverDropsBelowZero","seam":"S3","seamWeightTier":3,"visibility":"ALWAYS"},
-              {"name":"rejectsNonPositiveMaximum","seam":"S4","seamWeightTier":2,"visibility":"ALWAYS"}
+              {"name":"startsAtZeroAndExposesValue","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":1,"visibility":"ALWAYS"},
+              {"name":"incrementsUntilMaximum","seam":"S2","riskPartitions":["S2.P1","S2.P2","S2.P3"],"seamWeightTier":3,"visibility":"ALWAYS"},
+              {"name":"decrementNeverDropsBelowZero","seam":"S3","riskPartitions":["S3.P1","S3.P2","S3.P3"],"seamWeightTier":3,"visibility":"ALWAYS"},
+              {"name":"rejectsNonPositiveMaximum","seam":"S4","riskPartitions":["S4.P1","S4.P2"],"seamWeightTier":2,"visibility":"ALWAYS"}
             ]}
             """;
 

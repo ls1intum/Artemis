@@ -277,7 +277,10 @@ public class AgentSystemPromptService {
             central interaction instead of adding themed vocabulary, variants, selectors, validation, or task counts.
             After the Testing Strategy, add `## Contract Risk Inventory` with a table
             (| Seam | Rules | Admitted partitions | Excluded inputs |). Give every Testing Strategy seam exactly one row, cite its exact R IDs, and enumerate the legal
-            distinctions its tests must cover before any code is authored. Audit the full Java type domain unless an explicit rule narrows it: numeric minima/maxima and
+            distinctions its tests must cover before any code is authored. Give every semicolon-delimited distinction a unique stable ID owned by its seam, using exactly
+            `<seam>.P<n>: <concrete distinction>` (for example `S1.P1: ordinary values; S1.P2: integer extrema`). Later map every ID to verified evidence through test-plan
+            `riskPartitions`. Audit the full Java type
+            domain unless an explicit rule narrows it: numeric minima/maxima and
             intermediate overflow; equality neighbors; empty, singleton, duplicate, aliased, and partially represented collections when admitted; every source/target pair for
             finite states; repeated/reordered calls and collaborator forwarding for stateful interactions; and multi-step ties, dependency-only nodes, self-loops, and longer
             cycles for graphs when admitted. Write `none` in Excluded inputs when the domain is total; otherwise cite only exclusions already stated as explicit rule
@@ -335,9 +338,10 @@ public class AgentSystemPromptService {
             `newInstance(getConstructor(getClazz(owner), Declared.class, getClazz(collaborator)), args)`; never add harness overloads. Assert exception types, never assert
             message strings, unless the statement fixes the exact message; give every assertion a failure message naming the
             broken behaviour — it is all a failing student sees. Then write `/workspace/test-plan.json` implementing
-            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]} — carry the spec seam ID and
-            exact tier. Include every agent-authored behavioral test, not build gates or server-seeded structural checks; Artemis manages seeded structural checks as visible,
-            zero-weight feedback. Each seam needs an ALWAYS behavioral test; hidden `yes` adds a fresh AFTER_DUE_DATE behavioral witness, while `no` forbids one.
+            the Testing Strategy: {"tests":[{"name":"<exact test name>","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":<1..3>,
+            "visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}. Map every ID to a witness; every test needs one of its seam's IDs. Include every behavioral test, not
+            build gates or seeded structural checks; Artemis manages the latter as visible, zero-weight feedback. Each seam needs an ALWAYS behavioral test; hidden `yes` adds a
+            fresh AFTER_DUE_DATE behavioral witness, while `no` forbids one.
             Repeating the tier assigns seam importance; persistence divides it evenly among that seam's cases. Names must match `verify`. Fix differential defects in the owning
             artifact inside the same increment; never weaken accepted ownership or diagram decisions. Finish with one clean full differential proving the complete accumulated
             solution, template, tests, structural checks, and grading plan together.
