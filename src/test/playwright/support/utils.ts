@@ -50,8 +50,9 @@ function isResponseBodyEvicted(error: unknown): boolean {
 const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
 
 /**
- * Largest multipart request body we re-issue from Node in {@link installApiResponseCapture}.
- * Multipart requests below this size are the metadata-carrying ones whose response bodies tests
+ * Largest multipart request body we re-issue from Node in {@link installApiResponseCapture}, inclusive:
+ * a body of exactly this size is still captured, anything larger is not.
+ * Multipart requests up to this size are the metadata-carrying ones whose response bodies tests
  * actually read — course create/update post a small JSON blob plus an optional course icon. Genuine
  * large file uploads stay on `route.continue()`: buffering megabytes through Node costs memory and
  * buys nothing, because those tests do not read the response body.
@@ -81,7 +82,7 @@ function requestBodySizeInBytes(request: Request): number | undefined {
  *
  * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
  * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
- * are only captured below {@link MAX_CAPTURED_MULTIPART_BODY_BYTES}. Multipart was previously
+ * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive. Multipart was previously
  * skipped outright, which left course create/update (Angular posts them as `FormData`) with no
  * Node-held body: a POST/PUT cannot be replayed read-side, so an eviction there fails the test
  * outright rather than degrading. `route.fetch()` re-sends the original body buffer and preserves
