@@ -1502,7 +1502,7 @@ describe('IrisChatService', () => {
          * flight. It therefore has to be discarded when a logout cancels that request, or the next user's failed
          * consent update would restore the previous user's decision into their identity cache.
          */
-        it("should not restore a previous user's decision after an authentication reset cancelled their consent request", () => {
+        it('should not restore the decision of a previous user after an authentication reset cancelled their consent request', () => {
             customAccountService.userIdentity.set({ id: 99, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
             userMock.updateLLMSelectionDecision.mockReset();
             userMock.updateLLMSelectionDecision.mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable());
