@@ -17,13 +17,17 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProblemStatementSsrRenderService } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr-render.service';
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
-import { ProblemStatementRenderRequest, RenderedProblemStatement, SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import {
+    ProblemStatementRenderRequest,
+    RenderedProblemStatement,
+    SSR_TASK_STATUSES,
+    SsrTask,
+    SsrTaskStatus,
+} from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
-export type { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
-
-export type SsrLiveUpdates = 'none' | 'personal' | 'exercise';
+export type SsrLiveUpdates = 'none' | 'personal';
 
 /**
  * Read-only problem statement rendered by the server.
@@ -31,7 +35,7 @@ export type SsrLiveUpdates = 'none' | 'personal' | 'exercise';
  * This component owns the state: hydration of the effective result, the render request lifecycle, the failure states
  * and the feedback dialog. It deliberately uses **default** encapsulation so its chrome (spinner, banners) is styled
  * by the application's global CSS. The server-rendered markup itself lives in the shadow-DOM child component, which is
- * the only thing that may sit behind a shadow boundary — see its class comment.
+ * the only thing that may sit behind a shadow boundary (see its class comment).
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr',
@@ -60,7 +64,10 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private readonly hydrationSettled = signal(false);
     private readonly hydrationFailed = signal(false);
 
-    readonly exercise = input.required<ProgrammingExercise>();
+    // Deliberately optional, matching the legacy component's contract: `input.required` only guarantees that the
+    // binding exists, not that its value is defined, and several hosts bind a class field that is still undefined on
+    // the first render pass (for example `signal<ProgrammingExercise>(undefined!)` in the repository view).
+    readonly exercise = input<ProgrammingExercise>();
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly liveUpdates = input<SsrLiveUpdates>('none');
@@ -178,7 +185,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             return;
         }
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(participationId, mode === 'personal', this.exercise().id)
+            .subscribeForLatestResultOfParticipation(participationId, mode === 'personal', this.exercise()?.id)
             // The websocket emits undefined before the first push; pushed results go through hydration like any other
             // source, because they may arrive without feedback details.
             .pipe(filter((result): result is Result => !!result))
@@ -214,7 +221,13 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         return of(undefined);
     }
 
-    private requestRender(exercise: ProgrammingExercise, result: Result | undefined, locale: string, darkMode: boolean): void {
+    private requestRender(exercise: ProgrammingExercise | undefined, result: Result | undefined, locale: string, darkMode: boolean): void {
+        if (!exercise) {
+            // The exercise is still loading. That is not the same as "this exercise has no problem statement", so the
+            // loading indicator stays on and onNoInstructionsAvailable must not fire (it permanently hides the pane in
+            // the code editor). The effect re-runs as soon as the exercise arrives.
+            return;
+        }
         const markdown = exercise.problemStatement?.trim();
         if (!markdown) {
             // startHydration already switched on a loading indicator; there is nothing to render, so clear it again
@@ -239,7 +252,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         this.initialLoadFailed.set(false);
         if (rendered.contentHash === this.contentHash) {
             // Identical output: keep the current DOM so scroll position, focus and the rendered formulas survive
-            // untouched. Nothing has to be scheduled here — the content component re-applies the task accessibility
+            // untouched. Nothing has to be scheduled here: the content component re-applies the task accessibility
             // attributes by itself whenever the interactivity gating changes.
             return;
         }
@@ -266,7 +279,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
      * script (the endpoint still appends KaTeX scripts even with includeJs=false; KaTeX runs from Angular instead).
      *
      * The server prepends the stylesheet and the KaTeX link to the fragment inside the body, so both head and body
-     * must be searched — querying the head alone would silently drop all CSS.
+     * must be searched. Querying the head alone would silently drop all CSS.
      */
     private extractRenderableHtml(document_: string): { html: string; tasks: SsrTask[] } {
         const parsed = new DOMParser().parseFromString(document_, 'text/html');
@@ -281,11 +294,19 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
                 .split(',')
                 .filter((value) => value.length > 0)
                 .map((value) => Number(value)),
-            status: element.getAttribute('data-test-status') ?? 'no-result',
+            status: this.parseStatus(element.getAttribute('data-test-status')),
             authoredCount: Number(element.getAttribute('data-authored-count') ?? '0'),
             notExecutedCount: Number(element.getAttribute('data-not-executed-count') ?? '0'),
         }));
         return { html: styles + (fragment?.outerHTML ?? ''), tasks };
+    }
+
+    /**
+     * Narrows the server's `data-test-status` to the known vocabulary. An unknown value can only come from a server
+     * that emits a status this client does not know yet; it degrades to the neutral "no result" circle.
+     */
+    private parseStatus(value: string | null): SsrTaskStatus {
+        return SSR_TASK_STATUSES.find((status) => status === value) ?? 'no-result';
     }
 
     /** Handles a task activation reported by the content component, identified by its document position. */
@@ -303,7 +324,8 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     openTaskFeedback(task: SsrTask): void {
         const result = this.latestResult();
         const participation = this.participation();
-        if (!result || !participation || !task.testIds.length) {
+        const exercise = this.exercise();
+        if (!result || !participation || !exercise || !task.testIds.length) {
             return;
         }
         this.dialogService.open(FeedbackComponent, {
@@ -315,7 +337,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             closeOnEscape: true,
             dismissableMask: true,
             inputValues: {
-                exercise: this.exercise(),
+                exercise,
                 result,
                 participation,
                 feedbackFilter: task.testIds,

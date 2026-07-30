@@ -118,6 +118,43 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.tasks()).toEqual([{ index: 0, taskName: 'A', testIds: [1], status: 'success', authoredCount: 1, notExecutedCount: 0 }]);
     });
 
+    it('waits for an exercise that is still undefined instead of throwing or reporting "no instructions"', () => {
+        const emitted = vi.fn();
+        comp.onNoInstructionsAvailable.subscribe(emitted);
+        // Several hosts bind a field that is undefined on the first render pass (`signal<ProgrammingExercise>(undefined!)`),
+        // which `input.required` does not prevent. Dereferencing it threw a TypeError inside an effect.
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('liveUpdates', 'personal');
+        fixture.detectChanges();
+
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        // "Still loading" and "this exercise has no problem statement" are different states: emitting here would
+        // permanently hide the instructions pane in the code editor.
+        expect(emitted).not.toHaveBeenCalled();
+        expect(comp.isLoading()).toBe(true);
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+
+        expect(comp.tasks()).toHaveLength(1);
+        expect(comp.isLoading()).toBe(false);
+    });
+
+    it('scrolls only the statement, keeping the step wizard and the banners pinned', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+
+        // The legacy renderer scrolls `.instructions__content__markdown` and leaves its wizard outside that box. Only
+        // the content child may sit inside the scroll container here, or the chrome scrolls away with the statement.
+        const scrollArea = fixture.nativeElement.querySelector('.ssr-scroll-area');
+        expect(scrollArea.querySelector('jhi-programming-exercise-instruction-ssr-content')).toBeTruthy();
+        expect(scrollArea.querySelector('jhi-programming-exercise-instruction-ssr-step-wizard')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-programming-exercise-instruction-ssr-step-wizard')).toBeTruthy();
+    });
+
     it('emits onNoInstructionsAvailable for an empty problem statement, calls no endpoint and shows no loading indicator', () => {
         const emitted = vi.fn();
         comp.onNoInstructionsAvailable.subscribe(emitted);

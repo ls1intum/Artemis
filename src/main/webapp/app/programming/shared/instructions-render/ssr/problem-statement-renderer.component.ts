@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -20,11 +20,14 @@ import { ProgrammingExerciseInstructionSsrComponent, SsrLiveUpdates } from 'app/
     templateUrl: './problem-statement-renderer.component.html',
     styleUrls: ['./problem-statement-renderer.component.scss'],
     imports: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionSsrComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProblemStatementRendererComponent {
     private featureToggleService = inject(FeatureToggleService);
 
-    readonly exercise = input.required<ProgrammingExercise>();
+    // Optional, mirroring both renderers: several hosts bind a class field that is undefined until the exercise has
+    // loaded, and `input.required` would not catch that anyway (it only checks that the binding is present).
+    readonly exercise = input<ProgrammingExercise>();
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly liveUpdates = input<SsrLiveUpdates>('none');
@@ -37,7 +40,7 @@ export class ProblemStatementRendererComponent {
     // app.config.ts, which awaits ProfileService.loadProfileInfo() (and, inside it, initializeFeatureToggles(...)
     // with the real server-provided feature list) before Angular bootstraps any component. By the time this
     // component's constructor subscribes below, the underlying BehaviorSubject already holds the real toggle state,
-    // not defaultActiveFeatureState's "every feature active" default — so this Observable's first (synchronous)
+    // not defaultActiveFeatureState's "every feature active" default, so this Observable's first (synchronous)
     // emission is already correct, and `initialValue: false` below is never actually observed in production.
     // It stays as a defensive fail-closed default (prefer the legacy renderer) in case that guarantee ever breaks,
     // and it keeps `ssrEnabled` typed as `boolean` instead of `boolean | undefined`.
