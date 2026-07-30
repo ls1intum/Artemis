@@ -46,7 +46,11 @@ public class SandboxBuildCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(SandboxBuildCommandService.class);
 
-    private static final Pattern MAVEN_TEST_PHASE = Pattern.compile("(?s)^(\\s*(?:cd\\s+[^\\n]+\\n)?\\s*mvn\\s+)(.*?)(?<![\\w-])test(?![\\w-])([^\\n;&|]*)\\s*$");
+    private static final Pattern MAVEN_TEST_PHASE = Pattern
+            .compile("(?s)^(\\s*(?:cd\\s+[^\\n;&|]+\\n)?\\s*mvn\\s+)((?:-[^\\s;&|]+\\s+)*(?:clean\\s+)?)test((?:\\s+-[^\\s;&|]+)*)\\s*$");
+
+    private static final Pattern MAVEN_STATIC_ANALYSIS_PHASE = Pattern
+            .compile("(?s)^\\s*(?:cd\\s+[^\\n]+\\n)?\\s*mvn\\s+[^\\n;&|]*(?:spotbugs:spotbugs|checkstyle:checkstyle|pmd:pmd|pmd:cpd)[^\\n;&|]*\\s*$");
 
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
@@ -268,6 +272,7 @@ public class SandboxBuildCommandService {
      */
     private static String buildIsolatedJavaPhaseSection(BuildRecipe recipe, ProgrammingExercise exercise) {
         List<String> setupPhases = new ArrayList<>();
+        List<String> staticAnalysisPhases = new ArrayList<>();
         List<MavenTestPhase> testPhases = new ArrayList<>();
         boolean reachedTests = false;
         for (String phase : recipe.phases()) {
@@ -275,6 +280,9 @@ public class SandboxBuildCommandService {
             if (split != null) {
                 reachedTests = true;
                 testPhases.add(split);
+            }
+            else if (MAVEN_STATIC_ANALYSIS_PHASE.matcher(phase).matches()) {
+                staticAnalysisPhases.add(phase);
             }
             else if (reachedTests) {
                 return "run_phase 'echo \"Source-isolated verification requires compile/setup phases before Maven test phases\" >&2; exit 65'";
@@ -289,7 +297,10 @@ public class SandboxBuildCommandService {
         String setup = buildPhaseSection(setupPhases);
         String compileTests = testPhases.stream().map(MavenTestPhase::compileTests).map(SandboxBuildCommandService::singleQuote).map(command -> "run_phase '" + command + "'")
                 .collect(Collectors.joining("\n"));
-        String staticAnalysis = Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) ? "\nrun_phase 'mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'" : "";
+        if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) && staticAnalysisPhases.isEmpty()) {
+            staticAnalysisPhases.add("mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd");
+        }
+        String staticAnalysis = staticAnalysisPhases.isEmpty() ? "" : "\n" + buildPhaseSection(staticAnalysisPhases);
         String executeTests = testPhases.stream().map(MavenTestPhase::executeTests).map(SandboxBuildCommandService::singleQuote).map(command -> "run_phase '" + command + "'")
                 .collect(Collectors.joining("\n"));
         return setup + "\n" + compileTests + staticAnalysis + """

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -300,6 +301,23 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void authoritativeJavaBuild_preservesTheResolvedStaticAnalysisPhaseBeforeSourceRemoval() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        java.setStaticCodeAnalysisEnabled(true);
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn -B clean compile", null, false, List.of());
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn -B test", null, false, List.of());
+        String scaCommand = "mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd";
+        BuildPhaseDTO sca = new BuildPhaseDTO("static_code_analysis", scaCommand, null, true, List.of());
+        String script = factoryWithPhases(List.of(compile, test, sca)).verifyScriptContent(java);
+
+        assertThat(script.split(Pattern.quote(scaCommand), -1)).hasSize(3);
+        assertThat(script.indexOf("test-compile -DskipTests")).isLessThan(script.indexOf(scaCommand));
+        assertThat(script.indexOf(scaCommand)).isLessThan(script.indexOf("-name '*.java' -delete"));
+        assertThat(script.indexOf("-name '*.java' -delete")).isLessThan(script.indexOf("surefire:test"));
+    }
+
+    @Test
     void authoritativeJavaBuild_failsClosedWhenTheResolvedRecipeCannotBeSplitSafely() {
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -307,6 +325,28 @@ class SandboxBuildCommandServiceTest {
         String script = factoryWithPhases(List.of(combined)).verifyScriptContent(java);
 
         assertThat(script).contains("Source-isolated verification requires a standalone Maven test phase", "exit 65");
+    }
+
+    @Test
+    void authoritativeJavaBuild_rewritesOnlyTheLifecycleGoalNotAnOptionValue() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn -B -Dstage=test test", null, false, List.of());
+        String script = factoryWithPhases(List.of(test)).verifyScriptContent(java);
+
+        assertThat(script).contains("mvn -B -Dstage=test test-compile -DskipTests", "mvn -B -Dstage=test surefire:test").doesNotContain("-Dstage=test-compile");
+    }
+
+    @Test
+    void authoritativeJavaBuild_rejectsQuotedOptionValuesAndTrailingLifecycleGoals() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+
+        String quoted = factoryWithPhases(List.of(new BuildPhaseDTO("test", "mvn -B -DargLine=\"unit test mode\" test", null, false, List.of()))).verifyScriptContent(java);
+        String trailingGoal = factoryWithPhases(List.of(new BuildPhaseDTO("test", "mvn -B test verify", null, false, List.of()))).verifyScriptContent(java);
+
+        assertThat(quoted).contains("Source-isolated verification requires a standalone Maven test phase", "exit 65");
+        assertThat(trailingGoal).contains("Source-isolated verification requires a standalone Maven test phase", "exit 65");
     }
 
     @Test
