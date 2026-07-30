@@ -8,9 +8,8 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionSsrStepWizardComponent>;
     let comp: ProgrammingExerciseInstructionSsrStepWizardComponent;
 
-    // Indices deliberately do not match array position: a click on the middle circle must emit the task's own
-    // server-assigned index (7), not the array position (1) — the assertion below would pass under a buggy
-    // `track $index` implementation if these were sequential, since 0/1/2 are indistinguishable from position.
+    // Indices deliberately do not match array position, so a reorder (see the tracking test below) moves a task
+    // to a different position than its index would suggest.
     const tasks: SsrTask[] = [
         { index: 3, taskName: 'A', testIds: [1], status: 'success', authoredCount: 1, notExecutedCount: 0 },
         { index: 7, taskName: 'B', testIds: [2], status: 'fail', authoredCount: 1, notExecutedCount: 0 },
@@ -50,9 +49,6 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('.stepwizard-step')).toHaveLength(2);
         fixture.nativeElement.querySelectorAll('.stepwizard-circle')[1].click();
         expect(emitted).toHaveBeenCalledWith(duplicates[1]);
-        // The clicked circle sits at array position 1, but its server-assigned index is 9 — asserting the
-        // property directly proves the emission carries the task's own index, not the iteration position.
-        expect(emitted.mock.calls[0][0].index).toBe(9);
     });
 
     it('emits the selected task on click', () => {
@@ -61,11 +57,9 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         fixture.componentRef.setInput('tasks', tasks);
         fixture.detectChanges();
 
-        // Middle circle is at array position 1, whose task carries index 7 (not 1).
         fixture.nativeElement.querySelectorAll('.stepwizard-circle')[1].click();
 
         expect(emitted).toHaveBeenCalledWith(tasks[1]);
-        expect(emitted.mock.calls[0][0].index).toBe(7);
     });
 
     it('renders nothing without tasks', () => {
@@ -73,5 +67,24 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelectorAll('.stepwizard-step')).toHaveLength(0);
+    });
+
+    // A click-and-assert test can never distinguish `track task.index` from `track $index`: whichever task
+    // object backs a given array position in the *current* render is emitted regardless of the track key — the
+    // key only governs whether Angular reuses or recreates the underlying DOM node across a re-render. So this
+    // test observes the one thing `track` actually controls: node identity across a reorder. Under
+    // `track task.index`, moving a task to a new array position moves its existing button node with it; under
+    // `track $index`, the node stays at its position and merely gets new content applied to it.
+    it('keeps a task circle bound to its own DOM node when its array position changes', () => {
+        fixture.componentRef.setInput('tasks', tasks);
+        fixture.detectChanges();
+
+        const firstNode = fixture.nativeElement.querySelectorAll('.stepwizard-circle')[0];
+
+        // Swap the first two tasks: the task previously at position 0 (index 3) now sits at position 1.
+        fixture.componentRef.setInput('tasks', [tasks[1], tasks[0], tasks[2]]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('.stepwizard-circle')[1]).toBe(firstNode);
     });
 });
