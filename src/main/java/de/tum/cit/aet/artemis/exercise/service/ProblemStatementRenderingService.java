@@ -413,11 +413,11 @@ public class ProblemStatementRenderingService {
         boolean anyNotExecuted = hasUnresolvedRefs;
         for (Long testId : testIds) {
             TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail == null) {
-                anyNotExecuted = true;
-            }
-            else if (!detail.passed()) {
-                anyFailed = true;
+            switch (TestFeedbackLookup.outcomeOf(detail)) {
+                case FAILED -> anyFailed = true;
+                case NOT_EXECUTED -> anyNotExecuted = true;
+                case PASSED -> {
+                }
             }
         }
         if (anyFailed) {
@@ -435,8 +435,7 @@ public class ProblemStatementRenderingService {
         }
         int success = 0;
         for (Long testId : testIds) {
-            TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail != null && detail.passed()) {
+            if (TestFeedbackLookup.outcomeOf(testResults.get(testId)) == TestOutcome.PASSED) {
                 success++;
             }
         }
@@ -635,7 +634,7 @@ public class ProblemStatementRenderingService {
         }
         String prefix = "exercise.problemStatement.modal.";
         Map<String, String> i18n = new LinkedHashMap<>();
-        for (String key : List.of("feedbackTitle", "close", "score", "points", "of", "submitted", "commit", "failedTests", "passedTests")) {
+        for (String key : List.of("feedbackTitle", "close", "score", "points", "of", "submitted", "commit", "failedTests", "passedTests", "notExecutedTests")) {
             i18n.put(key, messageSource.getMessage(prefix + key, null, key, locale));
         }
         try {

@@ -139,8 +139,9 @@
         const result = resultSummaryOf(container);
         const isDark = container && container.classList && container.classList.contains(DARK_CONTAINER_CLASS);
 
-        const passed = feedback.filter((item) => item.passed);
-        const failed = feedback.filter((item) => !item.passed);
+        const passed = feedback.filter((item) => item.passed === true);
+        const failed = feedback.filter((item) => item.passed === false);
+        const notExecuted = feedback.filter((item) => item.passed !== true && item.passed !== false);
 
         const backdrop = buildBackdrop(isDark);
         const { modal, body } = buildModalShell(taskName, isDark);
@@ -158,6 +159,9 @@
 
         if (failed.length > 0) {
             body.appendChild(buildFeedbackGroup(t('failedTests', 'Failed Tests'), failed, 'failed'));
+        }
+        if (notExecuted.length > 0) {
+            body.appendChild(buildFeedbackGroup(t('notExecutedTests', 'Not Executed Tests'), notExecuted, 'not-executed'));
         }
         if (passed.length > 0) {
             body.appendChild(buildFeedbackGroup(t('passedTests', 'Passed Tests'), passed, 'passed'));

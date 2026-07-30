@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,22 +50,24 @@ public final class PlantUmlTaskColorResolver {
      * @return PlantUML source with test-color tokens resolved
      */
     public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        Map<String, TestFeedbackInputDTO> byName = buildByNameLookup(testResults);
+        TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
 
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
+            String color = colorFor(lookup, match.group(1));
             return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
         });
         // Text coloring must be checked before plain arrow/element coloring to avoid partial matches.
-        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#text:" + color);
-        });
-        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#" + color);
-        });
+        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#text:" + colorFor(lookup, match.group(1))));
+        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#" + colorFor(lookup, match.group(1))));
         return resolved;
+    }
+
+    private static String colorFor(TestFeedbackLookup lookup, String testRef) {
+        return switch (lookup.outcomeOf(testRef)) {
+            case PASSED -> "green";
+            case FAILED -> "red";
+            case NOT_EXECUTED -> "grey";
+        };
     }
 
     /**
@@ -78,30 +79,5 @@ public final class PlantUmlTaskColorResolver {
      */
     public static String stripTestIdWrappers(String text) {
         return TESTID_PATTERN.matcher(text).replaceAll("$1");
-    }
-
-    private static Map<String, TestFeedbackInputDTO> buildByNameLookup(@Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        if (testResults == null) {
-            return Map.of();
-        }
-        Map<String, TestFeedbackInputDTO> byName = new HashMap<>();
-        for (TestFeedbackInputDTO detail : testResults.values()) {
-            byName.put(detail.testName(), detail);
-        }
-        return byName;
-    }
-
-    private static String resolveColor(String testRef, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> byName) {
-        if (testResults == null) {
-            return "grey";
-        }
-        Matcher idMatcher = TESTID_PATTERN.matcher(testRef);
-        if (idMatcher.matches()) {
-            long testId = Long.parseLong(idMatcher.group(1));
-            TestFeedbackInputDTO detail = testResults.get(testId);
-            return detail == null ? "grey" : detail.passed() ? "green" : "red";
-        }
-        TestFeedbackInputDTO detail = byName.get(testRef);
-        return detail == null ? "grey" : detail.passed() ? "green" : "red";
     }
 }

@@ -8,6 +8,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TestFeedbackInputDTO(@NotNull Long testId, @NotNull @Size(max = 500) String testName, boolean passed, @Nullable @Size(max = 5000) String message,
+public record TestFeedbackInputDTO(@NotNull Long testId, @NotNull @Size(max = 500) String testName, @Nullable Boolean passed, @Nullable @Size(max = 5000) String message,
         @Nullable Double credits) {
 }

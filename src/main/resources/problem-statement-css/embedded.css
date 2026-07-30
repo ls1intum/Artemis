@@ -324,6 +324,11 @@ i.fa.artemis-icon-no-result {
     color: var(--artemis-modal-danger-color);
 }
 
+.artemis-feedback-group--not-executed .artemis-feedback-group__header {
+    background: var(--secondary, #6c757d);
+    color: #fff;
+}
+
 .artemis-feedback-group__arrow {
     font-size: 11px;
     margin-right: 6px;

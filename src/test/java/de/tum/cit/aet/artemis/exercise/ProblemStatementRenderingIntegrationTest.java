@@ -248,6 +248,18 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderNullPassedAsNotExecuted() throws Exception {
+        var feedback = new TestFeedbackInputDTO(1L, "testA", null, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Task A](<testid>1</testid>)", List.of(feedback), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"not-executed\"");
+        assertThat(result.html()).doesNotContain("data-test-status=\"fail\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLocalizeNoResultInGerman() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "de", false, false, false, null);
 
@@ -344,6 +356,18 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).doesNotContain("testsColor");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldColorPlantUmlGreyForNullPassed() throws Exception {
+        String markdown = "@startuml\nclass A #testsColor(<testid>1</testid>)\n@enduml";
+        var feedback = new TestFeedbackInputDTO(1L, "testA", null, null, null);
+        var body = new ProblemStatementRenderRequestDTO(markdown, List.of(feedback), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<svg");
+    }
+
     // --- Locale ---
 
     @Test
@@ -405,6 +429,23 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     // --- Interactive toggle ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExposeNullVerdictAndNeutralGroupLabelForInteractiveScript() throws Exception {
+        var notExecuted = new TestFeedbackInputDTO(1L, "testA", null, "no run", null);
+        var failed = new TestFeedbackInputDTO(2L, "testB", false, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>,<testid>2</testid>)", List.of(notExecuted, failed), null, "en", false, true, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The script distinguishes the three buckets by `passed === true / === false / neither`, so a null verdict
+        // must be serialized as null rather than being coerced to false or dropped.
+        assertThat(result.html()).contains("&quot;passed&quot;:null");
+        assertThat(result.html()).contains("&quot;passed&quot;:false");
+        assertThat(result.interactiveScript()).contains("notExecutedTests");
+        assertThat(result.html()).contains("data-test-status=\"fail\"");
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
