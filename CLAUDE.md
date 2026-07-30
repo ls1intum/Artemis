@@ -9,7 +9,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ## Tech Stack
 
 - **Server**: Spring Boot 4.1 (Java 25), MySQL, Hibernate, Hazelcast
-- **Client**: Angular 21, TypeScript, SCSS
+- **Client**: Angular 22, TypeScript, SCSS
 - **Build**: Gradle 9.6, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
 - **Testing**: JUnit 6, Vitest, Playwright
 
