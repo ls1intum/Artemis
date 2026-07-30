@@ -14,6 +14,7 @@ import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
@@ -69,7 +70,7 @@ export class LearningPathStudentPageComponent {
                 this.learningPath.set(learningPath);
             }
             await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
-            this.learningPath.update((learningPath) => ({ ...learningPath!, startedByStudent: true }));
+            this.learningPath.update((learningPath) => cloneWith(learningPath!, { startedByStudent: true }));
         } catch (error) {
             this.alertService.error(getErrorMessage(error));
         } finally {
