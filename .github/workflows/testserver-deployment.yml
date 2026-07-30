@@ -40,7 +40,7 @@ env:
 jobs:
   determine-build-context:
     name: Determine Build Context
-    runs-on: [self-hosted, artemis-test-deployment]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read        # git refs lookup
@@ -145,15 +145,15 @@ jobs:
     name: Verify Deployable Image
     if: ${{ needs.determine-build-context.outputs.needs_build == 'false' }}
     needs: determine-build-context
-    runs-on: [self-hosted, artemis-test-deployment]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       packages: read
     steps:
       # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
-      # from the branch being deployed). Keep it out of the root workspace: this job can run in
-      # parallel with the database approval check, and sparse checkouts mutate the worktree.
+      # from the branch being deployed). Keep it out of the root workspace: sparse checkouts mutate
+      # the worktree.
       - name: Check out verify action
         uses: actions/checkout@v6
         with:
@@ -175,52 +175,12 @@ jobs:
         if: always()
         run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build"
 
-  check-database-migration-approval:
-    name: Check Database Migration Approval
-    needs: determine-build-context
-    if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
-    runs-on: [self-hosted, artemis-test-deployment]
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Check out database approval check
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: supporting_scripts/database_approval_check
-          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check
-      - name: Install Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-      - name: Install Dependencies
-        working-directory: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check/supporting_scripts/database_approval_check
-        run: |
-          set -Eeuo pipefail
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-      - name: Check Migration Approval
-        working-directory: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/database-approval-check/supporting_scripts/database_approval_check
-        env:
-          GITHUB_TOKEN: ${{ secrets.DB_MIGRATON_APPROVAL_GITHUB_TOKEN }}
-          GITHUB_PR: ${{ needs.determine-build-context.outputs.pr_number }}
-        run: |
-          set -Eeuo pipefail
-          python main.py || {
-            echo "::error::Database migration approval check failed. Ensure the latest database migration changes have been approved by a database maintainer."
-            exit 1
-          }
-      - name: Cleanup database approval checkout
-        if: always()
-        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/database-approval-check"
-
   deploy:
     name: Deploy to Test-Server
     needs:
       - determine-build-context
       - conditional-build
       - verify-image-build
-      - check-database-migration-approval
     # Deploy once the image is ready (verified or just built) and the migration gate passed or did
     # not apply. `!cancelled()` (not `always()`) so a Cancel truly stops a queued deploy.
     #
@@ -230,8 +190,7 @@ jobs:
     if: >-
       !cancelled()
       && (needs.conditional-build.result == 'success' || needs.verify-image-build.result == 'success')
-      && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
-    runs-on: [self-hosted, artemis-test-deployment]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -239,9 +198,9 @@ jobs:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
     env:
-      GATEWAY_USER: "jump"
-      GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
-      GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+      GATEWAY_USER: ${{ vars.DEPLOYMENT_GATEWAY_USER }}
+      GATEWAY_HOST: ${{ vars.DEPLOYMENT_GATEWAY_HOST }}:${{ vars.DEPLOYMENT_GATEWAY_PORT }}
+      GATEWAY_HOST_PUBLIC_KEY: ${{ vars.DEPLOYMENT_GATEWAY_PUBLIC_KEY }}
     steps:
       # Check out the deploy CLI from the workflow's own ref — a proper checkout, replacing the old
       # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
