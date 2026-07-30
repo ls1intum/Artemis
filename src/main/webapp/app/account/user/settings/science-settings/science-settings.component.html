@@ -1,42 +1,45 @@
 <div>
-    <h2>
-        <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-    </h2>
+    <h2>Science data collection</h2>
     <div class="d-flex userSettings-info">
         <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-        <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
+        <span class="ps-1">
+            Science data collection is voluntary and configured per course. You can change your decision or delete interaction data for a course at any time.
+        </span>
     </div>
-    @if (!featureToggleActive()) {
-        <div class="d-flex mt-2 userSettings-info">
-            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
+</div>
+
+<div class="list-group d-block mt-3">
+    @for (consent of consents(); track consent.courseId) {
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="fw-medium">{{ consent.courseTitle }}</div>
+                    <div class="text-muted small">
+                        {{ consent.courseShortName }}
+                        @if (!consent.scienceEnabled) {
+                            <span> | science collection currently disabled</span>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="consent.active === true"
+                            [disabled]="!consent.scienceEnabled"
+                            id="science-course-{{ consent.courseId }}"
+                            (click)="toggleConsent(consent)"
+                        />
+                        <label class="form-check-label" for="science-course-{{ consent.courseId }}">Contribute</label>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteData(consent)">
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+            </div>
         </div>
+    } @empty {
+        <div class="list-group-item">No courses are configured for science data collection.</div>
     }
 </div>
-@if (userSettings()) {
-    <div class="list-group d-block">
-        @for (settingGroup of userSettings().groups; track settingGroup) {
-            <div *jhiHasAnyAuthority="settingGroup.restrictionLevels">
-                @for (setting of settingGroup.settings; track setting) {
-                    <div class="list-group-item">
-                        <div class="form-check form-switch">
-                            <input
-                                type="checkbox"
-                                class="form-check-input"
-                                [checked]="setting.active"
-                                id="{{ setting.settingId }}"
-                                value="{{ setting.active }}"
-                                (click)="toggleSetting($event)"
-                            />
-                            <label class="form-check-label" for="{{ setting.settingId }}">
-                                <span class="fw-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
-                                {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
-                            </label>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-}

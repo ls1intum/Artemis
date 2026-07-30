@@ -78,3 +78,19 @@
 </ng-template>
 
 <jhi-course-unenrollment-modal [(visible)]="showUnenrollModal" [course]="course()" />
+
+@if (showScienceConsentModal()) {
+    <div class="science-consent-backdrop">
+        <div class="science-consent-dialog" role="dialog" aria-modal="true">
+            <h3>Contribute course interaction data?</h3>
+            <p>
+                {{ scienceConsentCourse()?.courseTitle }} uses voluntary science data collection for educational research and platform improvement. Artemis records selected course
+                interaction events only if you agree. You can withdraw consent or delete your course interaction data later in user settings.
+            </p>
+            <div class="science-consent-actions">
+                <button type="button" class="btn btn-outline-secondary" (click)="declineScienceConsent()">Do not contribute</button>
+                <button type="button" class="btn btn-primary" (click)="acceptScienceConsent()">Contribute data</button>
+            </div>
+        </div>
+    </div>
+}

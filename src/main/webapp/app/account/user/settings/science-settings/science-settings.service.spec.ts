@@ -8,7 +8,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
-import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceSettingsService, ScienceSettingsStorageEntry } from 'app/account/user/settings/science-settings/science-settings.service';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Setting } from 'app/account/user/settings/user-settings.model';
@@ -165,7 +165,7 @@ describe('ScienceSettingsService', () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
 
         // The subject should have emitted the settings
-        let receivedSettings: ScienceSetting[] = [];
+        let receivedSettings: ScienceSettingsStorageEntry[] = [];
         scienceSettingsService.getScienceSettingsUpdates().subscribe((settings) => {
             receivedSettings = settings;
         });

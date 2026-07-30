@@ -1,0 +1,79 @@
+.admin-science-title {
+    margin: 0;
+}
+
+.admin-science-section {
+    margin-bottom: 2rem;
+}
+
+.admin-science-inline-form {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 28rem;
+    margin-bottom: 1rem;
+
+    input {
+        flex: 1;
+    }
+}
+
+.admin-science-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    th {
+        font-weight: 600;
+        background: var(--surface-ground);
+    }
+}
+
+.admin-science-export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-weight: 600;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        font-weight: 400;
+    }
+}
+
+.admin-science-purpose {
+    grid-column: 1 / -1;
+}
+
+.admin-science-muted {
+    color: var(--secondary);
+}
+
+.admin-science-event-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+}
+
+.admin-science-export-button {
+    margin-top: 1rem;
+}
+
+.admin-science-checksum {
+    max-width: 18rem;
+    overflow-wrap: anywhere;
+}

@@ -44,6 +44,14 @@ const childRoutes: Routes = [
         },
     },
     {
+        path: 'science',
+        loadComponent: () => import('app/admin/science/admin-science.component').then((m) => m.AdminScienceComponent),
+        data: {
+            pageTitle: 'Science data collection',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+    },
+    {
         path: 'health',
         loadComponent: () => import('app/admin/health/health.component').then((m) => m.HealthComponent),
         data: {

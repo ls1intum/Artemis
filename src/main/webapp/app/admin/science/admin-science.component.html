@@ -1,0 +1,123 @@
+<div>
+    <h5 *adminTitleBarTitle class="admin-science-title">Science data collection</h5>
+
+    <section class="admin-science-section">
+        <h3>Course activation</h3>
+        <div class="admin-science-inline-form">
+            <input type="number" pInputText placeholder="Course ID" [(ngModel)]="courseIdToEnable" />
+            <button type="button" pButton (click)="enableCourse()">
+                <fa-icon [icon]="faPlus" />
+                Enable
+            </button>
+        </div>
+
+        @if (loading()) {
+            <fa-icon [icon]="faSpinner" animation="spin" />
+        } @else {
+            <table class="admin-science-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Short name</th>
+                        <th>Status</th>
+                        <th>Last changed</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (course of courses(); track course.courseId) {
+                        <tr>
+                            <td>{{ course.courseTitle }} ({{ course.courseId }})</td>
+                            <td>{{ course.courseShortName }}</td>
+                            <td>
+                                @if (course.active) {
+                                    <p-tag severity="success" value="Active" />
+                                } @else {
+                                    <p-tag severity="secondary" value="Inactive" />
+                                }
+                            </td>
+                            <td>{{ course.lastModifiedDate ?? course.createdDate }}</td>
+                            <td>
+                                @if (course.active) {
+                                    <button type="button" pButton severity="secondary" size="small" [outlined]="true" (click)="disableCourse(course)">
+                                        <fa-icon [icon]="faToggleOff" />
+                                        Disable
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="5">No courses have been configured for science collection.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="admin-science-section">
+        <h3>Research CSV export</h3>
+        <p class="admin-science-muted">Exports contain pseudonymized/personal behavioral data. Provide a purpose and narrow filters for every export.</p>
+        <div class="admin-science-export-grid">
+            <label>
+                Course IDs
+                <input type="text" pInputText placeholder="1, 2, 3" [(ngModel)]="exportCourseIds" />
+            </label>
+            <label>
+                From
+                <input type="datetime-local" pInputText [(ngModel)]="exportFrom" />
+            </label>
+            <label>
+                To
+                <input type="datetime-local" pInputText [(ngModel)]="exportTo" />
+            </label>
+            <label class="admin-science-purpose">
+                Purpose
+                <textarea pTextarea rows="3" [(ngModel)]="exportPurpose"></textarea>
+            </label>
+        </div>
+        <div class="admin-science-event-types">
+            @for (eventType of eventTypes; track eventType) {
+                <label>
+                    <input type="checkbox" (change)="toggleEventType(eventType, $any($event.target).checked)" />
+                    {{ eventType }}
+                </label>
+            }
+        </div>
+        <button type="button" pButton class="admin-science-export-button" (click)="createExport()">
+            <fa-icon [icon]="faDownload" />
+            Create CSV export
+        </button>
+    </section>
+
+    <section class="admin-science-section">
+        <h3>Export audit</h3>
+        <table class="admin-science-table">
+            <thead>
+                <tr>
+                    <th>Created</th>
+                    <th>Admin</th>
+                    <th>Courses</th>
+                    <th>Purpose</th>
+                    <th>Checksum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (audit of audits(); track audit.id) {
+                    <tr>
+                        <td>{{ audit.createdDate }}</td>
+                        <td>{{ audit.createdBy }}</td>
+                        <td>{{ audit.courseFilter }}</td>
+                        <td>{{ audit.purpose }}</td>
+                        <td class="admin-science-checksum">{{ audit.fileChecksum }}</td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="5">No research exports have been created.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>

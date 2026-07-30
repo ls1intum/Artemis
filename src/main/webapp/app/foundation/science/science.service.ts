@@ -5,6 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { User } from 'app/account/user/user.model';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class ScienceService {
@@ -12,6 +13,7 @@ export class ScienceService {
     private featureToggleService = inject(FeatureToggleService);
     private scienceSettingsService = inject(ScienceSettingsService);
     private accountService = inject(AccountService);
+    private router = inject(Router);
 
     private resourceURL = 'api/atlas';
 
@@ -31,19 +33,29 @@ export class ScienceService {
         }
     }
 
-    eventLoggingActive() {
-        return this.featureToggleActive && this.scienceSettingsService.eventLoggingAllowed();
+    eventLoggingActive(courseId?: number) {
+        return this.featureToggleActive && this.scienceSettingsService.eventLoggingAllowed(courseId);
     }
 
     logEvent(type: ScienceEventType, resourceId?: number): void {
-        if (!this.eventLoggingActive()) {
+        const courseId = this.inferCourseId();
+        if (!this.eventLoggingActive(courseId)) {
             return;
         }
         const event = new ScienceEventDTO();
         event.type = type;
+        event.courseId = courseId;
         if (resourceId) {
             event.resourceId = resourceId;
         }
         this.httpClient.put<void>(`${this.resourceURL}/science`, event, { observe: 'response' }).subscribe();
+    }
+
+    private inferCourseId(): number | undefined {
+        const match = this.router.url.match(/\/(?:courses|course-management)\/(\d+)/);
+        if (!match?.[1]) {
+            return undefined;
+        }
+        return Number(match[1]);
     }
 }

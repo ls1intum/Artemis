@@ -227,6 +227,7 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
