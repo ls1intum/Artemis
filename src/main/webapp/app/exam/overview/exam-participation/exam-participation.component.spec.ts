@@ -1633,6 +1633,38 @@ describe('ExamParticipationComponent', () => {
             expect(summarySpy).toHaveBeenCalledOnce();
         });
 
+        it('should clear the error state when the reused component navigates to another exam', () => {
+            // The component instance is reused when only the :examId route parameter changes, so a failure on one exam
+            // must not leave its error message on the next one
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const summaryError = throwError(() => new HttpErrorResponse({ status: 500 }));
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError);
+            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary fails
+            params.next({ courseId: '1', examId: '2' });
+            expect(comp.summaryLoadFailed()).toBe(true);
+
+            // exam B: still active, so it takes the regular loading branch and never touches the summary
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            (activatedRoute as any).firstChild = undefined;
+            comp.testExam.set(false);
+            comp.studentExamId.set(undefined!);
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.summaryLoadFailed()).toBe(false);
+            comp.retryLoadSummary();
+            expect(examParticipationService.loadStudentExamWithExercisesForSummary).toHaveBeenCalledTimes(1);
+        });
+
         it('should repeat the initial test exam load on retry rather than the show-summary request', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };

@@ -239,6 +239,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.studentExamId.set(parseInt(studentExamId, 10));
             }
             this.loadingExam.set(true);
+            // This component is reused when only the :examId parameter changes, so a summary failure on the previous exam
+            // must not leave its error state behind: not every branch below goes through a summary request that resets it
+            this.clearFailedSummaryLoad();
             if (this.testRunId()) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                     next: (studentExam) => {
@@ -288,7 +291,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
-        this.summaryLoadFailed.set(false);
+        this.clearFailedSummaryLoad();
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
                 this.studentExam.set(studentExamWithExercises);
@@ -309,7 +312,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * initial load, so it also has to set up the exam itself; the summary is then displayed by {@link handleStudentExam}.
      */
     private loadTestExamStudentExamForSummary(): void {
-        this.summaryLoadFailed.set(false);
+        this.clearFailedSummaryLoad();
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
             next: (studentExam) => {
                 this.handleStudentExam(studentExam);
@@ -331,6 +334,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.showExamSummary.set(false);
         this.summaryLoadFailed.set(true);
         this.loadingExam.set(false);
+    }
+
+    /**
+     * Drops the retryable error state so that a message cannot outlive the request that produced it.
+     */
+    private clearFailedSummaryLoad(): void {
+        this.summaryLoadFailed.set(false);
+        this.retrySummaryLoad = undefined;
     }
 
     /**
