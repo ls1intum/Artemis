@@ -66,7 +66,7 @@ for (const operatingSystemTheme of ['light', 'dark'] satisfies ColorScheme[]) {
 
         for (const toolbarTheme of ['light', 'dark'] satisfies ColorScheme[]) {
             test(`follows the ${toolbarTheme} toolbar theme in AutoDocs`, async ({ page }) => {
-                await page.goto(`/?path=/docs/actions-button--docs&globals=theme:${toolbarTheme}`);
+                await page.goto(`./?path=/docs/actions-button--docs&globals=theme:${toolbarTheme}`);
                 const frame = await findPreviewFrame(page);
                 await expectTheme(frame, toolbarTheme);
             });
@@ -74,7 +74,7 @@ for (const operatingSystemTheme of ['light', 'dark'] satisfies ColorScheme[]) {
 
         if (operatingSystemTheme === 'light') {
             test('updates AutoDocs when the toolbar theme changes', async ({ page }) => {
-                await page.goto('/?path=/docs/actions-button--docs&globals=theme:light');
+                await page.goto('./?path=/docs/actions-button--docs&globals=theme:light');
                 const frame = await findPreviewFrame(page);
                 await expectTheme(frame, 'light');
                 const lightComponent = (await readAppearance(frame)).component;

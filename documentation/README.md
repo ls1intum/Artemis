@@ -23,9 +23,12 @@ This command starts a local development server and opens up a browser window. Mo
 pnpm run build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+This command generates the Docusaurus site in the `build` directory. The deployment workflow also
+builds the TUM UI Storybook from `packages/tum-ui` and adds it at `/tum-ui/` before publishing the
+site.
 
 To test the build locally, you can run:
+
 ```bash
 pnpm run serve
 ```
@@ -34,4 +37,6 @@ pnpm run serve
 
 We are using GitHub pages to host the website.
 
-See [deploy-documentation.yml](../.github/workflows/deploy-documentation.yml) for the deployment configuration.
+The develop-branch deployment is defined in [ci.yml](../.github/workflows/ci.yml).
+[deploy-documentation.yml](../.github/workflows/deploy-documentation.yml) provides the manual
+redeploy path; both use [ci-docs.yml](../.github/workflows/ci-docs.yml) to build the same artifact.

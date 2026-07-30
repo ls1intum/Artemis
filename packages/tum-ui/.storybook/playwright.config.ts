@@ -9,13 +9,13 @@ export default defineConfig({
     reporter: 'list',
     outputDir: resolve(process.cwd(), '../../build/test-results/tum-ui-storybook'),
     use: {
-        baseURL: 'http://127.0.0.1:6106',
+        baseURL: 'http://127.0.0.1:6106/tum-ui/',
         trace: 'retain-on-failure',
     },
     webServer: {
-        command: 'pnpm exec vite preview --outDir ../../build/storybook/tum-ui --host 127.0.0.1 --port 6106 --strictPort',
+        command: 'pnpm exec vite preview --outDir ../../build/storybook --host 127.0.0.1 --port 6106 --strictPort',
         cwd: process.cwd(),
-        url: 'http://127.0.0.1:6106',
+        url: 'http://127.0.0.1:6106/tum-ui/',
         reuseExistingServer: false,
     },
 });

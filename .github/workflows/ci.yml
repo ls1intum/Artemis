@@ -103,6 +103,10 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
               - 'documentation/**'
+              - 'packages/tum-ui/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
             has_i18n:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-translation.yml'
