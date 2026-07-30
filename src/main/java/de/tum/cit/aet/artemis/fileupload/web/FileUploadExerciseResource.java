@@ -372,8 +372,13 @@ public class FileUploadExerciseResource {
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
-        if (!Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
+
+        if (fileUploadExerciseBeforeUpdate.isCourseExercise() && !Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
             throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
+        }
+        if (fileUploadExerciseBeforeUpdate.isExamExercise()
+                && !Objects.equals(fileUploadExerciseBeforeUpdate.getExerciseGroup().getId(), updateFileUploadExerciseDTO.exerciseGroupId())) {
+            throw new BadRequestAlertException("The exercise group can not be changed.", ENTITY_NAME, "exerciseGroupIdInvalid");
         }
 
         // Check that the user is authorized to update the exercise
