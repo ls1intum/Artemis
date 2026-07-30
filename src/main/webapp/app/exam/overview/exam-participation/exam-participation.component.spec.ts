@@ -602,9 +602,10 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = exam;
         studentExam.startedDate = dayjs();
         studentExam.workingTime = 3600;
-        comp.exam.set(exam);
 
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.exam.set(exam);
+        });
 
         expect(comp.individualStudentEndDate()).toEqual(exam.startDate.add(exam.workingTime, 'seconds'));
     });
@@ -618,9 +619,10 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = exam;
         studentExam.startedDate = dayjs();
         studentExam.workingTime = 3600;
-        comp.exam.set(exam);
 
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.exam.set(exam);
+        });
 
         expect(comp.individualStudentEndDate()).toEqual(studentExam.startedDate.add(studentExam.workingTime, 'seconds'));
     });
@@ -2074,6 +2076,8 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should show the real exam missed submission warning', () => {
+        fixture.changeDetectorRef.detectChanges();
+
         comp.exam.set(new Exam());
         comp.exam().examMode = ExamMode.REAL;
         comp.studentExam.set(new StudentExam());
