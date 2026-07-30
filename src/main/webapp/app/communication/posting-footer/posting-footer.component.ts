@@ -10,11 +10,20 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface PostGroup {
     author: User | undefined;
     posts: AnswerPost[];
+}
+
+/**
+ * Returns a new {@link AnswerPost} reference differing only in `isConsecutive`. See the equivalent helper in
+ * conversation-messages.component.ts: grouping must not deep-copy the answers it renders.
+ */
+function withConsecutiveFlag(answerPost: AnswerPost, isConsecutive: boolean): AnswerPost {
+    const flagged = AnswerPost.withSameValues(answerPost);
+    flagged.isConsecutive = isConsecutive;
+    return flagged;
 }
 
 @Component({
@@ -101,7 +110,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
         const groups: PostGroup[] = [];
         let currentGroup: PostGroup = {
             author: sortedPosts[0].author,
-            posts: [cloneWith(sortedPosts[0], { isConsecutive: false })],
+            posts: [withConsecutiveFlag(sortedPosts[0], false)],
         };
 
         for (let i = 1; i < sortedPosts.length; i++) {
@@ -114,12 +123,12 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push(cloneWith(currentPost, { isConsecutive: true })); // consecutive post
+                currentGroup.posts.push(withConsecutiveFlag(currentPost, true)); // consecutive post
             } else {
                 groups.push(currentGroup);
                 currentGroup = {
                     author: currentPost.author,
-                    posts: [cloneWith(currentPost, { isConsecutive: false })],
+                    posts: [withConsecutiveFlag(currentPost, false)],
                 };
             }
         }

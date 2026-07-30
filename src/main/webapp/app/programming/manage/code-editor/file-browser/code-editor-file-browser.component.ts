@@ -494,13 +494,34 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * @param node Tree node
      */
     compressTree(node: FileTreeItem): FileTreeItem {
+        // The replacement nodes are built field by field rather than copied: compressTree already recurses, so copying
+        // the subtree at every level would be quadratic in the tree depth (a deep Java package chain is the common case).
         // If the node has only one child and that child is a folder, we can compress the tree.
         if (node.children && node.children.length === 1 && this.repositoryFiles()[node.children[0].value] === FileType.FOLDER) {
-            return this.compressTree(cloneWith(node.children[0], { text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file }));
+            const onlyChild = node.children[0] as FileTreeItem;
+            return this.compressTree({
+                text: node.text + '/' + onlyChild.text,
+                value: onlyChild.value,
+                disabled: onlyChild.disabled,
+                checked: onlyChild.checked,
+                collapsed: onlyChild.collapsed,
+                children: onlyChild.children,
+                folder: node.folder,
+                file: node.file,
+            });
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return cloneWith(node, { children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)) });
+            return {
+                text: node.text,
+                value: node.value,
+                disabled: node.disabled,
+                checked: node.checked,
+                collapsed: node.collapsed,
+                children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)),
+                folder: node.folder,
+                file: node.file,
+            };
         }
         // If the node has no children, there is nothing to compress.
         else {

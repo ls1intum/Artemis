@@ -33,7 +33,12 @@ export function deepClone<T>(obj: T): T {
  * signal rather than cloning it into a dead copy.
  *
  * The result is typed `T & U` so a call may add fields the source type does not declare, which object spread also
- * allowed: `cloneWith(exercise, { isAtLeastTutor: true })`.
+ * allowed: `cloneWith(exercise, { isAtLeastTutor: true })`. Unlike spread, an override that *changes* a field's type
+ * collapses that field to `never` (`T & U` cannot narrow); assign such a field after the call, or build the object
+ * explicitly.
+ *
+ * Only string keys of `overrides` are applied (`Object.keys`), so symbol-keyed properties are dropped — spread and
+ * `Object.assign` would copy them.
  *
  * @param source The object to copy
  * @param overrides The properties to set on the copy
@@ -61,6 +66,9 @@ export function cloneWith<T extends object, U extends object>(source: T, overrid
  *
  * Unlike `Object.assign`, the copied values are detached from the sources, so later edits to the model cannot
  * reach back into the DTO. Later sources win over earlier ones, as with `Object.assign`.
+ *
+ * Note the asymmetry with {@link cloneWith}, which applies its overrides *by reference*: every source given here is
+ * cloned, so do not use `hydrate` to attach a value whose identity must survive. Only string keys are copied.
  *
  * `target` is mutated and returned. Use this only when populating an object you just created, or when mutating
  * in place is the deliberate intent; to derive a modified copy of an existing object use `cloneWith` instead,

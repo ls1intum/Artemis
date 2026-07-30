@@ -617,10 +617,19 @@ private commitCourse(): void {
 explicitly, field by field — `MetisService.rebuildPostReference` is the example — rather than reaching for a shallow
 copy.
 
-One more thing worth knowing when you do clone: lodash returns the *original reference* for values whose tag it does
-not recognise (`File`, `Blob`, DOM nodes, functions and therefore signals), so those survive a `deepClone` untouched.
-A class instance lodash rebuilds from its prototype plus a shallow property copy does not — an RxJS `Subject` cloned
-that way looks alive yet is disconnected from the original's subscribers.
+Two things worth knowing when you do clone:
+
+- **Nested** values whose tag lodash does not recognise (`File`, `Blob`, `Error`, DOM nodes, functions and therefore
+  signals) are carried over by reference, so they survive a `deepClone` untouched. That does **not** hold at the top
+  level: `deepClone(someFile)` returns `{}`, not the file. Clone the object that holds it, never the value itself.
+- A class instance lodash rebuilds from its prototype plus a shallow property copy is not so lucky — an RxJS `Subject`
+  cloned that way looks alive yet is disconnected from the original's subscribers.
+
+`equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
+the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+`Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
+producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
+`Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.
 
 Assembling a view object from parts that must stay reference-identical also reads better as explicit field
 assignments than as a copy — see the `GradingComponent.gradingScale` getter.

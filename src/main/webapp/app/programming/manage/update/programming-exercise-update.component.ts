@@ -63,7 +63,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -1649,58 +1649,63 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly programmingExerciseCreationConfig: Partial<ProgrammingExerciseCreationConfig> = {};
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
-        return hydrate(this.programmingExerciseCreationConfig, {
-            isImportFromFile: this.isImportFromFile,
-            isImportFromSharing: this.isImportFromSharing,
-            isImportFromExistingExercise: this.isImportFromExistingExercise,
-            showSummary: false,
-            isEdit: this.isEdit,
-            isExamMode: this.isExamMode(),
-            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
-            customBuildPlansSupported: this.customBuildPlansSupported,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: EXERCISE_TITLE_NAME_PATTERN,
-            shortNamePattern: this.shortNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
-            // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
-            exerciseCategories: this.exerciseCategories ?? [],
-            existingCategories: this.existingCategories,
-            updateCategories: this.categoriesChanged,
-            modePickerOptions: this.modePickerOptions,
-            withDependencies: this.withDependencies,
-            onWithDependenciesChanged: this.withDependenciesChanged,
-            packageNameRequired: this.packageNameRequired,
-            packageNamePattern: this.packageNamePattern,
-            supportedLanguages: this.supportedLanguages,
-            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
-            onProgrammingLanguageChange: this.programmingLanguageChanged,
-            projectTypes: this.projectTypes,
-            selectedProjectType: this.selectedProjectType,
-            onProjectTypeChange: this.projectTypeChanged,
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
-            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
-            maxPenaltyPattern: this.maxPenaltyPattern,
-            problemStatementLoaded: this.problemStatementLoaded,
-            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
-            hasUnsavedChanges: this.hasUnsavedChanges,
-            rerenderSubject: this.rerenderSubject.asObservable(),
-            validIdeSelection: this.validIdeSelection,
-            validOnlineIdeSelection: this.validOnlineIdeSelection,
-            inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.importOptions.recreateBuildPlans,
-            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.importOptions.updateTemplate,
-            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            buildPlanLoaded: this.buildPlanLoaded,
-        });
+        // The fields are assigned onto the cached object one by one, deliberately by reference. A copy helper is
+        // wrong here: this getter runs on every change-detection pass (five template bindings use it), and handing
+        // out detached copies of the live component state would give `modePickerOptions`, `exerciseCategories`, the
+        // validation RegExps and `rerenderSubject` a fresh identity every pass — which re-creates the `track`-by-identity
+        // mode picker (NG0956), re-seeds the category selector's local working copy, and disconnects the Subject.
+        const config = this.programmingExerciseCreationConfig;
+        config.isImportFromFile = this.isImportFromFile;
+        config.isImportFromSharing = this.isImportFromSharing;
+        config.isImportFromExistingExercise = this.isImportFromExistingExercise;
+        config.showSummary = false;
+        config.isEdit = this.isEdit;
+        config.isExamMode = this.isExamMode();
+        config.auxiliaryRepositoriesSupported = this.auxiliaryRepositoriesSupported;
+        config.auxiliaryRepositoryDuplicateDirectories = this.auxiliaryRepositoryDuplicateDirectories;
+        config.auxiliaryRepositoryDuplicateNames = this.auxiliaryRepositoryDuplicateNames;
+        config.checkoutSolutionRepositoryAllowed = this.checkoutSolutionRepositoryAllowed;
+        config.customBuildPlansSupported = this.customBuildPlansSupported;
+        config.invalidDirectoryNamePattern = this.invalidDirectoryNamePattern;
+        config.invalidRepositoryNamePattern = this.invalidRepositoryNamePattern;
+        config.titleNamePattern = EXERCISE_TITLE_NAME_PATTERN;
+        config.shortNamePattern = this.shortNamePattern;
+        config.updateRepositoryName = this.updateRepositoryName;
+        config.updateCheckoutDirectory = this.updateCheckoutDirectory;
+        config.refreshAuxiliaryRepositoryChecks = this.refreshAuxiliaryRepositoryChecks;
+        // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
+        // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
+        config.exerciseCategories = this.exerciseCategories ?? [];
+        config.existingCategories = this.existingCategories;
+        config.updateCategories = this.categoriesChanged;
+        config.modePickerOptions = this.modePickerOptions;
+        config.withDependencies = this.withDependencies;
+        config.onWithDependenciesChanged = this.withDependenciesChanged;
+        config.packageNameRequired = this.packageNameRequired;
+        config.packageNamePattern = this.packageNamePattern;
+        config.supportedLanguages = this.supportedLanguages;
+        config.selectedProgrammingLanguage = this.selectedProgrammingLanguage;
+        config.onProgrammingLanguageChange = this.programmingLanguageChanged;
+        config.projectTypes = this.projectTypes;
+        config.selectedProjectType = this.selectedProjectType;
+        config.onProjectTypeChange = this.projectTypeChanged;
+        config.sequentialTestRunsAllowed = this.sequentialTestRunsAllowed;
+        config.staticCodeAnalysisAllowed = this.staticCodeAnalysisAllowed;
+        config.onStaticCodeAnalysisChanged = this.staticCodeAnalysisChanged;
+        config.maxPenaltyPattern = this.maxPenaltyPattern;
+        config.problemStatementLoaded = this.problemStatementLoaded;
+        config.templateParticipationResultLoaded = this.templateParticipationResultLoaded;
+        config.hasUnsavedChanges = this.hasUnsavedChanges;
+        config.rerenderSubject = this.rerenderSubject.asObservable();
+        config.validIdeSelection = this.validIdeSelection;
+        config.validOnlineIdeSelection = this.validOnlineIdeSelection;
+        config.inProductionEnvironment = this.inProductionEnvironment;
+        config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
+        config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.updateTemplate = this.importOptions.updateTemplate;
+        config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
+        config.buildPlanLoaded = this.buildPlanLoaded;
+        return config as ProgrammingExerciseCreationConfig;
     }
 
     private updateFormSectionOnIsValidPlagiarismChange() {

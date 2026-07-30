@@ -620,6 +620,8 @@ export class ExerciseReviewCommentService implements OnDestroy {
             if (thread.id !== updatedThread.id) {
                 return thread;
             }
+            // hydrate mutates its target and deep-clones each source, so `deepClone(thread)` is the detached base and
+            // `thread` itself is copied exactly once.
             return hydrate(deepClone(thread), updatedThread, { comments: mergedComments });
         });
     }

@@ -443,51 +443,13 @@ export class MetisService implements OnDestroy {
                         cachedPost.reactions = cachedPost.reactions ?? [];
                         cachedPost.reactions.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = MetisService.rebuildPostReference(cachedPost);
+                        this.cachedPosts[indexToUpdate] = Post.withSameValues(cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
                 }
             }),
         );
-    }
-
-    /**
-     * Builds a new {@link Post} carrying the same values as the given one, assigned field by field.
-     *
-     * The reaction handlers mutate a cached post in place and then need a new top-level reference so the message
-     * re-renders. The nested values are carried over as they are on purpose: deep-cloning them would detach the
-     * author, the answers and the reaction -> post back-reference from the rest of the cache, and would rebuild the
-     * whole post graph on every reaction click.
-     *
-     * @param post The cached post that was just mutated in place.
-     * @returns A new Post instance holding the same values.
-     */
-    private static rebuildPostReference(post: Post): Post {
-        const rebuilt = new Post();
-        rebuilt.id = post.id;
-        rebuilt.referencePostId = post.referencePostId;
-        rebuilt.author = post.author;
-        rebuilt.authorRole = post.authorRole;
-        rebuilt.creationDate = post.creationDate;
-        rebuilt.updatedDate = post.updatedDate;
-        rebuilt.content = post.content;
-        rebuilt.isSaved = post.isSaved;
-        rebuilt.savedPostStatus = post.savedPostStatus;
-        rebuilt.postingType = post.postingType;
-        rebuilt.reactions = post.reactions;
-        rebuilt.hasForwardedMessages = post.hasForwardedMessages;
-        rebuilt.isConsecutive = post.isConsecutive;
-        rebuilt.conversation = post.conversation;
-        rebuilt.title = post.title;
-        rebuilt.answers = post.answers;
-        rebuilt.plagiarismCase = post.plagiarismCase;
-        rebuilt.displayPriority = post.displayPriority;
-        rebuilt.resolved = post.resolved;
-        rebuilt.forwardedPosts = post.forwardedPosts;
-        rebuilt.forwardedAnswerPosts = post.forwardedAnswerPosts;
-        rebuilt.visibleForStudents = post.visibleForStudents;
-        return rebuilt;
     }
 
     /**
@@ -506,7 +468,7 @@ export class MetisService implements OnDestroy {
                     if (indexOfReaction > -1) {
                         cachedPost.reactions!.splice(indexOfReaction, 1);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = MetisService.rebuildPostReference(cachedPost);
+                        this.cachedPosts[indexToUpdate] = Post.withSameValues(cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }

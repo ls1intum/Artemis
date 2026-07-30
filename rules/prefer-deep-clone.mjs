@@ -52,6 +52,11 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * state is not signal-backed, build the replacement object explicitly, field by field, as
  * `MetisService.rebuildPostReference` does.
  *
+ * Note that `equal: () => false` only reaches consumers reading the signal in the declaring component's own template.
+ * A child `input()` bound to the same object is NOT notified, because Angular compares the property binding with
+ * `Object.is` before it reaches the input. Those call sites need a new top-level reference built field by field —
+ * see `Exam.withSameValues` / `StudentExam.withSameValues`.
+ *
  * Full rationale and examples:
  * documentation/docs/developer/guidelines/client-development.mdx ("Cloning objects").
  */

@@ -143,10 +143,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
     // needed, because studentExam is downloaded only when exam is started
-    // Both are declared with `equal: () => false` so re-setting the same reference emits. Live events update these
-    // objects in place, and copying them would detach the exercises and submissions the student is working on.
-    readonly exam = signal<Exam>(undefined!, { equal: () => false });
-    readonly studentExam = signal<StudentExam>(undefined!, { equal: () => false });
+    readonly exam = signal<Exam>(undefined!);
+    readonly studentExam = signal<StudentExam>(undefined!);
 
     readonly individualStudentEndDate = signal<dayjs.Dayjs>(undefined!);
     readonly individualStudentEndDateWithGracePeriod = signal<dayjs.Dayjs>(undefined!);
@@ -927,9 +925,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.workingTimeUpdateEventsSubscription = (
             this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
         ).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Assign the new working time in place and re-set the same reference; `equal: () => false` makes that emit.
-            // No copy, so the submissions the exercise components are editing stay the same objects.
-            const studentExam = this.studentExam();
+            // A new top-level reference is required, not a copy: children bind `[studentExam]="studentExam()"`, and
+            // Angular compares a property binding with `Object.is` before it reaches their `input()`, so re-setting the
+            // same reference would leave the cover page showing the old working time. `withSameValues` carries every
+            // nested value over untouched, so the submissions the exercise components are editing stay the same objects.
+            const studentExam = StudentExam.withSameValues(this.studentExam());
             studentExam.workingTime = event.newWorkingTime;
             this.studentExam.set(studentExam);
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
@@ -938,7 +938,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // the schedule (the exam dates are only its availability window, not the student's conduction window), so
             // the exam dates are left untouched and the end date is derived from the student's own start below.
             if (event.newStartDate) {
-                const exam = this.exam();
+                // Same reasoning as above: the cover page's start/end dates are derived in a child effect.
+                const exam = Exam.withSameValues(this.exam());
                 exam.startDate = event.newStartDate;
                 exam.endDate = event.newEndDate ?? exam.endDate;
                 this.exam.set(exam);

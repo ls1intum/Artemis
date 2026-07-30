@@ -7,6 +7,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -16,7 +17,7 @@ import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -331,7 +332,17 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            exercise.exerciseGroup = cloneWith(exercise.exerciseGroup!, { exam: studentExam.exam });
+            // Built field by field, not copied: the group's `exercises` are the very objects being mapped here, so they
+            // must stay the same instances. `?? new ExerciseGroup()` keeps the previous spread behaviour, which produced
+            // a group carrying only the exam when the server sent none.
+            const group = exercise.exerciseGroup ?? new ExerciseGroup();
+            const groupWithExam = new ExerciseGroup();
+            groupWithExam.id = group.id;
+            groupWithExam.title = group.title;
+            groupWithExam.isMandatory = group.isMandatory;
+            groupWithExam.exercises = group.exercises;
+            groupWithExam.exam = studentExam.exam;
+            exercise.exerciseGroup = groupWithExam;
             return exercise;
         });
         return studentExam;

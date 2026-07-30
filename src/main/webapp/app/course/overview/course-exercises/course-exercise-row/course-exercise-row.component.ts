@@ -23,7 +23,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -140,24 +140,20 @@ export class CourseExerciseRowComponent implements OnInit {
         }
         this._dueDate.set(getExerciseDueDate(exercise, this._gradedStudentParticipation()));
 
-        // Enrich the exercise with role checks and course reference via a spread copy
-        // to avoid mutating the input signal's underlying object
+        // Copy the exercise once so the input signal's object is not mutated, then enrich the copy field by field.
+        // A single copy on purpose: this runs per row on the course overview, and the previous quiz branch copied the
+        // already-copied exercise a second time.
         const courseForRoleCheck = course || exercise.exerciseGroup?.exam?.course;
-        let enrichedExercise: Exercise = cloneWith(exercise, {
-            isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(courseForRoleCheck),
-            isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(courseForRoleCheck),
-            isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck),
-            course,
-        });
+        const enrichedExercise: Exercise = deepClone(exercise);
+        enrichedExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(courseForRoleCheck);
+        enrichedExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(courseForRoleCheck);
+        enrichedExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck);
+        enrichedExercise.course = course;
 
-        // Quiz-specific enrichment via spread to avoid mutating the object after creation
         if (enrichedExercise.type === ExerciseType.QUIZ) {
             const quizExercise = enrichedExercise as QuizExercise;
-            const enrichedQuizExercise: QuizExercise = cloneWith(quizExercise, {
-                isActiveQuiz: this.exerciseService.isActiveQuiz(quizExercise),
-                isPracticeModeAvailable: quizExercise.quizEnded,
-            });
-            enrichedExercise = enrichedQuizExercise;
+            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
+            quizExercise.isPracticeModeAvailable = quizExercise.quizEnded;
         }
 
         this._enrichedExercise.set(enrichedExercise);

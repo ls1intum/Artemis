@@ -7,7 +7,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -67,8 +67,8 @@ export class AttachmentService {
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {
-        // Deep clone is applied to preserve all nested properties of the attachment
-        return cloneWith(deepClone(attachment), {
+        // cloneWith already deep-clones its source, which preserves all nested properties of the attachment.
+        return cloneWith(attachment, {
             releaseDate: convertDateFromClient(attachment.releaseDate),
             uploadDate: convertDateFromClient(attachment.uploadDate),
         });
