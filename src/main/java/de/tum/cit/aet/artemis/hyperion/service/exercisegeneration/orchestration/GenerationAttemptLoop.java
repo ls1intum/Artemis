@@ -198,6 +198,8 @@ class GenerationAttemptLoop {
     /** Previously proven mutants whose latest environment recheck executed no conclusive pass/fail result. */
     private List<SemanticMutant> semanticMutantsAwaitingRecheck = List.of();
 
+    private List<SemanticMutant> semanticMutantsPendingSpecApproval = List.of();
+
     /** Independently adjudicated reference defects remain executable acceptance checks until a later candidate makes their exact witnesses pass. */
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
@@ -579,13 +581,7 @@ class GenerationAttemptLoop {
         SpecFidelityReport previousReview = candidateBeforeCurrentRepair == null ? specFidelityReport : candidateBeforeCurrentRepair.reviewReport();
         specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), adaptationChanges, repairDelta, previousReview,
                 GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-        if (!unresolvedSpecificationFindings.isEmpty()) {
-            List<SpecFidelityReport.Finding> combined = new ArrayList<>(specFidelityReport.findings());
-            unresolvedSpecificationFindings.forEach(finding -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, finding,
-                    "The independent pre-freeze review completed and still rejected this compiled specification after its bounded refinement budget. The exact finding is "
-                            + "retained so the saved exercise remains NEEDS_REVIEW rather than silently treating the contract as fully approved.")));
-            specFidelityReport = new SpecFidelityReport(List.copyOf(combined));
-        }
+        specFidelityReport = GenerationReviewSupport.preserveSpecificationReviewState(specFidelityReport, unresolvedSpecificationFindings);
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
@@ -654,7 +650,7 @@ class GenerationAttemptLoop {
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), retryAdaptationChanges, null, null,
                         GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-                specFidelityReport = preserveExecutableEvidenceState(specFidelityReport);
+                specFidelityReport = preserveExecutableEvidenceState(GenerationReviewSupport.preserveSpecificationReviewState(specFidelityReport, unresolvedSpecificationFindings));
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
                 repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
@@ -713,7 +709,8 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream.concat(semanticMutantsPendingRepair.stream(), semanticMutantsAwaitingRecheck.stream()).distinct()
+            List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream
+                    .of(semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck, semanticMutantsPendingSpecApproval).flatMap(List::stream).distinct()
                     .limit(MAX_TRACKED_SEMANTIC_MUTANTS).toList();
             List<SemanticMutant> applicablePendingMutants = priorUnresolvedMutants.stream()
                     .filter(mutant -> mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))).toList();
@@ -738,7 +735,9 @@ class GenerationAttemptLoop {
                     .map(SemanticMutantOutcome::mutant).toList();
             boolean specificationApproved = unresolvedSpecificationFindings.isEmpty();
             semanticMutantsPendingRepair = specificationApproved ? validatedMutants : List.of();
-            semanticMutantsAwaitingRecheck = specificationApproved ? inconclusivePendingMutants : List.of();
+            // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors while specification approval is pending.
+            semanticMutantsAwaitingRecheck = inconclusivePendingMutants;
+            semanticMutantsPendingSpecApproval = specificationApproved ? List.of() : validatedMutants;
 
             Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
             Set<String> pendingAdjudicationNames = referenceWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
@@ -803,7 +802,9 @@ class GenerationAttemptLoop {
     }
 
     private SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
-        return GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck);
+        SpecFidelityReport preserved = GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair,
+                semanticMutantsAwaitingRecheck);
+        return GenerationReviewSupport.preservePendingSpecApprovalMutants(preserved, semanticMutantsPendingSpecApproval);
     }
 
     private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {

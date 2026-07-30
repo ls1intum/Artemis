@@ -1188,7 +1188,8 @@ class SpecFidelityCriticServiceTest {
                 {"exampleChecks": [{"claim": "the rover ends at (2,3) E", "computedOutcome": "the rover ends at (2,2) N", "consistent": false,
                     "reason": "replaying the command sequence gives a different state"}],
                  "apiChecks": [{"symbol": "Rover(int,int,Collection<int[]>)", "discoverable": false, "reason": "tests require it while the statement leaves the API open"}],
-                 "templateChecks": [{"ownerType":"FixtureType","test": "turnsLeft", "targetReached": false, "reason": "the constructor throws before the turn assertion",
+                 "templateChecks": [{"ownerType":"FixtureType","test": "turnsLeft", "targetReached": false, "blockingCause":"PROVIDED_SCAFFOLD_DEFECT",
+                     "reason": "the constructor throws before the turn assertion",
                      "evidenceQuote":"class Graphemes"}],
                  "mutantChecks": [{"mutant": "reject CJK characters", "killed": false, "sourceQuote": "CJK characters", "reason": "no assertion exercises CJK input"}],
                  "uncovered": [{"requirement": "CJK characters", "sourceQuote": "CJK characters", "reason": "no assertion exercises CJK input"}],
@@ -1221,6 +1222,7 @@ class SpecFidelityCriticServiceTest {
                 {"exampleChecks":[],
                  "apiChecks":[],
                  "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":false,
+                     "blockingCause":"PROVIDED_SCAFFOLD_DEFECT",
                      "reason":"the template's count(String value) method has no doc comment",
                      "evidenceQuote":"int count(String value) { return 0; }"}],
                  "contradictions":[],
@@ -1247,6 +1249,7 @@ class SpecFidelityCriticServiceTest {
         ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],"apiChecks":[{"symbol":"FireStrategy","discoverable":true,"reason":"the statement describes it"}],
                  "templateChecks":[{"ownerType":"FireStrategy","test":"missing FireStrategy stub","targetReached":false,
+                     "blockingCause":"PROVIDED_SCAFFOLD_DEFECT",
                      "reason":"the template has no FireStrategy class or TODO","evidenceQuote":"class Graphemes"}],
                  "contradictions":[],"hiddenRequirements":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
                 """), rawResponse("""
@@ -1269,7 +1272,7 @@ class SpecFidelityCriticServiceTest {
         // Once the approved Design fixes who owns which type, a scaffold complaint about some other type means the reviewer was not reading that contract. Surfacing it would
         // send the repair loop after a type the design does not have, so the whole verdict is discarded instead.
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"templateChecks\":[{\"ownerType\":\"WaterStrategy\",\"test\":\"missing WaterStrategy stub\",\"targetReached\":false,\"reason\":\"the template has no WaterStrategy class or TODO\"}]}"),
+                "{\"templateChecks\":[{\"ownerType\":\"WaterStrategy\",\"test\":\"missing WaterStrategy stub\",\"targetReached\":false,\"blockingCause\":\"PROVIDED_SCAFFOLD_DEFECT\",\"reason\":\"the template has no WaterStrategy class or TODO\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
 
         SpecFidelityReport report = scripted.critic().critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null,
@@ -1286,7 +1289,7 @@ class SpecFidelityCriticServiceTest {
         // Build files, fixtures, and other shared scaffold are real and repairable but deliberately absent from the Design ownership table, so the reserved owner name must pass
         // the guard that discards a complaint about a type the design never names.
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"reason\":\"the shared fixture fails to compile before any student-owned code runs\",\"evidenceQuote\":\"class Graphemes\"}]}"),
+                "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"blockingCause\":\"PROVIDED_SCAFFOLD_DEFECT\",\"reason\":\"the shared fixture fails to compile before any student-owned code runs\",\"evidenceQuote\":\"class Graphemes\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
 
         SpecFidelityReport report = scripted.critic().critique("Create a Strategy exercise.", "Create FireStrategy.", List.of("fire"), COMPLETE_ARTIFACTS, null, () -> false, null,
@@ -1301,7 +1304,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void contractReviewAbstainsOnTemplateGapsWithoutArtifactEvidence() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"templateChecks\":[{\"ownerType\":\"FixtureType\",\"test\":\"imagined prerequisite\",\"targetReached\":false,\"reason\":\"another task blocks it\",\"evidenceQuote\":\"a line that is not in any artifact\"}]}"),
+                "{\"templateChecks\":[{\"ownerType\":\"FixtureType\",\"test\":\"imagined prerequisite\",\"targetReached\":false,\"blockingCause\":\"DIFFERENT_STUDENT_SEAM\",\"reason\":\"another task blocks it\",\"evidenceQuote\":\"a line that is not in any artifact\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
 
         SpecFidelityReport report = critique(scripted.critic(), "Create an exercise.", "Implement the fixture.", List.of("fixture"), COMPLETE_ARTIFACTS, null);

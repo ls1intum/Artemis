@@ -14,7 +14,7 @@ class CriticVerdictParserTest {
     private final CriticVerdictParser parser = new CriticVerdictParser(new ObjectMapper());
 
     @Test
-    void intendedIncompleteStubIsNotAReachabilityDefect() {
+    void intendedIncompleteStubReportedAsUnreachableRequiresCorrection() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {
                   "exampleChecks": [],
@@ -23,6 +23,7 @@ class CriticVerdictParserTest {
                     "ownerType": "Graphemes",
                     "test": "count",
                     "targetReached": false,
+                    "blockingCause": "INTENDED_INCOMPLETE_STUB",
                     "reason": "the method contains a TODO and throws UnsupportedOperationException",
                     "evidenceQuote": "// TODO: implement"
                   }],
@@ -35,21 +36,22 @@ class CriticVerdictParserTest {
                 }
                 """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO: implement", "", false, false, true, false, Map.of("Graphemes", "stubbed"));
 
-        assertThat(findings).isEmpty();
+        assertThat(findings).isNull();
     }
 
     @Test
-    void stubInTheWrongMethodRemainsAReachabilityDefect() {
+    void liveIntendedStubPhraseRequiresCorrectionRatherThanAFalseBlocker() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {
                   "exampleChecks": [],
                   "apiChecks": [],
                   "templateChecks": [{
-                    "ownerType": "Graphemes",
-                    "test": "count",
+                    "ownerType": "DependencyGraph",
+                    "test": "findOrder",
                     "targetReached": false,
-                    "reason": "the TODO is in a different method from the task target",
-                    "evidenceQuote": "// TODO is in a different method"
+                    "blockingCause": "INTENDED_INCOMPLETE_STUB",
+                    "reason": "the intended findOrder stub throws UnsupportedOperationException before any student implementation can be exercised",
+                    "evidenceQuote": "throw new UnsupportedOperationException(\\"TODO\\");"
                   }],
                   "contradictions": [],
                   "hiddenRequirements": [],
@@ -58,10 +60,81 @@ class CriticVerdictParserTest {
                   "unrequestedChanges": [],
                   "missingRequestedChanges": []
                 }
-                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement count.", "// TODO is in a different method", "", false, false, true, false,
-                Map.of("Graphemes", "stubbed"));
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement findOrder.", "throw new UnsupportedOperationException(\"TODO\");", "", false, false, true, false,
+                Map.of("DependencyGraph", "stubbed"));
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
+    void passingTemplateCheckCannotCarryAContradictoryBlockingCause() {
+        List<SpecFidelityReport.Finding> findings = parseSingleTemplateCheck("""
+                "targetReached": true,
+                "blockingCause": "DIFFERENT_STUDENT_SEAM",
+                "reason": "Parser blocks the intended scheduler seam"
+                """);
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
+    void failedTemplateCheckRequiresArtifactEvidence() {
+        List<SpecFidelityReport.Finding> findings = parseSingleTemplateCheck("""
+                "targetReached": false,
+                "blockingCause": "PROVIDED_SCAFFOLD_DEFECT",
+                "reason": "the provided fixture prevents execution",
+                "evidenceQuote": ""
+                """);
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
+    void stubInADifferentOwnerBeforeTheIntendedSeamRemainsAReachabilityDefect() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [{
+                    "ownerType": "Scheduler",
+                    "test": "schedule",
+                    "targetReached": false,
+                    "blockingCause": "DIFFERENT_STUDENT_SEAM",
+                    "reason": "the Parser TODO throws UnsupportedOperationException before Scheduler.schedule can be reached",
+                    "evidenceQuote": "throw new UnsupportedOperationException(\\"TODO Parser.parse\\");"
+                  }],
+                  "contradictions": [],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement Scheduler.schedule.", "throw new UnsupportedOperationException(\"TODO Parser.parse\");", "", false,
+                false, true, false, Map.of("Scheduler", "stubbed"));
 
         assertThat(findings).singleElement().extracting(SpecFidelityReport.Finding::kind).isEqualTo(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
+    }
+
+    private List<SpecFidelityReport.Finding> parseSingleTemplateCheck(String checkFields) {
+        return parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [{
+                    "ownerType": "Scheduler",
+                    "test": "schedule",
+                    %s
+                  }],
+                  "contradictions": [],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """.formatted(checkFields), CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement Scheduler.schedule.", "class Scheduler {}", "", false, false, true, false,
+                Map.of("Scheduler", "stubbed"));
     }
 
     @Test

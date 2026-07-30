@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -64,7 +65,8 @@ class CriticVerdictParser {
     private record ApiCheckItem(@Nullable String symbol, @Nullable Boolean discoverable, @Nullable String reason) {
     }
 
-    private record TemplateCheckItem(@Nullable String ownerType, @Nullable String test, @Nullable Boolean targetReached, @Nullable String reason, @Nullable String evidenceQuote) {
+    private record TemplateCheckItem(@Nullable String ownerType, @Nullable String test, @Nullable Boolean targetReached, @Nullable String blockingCause, @Nullable String reason,
+            @Nullable String evidenceQuote) {
     }
 
     private record MutantCheckItem(@Nullable String mutant, @Nullable Boolean killed, @Nullable String reason, @Nullable String sourceQuote, @Nullable String ownerType) {
@@ -172,10 +174,6 @@ class CriticVerdictParser {
             }
             for (TemplateCheckItem item : parsed.templateChecks()) {
                 if (!item.targetReached() && findings.size() < MAX_REVIEW_FINDINGS) {
-                    if (onlyReportsTheIntendedIncompleteStub(item)) {
-                        log.info("Critic abstained on a template-gap finding that treats the intended incomplete stub as the defect: {}", item.test());
-                        continue;
-                    }
                     String ownerType = item.ownerType().strip().replace("`", "");
                     if ("student-creates".equals(templateStatuses.get(ownerType))) {
                         log.info("Critic abstained on a template-gap finding for student-created type {} because the approved Design contract requires it to be absent.",
@@ -339,18 +337,12 @@ class CriticVerdictParser {
     }
 
     private static boolean malformedTemplateChecks(List<TemplateCheckItem> items) {
-        return items.stream().anyMatch(item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null
-                || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank()) || item.reason() == null || item.reason().isBlank());
-    }
-
-    private static boolean onlyReportsTheIntendedIncompleteStub(TemplateCheckItem item) {
-        String reason = item.reason().toLowerCase(Locale.ROOT);
-        String evidence = item.evidenceQuote() == null ? "" : item.evidenceQuote().toLowerCase(Locale.ROOT);
-        boolean namesExpectedStub = reason.contains("todo") || reason.contains("unsupportedoperationexception") || evidence.contains("todo")
-                || evidence.contains("unsupportedoperationexception");
-        boolean namesActualReachabilityDefect = reason.contains(" before ") || reason.contains("another ") || reason.contains("different ") || reason.contains("unrelated ")
-                || reason.contains("missing ") || reason.contains("lacks ") || reason.contains("outside ");
-        return namesExpectedStub && !namesActualReachabilityDefect;
+        return items.stream().anyMatch(
+                item -> item == null || item.test() == null || item.test().isBlank() || item.targetReached() == null || item.targetReached() && item.blockingCause() != null
+                        || !item.targetReached() && (item.ownerType() == null || item.ownerType().isBlank() || item.blockingCause() == null
+                                || !Set.of("DIFFERENT_STUDENT_SEAM", "PROVIDED_SCAFFOLD_DEFECT").contains(item.blockingCause()) || item.evidenceQuote() == null
+                                || item.evidenceQuote().isBlank())
+                        || item.reason() == null || item.reason().isBlank());
     }
 
     private static String scalarText(JsonNode node) {

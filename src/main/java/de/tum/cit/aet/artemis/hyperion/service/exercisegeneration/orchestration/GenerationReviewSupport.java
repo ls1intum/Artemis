@@ -98,6 +98,28 @@ final class GenerationReviewSupport {
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
+    static SpecFidelityReport preserveSpecificationReviewState(SpecFidelityReport report, List<String> unresolvedSpecificationFindings) {
+        if (unresolvedSpecificationFindings.isEmpty()) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        unresolvedSpecificationFindings.stream()
+                .map(finding -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, finding,
+                        "The independent pre-freeze review did not approve this compiled specification. The exact finding is retained so the saved exercise remains NEEDS_REVIEW "
+                                + "rather than silently treating the contract as approved."))
+                .filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
+    static SpecFidelityReport preservePendingSpecApprovalMutants(SpecFidelityReport report, List<SemanticMutant> mutants) {
+        if (mutants.isEmpty()) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)).filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
     static void addReferenceUnavailability(List<SpecFidelityReport.Finding> findings, int omitted, int pendingPass, int pendingAdjudication) {
         if (omitted > 0) {
             findings.addAll(

@@ -65,7 +65,7 @@ Return every failed check. When a check category has no failures, return only on
 Respond with ONLY this complete JSON shape; every array is mandatory for this contract review:
 {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
  "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
- "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"reason":"teaching-scaffold evidence","evidenceQuote":"exact artifact quote; mandatory when targetReached is false"}],
+ "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"blockingCause":null,"reason":"teaching-scaffold evidence","evidenceQuote":"exact artifact quote; mandatory when targetReached is false"}],
  "contradictions": [{"requirement":"...","sourceQuote":"exact authoritative quote from INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT","evidenceArtifact":"exact artifact label, for example TEMPLATE: src/example/Thing.java","evidenceQuote":"exact quote from that conflicting artifact","reason":"why these two quotes conflict"}],
  "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
  "missingExamples": [{"behaviour":"...","reason":"..."}],
@@ -80,5 +80,8 @@ the exact repository-and-path label shown after a --- separator, such as TEMPLAT
 file: if no conflicting downstream quote exists, omit it. Every hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
 STATEMENT, or GENERATED TEST PLAN. Every invented finding must quote the produced statement, solution, template, tests, or test plan that imposes the unsupported
 requirement. For templateChecks, targetReached means that the named test can reach the intended incomplete TODO seam before a different student seam; it never means the TODO
-has already been implemented. Every false templateCheck requires evidenceQuote copied verbatim from a produced statement, solution, template, test, or test plan. Omit a
-finding instead of inventing its quote.
+has already been implemented. Set targetReached=true when execution reaches the intended owner's TODO or UnsupportedOperationException, even if that intentionally stops
+execution before any student implementation exists. Set it false only when a different seam or provided-scaffold defect prevents reaching that intended owner. Every false
+templateCheck requires blockingCause set to exactly DIFFERENT_STUDENT_SEAM or PROVIDED_SCAFFOLD_DEFECT and evidenceQuote copied verbatim from a produced statement, solution,
+template, test, or test plan. Set blockingCause to null for a passing check. A false check that names the intended incomplete stub itself as the blocker is contradictory; correct
+it to targetReached=true rather than relabeling the intended seam as a scaffold defect. Omit a finding instead of inventing its quote.

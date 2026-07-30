@@ -200,6 +200,23 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void aCleanTextOnlyRetryCannotEraseAnInconclusivePreFreezeSpecificationReview() {
+        String unresolved = "The automated specification quality review was inconclusive, so the contract requires instructor review.";
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(unresolved)));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The full-artifact review did not complete."), SpecFidelityReport.empty());
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
+        loop.run();
+
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        assertThat(loop.specFidelityReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING && finding.requirement().equals(unresolved) && finding.isBlocking());
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
     void anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption() {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
@@ -214,13 +231,16 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
         when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
                 .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The first full-artifact review did not complete."), SpecFidelityReport.empty());
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 3, 2, true);
         loop.run();
 
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(baseTools, never()).enterRepairScope(any());
-        assertThat(loop.specFidelityReport().findings())
-                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL && !finding.isBlocking());
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL
+                && finding.detail().contains(witness.testName()) && !finding.isBlocking());
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
@@ -275,7 +295,9 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
-    void anInconclusivePendingMutantRecheckRemainsUnresolvedAndCannotConverge() {
+    void anInconclusivePendingMutantRecheckUnderAnUnapprovedSpecificationNeverBecomesCurrentSurvivorEvidence() {
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
@@ -298,7 +320,8 @@ class GenerationAttemptLoopTest {
 
         assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE && finding.detail().contains("R1")
                 && finding.detail().contains("src/Scheduler.java") && finding.detail().contains("hyperionMutantGlobalChoice") && finding.detail().contains("remains unresolved"));
-        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
+                || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
     }
 
