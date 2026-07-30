@@ -3,6 +3,8 @@
         "metis": {
             "loadingPosts": "Nachrichten laden...",
             "noPosts": "Keine Nachrichten gefunden.",
+            "imagePreviewTitle": "Bildvorschau",
+            "imagePreviewAlt": "Vergrößertes Bild",
             "postNumberInformation": "{{ number }} Treffer",
             "newMessage": "Neue Nachricht",
             "newAnnouncement": "Neue Ankündigung",
@@ -89,6 +91,7 @@
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
+                "filterToUnverifiedIris": "Iris zu prüfen",
                 "courseFilterExplanation": "{{ title }} (Alle Beiträge)",
                 "filterOptGroups": {
                     "general": "Allgemein",
@@ -166,7 +169,16 @@
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
                 "deleted": "Antwort erfolgreich gelöscht",
-                "deleteAnswer": "Antwort löschen"
+                "deleteAnswer": "Antwort löschen",
+                "unverifiedIris": {
+                    "badge": "Wartet auf Tutorprüfung",
+                    "approve": "Freigeben",
+                    "edit": "Bearbeiten",
+                    "reject": "Ablehnen",
+                    "saveAndApprove": "Speichern & Freigeben",
+                    "cancelEdit": "Abbrechen",
+                    "editAreaLabel": "Iris-Antwort bearbeiten"
+                }
             },
             "userRoles": {
                 "instructor": "Instruktor",

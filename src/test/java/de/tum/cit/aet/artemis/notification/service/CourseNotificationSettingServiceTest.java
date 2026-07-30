@@ -274,7 +274,7 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldReturnEmptyListWhenUserNotificationSpecificationNotFound() {
+    void shouldFallBackToDefaultPresetWhenCustomSpecificationMissingAndDefaultDisabled() {
         TestNotification notification = new TestNotification(123L);
         User user = createTestUser(1L);
         List<User> recipients = List.of(user);
@@ -292,9 +292,36 @@ class CourseNotificationSettingServiceTest {
 
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of(differentSpec));
 
+        // A custom preset with no specification row for this type must fall back to the default preset (id 1) value.
+        when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(false);
+
         List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).isEmpty();
+    }
+
+    @Test
+    void shouldFallBackToDefaultPresetWhenCustomSpecificationMissingAndDefaultEnabled() {
+        // Regression test: tutors on a custom preset created before a notification type existed have no
+        // specification row for it. The missing row must fall back to the default preset value rather than
+        // silently dropping the recipient (which previously hid Iris review notifications).
+        TestNotification notification = new TestNotification(123L);
+        User user = createTestUser(1L);
+        List<User> recipients = List.of(user);
+
+        UserCourseNotificationSettingPreset customPreset = new UserCourseNotificationSettingPreset();
+        customPreset.setSettingPreset((short) 0);
+        when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
+
+        // No specification row exists for this notification type (empty list), so the type identifier is never consulted.
+        when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(List.of());
+
+        // The default preset enables this notification for WEBAPP, so the recipient must be kept.
+        when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(true);
+
+        List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP);
+
+        assertThat(filteredRecipients).containsExactly(user);
     }
 
     private User createTestUser(Long id) {

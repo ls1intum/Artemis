@@ -1,0 +1,10 @@
+<div class="tum-ui-message-content">
+    @if (icon(); as messageIcon) {
+        <fa-icon [icon]="messageIcon" class="tum-ui-message-icon" />
+    }
+    @if (text(); as messageText) {
+        <span class="tum-ui-message-text">{{ messageText }}</span>
+    } @else {
+        <span class="tum-ui-message-text"><ng-content /></span>
+    }
+</div>

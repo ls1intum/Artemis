@@ -30,7 +30,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
+} from 'app/foundation/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -1565,6 +1570,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
                 translateValues: {},
+            });
+        });
+
+        it('should add validation error when title exceeds max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
+        it('should not add validation error when title is within max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
             });
         });
 

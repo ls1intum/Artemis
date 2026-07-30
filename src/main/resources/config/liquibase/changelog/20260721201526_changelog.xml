@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260721201526-1-add-exam-summary-publication-date" author="krusche">
+        <!-- Optional date from which students can see the summary (submission overview) of their submitted exam. If null, the
+             summary is available immediately after submission (previous behavior). Used to delay the overview for staggered
+             multi-shift exams so early submitters cannot leak the exam content to later shifts (see mail request). -->
+        <addColumn tableName="exam">
+            <column name="exam_summary_publication_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
