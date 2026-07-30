@@ -64,9 +64,27 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         }
         long now = System.nanoTime();
         for (var deadline : expiryDeadlines.entrySet()) {
+            K key = deadline.getKey();
             // Subtraction rather than comparison, so the check stays correct across nano-time wraparound.
-            if (deadline.getValue() - now <= 0 && expiryDeadlines.remove(deadline.getKey()) != null) {
-                remove(deadline.getKey());
+            if (deadline.getValue() - now > 0) {
+                continue;
+            }
+            // Removing the deadline conditionally on the exact value observed, and evicting under the same key lock the
+            // writers use, prevents deleting a value that was replaced between the scan and the eviction.
+            if (!expiryDeadlines.remove(key, deadline.getValue())) {
+                continue;
+            }
+            ReentrantLock lock = getLock(key);
+            V expiredValue;
+            lock.lock();
+            try {
+                expiredValue = expiryDeadlines.containsKey(key) ? null : map.remove(key);
+            }
+            finally {
+                lock.unlock();
+            }
+            if (expiredValue != null) {
+                notifyEntryRemoved(key, expiredValue);
             }
         }
     }
@@ -135,8 +153,12 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V putIfAbsent(K key, V value) {
-        expiryDeadlines.remove(key);
-        return putIfAbsentInternal(key, value);
+        V existing = putIfAbsentInternal(key, value);
+        if (existing == null) {
+            // Only the caller that actually stored the value may drop a previously configured lifetime.
+            expiryDeadlines.remove(key);
+        }
+        return existing;
     }
 
     @Override
@@ -186,6 +208,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V remove(K key) {
+        expiryDeadlines.remove(key);
         ReentrantLock lock = getLock(key);
         V oldValue;
 

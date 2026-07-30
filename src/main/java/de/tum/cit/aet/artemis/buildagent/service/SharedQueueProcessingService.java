@@ -696,6 +696,11 @@ public class SharedQueueProcessingService {
         // Iterate over entries to access both the key (short name) and the stored member address
         for (var entry : buildAgentMap.entrySet()) {
             String agentKey = entry.getKey();
+            // Entries without agent details cannot be matched against the live node set, and other readers filter them
+            // out too, so skip rather than dereference.
+            if (entry.getValue() == null || entry.getValue().buildAgent() == null) {
+                continue;
+            }
             String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
 
             if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers, agentsAppearInLiveList)) {

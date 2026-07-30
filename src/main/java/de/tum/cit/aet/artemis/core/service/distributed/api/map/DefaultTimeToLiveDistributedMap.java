@@ -20,6 +20,12 @@ public class DefaultTimeToLiveDistributedMap<K, V> extends DelegatingDistributed
 
     public DefaultTimeToLiveDistributedMap(DistributedMap<K, V> delegate, Duration defaultTimeToLive) {
         super(delegate);
+        // Validated here rather than on the first write: a null default fails with a confusing NullPointerException far
+        // from the misconfiguration, and zero or negative durations mean "never expires" on the backends, silently
+        // turning an expiring map into a permanent one.
+        if (defaultTimeToLive == null || defaultTimeToLive.isZero() || defaultTimeToLive.isNegative()) {
+            throw new IllegalArgumentException("The default time-to-live of an expiring map must be positive, but was " + defaultTimeToLive);
+        }
         this.defaultTimeToLive = defaultTimeToLive;
     }
 

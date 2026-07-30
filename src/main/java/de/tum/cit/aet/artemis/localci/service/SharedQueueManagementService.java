@@ -146,7 +146,7 @@ public class SharedQueueManagementService {
         }
         for (var entry : buildAgents.entrySet()) {
             BuildAgentInformation agentInformation = entry.getValue();
-            if (agentInformation != null && clientIdentifier.equals(agentInformation.buildAgent().memberAddress())) {
+            if (agentInformation != null && agentInformation.buildAgent() != null && clientIdentifier.equals(agentInformation.buildAgent().memberAddress())) {
                 return entry.getKey();
             }
         }

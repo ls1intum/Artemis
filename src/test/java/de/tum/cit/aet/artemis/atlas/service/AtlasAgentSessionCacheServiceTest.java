@@ -128,11 +128,17 @@ class AtlasAgentSessionCacheServiceTest {
                     return null;
                 }));
             }
-            start.countDown();
-            for (Future<?> f : futures) {
-                f.get(10, TimeUnit.SECONDS);
+            try {
+                start.countDown();
+                for (Future<?> f : futures) {
+                    f.get(10, TimeUnit.SECONDS);
+                }
             }
-            pool.shutdown();
+            finally {
+                // A throwing Future#get would otherwise leave the fixed pool's threads alive and hang the test JVM.
+                pool.shutdownNow();
+                pool.awaitTermination(10, TimeUnit.SECONDS);
+            }
 
             assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
         }

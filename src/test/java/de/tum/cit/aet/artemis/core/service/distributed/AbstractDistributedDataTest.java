@@ -689,6 +689,33 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         topic.removeMessageListener(listenerId);
     }
 
+    /**
+     * The scheduling topics carry {@code Long} and {@code Long[]} payloads, so a codec that mangled either would break
+     * scheduling silently. This round-trips both shapes rather than only the String used elsewhere.
+     */
+    @Test
+    void testReliableTopicRoundTripsSchedulingPayloadTypes() {
+        DistributedTopic<Long> singleValueTopic = getDistributedDataProvider().getReliableTopic("reliableTopicLongTest");
+        Consumer<Long> singleValueConsumer = Mockito.mock(Consumer.class);
+        singleValueTopic.addMessageListener(singleValueConsumer);
+        singleValueTopic.publish(4711L);
+        verify(singleValueConsumer, timeout(5000)).accept(4711L);
+
+        DistributedTopic<Long[]> arrayTopic = getDistributedDataProvider().getReliableTopic("reliableTopicLongArrayTest");
+        Consumer<Long[]> arrayConsumer = Mockito.mock(Consumer.class);
+        arrayTopic.addMessageListener(arrayConsumer);
+        arrayTopic.publish(new Long[] { 1L, 2L, 3L });
+        verify(arrayConsumer, timeout(5000)).accept(argThat(payload -> payload.length == 3 && payload[0] == 1L && payload[2] == 3L));
+    }
+
+    @Test
+    void testExpiringMapRejectsNonPositiveDefaultTimeToLive() {
+        // A zero or negative lifetime means "never expires" on the backends, which would turn an expiring map into a
+        // permanent one without any signal at the call site.
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("zeroTtlMapTest", Duration.ZERO));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> getDistributedDataProvider().getExpiringMap("negativeTtlMapTest", Duration.ofSeconds(-1)));
+    }
+
     @Test
     void testMapLockIsMutuallyExclusive() throws InterruptedException {
         DistributedMap<String, String> map = getDistributedDataProvider().getMap("lockTestMap");

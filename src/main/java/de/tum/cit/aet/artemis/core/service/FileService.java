@@ -73,7 +73,9 @@ public class FileService implements DisposableBean {
      * @return file contents as a byte[], or null, if the file doesn't exist
      * @throws IOException if the file can't be accessed.
      */
-    @Cacheable(value = "files", unless = "#result == null")
+    // Keyed by the path string rather than the Path object: the eviction broadcast has to carry the key across nodes, and
+    // Path instances are neither portable between JVMs nor comparable across filesystem providers.
+    @Cacheable(value = "files", key = "#path.toString()", unless = "#result == null")
     public byte[] getFileForPath(Path path) throws IOException {
         if (Files.exists(path)) {
             return Files.readAllBytes(path);
@@ -97,7 +99,7 @@ public class FileService implements DisposableBean {
             log.error("Cannot evict the files cache for {}: this FileService was constructed directly instead of being injected", path);
             return;
         }
-        blobCacheEvictionService.evictEverywhere("files", path);
+        blobCacheEvictionService.evictEverywhere("files", path.toString());
     }
 
     /**

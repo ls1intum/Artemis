@@ -61,6 +61,7 @@ public class IrisUsageDigestScheduleService {
      */
     private static final Duration DIGEST_MARKER_TIME_TO_LIVE = Duration.ofDays(3);
 
+    @Nullable
     private DistributedMap<String, Instant> scheduleStateMap;
 
     /**

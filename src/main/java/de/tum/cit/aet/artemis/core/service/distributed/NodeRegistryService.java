@@ -75,7 +75,15 @@ public class NodeRegistryService {
             if (distributedDataProvider.isEmpty()) {
                 return Optional.empty();
             }
-            nodes = distributedDataProvider.get().getExpiringMap(NODES_MAP, NODE_TIMEOUT);
+            try {
+                nodes = distributedDataProvider.get().getExpiringMap(NODES_MAP, NODE_TIMEOUT);
+            }
+            catch (Exception e) {
+                // The provider connects asynchronously, so resolving the map can fail while a node is still starting.
+                // Returning empty keeps the documented fallback and lets a later heartbeat recover.
+                log.debug("Distributed data provider is not usable yet, node registry unavailable: {}", e.getMessage());
+                return Optional.empty();
+            }
         }
         return Optional.of(nodes);
     }

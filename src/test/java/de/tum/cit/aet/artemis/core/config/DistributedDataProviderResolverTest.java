@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 import static de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver.LEGACY_PROVIDER_PROPERTY;
 import static de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver.PROVIDER_PROPERTY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -50,6 +51,39 @@ class DistributedDataProviderResolverTest {
     void testBlankCurrentPropertyFallsBackToLegacyProperty() {
         MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "  ").withProperty(LEGACY_PROVIDER_PROPERTY, REDIS);
         assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(REDIS);
+    }
+
+    /**
+     * Every provider bean is gated on an exact value, so a typo would otherwise leave the application with no provider and
+     * surface as an unrelated failure much later.
+     */
+    @Test
+    void testRejectsUnsupportedProviderValue() {
+        MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "Rediss");
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> DistributedDataProviderResolver.resolveProvider(environment)).withMessageContaining("Rediss")
+                .withMessageContaining(PROVIDER_PROPERTY);
+    }
+
+    @Test
+    void testRejectsUnsupportedLegacyProviderValue() {
+        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, "Hazlecast");
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> DistributedDataProviderResolver.resolveProvider(environment));
+    }
+
+    @Test
+    void testTrimsSurroundingWhitespace() {
+        MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "  Redis  ");
+
+        assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(REDIS);
+    }
+
+    @Test
+    void testBlankLegacyPropertyFallsBackToDefault() {
+        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, "   ");
+
+        assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(HAZELCAST);
     }
 
     @Test

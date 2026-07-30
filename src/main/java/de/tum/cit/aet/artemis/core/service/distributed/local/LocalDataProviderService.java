@@ -32,6 +32,13 @@ public class LocalDataProviderService implements DistributedDataProvider {
 
     private final ConcurrentHashMap<String, DistributedMap<?, ?>> maps = new ConcurrentHashMap<>();
 
+    /**
+     * Expiring maps are kept in their own registry. Sharing one backing map between {@link #getMap(String)} and
+     * {@link #getExpiringMap(String, Duration)} would let a TTL write expire an entry out from under readers of the
+     * non-expiring view, which that view promises never happens.
+     */
+    private final ConcurrentHashMap<String, DistributedMap<?, ?>> expiringMaps = new ConcurrentHashMap<>();
+
     private final ConcurrentHashMap<String, DistributedSet<?>> sets = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<String, DistributedLock> locks = new ConcurrentHashMap<>();
@@ -58,10 +65,9 @@ public class LocalDataProviderService implements DistributedDataProvider {
 
     @Override
     public <K, V> DistributedMap<K, V> getExpiringMap(String name, Duration defaultTimeToLive) {
-        // LocalMap enforces per-entry expiry itself. Note this deliberately does not go through getMap(name), which
-        // wraps the map so that per-entry TTL is rejected.
+        // LocalMap enforces per-entry expiry itself. Deliberately a separate registry from getMap(name): see expiringMaps.
         // noinspection unchecked
-        return new DefaultTimeToLiveDistributedMap<>((DistributedMap<K, V>) maps.computeIfAbsent(name, _ -> new LocalMap<K, V>()), defaultTimeToLive);
+        return new DefaultTimeToLiveDistributedMap<>((DistributedMap<K, V>) expiringMaps.computeIfAbsent(name, _ -> new LocalMap<K, V>()), defaultTimeToLive);
     }
 
     @Override
