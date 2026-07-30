@@ -97,6 +97,15 @@ describe('ExamParticipationComponent', () => {
         };
     }
 
+    /**
+     * Points the route at a test exam by giving it the child route that carries the `studentExamId`, or clears it again
+     * to model a regular exam. The component reads this child snapshot directly, so tests that navigate between the two
+     * kinds of exam have to switch it explicitly.
+     */
+    function setRouteStudentExamId(activatedRoute: ActivatedRoute, studentExamId: string | undefined): void {
+        (activatedRoute as any).firstChild = studentExamId ? { snapshot: { params: { studentExamId } } } : undefined;
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -336,11 +345,7 @@ describe('ExamParticipationComponent', () => {
         studentExamWithExercises.id = 3;
         studentExamWithExercises.exam = new Exam();
         const activatedRoute = TestBed.inject(ActivatedRoute);
-        (activatedRoute as any).firstChild = {
-            snapshot: {
-                params: { studentExamId: '3' },
-            },
-        };
+        setRouteStudentExamId(activatedRoute, '3');
         activatedRoute.params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -1564,7 +1569,7 @@ describe('ExamParticipationComponent', () => {
 
         it('should show the retryable error state instead of the no-student-exam state when the initial test exam summary load fails', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
-            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            setRouteStudentExamId(activatedRoute, '3');
             activatedRoute.params = of({ courseId: '1', examId: '2' });
             const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
             const handleNoStudentExamSpy = vi.spyOn(comp, 'handleNoStudentExam');
@@ -1641,7 +1646,7 @@ describe('ExamParticipationComponent', () => {
             activatedRoute.params = params;
             const summaryError = throwError(() => new HttpErrorResponse({ status: 500 }));
             vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError);
-            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            setRouteStudentExamId(activatedRoute, '3');
             comp.ngOnInit();
 
             // exam A: a test exam whose summary fails
@@ -1656,7 +1661,7 @@ describe('ExamParticipationComponent', () => {
             ongoingStudentExam.workingTime = 3600;
             vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
             // the route no longer carries a studentExamId, so the component itself has to drop the test exam state of exam A
-            (activatedRoute as any).firstChild = undefined;
+            setRouteStudentExamId(activatedRoute, undefined);
             params.next({ courseId: '1', examId: '7' });
 
             expect(comp.testExam()).toBe(false);
@@ -1676,7 +1681,7 @@ describe('ExamParticipationComponent', () => {
             summaryStudentExam.id = 3;
             summaryStudentExam.exam = new Exam();
             vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(summaryStudentExam));
-            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            setRouteStudentExamId(activatedRoute, '3');
             comp.ngOnInit();
 
             // exam A: a test exam whose summary loads successfully
@@ -1691,7 +1696,7 @@ describe('ExamParticipationComponent', () => {
             ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
             ongoingStudentExam.workingTime = 3600;
             vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
-            (activatedRoute as any).firstChild = undefined;
+            setRouteStudentExamId(activatedRoute, undefined);
             params.next({ courseId: '1', examId: '7' });
 
             expect(comp.showExamSummary()).toBe(false);
@@ -1707,7 +1712,7 @@ describe('ExamParticipationComponent', () => {
             activatedRoute.params = params;
             const pendingSummary = new Subject<StudentExam>();
             const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(pendingSummary.asObservable());
-            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            setRouteStudentExamId(activatedRoute, '3');
             comp.ngOnInit();
 
             // exam A: a test exam whose summary request never completes before the navigation
@@ -1721,7 +1726,7 @@ describe('ExamParticipationComponent', () => {
             ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
             ongoingStudentExam.workingTime = 3600;
             vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
-            (activatedRoute as any).firstChild = undefined;
+            setRouteStudentExamId(activatedRoute, undefined);
             params.next({ courseId: '1', examId: '7' });
 
             summarySpy.mockClear();
@@ -1734,7 +1739,7 @@ describe('ExamParticipationComponent', () => {
 
         it('should repeat the initial test exam load on retry rather than the show-summary request', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
-            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            setRouteStudentExamId(activatedRoute, '3');
             activatedRoute.params = of({ courseId: '1', examId: '2' });
             const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
 
