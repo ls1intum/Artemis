@@ -330,6 +330,7 @@ export class UserManagementUpdateComponent implements OnInit {
             email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
+            isTestUser: [''],
             langKey: [''],
             authorities: [''],
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined

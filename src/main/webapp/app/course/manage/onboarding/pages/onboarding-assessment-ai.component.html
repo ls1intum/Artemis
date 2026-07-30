@@ -15,7 +15,26 @@
         <div class="row mb-3 g-3">
             <div class="col-md-6">
                 <label class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
-                <input type="number" class="form-control" [ngModel]="course().maxPoints" (ngModelChange)="updateField('maxPoints', $event)" min="1" />
+                <input
+                    type="number"
+                    class="form-control"
+                    [ngModel]="course().maxPoints"
+                    (ngModelChange)="updateField('maxPoints', $event)"
+                    min="1"
+                    step="1"
+                    pattern="\d*"
+                    [max]="MAX_GRADING_POINTS"
+                    #maxPointsInput="ngModel"
+                />
+                @if (maxPointsInput.errors?.['min']) {
+                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.min"></div>
+                }
+                @if (maxPointsInput.errors?.['max']) {
+                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.max" [translateValues]="{ max: MAX_GRADING_POINTS }"></div>
+                }
+                @if (maxPointsInput.errors?.['pattern']) {
+                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.wholeNumber"></div>
+                }
             </div>
             <div class="col-md-6">
                 <label class="form-label" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>

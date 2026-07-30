@@ -723,9 +723,11 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find and then to add each user of the given list to the course
+     * This method first tries to find each user of the given list. When a user is found and the DTO explicitly provides
+     * the {@code isTestUser} flag (i.e. it is not {@code null}), the flag is applied to the user so that test/QA accounts
+     * can be marked (or unmarked) via the user CSV import and excluded from usage statistics.
      *
-     * @param userDtos users to be added to the course
+     * @param userDtos users to be looked up (and optionally flagged as test users)
      * @return a list of not found users
      */
     public List<StudentDTO> importUsers(List<StudentDTO> userDtos) {
@@ -734,6 +736,11 @@ public class UserService {
             var optionalStudent = findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundUsers.add(userDto);
+            }
+            else if (userDto.isTestUser() != null && optionalStudent.get().isTestUser() != userDto.isTestUser()) {
+                User student = optionalStudent.get();
+                student.setTestUser(userDto.isTestUser());
+                userRepository.save(student);
             }
         }
 

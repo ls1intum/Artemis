@@ -5,6 +5,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Observable, combineLatest, filter, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
@@ -13,13 +14,14 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
     private courseManagementService = inject(CourseManagementService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private router = inject(Router);
+    private alertService = inject(AlertService);
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         const courseId = route.params['courseId'];
         const course$ = this.courseManagementService.find(courseId).pipe(
             filter((response: HttpResponse<Course>) => response.ok),
-            map((response: HttpResponse<Course>) => response.body),
-            filter((course: Course | null): course is Course => course !== null),
+            map((response: HttpResponse<Course>) => response.body ?? undefined),
+            filter((course: Course | undefined): course is Course => course !== undefined),
         );
         const configuration$ = this.tutorialGroupsConfigurationService.getOneOfCourse(courseId);
 
@@ -31,16 +33,19 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 return course;
             }),
             tap((course: Course) => {
-                // special case edit configuration
                 if (course.tutorialGroupsConfiguration) {
                     const editUrl = '/course-management/' + course.id + '/tutorial-groups/configuration/' + course.tutorialGroupsConfiguration.id + '/edit';
                     if (state.url === editUrl) {
                         return;
                     }
                 }
-                // user has not completed all necessary configuration steps
                 if (!course.tutorialGroupsConfiguration || !course.timeZone) {
-                    void this.router.navigate(['/course-management', course.id, 'tutorial-groups-checklist']);
+                    if (course.isAtLeastInstructor) {
+                        void this.router.navigate(['/course-management', course.id, 'tutorial-groups-checklist']);
+                    } else {
+                        this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
+                        void this.router.navigate(['/course-management']);
+                    }
                 }
             }),
         );
