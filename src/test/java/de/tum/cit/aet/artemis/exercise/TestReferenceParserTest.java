@@ -34,4 +34,19 @@ class TestReferenceParserTest {
     void shouldPreserveTestIdWrappers() {
         assertThat(TestReferenceParser.splitTestReferences("<testid>1</testid>,<testid>2</testid>")).containsExactly("<testid>1</testid>", "<testid>2</testid>");
     }
+
+    @Test
+    void shouldDropTrailingEmptyRef() {
+        assertThat(TestReferenceParser.splitTestReferences("testA,")).containsExactly("testA");
+    }
+
+    @Test
+    void shouldReturnEmptyListForWhitespaceOnly() {
+        assertThat(TestReferenceParser.splitTestReferences("   ")).isEmpty();
+    }
+
+    @Test
+    void shouldDropAllEmptyRefs() {
+        assertThat(TestReferenceParser.splitTestReferences("testA,,testB")).containsExactly("testA", "testB");
+    }
 }

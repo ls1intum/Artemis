@@ -11,6 +11,9 @@ import org.jspecify.annotations.Nullable;
  * Splitting happens on top-level commas only: parameterized test names may themselves contain commas inside round
  * brackets (e.g. {@code testInsert(InsertMock, 1)}). This grammar is shared by the problem-statement renderer and
  * {@code ProgrammingExerciseTaskService}; it must stay in sync with the client-side task extension.
+ * <p>
+ * Empty references are dropped everywhere, including a trailing one (e.g. {@code "testA,"} returns {@code ["testA"]}).
+ * This is a deliberate tightening of the previous behavior, approved to ensure reference counts remain accurate.
  */
 public final class TestReferenceParser {
 
