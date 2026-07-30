@@ -4,9 +4,15 @@
     </div>
 }
 @if (initialLoadFailed()) {
-    <p-message severity="warn" [text]="errorMessageKey() | artemisTranslate" />
+    <tum-ui-message severity="warn" styleClass="mb-3" [text]="errorMessageKey() | artemisTranslate" />
 }
 @if (refreshFailed()) {
-    <p-message severity="info" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
+    <tum-ui-message severity="info" styleClass="mb-3" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
 }
-<div #renderTarget class="artemis-problem-statement-host" [attr.aria-busy]="isRefreshing()" [innerHTML]="safeHtml()"></div>
+<jhi-programming-exercise-instruction-ssr-content
+    [html]="renderedHtml()"
+    [tasks]="tasks()"
+    [interactive]="canOpenFeedback()"
+    [attr.aria-busy]="isRefreshing()"
+    (taskActivated)="onTaskActivated($event)"
+/>

@@ -25,3 +25,14 @@ export interface RenderedProblemStatement {
     contentHash: string;
     rendererVersion: string;
 }
+
+/** A task parsed from the server-rendered markup, built purely from the `data-*` metadata the server emits. */
+export interface SsrTask {
+    /** Position in document order. Task names are not unique, so the index identifies a task. */
+    index: number;
+    taskName: string;
+    testIds: number[];
+    status: string;
+    authoredCount: number;
+    notExecutedCount: number;
+}

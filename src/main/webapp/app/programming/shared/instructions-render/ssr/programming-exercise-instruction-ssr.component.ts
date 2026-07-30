@@ -1,31 +1,13 @@
-import {
-    Component,
-    DestroyRef,
-    ElementRef,
-    Injector,
-    OnDestroy,
-    ViewEncapsulation,
-    afterNextRender,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    untracked,
-    viewChild,
-} from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
-import { MessageModule } from 'primeng/message';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import katex from 'katex';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -35,33 +17,26 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProblemStatementSsrRenderService } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr-render.service';
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
-import { ProblemStatementRenderRequest, RenderedProblemStatement } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { ProblemStatementRenderRequest, RenderedProblemStatement, SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 
-export interface SsrTask {
-    /** Position in document order. Task names are not unique, so the index identifies a task. */
-    index: number;
-    taskName: string;
-    testIds: number[];
-    status: string;
-    authoredCount: number;
-    notExecutedCount: number;
-}
+export type { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
 export type SsrLiveUpdates = 'none' | 'personal' | 'exercise';
 
+/**
+ * Read-only problem statement rendered by the server.
+ *
+ * This component owns the state: hydration of the effective result, the render request lifecycle, the failure states
+ * and the feedback dialog. It deliberately uses **default** encapsulation so its chrome (spinner, banners) is styled
+ * by the application's global CSS. The server-rendered markup itself lives in the shadow-DOM child component, which is
+ * the only thing that may sit behind a shadow boundary — see its class comment.
+ */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr',
     templateUrl: './programming-exercise-instruction-ssr.component.html',
-    // The endpoint returns a self-contained stylesheet. Shadow DOM scopes it to this component and shields the
-    // rendered problem statement from Artemis' global styles in both directions.
-    encapsulation: ViewEncapsulation.ShadowDom,
     styleUrls: ['./programming-exercise-instruction-ssr.component.scss'],
-    imports: [FaIconComponent, MessageModule, ArtemisTranslatePipe],
-    host: {
-        '(click)': 'onHostEvent($event)',
-        '(keydown.enter)': 'onHostEvent($event)',
-        '(keydown.space)': 'onHostEvent($event)',
-    },
+    imports: [FaIconComponent, TumUiMessageComponent, ArtemisTranslatePipe, ProgrammingExerciseInstructionSsrContentComponent],
 })
 export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private renderService = inject(ProblemStatementSsrRenderService);
@@ -70,9 +45,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private themeService = inject(ThemeService);
-    private sanitizer = inject(DomSanitizer);
     private destroyRef = inject(DestroyRef);
-    private injector = inject(Injector);
 
     private readonly locale = getCurrentLocaleSignal(this.translateService);
     private readonly renderRequests = new Subject<ProblemStatementRenderRequest>();
@@ -100,18 +73,13 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         return base + (this.errorStatus() === 429 ? 'renderRateLimited' : this.errorStatus() === 422 ? 'renderRejected' : 'renderFailed');
     });
 
-    readonly safeHtml = computed<SafeHtml | undefined>(() => {
-        const html = this.renderedHtml();
-        // The html is server-generated, sanitized server-side with a jsoup safelist, and all scripts are removed
-        // in extractRenderableHtml before it ever reaches this point.
-        return html === undefined ? undefined : this.sanitizer.bypassSecurityTrustHtml(html);
-    });
-
     readonly faCircleNotch = faCircleNotch;
 
-    private readonly renderTarget = viewChild<ElementRef<HTMLElement>>('renderTarget');
-
     private latestResult = signal<Result | undefined>(undefined);
+
+    /** Tasks are only interactive when a feedback dialog can actually be opened. */
+    readonly canOpenFeedback = computed(() => !!this.latestResult() && !!this.participation());
+
     private resultSubscription?: Subscription;
     private contentHash?: string;
 
@@ -136,14 +104,20 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
                     // and replace valid content with neutral tasks. Surface it like a render failure instead.
                     this.isLoading.set(false);
                     this.isRefreshing.set(false);
+                    // errorStatus describes the last *render* (HTTP) error. A hydration failure must not inherit it,
+                    // or the banner would claim e.g. rate limiting for an entirely unrelated failure.
+                    this.errorStatus.set(undefined);
                     if (this.renderedHtml() === undefined) {
                         this.initialLoadFailed.set(true);
                     } else {
                         this.refreshFailed.set(true);
                     }
+                } else {
+                    // Only a successful hydration may replace the current result. Blanking it on failure would make
+                    // canOpenFeedback() false while the untouched DOM still advertises its tasks as buttons.
+                    this.latestResult.set(result);
                 }
                 this.hydrationFailed.set(failed);
-                this.latestResult.set(result);
                 this.hydrationSettled.set(true);
             });
 
@@ -217,6 +191,8 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         }
         this.initialLoadFailed.set(false);
         this.refreshFailed.set(false);
+        // The status describes the previous render error; a fresh attempt must not inherit it.
+        this.errorStatus.set(undefined);
         this.hydrationRequests.next(request);
     }
 
@@ -240,6 +216,9 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             this.isRefreshing.set(false);
             this.renderedHtml.set(undefined);
             this.tasks.set([]);
+            // Cleared alongside the html: otherwise a statement that goes blank and later returns to a previously
+            // rendered value would hit the render cache, match the retained hash, and stay blank forever.
+            this.contentHash = undefined;
             this.onNoInstructionsAvailable.emit();
             return;
         }
@@ -252,17 +231,15 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         this.refreshFailed.set(false);
         this.initialLoadFailed.set(false);
         if (rendered.contentHash === this.contentHash) {
-            // Identical output: keep the current DOM so scroll position and focus survive untouched.
+            // Identical output: keep the current DOM so scroll position, focus and the rendered formulas survive
+            // untouched. Nothing has to be scheduled here — the content component re-applies the task accessibility
+            // attributes by itself whenever the interactivity gating changes.
             return;
         }
         this.contentHash = rendered.contentHash;
-        const focusedTaskIndex = this.focusedTaskIndex();
-        const scrollTop = this.scrollTopOfNearestScrollParent();
         const { html, tasks } = this.extractRenderableHtml(rendered.html);
         this.renderedHtml.set(html);
         this.tasks.set(tasks);
-        // The DOM is only updated after change detection has run, so post-processing must wait for the next render.
-        afterNextRender(() => this.postProcessRenderedDom(focusedTaskIndex, scrollTop), { injector: this.injector });
     }
 
     private applyError(error: HttpErrorResponse): void {
@@ -304,108 +281,10 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         return { html: styles + (fragment?.outerHTML ?? ''), tasks };
     }
 
-    /** Index of the currently focused task inside the shadow root, so focus can be restored after a re-render. */
-    private focusedTaskIndex(): number | undefined {
-        const host = this.renderTarget()?.nativeElement;
-        const active = (host?.getRootNode() as ShadowRoot | undefined)?.activeElement;
-        if (!host || !active) {
-            return undefined;
-        }
-        const index = this.taskElements(host).indexOf(active as HTMLElement);
-        return index === -1 ? undefined : index;
-    }
-
-    private taskElements(host: HTMLElement): HTMLElement[] {
-        return [...host.querySelectorAll<HTMLElement>('.artemis-task')];
-    }
-
-    /** The nearest scrollable ancestor outside the shadow root, whose position must survive a full re-render. */
-    private scrollParent(): HTMLElement | undefined {
-        let node = (this.renderTarget()?.nativeElement.getRootNode() as ShadowRoot | undefined)?.host?.parentElement ?? undefined;
-        while (node) {
-            if (node.scrollHeight > node.clientHeight && ['auto', 'scroll'].includes(getComputedStyle(node).overflowY)) {
-                return node;
-            }
-            node = node.parentElement ?? undefined;
-        }
-        return undefined;
-    }
-
-    private scrollTopOfNearestScrollParent(): number | undefined {
-        return this.scrollParent()?.scrollTop;
-    }
-
-    private postProcessRenderedDom(focusedTaskIndex: number | undefined, scrollTop: number | undefined): void {
-        const host = this.renderTarget()?.nativeElement;
-        if (!host) {
-            return;
-        }
-        if (scrollTop !== undefined) {
-            const scrollParent = this.scrollParent();
-            if (scrollParent) {
-                scrollParent.scrollTop = scrollTop;
-            }
-        }
-        // The server emits inert <span class="katex-formula" data-formula data-display-mode> placeholders instead of
-        // rendered math (its own script is stripped), so KaTeX must run over exactly those nodes.
-        host.querySelectorAll<HTMLElement>('.katex-formula').forEach((element) => {
-            const formula = element.getAttribute('data-formula') ?? '';
-            try {
-                katex.render(formula, element, { displayMode: element.getAttribute('data-display-mode') === 'true', throwOnError: false, output: 'html' });
-            } catch {
-                element.textContent = formula;
-            }
-        });
-
-        // Tasks are only interactive when a feedback dialog can actually be opened.
-        const interactive = this.canOpenFeedback();
-        this.taskElements(host).forEach((element, index) => {
-            const task = this.tasks()[index];
-            element.setAttribute('aria-label', this.taskAriaLabel(task));
-            if (interactive && task?.testIds.length) {
-                element.setAttribute('role', 'button');
-                element.setAttribute('tabindex', '0');
-            } else {
-                element.removeAttribute('role');
-                element.removeAttribute('tabindex');
-            }
-        });
-
-        if (focusedTaskIndex !== undefined) {
-            this.taskElements(host)[focusedTaskIndex]?.focus();
-        }
-    }
-
-    private taskAriaLabel(task: SsrTask | undefined): string {
-        if (!task) {
-            return '';
-        }
-        // Own key set: artemisApp.editor.testStatusLabels only defines noResult, noTests, testPassing and
-        // totalTestsPassing, so there is no existing key for "failed" or "not executed".
-        return `${task.taskName}: ${this.translateService.instant('artemisApp.programmingExercise.problemStatement.taskStatus.' + task.status)}`;
-    }
-
-    private canOpenFeedback(): boolean {
-        return !!this.latestResult() && !!this.participation();
-    }
-
-    /**
-     * Resolves a click or keyboard activation inside the shadow root to the task it happened on.
-     *
-     * Events are retargeted at the shadow boundary, so `event.target` is the host element from the outside;
-     * `composedPath()` still contains the real node inside the shadow tree.
-     */
-    onHostEvent(event: Event): void {
-        const taskElement = event.composedPath().find((target): target is HTMLElement => target instanceof HTMLElement && target.classList.contains('artemis-task'));
-        const host = this.renderTarget()?.nativeElement;
-        if (!taskElement || !host) {
-            return;
-        }
-        // Resolve by document position, not by name: task names are not guaranteed to be unique.
-        const index = this.taskElements(host).indexOf(taskElement);
-        const task = index === -1 ? undefined : this.tasks()[index];
+    /** Handles a task activation reported by the content component, identified by its document position. */
+    onTaskActivated(index: number): void {
+        const task = this.tasks()[index];
         if (task) {
-            event.preventDefault();
             this.openTaskFeedback(task);
         }
     }

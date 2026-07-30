@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
-import katex from 'katex';
 import { ProgrammingExerciseInstructionSsrComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr.component';
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -18,15 +18,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 
-// jsdom cannot lay out math, so KaTeX is mocked. The mock still writes into the passed element so the spec can assert
-// that the component handed the placeholder node (and not, say, a detached copy) to the renderer.
-vi.mock('katex', () => ({
-    default: {
-        render: vi.fn((formula: string, element: HTMLElement) => {
-            element.innerHTML = `<span class="katex">${formula}</span>`;
-        }),
-    },
-}));
+// The content child renders math through KaTeX; jsdom cannot lay it out.
+vi.mock('katex', () => ({ default: { render: vi.fn() } }));
 
 const RENDER_URL_MATCHER = (request: { url: string }) => request.url.endsWith('exercise/problem-statement/render');
 
@@ -40,6 +33,8 @@ const bodyStyleResponse = (body: string, contentHash: string) => ({
     rendererVersion: '1.0.0',
 });
 
+const passingFeedback = () => [{ testCase: { id: 1, testName: 'testA' }, positive: true }];
+
 describe('ProgrammingExerciseInstructionSsrComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionSsrComponent>;
     let comp: ProgrammingExerciseInstructionSsrComponent;
@@ -47,21 +42,23 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
     let resultSubject: Subject<Result>;
     let dialogService: DialogService;
     let currentTheme: ReturnType<typeof signal<Theme>>;
+    /** Swappable so a spec can make a *later* hydration fail after an earlier one succeeded. */
+    let hydrateResult: (participation: Participation | undefined, result: Result) => Observable<Result>;
 
     const exercise = { id: 42, problemStatement: '[task][A](<testid>1</testid>)' } as ProgrammingExercise;
 
     // The server still appends KaTeX scripts even with includeJs=false, and they sit inside the rendered fragment,
     // so the script below is deliberately part of `.artemis-problem-statement` and must be stripped.
-    const renderResponse = (status = 'success', extra = '') => ({
-        html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${taskSpan('A', '1', status)}${extra}<script>window.x=1</script></div></body></html>`,
-        contentHash: status + extra,
+    const renderResponse = (status = 'success', extra = '', notExecutedCount = '0') => ({
+        html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${taskSpan('A', '1', status, notExecutedCount)}${extra}<script>window.x=1</script></div></body></html>`,
+        contentHash: status + extra + notExecutedCount,
         rendererVersion: '1.0.0',
     });
 
     beforeEach(async () => {
         resultSubject = new Subject<Result>();
         currentTheme = signal<Theme>(Theme.LIGHT);
-        vi.mocked(katex.render).mockClear();
+        hydrateResult = (_participation, result) => of(result);
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseInstructionSsrComponent],
             providers: [
@@ -73,7 +70,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
                 {
                     provide: ProblemStatementResultHydrationService,
                     useValue: {
-                        withFeedbackDetails: (_participation: unknown, result: Result) => of(result),
+                        withFeedbackDetails: (participation: Participation | undefined, result: Result) => hydrateResult(participation, result),
                         initialResult: () => of(undefined),
                     },
                 },
@@ -91,23 +88,26 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
     afterEach(() => httpMock.verify({ ignoreCancelled: true }));
 
-    const shadowRoot = (): ShadowRoot => fixture.nativeElement.shadowRoot;
+    /** The shadow root of the content child. The outer component itself deliberately has none. */
+    const contentShadowRoot = (): ShadowRoot => fixture.nativeElement.querySelector('jhi-programming-exercise-instruction-ssr-content').shadowRoot;
+    const firstTaskElement = () => contentShadowRoot().querySelector<HTMLElement>('.artemis-task')!;
 
     const flushRender = (response = renderResponse()) => {
         httpMock.expectOne(RENDER_URL_MATCHER).flush(response);
         fixture.detectChanges();
     };
 
-    it('renders the server html into the shadow root and strips scripts', () => {
+    it('strips scripts from the rendered html and hands it to the shadow-DOM content child', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         flushRender();
 
         expect(comp.renderedHtml()).toContain('artemis-task');
         expect(comp.renderedHtml()).not.toContain('<script');
-        expect(shadowRoot()).toBeTruthy();
-        expect(shadowRoot().querySelector('.artemis-task')).toBeTruthy();
-        expect(shadowRoot().querySelector('script')).toBeNull();
+        // The chrome must stay in the light DOM; only the server markup goes behind the shadow boundary.
+        expect(fixture.nativeElement.shadowRoot).toBeNull();
+        expect(contentShadowRoot().querySelector('.artemis-task')).toBeTruthy();
+        expect(contentShadowRoot().querySelector('script')).toBeNull();
     });
 
     it('exposes tasks parsed from server metadata', () => {
@@ -132,6 +132,26 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.isRefreshing()).toBe(false);
     });
 
+    it('renders again when a blank problem statement later returns to a previously rendered one', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+        expect(comp.renderedHtml()).toContain('artemis-task');
+
+        fixture.componentRef.setInput('exercise', { id: 42, problemStatement: '' } as ProgrammingExercise);
+        fixture.detectChanges();
+        expect(comp.renderedHtml()).toBeUndefined();
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+
+        // Served from the render service cache, so the response carries the identical contentHash. Without clearing
+        // the retained hash the component would early-return here and stay blank forever.
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        expect(comp.renderedHtml()).toContain('artemis-task');
+        expect(firstTaskElement()).toBeTruthy();
+    });
+
     it('re-renders when a new result arrives for personal live updates', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', { id: 7 });
@@ -139,7 +159,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
         flushRender(renderResponse('not-executed'));
 
-        resultSubject.next({ id: 9, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
+        resultSubject.next({ id: 9, feedbacks: passingFeedback() } as Result);
         fixture.detectChanges();
         flushRender(renderResponse('success'));
 
@@ -157,7 +177,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(spy).not.toHaveBeenCalled();
     });
 
-    it('keeps the previous html when a refresh fails and shows the stale hint', () => {
+    it('keeps the previous html when a refresh fails and shows the stale hint in the light DOM', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', { id: 7 });
         fixture.componentRef.setInput('liveUpdates', 'personal');
@@ -173,9 +193,14 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.renderedHtml()).toBe(before);
         expect(comp.refreshFailed()).toBe(true);
         expect(comp.initialLoadFailed()).toBe(false);
-        expect(shadowRoot().textContent).toContain('artemisApp.programmingExercise.problemStatement.renderStale');
+        // The banner is a tum-ui-message in the light DOM: styles injected into document.head never cross a shadow
+        // boundary, so no chrome may live inside the content child.
+        const banner = fixture.nativeElement.querySelector('tum-ui-message');
+        expect(banner).toBeTruthy();
+        expect(banner.getAttribute('data-severity')).toBe('info');
+        expect(banner.textContent).toContain('artemisApp.programmingExercise.problemStatement.renderStale');
         // The already rendered statement must still be on screen.
-        expect(shadowRoot().querySelector('.artemis-task')).toBeTruthy();
+        expect(firstTaskElement()).toBeTruthy();
     });
 
     it('selects the rate-limit message when the initial render is rejected with 429', () => {
@@ -187,21 +212,63 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.initialLoadFailed()).toBe(true);
         expect(comp.refreshFailed()).toBe(false);
         expect(comp.errorMessageKey()).toBe('artemisApp.programmingExercise.problemStatement.renderRateLimited');
-        expect(shadowRoot().textContent).toContain('artemisApp.programmingExercise.problemStatement.renderRateLimited');
+        const banner = fixture.nativeElement.querySelector('tum-ui-message');
+        expect(banner.getAttribute('data-severity')).toBe('warn');
+        expect(banner.textContent).toContain('artemisApp.programmingExercise.problemStatement.renderRateLimited');
     });
 
-    it('opens the feedback dialog for a task click when a result and participation exist', () => {
+    it('does not reuse a previous render error status for a later hydration failure', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush('too many requests', new HttpErrorResponse({ status: 429, statusText: 'Too Many Requests' }));
+        fixture.detectChanges();
+        expect(comp.errorMessageKey()).toBe('artemisApp.programmingExercise.problemStatement.renderRateLimited');
+
+        hydrateResult = () => throwError(() => new Error('feedback details unavailable'));
+        fixture.componentRef.setInput('result', { id: 3 } as Result);
+        fixture.detectChanges();
+
+        expect(comp.initialLoadFailed()).toBe(true);
+        // The 429 described the render call, not this hydration failure.
+        expect(comp.errorStatus()).toBeUndefined();
+        expect(comp.errorMessageKey()).toBe('artemisApp.programmingExercise.problemStatement.renderFailed');
+    });
+
+    it('keeps the last hydrated result when a refresh hydration fails, so the tasks stay interactive', () => {
         const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', { id: 7 });
-        fixture.componentRef.setInput('result', { id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
         fixture.detectChanges();
         flushRender();
+        expect(firstTaskElement().getAttribute('role')).toBe('button');
 
-        comp.openTaskFeedback({ index: 0, taskName: 'A', testIds: [1], status: 'success', authoredCount: 1, notExecutedCount: 0 });
+        hydrateResult = () => throwError(() => new Error('feedback details unavailable'));
+        fixture.componentRef.setInput('result', { id: 4 } as Result);
+        fixture.detectChanges();
 
-        expect(open).toHaveBeenCalled();
-        expect(open.mock.calls[0][1]?.inputValues?.numberOfNotExecutedTests).toBe(0);
+        expect(comp.refreshFailed()).toBe(true);
+        // Blanking the result would leave a span that is announced and focusable as a button but does nothing.
+        expect(comp.canOpenFeedback()).toBe(true);
+        expect(firstTaskElement().getAttribute('role')).toBe('button');
+        comp.onTaskActivated(0);
+        expect(open).toHaveBeenCalledOnce();
+    });
+
+    it('opens the feedback dialog with the not-executed count taken from the server metadata', () => {
+        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        // The server reports two not-executed tests; the client must forward exactly that, never recompute it.
+        flushRender(renderResponse('not-executed', '', '2'));
+
+        comp.onTaskActivated(0);
+
+        expect(open).toHaveBeenCalledOnce();
+        expect(open.mock.calls[0][1]?.inputValues?.numberOfNotExecutedTests).toBe(2);
+        expect(open.mock.calls[0][1]?.inputValues?.feedbackFilter).toEqual([1]);
     });
 
     it('does not open the feedback dialog without a result', () => {
@@ -210,22 +277,26 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
         flushRender();
 
-        comp.openTaskFeedback({ index: 0, taskName: 'A', testIds: [1], status: 'success', authoredCount: 1, notExecutedCount: 0 });
+        comp.onTaskActivated(0);
 
         expect(open).not.toHaveBeenCalled();
     });
 
-    it('renders the inert katex placeholders emitted by the server', () => {
+    it('makes the tasks interactive when a participation arrives although the render is served from cache', () => {
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
         fixture.detectChanges();
-        flushRender(renderResponse('success', '<span class="katex-formula" data-formula="a^2" data-display-mode="false"></span>'));
+        flushRender();
+        expect(firstTaskElement().getAttribute('role')).toBeNull();
 
-        const placeholder = shadowRoot().querySelector('.katex-formula')!;
-        expect(katex.render).toHaveBeenCalledOnce();
-        expect(vi.mocked(katex.render).mock.calls[0][0]).toBe('a^2');
-        expect(vi.mocked(katex.render).mock.calls[0][1]).toBe(placeholder);
-        expect(vi.mocked(katex.render).mock.calls[0][2]?.displayMode).toBe(false);
-        expect(placeholder.innerHTML).toContain('katex');
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.detectChanges();
+
+        // Same markdown, locale, theme and test results: the render service answers from its cache with the identical
+        // contentHash, so the DOM is deliberately not replaced. The accessibility gating must update all the same.
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        expect(firstTaskElement().getAttribute('role')).toBe('button');
+        expect(firstTaskElement().getAttribute('tabindex')).toBe('0');
     });
 
     it('keeps the stylesheet the server places inside the body', () => {
@@ -234,14 +305,14 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         flushRender(bodyStyleResponse(taskSpan('A', '1'), 'body-style'));
 
         expect(comp.renderedHtml()).toContain('<style>.artemis-task{color:red}</style>');
-        expect(shadowRoot().querySelector('style')).toBeTruthy();
+        expect(contentShadowRoot().querySelector('style')).toBeTruthy();
     });
 
     it('cancels an in-flight render when a newer one supersedes it', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         // Do not flush: while the first request is still open, a new result supersedes it.
-        fixture.componentRef.setInput('result', { id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
         fixture.detectChanges();
 
         const requests = httpMock.match(RENDER_URL_MATCHER);
@@ -290,64 +361,6 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         second.flush(renderResponse('success', '<!-- de -->'));
         fixture.detectChanges();
     });
-
-    it('restores focus to the task at the same index after a re-render', () => {
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('participation', { id: 7 });
-        fixture.componentRef.setInput('result', { id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
-        fixture.detectChanges();
-        flushRender(renderResponse('not-executed'));
-
-        const firstTask = shadowRoot().querySelector<HTMLElement>('.artemis-task')!;
-        firstTask.focus();
-        expect(shadowRoot().activeElement).toBe(firstTask);
-
-        fixture.componentRef.setInput('result', { id: 4, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: false }] } as Result);
-        fixture.detectChanges();
-        flushRender(renderResponse('fail'));
-
-        const reRenderedTask = shadowRoot().querySelector<HTMLElement>('.artemis-task')!;
-        expect(reRenderedTask).not.toBe(firstTask);
-        expect(shadowRoot().activeElement).toBe(reRenderedTask);
-    });
-
-    it('marks tasks as interactive only when a feedback dialog can be opened', () => {
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.detectChanges();
-        flushRender();
-
-        const task = shadowRoot().querySelector<HTMLElement>('.artemis-task')!;
-        expect(task.getAttribute('role')).toBeNull();
-        expect(task.getAttribute('tabindex')).toBeNull();
-        expect(task.getAttribute('aria-label')).toBe('A: artemisApp.programmingExercise.problemStatement.taskStatus.success');
-
-        fixture.componentRef.setInput('participation', { id: 7 });
-        fixture.componentRef.setInput('result', { id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
-        fixture.detectChanges();
-        flushRender(renderResponse('success', '<!-- with result -->'));
-
-        const interactiveTask = shadowRoot().querySelector<HTMLElement>('.artemis-task')!;
-        expect(interactiveTask.getAttribute('role')).toBe('button');
-        expect(interactiveTask.getAttribute('tabindex')).toBe('0');
-        expect(interactiveTask.getAttribute('aria-label')).toBe('A: artemisApp.programmingExercise.problemStatement.taskStatus.success');
-    });
-
-    it('resolves a clicked task by document position, not by name', () => {
-        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('participation', { id: 7 });
-        fixture.componentRef.setInput('result', { id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] } as Result);
-        fixture.detectChanges();
-        // Two tasks with the same name but different test ids.
-        flushRender(bodyStyleResponse(taskSpan('A', '1') + taskSpan('A', '2,3'), 'duplicates'));
-
-        expect(comp.tasks()).toHaveLength(2);
-        const secondTask = shadowRoot().querySelectorAll<HTMLElement>('.artemis-task')[1];
-        secondTask.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-
-        expect(open).toHaveBeenCalledOnce();
-        expect(open.mock.calls[0][1]?.inputValues?.feedbackFilter).toEqual([2, 3]);
-    });
 });
 
 describe('ProgrammingExerciseInstructionSsrComponent with the real hydration service', () => {
@@ -381,7 +394,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
     afterEach(() => httpMock.verify({ ignoreCancelled: true }));
 
     it('renders with the hydrated latest result of the participation', () => {
-        const participation = { id: 7, submissions: [{ id: 10, results: [{ id: 3, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: true }] }] }] };
+        const participation = { id: 7, submissions: [{ id: 10, results: [{ id: 3, feedbacks: passingFeedback() }] }] };
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
