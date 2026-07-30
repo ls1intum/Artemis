@@ -36,6 +36,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import dayjs from 'dayjs/esm';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -1162,6 +1163,60 @@ describe('IrisChatService', () => {
             inFlight.complete();
 
             expect(emissions).toBe(1);
+        });
+
+        /**
+         * The chatbot decides whether to show the "Choose Your AI Experience" modal from the cached
+         * `userIdentity().selectedLLMUsage`. Publishing the decision only after the PUT resolved made a widget
+         * that is re-created in that window read the stale value and ask again (nightly Iris e2e #13301), so
+         * the cache must reflect the choice as soon as it is made.
+         */
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+            'should publish %s to the account cache while the request is still in flight',
+            (decision) => {
+                accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+                userMock.updateLLMSelectionDecision.mockReturnValue(new Subject<HttpResponse<void>>().asObservable());
+
+                service.updateLLMUsageConsent(decision);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(decision);
+            },
+        );
+
+        it('should revert the cached decision when persisting it fails', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+        });
+
+        /**
+         * The consent handler only has to CREATE the session that could not exist before the user opted in —
+         * it must not tear down a session that is already established, which would discard the message the
+         * user has meanwhile sent (its response is dropped once `sessionId` changes) and leave an empty chat.
+         */
+        it('should keep an already established session when the accepted decision is persisted', async () => {
+            const unsubscribeSpy = vi.spyOn(wsMock, 'unsubscribeFromSession');
+            await startSessionWithWebsocket(new Subject<IrisChatWebsocketDTO>());
+            expect(service.sessionId).toBe(id);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(unsubscribeSpy).not.toHaveBeenCalled();
+            expect(service.sessionId).toBe(id);
+        });
+
+        it('should revert the cached decision to the previous one when persisting a change fails', () => {
+            const previousTimestamp = dayjs().subtract(3, 'day');
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: previousTimestamp } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(previousTimestamp);
         });
     });
 

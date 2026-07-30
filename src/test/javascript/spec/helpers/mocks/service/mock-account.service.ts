@@ -4,6 +4,7 @@ import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { signal } from '@angular/core';
+import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -41,7 +42,13 @@ export class MockAccountService implements IAccountService {
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
-    setUserLLMSelectionDecision = (accepted: LLMSelectionDecision) => {};
+    // Mirrors the real service so specs can observe the cached decision (the Iris chatbot gates its
+    // AI-selection modal on it).
+    setUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined = dayjs()) => {
+        this.userIdentity.update((currentUserIdentity) =>
+            currentUserIdentity ? Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: timestamp }) : currentUserIdentity,
+        );
+    };
 
     askToSetupPasskey = () => false;
     isLoggedInWithPasskey = () => true;

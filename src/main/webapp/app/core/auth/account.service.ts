@@ -407,14 +407,18 @@ export class AccountService implements IAccountService {
     /**
      * Sets LLMSelectionDecisionDate to current timestamp locally if the users accepted the conditions or actively declined,
      * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
+     *
+     * @param accepted  the decision to cache, or {@code undefined} to cache "no decision made yet"
+     * @param timestamp when the decision was made; defaults to now. Pass the previous values to restore the
+     *                  cached state after persisting a decision failed.
      */
-    setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
+    setUserLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined = dayjs()): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() });
+            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: timestamp });
         });
     }
 

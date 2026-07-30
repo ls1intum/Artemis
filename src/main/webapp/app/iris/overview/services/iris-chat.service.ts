@@ -448,16 +448,25 @@ export class IrisChatService implements OnDestroy {
     }
 
     public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        // Publish the decision to the cached user identity right away, before the request resolves: the chatbot
+        // gates the "Choose Your AI Experience" modal on `userIdentity().selectedLLMUsage`, so a chat that is
+        // (re-)opened while the request is still in flight would otherwise read the stale value and ask the user
+        // to choose again. Reverted in the error handlers below if persisting the decision fails.
+        const previousDecision = this.accountService.userIdentity()?.selectedLLMUsage;
+        const previousDecisionTimestamp = this.accountService.userIdentity()?.selectedLLMUsageTimestamp;
+        const revertDecision = () => this.accountService.setUserLLMSelectionDecision(previousDecision, previousDecisionTimestamp);
+        this.accountService.setUserLLMSelectionDecision(accepted);
+
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
             this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
                 next: () => {
-                    this.accountService.setUserLLMSelectionDecision(accepted);
                     this.llmOptedOutSubject.next();
                     this.close();
                 },
                 error: () => {
+                    revertDecision();
                     this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
                     this.close();
                 },
@@ -468,10 +477,16 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
             next: () => {
                 this.hasJustAcceptedLLMUsage = true;
-                this.accountService.setUserLLMSelectionDecision(accepted);
-                this.closeAndStart();
+                // Only start the session that could not be created before the user opted in (the server rejects
+                // session creation without consent). If one is already established — the chat was reopened right
+                // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
+                // the websocket subscription and discard the response to a message the user already sent.
+                if (!this.sessionId) {
+                    this.closeAndStart();
+                }
             },
             error: () => {
+                revertDecision();
                 this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
             },
         });
