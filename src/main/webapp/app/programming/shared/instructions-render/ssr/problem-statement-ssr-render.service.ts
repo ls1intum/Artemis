@@ -71,17 +71,14 @@ export class ProblemStatementSsrRenderService {
     }
 
     private cacheKey(request: ProblemStatementRenderRequest): string {
-        // `null` and `[]` must produce different keys: they render differently (no-result vs not-executed).
+        // `undefined` and `[]` must produce different keys: they render differently (no-result vs not-executed).
+        // JSON.stringify serializes the former as `null`, so the distinction survives.
         // Sorted by test id (not just concatenated in input order) so two logically equal requests whose test
         // results arrive in a different order still produce the same key.
-        const tests =
-            request.testResults === undefined
-                ? 'none'
-                : [...request.testResults]
-                      .sort((a, b) => a.testId - b.testId)
-                      .map((t) => `${t.testId}:${t.testName}:${t.passed}`)
-                      .join('|');
-        return `${request.locale}|${request.darkMode}|${tests}|${request.markdown}`;
+        const tests = request.testResults === undefined ? undefined : [...request.testResults].sort((a, b) => a.testId - b.testId).map((t) => [t.testId, t.testName, t.passed]);
+        // Structured rather than delimiter-joined: a test name or a markdown body containing the delimiter could
+        // otherwise shift the field boundaries and make two different requests collide on one cache entry.
+        return JSON.stringify([request.locale, request.darkMode, tests, request.markdown]);
     }
 
     /** FIFO eviction: insertion order is not refreshed on a hit, which is sufficient for this small cache. */
