@@ -6,7 +6,10 @@ async function expectReferenceTheme(page: Page, theme: 'light' | 'dark') {
     await expect(page.getByRole('button', { name: /Theme/ })).toContainText(`${theme} theme`);
     const documentation = page.frameLocator('#storybook-preview-iframe').locator('.sbdocs-wrapper');
     await expect(documentation).toBeVisible();
-    return documentation.evaluate((element) => getComputedStyle(element).backgroundColor);
+    return {
+        documentation: await documentation.evaluate((element) => getComputedStyle(element).backgroundColor),
+        manager: await page.locator('body').evaluate((element) => getComputedStyle(element).backgroundColor),
+    };
 }
 
 async function selectDocumentationTheme(page: Page, theme: 'light' | 'dark') {
@@ -42,7 +45,8 @@ test('connects the coding guidelines and component reference with the selected t
     await selectDocumentationTheme(page, 'light');
     await page.getByRole('complementary').getByRole('link', { name: 'TUM UI component reference' }).click();
     const lightReferenceBackground = await expectReferenceTheme(page, 'light');
-    expect(lightReferenceBackground).not.toBe(darkReferenceBackground);
+    expect(lightReferenceBackground.documentation).not.toBe(darkReferenceBackground.documentation);
+    expect(lightReferenceBackground.manager).not.toBe(darkReferenceBackground.manager);
 });
 
 test('indexes component names in the developer documentation search', async ({ request }) => {

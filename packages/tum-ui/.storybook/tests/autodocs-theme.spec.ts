@@ -46,17 +46,20 @@ async function resolvedColor(page: Page, color: string) {
 
 async function expectTheme(page: Page, frame: Frame, theme: ColorScheme) {
     const expectedDocsBackground = await resolvedColor(page, themes[theme].appContentBg);
+    const expectedManagerBackground = await resolvedColor(page, themes[theme].appBg);
     await expect
         .poll(async () => {
             const appearance = await readAppearance(frame);
             return {
                 componentTheme: appearance.docs.componentTheme,
                 docsBackground: appearance.docs.background,
+                managerBackground: await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
             };
         })
         .toEqual({
             componentTheme: theme,
             docsBackground: expectedDocsBackground,
+            managerBackground: expectedManagerBackground,
         });
 }
 
