@@ -1,15 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ScienceCourseConsent, ScienceSettingsService, isScienceCourseConsent } from 'app/account/user/settings/science-settings/science-settings.service';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
 
 @Component({
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
-    styleUrls: ['../user-settings.scss'],
-    imports: [FaIconComponent],
+    styleUrls: ['../user-settings.scss', 'science-settings.component.scss'],
+    imports: [FormsModule, FaIconComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiToggleSwitchComponent],
 })
 export class ScienceSettingsComponent implements OnInit {
     private readonly scienceSettingsService = inject(ScienceSettingsService);

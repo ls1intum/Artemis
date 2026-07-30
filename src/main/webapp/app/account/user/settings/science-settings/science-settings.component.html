@@ -1,45 +1,46 @@
 <div>
     <h2>Science data collection</h2>
-    <div class="d-flex userSettings-info">
-        <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-        <span class="ps-1">
-            Science data collection is voluntary and configured per course. You can change your decision or delete interaction data for a course at any time.
-        </span>
-    </div>
+    <tum-ui-message severity="info" [icon]="faInfoCircle" styleClass="science-settings-info">
+        Science data collection is voluntary and configured per course. You can change your decision or delete interaction data for a course at any time.
+    </tum-ui-message>
 </div>
 
-<div class="list-group d-block mt-3">
+<div class="science-settings-list">
     @for (consent of consents(); track consent.courseId) {
-        <div class="list-group-item">
-            <div class="d-flex justify-content-between align-items-center gap-3">
-                <div>
-                    <div class="fw-medium">{{ consent.courseTitle }}</div>
-                    <div class="text-muted small">
-                        {{ consent.courseShortName }}
-                        @if (!consent.scienceEnabled) {
-                            <span> | science collection currently disabled</span>
-                        }
-                    </div>
+        <div class="science-settings-item">
+            <div>
+                <div class="science-settings-course-title">{{ consent.courseTitle }}</div>
+                <div class="science-settings-course-meta">
+                    {{ consent.courseShortName }}
+                    @if (!consent.scienceEnabled) {
+                        <span> | science collection currently disabled</span>
+                    }
                 </div>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="form-check form-switch">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="consent.active === true"
-                            [disabled]="!consent.scienceEnabled"
-                            id="science-course-{{ consent.courseId }}"
-                            (click)="toggleConsent(consent)"
-                        />
-                        <label class="form-check-label" for="science-course-{{ consent.courseId }}">Contribute</label>
-                    </div>
-                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteData(consent)">
-                        <fa-icon [icon]="faTrash" />
-                    </button>
-                </div>
+            </div>
+            <div class="science-settings-actions">
+                <label class="science-settings-switch" for="science-course-{{ consent.courseId }}">
+                    <tum-ui-toggle-switch
+                        inputId="science-course-{{ consent.courseId }}"
+                        [ngModel]="consent.active === true"
+                        [disabled]="!consent.scienceEnabled"
+                        (changed)="toggleConsent(consent)"
+                    />
+                    Contribute
+                </label>
+                <button
+                    type="button"
+                    tumUiButton
+                    severity="danger"
+                    size="small"
+                    variant="outlined"
+                    [attr.aria-label]="'Delete science data for ' + consent.courseTitle"
+                    (click)="deleteData(consent)"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
             </div>
         </div>
     } @empty {
-        <div class="list-group-item">No courses are configured for science data collection.</div>
+        <div class="science-settings-empty">No courses are configured for science data collection.</div>
     }
 </div>

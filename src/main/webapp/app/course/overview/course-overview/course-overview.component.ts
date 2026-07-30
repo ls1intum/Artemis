@@ -34,6 +34,8 @@ import { CourseTitleBarService } from 'app/course/shared/services/course-title-b
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
 /**
  * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
@@ -51,7 +53,18 @@ function readComponentCollapsed(componentRef: unknown): boolean | undefined {
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
+    imports: [
+        CdkScrollable,
+        NgClass,
+        RouterOutlet,
+        NgTemplateOutlet,
+        FaIconComponent,
+        CourseSidebarComponent,
+        CourseUnenrollmentModalComponent,
+        CourseTitleBarComponent,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+    ],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {

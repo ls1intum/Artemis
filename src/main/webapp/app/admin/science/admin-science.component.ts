@@ -1,23 +1,35 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { faDownload, faPlus, faSpinner, faToggleOff, faToggleOn } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlus, faToggleOff } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminScienceService } from 'app/admin/science/admin-science.service';
 import { ScienceEnabledCourse, ScienceResearchExportAudit } from 'app/admin/science/admin-science.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { TagModule } from 'primeng/tag';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiProgressSpinnerComponent } from 'app/shared-ui/tum-ui/progress-spinner/tum-ui-progress-spinner.component';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 
 @Component({
     selector: 'jhi-admin-science',
     templateUrl: './admin-science.component.html',
     styleUrl: './admin-science.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, FaIconComponent, AdminTitleBarTitleDirective, ButtonModule, InputTextModule, TextareaModule, TagModule],
+    imports: [
+        FormsModule,
+        FaIconComponent,
+        AdminTitleBarTitleDirective,
+        TumUiButtonDirective,
+        TumUiCheckboxComponent,
+        TumUiInputDirective,
+        TumUiProgressSpinnerComponent,
+        TumUiTableDirective,
+        TumUiTagComponent,
+    ],
 })
 export class AdminScienceComponent implements OnInit {
     private readonly adminScienceService = inject(AdminScienceService);
@@ -37,8 +49,6 @@ export class AdminScienceComponent implements OnInit {
     protected readonly eventTypes = Object.values(ScienceEventType);
     protected readonly faPlus = faPlus;
     protected readonly faDownload = faDownload;
-    protected readonly faSpinner = faSpinner;
-    protected readonly faToggleOn = faToggleOn;
     protected readonly faToggleOff = faToggleOff;
 
     ngOnInit(): void {

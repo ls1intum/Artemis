@@ -1,0 +1,59 @@
+.science-settings-info {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.science-settings-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.science-settings-item,
+.science-settings-empty {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.science-settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.science-settings-item:last-child,
+.science-settings-empty:last-child {
+    border-bottom: 0;
+}
+
+.science-settings-course-title {
+    font-weight: 600;
+}
+
+.science-settings-course-meta {
+    color: var(--secondary);
+    font-size: 0.875rem;
+}
+
+.science-settings-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.science-settings-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+    .science-settings-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

@@ -4,17 +4,17 @@
     <section class="admin-science-section">
         <h3>Course activation</h3>
         <div class="admin-science-inline-form">
-            <input type="number" pInputText placeholder="Course ID" [(ngModel)]="courseIdToEnable" />
-            <button type="button" pButton (click)="enableCourse()">
+            <input type="number" tumUiInput placeholder="Course ID" [(ngModel)]="courseIdToEnable" />
+            <button type="button" tumUiButton (click)="enableCourse()">
                 <fa-icon [icon]="faPlus" />
                 Enable
             </button>
         </div>
 
         @if (loading()) {
-            <fa-icon [icon]="faSpinner" animation="spin" />
+            <tum-ui-progress-spinner ariaLabel="Loading science courses" styleClass="admin-science-spinner" />
         } @else {
-            <table class="admin-science-table">
+            <table tumUiTable [size]="'small'" [striped]="true" [rowHover]="true" styleClass="admin-science-table">
                 <thead>
                     <tr>
                         <th>Course</th>
@@ -31,15 +31,15 @@
                             <td>{{ course.courseShortName }}</td>
                             <td>
                                 @if (course.active) {
-                                    <p-tag severity="success" value="Active" />
+                                    <tum-ui-tag severity="success" value="Active" />
                                 } @else {
-                                    <p-tag severity="secondary" value="Inactive" />
+                                    <tum-ui-tag severity="secondary" value="Inactive" />
                                 }
                             </td>
                             <td>{{ course.lastModifiedDate ?? course.createdDate }}</td>
                             <td>
                                 @if (course.active) {
-                                    <button type="button" pButton severity="secondary" size="small" [outlined]="true" (click)="disableCourse(course)">
+                                    <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="disableCourse(course)">
                                         <fa-icon [icon]="faToggleOff" />
                                         Disable
                                     </button>
@@ -62,30 +62,34 @@
         <div class="admin-science-export-grid">
             <label>
                 Course IDs
-                <input type="text" pInputText placeholder="1, 2, 3" [(ngModel)]="exportCourseIds" />
+                <input type="text" tumUiInput placeholder="1, 2, 3" [(ngModel)]="exportCourseIds" />
             </label>
             <label>
                 From
-                <input type="datetime-local" pInputText [(ngModel)]="exportFrom" />
+                <input type="datetime-local" tumUiInput [(ngModel)]="exportFrom" />
             </label>
             <label>
                 To
-                <input type="datetime-local" pInputText [(ngModel)]="exportTo" />
+                <input type="datetime-local" tumUiInput [(ngModel)]="exportTo" />
             </label>
             <label class="admin-science-purpose">
                 Purpose
-                <textarea pTextarea rows="3" [(ngModel)]="exportPurpose"></textarea>
+                <textarea tumUiTextarea rows="3" [(ngModel)]="exportPurpose"></textarea>
             </label>
         </div>
         <div class="admin-science-event-types">
             @for (eventType of eventTypes; track eventType) {
-                <label>
-                    <input type="checkbox" (change)="toggleEventType(eventType, $any($event.target).checked)" />
+                <label class="admin-science-event-type">
+                    <tum-ui-checkbox
+                        [inputId]="'science-event-type-' + eventType"
+                        [ngModel]="selectedEventTypes().includes(eventType)"
+                        (onChange)="toggleEventType(eventType, $event.checked)"
+                    />
                     {{ eventType }}
                 </label>
             }
         </div>
-        <button type="button" pButton class="admin-science-export-button" (click)="createExport()">
+        <button type="button" tumUiButton class="admin-science-export-button" (click)="createExport()">
             <fa-icon [icon]="faDownload" />
             Create CSV export
         </button>
@@ -93,7 +97,7 @@
 
     <section class="admin-science-section">
         <h3>Export audit</h3>
-        <table class="admin-science-table">
+        <table tumUiTable [size]="'small'" [striped]="true" [rowHover]="true" styleClass="admin-science-table">
             <thead>
                 <tr>
                     <th>Created</th>
