@@ -1183,13 +1183,15 @@ describe('IrisChatService', () => {
             },
         );
 
-        it('should revert the cached decision when persisting it fails', () => {
-            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+        it('should revert to "no decision yet" — without stamping a timestamp — when persisting it fails', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
             userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
 
             expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            // A rollback must not claim the user decided just now: the settings page renders this timestamp.
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
         });
 
         /**

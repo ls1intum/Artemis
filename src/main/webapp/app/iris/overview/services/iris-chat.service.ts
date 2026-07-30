@@ -454,7 +454,7 @@ export class IrisChatService implements OnDestroy {
         // to choose again. Reverted in the error handlers below if persisting the decision fails.
         const previousDecision = this.accountService.userIdentity()?.selectedLLMUsage;
         const previousDecisionTimestamp = this.accountService.userIdentity()?.selectedLLMUsageTimestamp;
-        const revertDecision = () => this.accountService.setUserLLMSelectionDecision(previousDecision, previousDecisionTimestamp);
+        const revertDecision = () => this.accountService.restoreUserLLMSelectionDecision(previousDecision, previousDecisionTimestamp);
         this.accountService.setUserLLMSelectionDecision(accepted);
 
         if (accepted === LLMSelectionDecision.NO_AI) {

@@ -42,9 +42,13 @@ export class MockAccountService implements IAccountService {
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
-    // Mirrors the real service so specs can observe the cached decision (the Iris chatbot gates its
-    // AI-selection modal on it).
-    setUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined = dayjs()) => {
+    // Both mirror the real service so specs can observe the cached decision (the Iris chatbot gates its
+    // AI-selection modal on it). restore… keeps an absent timestamp absent, exactly like production.
+    setUserLLMSelectionDecision = (accepted: LLMSelectionDecision) => this.applyLLMSelectionDecision(accepted, dayjs());
+
+    restoreUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => this.applyLLMSelectionDecision(accepted, timestamp);
+
+    private applyLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => {
         this.userIdentity.update((currentUserIdentity) =>
             currentUserIdentity ? Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: timestamp }) : currentUserIdentity,
         );
