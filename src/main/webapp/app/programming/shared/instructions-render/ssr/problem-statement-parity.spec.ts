@@ -103,12 +103,17 @@ describe('problem statement rendering parity', () => {
         serverHtml: readFileSync(join(CORPUS, 'rendered', name.replace('.md', '.html')), 'utf8'),
     });
 
-    it.each(files)('server and legacy status engines agree for %s', (name) => {
-        const markdown = readFileSync(join(CORPUS, name), 'utf8');
-        const serverHtml = readFileSync(join(CORPUS, 'rendered', name.replace('.md', '.html')), 'utf8');
+    // Zero corpus files would make every `it.each` below expand to zero tests, which a run reports as green. The Java
+    // half (ProblemStatementRenderingParityTest.corpus) asserts the same thing on its side.
+    it('has a non-empty corpus', () => {
+        expect(files.length).toBeGreaterThan(0);
+    });
 
-        // Rebuild exactly the data the fixture was generated with: one test case per distinct authored reference,
-        // numbered in first-appearance order, all passing.
+    /**
+     * Rebuilds exactly the test data the fixtures were generated with: one test case per distinct authored reference,
+     * numbered in first-appearance order.
+     */
+    const testCasesFor = (markdown: string): ProgrammingExerciseTestCase[] => {
         const distinctRefs: string[] = [];
         for (const refList of authoredRefLists(markdown)) {
             for (const ref of splitTestReferences(refList)) {
@@ -117,15 +122,44 @@ describe('problem statement rendering parity', () => {
                 }
             }
         }
-        const testCases = distinctRefs.map((ref, index) => ({ id: index + 1, testName: ref }) as ProgrammingExerciseTestCase);
-        const result = { id: 1, successful: true, feedbacks: testCases.map((testCase) => ({ testCase, positive: true })) } as Result;
+        return distinctRefs.map((ref, index) => ({ id: index + 1, testName: ref }) as ProgrammingExerciseTestCase);
+    };
 
-        const legacy = authoredRefLists(markdown).map((refList) => {
+    /** The legacy engine's status per task, in document order, translated into the server's vocabulary. */
+    const legacyStatuses = (markdown: string, testCases: ProgrammingExerciseTestCase[], result: Result): string[] =>
+        authoredRefLists(markdown).map((refList) => {
             const testIds = instructionService.convertTestListToIds(refList, testCases);
             return LEGACY_TO_SERVER[instructionService.testStatusForTask(testIds, result).testCaseState];
         });
 
-        expect(serverStatuses(serverHtml)).toEqual(legacy);
+    it.each(files)('server and legacy status engines agree for %s', (name) => {
+        const { markdown, serverHtml } = readPair(name);
+        const testCases = testCasesFor(markdown);
+        const result = { id: 1, successful: true, feedbacks: testCases.map((testCase) => ({ testCase, positive: true })) } as Result;
+
+        expect(serverStatuses(serverHtml)).toEqual(legacyStatuses(markdown, testCases, result));
+    });
+
+    // The all-passing case above cannot expose a drift in the fail / not-executed arms of the status engine, and both
+    // engines have distinct logic there. The server's half of these two comparisons is
+    // ProblemStatementRenderingParityTest.everyTaskReflectsTheOutcomeOfItsTests, which renders this same corpus with
+    // the same two scenarios and asserts the same expectation per task. Task count and order still come from the
+    // committed fixture, so a task appearing or disappearing on either side fails here too.
+    it.each(files)('server and legacy status engines agree on an all-failing result for %s', (name) => {
+        const { markdown, serverHtml } = readPair(name);
+        const testCases = testCasesFor(markdown);
+        const result = { id: 1, successful: false, feedbacks: testCases.map((testCase) => ({ testCase, positive: false })) } as Result;
+
+        expect(legacyStatuses(markdown, testCases, result)).toEqual(serverStatuses(serverHtml).map(() => 'fail'));
+    });
+
+    it.each(files)('server and legacy status engines agree on a not-executed result for %s', (name) => {
+        const { markdown, serverHtml } = readPair(name);
+        const testCases = testCasesFor(markdown);
+        // `positive: undefined` is the legacy spelling of the server's `passed: null`: the test is known but did not run.
+        const result = { id: 1, successful: false, feedbacks: testCases.map((testCase) => ({ testCase, positive: undefined })) } as Result;
+
+        expect(legacyStatuses(markdown, testCases, result)).toEqual(serverStatuses(serverHtml).map(() => 'not-executed'));
     });
 
     // Second comparison: the markdown output itself. Status parity alone does not satisfy the spec's gate, which

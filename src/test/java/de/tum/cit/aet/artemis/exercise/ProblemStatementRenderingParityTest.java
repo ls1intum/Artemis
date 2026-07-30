@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -52,18 +53,25 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
     // one actually used to extract "tests" in production and must be used here too.
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[([^\\[\\]]+)]\\(((?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
+    private static final Pattern TASK_STATUS_PATTERN = Pattern.compile("data-test-status=\"([^\"]+)\"");
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
     private static Stream<Path> corpus() throws IOException {
+        List<Path> corpusFiles;
         try (var files = Files.list(CORPUS_DIRECTORY)) {
             // README.md documents the corpus but is not itself corpus content; it also happens to contain the
             // literal task-syntax example `[task][name](refs)` in prose, which would otherwise be picked up and
             // fail the "must contain at least one task reference" / "must resolve to success" assertions.
-            return files.filter(path -> path.toString().endsWith(".md") && !path.getFileName().toString().equals("README.md")).toList().stream();
+            corpusFiles = files.filter(path -> path.toString().endsWith(".md") && !path.getFileName().toString().equals("README.md")).toList();
         }
+        // An empty corpus yields zero parameterized tests, which a build reports as green. Fail loudly instead: the
+        // whole point of this gate is that it runs. The client half asserts the same thing on its side.
+        assertThat(corpusFiles).as("corpus directory %s must contain at least one .md file", CORPUS_DIRECTORY).isNotEmpty();
+        return corpusFiles.stream();
     }
 
     @ParameterizedTest
@@ -71,29 +79,13 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void everyTaskResolvesWhenFeedbackIsProvided(Path corpusFile) throws Exception {
         String markdown = Files.readString(corpusFile, StandardCharsets.UTF_8);
-
-        // One feedback per DISTINCT reference, numbered in first-appearance order. Deduplication is required for two
-        // reasons: a test referenced by several tasks would otherwise trip the duplicate-name 422 rule, and the
-        // client-side half of this harness rebuilds the same numbering.
-        Map<String, Long> idsByReference = new LinkedHashMap<>();
-        Matcher matcher = TASK_PATTERN.matcher(markdown);
-        while (matcher.find()) {
-            for (String reference : TestReferenceParser.splitTestReferences(matcher.group(2))) {
-                idsByReference.computeIfAbsent(reference, ignored -> (long) (idsByReference.size() + 1));
-            }
-        }
-        List<TestFeedbackInputDTO> feedbacks = idsByReference.entrySet().stream().map(entry -> new TestFeedbackInputDTO(entry.getValue(), entry.getKey(), true, null, null))
-                .toList();
+        List<TestFeedbackInputDTO> feedbacks = feedbacksFor(markdown, true);
         assertThat(feedbacks).as("corpus file %s must contain at least one task reference", corpusFile).isNotEmpty();
 
-        // includeCss=false: the client-side half of this harness only parses structure and statuses, so the
-        // embedded CSS (problem-statement-css/embedded.css plus the KaTeX stylesheet link) carries no signal.
-        // Including it would bloat every fixture and couple them to unrelated styling changes.
-        var body = new ProblemStatementRenderRequestDTO(markdown, feedbacks, null, "en", false, false, false, null);
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        String html = render(markdown, feedbacks);
 
-        assertThat(result.html()).as("all tasks in %s must resolve to success", corpusFile).contains("data-test-status=\"success\"");
-        assertThat(result.html()).as("no task in %s may be unresolved", corpusFile).doesNotContain("data-test-status=\"not-executed\"");
+        assertThat(html).as("all tasks in %s must resolve to success", corpusFile).contains("data-test-status=\"success\"");
+        assertThat(html).as("no task in %s may be unresolved", corpusFile).doesNotContain("data-test-status=\"not-executed\"");
 
         // Emit the server fixture for the client-side diff. A normal run compares against the committed fixture and
         // never rewrites it, so a rendering regression cannot silently overwrite its own baseline. Regeneration is
@@ -105,7 +97,7 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
             // this repo, so a fixture without one invites an editor or formatter to "fix" it later. The compare path
             // below strips exactly one trailing newline back off before comparing, so that eventual fix-up can never
             // break the parity gate for a reason unrelated to actual rendering differences.
-            Files.writeString(fixture, result.html() + "\n", StandardCharsets.UTF_8);
+            Files.writeString(fixture, html + "\n", StandardCharsets.UTF_8);
             return;
         }
         assertThat(fixture).as("fixture missing - regenerate with -Dartemis.regenerateProblemStatementFixtures=true").exists();
@@ -113,6 +105,60 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
         // Strip exactly one trailing newline, matching what the write path above adds. This is not a general
         // whitespace normalization: any other difference, including additional trailing newlines, still fails.
         String normalizedFixtureContent = fixtureContent.endsWith("\n") ? fixtureContent.substring(0, fixtureContent.length() - 1) : fixtureContent;
-        assertThat(normalizedFixtureContent).isEqualTo(result.html());
+        assertThat(normalizedFixtureContent).isEqualTo(html);
+    }
+
+    /**
+     * The all-passing case above cannot expose a drift in the fail / not-executed arms of the status engine, which is
+     * the arm most likely to change. Rendering the same corpus with all-failing and with all-unexecuted feedback pins
+     * both. The client-side half ({@code problem-statement-parity.spec.ts}) drives the legacy engine over the same
+     * corpus with the same two scenarios and asserts the same expectation per task, so a drift in either engine turns
+     * one of the two red.
+     */
+    @ParameterizedTest
+    @MethodSource("corpus")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void everyTaskReflectsTheOutcomeOfItsTests(Path corpusFile) throws Exception {
+        String markdown = Files.readString(corpusFile, StandardCharsets.UTF_8);
+
+        List<String> failing = taskStatuses(render(markdown, feedbacksFor(markdown, false)));
+        assertThat(failing).as("every task in %s must report fail when all of its tests failed", corpusFile).isNotEmpty().containsOnly("fail");
+
+        // passed = null is "the test is known but was not executed", the tri-state the whole migration hinges on.
+        List<String> notExecuted = taskStatuses(render(markdown, feedbacksFor(markdown, null)));
+        assertThat(notExecuted).as("every task in %s must report not-executed when none of its tests ran", corpusFile).isNotEmpty().containsOnly("not-executed");
+
+        assertThat(notExecuted).as("both scenarios must cover the same tasks of %s", corpusFile).hasSameSizeAs(failing);
+    }
+
+    /**
+     * One feedback per DISTINCT reference, numbered in first-appearance order. Deduplication is required for two
+     * reasons: a test referenced by several tasks would otherwise trip the duplicate-name 422 rule, and the
+     * client-side half of this harness rebuilds the same numbering.
+     */
+    private static List<TestFeedbackInputDTO> feedbacksFor(String markdown, @Nullable Boolean passed) {
+        Map<String, Long> idsByReference = new LinkedHashMap<>();
+        Matcher matcher = TASK_PATTERN.matcher(markdown);
+        while (matcher.find()) {
+            for (String reference : TestReferenceParser.splitTestReferences(matcher.group(2))) {
+                idsByReference.computeIfAbsent(reference, ignored -> (long) (idsByReference.size() + 1));
+            }
+        }
+        return idsByReference.entrySet().stream().map(entry -> new TestFeedbackInputDTO(entry.getValue(), entry.getKey(), passed, null, null)).toList();
+    }
+
+    /**
+     * includeCss=false: the client-side half of this harness only parses structure and statuses, so the embedded CSS
+     * (problem-statement-css/embedded.css plus the KaTeX stylesheet link) carries no signal. Including it would bloat
+     * every fixture and couple them to unrelated styling changes.
+     */
+    private String render(String markdown, List<TestFeedbackInputDTO> feedbacks) throws Exception {
+        var body = new ProblemStatementRenderRequestDTO(markdown, feedbacks, null, "en", false, false, false, null);
+        return request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK).html();
+    }
+
+    /** The {@code data-test-status} of every rendered task, in document order. */
+    private static List<String> taskStatuses(String html) {
+        return TASK_STATUS_PATTERN.matcher(html).results().map(match -> match.group(1)).toList();
     }
 }
