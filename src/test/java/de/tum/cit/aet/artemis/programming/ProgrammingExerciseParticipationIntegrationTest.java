@@ -1115,14 +1115,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldKeepBinaryFilteringSpecificToSelectedFileExport() throws Exception {
+        void shouldFilterBinarySelectedFilesByContentInsteadOfExtension() throws Exception {
             var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
                     + "&participationId=" + participation.getId();
 
             Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java", "student/check.sh"), Map.class, HttpStatus.OK);
 
-            assertThat(files).hasSize(1);
+            assertThat(files).hasSize(2);
             assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+            assertThat(files.get("student/check.sh")).isEqualTo("#!/bin/sh\necho checked\n");
         }
 
         @Test

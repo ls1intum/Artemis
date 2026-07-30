@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -116,6 +117,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
     void getSelectedFilesContentEnforcesAggregateLimit() throws Exception {
         Set<String> filePaths = new HashSet<>();
         byte[] content = new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES];
+        Arrays.fill(content, (byte) 'a');
         for (int i = 0; i < 6; i++) {
             String filePath = "src/File" + i + ".java";
             FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath).toFile(), content);
