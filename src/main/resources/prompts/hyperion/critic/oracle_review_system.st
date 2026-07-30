@@ -13,6 +13,13 @@ For public numeric inputs, include representation failures in that risk ranking 
 boundary comparison, losing precision near a boundary, or overflowing integer subtraction/absolute-value arithmetic at admitted extrema. Propose a concrete permitted witness
 that changes the result; omit the mutant when an explicit finite/range precondition makes the witness invalid. Let the execution phase decide whether the generated suite kills it.
 
+Every proposed wrong implementation must stay in the reference solution's natural implementation neighborhood: one smallest plausible change to a decision, data flow,
+ownership choice, arithmetic representation, or state transition already present in the reference or directly suggested by the approved rule. Its failure must arise across a
+natural input region or an existing lifecycle, not from code written to single out the proposed witness. Extreme values are useful when they expose
+ordinary arithmetic or representation already used; never propose a branch that explicitly recognizes the extreme. Repeated calls are useful for a specified or
+already-stateful lifecycle, not by inventing memory for an otherwise stateless mapping. Independent inputs may be ignored, swapped, or wired to the wrong existing decision; do
+not invent a conjunction or other cross-input dependency solely to target one missing combination. Omit the finding rather than inventing an unnatural mutant.
+
 When the learning objective is collaboration through an abstraction (for example delegation, a strategy, callback, or policy), prioritize a mutant that returns the
 known concrete outcomes while bypassing the supplied collaborator. A fake or recording collaborator that proves forwarding and return propagation is behavioral
 evidence, not a brittle implementation-detail assertion. The smallest repair evidence must describe a test-controlled fake or recording collaborator that returns a

@@ -32,6 +32,18 @@ except the one plausible misconception. Avoid trivial constant-return, exception
 method's specified observable purpose is to replace configuration or update state and preserving the prior value is the plausible misconception; do not discard that interaction
 defect merely because its method body is small.
 
+A proposal must stay inside the pristine solution's natural implementation neighborhood. Model one smallest, locally plausible mistake by modifying, omitting, reordering, or
+miswiring a decision, data flow, ownership choice, arithmetic representation, or state transition already present in the reference or directly suggested by the approved rule.
+The wrong behavior must arise naturally across a region of inputs or an existing lifecycle, not from code written to single out the proposed counterexample. Do not introduce a
+magic equality or special case, cache, toggle, counter, random or global state, arbitrary narrowing, modulo, offset, or unrelated cross-input dependency unless that mechanism
+already exists in the reference or contract, or is itself the direct likely implementation of the rule. Extreme inputs are valuable when they expose
+ordinary arithmetic or representation already used, never because the mutant explicitly names that extreme. Repeated-call witnesses are valuable for a specified or
+already-stateful lifecycle or ownership rule, not by inventing memory for an otherwise stateless mapping. Independent configuration inputs may be confused, ignored, or swapped;
+do not combine them in a new predicate solely to target a missing combination. Before emitting, identify the smallest causal edit and a non-singleton input region or existing
+lifecycle family it affects.
+If the rationale disappears when the witness literal or call order is removed, reject it. Source-backed hypotheses do not override this plausibility requirement. When exclusions
+exhaust plausible distinct mistakes, return fewer mutants rather than inventing novelty.
+
 The rule must be the exact canonical R<digits> ID from the specification. The testCode is one complete test method with no class/import/package or markdown. Make it independent
 of whichever imports the graded suite happens to use: write @org.junit.jupiter.api.Test and fully qualified org.junit.jupiter.api.Assertions calls. Use only the public API in the
 solution. Include an assertion message naming the rule distinction. Use fixed data; no timing, randomness, source inspection, reflection, or environment dependence.

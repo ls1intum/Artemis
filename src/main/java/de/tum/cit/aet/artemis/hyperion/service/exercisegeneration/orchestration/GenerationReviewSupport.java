@@ -23,7 +23,7 @@ final class GenerationReviewSupport {
     }
 
     record ExecutableProbeSummary(List<SemanticMutantOutcome> mutantOutcomes, List<ContractWitnessOutcome> witnessOutcomes, int adoptableWitnesses, int awaitingReferencePass,
-            int awaitingAdjudication) {
+            int awaitingReferenceAdjudication, int awaitingAdoptionAdjudication) {
 
         String render() {
             long survivors = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).count();
@@ -40,7 +40,8 @@ final class GenerationReviewSupport {
                     + referenceFailedMutants + " reference-fail, " + mutantInconclusive + " inconclusive; " + witnessOutcomes.size() + " contract-witness proposal(s): "
                     + validatedWitnesses + " reference-pass/starter-fail, " + starterDidNotFail + " reference-pass/starter-not-fail, " + referenceFailed + " reference-fail, "
                     + witnessInconclusive + " inconclusive, " + adoptableWitnesses + " eligible for adoption; " + awaitingReferencePass
-                    + " adjudicated reference defect(s) still failing, " + awaitingAdjudication + " unresolved adjudication(s).";
+                    + " adjudicated reference defect(s) still failing, " + awaitingReferenceAdjudication + " unresolved reference adjudication(s), " + awaitingAdoptionAdjudication
+                    + " unresolved adoption adjudication(s).";
         }
     }
 
@@ -52,6 +53,22 @@ final class GenerationReviewSupport {
                 "Reference solution still violates " + witness.ruleId() + " in executable witness " + witness.testName(),
                 "A prior independent adjudication grounded this exact witness in the frozen specification. The environment executed it again and the reference test still "
                         + "failed. Repair the reference behavior without weakening the contract; convergence remains blocked until this exact witness passes.\n" + witness.code());
+    }
+
+    static SpecFidelityReport.Finding positiveWitnessAdjudicationUnavailable(ContractWitness witness) {
+        return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE,
+                "Executable witness " + witness.testName() + " for rule " + witness.ruleId() + " was not source-approved",
+                "The environment executed this optional proposal: the reference passed and the starter failed. Independent review could not establish that the exact assertion "
+                        + "follows from the frozen specification and belongs to student-owned work, so it was not offered for adoption. An instructor may review it manually.\n"
+                        + witness.code());
+    }
+
+    static SpecFidelityReport.Finding approvedContractWitnessAvailable(ContractWitness witness) {
+        return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
+                "Rule " + witness.ruleId() + " has a source-approved executable witness " + witness.testName(),
+                "Independent review already grounded this exact assertion in the frozen specification. The environment now executes it successfully against the reference and "
+                        + "observes it fail against the starter at student work. Add it unless an existing graded assertion already distinguishes the same behavior. The author "
+                        + "proposed it for this plausible wrong behavior, which the environment did not execute: " + witness.wrongBehavior() + "\nWitness:\n" + witness.code());
     }
 
     static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant, boolean specificationApproved) {
@@ -194,6 +211,16 @@ final class GenerationReviewSupport {
         findings.addAll(SpecFidelityReport.qualityReviewUnavailable("Executable reference evidence remains unresolved: " + awaitingPass.size()
                 + " independently adjudicated witness(es) await an " + "environment pass and " + awaitingAdjudication.size()
                 + " environment-confirmed failure(s) await an explicit independent verdict. A text-only review cannot discharge either state.").findings());
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
+    /** Retains optional positive proposals as advisory review context without turning an auxiliary reviewer outage into a blocking exercise defect. */
+    static SpecFidelityReport preservePositiveWitnessState(SpecFidelityReport report, List<ContractWitness> awaitingAdjudication) {
+        if (awaitingAdjudication.isEmpty()) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        awaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !findings.contains(finding)).forEach(findings::add);
         return new SpecFidelityReport(List.copyOf(findings));
     }
 

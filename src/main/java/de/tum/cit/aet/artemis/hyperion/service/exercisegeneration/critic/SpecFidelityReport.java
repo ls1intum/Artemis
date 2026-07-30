@@ -76,6 +76,11 @@ public record SpecFidelityReport(List<Finding> findings) {
          * implementation the suite accepts. Adopting it therefore either strengthens grading or is redundant, and never blocks an otherwise sound candidate.
          */
         CONTRACT_WITNESS_AVAILABLE,
+        /**
+         * A test passed the reference and failed the starter, but independent review could not establish that its assertion is safe to grade. The optional proposal was not
+         * adopted and does not by itself prove the current exercise defective.
+         */
+        CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE,
         /** The automated full-artifact quality review could not produce a complete verdict. */
         QUALITY_REVIEW_UNAVAILABLE,
         /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
@@ -99,7 +104,9 @@ public record SpecFidelityReport(List<Finding> findings) {
                 case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
                 case UNENFORCEABLE_TECHNIQUE_RULE -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE -> false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,
+                        CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
+                    false;
             };
         }
     }

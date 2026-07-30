@@ -75,6 +75,11 @@ repeated-call behavior, or testability requirement would remain correct and unam
 is not enough. Report it only when removal clearly preserves every independently established behavior and the rule instead adds unrelated burden, gratuitous exact
 behavior, or a material restriction. Include both the obligation and the independent evidence in specEvidenceIds when it exists. Internal implementation choices for
 given plumbing are not graded constraints.
+Audit every Decision Ledger row before freezing the contract. `EXPLICIT_BRIEF` is valid only when the instructor brief itself entails that exact decision; a generated concept,
+selected theme, or coherent author choice is process history, not instructor provenance. Use `INPUT_DOMAIN_ASSUMPTION` only for an admitted-domain choice, and
+`PEDAGOGICAL_ASSUMPTION` only for a learning-design choice. A proportionate choice needed to make the exercise executable, testable, or internally coherent belongs under
+`NECESSARY_OPERATIONAL_CHOICE`. A false provenance label is a blocking unsupported-constraint finding even when the decision itself is coherent: repair the label rather than
+removing a sound choice. Do not let a row's rationale authorize its own provenance.
 Judge an adjective such as "non-standard", "unusual", or "interesting" relative to common teaching examples for the requested programming concept, not by whether
 the domain is familiar in popular culture. Do not reject a coherent theme merely because another theme is possible, and never propose a concrete replacement theme
 or identifier: diagnose the violated property and leave creative authorship to the generator. Distinguish theme identity from theme integration: arbitrary formula

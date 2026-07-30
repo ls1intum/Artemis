@@ -33,6 +33,8 @@ class CriticPromptContractTest {
 
     private static final String ORACLE_REVIEW = "/prompts/hyperion/critic/oracle_review_system.st";
 
+    private static final String SEMANTIC_MUTANT = "/prompts/hyperion/critic/semantic_mutant_system.st";
+
     private static final String CONTRACT_WITNESS = "/prompts/hyperion/critic/contract_witness_system.st";
 
     private final HyperionPromptTemplateService templateService = new HyperionPromptTemplateService();
@@ -82,7 +84,8 @@ class CriticPromptContractTest {
                         "blocking findings TOTAL", "Diagnose properties only", "never supply replacement names, domains, formulas, or APIs",
                         "numeric partitions for gaps and overlaps", "concrete admitted witness", "explicitly narrowed input domain", "unrelated operation advances",
                         "object that owns", "trace a legal setup", "shifts that outcome to an earlier operation", "promised later outcome unreachable",
-                        "one boundaryChecks item for every explicit boundary", "\"timingPreserved\":true"),
+                        "one boundaryChecks item for every explicit boundary", "\"timingPreserved\":true", "Audit every Decision Ledger row", "`EXPLICIT_BRIEF` is valid only",
+                        "process history, not instructor provenance", "`NECESSARY_OPERATIONAL_CHOICE`", "false provenance label is a blocking unsupported-constraint finding"),
 
                 // Contract review: the student-contract half of the full-artifact review.
                 rows(CONTRACT_REVIEW, "house teaching scaffold", "restate its student-visible contract", "imperative TODO", "stubbed owner", "solution/template diff",
@@ -103,12 +106,19 @@ class CriticPromptContractTest {
                         "executable setup", "Do not invent requirements from solution-only behavior", "APPROVED SPECIFICATION CONTRACT is binding authority",
                         "input permitted by the declared contract", "student-facing API", "reflection", "private-state mutation", "bypassing a constructor precondition",
                         "mathematically redundant transformations", "states that the declared types make impossible", "truncating or casting floating-point input",
-                        "overflowing integer subtraction/absolute-value arithmetic", "execution phase decide",
+                        "overflowing integer subtraction/absolute-value arithmetic", "execution phase decide", "natural implementation neighborhood", "smallest plausible change",
+                        "natural input region or an existing lifecycle", "not from code written to single out", "ordinary arithmetic or representation already used",
+                        "otherwise stateless mapping", "Omit the finding rather than inventing an unnatural mutant",
                         "The produced statement is evidence to compare against those primary sources, not authority",
                         "If the primary source requirements do not require every behavior needed to distinguish the proposed wrong implementation"))
                 .flatMap(rows -> rows);
-        return Stream.concat(reviewClauses, rows(CONTRACT_WITNESS, "compilation style as the graded tests", "wrapper that copies imports", "compile against the student starter",
-                "reflection/dynamic-proxy pattern", "never executes and is discarded"));
+        return Stream.concat(reviewClauses,
+                Stream.concat(
+                        rows(SEMANTIC_MUTANT, "natural implementation neighborhood", "smallest, locally plausible mistake", "across a region of inputs or an existing lifecycle",
+                                "not from code written to single out", "ordinary arithmetic or representation already used", "otherwise stateless mapping",
+                                "Source-backed hypotheses do not override", "return fewer mutants rather than inventing novelty"),
+                        rows(CONTRACT_WITNESS, "compilation style as the graded tests", "wrapper that copies imports", "compile against the student starter",
+                                "reflection/dynamic-proxy pattern", "never executes and is discarded")));
     }
 
     /**

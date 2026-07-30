@@ -111,6 +111,8 @@ public class GenerationReviewService {
                 case TEMPLATE_QUALITY_GAP -> "Student task and starter scaffold need alignment: \"" + finding.requirement() + "\"";
                 case UNENFORCEABLE_TECHNIQUE_RULE -> "Students can pass without using the technique the exercise teaches: " + finding.requirement();
                 case CONTRACT_WITNESS_AVAILABLE -> "A ready-to-adopt test for a specification rule, already passing against the reference solution: " + finding.requirement();
+                case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
+                    "An executed optional test was not adopted because its contract/ownership review was incomplete: " + finding.requirement();
                 case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
                 case SPECIFICATION_REVIEW_FINDING -> "The compiled exercise specification still has an unresolved review finding: " + finding.requirement();
             };

@@ -2807,7 +2807,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.findings()).isEmpty();
         assertThat(review.supportedWitnesses()).isEmpty();
         assertThat(review.invalidWitnesses()).containsExactly(witness);
-        assertThat(review.unresolvedWitnesses()).isEmpty();
+        assertThat(review.unresolvedReferenceWitnesses()).isEmpty();
     }
 
     @Test
@@ -2820,7 +2820,7 @@ class SpecFidelityCriticServiceTest {
                 null, () -> false);
 
         assertThat(review.supportedWitnesses()).isEmpty();
-        assertThat(review.unresolvedWitnesses()).containsExactly(witness);
+        assertThat(review.unresolvedReferenceWitnesses()).containsExactly(witness);
         assertThat(review.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
     }
 
@@ -2835,8 +2835,83 @@ class SpecFidelityCriticServiceTest {
                 null, () -> false);
 
         assertThat(review.invalidWitnesses()).isEmpty();
-        assertThat(review.unresolvedWitnesses()).containsExactly(witness);
+        assertThat(review.unresolvedReferenceWitnesses()).containsExactly(witness);
         assertThat(review.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
+    }
+
+    @Test
+    void positiveWitnessRequiresIndependentContractAndOwnershipApprovalBeforeAdoption() {
+        String specification = """
+                ## Rules
+                R1 returns the selected value for every valid input.
+
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Selector` | selects a value | stubbed |
+                """;
+        ContractWitness witness = new ContractWitness("R1", "selectsValidValue", "@Test void selectsValidValue() { assertEquals(3, new Selector().choose(3)); }",
+                "returns an unrelated value");
+        ContractWitnessOutcome outcome = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED,
+                "reference passed; starter assertion failed");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"outcomes":[{"testName":"selectsValidValue","verdict":"SUPPORTED_GRADING_WITNESS",
+                "sourceQuote":"R1 returns the selected value for every valid input.","ownerType":"Selector",
+                "reason":"The legal input 3 must remain the selected value, and Selector is student-owned."}]}
+                """));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses(specification, "class Selector {}", List.of(outcome), null, () -> false);
+
+        assertThat(review.adoptableWitnesses()).containsExactly(witness);
+        assertThat(review.unresolvedAdoptionWitnesses()).isEmpty();
+        assertThat(review.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.CONTRACT_WITNESS_AVAILABLE);
+            assertThat(finding.detail()).contains("R1 returns the selected value", "student-owned type Selector", witness.code());
+            assertThat(finding.isBlocking()).isFalse();
+        });
+    }
+
+    @Test
+    void positiveWitnessCannotBeApprovedAgainstAGivenType() {
+        String specification = """
+                ## Rules
+                R1 returns the selected value for every valid input.
+
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Selector` | supplied utility | given |
+                """;
+        ContractWitness witness = new ContractWitness("R1", "selectsValidValue", "@Test void selectsValidValue() { assertEquals(3, new Selector().choose(3)); }",
+                "returns an unrelated value");
+        ContractWitnessOutcome outcome = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED,
+                "reference passed; starter assertion failed");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("""
+                {"outcomes":[{"testName":"selectsValidValue","verdict":"SUPPORTED_GRADING_WITNESS",
+                "sourceQuote":"R1 returns the selected value for every valid input.","ownerType":"Selector",
+                "reason":"The assertion follows from R1."}]}
+                """));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses(specification, "class Selector {}", List.of(outcome), null, () -> false);
+
+        assertThat(review.adoptableWitnesses()).isEmpty();
+        assertThat(review.unresolvedAdoptionWitnesses()).containsExactly(witness);
+        assertThat(review.findings()).isEmpty();
+    }
+
+    @Test
+    void unavailablePositiveWitnessReviewDoesNotTurnAnOptionalProposalIntoABlocker() {
+        ContractWitness witness = new ContractWitness("R1", "selectsValidValue", "@Test void selectsValidValue() { assertEquals(3, choose(3)); }", "returns an unrelated value");
+        ContractWitnessOutcome outcome = new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED,
+                "reference passed; starter assertion failed");
+        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"outcomes\":[]}"));
+
+        SpecFidelityCriticService.ReferenceWitnessReview review = critic.adjudicateReferenceWitnesses("## Rules\nR1 returns the selected value.", "class Selector {}",
+                List.of(outcome), null, () -> false);
+
+        assertThat(review.adoptableWitnesses()).isEmpty();
+        assertThat(review.unresolvedAdoptionWitnesses()).containsExactly(witness);
+        assertThat(review.findings()).isEmpty();
     }
 
 }

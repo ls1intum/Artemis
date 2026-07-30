@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.C
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome.Disposition;
 
 /**
- * Independently adjudicates a witness that executed and failed against the reference solution. Execution proves the failure, but not that the model-authored assertion correctly
- * interprets the specification; this focused pass supplies that missing decision before a reference change can be scheduled.
+ * Independently adjudicates executed contract witnesses. Execution proves how a witness behaves against the generated reference and starter, but not that the model-authored
+ * assertion follows from the specification; this focused pass supplies that missing decision before a reference repair or test adoption can be scheduled.
  */
 class ReferenceWitnessCritic {
 
@@ -37,13 +37,13 @@ class ReferenceWitnessCritic {
     private static final int MAX_OUTPUT_TOKENS = 4_096;
 
     private enum Verdict {
-        SUPPORTED_REFERENCE_DEFECT, INVALID_WITNESS, INCONCLUSIVE
+        SUPPORTED_REFERENCE_DEFECT, SUPPORTED_GRADING_WITNESS, INVALID_WITNESS, INCONCLUSIVE
     }
 
     private record Response(@Nullable List<Item> outcomes) {
     }
 
-    private record Item(@Nullable String testName, @Nullable Verdict verdict, @Nullable String sourceQuote, @Nullable String reason) {
+    private record Item(@Nullable String testName, @Nullable Verdict verdict, @Nullable String sourceQuote, @Nullable String ownerType, @Nullable String reason) {
     }
 
     private final ReviewerClient reviewer;
@@ -55,19 +55,20 @@ class ReferenceWitnessCritic {
         this.objectMapper = objectMapper;
     }
 
-    SpecFidelityCriticService.ReferenceWitnessReview adjudicate(String specification, String solutionSources, List<ContractWitnessOutcome> outcomes,
-            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        List<ContractWitnessOutcome> failures = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED).toList();
-        if (failures.isEmpty()) {
+    SpecFidelityCriticService.ReferenceWitnessReview adjudicate(String specification, String solutionSources, Map<String, String> templateStatuses,
+            List<ContractWitnessOutcome> outcomes, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        List<ContractWitnessOutcome> candidates = outcomes.stream()
+                .filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED || outcome.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED).toList();
+        if (candidates.isEmpty()) {
             return SpecFidelityCriticService.ReferenceWitnessReview.empty();
         }
         if (cancelled.getAsBoolean()) {
-            return unavailable("Reference-witness adjudication was cancelled.", failures);
+            return unavailable("Contract-witness adjudication was cancelled.", candidates);
         }
         requireReviewTextSafe("reference-witness/specification", specification);
         requireReviewTextSafe("reference-witness/solution", solutionSources);
         if (!reviewer.configured()) {
-            return unavailable("The independent reference-witness adjudicator is not configured.", failures);
+            return unavailable("The independent contract-witness adjudicator is not configured.", candidates);
         }
         String boundedSolution = solutionSources.strip();
         if (boundedSolution.length() > MAX_ARTIFACT_EVIDENCE_CHARS) {
@@ -75,85 +76,120 @@ class ReferenceWitnessCritic {
         }
         StringBuilder prompt = new StringBuilder("FROZEN SPECIFICATION (sole contract authority):\n").append(specification.strip())
                 .append("\n\nREFERENCE SOLUTION SOURCES (bounded implementation evidence, never contract authority):\n").append(boundedSolution)
-                .append("\n\nENVIRONMENT-CONFIRMED REFERENCE FAILURES:\n");
-        for (ContractWitnessOutcome failure : failures) {
-            ContractWitness witness = failure.witness();
-            prompt.append("\nTEST NAME: ").append(witness.testName()).append("\nRULE ID: ").append(witness.ruleId()).append("\nTEST METHOD:\n").append(witness.code())
-                    .append("\nSANITIZED BUILD EVIDENCE:\n").append(failure.diagnostic()).append('\n');
+                .append("\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n").append(ContractWitnessAuthor.renderTemplateOwnership(templateStatuses))
+                .append("\n\nENVIRONMENT-CONFIRMED WITNESS OUTCOMES:\n");
+        for (ContractWitnessOutcome candidate : candidates) {
+            ContractWitness witness = candidate.witness();
+            prompt.append("\nTEST NAME: ").append(witness.testName()).append("\nENVIRONMENT OUTCOME: ").append(candidate.disposition()).append("\nRULE ID: ")
+                    .append(witness.ruleId()).append("\nTEST METHOD:\n").append(witness.code()).append("\nSANITIZED BUILD EVIDENCE:\n").append(candidate.diagnostic()).append('\n');
         }
         try {
             String response = reviewer.call(PROMPT_TEMPLATE, prompt.toString(), usageSink, MAX_OUTPUT_TOKENS);
-            return parse(response, specification, failures);
+            return parse(response, specification, templateStatuses, candidates);
         }
         catch (RuntimeException exception) {
-            log.warn("Reference-witness adjudication failed: {}", exception.getMessage());
-            return unavailable("The independent reference-witness adjudicator failed.", failures);
+            log.warn("Contract-witness adjudication failed: {}", exception.getMessage());
+            return unavailable("The independent contract-witness adjudicator failed.", candidates);
         }
     }
 
-    private SpecFidelityCriticService.ReferenceWitnessReview parse(@Nullable String text, String specification, List<ContractWitnessOutcome> failures) {
+    private SpecFidelityCriticService.ReferenceWitnessReview parse(@Nullable String text, String specification, Map<String, String> templateStatuses,
+            List<ContractWitnessOutcome> candidates) {
         Response response;
         try {
             response = text == null ? null : objectMapper.readValue(extractJsonPayload(text), Response.class);
         }
         catch (Exception exception) {
-            return unavailable("The independent reference-witness verdict was malformed.", failures);
+            return unavailable("The independent contract-witness verdict was malformed.", candidates);
         }
         if (response == null || response.outcomes() == null) {
-            return unavailable("The independent reference-witness verdict was incomplete.", failures);
+            return unavailable("The independent contract-witness verdict was incomplete.", candidates);
         }
-        Map<String, ContractWitnessOutcome> failuresByName = new HashMap<>();
-        for (ContractWitnessOutcome failure : failures) {
-            if (failuresByName.putIfAbsent(failure.witness().testName(), failure) != null) {
-                return unavailable("The environment reported duplicate reference-witness test names.", failures);
+        Map<String, ContractWitnessOutcome> candidatesByName = new HashMap<>();
+        for (ContractWitnessOutcome candidate : candidates) {
+            if (candidatesByName.putIfAbsent(candidate.witness().testName(), candidate) != null) {
+                return unavailable("The environment reported duplicate contract-witness test names.", candidates);
             }
         }
         Set<String> seen = new HashSet<>();
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         List<ContractWitness> supported = new ArrayList<>();
+        List<ContractWitness> adoptable = new ArrayList<>();
         List<ContractWitness> invalid = new ArrayList<>();
-        List<ContractWitness> unresolved = new ArrayList<>();
+        List<ContractWitness> unresolvedReference = new ArrayList<>();
+        List<ContractWitness> unresolvedAdoption = new ArrayList<>();
         for (Item item : response.outcomes()) {
             if (item == null || item.testName() == null || item.verdict() == null || !seen.add(item.testName())) {
-                return unavailable("The independent reference-witness verdict did not identify every failed test exactly once.", failures);
+                return unavailable("The independent contract-witness verdict did not identify every test exactly once.", candidates);
             }
-            ContractWitnessOutcome failure = failuresByName.get(item.testName());
-            if (failure == null) {
-                return unavailable("The independent reference-witness verdict named a test the environment did not report failing.", failures);
+            ContractWitnessOutcome candidate = candidatesByName.get(item.testName());
+            if (candidate == null) {
+                return unavailable("The independent contract-witness verdict named a test the environment did not report.", candidates);
             }
             if (item.reason() == null || item.reason().isBlank()) {
-                return unavailable("The independent reference-witness verdict omitted its rationale.", failures);
+                return unavailable("The independent contract-witness verdict omitted its rationale.", candidates);
             }
             if (item.verdict() == Verdict.INVALID_WITNESS) {
-                invalid.add(failure.witness());
+                invalid.add(candidate.witness());
                 continue;
             }
             if (item.verdict() == Verdict.INCONCLUSIVE) {
-                findings.addAll(
-                        unavailable("The independent reviewer could not determine whether " + item.testName() + " exposes a reference defect.", List.of(failure)).findings());
-                unresolved.add(failure.witness());
+                addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
                 continue;
             }
             if (item.sourceQuote() == null || item.sourceQuote().isBlank() || !specification.contains(item.sourceQuote().strip())) {
-                return unavailable("A claimed reference defect was not grounded in an exact specification quote.", failures);
+                return unavailable("A supported contract witness was not grounded in an exact specification quote.", candidates);
             }
-            ContractWitness witness = failure.witness();
-            findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
-                    "Reference solution violates " + witness.ruleId() + " in executable witness " + witness.testName(),
-                    "An independent reviewer grounded the failed test in the frozen specification quote \"" + truncate(item.sourceQuote().strip()) + "\". The environment "
-                            + "executed the named test against the reference solution and observed a failure or error (not a compilation or discovery failure). Repair the "
-                            + "reference behavior without weakening the frozen rule, then make this exact witness pass. Reviewer rationale: " + truncate(item.reason().strip())
-                            + "\nWitness:\n" + witness.code() + "\nEnvironment evidence:\n" + truncate(failure.diagnostic())));
-            supported.add(witness);
+            if (item.verdict() == Verdict.SUPPORTED_REFERENCE_DEFECT && candidate.disposition() == Disposition.REFERENCE_TEST_FAILED) {
+                ContractWitness witness = candidate.witness();
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
+                        "Reference solution violates " + witness.ruleId() + " in executable witness " + witness.testName(),
+                        "An independent reviewer grounded the failed test in the frozen specification quote \"" + truncate(item.sourceQuote().strip()) + "\". The environment "
+                                + "executed the named test against the reference solution and observed a failure or error (not a compilation or discovery failure). Repair the "
+                                + "reference behavior without weakening the frozen rule, then make this exact witness pass. Reviewer rationale: " + truncate(item.reason().strip())
+                                + "\nWitness:\n" + witness.code() + "\nEnvironment evidence:\n" + truncate(candidate.diagnostic())));
+                supported.add(witness);
+                continue;
+            }
+            if (item.verdict() == Verdict.SUPPORTED_GRADING_WITNESS && candidate.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED
+                    && studentOwned(item.ownerType(), templateStatuses)) {
+                ContractWitness witness = candidate.witness();
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
+                        "Rule " + witness.ruleId() + " has a source-approved executable witness " + witness.testName(),
+                        "An independent reviewer grounded this assertion in the frozen specification quote \"" + truncate(item.sourceQuote().strip())
+                                + "\" and attributed it to student-owned type " + item.ownerType().strip() + ". The environment executed it: the reference passes and the starter "
+                                + "fails. Add it unless an existing assertion already distinguishes the same behavior. Reviewer rationale: " + truncate(item.reason().strip())
+                                + "\nThe author proposed it for this plausible wrong behavior, which the environment did not execute: " + witness.wrongBehavior() + "\nWitness:\n"
+                                + witness.code()));
+                adoptable.add(witness);
+                continue;
+            }
+            return unavailable("A contract-witness verdict did not match its environment outcome or a student-owned Design type.", candidates);
         }
-        if (!seen.equals(failuresByName.keySet())) {
-            return unavailable("The independent reference-witness verdict omitted an environment-confirmed failed test.", failures);
+        if (!seen.equals(candidatesByName.keySet())) {
+            return unavailable("The independent contract-witness verdict omitted an environment-confirmed test.", candidates);
         }
-        return new SpecFidelityCriticService.ReferenceWitnessReview(findings, supported, invalid, unresolved);
+        return new SpecFidelityCriticService.ReferenceWitnessReview(findings, supported, adoptable, invalid, unresolvedReference, unresolvedAdoption);
     }
 
-    private static SpecFidelityCriticService.ReferenceWitnessReview unavailable(String detail, List<ContractWitnessOutcome> failures) {
-        return new SpecFidelityCriticService.ReferenceWitnessReview(SpecFidelityReport.qualityReviewUnavailable(detail).findings(), List.of(), List.of(),
-                failures.stream().map(ContractWitnessOutcome::witness).distinct().toList());
+    private static void addUnresolved(ContractWitnessOutcome outcome, List<ContractWitness> unresolvedReference, List<ContractWitness> unresolvedAdoption) {
+        (outcome.disposition() == Disposition.REFERENCE_TEST_FAILED ? unresolvedReference : unresolvedAdoption).add(outcome.witness());
+    }
+
+    private static boolean studentOwned(@Nullable String ownerType, Map<String, String> templateStatuses) {
+        if (ownerType == null || ownerType.isBlank()) {
+            return false;
+        }
+        String status = templateStatuses.get(ownerType.strip());
+        return "stubbed".equals(status) || "student-creates".equals(status);
+    }
+
+    private static SpecFidelityCriticService.ReferenceWitnessReview unavailable(String detail, List<ContractWitnessOutcome> candidates) {
+        List<ContractWitness> unresolvedReference = candidates.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED)
+                .map(ContractWitnessOutcome::witness).distinct().toList();
+        List<ContractWitness> unresolvedAdoption = candidates.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED)
+                .map(ContractWitnessOutcome::witness).distinct().toList();
+        List<SpecFidelityReport.Finding> findings = unresolvedReference.isEmpty() ? List.of() : SpecFidelityReport.qualityReviewUnavailable(detail).findings();
+        return new SpecFidelityCriticService.ReferenceWitnessReview(findings, List.of(), List.of(), List.of(), unresolvedReference, unresolvedAdoption);
     }
 }

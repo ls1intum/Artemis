@@ -96,22 +96,24 @@ public class SpecFidelityCriticService {
 
     private static final String ORACLE_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/oracle_review_system.st";
 
-    public record ReferenceWitnessReview(List<SpecFidelityReport.Finding> findings, List<ContractWitness> supportedWitnesses, List<ContractWitness> invalidWitnesses,
-            List<ContractWitness> unresolvedWitnesses) {
+    public record ReferenceWitnessReview(List<SpecFidelityReport.Finding> findings, List<ContractWitness> supportedWitnesses, List<ContractWitness> adoptableWitnesses,
+            List<ContractWitness> invalidWitnesses, List<ContractWitness> unresolvedReferenceWitnesses, List<ContractWitness> unresolvedAdoptionWitnesses) {
 
         public ReferenceWitnessReview {
             findings = List.copyOf(findings);
             supportedWitnesses = List.copyOf(supportedWitnesses);
+            adoptableWitnesses = List.copyOf(adoptableWitnesses);
             invalidWitnesses = List.copyOf(invalidWitnesses);
-            unresolvedWitnesses = List.copyOf(unresolvedWitnesses);
+            unresolvedReferenceWitnesses = List.copyOf(unresolvedReferenceWitnesses);
+            unresolvedAdoptionWitnesses = List.copyOf(unresolvedAdoptionWitnesses);
         }
 
         public ReferenceWitnessReview(List<SpecFidelityReport.Finding> findings, List<ContractWitness> supportedWitnesses) {
-            this(findings, supportedWitnesses, List.of(), List.of());
+            this(findings, supportedWitnesses, List.of(), List.of(), List.of(), List.of());
         }
 
         public static ReferenceWitnessReview empty() {
-            return new ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of());
+            return new ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
         }
     }
 
@@ -363,7 +365,7 @@ public class SpecFidelityCriticService {
     public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources,
             List<de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome> outcomes, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
-        return referenceWitnessCritic.adjudicate(specificationContract, solutionSources, outcomes, usageSink, cancelled);
+        return referenceWitnessCritic.adjudicate(specificationContract, solutionSources, designTemplateStatuses(specificationContract), outcomes, usageSink, cancelled);
     }
 
     /**
@@ -938,6 +940,9 @@ public class SpecFidelityCriticService {
                     .append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_AVAILABLE ->
                 builder.append("\n- Optional environment-validated contract witness: \"").append(finding.requirement()).append("\". ").append(finding.detail());
+            case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
+                builder.append("\n- This optional executable witness was not adopted because independent contract/ownership review was incomplete: \"")
+                        .append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP ->
                 builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");

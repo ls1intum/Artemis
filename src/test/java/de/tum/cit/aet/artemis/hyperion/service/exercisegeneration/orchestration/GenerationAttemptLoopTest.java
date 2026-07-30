@@ -247,6 +247,30 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void anUnreviewedPositiveWitnessIsRetainedForInstructorReviewButCannotChangeGrading() {
+        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of(), List.of(), List.of(witness)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        verify(baseTools, never()).enterRepairScope(any());
+        assertThat(loop.specFidelityReport().findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE);
+            assertThat(finding.detail()).contains("reference passed", "starter failed", "not offered for adoption", witness.code());
+            assertThat(finding.isBlocking()).isFalse();
+        });
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
     void aFailedRecheckCannotEraseAProvenSemanticSurvivorOrConverge() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
@@ -718,6 +742,11 @@ class GenerationAttemptLoopTest {
                 List.of(kinds).stream().map(kind -> new SpecFidelityReport.Finding(kind, "requirement for " + kind.name(), "detail for " + kind.name())).toList());
     }
 
+    private static SpecFidelityCriticService.ReferenceWitnessReview approvedForAdoption(ContractWitness witness) {
+        return new SpecFidelityCriticService.ReferenceWitnessReview(List.of(GenerationReviewSupport.approvedContractWitnessAvailable(witness)), List.of(), List.of(witness),
+                List.of(), List.of(), List.of());
+    }
+
     private static SemanticMutant mutant(String ruleId, String testName, String wrongBehavior) {
         return new SemanticMutant(ruleId, "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int " + testName + "; }",
                 new ContractWitness(ruleId, testName, "@Test void " + testName + "() {}", wrongBehavior));
@@ -797,6 +826,7 @@ class GenerationAttemptLoopTest {
             when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
                     List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")),
                     List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")), List.of());
+            when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(approvedForAdoption(witness));
 
             GenerationAttemptLoop loop = newGenerateLoop(4, 3);
             loop.run();
@@ -851,6 +881,7 @@ class GenerationAttemptLoopTest {
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
             when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
                     .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+            when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(approvedForAdoption(witness));
 
             newGenerateLoop(6, 4).run();
 
