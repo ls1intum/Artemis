@@ -2,7 +2,7 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
-                <span class="unified-feedback-reference-text" [pTooltip]="inferredReference()!" tooltipPosition="top">{{ inferredReference() }}</span>
+                <span class="unified-feedback-reference-text" [tumUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
             </div>
         }
 
@@ -23,7 +23,7 @@
                             [disabled]="readOnly()"
                         />
                     } @else if (inferredTitle()) {
-                        <span class="unified-feedback-title" [pTooltip]="inferredTitle()!" tooltipPosition="top">{{ inferredTitle() }}</span>
+                        <span class="unified-feedback-title" [tumUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-header-right">
@@ -77,7 +77,7 @@
                 @if (gradingInstructionText()) {
                     <div class="unified-feedback-rubric-label">
                         <span>{{ gradingInstructionText() }}</span>
-                        <fa-icon [icon]="faQuestionCircle" [pTooltip]="rubricHint()" tooltipPosition="top" />
+                        <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="rubricHint()" />
                     </div>
                 }
                 <div class="unified-feedback-detail-row">

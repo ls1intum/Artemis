@@ -3,7 +3,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faLightbulb, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-feedback-suggestion-badge',
     templateUrl: './feedback-suggestion-badge.component.html',
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
-    imports: [NgbTooltip, FaIconComponent, TranslateDirective],
+    imports: [TumUiTooltipDirective, FaIconComponent, TranslateDirective],
     host: {
         '[class.suggestion-badge-host--footer]': "variant() === 'footer'",
     },

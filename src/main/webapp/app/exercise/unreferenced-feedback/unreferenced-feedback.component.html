@@ -1,12 +1,8 @@
 <div (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
     <div class="col-md-6">
-        <p-button
-            [label]="'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate"
-            severity="success"
-            class="mt-4"
-            [disabled]="readOnly()"
-            (onClick)="addUnreferencedFeedback()"
-        />
+        <tum-ui-button severity="success" class="mt-4" [disabled]="readOnly()" (clicked)="addUnreferencedFeedback()">
+            {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
+        </tum-ui-button>
         <div class="row mt-4">
             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
             @if (unreferencedFeedback.length === 0) {
