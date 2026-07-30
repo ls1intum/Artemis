@@ -1118,7 +1118,7 @@ class SpecFidelityCriticServiceTest {
         verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("[F1] Unsupported constraint", "Adjudicate every F ID",
                 "Do not repeat an F finding in an ordinary finding array", "preserve their values and evidence IDs", "objectiveEvidenceIds: E candidates",
-                "Every briefEvidenceIds field: B candidates");
+                "Every briefEvidenceIds field: B candidates", "PREVIOUS RESPONSE TO CORRECT", "Students reason about both threshold boundaries");
     }
 
     @Test
