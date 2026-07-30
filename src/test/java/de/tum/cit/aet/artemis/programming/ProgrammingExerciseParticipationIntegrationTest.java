@@ -263,6 +263,36 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResult_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        var participationWithoutResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithoutResult)).isEmpty();
+
+        addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var participationWithResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithResult)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLatestResultWithFeedbacks_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        assertThat(request.get(url, HttpStatus.OK, Result.class)).isNull();
+
+        var result = addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var requestedResult = request.get(url, HttpStatus.OK, Result.class);
+        assertThat(requestedResult).isNotNull();
+        assertThat(requestedResult.getId()).isEqualTo(result.getId());
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationResults")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -1309,6 +1339,44 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 userLogin, workingTime);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
+    }
+
+    /**
+     * Sets up an exam exercise conducted as an instructor test run, together with a test-run participation that has no
+     * result yet. The exam started an hour ago and its results are not published yet, i.e. the state in which a test run
+     * is conducted. A test run only has a student exam with {@code testRun = true} and deliberately no regular student exam.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The test-run participation of the instructor
+     */
+    private ProgrammingExerciseStudentParticipation setupExamTestRunWithParticipation(String instructorLogin) {
+        var startDate = ZonedDateTime.now().minusHours(1);
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, startDate.minusHours(1), startDate, startDate.plusHours(1));
+        exam.setPublishResultsDate(startDate.plusHours(10));
+        examRepository.save(exam);
+
+        var instructor = userUtilService.getUserByLogin(instructorLogin);
+        studentExamRepository.save(examUtilService.generateTestRunForInstructor(exam, instructor, List.of(programmingExercise)));
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, instructorLogin);
+        assertThat(participation.isTestRun()).isTrue();
+        programmingExerciseParticipation = participation;
+        return participation;
+    }
+
+    /**
+     * Adds a submission with an automatic result to the test-run participation set up by {@link #setupExamTestRunWithParticipation}.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The result attached to the test-run participation
+     */
+    private Result addResultToTestRunParticipation(String instructorLogin) {
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
+                instructorLogin);
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(58));
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
 }
