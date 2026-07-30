@@ -84,6 +84,8 @@ jobs:
           cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+      - name: Dependency Version Consistency
+        run: pnpm run sync-versions:check
       - name: TypeScript Formatting
         run: pnpm run prettier:check
       - name: TypeScript Code Style

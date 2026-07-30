@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -16,11 +16,11 @@ export class TumUiButtonComponent {
     readonly size = input<TumUiButtonSize>('default');
 
     readonly variant = input<TumUiButtonVariant>('solid');
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
-    readonly rounded = input(false);
+    readonly rounded = input(false, { transform: booleanAttribute });
 
-    readonly loading = input(false);
+    readonly loading = input(false, { transform: booleanAttribute });
     readonly icon = input<IconProp | undefined>(undefined);
     readonly type = input<'button' | 'submit'>('button');
     readonly ariaLabel = input<string | undefined>(undefined);

@@ -125,7 +125,8 @@
         "vite": "catalog:",
         "vite-tsconfig-paths": "6.1.1",
         "vitest": "catalog:",
-        "vitest-canvas-mock": "1.1.4"
+        "vitest-canvas-mock": "1.1.4",
+        "yaml": "catalog:"
     },
     "engines": {
         "node": ">=24.18.0",
@@ -139,7 +140,7 @@
         "compile:tests": "pnpm run prebuild && tsc --project tsconfig.spec.json",
         "coverage:check-module": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
-        "docs:build": "cross-env ARTEMIS_DOCS_TUM_UI=true pnpm --dir documentation run build && pnpm --dir packages/tum-ui run storybook:prepare && cross-env STORYBOOK_ARTEMIS_CLIENT_GUIDE_URL=/developer/artemis-client pnpm --dir packages/tum-ui exec storybook build --output-dir ../../documentation/build/developer/tum-ui",
+        "docs:build": "pnpm --dir packages/tum-ui run storybook:prepare && cross-env STORYBOOK_TUM_UI_GUIDE_URL=/developer/guidelines/tum-ui-kit pnpm --dir packages/tum-ui exec storybook build --output-dir ../../build/documentation-static/developer/tum-ui && node supporting_scripts/generate-tum-ui-reference-page.mjs && cross-env ARTEMIS_DOCS_TUM_UI=true pnpm --dir documentation run build",
         "docs:integration:check": "pnpm --dir documentation exec eslint tests && tsc --project documentation/tests/tsconfig.json",
         "docs:integration:test": "pnpm run docs:integration:check && playwright test --config documentation/tests/playwright.config.ts",
         "docs:serve": "pnpm --dir packages/tum-ui exec vite preview --outDir ../../documentation/build --host 127.0.0.1 --port 3000 --strictPort",

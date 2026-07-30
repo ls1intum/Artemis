@@ -1,4 +1,5 @@
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
@@ -18,15 +19,17 @@ const meta = {
         placeholder: 'Course name or identifier',
         iconPosition: 'left',
     },
+    decorators: [
+        moduleMetadata({
+            imports: [TumUiInputDirective],
+        }),
+    ],
     render: (args) => ({
         props: {
             label: args.label,
             placeholder: args.placeholder,
             icon: faMagnifyingGlass,
             iconPosition: args.iconPosition,
-        },
-        moduleMetadata: {
-            imports: [TumUiInputDirective],
         },
         template: `
             <label for="course-search">{{ label }}</label>

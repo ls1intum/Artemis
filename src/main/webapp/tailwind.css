@@ -72,32 +72,21 @@
     --tum-ui-highlight-color: var(--p-highlight-color);
     --tum-ui-highlight-background: var(--p-highlight-background);
     --tum-ui-highlight-focus-background: var(--p-highlight-focus-background);
-    --tum-ui-state-danger: var(--danger);
-    --tum-ui-state-danger-contrast: var(--p-surface-0);
-    --tum-ui-state-danger-foreground: var(--p-red-800);
-    --tum-ui-state-success: var(--success);
-    --tum-ui-state-success-contrast: var(--p-surface-0);
-    --tum-ui-state-success-foreground: var(--p-green-800);
-    --tum-ui-state-warning: var(--warning);
-    --tum-ui-state-warning-contrast: var(--p-surface-950);
-    --tum-ui-state-warning-foreground: var(--p-yellow-800);
-    --tum-ui-state-info: var(--info);
-    --tum-ui-state-info-contrast: var(--p-surface-950);
-    --tum-ui-state-info-foreground: var(--p-cyan-800);
+    --tum-ui-state-danger: var(--artemis-alert-danger-color);
+    --tum-ui-state-danger-contrast: var(--artemis-alert-danger-background);
+    --tum-ui-state-danger-foreground: var(--artemis-alert-danger-color);
+    --tum-ui-state-success: var(--artemis-alert-success-color);
+    --tum-ui-state-success-contrast: var(--artemis-alert-success-background);
+    --tum-ui-state-success-foreground: var(--artemis-alert-success-color);
+    --tum-ui-state-warning: var(--artemis-alert-warning-color);
+    --tum-ui-state-warning-contrast: var(--artemis-alert-warning-background);
+    --tum-ui-state-warning-foreground: var(--artemis-alert-warning-color);
+    --tum-ui-state-info: var(--artemis-alert-info-color);
+    --tum-ui-state-info-contrast: var(--artemis-alert-info-background);
+    --tum-ui-state-info-foreground: var(--artemis-alert-info-color);
     --tum-ui-table-striped-background: color-mix(in srgb, var(--p-content-background), var(--p-text-color) 3%);
-    --tum-ui-tooltip-background: var(--p-surface-700);
-    --tum-ui-tooltip-color: var(--p-surface-0);
-}
-
-[data-theme='dark'] {
-    --tum-ui-state-danger-contrast: var(--p-red-950);
-    --tum-ui-state-danger-foreground: var(--p-red-400);
-    --tum-ui-state-success-contrast: var(--p-green-950);
-    --tum-ui-state-success-foreground: var(--p-green-400);
-    --tum-ui-state-warning-contrast: var(--p-yellow-950);
-    --tum-ui-state-warning-foreground: var(--p-yellow-400);
-    --tum-ui-state-info-contrast: var(--p-cyan-950);
-    --tum-ui-state-info-foreground: var(--p-cyan-400);
+    --tum-ui-tooltip-background: var(--p-text-color);
+    --tum-ui-tooltip-color: var(--p-content-background);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */

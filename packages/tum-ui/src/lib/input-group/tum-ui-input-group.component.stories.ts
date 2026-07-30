@@ -1,3 +1,4 @@
+import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
@@ -24,11 +25,13 @@ const meta = {
         prefix: '€',
         suffix: 'EUR',
     },
+    decorators: [
+        moduleMetadata({
+            imports: [TumUiInputDirective, TumUiInputGroupAddonComponent],
+        }),
+    ],
     render: (args) => ({
         props: args,
-        moduleMetadata: {
-            imports: [TumUiInputDirective, TumUiInputGroupAddonComponent],
-        },
         template: `
             <label for="budget">{{ label }}</label>
             <tum-ui-input-group>

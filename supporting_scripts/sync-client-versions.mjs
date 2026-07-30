@@ -15,23 +15,30 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { parseDocument } from 'yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-const ENV_FILE = resolve(ROOT, '.env');
-const ROOT_PKG = resolve(ROOT, 'package.json');
-const PLAYWRIGHT_PKG = resolve(ROOT, 'src/test/playwright/package.json');
+const defaultPaths = {
+    envFile: resolve(ROOT, '.env'),
+    rootPackage: resolve(ROOT, 'package.json'),
+    playwrightPackage: resolve(ROOT, 'src/test/playwright/package.json'),
+    workspace: resolve(ROOT, 'pnpm-workspace.yaml'),
+};
 
 // ── .env parsing ──────────────────────────────────────────────────────────────
 
-function parseEnv(path) {
+export function parseEnv(path) {
     const vars = {};
     for (const line of readFileSync(path, 'utf8').split('\n')) {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
         const [key, ...rest] = trimmed.split('=');
-        vars[key.trim()] = rest.join('=').trim().replace(/^(['"])(.*)\1$/, '$2');
+        vars[key.trim()] = rest
+            .join('=')
+            .trim()
+            .replace(/^(['"])(.*)\1$/, '$2');
     }
     return vars;
 }
@@ -64,12 +71,12 @@ function writePkg(path, pkg) {
 
 /** Packages with independent release cycles, excluded from ANGULAR_VERSION sync. */
 const ANGULAR_INDEPENDENT_PACKAGES = new Set([
-    '@angular/cdk',             // Angular Components team, separate releases
-    '@angular/material',        // Angular Components team, separate releases
-    '@angular/youtube-player',  // Angular Components team, separate releases
+    '@angular/cdk', // Angular Components team, separate releases
+    '@angular/material', // Angular Components team, separate releases
+    '@angular/youtube-player', // Angular Components team, separate releases
     '@angular-devkit/build-angular', // Angular CLI team, separate releases
-    '@angular/build',           // Angular CLI team, separate releases
-    '@angular/cli',             // Angular CLI team, separate releases
+    '@angular/build', // Angular CLI team, separate releases
+    '@angular/cli', // Angular CLI team, separate releases
 ]);
 
 /** Given a package name and current version, return the .env key that controls it. */
@@ -130,12 +137,14 @@ function toOverridePattern(version) {
 
 // ── Sync logic ────────────────────────────────────────────────────────────────
 
-function syncForward(env, checkOnly) {
+export function syncForward(env, checkOnly, paths = defaultPaths) {
     let changes = 0;
-    let mismatches = [];
+    const mismatches = [];
 
     // --- Root package.json ---
-    const pkg = readPkg(ROOT_PKG);
+    const pkg = readPkg(paths.rootPackage);
+    const workspace = parseDocument(readFileSync(paths.workspace, 'utf8'));
+    let workspaceChanges = 0;
 
     for (const section of ['dependencies', 'devDependencies']) {
         if (!pkg[section]) continue;
@@ -143,7 +152,24 @@ function syncForward(env, checkOnly) {
             const envKey = envKeyForPackage(name);
             if (!envKey || !(envKey in env)) continue;
             const targetVersion = envValueToNpmVersion(envKey, env[envKey]);
-            if (currentVersion !== targetVersion) {
+            if (currentVersion.startsWith('catalog:')) {
+                const catalogName = currentVersion.slice('catalog:'.length);
+                const path = catalogName ? ['catalogs', catalogName, name] : ['catalog', name];
+                const catalogVersion = workspace.getIn(path);
+                if (catalogVersion !== targetVersion) {
+                    mismatches.push({
+                        file: 'pnpm-workspace.yaml',
+                        section: catalogName ? `catalogs.${catalogName}` : 'catalog',
+                        name,
+                        current: catalogVersion ?? '(missing)',
+                        target: targetVersion,
+                        envKey,
+                    });
+                    workspace.setIn(path, targetVersion);
+                    workspaceChanges++;
+                    changes++;
+                }
+            } else if (currentVersion !== targetVersion) {
                 mismatches.push({ file: 'package.json', section, name, current: currentVersion, target: targetVersion, envKey });
                 pkg[section][name] = targetVersion;
                 changes++;
@@ -158,7 +184,14 @@ function syncForward(env, checkOnly) {
             if (typeof libOverrides !== 'object') continue;
             for (const [depName, currentPattern] of Object.entries(libOverrides)) {
                 if (envKeyForPackage(depName) === 'ANGULAR_VERSION' && currentPattern !== overridePattern) {
-                    mismatches.push({ file: 'package.json', section: `overrides.${libName}`, name: depName, current: currentPattern, target: overridePattern, envKey: 'ANGULAR_VERSION' });
+                    mismatches.push({
+                        file: 'package.json',
+                        section: `overrides.${libName}`,
+                        name: depName,
+                        current: currentPattern,
+                        target: overridePattern,
+                        envKey: 'ANGULAR_VERSION',
+                    });
                     pkg.overrides[libName][depName] = overridePattern;
                     changes++;
                 }
@@ -167,8 +200,8 @@ function syncForward(env, checkOnly) {
     }
 
     // --- Playwright package.json ---
-    if (existsSync(PLAYWRIGHT_PKG) && env.PLAYWRIGHT_VERSION) {
-        const playwrightPkg = readPkg(PLAYWRIGHT_PKG);
+    if (existsSync(paths.playwrightPackage) && env.PLAYWRIGHT_VERSION) {
+        const playwrightPkg = readPkg(paths.playwrightPackage);
         const targetVersion = envValueToNpmVersion('PLAYWRIGHT_VERSION', env.PLAYWRIGHT_VERSION);
         let playwrightChanges = 0;
         for (const section of ['dependencies', 'devDependencies']) {
@@ -183,7 +216,7 @@ function syncForward(env, checkOnly) {
             }
         }
         if (!checkOnly && playwrightChanges > 0) {
-            writePkg(PLAYWRIGHT_PKG, playwrightPkg);
+            writePkg(paths.playwrightPackage, playwrightPkg);
         }
     }
 
@@ -204,13 +237,17 @@ function syncForward(env, checkOnly) {
         return 1;
     }
 
-    writePkg(ROOT_PKG, pkg);
+    if (workspaceChanges > 0) {
+        writeFileSync(paths.workspace, workspace.toString());
+    }
+    writePkg(paths.rootPackage, pkg);
     console.log(`\nUpdated ${changes} version(s). Run \`pnpm install\` to apply.`);
     return 0;
 }
 
-function syncReverse(env) {
-    const pkg = readPkg(ROOT_PKG);
+export function syncReverse(env, paths = defaultPaths) {
+    const pkg = readPkg(paths.rootPackage);
+    const workspace = parseDocument(readFileSync(paths.workspace, 'utf8'));
     const updates = {};
 
     // Extract canonical version for each .env key from package.json
@@ -222,7 +259,9 @@ function syncReverse(env) {
     };
 
     for (const [envKey, pkgName] of Object.entries(canonicalSources)) {
-        const version = pkg.dependencies?.[pkgName] || pkg.devDependencies?.[pkgName];
+        const specifier = pkg.dependencies?.[pkgName] || pkg.devDependencies?.[pkgName];
+        const catalogName = specifier?.startsWith('catalog:') ? specifier.slice('catalog:'.length) : undefined;
+        const version = catalogName === undefined ? specifier : workspace.getIn(catalogName ? ['catalogs', catalogName, pkgName] : ['catalog', pkgName]);
         if (version) {
             const envValue = npmVersionToEnvValue(envKey, version);
             if (env[envKey] !== envValue) {
@@ -233,8 +272,8 @@ function syncReverse(env) {
     }
 
     // Playwright: read from playwright package.json
-    if (existsSync(PLAYWRIGHT_PKG)) {
-        const playwrightPkg = readPkg(PLAYWRIGHT_PKG);
+    if (existsSync(paths.playwrightPackage)) {
+        const playwrightPkg = readPkg(paths.playwrightPackage);
         const version = playwrightPkg.devDependencies?.['@playwright/test'];
         if (version) {
             const envValue = npmVersionToEnvValue('PLAYWRIGHT_VERSION', version);
@@ -250,28 +289,30 @@ function syncReverse(env) {
         return 0;
     }
 
-    writeEnv(ENV_FILE, { ...env, ...updates });
+    writeEnv(paths.envFile, { ...env, ...updates });
     console.log(`\nUpdated .env with ${Object.keys(updates).length} version(s).`);
     return 0;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2);
-const checkOnly = args.includes('--check');
-const reverse = args.includes('--reverse');
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+    const args = process.argv.slice(2);
+    const checkOnly = args.includes('--check');
+    const reverse = args.includes('--reverse');
 
-if (!existsSync(ENV_FILE)) {
-    console.error(`Error: ${ENV_FILE} not found`);
-    process.exit(1);
-}
+    if (!existsSync(defaultPaths.envFile)) {
+        console.error(`Error: ${defaultPaths.envFile} not found`);
+        process.exit(1);
+    }
 
-const env = parseEnv(ENV_FILE);
+    const env = parseEnv(defaultPaths.envFile);
 
-if (reverse) {
-    console.log('Syncing package.json → .env (reverse)\n');
-    process.exit(syncReverse(env));
-} else {
-    console.log(`Syncing .env → package.json${checkOnly ? ' (check only)' : ''}\n`);
-    process.exit(syncForward(env, checkOnly));
+    if (reverse) {
+        console.log('Syncing package.json → .env (reverse)\n');
+        process.exit(syncReverse(env));
+    } else {
+        console.log(`Syncing .env → package.json${checkOnly ? ' (check only)' : ''}\n`);
+        process.exit(syncForward(env, checkOnly));
+    }
 }

@@ -9,7 +9,6 @@ const meta = {
     args: {
         ariaLabel: 'Deadline',
         labelName: 'Deadline',
-        shouldDisplayTimeZoneWarning: false,
         value: dayjs('2026-06-13T08:30:00'),
     },
     argTypes: {
@@ -23,7 +22,10 @@ export default meta;
 
 type Story = StoryObj<TumUiDatePickerComponent>;
 
-export const Default: Story = {
+export const Default: Story = {};
+
+export const CalendarInteraction: Story = {
+    tags: ['!dev', '!autodocs'],
     play: async ({ canvas, userEvent }) => {
         const trigger = canvas.getByRole('button', { name: 'Open calendar' });
         await userEvent.click(trigger);

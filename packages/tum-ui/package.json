@@ -23,7 +23,7 @@
         "storybook:docs": "compodoc -p tsconfig.lib.json -e json -d . --silent",
         "storybook:docs:test": "pnpm run storybook:build && pnpm run storybook:docs:test:built",
         "storybook:docs:test:built": "playwright test --config .storybook/playwright.config.ts",
-        "storybook:prepare": "node build-styles.mjs && pnpm run storybook:docs",
+        "storybook:prepare": "node build-styles.mjs --development && pnpm run storybook:docs",
         "storybook:test": "pnpm run storybook:prepare && vitest run --config vitest.storybook.config.ts",
         "storybook:typecheck": "pnpm run storybook:docs && tsc --noEmit --project .storybook/tsconfig.json"
     },

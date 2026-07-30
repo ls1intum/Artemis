@@ -38,18 +38,18 @@ export class TumUiTableVirtualScrollComponent<T> {
     readonly ariaDescribedBy = input<string | undefined>(undefined);
 
     protected readonly isFlexHeight = computed(() => this.scrollHeight() === 'flex');
-    protected readonly maxHeight = computed(() => (this.isFlexHeight() ? undefined : this.scrollHeight()));
+    protected readonly viewportHeight = computed(() => (this.isFlexHeight() ? undefined : this.scrollHeight()));
     protected readonly effectiveTrackBy = computed<TrackByFunction<T>>(() => this.trackBy() ?? ((_, item) => item));
 
     protected readonly headerClasses = computed(() => {
         const base =
-            'tum-ui-vs-header tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-text tum:bg-tum-ui-content-background ' +
-            'tum:border-b tum:border-solid tum:border-tum-ui-border';
+            'tum-ui-vs-header tum:box-border tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-text tum:bg-tum-ui-content-background ' +
+            'tum:border-b tum:border-tum-ui-border';
         return `${base} ${HEADER_PADDING[this.size()]}`;
     });
 
     protected readonly rowClasses = computed(() => {
-        const base = 'tum-ui-vs-row tum:flex tum:items-center tum:text-sm tum:text-tum-ui-text tum:border-b tum:border-solid tum:border-tum-ui-border';
+        const base = 'tum-ui-vs-row tum:box-border tum:flex tum:items-center tum:text-sm tum:text-tum-ui-text tum:border-b tum:border-tum-ui-border';
         const hover = this.rowHover() ? ' tum:hover:bg-tum-ui-hover-background' : '';
         return `${base}${hover} ${HEADER_PADDING[this.size()]}`;
     });

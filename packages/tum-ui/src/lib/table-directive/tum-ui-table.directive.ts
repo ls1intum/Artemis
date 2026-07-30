@@ -16,9 +16,9 @@ const SIZE_PADDING: Record<TumUiTableSize, string> = {
 const HEADER_CLASSES =
     'tum:[&_thead_th]:text-left tum:[&_thead_th]:font-semibold tum:[&_thead_th]:whitespace-nowrap ' +
     'tum:[&_thead_th]:bg-tum-ui-content-background tum:[&_thead_th]:text-tum-ui-text ' +
-    'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-solid tum:[&_thead_th]:border-tum-ui-border';
+    'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-tum-ui-border';
 
-const BODY_CLASSES = 'tum:[&_tbody_td]:text-tum-ui-text tum:[&_tbody_td]:border-b tum:[&_tbody_td]:border-solid tum:[&_tbody_td]:border-tum-ui-border';
+const BODY_CLASSES = 'tum:[&_tbody_td]:text-tum-ui-text tum:[&_tbody_td]:border-b tum:[&_tbody_td]:border-tum-ui-border';
 
 const STRIPED_CLASSES = 'tum:[&_tbody_tr:nth-child(odd)]:bg-tum-ui-table-striped-background';
 

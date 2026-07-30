@@ -16,7 +16,7 @@ stylesheet.
     Delegate interaction behavior to native HTML, Angular CDK, or Angular Aria instead of reimplementing it.
 </Callout>
 
-Use the [TUM UI component reference](/developer/tum-ui/?path=/docs/actions-button--docs) to inspect
+Use the [TUM UI component reference](/developer/tum-ui-reference) to inspect
 supported states, controls, accessibility results, and APIs. This guide covers package architecture
 and contribution rules.
 
@@ -64,9 +64,19 @@ TypeScript's `satisfies` operator. Keep configuration in `packages/tum-ui/.story
 root Storybook configuration or import Artemis into a story.
 
 Prefer an args-driven default story and only the additional states that expose a meaningful visual
-or behavioral contract. Add a `play` function for browser-only behavior such as focus, keyboard
-navigation, overlays, or dismissal. Query by accessible role and name. Do not assert CSS classes,
-duplicate unit-test matrices, add snapshots, or disable accessibility rules to make a story pass.
+or behavioral contract. Let Storybook render the component directly when inputs and outputs are
+enough. Use an Angular template only when the public contract requires projection, a directive host,
+forms, a `TemplateRef`, or compound components. Synchronize controlled template state with
+Storybook args.
+
+Add a `play` function for browser-only behavior such as focus, keyboard navigation, overlays, or
+dismissal. Hide a tested story from the sidebar and AutoDocs only when the interaction is valuable
+but its final state is not a useful reference; do not create hidden duplicates of unit tests. Query
+by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
+or disable accessibility rules to make a story pass.
+
+CSF Next remains a preview API. Keep stories on stable CSF3 until the Angular renderer and repository
+toolchain support a deliberate migration.
 
 Before upgrading Storybook or its
 [Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite),
@@ -152,6 +162,7 @@ pnpm run compile:tests
 pnpm --dir packages/tum-ui run storybook:typecheck
 pnpm --dir packages/tum-ui run storybook:test
 pnpm --dir packages/tum-ui run storybook:docs:test
+pnpm run docs:test
 ```
 
 `pnpm run test:rules` checks the package manifest against the canonical versions in

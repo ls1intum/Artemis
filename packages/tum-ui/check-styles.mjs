@@ -31,6 +31,9 @@ stylesheet.walkAtRules((atRule) => {
     if (atRule.name === 'layer' && atRule.params !== 'properties') {
         errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
     }
+    if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tum-')) {
+        errors.push(`the compiled stylesheet contains unnamespaced keyframes ${atRule.params}`);
+    }
 });
 
 function classNames(rule) {
@@ -102,14 +105,18 @@ stylesheet.walkRules((rule) => {
     }
 });
 
-let spinToken;
-stylesheet.walkDecls('--tum-animate-spin', (declaration) => {
-    spinToken = declaration;
+const keyframes = new Set();
+stylesheet.walkAtRules((atRule) => {
+    if (atRule.name.endsWith('keyframes')) {
+        keyframes.add(atRule.params);
+    }
 });
-const spinKeyframes = stylesheet.nodes.find((node) => node.type === 'atrule' && node.name.endsWith('keyframes') && node.params === 'tum-spin');
-if (!spinToken?.value.startsWith('tum-spin ') || !spinKeyframes) {
-    errors.push('the namespaced spin animation contract is incomplete');
-}
+stylesheet.walkDecls(/^--tum-animate-/, (declaration) => {
+    const name = declaration.value.split(/\s+/, 1)[0];
+    if (!name.startsWith('tum-') || !keyframes.has(name)) {
+        errors.push(`the animation token ${declaration.prop} references invalid keyframes ${name}`);
+    }
+});
 if (
     manifest.exports?.['./styles.css'] !== './styles.css' ||
     manifest.exports?.['./themes.css'] !== './themes.css' ||

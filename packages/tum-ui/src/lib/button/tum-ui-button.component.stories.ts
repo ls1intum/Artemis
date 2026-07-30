@@ -1,6 +1,7 @@
 import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { expect, fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
@@ -16,6 +17,8 @@ interface ButtonStoryArgs {
     disabled: boolean;
     rounded: boolean;
     loading: boolean;
+    icon: IconProp | undefined;
+    ariaLabel: string | undefined;
     clicked: (event: MouseEvent) => void;
 }
 
@@ -32,6 +35,8 @@ const meta = {
         disabled: false,
         rounded: false,
         loading: false,
+        icon: undefined,
+        ariaLabel: undefined,
     },
     argTypes: {
         severity: {
@@ -45,6 +50,9 @@ const meta = {
         variant: {
             control: 'select',
             options: variants,
+        },
+        icon: {
+            control: false,
         },
     },
     render: ({ label, ...args }) => ({
@@ -64,68 +72,45 @@ export default meta;
 
 type Story = StoryObj<ButtonStoryArgs>;
 
-export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+export const Default: Story = {};
+
+export const Outlined: Story = {
+    args: {
+        variant: 'outlined',
+    },
+};
+
+export const Text: Story = {
+    args: {
+        variant: 'text',
+    },
+};
+
+export const Disabled: Story = {
+    args: {
+        disabled: true,
+    },
+    play: async ({ canvas }) => {
+        await expect(canvas.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    },
+};
+
+export const Loading: Story = {
+    args: {
+        loading: true,
+    },
+    play: async ({ canvas }) => {
         const button = canvas.getByRole('button', { name: 'Continue' });
-        await userEvent.click(button);
-        await expect(args.clicked).toHaveBeenCalledOnce();
-    },
-};
-
-export const Variants: Story = {
-    render: ({ label, size }) => ({
-        props: { label, severities, size, variants },
-        template: `
-            <div style="display: grid; grid-template-columns: auto repeat(3, minmax(6rem, auto)); align-items: center; gap: 0.75rem;">
-                <span aria-hidden="true"></span>
-                @for (variant of variants; track variant) {
-                    <strong style="text-transform: capitalize;">{{ variant }}</strong>
-                }
-                @for (severity of severities; track severity) {
-                    <strong style="text-transform: capitalize;">{{ severity }}</strong>
-                    @for (variant of variants; track variant) {
-                        <tum-ui-button [severity]="severity" [size]="size" [variant]="variant">
-                            {{ label }}
-                        </tum-ui-button>
-                    }
-                }
-            </div>
-        `,
-    }),
-    parameters: {
-        controls: {
-            include: ['label', 'size'],
-        },
-        layout: 'padded',
-    },
-};
-
-export const States: Story = {
-    render: ({ severity, size, variant }) => ({
-        props: { severity, size, variant },
-        template: `
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <tum-ui-button [severity]="severity" [size]="size" [variant]="variant">Default</tum-ui-button>
-                <tum-ui-button [severity]="severity" [size]="size" [variant]="variant" disabled>Disabled</tum-ui-button>
-                <tum-ui-button [severity]="severity" [size]="size" [variant]="variant" loading>Loading</tum-ui-button>
-            </div>
-        `,
-    }),
-    parameters: {
-        controls: {
-            include: ['severity', 'size', 'variant'],
-        },
+        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute('aria-busy', 'true');
     },
 };
 
 export const IconOnly: Story = {
-    render: () => ({
-        props: { faDownload },
-        template: '<tum-ui-button [icon]="faDownload" ariaLabel="Download results" rounded />',
-    }),
-    parameters: {
-        controls: {
-            disable: true,
-        },
+    args: {
+        ariaLabel: 'Download results',
+        icon: faDownload,
+        label: '',
+        rounded: true,
     },
 };

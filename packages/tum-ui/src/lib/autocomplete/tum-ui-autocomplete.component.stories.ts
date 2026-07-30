@@ -32,7 +32,10 @@ export default meta;
 
 type Story = StoryObj<TumUiAutoCompleteComponent>;
 
-export const Default: Story = {
+export const Default: Story = {};
+
+export const SelectsSuggestion: Story = {
+    tags: ['!dev', '!autodocs'],
     play: async ({ args, canvas, userEvent }) => {
         const input = canvas.getByRole('combobox', { name: 'Assignee' });
         await userEvent.click(input);
@@ -75,6 +78,14 @@ export const Multiple: Story = {
             />
         `,
     }),
+};
+
+export const AddsMultipleSuggestion: Story = {
+    args: {
+        multiple: true,
+    },
+    render: Multiple.render,
+    tags: ['!dev', '!autodocs'],
     play: async ({ args, canvas, userEvent }) => {
         await expect(canvas.getByText('Ada Lovelace')).toBeVisible();
         await userEvent.click(canvas.getByRole('combobox', { name: 'Assignee' }));

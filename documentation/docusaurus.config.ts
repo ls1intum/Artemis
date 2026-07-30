@@ -17,6 +17,7 @@ const config: Config = {
         pageTitle: PAGE_TITLE,
         tumUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_UI === 'true',
     },
+    staticDirectories: ['static', ...(process.env.ARTEMIS_DOCS_TUM_UI === 'true' ? ['../build/documentation-static'] : [])],
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
     future: {

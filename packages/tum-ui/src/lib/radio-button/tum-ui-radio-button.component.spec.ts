@@ -33,18 +33,6 @@ describe('TumUiRadioButtonComponent', () => {
         expect(input().checked).toBe(false);
     });
 
-    it('renders checked when the bound modelValue equals its value', () => {
-        fixture.componentRef.setInput('modelValue', 'a');
-        fixture.detectChanges();
-        expect(input().checked).toBe(true);
-    });
-
-    it('treats an undefined selected value as unchecked (the admin value-or-undefined pattern)', () => {
-        fixture.componentRef.setInput('modelValue', undefined);
-        fixture.detectChanges();
-        expect(input().checked).toBe(false);
-    });
-
     it('emits onClick with the radio value on every click', () => {
         const events: TumUiRadioButtonClickEvent[] = [];
         component.onClick.subscribe((event) => events.push(event));

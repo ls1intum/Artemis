@@ -19,8 +19,6 @@ const UNSET = Symbol('tum-ui-radio-unset');
 export class TumUiRadioButtonComponent implements ControlValueAccessor {
     readonly value = input<unknown>();
 
-    readonly modelValue = input<unknown>();
-
     readonly name = input<string>();
 
     readonly inputId = input<string>();
@@ -31,8 +29,7 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
     readonly onClick = output<TumUiRadioButtonClickEvent>();
 
     private readonly cvaValue = signal<unknown>(UNSET);
-    private readonly selectedValue = computed(() => (this.cvaValue() === UNSET ? this.modelValue() : this.cvaValue()));
-    protected readonly isChecked = computed(() => this.selectedValue() === this.value());
+    protected readonly isChecked = computed(() => this.cvaValue() !== UNSET && this.cvaValue() === this.value());
 
     private readonly cvaDisabled = signal(false);
     protected readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());

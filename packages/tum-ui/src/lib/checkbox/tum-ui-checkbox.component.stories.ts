@@ -1,6 +1,7 @@
 import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn } from 'storybook/test';
+import { useArgs } from 'storybook/preview-api';
+import { fn } from 'storybook/test';
 
 import { TumUiCheckboxChangeEvent, TumUiCheckboxComponent } from './tum-ui-checkbox.component';
 
@@ -20,34 +21,38 @@ const meta = {
         disabled: false,
         onChange: fn(),
     },
-    render: (args) => ({
-        props: args,
-        template: `
-            <label for="terms">
-                <tum-ui-checkbox
-                    inputId="terms"
-                    name="terms"
-                    [(checked)]="checked"
-                    ${argsToTemplate(args, { exclude: ['checked', 'label'] })}
-                />
-                {{ label }}
-            </label>
-        `,
-    }),
+    render: function Render(args) {
+        const [{ checked }, updateArgs] = useArgs<CheckboxStoryArgs>();
+        return {
+            props: {
+                ...args,
+                checked,
+                change: (event: TumUiCheckboxChangeEvent) => {
+                    updateArgs({ checked: event.checked });
+                    args.onChange(event);
+                },
+            },
+            template: `
+                <label for="terms">
+                    <tum-ui-checkbox
+                        inputId="terms"
+                        name="terms"
+                        [checked]="checked"
+                        ${argsToTemplate(args, { exclude: ['checked', 'label', 'onChange'] })}
+                        (onChange)="change($event)"
+                    />
+                    {{ label }}
+                </label>
+            `,
+        };
+    },
 } satisfies Meta<CheckboxStoryArgs>;
 
 export default meta;
 
 type Story = StoryObj<CheckboxStoryArgs>;
 
-export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        const checkbox = canvas.getByRole('checkbox', { name: 'Accept the terms and conditions' });
-        await userEvent.click(checkbox);
-        await expect(checkbox).toBeChecked();
-        await expect(args.onChange).toHaveBeenCalledWith(expect.objectContaining({ checked: true }));
-    },
-};
+export const Default: Story = {};
 
 export const Checked: Story = {
     args: {

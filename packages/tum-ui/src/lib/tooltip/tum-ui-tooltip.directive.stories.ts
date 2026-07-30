@@ -51,14 +51,24 @@ export default meta;
 
 type Story = StoryObj<TooltipStoryArgs>;
 
-export const Default: Story = {
+export const Default: Story = {};
+
+export const Open: Story = {
+    tags: ['!autodocs'],
     play: async ({ canvas, userEvent }) => {
         const trigger = canvas.getByRole('button', { name: 'Export' });
         await userEvent.tab();
 
         const tooltip = await screen.findByRole('tooltip', { name: 'Downloads the current result as a CSV file' });
         await expect(trigger).toHaveAttribute('aria-describedby', tooltip.id);
+    },
+};
 
+export const DismissesWithEscape: Story = {
+    tags: ['!dev', '!autodocs'],
+    play: async ({ canvas, userEvent }) => {
+        await userEvent.tab();
+        const tooltip = await screen.findByRole('tooltip', { name: 'Downloads the current result as a CSV file' });
         const tooltipRemoved = waitForElementToBeRemoved(tooltip);
         await userEvent.keyboard('{Escape}');
         await tooltipRemoved;

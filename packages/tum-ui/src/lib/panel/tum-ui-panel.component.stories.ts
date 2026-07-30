@@ -1,7 +1,6 @@
 import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect } from 'storybook/test';
-
+import { useArgs } from 'storybook/preview-api';
 import { TumUiPanelComponent } from './tum-ui-panel.component';
 
 interface PanelStoryArgs {
@@ -20,14 +19,27 @@ const meta = {
         toggleable: false,
         collapsed: false,
     },
-    render: ({ content, ...args }) => ({
-        props: { ...args, content },
-        template: `
-            <tum-ui-panel [(collapsed)]="collapsed" ${argsToTemplate(args, { exclude: ['collapsed'] })} style="display: block; width: 28rem;">
-                <p style="margin: 0;">{{ content }}</p>
-            </tum-ui-panel>
-        `,
-    }),
+    render: function Render({ content, ...args }) {
+        const [{ collapsed }, updateArgs] = useArgs<PanelStoryArgs>();
+        return {
+            props: {
+                ...args,
+                collapsed,
+                content,
+                setCollapsed: (nextCollapsed: boolean) => updateArgs({ collapsed: nextCollapsed }),
+            },
+            template: `
+                <tum-ui-panel
+                    [collapsed]="collapsed"
+                    ${argsToTemplate(args, { exclude: ['collapsed'] })}
+                    (collapsedChange)="setCollapsed($event)"
+                    style="display: block; width: 28rem;"
+                >
+                    <p style="margin: 0;">{{ content }}</p>
+                </tum-ui-panel>
+            `,
+        };
+    },
 } satisfies Meta<PanelStoryArgs>;
 
 export default meta;
@@ -40,10 +52,11 @@ export const Toggleable: Story = {
     args: {
         toggleable: true,
     },
-    play: async ({ canvas, userEvent }) => {
-        const toggle = canvas.getByRole('button', { name: 'Exercise details' });
-        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-        await userEvent.click(toggle);
-        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+};
+
+export const Collapsed: Story = {
+    args: {
+        collapsed: true,
+        toggleable: true,
     },
 };

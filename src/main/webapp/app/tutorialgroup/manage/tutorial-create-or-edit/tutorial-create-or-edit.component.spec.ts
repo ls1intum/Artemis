@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -7,6 +8,7 @@ import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { InputNumber } from 'primeng/inputnumber';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -143,6 +145,33 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.repetitionFrequency()).toBe(1);
         expect(component.tutorialPeriodEnd()).toBeUndefined();
         expect(component.location()).toBe('');
+    });
+
+    it('should keep capacity and repetition frequency integer-only', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        component.capacity.set(20);
+        component.repetitionFrequency.set(2);
+        component.configureSessionPlan.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const inputNumbers = fixture.debugElement.queryAll(By.directive(InputNumber));
+        const integerInputIds = ['capacity-input', 'repetition-frequency-input'];
+
+        for (const inputId of integerInputIds) {
+            const inputNumber = inputNumbers.find((debugElement) => (debugElement.componentInstance as InputNumber).inputId === inputId)!.componentInstance as InputNumber;
+            expect(inputNumber.maxFractionDigits).toBe(0);
+
+            const input = fixture.debugElement.query(By.css(`#${inputId}`)).nativeElement as HTMLInputElement;
+            input.setSelectionRange(input.value.length, input.value.length);
+            const decimalKeypress = new KeyboardEvent('keypress', { key: '.', code: 'Period', charCode: 46, keyCode: 46, bubbles: true, cancelable: true });
+            input.dispatchEvent(decimalKeypress);
+            expect(decimalKeypress.defaultPrevented).toBe(true);
+        }
+        await fixture.whenStable();
+
+        expect(component.capacity()).toBe(20);
+        expect(component.repetitionFrequency()).toBe(2);
     });
 
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {

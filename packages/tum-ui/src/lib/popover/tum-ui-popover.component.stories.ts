@@ -43,7 +43,10 @@ export default meta;
 
 type Story = StoryObj<TumUiPopoverComponent>;
 
-export const Default: Story = {
+export const Default: Story = {};
+
+export const Open: Story = {
+    tags: ['!autodocs'],
     play: async ({ args, canvas, userEvent }) => {
         const trigger = canvas.getByRole('button', { name: 'Review details' });
         await userEvent.click(trigger);
@@ -52,7 +55,15 @@ export const Default: Story = {
         await expect(popover).toHaveFocus();
         await expect(trigger).toHaveAttribute('aria-expanded', 'true');
         await expect(args.openChange).toHaveBeenLastCalledWith(true);
+    },
+};
 
+export const DismissesWithEscape: Story = {
+    tags: ['!dev', '!autodocs'],
+    play: async ({ args, canvas, userEvent }) => {
+        const trigger = canvas.getByRole('button', { name: 'Review details' });
+        await userEvent.click(trigger);
+        const popover = await screen.findByRole('dialog', { name: 'Enrollment details' });
         const popoverRemoved = waitForElementToBeRemoved(popover);
         await userEvent.keyboard('{Escape}');
         await popoverRemoved;

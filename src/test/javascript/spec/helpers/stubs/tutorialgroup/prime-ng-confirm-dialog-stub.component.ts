@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-    selector: 'p-confirmDialog',
+    selector: 'p-confirmdialog',
     template: '',
 })
 export class PrimeNgConfirmDialogStubComponent {}

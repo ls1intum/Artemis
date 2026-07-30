@@ -1,8 +1,11 @@
 import { globSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import postcss from 'postcss';
+import { compile } from 'sass';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const packageJson = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-ui/package.json'), 'utf8'));
@@ -32,19 +35,9 @@ const packageStyles = globSync(['packages/tum-ui/src/**/*.{css,scss}', 'packages
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/themes.css'), 'utf8');
 const hostTheme = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
-const workspace = readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8');
-const catalogBlock = workspace.match(/^catalog:\n(?<entries>(?: {2,4}.+\n)+)/m)?.groups?.entries ?? '';
-const catalog = Object.fromEntries(
-    [...catalogBlock.matchAll(/^ {2,4}(?<name>'[^']+'|[^:]+): (?<version>\S+)$/gm)].map(({ groups }) => [groups.name.replaceAll("'", '').trim(), groups.version]),
-);
-const namedCatalogs = Object.fromEntries(
-    [...workspace.matchAll(/^ {2,4}(?<catalog>[\w-]+):\n(?<entries>(?: {4,8}.+\n)+)/gm)].map(({ groups }) => [
-        groups.catalog,
-        Object.fromEntries(
-            [...groups.entries.matchAll(/^ {4,8}(?<name>'[^']+'|[^:]+): (?<version>\S+)$/gm)].map(({ groups: entry }) => [entry.name.replaceAll("'", '').trim(), entry.version]),
-        ),
-    ]),
-);
+const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
+const catalog = workspace.catalog ?? {};
+const namedCatalogs = workspace.catalogs ?? {};
 
 function customProperties(marker) {
     const start = storybookTheme.indexOf(marker);
@@ -56,21 +49,58 @@ function customProperties(marker) {
 }
 
 function relativeLuminance(color) {
-    const normalized = color.length === 4 ? `#${[...color.slice(1)].map((channel) => channel.repeat(2)).join('')}` : color;
-    const channels = normalized
-        .slice(1)
-        .match(/.{2}/g)
-        .map((channel) => {
-            const value = Number.parseInt(channel, 16) / 255;
-            return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-        });
+    const channels = cssColorChannels(color).map((value) => {
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
     return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
 
+function cssColorChannels(color) {
+    if (color.startsWith('#')) {
+        const normalized = color.length === 4 ? `#${[...color.slice(1)].map((channel) => channel.repeat(2)).join('')}` : color;
+        return normalized
+            .slice(1)
+            .match(/.{2}/g)
+            .map((channel) => Number.parseInt(channel, 16) / 255);
+    }
+    const match = /^rgb\(([\d.]+)%?,\s*([\d.]+)%?,\s*([\d.]+)%?\)$/.exec(color);
+    if (!match) {
+        throw new Error(`Unsupported CSS color: ${color}`);
+    }
+    const percentage = color.includes('%');
+    return match.slice(1).map((channel) => Number.parseFloat(channel) / (percentage ? 100 : 255));
+}
+
+function mixColors(first, second, firstWeight) {
+    return cssColorChannels(first).map((channel, index) => channel * firstWeight + cssColorChannels(second)[index] * (1 - firstWeight));
+}
+
+function relativeLuminanceChannels(channels) {
+    const linear = channels.map((value) => {
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
 function contrastRatio(first, second) {
-    const lighter = Math.max(relativeLuminance(first), relativeLuminance(second));
-    const darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+    const firstLuminance = Array.isArray(first) ? relativeLuminanceChannels(first) : relativeLuminance(first);
+    const secondLuminance = Array.isArray(second) ? relativeLuminanceChannels(second) : relativeLuminance(second);
+    const lighter = Math.max(firstLuminance, secondLuminance);
+    const darker = Math.min(firstLuminance, secondLuminance);
     return (lighter + 0.05) / (darker + 0.05);
+}
+
+function compiledThemeProperties(file) {
+    const css = compile(resolve(repoRoot, file), {
+        loadPaths: [repoRoot, resolve(repoRoot, 'node_modules')],
+        quietDeps: true,
+        silenceDeprecations: ['color-functions', 'global-builtin', 'if-function', 'import'],
+    }).css;
+    const properties = {};
+    postcss.parse(css).walkDecls(/^--(?:artemis-alert|module-bg)/, (declaration) => {
+        properties[declaration.prop] = declaration.value;
+    });
+    return properties;
 }
 
 function dependencyCatalog(specifier) {
@@ -185,6 +215,14 @@ describe('@tumaet/ui-angular package manifest', () => {
         const hostColorUtilities = [
             ...packageRuntimeSources.matchAll(/(?:bg|text|border(?:-[trblxy])?|outline|ring(?:-offset)?)-(primary|surface(?:-[\w-]+)?|muted-color|state-[\w-]+)/g),
         ].map((match) => match[0]);
+        const primitiveHostTokens = [];
+        const hostTokens = {};
+        postcss.parse(hostTheme).walkDecls(/^--tum-ui-/, (declaration) => {
+            hostTokens[declaration.prop] = declaration.value;
+            if (/var\(--p-(?:surface|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+\b/.test(declaration.value)) {
+                primitiveHostTokens.push(`${declaration.prop}: ${declaration.value}`);
+            }
+        });
 
         expect(consumedProperties.filter((property) => !property.startsWith('--tum-ui-'))).toEqual([]);
         expect(packageProperties.filter((property) => property.startsWith('--tum-ui-surface-'))).toEqual([]);
@@ -194,6 +232,29 @@ describe('@tumaet/ui-angular package manifest', () => {
         expect(storybookProperties).toEqual(packageProperties);
         expect(utilityColors.filter((color) => !themeColors.has(color))).toEqual([]);
         expect(hostColorUtilities).toEqual([]);
+        expect(primitiveHostTokens).toEqual([]);
+        for (const state of ['danger', 'success', 'warning', 'info']) {
+            expect(hostTokens[`--tum-ui-state-${state}`]).toBe(`var(--artemis-alert-${state}-color)`);
+            expect(hostTokens[`--tum-ui-state-${state}-contrast`]).toBe(`var(--artemis-alert-${state}-background)`);
+            expect(hostTokens[`--tum-ui-state-${state}-foreground`]).toBe(`var(--artemis-alert-${state}-color)`);
+        }
+    });
+
+    it('keeps Artemis state colors readable in both themes', () => {
+        const themes = {
+            light: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-default.scss'),
+            dark: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-dark.scss'),
+        };
+
+        for (const [theme, properties] of Object.entries(themes)) {
+            for (const state of ['danger', 'success', 'warning', 'info']) {
+                const color = properties[`--artemis-alert-${state}-color`];
+                const contrast = properties[`--artemis-alert-${state}-background`];
+                const tagBackground = mixColors(color, properties['--module-bg'], 0.2);
+                expect(contrastRatio(color, contrast), `${theme}: filled ${state}`).toBeGreaterThanOrEqual(4.5);
+                expect(contrastRatio(color, tagBackground), `${theme}: tinted ${state}`).toBeGreaterThanOrEqual(4.5);
+            }
+        }
     });
 
     it('keeps the reference themes readable', () => {

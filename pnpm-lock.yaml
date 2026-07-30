@@ -141,6 +141,9 @@ catalogs:
     vitest:
       specifier: 4.1.10
       version: 4.1.10
+    yaml:
+      specifier: 2.9.0
+      version: 2.9.0
   storybook:
     vite:
       specifier: 8.1.5
@@ -557,6 +560,9 @@ importers:
       vitest-canvas-mock:
         specifier: 1.1.4
         version: 1.1.4(vitest@4.1.10)
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
 
   packages/tum-ui:
     dependencies:
@@ -16133,8 +16139,7 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.9.0:
-    optional: true
+  yaml@2.9.0: {}
 
   yargs-parser@22.0.0: {}
 

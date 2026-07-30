@@ -34,8 +34,10 @@ describe('TumUiTableVirtualScrollComponent', () => {
 
     it('renders the CDK virtual-scroll viewport and the projected header', () => {
         const table = (fixture.nativeElement as HTMLElement).querySelector('[role="table"]');
+        const viewport = table?.querySelector<HTMLElement>('[role="rowgroup"]');
         expect(table).not.toBeNull();
-        expect(table?.querySelector('[role="rowgroup"]')).not.toBeNull();
+        expect(viewport).not.toBeNull();
+        expect(viewport?.style.height).toBe('20rem');
         expect(table?.querySelector('[role="row"]')?.textContent).toContain('Name');
         expect(table?.getAttribute('aria-describedby')).toBe('desc');
         expect(table?.getAttribute('aria-rowcount')).toBe('51');

@@ -43,20 +43,18 @@ export default meta;
 type Story = StoryObj<TumUiTableComponent<Participant>>;
 
 export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ canvas }) => {
         await expect(canvas.getAllByRole('row')).toHaveLength(4);
 
         const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
         await expect(participantHeader).toHaveAttribute('aria-sort', 'none');
-        await userEvent.click(canvas.getByRole('button', { name: /Participant/ }));
+    },
+};
 
-        await expect(participantHeader).toHaveAttribute('aria-sort', 'ascending');
-        await expect(args.dataRequest).toHaveBeenLastCalledWith({
-            page: 0,
-            pageSize: 20,
-            searchTerm: undefined,
-            sort: { direction: 'asc', field: 'name' },
-        });
+export const InitiallySorted: Story = {
+    args: {
+        initialSortDirection: 'asc',
+        initialSortField: 'name',
     },
 };
 

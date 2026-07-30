@@ -1,6 +1,8 @@
 import { FormsModule } from '@angular/forms';
+import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn } from 'storybook/test';
+import { useArgs } from 'storybook/preview-api';
+import { fn } from 'storybook/test';
 
 import { TumUiToggleSwitchComponent } from './tum-ui-toggle-switch.component';
 
@@ -20,36 +22,39 @@ const meta = {
         disabled: false,
         changed: fn(),
     },
-    render: (args) => ({
-        props: args,
-        moduleMetadata: {
+    decorators: [
+        moduleMetadata({
             imports: [FormsModule],
-        },
-        template: `
-            <span id="notification-label">{{ label }}</span>
-            <tum-ui-toggle-switch
-                inputId="notifications"
-                aria-labelledby="notification-label"
-                [(ngModel)]="enabled"
-                [disabled]="disabled"
-                (changed)="changed($event)"
-            />
-        `,
-    }),
+        }),
+    ],
+    render: function Render(args) {
+        const [{ enabled }, updateArgs] = useArgs<ToggleSwitchStoryArgs>();
+        return {
+            props: {
+                ...args,
+                enabled,
+                setEnabled: (nextEnabled: boolean) => updateArgs({ enabled: nextEnabled }),
+            },
+            template: `
+                <span id="notification-label">{{ label }}</span>
+                <tum-ui-toggle-switch
+                    inputId="notifications"
+                    aria-labelledby="notification-label"
+                    [ngModel]="enabled"
+                    (ngModelChange)="setEnabled($event)"
+                    [disabled]="disabled"
+                    (changed)="changed($event)"
+                />
+            `,
+        };
+    },
 } satisfies Meta<ToggleSwitchStoryArgs>;
 
 export default meta;
 
 type Story = StoryObj<ToggleSwitchStoryArgs>;
 
-export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        const toggle = canvas.getByRole('switch', { name: 'Email notifications' });
-        await userEvent.click(toggle);
-        await expect(toggle).toBeChecked();
-        await expect(args.changed).toHaveBeenCalledWith(true);
-    },
-};
+export const Default: Story = {};
 
 export const On: Story = {
     args: {

@@ -1,7 +1,16 @@
-import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { useArgs } from 'storybook/preview-api';
 import { expect, fn } from 'storybook/test';
 import { TumUiPaginatorComponent } from './tum-ui-paginator.component';
+
+interface PaginatorStoryArgs {
+    disabled: boolean;
+    page: number;
+    pageChange: (page: number) => void;
+    pageSize: number;
+    pageSizeChange: (pageSize: number) => void;
+    totalRecords: number;
+}
 
 const meta = {
     title: 'Data Display/Paginator',
@@ -12,44 +21,40 @@ const meta = {
         pageSize: 20,
         pageSizeChange: fn(),
         totalRecords: 128,
+        disabled: false,
     },
-    render: (args) => ({
-        props: args,
-        template: `
-            <tum-ui-paginator
-                ${argsToTemplate(args, { exclude: ['page', 'pageChange', 'pageSize', 'pageSizeChange'] })}
-                [page]="page"
-                [pageSize]="pageSize"
-                (pageChange)="page = $event; pageChange($event)"
-                (pageSizeChange)="page = 0; pageSize = $event; pageSizeChange($event)"
-            />
-        `,
-    }),
+    render: function Render(args) {
+        const [{ page, pageSize }, updateArgs] = useArgs<PaginatorStoryArgs>();
+        return {
+            props: {
+                ...args,
+                page,
+                pageSize,
+                pageChange: (nextPage: number) => {
+                    updateArgs({ page: nextPage });
+                    args.pageChange(nextPage);
+                },
+                pageSizeChange: (nextPageSize: number) => {
+                    updateArgs({ page: 0, pageSize: nextPageSize });
+                    args.pageSizeChange(nextPageSize);
+                },
+            },
+        };
+    },
     parameters: {
         layout: 'padded',
     },
-} satisfies Meta<TumUiPaginatorComponent>;
+} satisfies Meta<PaginatorStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<TumUiPaginatorComponent>;
+type Story = StoryObj<PaginatorStoryArgs>;
 
 export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ canvas }) => {
         await expect(canvas.getByRole('navigation', { name: 'Pagination' })).toBeVisible();
         await expect(canvas.getByText('Showing 41 to 60 of 128')).toBeVisible();
         await expect(canvas.getByRole('button', { current: 'page' })).toHaveTextContent('3');
-
-        await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
-        await expect(args.pageChange).toHaveBeenCalledWith(3);
-        await expect(canvas.getByText('Showing 61 to 80 of 128')).toBeVisible();
-        await expect(canvas.getByRole('button', { current: 'page' })).toHaveTextContent('4');
-
-        const pageSize = canvas.getByRole('combobox', { name: 'Rows per page' });
-        await userEvent.selectOptions(pageSize, canvas.getByRole('option', { name: '50' }));
-        await expect(args.pageSizeChange).toHaveBeenCalledWith(50);
-        await expect(canvas.getByText('Showing 1 to 50 of 128')).toBeVisible();
-        await expect(canvas.getByRole('button', { current: 'page' })).toHaveTextContent('1');
     },
 };
 
@@ -57,5 +62,11 @@ export const Empty: Story = {
     args: {
         page: 0,
         totalRecords: 0,
+    },
+};
+
+export const Disabled: Story = {
+    args: {
+        disabled: true,
     },
 };

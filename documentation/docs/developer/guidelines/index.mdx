@@ -1,5 +1,5 @@
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # Coding and Design Guidelines
 
@@ -11,9 +11,10 @@ Welcome to the Artemis Coding and Design Guidelines. These guidelines help maint
 For all UI-related development work, you must follow the **[AET UI/UX Guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/intro)**. These external guidelines cover design principles (simplicity, consistency, feedback, accessibility, learnability), general conventions, accessibility standards, and component styling (buttons, headings, spacing, colors).
 
 The Artemis-specific guidelines below focus on **implementation details** for Angular/TypeScript development, while the AET UI/UX Guidelines define the **design standards** you must follow.
+
 </Callout>
 
-## Client Guidelines
+## Artemis client
 
 Guidelines for Angular and TypeScript client development:
 
@@ -21,6 +22,7 @@ Guidelines for Angular and TypeScript client development:
 - **[Client Theming](/developer/guidelines/client-theming)** - Theme management, color usage, and styling guidelines
 - **[Client Tests](/developer/guidelines/client-tests)** - Testing practices, mocking strategies, and coverage standards
 - **[TUM UI package](/developer/guidelines/tum-ui-kit)** - Ownership, integration, and contribution rules for the existing component package
+- **[TUM UI component reference](/developer/tum-ui-reference)** - Interactive component states, controls, accessibility checks, and APIs
 
 ## Server Guidelines
 
@@ -47,7 +49,7 @@ Guidelines for Spring Boot/Java backend development:
 - Reuse code and avoid duplication
 - Write meaningful tests
 - Follow established patterns and conventions
-</Callout>
+    </Callout>
 
 <Callout variant={CalloutVariant.warning}>
 **Performance Matters**
@@ -56,7 +58,7 @@ Guidelines for Spring Boot/Java backend development:
 - Use lazy loading by default
 - Implement proper caching strategies
 - Avoid N+1 query problems
-</Callout>
+    </Callout>
 
 <Callout variant={CalloutVariant.danger}>
 **Security is Critical**
@@ -65,7 +67,7 @@ Guidelines for Spring Boot/Java backend development:
 - Always validate and sanitize data
 - Use proper authorization checks
 - Follow the principle of least privilege
-</Callout>
+    </Callout>
 
 ## Getting Started
 

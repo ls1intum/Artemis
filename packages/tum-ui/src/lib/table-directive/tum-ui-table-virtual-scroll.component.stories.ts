@@ -14,14 +14,22 @@ const meta = {
     component: TumUiTableVirtualScrollComponent<(typeof items)[number]>,
     args: {
         ariaDescribedBy: 'participant-table-description',
-        itemSize: 44,
+        itemSize: 56,
         items,
         minWidth: '32rem',
         rowHover: true,
-        scrollHeight: '264px',
+        scrollHeight: '280px',
         striped: true,
     },
     argTypes: {
+        itemSize: {
+            control: {
+                type: 'number',
+            },
+        },
+        items: {
+            control: false,
+        },
         rowTemplate: {
             control: false,
         },
@@ -37,13 +45,15 @@ const meta = {
         props: args,
         template: `
             <p id="participant-table-description">Participant scores for the current course</p>
-            <tum-ui-table-virtual-scroll
-                [rowTemplate]="row"
-                ${argsToTemplate(args, { exclude: ['rowTemplate', 'trackBy'] })}
-            >
-                <div role="columnheader" style="width: 16rem;">Participant</div>
-                <div role="columnheader">Score</div>
-            </tum-ui-table-virtual-scroll>
+            <div [style.height]="scrollHeight === 'flex' ? '24rem' : null">
+                <tum-ui-table-virtual-scroll
+                    [rowTemplate]="row"
+                    ${argsToTemplate(args, { exclude: ['rowTemplate', 'trackBy'] })}
+                >
+                    <div role="columnheader" style="width: 16rem;">Participant</div>
+                    <div role="columnheader">Score</div>
+                </tum-ui-table-virtual-scroll>
+            </div>
 
             <ng-template #row let-participant>
                 <div role="cell" style="width: 16rem;">{{ participant.name }}</div>
@@ -66,7 +76,27 @@ export const Default: Story = {
         await expect(table).toHaveAccessibleDescription('Participant scores for the current course');
 
         const viewport = canvas.getByRole('rowgroup');
-        await fireEvent.scroll(viewport, { target: { scrollTop: 44 * 900 } });
+        const firstParticipant = canvas.getByText('Participant 1');
+        await expect(firstParticipant).toBeVisible();
+        await expect(viewport.getBoundingClientRect().height).toBe(280);
+        await expect(firstParticipant.closest('[role="row"]')?.getBoundingClientRect().height).toBe(56);
+    },
+};
+
+export const DeepScroll: Story = {
+    tags: ['!dev', '!autodocs'],
+    play: async ({ args, canvas }) => {
+        const viewport = canvas.getByRole('rowgroup');
+        await fireEvent.scroll(viewport, { target: { scrollTop: args.itemSize * 900 } });
         await expect(await canvas.findByText('Participant 901')).toBeVisible();
+    },
+};
+
+export const FlexibleHeight: Story = {
+    args: {
+        scrollHeight: 'flex',
+    },
+    play: async ({ canvas }) => {
+        await expect(canvas.getByRole('rowgroup').getBoundingClientRect().height).toBeGreaterThan(280);
     },
 };

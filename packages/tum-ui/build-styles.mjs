@@ -40,17 +40,19 @@ async function build() {
     const stylesheet = postcss.parse(result.css);
 
     // Tailwind does not namespace its internal custom properties or keyframes when a class prefix is configured.
+    const keyframes = new Map();
+    stylesheet.walkAtRules((atRule) => {
+        atRule.params = atRule.params.replaceAll('--tw-', '--tum-tw-');
+        if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tum-')) {
+            keyframes.set(atRule.params, `tum-${atRule.params}`);
+            atRule.params = `tum-${atRule.params}`;
+        }
+    });
     stylesheet.walkDecls((declaration) => {
         declaration.prop = declaration.prop.replaceAll('--tw-', '--tum-tw-');
         declaration.value = declaration.value.replaceAll('--tw-', '--tum-tw-');
-        if (declaration.prop === '--tum-animate-spin') {
-            declaration.value = declaration.value.replace(/\bspin\b/g, 'tum-spin');
-        }
-    });
-    stylesheet.walkAtRules((atRule) => {
-        atRule.params = atRule.params.replaceAll('--tw-', '--tum-tw-');
-        if (atRule.name.endsWith('keyframes') && atRule.params === 'spin') {
-            atRule.params = 'tum-spin';
+        for (const [original, namespaced] of keyframes) {
+            declaration.value = declaration.value.replace(new RegExp(`(?<![-\\\\w])${original.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}(?![-\\\\w])`, 'g'), namespaced);
         }
     });
 
