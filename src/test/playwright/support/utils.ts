@@ -50,6 +50,29 @@ function isResponseBodyEvicted(error: unknown): boolean {
 const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
 
 /**
+ * Largest multipart request body we re-issue from Node in {@link installApiResponseCapture}, inclusive:
+ * a body of exactly this size is still captured, anything larger is not.
+ * Multipart requests up to this size are the metadata-carrying ones whose response bodies tests
+ * actually read — course create/update post a small JSON blob plus an optional course icon. Genuine
+ * large file uploads stay on `route.continue()`: buffering megabytes through Node costs memory and
+ * buys nothing, because those tests do not read the response body.
+ */
+const MAX_CAPTURED_MULTIPART_BODY_BYTES = 1024 * 1024;
+
+/**
+ * Size of a request body in bytes, or `undefined` when it cannot be determined. Prefers the
+ * `content-length` header (already parsed, no buffer materialisation) and falls back to the post
+ * data. An unknown size is treated as "too large" by the caller, keeping the conservative default.
+ */
+function requestBodySizeInBytes(request: Request): number | undefined {
+    const contentLength = Number(request.headers()['content-length']);
+    if (Number.isFinite(contentLength) && contentLength >= 0) {
+        return contentLength;
+    }
+    return request.postDataBuffer()?.length;
+}
+
+/**
  * Capture non-GET /api response bodies at the network layer for a whole browser context:
  * `route.fetch()` performs the request from Node, we keep the body in Node memory for
  * {@link readResponseJson}, and fulfill the page with the same response. This only works because
@@ -58,8 +81,12 @@ const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
  * defeated an earlier page-scoped version of this capture.
  *
  * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
- * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart uploads
- * are skipped (re-issuing a file upload from Node is riskier than the eviction it guards against).
+ * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
+ * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive. Multipart was previously
+ * skipped outright, which left course create/update (Angular posts them as `FormData`) with no
+ * Node-held body: a POST/PUT cannot be replayed read-side, so an eviction there fails the test
+ * outright rather than degrading. `route.fetch()` re-sends the original body buffer and preserves
+ * the `content-type` header including its multipart boundary, so the server sees the same request.
  *
  * Error semantics matter here: `route.continue()` is only safe while the request has NOT been
  * dispatched. Once `route.fetch()` has sent the request to the server, any failure afterwards must
@@ -71,10 +98,17 @@ export async function installApiResponseCapture(context: BrowserContext): Promis
         (url) => url.pathname.includes('/api/'),
         async (route) => {
             const request = route.request();
-            const requestContentType = request.headers()['content-type'] ?? '';
-            if (request.method() === 'GET' || requestContentType.includes('multipart/form-data')) {
+            if (request.method() === 'GET') {
                 await route.continue();
                 return;
+            }
+            const requestContentType = request.headers()['content-type'] ?? '';
+            if (requestContentType.includes('multipart/form-data')) {
+                const bodySize = requestBodySizeInBytes(request);
+                if (bodySize === undefined || bodySize > MAX_CAPTURED_MULTIPART_BODY_BYTES) {
+                    await route.continue();
+                    return;
+                }
             }
             let apiResponse;
             try {
