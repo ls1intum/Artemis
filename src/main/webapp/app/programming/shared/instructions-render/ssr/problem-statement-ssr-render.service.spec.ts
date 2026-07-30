@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProblemStatementSsrRenderService } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr-render.service';
+import { RenderedProblemStatement } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('ProblemStatementSsrRenderService', () => {
@@ -103,6 +104,17 @@ describe('ProblemStatementSsrRenderService', () => {
             const second = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(second.request.body.testResults).toBeNull();
             second.flush({ html: '<p>none</p>', contentHash: 'n', rendererVersion: '1.0.0' });
+        });
+
+        it('defaults html to an empty string when the server omits it for a blank rendering', () => {
+            let received: RenderedProblemStatement | undefined;
+            service.render({ markdown: '', testResults: undefined, locale: 'en', darkMode: false }).subscribe((r) => (received = r));
+
+            const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
+            // The server serializes with @JsonInclude(NON_EMPTY), so a blank rendering omits `html` from the JSON entirely.
+            req.flush({ contentHash: 'empty', rendererVersion: '1.0.0' });
+
+            expect(received?.html).toBe('');
         });
     });
 });
