@@ -120,8 +120,6 @@ public class ProblemStatementRenderingService {
     private static final Pattern TASK_PATTERN = Pattern
             .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
-    private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
-
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
     private static final String SVG_PLACEHOLDER_SUFFIX = "\"></span>";
@@ -193,7 +191,7 @@ public class ProblemStatementRenderingService {
 
         // 5. Strip leftover <testid>N</testid> wrappers in prose/PlantUML placeholders. Code blocks are
         // still masked, so their contents stay untouched and display as written.
-        processed = TESTID_PATTERN.matcher(processed).replaceAll("$1");
+        processed = TestReferenceParser.stripTestIdWrappers(processed);
 
         // 6. Restore masked content.
         processed = restoreCodeBlocks(processed, codeBlocks);
@@ -262,8 +260,8 @@ public class ProblemStatementRenderingService {
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
             String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults);
-            // Strip <testid> wrappers inside PlantUML — the layout engine does not understand them.
-            resolvedSource = PlantUmlTaskColorResolver.stripTestIdWrappers(resolvedSource);
+            // Strip <testid> wrappers inside PlantUML: the layout engine does not understand them.
+            resolvedSource = TestReferenceParser.stripTestIdWrappers(resolvedSource);
 
             String inlineSvg;
             try {
@@ -293,6 +291,8 @@ public class ProblemStatementRenderingService {
     private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
+        // Loop-invariant: the lookup only depends on the request's test results.
+        TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
 
         while (matcher.find()) {
             String taskName = matcher.group("name");
@@ -300,17 +300,14 @@ public class ProblemStatementRenderingService {
 
             boolean hasTestRefs = testsStr != null && !testsStr.isBlank();
             List<String> authoredRefs = TestReferenceParser.splitTestReferences(testsStr);
-            TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
 
             List<Long> testIds = new ArrayList<>();
             int unresolvedRefs = 0;
             for (String ref : authoredRefs) {
-                // find(), not matches(): the canonical ProgrammingExerciseTaskService also accepts a reference that
-                // merely contains a <testid> wrapper. Switching to matches() would silently drop such references.
-                Matcher idMatcher = TESTID_PATTERN.matcher(ref);
-                if (idMatcher.find()) {
+                Long authoredId = TestReferenceParser.extractTestId(ref);
+                if (authoredId != null) {
                     // An authored id stays authoritative even when no feedback carries it: it then counts as not executed.
-                    testIds.add(Long.parseLong(idMatcher.group(1)));
+                    testIds.add(authoredId);
                     continue;
                 }
                 TestFeedbackInputDTO named = lookup.resolve(ref);

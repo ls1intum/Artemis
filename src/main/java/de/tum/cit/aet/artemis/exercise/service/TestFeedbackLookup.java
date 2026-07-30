@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
@@ -21,8 +19,6 @@ import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
  * the results provided in the request.
  */
 public final class TestFeedbackLookup {
-
-    private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
     private final @Nullable Map<Long, TestFeedbackInputDTO> byId;
 
@@ -59,9 +55,10 @@ public final class TestFeedbackLookup {
     }
 
     /**
-     * Resolves a single authored test reference.
+     * Resolves a single authored test reference. A reference containing a {@code <testid>} wrapper resolves by id (see
+     * {@link TestReferenceParser#extractTestId}); everything else resolves by exact name.
      *
-     * @param reference the reference as authored, either {@code <testid>N</testid>} or an exact test name
+     * @param reference the reference as authored, either carrying a {@code <testid>N</testid>} wrapper or an exact test name
      * @return the matching feedback, or {@code null} if the reference cannot be resolved
      */
     public @Nullable TestFeedbackInputDTO resolve(String reference) {
@@ -69,9 +66,9 @@ public final class TestFeedbackLookup {
             return null;
         }
         String trimmed = reference.strip();
-        Matcher idMatcher = TESTID_PATTERN.matcher(trimmed);
-        if (idMatcher.matches()) {
-            return byId.get(Long.parseLong(idMatcher.group(1)));
+        Long testId = TestReferenceParser.extractTestId(trimmed);
+        if (testId != null) {
+            return byId.get(testId);
         }
         return byName.get(trimmed);
     }

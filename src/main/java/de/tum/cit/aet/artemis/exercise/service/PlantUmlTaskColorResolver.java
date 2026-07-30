@@ -35,9 +35,6 @@ public final class PlantUmlTaskColorResolver {
     /** {@code #text:testsColor(testName)}. Group 1: test identifier. */
     private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
-    /** {@code <testid>NNN</testid>}. */
-    private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
-
     private PlantUmlTaskColorResolver() {
     }
 
@@ -68,16 +65,5 @@ public final class PlantUmlTaskColorResolver {
             case FAILED -> "red";
             case NOT_EXECUTED -> "grey";
         };
-    }
-
-    /**
-     * Strips {@code <testid>N</testid>} wrappers from the given text, leaving the numeric identifier.
-     * Used to clean up PlantUML source so the layout engine does not see unknown XML-looking tokens.
-     *
-     * @param text the source text potentially containing {@code <testid>N</testid>} wrappers
-     * @return the text with those wrappers replaced by their numeric identifier
-     */
-    public static String stripTestIdWrappers(String text) {
-        return TESTID_PATTERN.matcher(text).replaceAll("$1");
     }
 }
