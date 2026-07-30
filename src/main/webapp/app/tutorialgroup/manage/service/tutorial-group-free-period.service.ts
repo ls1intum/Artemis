@@ -5,6 +5,7 @@ import { toISO8601DateTimeString } from 'app/foundation/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { convertTutorialGroupFreePeriodDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 
@@ -72,7 +73,7 @@ export class TutorialGroupFreePeriodService {
 
     private convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
         if (tutorialGroupFreePeriodDTO) {
-            return Object.assign({}, tutorialGroupFreePeriodDTO, {
+            return cloneWith(tutorialGroupFreePeriodDTO, {
                 startDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.startDate),
                 endDate: toISO8601DateTimeString(tutorialGroupFreePeriodDTO.endDate),
             });
