@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -196,7 +197,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
 
         pages.forEach((page) => {
             updatedHiddenPages[page.slideId] = {
@@ -226,7 +227,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param slideId - The ID of the slide to be made visible.
      */
     showPage(slideId: string): void {
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
         delete updatedHiddenPages[slideId];
         this.hiddenPagesOutput.emit(updatedHiddenPages);
         this.hideActionButton(slideId);

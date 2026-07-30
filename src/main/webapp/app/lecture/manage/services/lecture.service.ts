@@ -7,6 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -124,7 +125,7 @@ export class LectureService {
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
-        const copy: Lecture = Object.assign({}, lecture, {
+        const copy: Lecture = cloneWith(lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
         });
