@@ -8,8 +8,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,6 +32,12 @@ import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedExceptio
 @Lazy
 @Repository
 public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
+
+    /**
+     * Name of the unique constraint on team_student that enforces "a student belongs to at most one team per exercise",
+     * lower-cased for a case-insensitive comparison against what the database reports.
+     */
+    String TEAM_STUDENT_UNIQUE_CONSTRAINT = "uk_team_student_exercise_student";
 
     @EntityGraph(type = LOAD, attributePaths = "students")
     List<Team> findAllByExerciseId(Long exerciseId);
@@ -141,8 +149,45 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
             throw new StudentsAlreadyAssignedException(conflicts);
         }
         team.setExercise(exercise);
-        team = save(team);
+        try {
+            team = save(team);
+        }
+        catch (DataIntegrityViolationException exception) {
+            // The check above is a non-locking read in its own transaction, so two concurrent requests can both pass it.
+            // The unique constraint on team_student then rejects the loser. That is the same business conflict, so it
+            // must be reported to the client as such instead of escaping as a generic server error.
+            throw translateStudentTeamConflict(exercise, team, exception);
+        }
         return findWithStudentsByIdElseThrow(team.getId());
+    }
+
+    /**
+     * Turns the integrity violation raised by the unique constraint on team_student into the client-facing error the
+     * sequential case produces. The conflicts are looked up again because the concurrent winner is only visible now.
+     *
+     * @param exercise  Exercise which the team belongs to
+     * @param team      Team whose save was rejected
+     * @param exception the violation raised while saving
+     * @return a {@link StudentsAlreadyAssignedException} if the violation is the team-student conflict, otherwise the
+     *         original exception, which must not be masked
+     */
+    private RuntimeException translateStudentTeamConflict(Exercise exercise, Team team, DataIntegrityViolationException exception) {
+        if (!isTeamStudentUniquenessViolation(exception)) {
+            return exception;
+        }
+        List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);
+        return conflicts.isEmpty() ? exception : new StudentsAlreadyAssignedException(conflicts);
+    }
+
+    private boolean isTeamStudentUniquenessViolation(DataIntegrityViolationException exception) {
+        // The constraint name is the only reliable discriminator; databases report it in their own casing.
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException constraintViolation && constraintViolation.getConstraintName() != null
+                    && constraintViolation.getConstraintName().toLowerCase().contains(TEAM_STUDENT_UNIQUE_CONSTRAINT)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

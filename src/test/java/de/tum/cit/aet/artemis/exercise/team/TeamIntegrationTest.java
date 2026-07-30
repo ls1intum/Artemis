@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
+import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedException;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -181,6 +185,56 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         Team conflicting = new Team().name(TEST_PREFIX + "Team B").shortName(TEST_PREFIX + "teamb").exercise(exercise).students(Set.of(student));
         assertThatExceptionOfType(DataIntegrityViolationException.class).as("Database enforces one team per student per exercise")
                 .isThrownBy(() -> teamRepo.saveAndFlush(conflicting));
+    }
+
+    /**
+     * The application-level check in {@link TeamRepository#save(Exercise, Team)} is a read followed by a write in a
+     * separate transaction, so concurrent requests can both pass it and let the unique constraint reject the loser. That
+     * rejection is the same business conflict as the sequential case and must reach the client as a
+     * {@link StudentsAlreadyAssignedException} (HTTP 400), never as a raw integrity violation (HTTP 500).
+     * <p>
+     * Which of the two paths a loser takes depends on the interleaving, so the test asserts what has to hold for both:
+     * exactly one team is created and no {@link DataIntegrityViolationException} escapes. It is repeated because only
+     * some interleavings reach the constraint.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testConcurrentTeamCreationReportsAConflictInsteadOfAnIntegrityViolation() throws Exception {
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            Exercise raceExercise = textExerciseUtilService.createIndividualTextExercise(course, null, null, null);
+            raceExercise.setMode(ExerciseMode.TEAM);
+            Exercise savedExercise = exerciseRepository.save(raceExercise);
+
+            CyclicBarrier startTogether = new CyclicBarrier(2);
+            List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+            List<Thread> threads = new ArrayList<>();
+            for (int index = 0; index < 2; index++) {
+                String suffix = attempt + "" + index;
+                Thread thread = new Thread(() -> {
+                    Team team = new Team().name(TEST_PREFIX + "Race " + suffix).shortName(TEST_PREFIX + "race" + suffix).students(Set.of(student));
+                    try {
+                        startTogether.await();
+                        teamRepo.save(savedExercise, team);
+                    }
+                    catch (StudentsAlreadyAssignedException expected) {
+                        // the loser of the race, reported as the business conflict it is
+                    }
+                    catch (Throwable throwable) {
+                        failures.add(throwable);
+                    }
+                });
+                threads.add(thread);
+                thread.start();
+            }
+            for (Thread thread : threads) {
+                thread.join();
+            }
+
+            assertThat(failures).as("A concurrent loser must not surface a raw integrity violation").isEmpty();
+            assertThat(teamRepo.findAllByExerciseId(savedExercise.getId())).as("Only one of the two concurrent teams may be created").hasSize(1);
+        }
     }
 
     /**
