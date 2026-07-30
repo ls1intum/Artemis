@@ -329,9 +329,10 @@ public class ProblemStatementRenderingService {
 
             // Only emit data-feedback when at least one referenced test actually has feedback. Authored ids are always
             // added to testIds, so `!testIds.isEmpty()` alone would emit an empty data-feedback="[]" for an empty
-            // (but present) result map.
+            // (but present) result map. This gates data-feedback only: the stats line below is driven by whether
+            // test results were supplied at all, not by whether any of *this* task's tests are among them.
             boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
-            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, hasFeedback ? testResults : null, locale);
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, testResults, hasFeedback, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
         }
@@ -340,7 +341,7 @@ public class ProblemStatementRenderingService {
     }
 
     private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int authoredCount, int notExecutedCount,
-            @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
+            @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean hasFeedback, Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         StringBuilder html = new StringBuilder();
@@ -348,7 +349,7 @@ public class ProblemStatementRenderingService {
                 .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\" data-authored-count=\"").append(authoredCount)
                 .append("\" data-not-executed-count=\"").append(notExecutedCount).append("\"");
 
-        if (testResults != null) {
+        if (hasFeedback) {
             html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
         }
 

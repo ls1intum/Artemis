@@ -508,6 +508,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         // Neither the differently-cased nor the parenthesis-stripped variant may resolve.
         assertThat(result.html()).doesNotContain("data-test-status=\"success\"");
+        // Positive anchor: both tasks must still have rendered as spans with their own authored reference, so this
+        // assertion cannot pass vacuously if task rendering broke entirely and emitted no spans at all.
+        assertThat(result.html()).contains("data-authored-count=\"1\"");
     }
 
     @Test
@@ -525,6 +528,22 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderStatsTextWhenAuthoredIdHasNoFeedbackEntry() throws Exception {
+        var known = new TestFeedbackInputDTO(1L, "testA", true, null, null);
+        // includeCss=false so the embedded stylesheet's `[data-feedback]` selector cannot produce a false negative
+        // for the "attribute absent" assertion below.
+        var body = new ProblemStatementRenderRequestDTO("[task][X](<testid>99</testid>)", List.of(known), null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The referenced id (99) carries no feedback, so data-feedback must not be emitted for it, but the stats
+        // line must still render using the authored count — results were supplied, just not for this task's tests.
+        assertThat(result.html()).doesNotContain("data-feedback");
+        assertThat(result.html()).contains("0 of 1 tests passed");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCountUnresolvedReferencesAsNotExecutedInStats() throws Exception {
         var known = new TestFeedbackInputDTO(1L, "testKnown()", true, null, null);
         var body = new ProblemStatementRenderRequestDTO("[task][Partial](testKnown(),testMissing())", List.of(known), null, "en", false, false, true, null);
@@ -534,6 +553,27 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("data-test-status=\"not-executed\"");
         assertThat(result.html()).contains("data-authored-count=\"2\"");
         assertThat(result.html()).contains("data-not-executed-count=\"1\"");
+        // The stats denominator must be the authored count (2), not the resolved count (1) — this is the
+        // headline behavior of this task, so assert on the rendered text, not just the data attributes.
+        assertThat(result.html()).contains("1 of 2 tests passed");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldUseAuthoredCountAsStatsDenominatorWithPartialResolution() throws Exception {
+        var testA = new TestFeedbackInputDTO(1L, "testA()", true, null, null);
+        var testB = new TestFeedbackInputDTO(2L, "testB()", true, null, null);
+        var testC = new TestFeedbackInputDTO(3L, "testC()", true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Five](testA(),testB(),testC(),testD(),testE())", List.of(testA, testB, testC), null, "en", false, false, true,
+                null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // 3 of 5 authored references resolve and pass; testD() and testE() are unresolvable. The denominator must
+        // read "5" (authored), not "3" (resolved) — a task with unresolvable refs must not look fully accounted for.
+        assertThat(result.html()).contains("data-authored-count=\"5\"");
+        assertThat(result.html()).contains("data-not-executed-count=\"2\"");
+        assertThat(result.html()).contains("3 of 5 tests passed");
     }
 
     @Test
