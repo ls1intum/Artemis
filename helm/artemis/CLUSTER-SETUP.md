@@ -5,6 +5,9 @@ one, with concrete install commands, and ends with the `values.yaml` keys that t
 
 > Version numbers below are examples - check each project for the current release and for its Kubernetes / Gateway API
 > compatibility matrix before installing.
+>
+> Ready-to-apply copies of the manifests in this guide live in [`./cluster-setup/`](./cluster-setup/) - edit the
+> `FIXME:` placeholders and `kubectl apply` them instead of copy-pasting.
 
 Cluster prerequisites at a glance:
 
@@ -37,8 +40,10 @@ kubectl get crd | grep gateway.networking.k8s.io
 ```
 
 > Some controllers (Envoy Gateway, Cilium, Istio) bundle their own copy of the Gateway API CRDs. To avoid version
-> conflicts, either install the CRDs first and tell the controller to skip them, or rely on the controller's bundled
-> set and make sure it includes the **experimental** channel (TCPRoute). Only one source of these CRDs should win.
+> conflicts, either install the CRDs first (as above) and tell the controller to skip them - for Envoy Gateway pass
+> `--skip-crds` to its `helm install` (see [section 2](#2-gateway-controller-envoy-gateway)) - or rely on the
+> controller's bundled set and make sure it includes the **experimental** channel (TCPRoute). Only one source of these
+> CRDs should win.
 >
 > If your controller cannot do `TCPRoute`, skip it and use the SSH fallback (`gateway.ssh.mode=loadbalancer` or
 > `nodeport`) - then only the standard-channel CRDs are required.
@@ -53,10 +58,14 @@ support `TCPRoute`: **Cilium**, **Istio**, **NGINX Gateway Fabric**.
 
 ### Install Envoy Gateway
 
+`--skip-crds` tells Envoy Gateway **not** to install its bundled (standard-channel) Gateway API CRDs, so the
+experimental-channel CRDs from [section 1](#1-gateway-api-crds) (which include `TCPRoute`) remain the single source:
+
 ```bash
 helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.2.1 \
-  -n envoy-gateway-system --create-namespace
+  --version v1.8.3 \
+  -n envoy-gateway-system --create-namespace \
+  --skip-crds
 
 kubectl -n envoy-gateway-system rollout status deploy/envoy-gateway
 ```
@@ -77,11 +86,102 @@ spec:
 ```
 
 ```bash
-kubectl apply -f gatewayclass.yaml
+kubectl apply -f cluster-setup/gatewayclass.yaml
 kubectl get gatewayclass envoy   # ACCEPTED should be True
 ```
 
 Then set `--set gateway.className=envoy` when installing the chart.
+
+### Optional: MetalLB address pool + dual-stack
+
+If your cluster uses [MetalLB](https://metallb.universe.tf/) and you need the Envoy `LoadBalancer` service to (a) draw
+its address from a **specific `IPAddressPool`** and (b) be **dual-stack** (IPv4 + IPv6), customize the service the
+controller generates through an **`EnvoyProxy`** resource referenced from the `GatewayClass`.
+
+Prerequisites:
+
+- The cluster is dual-stack (kube-apiserver / kube-proxy configured with both IPv4 and IPv6 `--service-cluster-ip-range`).
+- Your MetalLB `IPAddressPool` contains **both** an IPv4 and an IPv6 range, so MetalLB can hand out one of each:
+
+  ```yaml
+  apiVersion: metallb.io/v1beta1
+  kind: IPAddressPool
+  metadata:
+    name: artemis-pool
+    namespace: metallb-system
+  spec:
+    addresses:
+      - 192.0.2.240-192.0.2.250      # IPv4 range
+      - 2001:db8:42::/120            # IPv6 range
+  ```
+
+Create an `EnvoyProxy` in the Envoy Gateway namespace. It sets the MetalLB pool annotation and patches the service to
+request dual-stack (there is no dedicated field for `ipFamilies`, so use a strategic-merge `patch`):
+
+```yaml
+# envoyproxy.yaml
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: artemis-envoy-proxy
+  namespace: envoy-gateway-system      # must live in the Envoy Gateway namespace
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          # Pin the LB address to a specific MetalLB pool.
+          metallb.universe.tf/address-pool: artemis-pool
+          # Optional: request specific IPs from that pool (comma-separated, one per family).
+          # metallb.universe.tf/loadBalancerIPs: 192.0.2.240,2001:db8:42::1
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ipFamilyPolicy: RequireDualStack
+              ipFamilies:
+                - IPv4
+                - IPv6
+```
+
+Point the `GatewayClass` at it via `parametersRef` (this replaces the plain GatewayClass from the previous step):
+
+```yaml
+# gatewayclass.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: artemis-envoy-proxy
+    namespace: envoy-gateway-system
+```
+
+```bash
+# Applies the IPAddressPool, EnvoyProxy, and the GatewayClass wired to it.
+kubectl apply -f cluster-setup/metallb-dualstack/
+```
+
+Verify the Envoy service picked up the pool and both families after deploying the chart:
+
+```bash
+# The Envoy service is created in the Envoy Gateway namespace, named after the owning Gateway.
+kubectl -n envoy-gateway-system get svc \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=<ns> \
+  -o custom-columns='NAME:.metadata.name,IP-FAMILIES:.spec.ipFamilies,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip'
+```
+
+You should see both an IPv4 and an IPv6 external address from `artemis-pool`. Create DNS A **and** AAAA records for
+`gateway.hostname` pointing at them (see [section 5](#5-dns)).
+
+> `RequireDualStack` fails service creation if the cluster is not dual-stack; use `PreferDualStack` if you want it to
+> fall back to single-stack gracefully. Changing `ipFamilyPolicy`/`ipFamilies` on an existing service is not always
+> allowed - delete and recreate the Gateway (and thus its Envoy service) if a change is rejected.
 
 ### Enable git-SSH (TCPRoute) end-to-end
 
@@ -184,7 +284,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f clusterissuer.yaml
+kubectl apply -f cluster-setup/clusterissuer-letsencrypt.yaml
 # then: --set gateway.tls.certManagerClusterIssuer=letsencrypt-prod
 ```
 

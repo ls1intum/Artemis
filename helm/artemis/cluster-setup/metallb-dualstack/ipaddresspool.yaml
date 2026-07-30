@@ -1,0 +1,12 @@
+# MetalLB address pool with BOTH an IPv4 and an IPv6 range so the Envoy
+# LoadBalancer service can be assigned one address of each family (dual-stack).
+# EDIT the ranges to match your network before applying.
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: artemis-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.0.2.240-192.0.2.250      # FIXME: IPv4 range
+    - 2001:db8:42::/120            # FIXME: IPv6 range
