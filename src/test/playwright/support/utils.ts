@@ -73,6 +73,51 @@ function requestBodySizeInBytes(request: Request): number | undefined {
 }
 
 /**
+ * Whether `route.fetch()` can faithfully re-send this request's multipart body.
+ *
+ * `route.fetch()` replays the body Playwright holds in Node, i.e. `postDataBuffer()`. For a
+ * `FormData` assembled purely in memory (a JSON blob, a cropped-image blob) that buffer is
+ * byte-complete. For a part backed by a **file on disk** — anything a test attaches with
+ * `setInputFiles()` — it is not: Chromium streams those parts from disk and never hands the bytes to
+ * the driver, so the buffer contains the part's headers but an empty payload (387 B for an 11 KB
+ * PDF). Replaying that sends a part with a `filename` and no content, and the server rejects it —
+ * `FileUploadSubmissionResource` answers 400 "The uploaded file is empty", which made the
+ * file-upload participation and assessment tests fail deterministically.
+ *
+ * Detect exactly that signature: a part declaring a `filename` whose payload is empty. Note we
+ * cannot compare against `content-length` — Chromium does not expose it on these requests (it is
+ * added further down the network stack), so it reads as `undefined` for in-memory `FormData` too and
+ * would disable the capture wholesale, reopening the eviction gap it exists to close.
+ *
+ * Anything unparseable is treated as not replayable, so the caller falls back to `route.continue()`:
+ * the browser then sends the untouched request and we merely forgo the Node-held response body,
+ * which degrades robustness instead of corrupting the upload.
+ */
+function isBodyFaithfullyReplayable(request: Request): boolean {
+    const body = request.postDataBuffer();
+    if (!body) {
+        return false;
+    }
+    const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(request.headers()['content-type'] ?? '');
+    const delimiter = (boundary?.[1] ?? boundary?.[2])?.trim();
+    if (!delimiter) {
+        return false;
+    }
+    // latin1 keeps one char per byte, so payload lengths measured here are byte-exact.
+    const segments = body.toString('latin1').split(`--${delimiter}`);
+    return segments.every((segment) => {
+        const headerEnd = segment.indexOf('\r\n\r\n');
+        if (headerEnd === -1) {
+            return true; // preamble, epilogue or a segment without headers: nothing to verify
+        }
+        if (!/;\s*filename\s*=/i.test(segment.slice(0, headerEnd))) {
+            return true; // plain field, always carried in full
+        }
+        return segment.slice(headerEnd + 4).replace(/\r\n$/, '').length > 0;
+    });
+}
+
+/**
  * Capture non-GET /api response bodies at the network layer for a whole browser context:
  * `route.fetch()` performs the request from Node, we keep the body in Node memory for
  * {@link readResponseJson}, and fulfill the page with the same response. This only works because
@@ -82,11 +127,14 @@ function requestBodySizeInBytes(request: Request): number | undefined {
  *
  * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
  * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
- * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive. Multipart was previously
- * skipped outright, which left course create/update (Angular posts them as `FormData`) with no
- * Node-held body: a POST/PUT cannot be replayed read-side, so an eviction there fails the test
- * outright rather than degrading. `route.fetch()` re-sends the original body buffer and preserves
- * the `content-type` header including its multipart boundary, so the server sees the same request.
+ * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive **and** only when
+ * Playwright's copy of the body is byte-complete (see {@link isBodyFaithfullyReplayable}). Multipart
+ * was previously skipped outright, which left course create/update (Angular posts them as `FormData`)
+ * with no Node-held body: a POST/PUT cannot be replayed read-side, so an eviction there fails the test
+ * outright rather than degrading. `route.fetch()` re-sends the body buffer Playwright holds and
+ * preserves the `content-type` header including its multipart boundary — so for an in-memory
+ * `FormData` the server sees the same request, but a file-backed part would arrive empty, which is
+ * exactly what the fidelity guard excludes.
  *
  * Error semantics matter here: `route.continue()` is only safe while the request has NOT been
  * dispatched. Once `route.fetch()` has sent the request to the server, any failure afterwards must
@@ -105,7 +153,9 @@ export async function installApiResponseCapture(context: BrowserContext): Promis
             const requestContentType = request.headers()['content-type'] ?? '';
             if (requestContentType.includes('multipart/form-data')) {
                 const bodySize = requestBodySizeInBytes(request);
-                if (bodySize === undefined || bodySize > MAX_CAPTURED_MULTIPART_BODY_BYTES) {
+                // Size cap first (cheap), then the fidelity check: a file-backed part is invisible to
+                // Playwright, so replaying it would upload an empty file. See isBodyFaithfullyReplayable.
+                if (bodySize === undefined || bodySize > MAX_CAPTURED_MULTIPART_BODY_BYTES || !isBodyFaithfullyReplayable(request)) {
                     await route.continue();
                     return;
                 }
