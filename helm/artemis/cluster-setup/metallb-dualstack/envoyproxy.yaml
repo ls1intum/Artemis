@@ -15,7 +15,7 @@ spec:
           # Pin the LB address to one of your EXISTING MetalLB pools (must contain
           # both an IPv4 and an IPv6 range for dual-stack). This chart does NOT
           # create the pool.
-          metallb.universe.tf/address-pool: <your-metallb-pool>   # FIXME
+          metallb.universe.tf/address-pool: lb2   # FIXME
           # Optional: request specific IPs from that pool (comma-separated, one per family).
           # metallb.universe.tf/loadBalancerIPs: 192.0.2.240,2001:db8:42::1
         patch:
