@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -16,19 +16,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationIndependentTest {
+class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     @Mock
-    ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Mock
-    ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+    ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +55,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingInteg
                         + "[task][Placeholder in Problem Statement](<testid>%d</testid>) Only Problem Statement Text at the end",
                 testCase1.getId(), testCase1.getId(), testCase1.getId());
         programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
-        assertEquals(problemStatement, exercise.getProblemStatement());
+        assertThat(exercise.getProblemStatement()).isEqualTo(problemStatement);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingInteg
                 "[task][Placeholder in Problem Statement](<testid>%d</testid>)" + "[task][Placeholder2 in Problem Statement](<testid>%d</testid>)", testCase1.getId(),
                 testCase2.getId());
         programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
-        assertEquals(problemStatement, exercise.getProblemStatement());
+        assertThat(exercise.getProblemStatement()).isEqualTo(problemStatement);
     }
 
 }
