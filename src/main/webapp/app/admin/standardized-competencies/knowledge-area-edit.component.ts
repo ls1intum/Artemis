@@ -14,6 +14,7 @@ import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Form structure for knowledge area editing.
@@ -136,7 +137,8 @@ export class KnowledgeAreaEditComponent {
      */
     save(): void {
         const updatedValues = this.form.getRawValue();
-        const updatedKnowledgeArea: KnowledgeAreaDTO = { ...this.knowledgeArea(), ...updatedValues };
+        // updatedValues comes straight from getRawValue(), so nothing else aliases it and it can be applied as overrides.
+        const updatedKnowledgeArea: KnowledgeAreaDTO = cloneWith(this.knowledgeArea(), updatedValues);
         this.isEditing.set(false);
         this.onSave.emit(updatedKnowledgeArea);
     }

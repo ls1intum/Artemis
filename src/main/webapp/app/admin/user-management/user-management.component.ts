@@ -41,6 +41,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -330,7 +331,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
         this.updateNoAuthority(false);
-        this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
+        // updateNoAuthority replaces the filter object with a detached copy, so `filter` is no longer the Set the
+        // signal holds. Re-read it instead of mutating the caller's now-orphaned reference.
+        this.toggleFilter<AuthorityFilter>(this.filters().authorityFilter, value, this.authorityKey);
     }
 
     /**
@@ -408,7 +411,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.noAuthority = value;
         this.filters.set(filters);
     }
@@ -417,7 +420,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deselect all roles
      */
     deselectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
@@ -428,7 +431,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set();
         this.filters.set(filters);
         this.updateNoAuthority(true);
@@ -438,7 +441,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        const filters = Object.assign(new UserFilter(), this.filters());
+        const filters = hydrate(new UserFilter(), this.filters());
         filters.authorityFilter = new Set(this.authorityFilters);
         this.filters.set(filters);
         this.updateNoAuthority(false);

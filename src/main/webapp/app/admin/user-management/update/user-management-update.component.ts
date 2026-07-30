@@ -35,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component for creating and updating users in the admin user management.
@@ -164,7 +165,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
-                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
+                    this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
                 });
             }
         });
@@ -262,7 +263,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     onOrgSelected(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
+        this.user.update((currentUser) => cloneWith(currentUser, { organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -271,7 +272,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     removeOrganizationFromUser(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
-        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
+        this.user.update((currentUser) =>
+            cloneWith(currentUser, { organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }),
+        );
     }
 
     /** Filters the group suggestions shown in the autocomplete dropdown based on the typed query. */
@@ -388,7 +391,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
      */
     private commitUser(user: User) {
-        this.user.update((currentUser) => (currentUser === user ? { ...currentUser } : currentUser));
+        this.user.update((currentUser) => (currentUser === user ? deepClone(currentUser) : currentUser));
     }
 
     /**

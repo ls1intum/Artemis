@@ -37,6 +37,7 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiProgressSpinnerComponent } from 'app/shared-ui/tum-ui/progress-spinner/tum-ui-progress-spinner.component';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -356,13 +357,12 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         // set children and competencies to previous values as we do not get all descendants from the server
-        const knowledgeAreaForTree: KnowledgeAreaForTree = {
-            ...knowledgeArea,
+        const knowledgeAreaForTree: KnowledgeAreaForTree = cloneWith(knowledgeArea, {
             level: parent ? parent.level + 1 : 0,
             isVisible: true,
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
-        };
+        });
         // update level of descendants
         this.updateLevelOfSelfAndDescendants(knowledgeAreaForTree, knowledgeAreaForTree.level);
 

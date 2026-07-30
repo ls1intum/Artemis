@@ -37,6 +37,7 @@ import { TumUiIconFieldComponent } from 'app/shared-ui/tum-ui/icon-field/tum-ui-
 
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type SbomSource = 'all' | 'server' | 'client';
 
@@ -152,20 +153,12 @@ export class AdminSbomComponent implements OnInit {
         const source = this.selectedSource();
         if ((source === 'all' || source === 'server') && sbom.server?.components) {
             components = components.concat(
-                sbom.server.components.map((c) => ({
-                    ...c,
-                    source: 'server' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.server.components.map((c) => cloneWith(c, { source: 'server' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
         if ((source === 'all' || source === 'client') && sbom.client?.components) {
             components = components.concat(
-                sbom.client.components.map((c) => ({
-                    ...c,
-                    source: 'client' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.client.components.map((c) => cloneWith(c, { source: 'client' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
 

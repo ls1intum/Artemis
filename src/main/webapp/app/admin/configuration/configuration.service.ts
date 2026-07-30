@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { Bean, Beans, ConfigProps, Env, PropertySource } from './configuration.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable({ providedIn: 'root' })
 export class ConfigurationService {
@@ -15,7 +16,7 @@ export class ConfigurationService {
                 Object.values(
                     Object.values(configProps.contexts)
                         .map((context) => context.beans)
-                        .reduce((allBeans: Beans, contextBeans: Beans) => ({ ...allBeans, ...contextBeans })),
+                        .reduce((allBeans: Beans, contextBeans: Beans) => cloneWith(allBeans, deepClone(contextBeans))),
                 ),
             ),
         );
