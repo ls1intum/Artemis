@@ -15,7 +15,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -28,7 +27,9 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
-    readonly exercise = signal<Exercise>(undefined!);
+    // `equal: () => false` so re-setting the same reference emits after the example submissions are spliced in place;
+    // copying the exercise would detach the nested associations from the parent that supplied it.
+    readonly exercise = signal<Exercise>(undefined!, { equal: () => false });
     readonly exerciseType = ExerciseType;
     readonly createdExampleAssessment = signal<boolean[]>([]);
     private importDialogRef?: DynamicDialogRef | null;
@@ -78,8 +79,8 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         this.exampleSubmissionService.delete(submissionId).subscribe({
             next: () => {
                 exercise.exampleSubmissions!.splice(index, 1);
-                // Re-set with a fresh reference so the signal notifies consumers (same-reference set is a no-op).
-                this.exercise.set(hydrate(Object.create(Object.getPrototypeOf(exercise)), exercise));
+                // Re-set the same reference so the signal notifies consumers; `equal: () => false` makes that emit.
+                this.exercise.set(exercise);
                 this.createdExampleAssessment.update((created) => {
                     const updated = [...created];
                     updated.splice(index, 1);

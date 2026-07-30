@@ -124,7 +124,7 @@ export class CourseUpdateComponent implements OnInit {
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
     // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
     // call commitCourse() to rebuild the reference so the signal fires.
-    private readonly _course = signal<Course>(undefined!);
+    private readonly _course = signal<Course>(undefined!, { equal: () => false });
     get course(): Course {
         return this._course();
     }
@@ -132,12 +132,10 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
-        // A shallow, prototype-preserving copy is deliberate here: the only goal is a new top-level reference so the
-        // signal fires. This runs on every keystroke in a date field, and the nested associations (organizations,
-        // exercises, …) are two-way bound into child components, so detaching them with a deep clone would both cost
-        // a full graph copy per edit and break their identity.
-        // eslint-disable-next-line localRules/prefer-deep-clone -- see above: reference rebuild for change detection, not a copy
-        this._course.update((course) => Object.assign(new Course(), course));
+        // No copy: `_course` is declared with `equal: () => false`, so re-setting the same reference emits. Copying the
+        // course here would detach the nested associations (organizations, exercises, …) that are two-way bound into
+        // child components, and it would do so on every keystroke in a date field.
+        this._course.set(this._course());
     }
     readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;

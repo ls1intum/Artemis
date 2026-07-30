@@ -120,7 +120,7 @@ export class BonusComponent implements OnInit {
      * template keeps writing `bonus.…` while reads stay reactive. Deep mutations (e.g. `this.bonus.id = …`) must be
      * followed by {@link commitBonus} so dependent template bindings re-render under zoneless.
      */
-    private readonly _bonus = signal<Bonus>(new Bonus());
+    private readonly _bonus = signal<Bonus>(new Bonus(), { equal: () => false });
     get bonus(): Bonus {
         return this._bonus();
     }
@@ -129,7 +129,8 @@ export class BonusComponent implements OnInit {
     }
     /** Rebuilds the bonus signal reference after an in-place mutation so dependent template bindings re-render under zoneless. */
     private commitBonus(): void {
-        this._bonus.update((bonus) => hydrate(new Bonus(), bonus));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._bonus.set(this._bonus());
     }
     readonly hasBonusStrategyWeightMismatch = signal(false);
 

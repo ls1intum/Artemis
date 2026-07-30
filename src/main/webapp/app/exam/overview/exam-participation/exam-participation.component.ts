@@ -62,7 +62,7 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -143,8 +143,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
     // needed, because studentExam is downloaded only when exam is started
-    readonly exam = signal<Exam>(undefined!);
-    readonly studentExam = signal<StudentExam>(undefined!);
+    // Both are declared with `equal: () => false` so re-setting the same reference emits. Live events update these
+    // objects in place, and copying them would detach the exercises and submissions the student is working on.
+    readonly exam = signal<Exam>(undefined!, { equal: () => false });
+    readonly studentExam = signal<StudentExam>(undefined!, { equal: () => false });
 
     readonly individualStudentEndDate = signal<dayjs.Dayjs>(undefined!);
     readonly individualStudentEndDateWithGracePeriod = signal<dayjs.Dayjs>(undefined!);
@@ -925,15 +927,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.workingTimeUpdateEventsSubscription = (
             this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
         ).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam.set(cloneWith(this.studentExam(), { workingTime: event.newWorkingTime }));
+            // Assign the new working time in place and re-set the same reference; `equal: () => false` makes that emit.
+            // No copy, so the submissions the exercise components are editing stay the same objects.
+            const studentExam = this.studentExam();
+            studentExam.workingTime = event.newWorkingTime;
+            this.studentExam.set(studentExam);
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
             // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
             // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
             // the schedule (the exam dates are only its availability window, not the student's conduction window), so
             // the exam dates are left untouched and the end date is derived from the student's own start below.
             if (event.newStartDate) {
-                this.exam.set(cloneWith(this.exam(), { startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate }));
+                const exam = this.exam();
+                exam.startDate = event.newStartDate;
+                exam.endDate = event.newEndDate ?? exam.endDate;
+                this.exam.set(exam);
             }
             // Derive the end date from the new start when present, otherwise from the start captured when the
             // subscription was created (the exam start for real exams, the student's startedDate for test exams),

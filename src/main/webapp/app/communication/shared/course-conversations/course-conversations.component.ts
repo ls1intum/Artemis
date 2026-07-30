@@ -64,7 +64,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
-import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -219,7 +219,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
     // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
     // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
-    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!);
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!, { equal: () => false });
     get courseWideSearchConfig(): CourseWideSearchConfig {
         return this._courseWideSearchConfig();
     }
@@ -227,7 +227,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this._courseWideSearchConfig.set(value);
     }
     private commitCourseWideSearchConfig(): void {
-        this._courseWideSearchConfig.update((config) => hydrate(new CourseWideSearchConfig(), config));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._courseWideSearchConfig.set(this._courseWideSearchConfig());
     }
 
     // Icons

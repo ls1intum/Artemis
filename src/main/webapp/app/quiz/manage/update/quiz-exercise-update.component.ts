@@ -297,8 +297,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                         } else if (this.quizExercise()) {
                             this.quizExercise().exerciseGroup = this.exerciseGroup;
                             this.savedEntity.exerciseGroup = this.exerciseGroup;
-                            // Commit a new reference so the in-place mutation renders under zoneless OnPush.
-                            this.quizExercise.update((quizExercise) => deepClone(quizExercise));
+                            // Re-set the same reference so the in-place mutation renders: the signal is declared with
+                            // `equal: () => false`. No copy, so the questions the child editors hold stay the same objects.
+                            this.quizExercise.set(this.quizExercise());
                         }
                     });
                 } else {
@@ -308,8 +309,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                     } else if (this.quizExercise()) {
                         this.quizExercise().course = this.course;
                         this.savedEntity.course = this.course;
-                        // Commit a new reference so the in-place mutation renders under zoneless OnPush.
-                        this.quizExercise.update((quizExercise) => deepClone(quizExercise));
+                        // Re-set the same reference so the in-place mutation renders (see above).
+                        this.quizExercise.set(this.quizExercise());
                     }
                 }
             });

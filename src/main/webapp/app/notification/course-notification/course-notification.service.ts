@@ -371,7 +371,14 @@ export class CourseNotificationService implements OnDestroy {
      * Creates a new object to ensure change detection.
      */
     private notifyNotificationSubscribers(): void {
-        this.notificationSubject.next(deepClone(this.courseNotificationMap));
+        // A new outer record so subscribers see a changed reference, with the per-course arrays carried over as they
+        // are: consumers render the notifications with `track` by identity, so those objects must stay the same
+        // instances across emissions.
+        const notificationsByCourse: Record<number, CourseNotification[]> = {};
+        for (const courseId of Object.keys(this.courseNotificationMap)) {
+            notificationsByCourse[Number(courseId)] = this.courseNotificationMap[Number(courseId)];
+        }
+        this.notificationSubject.next(notificationsByCourse);
     }
 
     /**

@@ -154,7 +154,7 @@ export class FinishedBuildsFilterModalComponent {
      * getter/setter property because the template uses deep two-way bindings ([(ngModel)]="finishedBuildJobFilter.prop")
      * that a bare signal cannot back. After deep mutations the reference is rebuilt via commitFinishedBuildJobFilter().
      */
-    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
+    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter(), { equal: () => false });
     get finishedBuildJobFilter(): FinishedBuildJobFilter {
         return this.finishedBuildJobFilterSignal();
     }
@@ -164,7 +164,8 @@ export class FinishedBuildsFilterModalComponent {
 
     /** Rebuilds the filter reference so signal consumers (the template) react to deep in-place mutations. */
     private commitFinishedBuildJobFilter(): void {
-        this.finishedBuildJobFilterSignal.update((filter) => hydrate(new FinishedBuildJobFilter(filter.buildAgentAddress), filter, { appliedFilters: filter.appliedFilters }));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this.finishedBuildJobFilterSignal.set(this.finishedBuildJobFilterSignal());
     }
 
     /** Available status values for the status filter dropdown */

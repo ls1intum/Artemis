@@ -39,7 +39,7 @@ import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.co
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
 import { Message } from 'primeng/message';
-import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Describes the editableField
@@ -130,7 +130,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // Backed by a signal but exposed via a getter/setter facade: the template binds `programmingExercise.prop`
     // directly and several subscribe handlers mutate nested properties in place, so we rebuild the reference
     // via commitProgrammingExercise() after deep mutations to keep template reads reactive under zoneless CD.
-    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
+    private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!, { equal: () => false });
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
     }
@@ -138,7 +138,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this._programmingExercise.set(value);
     }
     private commitProgrammingExercise(): void {
-        this._programmingExercise.update((exercise) => hydrate(new ProgrammingExercise(undefined, undefined), exercise));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits. This
+        // component edits the test cases and static-code-analysis categories in place, so a copy would discard them.
+        this._programmingExercise.set(this._programmingExercise());
     }
     testCaseSubscription?: Subscription;
     testCaseChangedSubscription?: Subscription;

@@ -14,7 +14,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-account-information',
@@ -43,7 +42,8 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
-    readonly currentUser = signal<User | undefined>(undefined);
+    // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
+    readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });
 
     private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
     expiryDate?: dayjs.Dayjs;
@@ -77,7 +77,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                 if (current) {
                     current.vcsAccessTokenExpiryDate = undefined;
                     current.vcsAccessToken = undefined;
-                    this.currentUser.set(hydrate(new User(), current));
+                    this.currentUser.set(current);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
@@ -104,7 +104,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                     const user = res.body as User;
                     current.vcsAccessToken = user.vcsAccessToken;
                     current.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
-                    this.currentUser.set(hydrate(new User(), current));
+                    this.currentUser.set(current);
                     this.edit.set(false);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
