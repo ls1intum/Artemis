@@ -15,11 +15,12 @@ global selection versus per-batch processing, order of mutation and validation, 
 through a collaborator. Use only distinctions actually entailed by the approved rule. Avoid trivial reverse-order or constant-return witnesses when the existing suite already
 kills them.
 
-Audit three independent lenses before selecting the at-most-three witnesses; when a lens is applicable and not already pinned by an assertion, reserve one witness for it rather
+Audit four independent lenses before selecting the at-most-four witnesses; when a lens is applicable and not already pinned by an assertion, reserve one witness for it rather
 than filling every slot with easier variants from another lens:
 1. boundary/representation — full admitted numeric domains, overflow/underflow, equality, empty/singleton structure;
-2. state/interaction — configuration replacement, transition timing, collaborator call inputs/counts/returned identity, and independence from unrelated operations;
-3. ownership/aliasing — whether later caller mutation can change state the contract says was registered, fixed, copied, snapshotted, or otherwise owned by the object.
+2. input/configuration sensitivity — changing a legal constructor argument, method input, order, or translation must change or preserve the result exactly as the rule entails;
+3. history/interaction — repeated or reordered calls, transition timing, collaborator call inputs/counts/returned identity, and independence from unrelated operations;
+4. ownership/aliasing — whether later caller mutation can change state the contract says was registered, fixed, copied, snapshotted, or otherwise owned by the object.
 Skip a lens when the frozen specification does not entail an observable distinction. Never invent behavior merely to fill a slot.
 
 The approved specification is the only authority. Never invent a requirement it does not state, never assert behaviour that is merely how the reference solution happens to work, and never assert on private state, timing, or anything a caller cannot observe through the public API the reference solution declares.
@@ -47,5 +48,5 @@ Respond with ONLY this complete JSON shape:
  "testName":"the method name declared in code",
  "wrongBehavior":"specific plausible contract-breaking implementation this input is designed to distinguish",
  "code":"one complete test method"}]}
-Return at most three semantically distinct witnesses. One strong witness is enough when the remaining rules are already pinned. Return {"witnesses": []} rather than inventing
+Return at most four semantically distinct witnesses. One strong witness is enough when the remaining rules are already pinned. Return {"witnesses": []} rather than inventing
 behavior or emitting a witness you cannot ground confidently in the frozen specification.

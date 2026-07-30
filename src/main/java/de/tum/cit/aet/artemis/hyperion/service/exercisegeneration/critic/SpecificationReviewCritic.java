@@ -195,8 +195,8 @@ class SpecificationReviewCritic {
                 return review;
             }
             String correctedResponse = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + SPECIFICATION_REVIEW_CORRECTION + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(), usageSink,
-                    SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
+                    userPrompt + SPECIFICATION_REVIEW_CORRECTION + evidenceCorrectionGuide(evidence) + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(),
+                    usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse correctedParsed = readSpecificationReviewResponse(correctedResponse);
             return parseSpecificationReview(correctedParsed, evidence, previousReview);
         }
@@ -204,6 +204,13 @@ class SpecificationReviewCritic {
             log.warn("Specification review failed: {}", e.getMessage());
             return incompleteSpecificationReview("Reviewer call failed: " + safeFailureDetail(e), previousReview);
         }
+    }
+
+    private static String evidenceCorrectionGuide(SpecificationReviewEvidence evidence) {
+        return "\n\nFIELD-SPECIFIC SPEC EVIDENCE GUIDE (prompt-local IDs; choose actual data rows, not the heading, table header, or separator):\n"
+                + "- studentOwnershipEvidenceIds: Design-section candidates " + evidence.specification().idsUnderHeading("## Design")
+                + "\n- assessmentEvidenceIds: Testing Strategy-section candidates " + evidence.specification().idsUnderHeading("## Testing Strategy")
+                + "\nThese are E evidence IDs. Authored S labels inside a Testing Strategy row are content, " + "not evidence IDs.";
     }
 
     private static String previousReviewContext(@Nullable SpecificationReview previousReview) {

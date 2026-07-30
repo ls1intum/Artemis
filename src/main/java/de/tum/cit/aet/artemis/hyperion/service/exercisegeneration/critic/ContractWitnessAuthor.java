@@ -35,7 +35,7 @@ class ContractWitnessAuthor {
     private static final int CONTRACT_WITNESS_MAX_OUTPUT_TOKENS = 8_192;
 
     /** Each witness costs a validating build, so the pass stays small enough to sit inside a generation without dominating its wall clock. */
-    private static final int MAX_CONTRACT_WITNESSES = 3;
+    private static final int MAX_CONTRACT_WITNESSES = 4;
 
     /** Assertion calls a witness may use; a witness without one passes against every implementation and therefore pins nothing. */
     private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");

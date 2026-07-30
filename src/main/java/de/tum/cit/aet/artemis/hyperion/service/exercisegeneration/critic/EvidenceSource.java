@@ -43,6 +43,25 @@ record EvidenceSource(Map<String, String> passages) {
         return containsAll(evidenceIds) && evidenceIds.stream().map(passages::get).anyMatch(passage -> passage != null && !passage.strip().startsWith("## "));
     }
 
+    List<String> idsUnderHeading(String heading) {
+        boolean inSection = false;
+        List<String> ids = new java.util.ArrayList<>();
+        for (Map.Entry<String, String> passage : passages.entrySet()) {
+            String text = passage.getValue().strip();
+            if (text.equals(heading)) {
+                inSection = true;
+                continue;
+            }
+            if (inSection && text.startsWith("## ")) {
+                break;
+            }
+            if (inSection) {
+                ids.add(passage.getKey());
+            }
+        }
+        return List.copyOf(ids);
+    }
+
     String resolve(@Nullable List<String> evidenceIds) {
         // Tolerant of missing or unknown IDs: evidence citation is advisory grounding, not a terminal contract. A mis-cited ID
         // resolves to a shorter quote rather than throwing, so a good verdict is never discarded over a self-report slip.

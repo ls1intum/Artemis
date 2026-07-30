@@ -344,11 +344,12 @@ class GenerationAttemptLoop {
             }
 
             // A validated witness is advisory, so nothing above blocks and the loop would otherwise stop with the witness never offered to the agent. One adoption round is
-            // granted instead: once per generation and only on an otherwise finished candidate, so a witness can never drive repeated rewrites.
+            // granted instead: once per generation and only when no blocking repair can be scheduled, so a witness can never displace a repairable defect or drive repeated
+            // rewrites. An unrelated, non-schedulable review uncertainty must not suppress environment-validated tests.
             // GENERATE only: an adaptation gets a single semantic round, and spending it on optional tests rather than on a defect would be a poor trade. The once-per-run and
             // budget guards live in the scheduler.
-            boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && attempt < maxGenerationAttempts
-                    && mode == GenerationMode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
+            boolean adoptWitnesses = verification.mechanicallyVerified() && attempt < maxGenerationAttempts && mode == GenerationMode.GENERATE
+                    && repairScheduler.nextRepairBatch(specFidelityReport).isEmpty() && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
                 break;
@@ -591,11 +592,7 @@ class GenerationAttemptLoop {
                             + "retained so the saved exercise remains NEEDS_REVIEW rather than silently treating the contract as fully approved.")));
             specFidelityReport = new SpecFidelityReport(List.copyOf(combined));
         }
-        boolean offerContractWitnesses = !specFidelityReport.hasBlockingFindings();
-        boolean checkOracleHypotheses = specFidelityReport.findings().stream()
-                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT);
-        specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot, offerContractWitnesses,
-                offerContractWitnesses || checkOracleHypotheses);
+        specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         if (cancelled.getAsBoolean()) {
@@ -699,13 +696,12 @@ class GenerationAttemptLoop {
     /**
      * Adds independently proposed counterexamples only after the environment validates them. A semantic mutant becomes blocking evidence only when the ordinary suite accepts
      * it and an independently authored counterexample distinguishes it from the pristine solution; a contract witness remains advisory after passing the solution and failing at
-     * the starter seam. Text-only oracle hypotheses and reference-correctness witnesses are executed even when a separate blocker exists, so independent defects are found before
-     * the repair budget is spent. Optional witness adoption remains deferred until the candidate has no blockers.
+     * the starter seam. Mutants and reference-correctness witnesses are executed even when a separate blocker exists, so independent defects are found before the repair budget is
+     * spent. Optional witness adoption remains deferred until no blocking repair can be scheduled.
      * An unavailable or malformed model proposal costs the accepted candidate nothing. Probe infrastructure fails closed so the orchestration boundary can preserve the
      * mechanically verified pre-review checkpoint instead of treating missing execution as evidence.
      */
-    private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot,
-            boolean offerContractWitnesses, boolean probeMutants) {
+    private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryType.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
             return preserveReferenceWitnessState(report);
@@ -719,9 +715,7 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> mutantCandidates = probeMutants
-                    ? specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled)
-                    : List.of();
+            List<SemanticMutant> mutantCandidates = specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled);
             List<SemanticMutantOutcome> mutantOutcomes = verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, mutantCandidates,
                     restoreCandidate);
             List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
@@ -739,10 +733,9 @@ class GenerationAttemptLoop {
                     .stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName()))).forEach(candidates::add);
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
             List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate);
-            List<ContractWitness> validated = offerContractWitnesses
-                    ? witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED)
-                            .map(ContractWitnessOutcome::witness).filter(witness -> !mutatedRules.contains(witness.ruleId())).toList()
-                    : List.of();
+            List<ContractWitness> environmentValidated = witnessOutcomes.stream()
+                    .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED).map(ContractWitnessOutcome::witness).toList();
+            List<ContractWitness> adoptableWitnesses = environmentValidated.stream().filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
             List<ContractWitnessOutcome> freshReferenceFailures = witnessOutcomes.stream()
                     .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
                     .filter(outcome -> !pendingWitnessNames.contains(outcome.witness().testName())).toList();
@@ -767,9 +760,14 @@ class GenerationAttemptLoop {
                     .distinct().toList();
             long killedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
             long inconclusiveMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
+            long starterDidNotFail = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_NOT_FAILED)
+                    .count();
+            long referenceFailed = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED).count();
+            long inconclusiveWitnesses = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE).count();
             emit("Executable semantic probes: " + mutantCandidates.size() + " mutant proposal(s): " + validatedMutants.size() + " survived, " + killedMutants
-                    + " killed by existing tests, " + inconclusiveMutants + " inconclusive; " + candidates.size() + " contract-witness proposal(s), " + validated.size()
-                    + " validated witness(es), " + freshReferenceFailures.size() + " reference test failure(s) awaiting review, " + referenceWitnessesAwaitingPass.size()
+                    + " killed by existing tests, " + inconclusiveMutants + " inconclusive; " + candidates.size() + " contract-witness proposal(s): " + environmentValidated.size()
+                    + " reference-pass/starter-fail, " + starterDidNotFail + " reference-pass/starter-not-fail, " + referenceFailed + " reference-fail, " + inconclusiveWitnesses
+                    + " inconclusive, " + adoptableWitnesses.size() + " offered for adoption; " + referenceWitnessesAwaitingPass.size()
                     + " adjudicated reference defect(s) still failing, " + referenceWitnessesAwaitingAdjudication.size() + " unresolved adjudication(s).");
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(SemanticEvidenceReconciler.reconcile(report, mutantOutcomes));
             combined.addAll(referenceReview.findings());
@@ -782,7 +780,7 @@ class GenerationAttemptLoop {
                             + "approved rule and independent review explain why that difference matters. Add or adapt a discriminating test for the counterexample; the environment "
                             + "will accept any executed test that kills the mutant, so preserve stronger or more idiomatic coverage rather than copying a method mechanically. "
                             + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code())));
-            validated.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
+            adoptableWitnesses.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
                     "Rule " + witness.ruleId() + " has an executable counterexample witness",
                     "Add this test to the graded suite, or state why it is redundant with an existing assertion. It was authored from rule " + witness.ruleId()
                             + " of the approved specification by a reviewer independent of the authoring loop. The environment ran it: the reference solution passes and the "

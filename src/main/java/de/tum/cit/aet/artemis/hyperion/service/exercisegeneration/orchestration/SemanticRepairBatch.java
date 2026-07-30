@@ -59,6 +59,10 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
             List<SpecFidelityReport.Finding> findings = report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                     .filter(finding -> surfaceFor(finding.kind()) == surface).toList();
             if (!findings.isEmpty()) {
+                if (surface == RepairSurface.ORACLE) {
+                    findings = java.util.stream.Stream
+                            .concat(findings.stream(), report.findings().stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE)).toList();
+                }
                 return Optional.of(new SemanticRepairBatch(surface, new SpecFidelityReport(findings), writableRootsFor(surface)));
             }
         }

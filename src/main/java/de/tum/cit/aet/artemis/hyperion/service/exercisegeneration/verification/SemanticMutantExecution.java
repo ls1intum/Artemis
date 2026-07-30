@@ -14,6 +14,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 /** Pure decision logic around sandbox mutant builds; {@link DifferentialVerificationService} remains the sole owner of executing and restoring the workspace. */
 final class SemanticMutantExecution {
 
+    private static final int MAX_MUTANTS = 4;
+
     @FunctionalInterface
     interface ProbeRunner {
 
@@ -38,7 +40,7 @@ final class SemanticMutantExecution {
             return inconclusive(candidates);
         }
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
-        for (SemanticMutant mutant : candidates.stream().limit(2).toList()) {
+        for (SemanticMutant mutant : candidates.stream().limit(MAX_MUTANTS).toList()) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath())) || declaresMethod(testFiles, mutant.counterexample().testName())) {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
@@ -73,7 +75,7 @@ final class SemanticMutantExecution {
 
     static List<SemanticMutant> surviving(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
         List<SemanticMutant> surviving = new ArrayList<>();
-        for (SemanticMutant mutant : mutants.stream().limit(2).toList()) {
+        for (SemanticMutant mutant : mutants.stream().limit(MAX_MUTANTS).toList()) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))) {
                 surviving.add(mutant);
                 continue;
@@ -102,6 +104,6 @@ final class SemanticMutantExecution {
     }
 
     private static List<SemanticMutantOutcome> inconclusive(List<SemanticMutant> candidates) {
-        return candidates.stream().limit(2).map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
+        return candidates.stream().limit(MAX_MUTANTS).map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
     }
 }

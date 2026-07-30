@@ -60,6 +60,20 @@ class SemanticRepairBatchTest {
     }
 
     @Test
+    void anOracleRepairAlsoCarriesEnvironmentValidatedWitnesses() {
+        SpecFidelityReport report = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "environment-proven"),
+                        new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE, "an executable boundary witness", "reference passes and starter fails"),
+                        new SpecFidelityReport.Finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "starter has no anchor", "separate surface")));
+
+        SemanticRepairBatch batch = SemanticRepairBatch.next(report, EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow();
+
+        assertThat(batch.surface()).isEqualTo(RepairSurface.ORACLE);
+        assertThat(batch.report().findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+    }
+
+    @Test
     void aTextOnlyOracleSuspicionDoesNotDriveAutonomousRepair() {
         SpecFidelityReport staticReview = new SpecFidelityReport(
                 List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "a reviewer suspects a gap", "no executable evidence")));

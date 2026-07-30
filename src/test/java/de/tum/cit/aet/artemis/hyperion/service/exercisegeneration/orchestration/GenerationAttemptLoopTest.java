@@ -200,6 +200,25 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void anUnschedulableSpecificationUncertaintyCannotSuppressValidatedWitnessAdoption() {
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 3, 2, true);
+        loop.run();
+
+        verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
     void aFailedRecheckCannotEraseAProvenSemanticSurvivorOrConverge() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))

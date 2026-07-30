@@ -43,11 +43,12 @@ class SemanticMutantAuthorTest {
     }
 
     @Test
-    void capsIndependentExecutionWorkAtTwoMutants() {
-        String three = "{\"mutants\":[" + item("src/example/Scheduler.java", "R1", "globalChoice") + "," + item("src/example/Scheduler.java", "R1", "globalChoiceAgain") + ","
-                + item("src/example/Scheduler.java", "R1", "thirdGlobalChoice") + "]}";
+    void capsIndependentExecutionWorkAtFourMutants() {
+        String five = "{\"mutants\":[" + item("src/example/Scheduler.java", "R1", "globalChoice") + "," + item("src/example/Scheduler.java", "R1", "globalChoiceAgain") + ","
+                + item("src/example/Scheduler.java", "R1", "thirdGlobalChoice") + "," + item("src/example/Scheduler.java", "R1", "fourthGlobalChoice") + ","
+                + item("src/example/Scheduler.java", "R1", "fifthGlobalChoice") + "]}";
 
-        assertThat(author.parse(three, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).hasSize(2);
+        assertThat(author.parse(five, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).hasSize(4);
     }
 
     @Test

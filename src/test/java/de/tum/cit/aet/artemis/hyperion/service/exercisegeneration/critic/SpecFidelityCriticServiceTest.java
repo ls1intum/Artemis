@@ -782,6 +782,28 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewCorrectionNamesFieldSpecificEvidenceCandidates() {
+        ScriptedCritic scripted = criticScripted(rawResponse("not json"), rawResponse("still not json"));
+
+        scripted.critic().reviewSpecification("Create an intermediate Strategy exercise.", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `FireStrategy` | learner-owned policy | student-creates |
+                ## Testing Strategy
+                | ID | Owner type | Observable responsibility | Weight | After-due-date |
+                |---|---|---|---|---|
+                | S1 | FireStrategy | dispatches through the strategy | 3 | no |
+                """, null, () -> false);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("FIELD-SPECIFIC SPEC EVIDENCE GUIDE",
+                "studentOwnershipEvidenceIds: Design-section candidates [E2, E3, E4]", "assessmentEvidenceIds: Testing Strategy-section candidates [E6, E7, E8]",
+                "Authored S labels inside a Testing Strategy row are content");
+    }
+
+    @Test
     void specificationReviewDerivesLearningFitFromOwnershipAndObservabilitySubchecks() {
         String contradictory = """
                 {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E4"],"objectiveEvidenceIds":["E4","E8"],
@@ -2483,7 +2505,7 @@ class SpecFidelityCriticServiceTest {
         String entries = java.util.stream.IntStream.range(0, 6).mapToObj(index -> "{\"rule\":\"R1\",\"testName\":\"testWitness" + index + "\",\"code\":\"@Test\\nvoid testWitness"
                 + index + "() { assertEquals(1, 1, \\\"w\\\"); }\",\"wrongBehavior\":\"wrong " + index + "\"}").collect(java.util.stream.Collectors.joining(","));
 
-        assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(3);
+        assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(4);
     }
 
     @Test

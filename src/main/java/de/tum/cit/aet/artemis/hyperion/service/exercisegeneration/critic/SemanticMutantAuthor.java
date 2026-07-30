@@ -34,7 +34,7 @@ class SemanticMutantAuthor {
 
     private static final int MAX_OUTPUT_TOKENS = 16_384;
 
-    private static final int MAX_MUTANTS = 2;
+    private static final int MAX_MUTANTS = 4;
 
     private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");
 
