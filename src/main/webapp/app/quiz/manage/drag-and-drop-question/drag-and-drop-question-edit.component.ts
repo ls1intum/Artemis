@@ -26,7 +26,6 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { cloneDeep } from 'lodash-es';
 import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
@@ -69,6 +68,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -194,7 +194,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     ngOnInit(): void {
         const question = this.question();
         // create deep copy as backup
-        this.backupQuestion = cloneDeep(question);
+        this.backupQuestion = deepClone(question);
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
@@ -227,7 +227,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue) {
-            this.backupQuestion = cloneDeep(this.question());
+            this.backupQuestion = deepClone(this.question());
         }
 
         if (!this.filePool() || this.filePool().size == 0) {
@@ -852,9 +852,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.randomizeOrder = this.backupQuestion.randomizeOrder;
         question.scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
-        question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        question.dropLocations = deepClone(this.backupQuestion.dropLocations);
+        question.dragItems = deepClone(this.backupQuestion.dragItems);
+        question.correctMappings = deepClone(this.backupQuestion.correctMappings);
         question.isHighlighted = this.backupQuestion.isHighlighted;
         this.resetQuestionText();
     }
