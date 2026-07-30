@@ -200,13 +200,17 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
-    void anUnschedulableSpecificationUncertaintyCannotSuppressValidatedWitnessAdoption() {
+    void anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption() {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
         ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Cycle.java", "class Cycle {}", "class Cycle { int stopsEarly; }", witness);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
         when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
                 .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
@@ -214,7 +218,9 @@ class GenerationAttemptLoopTest {
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 3, 2, true);
         loop.run();
 
-        verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        verify(baseTools, never()).enterRepairScope(any());
+        assertThat(loop.specFidelityReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL && !finding.isBlocking());
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
@@ -223,6 +229,8 @@ class GenerationAttemptLoopTest {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
         ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
@@ -237,6 +245,173 @@ class GenerationAttemptLoopTest {
         assertThatThrownBy(loop::run).isSameAs(failure);
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+    }
+
+    @Test
+    void aContractRepairRechecksProvenMutantEvidenceDuringTheNextReviewBeforeSchedulingOracleWork() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        SpecFidelityReport contractReview = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractReview, SpecFidelityReport.empty());
+        ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
+                "chooses within the first batch");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int localOnly; }", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
+        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), any());
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+    }
+
+    @Test
+    void anInconclusivePendingMutantRecheckRemainsUnresolvedAndCannotConverge() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        SpecFidelityReport advisoryCollision = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE,
+                "Reviewer mentions globalChoice", "Advisory prose repeats R1, src/Scheduler.java, and globalChoice but is not executable evidence.")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
+                advisoryCollision);
+        ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
+                "chooses within the first batch");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int localOnly; }", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE && finding.detail().contains("R1")
+                && finding.detail().contains("src/Scheduler.java") && finding.detail().contains("hyperionMutantGlobalChoice") && finding.detail().contains("remains unresolved"));
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    @Test
+    void aLaterProbeFailureCannotEraseARevalidatedSemanticMutant() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
+                SpecFidelityReport.empty());
+        SemanticMutant mutant = mutant("R1", "globalChoice", "chooses within the first batch");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of())
+                .thenThrow(new IllegalStateException("witness reviewer unavailable"));
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE && finding.detail().contains("R1")
+                && finding.detail().contains("src/Scheduler.java") && finding.detail().contains("globalChoice"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    @Test
+    void onlyRenderedSurvivorsBecomeOracleAcceptanceChecksWhileInconclusiveEvidenceIsRechecked() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |\n| R2 | break ties lexically |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
+                SpecFidelityReport.empty(), SpecFidelityReport.empty());
+        SemanticMutant firstOnly = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant fifo = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(firstOnly, fifo), List.of(), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
+                List.of(new SemanticMutantOutcome(firstOnly, Disposition.SURVIVED_GRADED_SUITE), new SemanticMutantOutcome(fifo, Disposition.SURVIVED_GRADED_SUITE)), List.of(),
+                List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(
+                List.of(new SemanticMutantOutcome(firstOnly, Disposition.SURVIVED_GRADED_SUITE), new SemanticMutantOutcome(fifo, Disposition.INCONCLUSIVE)),
+                List.of(new SemanticMutantOutcome(firstOnly, Disposition.KILLED_BY_GRADED_SUITE)), List.of(new SemanticMutantOutcome(fifo, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<SemanticMutant>> checkedMutants = ArgumentCaptor.forClass(List.class);
+        verify(verifier, times(3)).checkSemanticMutants(any(), anyString(), any(), any(), checkedMutants.capture(), any());
+        assertThat(checkedMutants.getAllValues()).containsExactly(List.of(firstOnly, fifo), List.of(firstOnly), List.of(fifo));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void priorInconclusiveEvidenceOwnsTheBoundedStateBeforeFreshSampling() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | one |\n| R2 | two |\n| R3 | three |\n| R4 | four |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
+                SpecFidelityReport.empty());
+        List<SemanticMutant> mutants = List.of(mutant("R1", "one", "wrong one"), mutant("R2", "two", "wrong two"), mutant("R3", "three", "wrong three"),
+                mutant("R4", "four", "wrong four"));
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(mutants);
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(mutants.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+                .thenReturn(mutants.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList());
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        verify(specFidelityCritic, times(1)).authorSemanticMutants(anyString(), any(), any(), any(), any());
+        assertThat(loop.specFidelityReport().findings()).filteredOn(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE).hasSize(4);
+        assertThat(loop.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::detail).anySatisfy(evidence -> assertThat(evidence).contains("R1"))
+                .anySatisfy(evidence -> assertThat(evidence).contains("R2")).anySatisfy(evidence -> assertThat(evidence).contains("R3"))
+                .anySatisfy(evidence -> assertThat(evidence).contains("R4"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    @Test
+    void contractThenOracleRepairKillsTheRevalidatedMutantAndConverges() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION),
+                SpecFidelityReport.empty(), SpecFidelityReport.empty());
+        ContractWitness counterexample = new ContractWitness("R1", "allPrerequisites", "@Test void allPrerequisites() { assertEquals(3, schedule().size()); }",
+                "honors only the first prerequisite");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int firstOnly; }", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of(), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(
+                List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        InOrder scopes = Mockito.inOrder(baseTools);
+        scopes.verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
+        scopes.verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        verify(verifier, times(2)).checkSemanticMutants(any(), anyString(), any(), any(), any(), any());
+        assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
     @Test
@@ -437,6 +612,11 @@ class GenerationAttemptLoopTest {
     private static SpecFidelityReport report(SpecFidelityReport.Kind... kinds) {
         return new SpecFidelityReport(
                 List.of(kinds).stream().map(kind -> new SpecFidelityReport.Finding(kind, "requirement for " + kind.name(), "detail for " + kind.name())).toList());
+    }
+
+    private static SemanticMutant mutant(String ruleId, String testName, String wrongBehavior) {
+        return new SemanticMutant(ruleId, "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int " + testName + "; }",
+                new ContractWitness(ruleId, testName, "@Test void " + testName + "() {}", wrongBehavior));
     }
 
     /** Every review round returns {@code review}, so the loop repairs until a budget stops it rather than because the findings ran out. */

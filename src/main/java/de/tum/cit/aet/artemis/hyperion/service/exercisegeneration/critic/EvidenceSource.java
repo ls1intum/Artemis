@@ -40,7 +40,7 @@ record EvidenceSource(Map<String, String> passages) {
     }
 
     boolean containsSubstantive(@Nullable List<String> evidenceIds) {
-        return containsAll(evidenceIds) && evidenceIds.stream().map(passages::get).anyMatch(passage -> passage != null && !passage.strip().startsWith("## "));
+        return containsAll(evidenceIds) && evidenceIds.stream().allMatch(this::isSubstantive);
     }
 
     List<String> idsUnderHeading(String heading) {
@@ -55,16 +55,41 @@ record EvidenceSource(Map<String, String> passages) {
             if (inSection && text.startsWith("## ")) {
                 break;
             }
-            if (inSection) {
+            if (inSection && isSubstantive(passage.getKey())) {
                 ids.add(passage.getKey());
             }
         }
         return List.copyOf(ids);
     }
 
+    private boolean isSubstantive(String evidenceId) {
+        String passage = passages.get(evidenceId);
+        if (passage == null || passage.strip().startsWith("## ") || isMarkdownTableSeparator(passage)) {
+            return false;
+        }
+        List<String> ids = passages.keySet().stream().toList();
+        int index = ids.indexOf(evidenceId);
+        return !passage.contains("|") || index < 0 || index + 1 >= ids.size() || !isMarkdownTableSeparator(passages.get(ids.get(index + 1)));
+    }
+
+    private static boolean isMarkdownTableSeparator(String passage) {
+        String row = passage.strip();
+        if (!row.contains("|")) {
+            return false;
+        }
+        boolean hasBoundaryPipe = row.startsWith("|") || row.endsWith("|");
+        if (row.startsWith("|")) {
+            row = row.substring(1);
+        }
+        if (row.endsWith("|")) {
+            row = row.substring(0, row.length() - 1);
+        }
+        String[] cells = row.split("\\|", -1);
+        return (hasBoundaryPipe || cells.length > 1) && java.util.Arrays.stream(cells).map(String::strip).allMatch(cell -> cell.matches(":?-{3,}:?"));
+    }
+
     String resolve(@Nullable List<String> evidenceIds) {
-        // Tolerant of missing or unknown IDs: evidence citation is advisory grounding, not a terminal contract. A mis-cited ID
-        // resolves to a shorter quote rather than throwing, so a good verdict is never discarded over a self-report slip.
+        // Rendering remains tolerant so audit summaries cannot throw. Each review shape separately validates the evidence IDs that authorize a finding.
         if (evidenceIds == null) {
             return "";
         }

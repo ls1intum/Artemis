@@ -7,11 +7,39 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 
 /** Pure rendering and classification rules shared by the generation review loop. */
 final class GenerationReviewSupport {
+
+    record SemanticMutantRecheck(List<SemanticMutant> unresolvedMutants, List<String> failureReasons) {
+    }
+
+    record ExecutableProbeSummary(List<SemanticMutantOutcome> mutantOutcomes, List<ContractWitnessOutcome> witnessOutcomes, int adoptableWitnesses, int awaitingReferencePass,
+            int awaitingAdjudication) {
+
+        String render() {
+            long survivors = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).count();
+            long killed = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
+            long mutantInconclusive = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
+            long validatedWitnesses = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED)
+                    .count();
+            long starterDidNotFail = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_NOT_FAILED)
+                    .count();
+            long referenceFailed = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED).count();
+            long witnessInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE).count();
+            return "Executable semantic probes: " + mutantOutcomes.size() + " mutant probe(s): " + survivors + " survived, " + killed + " killed by existing tests, "
+                    + mutantInconclusive + " inconclusive; " + witnessOutcomes.size() + " contract-witness proposal(s): " + validatedWitnesses + " reference-pass/starter-fail, "
+                    + starterDidNotFail + " reference-pass/starter-not-fail, " + referenceFailed + " reference-fail, " + witnessInconclusive + " inconclusive, "
+                    + adoptableWitnesses + " eligible for adoption; " + awaitingReferencePass + " adjudicated reference defect(s) still failing, " + awaitingAdjudication
+                    + " unresolved adjudication(s).";
+        }
+    }
 
     private GenerationReviewSupport() {
     }
@@ -21,6 +49,53 @@ final class GenerationReviewSupport {
                 "Reference solution still violates " + witness.ruleId() + " in executable witness " + witness.testName(),
                 "A prior independent adjudication grounded this exact witness in the frozen specification. The environment executed it again and the reference test still "
                         + "failed. Repair the reference behavior without weakening the contract; convergence remains blocked until this exact witness passes.\n" + witness.code());
+    }
+
+    static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant, boolean specificationApproved) {
+        return new SpecFidelityReport.Finding(
+                specificationApproved ? SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE : SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL,
+                "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
+                "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
+                        + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the frozen "
+                        + "rule and independent review explain why that difference matters. "
+                        + (specificationApproved
+                                ? "Add or adapt a discriminating test for the counterexample; the environment will accept any executed test that kills the mutant, so preserve "
+                                        + "stronger or more idiomatic coverage rather than copying a method mechanically. "
+                                : "Do not autonomously strengthen grading while the specification still has an unresolved pre-freeze review finding; retain this executed evidence "
+                                        + "for instructor adjudication. ")
+                        + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code());
+    }
+
+    static SemanticMutantRecheck semanticMutantRecheck(List<SemanticMutantOutcome> outcomes) {
+        List<SemanticMutant> unresolved = outcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
+                .toList();
+        List<String> reasons = outcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).map(outcome -> {
+            SemanticMutant mutant = outcome.mutant();
+            if (outcome.disposition() == Disposition.INCONCLUSIVE) {
+                return "The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
+                        + "; no kill is inferred from a timeout, compilation failure, or missing executed-test report.";
+            }
+            return "The graded suite still passes the environment-proven semantic mutant for rule " + mutant.ruleId() + " (" + mutant.counterexample().wrongBehavior()
+                    + "). Add a focused assertion that kills this plausible wrong implementation; keep the verified solution unchanged.";
+        }).toList();
+        return new SemanticMutantRecheck(unresolved, reasons);
+    }
+
+    static SpecFidelityReport.Finding semanticMutantRecheckUnavailable(SemanticMutant mutant) {
+        return SpecFidelityReport.qualityReviewUnavailable("The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
+                + " at " + mutant.solutionPath() + " (counterexample " + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior()
+                + "). It remains unresolved until an executed graded test kills it.").findings().getFirst();
+    }
+
+    /** A text-only or interrupted review cannot discharge executable mutant state; retain exact provenance without asserting a fresh survival result. */
+    static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> pendingRepair, List<SemanticMutant> awaitingRecheck) {
+        List<SemanticMutant> unresolved = java.util.stream.Stream.concat(pendingRepair.stream(), awaitingRecheck.stream()).distinct().toList();
+        if (unresolved.isEmpty()) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        unresolved.stream().map(GenerationReviewSupport::semanticMutantRecheckUnavailable).filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
     }
 
     static void addReferenceUnavailability(List<SpecFidelityReport.Finding> findings, int omitted, int pendingPass, int pendingAdjudication) {

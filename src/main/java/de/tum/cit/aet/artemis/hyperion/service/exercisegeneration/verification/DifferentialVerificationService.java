@@ -874,14 +874,14 @@ public class DifferentialVerificationService {
      * @param producedSolutionFiles the current reference-solution sources
      * @param provenMutants         mutants previously proven by the three-probe validation
      * @param restoreCandidate      restores the mechanically verified workspace
-     * @return the proven mutants that remain unresolved
+     * @return one executed survivor, kill, or inconclusive disposition per proven mutant
      */
-    public List<SemanticMutant> checkSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedSolutionFiles,
+    public List<SemanticMutantOutcome> checkSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedSolutionFiles,
             List<SemanticMutant> provenMutants, Runnable restoreCandidate) {
         if (provenMutants.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return List.of();
         }
-        return SemanticMutantExecution.surviving(producedSolutionFiles, provenMutants,
+        return SemanticMutantExecution.recheck(producedSolutionFiles, provenMutants,
                 (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
     }
 

@@ -787,6 +787,9 @@ public class SpecFidelityCriticService {
                     .append(" Change the test setup and assertion first; keep the verified solution unchanged unless the new witness proves it wrong. For delegation, inject a "
                             + "test-controlled fake or recording collaborator that returns one unique sentinel and records the exact input, then assert return propagation and forwarding. "
                             + "Never compare results from two independent production calls or add production caching/state to satisfy such a comparison.");
+            case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL -> builder.append(
+                    "\n- Preserve this executed grading-gap evidence for instructor review until the frozen specification is approved; do not autonomously add grading for it: \"")
+                    .append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP ->
                 builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");

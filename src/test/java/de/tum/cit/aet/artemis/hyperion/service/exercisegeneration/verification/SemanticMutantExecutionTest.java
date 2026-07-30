@@ -90,12 +90,12 @@ class SemanticMutantExecutionTest {
     void ordinaryRecheckRequiresAnExecutedFailingTestRatherThanACompileFailure() {
         AtomicInteger killedRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of("globalChoice"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),
-                List.of(MUTANT), killedRestores::incrementAndGet)).isEmpty();
+                List.of(MUTANT), killedRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(killedRestores).hasValue(2);
 
         AtomicInteger compileFailureRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of(), List.of())), "session", javaExercise(), Map.of(PATH, ORIGINAL), List.of(MUTANT),
-                compileFailureRestores::incrementAndGet)).containsExactly(MUTANT);
+                compileFailureRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
         assertThat(compileFailureRestores).hasValue(2);
     }
 
@@ -103,7 +103,7 @@ class SemanticMutantExecutionTest {
     void anAdaptedOrRenamedFailingTestKillsTheProvenMutant() {
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
                 Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
-                })).isEmpty();
+                })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
     }
 
     @Test
@@ -165,15 +165,15 @@ class SemanticMutantExecutionTest {
     }
 
     @Test
-    void aMutantProvenAgainstAnotherSolutionRevisionRemainsUnresolvedWithoutRunning() {
+    void aMutantProvenAgainstAnotherSolutionRevisionIsRetiredWithoutRunning() {
         AtomicInteger probes = new AtomicInteger();
 
-        List<SemanticMutant> result = SemanticMutantExecution.surviving(Map.of(PATH, ORIGINAL + "\n// changed"), List.of(MUTANT), (mutant, probe) -> {
+        List<SemanticMutantOutcome> result = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL + "\n// changed"), List.of(MUTANT), (mutant, probe) -> {
             probes.incrementAndGet();
             throw new AssertionError("stale evidence must not be applied to another solution revision");
         });
 
-        assertThat(result).containsExactly(MUTANT);
+        assertThat(result).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
         assertThat(probes).hasValue(0);
     }
 

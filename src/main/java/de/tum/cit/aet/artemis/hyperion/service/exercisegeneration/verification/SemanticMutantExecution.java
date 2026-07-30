@@ -73,21 +73,23 @@ final class SemanticMutantExecution {
         return List.copyOf(outcomes);
     }
 
-    static List<SemanticMutant> surviving(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
-        List<SemanticMutant> surviving = new ArrayList<>();
+    static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (SemanticMutant mutant : mutants.stream().limit(MAX_MUTANTS).toList()) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))) {
-                surviving.add(mutant);
+                // This exact replacement was proven only against another reference revision. It is neither a survivor nor a kill against the current candidate; the orchestration
+                // review authors a fresh mutant against the new source instead of making an unexecuted stale probe block acceptance.
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
             BuildSummary result = runner.run(mutant, null);
             // The repair may rename, strengthen, or replace the suggested counterexample. Because the candidate already passed mechanical verification immediately before this
             // probe, any test that executes and fails only after installing the mutant is outcome-level evidence that the suite now kills it. Compile failures execute no tests.
-            if (result.testFailedNames().isEmpty() || result.testNames().stream().noneMatch(result.testFailedNames()::contains)) {
-                surviving.add(mutant);
-            }
+            Disposition disposition = executedTestFailed(result) ? Disposition.KILLED_BY_GRADED_SUITE
+                    : passed(result) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.INCONCLUSIVE;
+            outcomes.add(new SemanticMutantOutcome(mutant, disposition));
         }
-        return List.copyOf(surviving);
+        return List.copyOf(outcomes);
     }
 
     private static boolean declaresMethod(Map<String, String> testFiles, String methodName) {

@@ -799,7 +799,7 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("FIELD-SPECIFIC SPEC EVIDENCE GUIDE",
-                "studentOwnershipEvidenceIds: Design-section candidates [E2, E3, E4]", "assessmentEvidenceIds: Testing Strategy-section candidates [E6, E7, E8]",
+                "studentOwnershipEvidenceIds: Design-section candidates [E4]", "assessmentEvidenceIds: Testing Strategy-section candidates [E8]",
                 "Authored S labels inside a Testing Strategy row are content");
     }
 
@@ -976,25 +976,30 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReviewToleratesAnUnknownEvidenceIdWithoutRetrying() {
-        // An unknown evidence ID (E99) inside an otherwise coherent finding is advisory: the pointer resolves to an empty quote, the finding
-        // still renders, and the verdict is complete after a single call with no correction retry.
-        ScriptedCritic scripted = criticScripted(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                         "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
-                         "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
-                         "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],
-                         "reason":"The claims conflict."}]}
-                        """));
+    void specificationReviewCorrectsAnUnknownFindingEvidenceIdInsteadOfAuthorizingIt() {
+        ScriptedCritic scripted = criticScripted(
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
+                                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[],
+                                 "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E99"],"reason":"The claims conflict."}]}
+                                """),
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
+                                 "remainingStudentReasoning":"Students must reason about a limiting ingredient after routine delegation is removed.",
+                                 "domainGrounding":"A potion is constrained by its weakest ingredient, which motivates the rule.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[]}
+                                """));
         SpecFidelityCriticService critic = scripted.critic();
         SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate strategy exercise with a potion theme.",
                 "R1: weak ingredients limit potency. R2: every ingredient contributes equally.", null, () -> false);
         assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("R1: weak ingredients limit potency.", "The claims conflict.");
-        verify(scripted.model(), times(1)).call(any(Prompt.class));
+        assertThat(review.accepted()).isTrue();
+        assertThat(review.feedback()).doesNotContain("The claims conflict");
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1031,8 +1036,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewDoesNotCarryAnUngroundedFirstFindingIntoTheFreshRetry() {
-        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so it is discarded before its finding
-        // is ever rendered. The single correction call returns a clean, complete verdict, and none of the first response's finding leaks in.
+        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), and its alleged conflict cites an unknown E ID. The correction receives no F
+        // continuity because the server cannot independently ground that hypothesis.
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
@@ -1055,6 +1060,79 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The decisions conflict");
         verify(scripted.model(), times(2)).call(any(Prompt.class));
+    }
+
+    @Test
+    void specificationReviewCorrectionMustAdjudicateAGroundedFirstPassFindingInsteadOfErasingIt() {
+        ScriptedCritic scripted = criticScripted(
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
+                                 "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],
+                                 "unsupportedConstraints":[{"briefEvidenceIds":[],"specEvidenceIds":["E1"],"reason":"The exact threshold value is invented by the specification and has no support in the instructor brief."}],
+                                 "boundaryChecks":[]}
+                                """),
+                rawResponse(
+                        """
+                                {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
+                                 "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                                 "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[],
+                                 "priorFindingChecks":[{"findingId":"F1","disposition":"STILL_PRESENT","specEvidenceIds":["E1"],"reason":"The current specification still mandates the exact threshold even though the brief provides no numeric value."}]}
+                                """));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Create a threshold-classification exercise.",
+                "R1: classify values below exactly 15 as low.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.feedback()).contains("Persistent specification defect [F1]", "still mandates the exact threshold");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("[F1] Unsupported constraint", "Adjudicate every F ID",
+                "Do not repeat an F finding in an ordinary finding array");
+    }
+
+    @Test
+    void specificationReviewCorrectsABlankFindingEntryInsteadOfSilentlyTreatingItAsNoFinding() {
+        String completeLearningFit = """
+                "learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the threshold policy.",
+                 "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"}
+                """;
+        ScriptedCritic scripted = criticScripted(rawResponse("{" + completeLearningFit + """
+                ,"omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],
+                "unsupportedConstraints":[{"specEvidenceIds":["E99"],"reason":""}],"boundaryChecks":[]}
+                """), rawResponse("{" + completeLearningFit + """
+                ,"omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[]}
+                """));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Create a threshold-classification exercise.",
+                "R1: classify values below the configured threshold as low.", null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
+    }
+
+    @Test
+    void specificationReviewDoesNotDropNewGroundedCorrectionEvidenceWhenRiskHistoryIsFull() {
+        List<String> priorRisks = java.util.stream.IntStream.rangeClosed(1, 8).mapToObj(index -> "Prior grounded risk " + index).toList();
+        SpecFidelityCriticService.SpecificationReview previous = new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "prior review", null, priorRisks);
+        ScriptedCritic scripted = criticScripted(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["S1"],"objectiveMechanism":"Students implement the threshold policy.",
+                         "remainingStudentReasoning":"Students reason about both threshold boundaries.","domainGrounding":"The classification domain gives the boundaries observable meaning.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],
+                         "unsupportedConstraints":[{"specEvidenceIds":["E1"],"reason":"The exact threshold is invented and has no authority in the instructor brief."}],"boundaryChecks":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Create a threshold-classification exercise.", null,
+                "R1: classify values below exactly 15 as low.", previous, null, () -> false);
+
+        assertThat(review.complete()).isFalse();
+        assertThat(review.auditSummary()).contains("added grounded hypotheses beyond the bounded continuity context", "specification remains unapproved");
+        assertThat(review.riskHistory()).containsExactlyElementsOf(priorRisks);
+        verify(scripted.model(), times(1)).call(any(Prompt.class));
     }
 
     @Test

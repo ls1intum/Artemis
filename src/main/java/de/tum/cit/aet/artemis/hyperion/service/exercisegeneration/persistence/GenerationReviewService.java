@@ -106,6 +106,8 @@ public class GenerationReviewService {
                 case WEAK_TEST_ORACLE ->
                     "An independent text review suspects the generated tests may allow an incorrect implementation (not execution-proven): \"" + finding.requirement() + "\"";
                 case EXECUTABLE_WEAK_TEST_ORACLE -> "Execution proved that the generated tests allow an incorrect implementation: \"" + finding.requirement() + "\"";
+                case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL ->
+                    "Execution found a grading gap, but the rule still requires instructor approval before the tests are strengthened: \"" + finding.requirement() + "\"";
                 case TEMPLATE_QUALITY_GAP -> "Student task and starter scaffold need alignment: \"" + finding.requirement() + "\"";
                 case UNENFORCEABLE_TECHNIQUE_RULE -> "Students can pass without using the technique the exercise teaches: " + finding.requirement();
                 case CONTRACT_WITNESS_AVAILABLE -> "A ready-to-adopt test for a specification rule, already passing against the reference solution: " + finding.requirement();

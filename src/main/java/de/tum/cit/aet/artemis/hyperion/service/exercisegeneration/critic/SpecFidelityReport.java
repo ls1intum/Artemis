@@ -53,6 +53,11 @@ public record SpecFidelityReport(List<Finding> findings) {
          */
         EXECUTABLE_WEAK_TEST_ORACLE,
         /**
+         * Execution proved that a generated suite accepts an implementation that violates the frozen specification, but the pre-freeze review did not approve that specification.
+         * The evidence is retained for the instructor without autonomously strengthening grading for a contract that may itself be wrong.
+         */
+        EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL,
+        /**
          * The student task structure and starter scaffold disagree: provided code fails outside a student-owned seam, a required API is missing, one implementation seam is split
          * into test-shaped tasks, student work has no task/TODO anchor, stub documentation is missing or differs between solution and template, or the statement duplicates the
          * template API instead of keeping the template as the point-of-use reference.
@@ -92,7 +97,9 @@ public record SpecFidelityReport(List<Finding> findings) {
                     true;
                 case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE -> false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,
+                        UNENFORCEABLE_TECHNIQUE_RULE ->
+                    false;
             };
         }
     }

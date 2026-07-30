@@ -56,7 +56,9 @@ class SpecificationReviewCritic {
     private static final String SPECIFICATION_REVIEW_CORRECTION = """
 
             Your previous response was malformed, incomplete, cited an unknown or wrong-source evidence ID, or failed to adjudicate every supplied F finding. Re-review the same
-            evidence from scratch and return one complete JSON verdict. Cite only the server-generated B, C, E, and F IDs exactly as shown. Do not copy source text or invent IDs.
+            evidence and return one complete JSON verdict. Cite only the server-generated B, C, E, and F IDs exactly as shown. Do not copy source text or invent IDs. The F findings
+            below are independently grounded hypotheses retained from this or an earlier review response; adjudicate every one in priorFindingChecks as RESOLVED or STILL_PRESENT
+            against current E evidence. Do not repeat an F finding in an ordinary finding array unless the current evidence reveals a distinct new defect.
             """;
 
     private record SpecificationReviewResponse(@Nullable List<SpecificationReviewItem> omissions, @Nullable List<SpecificationReviewItem> conflicts,
@@ -111,6 +113,9 @@ class SpecificationReviewCritic {
     }
 
     private record SpecificationReviewItem(@Nullable List<String> briefEvidenceIds, @Nullable List<String> specEvidenceIds, @Nullable String reason) {
+    }
+
+    private record CorrectionContinuity(@Nullable SpecificationReview review, @Nullable String overflowDetail) {
     }
 
     private record SpecificationInternalConflictItem(@Nullable List<String> firstSpecEvidenceIds, @Nullable List<String> secondSpecEvidenceIds, @Nullable String reason) {
@@ -178,12 +183,14 @@ class SpecificationReviewCritic {
         String conceptPrompt = evidence.hasConcept()
                 ? "\n\nSELECTED GENERATOR-AUTHORED CONCEPT EVIDENCE (process provenance, not scope authority):\n" + evidence.concept().promptText()
                 : "";
-        String userPrompt = "INSTRUCTOR BRIEF EVIDENCE (sole authority):\n" + evidence.brief().promptText() + conceptPrompt + "\n\nCANDIDATE SPECIFICATION EVIDENCE:\n"
-                + evidence.specification().promptText() + previousReviewContext(previousReview)
-                + "\n\nFINAL REPRESENTATION-DOMAIN CHECK: inspect every public numeric input before returning. In Java, float/double inputs include NaN and both infinities, and integer "
+        String evidencePrompt = "INSTRUCTOR BRIEF EVIDENCE (sole authority):\n" + evidence.brief().promptText() + conceptPrompt + "\n\nCANDIDATE SPECIFICATION EVIDENCE:\n"
+                + evidence.specification().promptText();
+        String finalInstruction = "\n\nFINAL REPRESENTATION-DOMAIN CHECK: inspect every public numeric input before returning. In Java, float/double inputs include NaN and both "
+                + "infinities, and integer "
                 + "inputs include their full MIN_VALUE..MAX_VALUE range; arithmetic may overflow even when each input is valid. If the rules neither define observable behavior "
                 + "for an admitted value nor state a consistently enforceable finite/range precondition, report that exact gap in ambiguities. Do not invent an arbitrary outcome "
                 + "when a narrow precondition is sufficient.\n\nReturn the complete JSON verdict specified by the system prompt.";
+        String userPrompt = evidencePrompt + previousReviewContext(previousReview) + finalInstruction;
         try {
             String response = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse parsed = readSpecificationReviewResponse(response);
@@ -194,11 +201,16 @@ class SpecificationReviewCritic {
             if (cancelled.getAsBoolean()) {
                 return review;
             }
-            String correctedResponse = reviewer.call(SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE,
-                    userPrompt + SPECIFICATION_REVIEW_CORRECTION + evidenceCorrectionGuide(evidence) + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(),
+            CorrectionContinuity correctionContinuity = correctionContinuity(previousReview, parsed, evidence);
+            if (correctionContinuity.overflowDetail() != null) {
+                return incompleteSpecificationReview(correctionContinuity.overflowDetail(), previousReview);
+            }
+            String correctedResponse = reviewer.call(
+                    SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE, evidencePrompt + previousReviewContext(correctionContinuity.review()) + finalInstruction
+                            + SPECIFICATION_REVIEW_CORRECTION + evidenceCorrectionGuide(evidence) + "\n\nSERVER VALIDATION FAILURE TO CORRECT:\n" + review.auditSummary(),
                     usageSink, SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS);
             SpecificationReviewResponse correctedParsed = readSpecificationReviewResponse(correctedResponse);
-            return parseSpecificationReview(correctedParsed, evidence, previousReview);
+            return parseSpecificationReview(correctedParsed, evidence, correctionContinuity.review());
         }
         catch (RuntimeException e) {
             log.warn("Specification review failed: {}", e.getMessage());
@@ -228,6 +240,87 @@ class SpecificationReviewCritic {
                 + "Use STILL_PRESENT when the current contract retains the defect. Report fresh blockers in the ordinary arrays.";
     }
 
+    /**
+     * Preserves only first-pass hypotheses whose cited authority can be checked independently of the malformed part of the response. The correction must adjudicate these
+     * hypotheses; they are not accepted as findings merely because the first response mentioned them.
+     */
+    private static CorrectionContinuity correctionContinuity(@Nullable SpecificationReview previousReview, @Nullable SpecificationReviewResponse parsed,
+            SpecificationReviewEvidence evidence) {
+        List<String> grounded = groundedFindingHypotheses(parsed, evidence);
+        List<String> history = mergedRiskHistory(previousReview, grounded);
+        if (history.isEmpty()) {
+            return new CorrectionContinuity(null, null);
+        }
+        if (history.size() > MAX_RISK_HISTORY || history.stream().mapToInt(String::length).sum() > MAX_PRIOR_FINDING_CHARS) {
+            return new CorrectionContinuity(null,
+                    "The correction was not attempted because the current response added grounded hypotheses beyond the bounded continuity context; the specification remains unapproved.");
+        }
+        return new CorrectionContinuity(
+                new SpecificationReview(false, false, false, List.of(), "Grounded first-pass hypotheses require correction-pass adjudication.", null, history), null);
+    }
+
+    private static List<String> groundedFindingHypotheses(@Nullable SpecificationReviewResponse parsed, SpecificationReviewEvidence evidence) {
+        if (parsed == null) {
+            return List.of();
+        }
+        List<String> findings = new ArrayList<>();
+        for (SpecificationReviewItem item : nullableItems(parsed.omissions())) {
+            if (validGroundedItem(item) && evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+                findings.add("Omission — brief says \"" + truncate(evidence.brief().resolve(item.briefEvidenceIds())) + "\": " + truncate(item.reason().strip()));
+            }
+        }
+        for (SpecificationReviewItem item : nullableItems(parsed.conflicts())) {
+            if (validGroundedItem(item) && evidence.brief().containsSubstantive(item.briefEvidenceIds()) && evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                findings.add("Conflict — brief says \"" + truncate(evidence.brief().resolve(item.briefEvidenceIds())) + "\" but SPEC says \""
+                        + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip()));
+            }
+        }
+        for (SpecificationInternalConflictItem item : parsed.internalConflicts() == null ? List.<SpecificationInternalConflictItem>of() : parsed.internalConflicts()) {
+            if (item != null && item.reason() != null && !item.reason().isBlank() && evidence.specification().containsSubstantive(item.firstSpecEvidenceIds())
+                    && evidence.specification().containsSubstantive(item.secondSpecEvidenceIds())) {
+                findings.add("Internal conflict — SPEC says both \"" + truncate(evidence.specification().resolve(item.firstSpecEvidenceIds())) + "\" and \""
+                        + truncate(evidence.specification().resolve(item.secondSpecEvidenceIds())) + "\": " + truncate(item.reason().strip()));
+            }
+        }
+        for (SpecificationReviewItem item : nullableItems(parsed.ambiguities())) {
+            if (validGroundedItem(item) && evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                findings.add("Ambiguous contract — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip()));
+            }
+        }
+        for (SpecificationReviewItem item : nullableItems(parsed.unsupportedConstraints())) {
+            if (validGroundedItem(item) && evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                findings.add(
+                        "Unsupported constraint — SPEC says \"" + truncate(evidence.specification().resolve(item.specEvidenceIds())) + "\": " + truncate(item.reason().strip()));
+            }
+        }
+        for (SpecificationExampleCheckItem item : parsed.exampleChecks() == null ? List.<SpecificationExampleCheckItem>of() : parsed.exampleChecks()) {
+            if (item != null && Boolean.FALSE.equals(item.consistent()) && item.exampleEvidenceId() != null
+                    && evidence.specification().containsSubstantive(List.of(item.exampleEvidenceId())) && item.replayedOutcome() != null && !item.replayedOutcome().isBlank()
+                    && item.reason() != null && !item.reason().isBlank()) {
+                findings.add("Incorrect worked example — SPEC says \"" + truncate(evidence.specification().resolve(List.of(item.exampleEvidenceId()))) + "\": replay gives \""
+                        + truncateLearningEvidence(item.replayedOutcome().strip()) + "\" because " + truncateLearningEvidence(item.reason().strip()));
+            }
+        }
+        for (BoundaryReachabilityCheck check : parsed.boundaryChecks() == null ? List.<BoundaryReachabilityCheck>of() : parsed.boundaryChecks()) {
+            if (check != null && (Boolean.FALSE.equals(check.reachable()) || Boolean.FALSE.equals(check.timingPreserved())) && check.publicSetup() != null
+                    && !check.publicSetup().isBlank() && check.observedOperation() != null && !check.observedOperation().isBlank() && check.reason() != null
+                    && check.reason().strip().length() >= 20 && evidence.brief().containsSubstantive(check.briefEvidenceIds())
+                    && evidence.specification().containsSubstantive(check.specEvidenceIds())) {
+                findings.add("Boundary reachability conflict — brief says \"" + truncate(evidence.brief().resolve(check.briefEvidenceIds())) + "\" but SPEC says \""
+                        + truncate(evidence.specification().resolve(check.specEvidenceIds())) + "\": " + truncate(check.reason().strip()));
+            }
+        }
+        return findings.stream().distinct().limit(MAX_RISK_HISTORY).toList();
+    }
+
+    private static List<SpecificationReviewItem> nullableItems(@Nullable List<SpecificationReviewItem> items) {
+        return items == null ? List.of() : items;
+    }
+
+    private static boolean validGroundedItem(@Nullable SpecificationReviewItem item) {
+        return item != null && item.reason() != null && !item.reason().isBlank();
+    }
+
     private @Nullable SpecificationReviewResponse readSpecificationReviewResponse(@Nullable String text) {
         if (text == null || text.isBlank()) {
             return null;
@@ -249,6 +342,10 @@ class SpecificationReviewCritic {
         if (parsed.omissions() == null || parsed.conflicts() == null || parsed.internalConflicts() == null || parsed.ambiguities() == null
                 || parsed.unsupportedConstraints() == null || parsed.boundaryChecks() == null) {
             return incompleteSpecificationReview("One or more mandatory finding arrays were missing.", previousReview);
+        }
+        String findingEvidenceValidationError = findingEvidenceValidationError(parsed, evidence);
+        if (findingEvidenceValidationError != null) {
+            return incompleteSpecificationReview("finding evidence validation failed: " + findingEvidenceValidationError, previousReview);
         }
         String boundaryValidationError = boundaryValidationError(parsed.boundaryChecks(), evidence);
         if (boundaryValidationError != null) {
@@ -358,6 +455,59 @@ class SpecificationReviewCritic {
                 learningFit.direction().name(), riskHistory);
     }
 
+    private static @Nullable String findingEvidenceValidationError(SpecificationReviewResponse parsed, SpecificationReviewEvidence evidence) {
+        for (SpecificationReviewItem item : parsed.omissions()) {
+            if (!validSpecificationReviewItem(item)) {
+                return "every omission entry must have a substantive reason.";
+            }
+            if (!evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+                return "each omission must cite known, substantive B evidence.";
+            }
+        }
+        for (SpecificationReviewItem item : parsed.conflicts()) {
+            if (!validSpecificationReviewItem(item)) {
+                return "every conflict entry must have a substantive reason.";
+            }
+            if (!evidence.brief().containsSubstantive(item.briefEvidenceIds()) || !evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                return "each brief/specification conflict must cite known, substantive B and E evidence.";
+            }
+        }
+        for (SpecificationInternalConflictItem item : parsed.internalConflicts()) {
+            if (item == null || item.reason() == null || item.reason().isBlank()) {
+                return "every internal conflict entry must have a substantive reason.";
+            }
+            if (!evidence.specification().containsSubstantive(item.firstSpecEvidenceIds()) || !evidence.specification().containsSubstantive(item.secondSpecEvidenceIds())) {
+                return "each internal conflict must cite both known, substantive E sides.";
+            }
+        }
+        for (SpecificationReviewItem item : parsed.ambiguities()) {
+            if (!validSpecificationReviewItem(item)) {
+                return "every ambiguity entry must have a substantive reason.";
+            }
+            if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                return "each ambiguity must cite known, substantive E evidence.";
+            }
+        }
+        for (SpecificationReviewItem item : parsed.unsupportedConstraints()) {
+            if (!validSpecificationReviewItem(item)) {
+                return "every unsupported constraint entry must have a substantive reason.";
+            }
+            if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+                return "each unsupported constraint must cite known, substantive E evidence.";
+            }
+        }
+        for (SpecificationExampleCheckItem item : parsed.exampleChecks() == null ? List.<SpecificationExampleCheckItem>of() : parsed.exampleChecks()) {
+            if (item == null || item.consistent() == null || item.exampleEvidenceId() == null || item.replayedOutcome() == null || item.replayedOutcome().isBlank()
+                    || item.reason() == null || item.reason().isBlank()) {
+                return "every worked-example check must have an evidence ID, replayed outcome, consistency verdict, and substantive reason.";
+            }
+            if (!evidence.specification().containsSubstantive(List.of(item.exampleEvidenceId()))) {
+                return "each worked example must cite known, substantive E evidence.";
+            }
+        }
+        return null;
+    }
+
     private static @Nullable String boundaryValidationError(List<BoundaryReachabilityCheck> checks, SpecificationReviewEvidence evidence) {
         for (BoundaryReachabilityCheck check : checks) {
             if (check == null || check.publicSetup() == null || check.publicSetup().isBlank() || check.observedOperation() == null || check.observedOperation().isBlank()
@@ -432,13 +582,18 @@ class SpecificationReviewCritic {
     }
 
     private static List<String> riskHistory(@Nullable SpecificationReview previousReview, List<String> currentFindings) {
+        List<String> combined = mergedRiskHistory(previousReview, currentFindings);
+        return List.copyOf(combined.subList(0, Math.min(combined.size(), MAX_RISK_HISTORY)));
+    }
+
+    private static List<String> mergedRiskHistory(@Nullable SpecificationReview previousReview, List<String> currentFindings) {
         List<String> combined = new ArrayList<>(previousReview == null ? List.of() : previousReview.riskHistory());
         for (String finding : currentFindings) {
             if (!combined.contains(finding)) {
                 combined.add(finding);
             }
         }
-        return List.copyOf(combined.subList(0, Math.min(combined.size(), MAX_RISK_HISTORY)));
+        return List.copyOf(combined);
     }
 
     private static String safeFailureDetail(RuntimeException exception) {
