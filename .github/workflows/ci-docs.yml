@@ -49,15 +49,8 @@ jobs:
         working-directory: documentation
         run: pnpm run lint
 
-      - name: Build Docusaurus site
-        working-directory: documentation
-        run: pnpm run build
-
-      - name: Build TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:build
-
-      - name: Add TUM UI Storybook to documentation site
-        run: cp -R build/storybook/tum-ui documentation/build/tum-ui
+      - name: Build documentation site
+        run: pnpm run docs:build
 
       # Only on the deploy paths (develop push / manual redeploy); the deploy job consumes this.
       # Uploading the artifact needs no extra permissions — `pages: write` lives on the deploy job.

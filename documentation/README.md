@@ -23,14 +23,20 @@ This command starts a local development server and opens up a browser window. Mo
 pnpm run build
 ```
 
-This command generates the Docusaurus site in the `build` directory. The deployment workflow also
-builds the TUM UI Storybook from `packages/tum-ui` and adds it at `/tum-ui/` before publishing the
-site.
+This command generates the Docusaurus site in the `build` directory.
 
 To test the build locally, you can run:
 
 ```bash
 pnpm run serve
+```
+
+To build and serve the complete deployed site, including the TUM UI Storybook at `/tum-ui/`, run
+from the repository root:
+
+```bash
+pnpm run docs:build
+pnpm run docs:serve
 ```
 
 ## Deployment

@@ -138,6 +138,8 @@
         "compile:tests": "pnpm run prebuild && tsc --project tsconfig.spec.json",
         "coverage:check-module": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
+        "docs:build": "pnpm --dir documentation run build && pnpm --dir packages/tum-ui run storybook:build --output-dir ../../documentation/build/tum-ui",
+        "docs:serve": "pnpm --dir packages/tum-ui exec vite preview --outDir ../../documentation/build --host 0.0.0.0 --port 3000 --strictPort",
         "lighthouse": "node supporting_scripts/lighthouse/run-lighthouse.mjs",
         "lint": "eslint src/main/webapp src/test/javascript && pnpm run tum-ui:lint",
         "lint:fix": "eslint --fix src/main/webapp src/test/javascript && pnpm run tum-ui:lint:fix",
