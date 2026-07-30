@@ -367,7 +367,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide updatedSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(updatedSlide).isNotNull();
         assertThat(updatedSlide.getHidden()).isNotNull();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(2, ChronoUnit.SECONDS));
 
         // Verify the exercise association
         assertThat(updatedSlide.getExercise()).isNotNull();
@@ -386,7 +386,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide updatedHiddenSlide = updatedSlides.stream().filter(slide -> slide.getId().equals(hiddenSlide.getId())).findFirst().orElseThrow();
-        assertThat(updatedHiddenSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedHiddenSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(2, ChronoUnit.SECONDS));
         assertThat(updatedHiddenSlide.getSlideImagePath()).isEqualTo(originalImagePath);
         assertThat(updatedSlides.stream().filter(slide -> !slide.getId().equals(hiddenSlide.getId()))).allMatch(slide -> slide.getHidden() == null);
 
@@ -434,7 +434,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(2, ChronoUnit.SECONDS));
     }
 
     @Test
@@ -759,7 +759,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getSlideNumber()).isEqualTo(1); // Should have slide number 1
         assertThat(firstSlide.getHidden()).isNotNull();
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(2, ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -836,8 +836,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // Both sides sample the wall clock independently, so compare with a tolerance: truncating to seconds
+        // still fails whenever the two samples straddle a second boundary (e.g. ...:56.99 vs ...:57.01).
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(2, ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -1031,8 +1032,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // Both sides sample the wall clock independently, so compare with a tolerance: truncating to seconds
+        // still fails whenever the two samples straddle a second boundary (e.g. ...:56.99 vs ...:57.01).
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(2, ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
