@@ -351,6 +351,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private resetForNewRoute(): void {
         this.resetForNewLoad();
+        this.stopConductionOfPreviousExam();
         this.exam.set(undefined!);
         this.studentExam.set(undefined!);
         this.examStartConfirmed.set(false);
@@ -358,6 +359,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExamPage.set(new ExamPage());
         this.individualStudentEndDate.set(undefined!);
         this.individualStudentEndDateWithGracePeriod.set(undefined!);
+    }
+
+    /**
+     * Stops the work {@link examStarted} set up for the exam that was being conducted, so none of it keeps running
+     * against the next exam. Resetting the signals alone is not enough: the autosave timer would keep firing
+     * {@link triggerSave} on a cleared student exam, and a live event of the previous exam would be applied to the next
+     * one, in the case of a working-time update even reconstructing a student exam that was just dropped (#13317).
+     */
+    private stopConductionOfPreviousExam(): void {
+        this.stopAutoSaveTimer();
+        this.workingTimeUpdateEventsSubscription?.unsubscribe();
+        this.workingTimeUpdateEventsSubscription = undefined;
+        this.problemStatementUpdateEventsSubscription?.unsubscribe();
+        this.problemStatementUpdateEventsSubscription = undefined;
+        this.programmingSubmissionSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        // Replacing the array rather than clearing it: ngOnDestroy iterates this list, and it must not keep the
+        // subscriptions of an exam that is no longer displayed.
+        this.programmingSubmissionSubscriptions = [];
     }
 
     /**
@@ -532,6 +551,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * start AutoSaveTimer
      */
     public startAutoSaveTimer(): void {
+        // Stop first: assigning over a running interval would drop the only handle to it, leaving it ticking for the
+        // rest of the page's life, past even ngOnDestroy. Also restarts the tick counter, so a new exam does not
+        // inherit the elapsed ticks of the previous one and save immediately.
+        this.stopAutoSaveTimer();
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer.update((v) => v + 1);
@@ -542,15 +565,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * Stops the autosave timer and drops its handle, so a later start cannot leave this interval running unreachably.
+     */
+    private stopAutoSaveTimer(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = undefined;
+        this.autoSaveTimer.set(0);
+    }
+
+    /**
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
         this.handInPossible.set(false);
         this.submitInProgress.set(true);
-        if (this.autoSaveInterval) {
-            window.clearInterval(this.autoSaveInterval);
-        }
+        this.stopAutoSaveTimer();
 
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
@@ -647,9 +677,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
-        if (this.autoSaveInterval) {
-            window.clearInterval(this.autoSaveInterval);
-        }
+        this.stopAutoSaveTimer();
         // update local studentExam for later sync with server
         this.updateLocalStudentExam();
         // The end view is gated by the time-based isOver() getter. The exam timer fires this handler
@@ -796,7 +824,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
-        window.clearInterval(this.autoSaveInterval);
+        this.stopAutoSaveTimer();
     }
 
     handleStudentExam(studentExam: StudentExam | undefined) {

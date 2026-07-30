@@ -1253,11 +1253,15 @@ describe('ExamParticipationComponent', () => {
 
     it('should clear autoSaveInterval when exam ended', () => {
         const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
-        comp.autoSaveInterval = 1;
+        // captured before the call: the handle is dropped along with the interval, so reading it afterwards would
+        // compare the spy against undefined instead of the interval that had to be cleared
+        const autoSaveInterval = 1;
+        comp.autoSaveInterval = autoSaveInterval;
         comp.studentExam.set(new StudentExam());
         comp.exam.set(new Exam());
         comp.examEnded();
-        expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
+        expect(clearIntervalSpy).toHaveBeenCalledWith(autoSaveInterval);
+        expect(comp.autoSaveInterval).toBeUndefined();
     });
 
     describe('onPageChange', () => {
@@ -1711,6 +1715,45 @@ describe('ExamParticipationComponent', () => {
             expect(comp.exam()).toBeUndefined();
             expect(comp.studentExam()).toBeUndefined();
             expect(comp.examStartConfirmed()).toBe(false);
+        });
+
+        it('should stop the conduction work of the previous exam when navigating after it was started', () => {
+            // Clearing the signals is not enough: the autosave timer and the live-event subscriptions of the started
+            // exam keep running against the next one, and a second startAutoSaveTimer would overwrite the only handle
+            // to the previous interval, leaving it ticking past even ngOnDestroy.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            activeStudentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: loaded and started, so its autosave timer and subscriptions are live
+            params.next({ courseId: '1', examId: '2' });
+            comp.examStarted(activeStudentExam);
+            const previousInterval = comp.autoSaveInterval;
+            const previousWorkingTimeSubscription = comp.workingTimeUpdateEventsSubscription;
+            const previousProgrammingSubscription = new Subject<void>().subscribe();
+            comp['programmingSubmissionSubscriptions'].push(previousProgrammingSubscription);
+            expect(previousInterval).toBeDefined();
+            const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
+
+            // exam B: its request never completes, so nothing of exam A may still be running
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject<StudentExam>().asObservable());
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(clearIntervalSpy).toHaveBeenCalledWith(previousInterval);
+            expect(comp.autoSaveInterval).toBeUndefined();
+            expect(previousWorkingTimeSubscription?.closed).toBe(true);
+            expect(comp.workingTimeUpdateEventsSubscription).toBeUndefined();
+            expect(previousProgrammingSubscription.closed).toBe(true);
+            expect(comp['programmingSubmissionSubscriptions']).toEqual([]);
         });
 
         it('should not keep the previous exam on screen underneath a failed summary load', () => {
