@@ -1,0 +1,25 @@
+@if (course().isAtLeastInstructor && this.assessmentEnabled()) {
+    <div class="iris-panel">
+        <div class="iris-header">
+            <div class="iris-title">
+                <fa-icon [icon]="faBrain" class="me-2" size="lg" />
+                <span jhiTranslate="artemisApp.iris.assessmentAttentionCenter.title"></span>
+                <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ms-1" />
+            </div>
+        </div>
+        <div class="iris-toggle">
+            <button
+                type="button"
+                class="iris-assessment-btn"
+                [class.iris-assessment-btn--suspicious]="needsAttention()"
+                [class.iris-assessment-btn--unsuspicious]="!needsAttention()"
+                [routerLink]="reviewLink()"
+                [jhiTranslate]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
+            ></button>
+            <button type="button" class="iris-assessment-btn iris-assessment-btn--in-class" [routerLink]="inClassQuizLink()">
+                <fa-icon class="jhi-btn__icon sm" [icon]="faListAlt" [fixedWidth]="true" />
+                {{ 'artemisApp.iris.assessmentInClassQuiz.open' | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+}

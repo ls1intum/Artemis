@@ -340,7 +340,7 @@
                 "title": "Iris Assessment",
                 "tooltip": "Here is shown whether there are any Iris-Assessments to inspect. Click on the button to get to the general overview of assessments. Use the in-class quiz button to open the overview where you can start the in-class quiz and inspect the results.",
                 "state": {
-                    "needsAttention": "Unreviewed Suspicious results",
+                    "needsAttention": "Unreviewed suspicious results",
                     "nothingToDo": "All suspicious results reviewed"
                 }
             },

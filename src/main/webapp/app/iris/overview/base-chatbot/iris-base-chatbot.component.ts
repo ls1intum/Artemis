@@ -305,7 +305,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.isLoading() ||
             !this.active() ||
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
-            this.awaitingAnswer(),
+            this.awaitingAnswer() ||
+            this.showOnlyPromptingModeMessage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
     readonly canShowSuggestions = computed(

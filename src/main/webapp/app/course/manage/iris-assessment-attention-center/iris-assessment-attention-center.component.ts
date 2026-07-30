@@ -7,17 +7,18 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { faBrain, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CardWrapperComponent } from 'app/shared-ui/card-wrapper/card-wrapper.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { RouterModule } from '@angular/router';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-assessment-attention-center',
-    imports: [HelpIconComponent, FaIconComponent, CardWrapperComponent, FeatureToggleDirective, RouterModule, CommonModule, ButtonComponent],
+    imports: [HelpIconComponent, FaIconComponent, RouterModule, CommonModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './iris-assessment-attention-center.component.html',
+    styleUrls: ['./iris-assessment-attention-center.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisAssessmentAttentionCenterComponent {

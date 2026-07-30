@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { catchError, of, switchMap, take } from 'rxjs';
 
@@ -22,6 +22,7 @@ import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 export class IrisStartPromptingButtonComponent {
     private readonly irisChatService = inject(IrisChatService);
     private readonly assessmentQuizService = inject(IrisAssessmentQuizService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input<StudentParticipation>();
@@ -49,7 +50,6 @@ export class IrisStartPromptingButtonComponent {
 
     protected readonly latestEvent = toSignal(this.irisChatService.currentLatestEvent(), { initialValue: undefined });
     private readonly hasBuildWithPoints = computed(() => this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
-    private readonly promptingFinished = computed(() => this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED);
 
     private readonly quizAlreadyDoneFromServer = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -77,7 +77,9 @@ export class IrisStartPromptingButtonComponent {
         { initialValue: false },
     );
 
-    protected readonly quizAlreadyDone = computed(() => (!this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || (this.isPromptingMode() && this.promptingFinished()));
+    protected readonly quizAlreadyDone = computed(
+        () => (!this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED,
+    );
 
     protected readonly canBeStarted = computed(
         () => (this.hasBuildWithPoints() || this.latestSubmissionHasPoints()) && !this.quizAlreadyDone() && !this.isPromptingMode() && !this.inClassPromptingModeStarted(),
@@ -94,6 +96,17 @@ export class IrisStartPromptingButtonComponent {
             return 'artemisApp.exerciseActions.prompting.noSubmission';
         }
     });
+
+    constructor() {
+        this.irisChatService
+            .currentLatestEvent()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((event) => {
+                if (event === IrisPipeEvent.PROMPTING_FINISHED) {
+                    this.isPromptingMode.set(false);
+                }
+            });
+    }
 
     protected startPromptingMode(): void {
         const exerciseId = this.exerciseId();

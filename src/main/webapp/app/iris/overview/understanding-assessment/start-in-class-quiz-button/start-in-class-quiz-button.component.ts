@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { catchError, merge, of, switchMap, take } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -14,7 +14,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 @Component({
     selector: 'jhi-start-in-class-quiz-button',
@@ -25,7 +24,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 export class IrisStartInClassQuizButtonComponent {
     private readonly irisChatService = inject(IrisChatService);
     private readonly assessmentQuizService = inject(IrisAssessmentQuizService);
-    private readonly websocketService = inject(WebsocketService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input<StudentParticipation>();
@@ -66,9 +65,7 @@ export class IrisStartInClassQuizButtonComponent {
         { initialValue: false },
     );
 
-    protected readonly quizAlreadyDone = computed(
-        () => this.quizAlreadyDoneFromServer() || (this.isInClassPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED),
-    );
+    protected readonly quizAlreadyDone = computed(() => this.quizAlreadyDoneFromServer() || this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED);
 
     protected readonly activeInClassQuiz = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -89,40 +86,6 @@ export class IrisStartInClassQuizButtonComponent {
         { initialValue: undefined },
     );
 
-    protected readonly resetStartedInClassQuizEffect = effect(() => {
-        const exerciseId = this.exerciseId();
-        if (exerciseId !== undefined && this.isInClassPromptingMode() && this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED) {
-            this.assessmentQuizService.setInClassPromptingModeStarted(exerciseId, false);
-        }
-    });
-
-    protected readonly inClassQuizStartedEffect = effect((onCleanup) => {
-        const exerciseId = this.exerciseId();
-
-        if (exerciseId === undefined) {
-            return;
-        }
-
-        const websocketTopic = `/topic/iris/programming-exercises/${exerciseId}/assessment-quiz/in-class/start`;
-        const websocketSubscription = this.websocketService
-            .subscribe<void>(websocketTopic)
-            .pipe(
-                switchMap(() =>
-                    this.assessmentQuizService.getActiveInClassQuiz(exerciseId).pipe(
-                        catchError(() => {
-                            this.assessmentQuizService.clearActiveInClassQuiz(exerciseId);
-                            return of(undefined);
-                        }),
-                    ),
-                ),
-            )
-            .subscribe();
-
-        onCleanup(() => {
-            websocketSubscription.unsubscribe();
-        });
-    });
-
     protected readonly canBeStarted = computed(() => this.latestSubmissionHasPoints() && !this.quizAlreadyDone() && !this.isInClassPromptingMode());
 
     protected readonly buttonLabel = computed(() => {
@@ -136,6 +99,17 @@ export class IrisStartInClassQuizButtonComponent {
             return 'artemisApp.iris.assessmentInClassQuiz.start';
         }
     });
+
+    constructor() {
+        this.irisChatService
+            .currentLatestEvent()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((event) => {
+                if (event === IrisPipeEvent.PROMPTING_FINISHED) {
+                    this.isInClassPromptingMode.set(false);
+                }
+            });
+    }
 
     protected startInClassQuiz(): void {
         if (!this.canBeStarted()) {

@@ -378,12 +378,6 @@
                                 <jhi-iris-thinking-bubble [message]="thinkingMessage()" />
                             </div>
                         }
-                        <jhi-quiz-timer-bar
-                            [open]="currentlyPrompting() && timerExpiresAt() !== undefined"
-                            [timeLimit]="timeLimit()"
-                            [timerExpiresAt]="timerExpiresAt()"
-                            (timerExpired)="timerExpired.emit()"
-                        />
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [runInfo]="runInfo()" />
                         }
@@ -427,6 +421,9 @@
             }
             @if (userAccepted() === LLMSelectionDecision.NO_AI) {
                 <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
+            }
+            @if (currentlyPrompting()) {
+                <jhi-quiz-timer-bar [open]="timerExpiresAt() !== undefined" [timeLimit]="timeLimit()" [timerExpiresAt]="timerExpiresAt()" (timerExpired)="timerExpired.emit()" />
             }
             @if (isAIEnabled()) {
                 <div class="chat-input">

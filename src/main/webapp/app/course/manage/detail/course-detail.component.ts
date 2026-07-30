@@ -35,7 +35,7 @@ import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-cha
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/course/manage/control-center/control-center.component';
-import { IrisAssessmentAttentionCenterComponent } from 'app/iris/overview/understanding-assessment/assessment-attention-center/iris-assessment-attention-center.component';
+import { IrisAssessmentAttentionCenterComponent } from 'app/course/manage/iris-assessment-attention-center/iris-assessment-attention-center.component';
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
