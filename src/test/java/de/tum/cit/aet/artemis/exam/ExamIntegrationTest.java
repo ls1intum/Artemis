@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -2866,10 +2867,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
 
-        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+        List<ExerciseGroupDTO> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 sourceExam.getExerciseGroups(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
-        List<Exercise> importedExercises = importedGroups.stream().filter(group -> !group.getExercises().isEmpty()).flatMap(group -> group.getExercises().stream()).toList();
+        // The response carries slim exercise summaries, so reload each imported exercise to assert on its content.
+        List<Exercise> importedExercises = importedGroups.stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream())
+                .map(exercise -> exerciseRepository.findByIdElseThrow(exercise.id())).toList();
         assertThat(importedExercises).as("all four non-empty exercise groups imported an exercise").hasSize(4);
 
         Map<ExerciseType, Exercise> sourceByType = sourceExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
