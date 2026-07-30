@@ -19,8 +19,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -235,7 +235,7 @@ export class CourseOverviewService {
     }
 
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
-        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedExerciseGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const exercise of sortedExercises) {
             const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
@@ -247,7 +247,7 @@ export class CourseOverviewService {
     }
 
     groupLecturesByStartDate(sortedLectures: Lecture[]): AccordionGroups {
-        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedLectureGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const lecture of sortedLectures) {
             const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
@@ -259,14 +259,8 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled
-            ? {
-                  ...DEFAULT_CHANNEL_GROUPS,
-                  groupChats: { entityData: [] },
-                  directMessages: { entityData: [] },
-              }
-            : DEFAULT_CHANNEL_GROUPS;
-        const groupedConversationGroups = cloneDeep(channelGroups);
+        const channelGroups = messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS;
+        const groupedConversationGroups = deepClone(channelGroups);
 
         groupedConversationGroups.savedPosts = {
             isHideCount: true,

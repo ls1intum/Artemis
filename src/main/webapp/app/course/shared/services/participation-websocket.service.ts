@@ -8,7 +8,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -266,7 +265,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = cloneDeep(newParticipation);
+        const participation = deepClone(newParticipation);
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }

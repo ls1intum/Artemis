@@ -13,6 +13,7 @@ import { WeekGroup, WeekGroupingUtil } from 'app/foundation/util/week-grouping.u
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, takeUntil } from 'rxjs';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 // CollapseState is an intersection with Record<...> group unions, so an empty seed cannot be expressed as a type
 // annotation or `satisfies`; the working copy is populated before use. Assert through a named variable so the ban on
@@ -107,7 +108,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     expandAll() {
-        const collapseState = { ...this.collapseStateInternal() };
+        const collapseState = deepClone(this.collapseStateInternal());
         Object.keys(collapseState).forEach((key) => {
             collapseState[key] = false;
         });
@@ -125,7 +126,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
                 );
                 if (groupWithSelectedItem) {
                     const groupName = groupWithSelectedItem[0];
-                    this.collapseStateInternal.set({ ...this.collapseStateInternal(), [groupName]: false });
+                    this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
                 }
             }
         }
@@ -152,7 +153,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
-        const collapseState = { ...this.collapseStateInternal(), [groupCategoryKey]: !this.collapseStateInternal()[groupCategoryKey] };
+        const collapseState = cloneWith(this.collapseStateInternal(), { [groupCategoryKey]: !this.collapseStateInternal()[groupCategoryKey] });
         this.collapseStateInternal.set(collapseState);
         this.localStorageService.store<CollapseState>('sidebar.accordion.collapseState.' + this.storageId() + '.byCourse.' + this.courseId(), collapseState);
     }

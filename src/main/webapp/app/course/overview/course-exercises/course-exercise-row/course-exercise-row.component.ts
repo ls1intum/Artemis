@@ -23,6 +23,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -123,7 +124,7 @@ export class CourseExerciseRowComponent implements OnInit {
                     const participation = this.participationService.getSpecificStudentParticipation(updatedParticipations, false);
                     this._gradedStudentParticipation.set(participation);
                     this._dueDate.set(getExerciseDueDate(exerciseValue, participation));
-                    this._enrichedExercise.update((current) => (current ? { ...current, studentParticipations: updatedParticipations } : current));
+                    this._enrichedExercise.update((current) => (current ? cloneWith(current, { studentParticipations: updatedParticipations }) : current));
                 }
             });
     }
@@ -142,22 +143,20 @@ export class CourseExerciseRowComponent implements OnInit {
         // Enrich the exercise with role checks and course reference via a spread copy
         // to avoid mutating the input signal's underlying object
         const courseForRoleCheck = course || exercise.exerciseGroup?.exam?.course;
-        let enrichedExercise: Exercise = {
-            ...exercise,
+        let enrichedExercise: Exercise = cloneWith(exercise, {
             isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(courseForRoleCheck),
             isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(courseForRoleCheck),
             isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck),
             course,
-        };
+        });
 
         // Quiz-specific enrichment via spread to avoid mutating the object after creation
         if (enrichedExercise.type === ExerciseType.QUIZ) {
             const quizExercise = enrichedExercise as QuizExercise;
-            const enrichedQuizExercise: QuizExercise = {
-                ...quizExercise,
+            const enrichedQuizExercise: QuizExercise = cloneWith(quizExercise, {
                 isActiveQuiz: this.exerciseService.isActiveQuiz(quizExercise),
                 isPracticeModeAvailable: quizExercise.quizEnded,
-            };
+            });
             enrichedExercise = enrichedQuizExercise;
         }
 

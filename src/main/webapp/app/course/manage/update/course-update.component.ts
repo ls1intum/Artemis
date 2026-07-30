@@ -132,6 +132,11 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
+        // A shallow, prototype-preserving copy is deliberate here: the only goal is a new top-level reference so the
+        // signal fires. This runs on every keystroke in a date field, and the nested associations (organizations,
+        // exercises, …) are two-way bound into child components, so detaching them with a deep clone would both cost
+        // a full graph copy per edit and break their identity.
+        // eslint-disable-next-line localRules/prefer-deep-clone -- see above: reference rebuild for change detection, not a copy
         this._course.update((course) => Object.assign(new Course(), course));
     }
     readonly isSaving = signal<boolean>(undefined!);
