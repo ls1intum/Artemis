@@ -60,6 +60,15 @@ tasks.withType(Test).configureEach {
         }
     }
 
+    // Forward the opt-in fixture-regeneration flag to the test JVM (off by default). Used by
+    // ProblemStatementRenderingParityTest to (re)write src/test/resources/test-data/problem-statements/rendered/*.html;
+    // see that directory's README.md. Without this, -D on the Gradle command line only sets the property for the
+    // Gradle daemon, not the forked test JVM, and Boolean.getBoolean(...) in the test would always read false.
+    def regenerateFixtures = System.getProperty('artemis.regenerateProblemStatementFixtures')
+    if (regenerateFixtures) {
+        systemProperty 'artemis.regenerateProblemStatementFixtures', regenerateFixtures
+    }
+
     // a collection to track failedTests
     ext.failedTests = []
 
