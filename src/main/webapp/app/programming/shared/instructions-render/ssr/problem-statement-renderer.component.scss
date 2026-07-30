@@ -1,9 +1,11 @@
-// This wrapper sits between the two code editor hosts' `.instructions-wrapper__content` element (which
-// code-editor-grid.scss turns into a `display: flex; flex-direction: column; min-height: 0; overflow: hidden` box)
-// and the actual renderer (legacy or SSR). Previously the renderer component itself carried that class and was
-// therefore the flex box; now the wrapper carries it instead, and the renderer is a plain flex item nested one
-// level deeper. Without this rule, that item defaults to `flex: 0 1 auto` with no `min-height: 0`, so it sizes to
-// its content instead of filling the available height, and the problem statement gets clipped with no scrollbar.
+// This wrapper sits between the two code editor hosts' `.instructions-wrapper__content` element (both hosts project
+// through `editorSidebar` into `.editor-sidebar-right`, whose `.instructions-wrapper__content` rule at
+// code-editor-grid.scss:68-73 sets `overflow: hidden; display: flex; flex-direction: column;`, on top of the base
+// `flex: 1 1 auto; height: 100%;` from code-editor-instructions.scss:11-16) and the actual renderer (legacy or SSR).
+// Previously the renderer component itself carried that class and was therefore the flex box; now the wrapper
+// carries it instead, and the renderer is a plain flex item nested one level deeper. Without this rule, that item
+// defaults to `flex: 0 1 auto` with no `min-height: 0`, so it sizes to its content instead of filling the available
+// height, and the problem statement gets clipped with no scrollbar.
 // This rule only affects hosts that put the wrapper in that flex context (code-editor-student-container and
 // repository-view, via the `instructions-wrapper__content` class); on the other four hosts the wrapper's own host
 // element is never a flex container, so `flex`/`min-height` on its child here have no visible effect.

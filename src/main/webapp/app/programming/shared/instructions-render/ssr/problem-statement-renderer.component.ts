@@ -33,6 +33,13 @@ export class ProblemStatementRendererComponent {
     readonly onNoInstructionsAvailable = output<void>();
 
     // getFeatureToggleActive already returns Observable<boolean> for a single feature.
-    // Starts false so a page load never flashes the SSR renderer before the server-provided toggle state has arrived.
+    // What actually prevents a flash of the SSR renderer on a fresh page load is the blocking APP_INITIALIZER in
+    // app.config.ts, which awaits ProfileService.loadProfileInfo() (and, inside it, initializeFeatureToggles(...)
+    // with the real server-provided feature list) before Angular bootstraps any component. By the time this
+    // component's constructor subscribes below, the underlying BehaviorSubject already holds the real toggle state,
+    // not defaultActiveFeatureState's "every feature active" default — so this Observable's first (synchronous)
+    // emission is already correct, and `initialValue: false` below is never actually observed in production.
+    // It stays as a defensive fail-closed default (prefer the legacy renderer) in case that guarantee ever breaks,
+    // and it keeps `ssrEnabled` typed as `boolean` instead of `boolean | undefined`.
     readonly ssrEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.SsrProblemStatement), { initialValue: false });
 }

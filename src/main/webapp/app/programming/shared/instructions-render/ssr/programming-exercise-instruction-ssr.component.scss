@@ -2,3 +2,16 @@
     display: flex;
     justify-content: center;
 }
+
+// Mirrors programming-exercise-instruction.scss's `.instructions__content__markdown` scroll chain (height: inherit;
+// overflow: auto), but applied directly to :host because this component's template has no single wrapping div of
+// its own to hang that rule on. Lives here (on the component itself), not on the wrapper or any host, so the
+// renderer owns its own scroll behavior wherever it is embedded, exactly like the legacy component does.
+// `height: 100%` only resolves to a real value where a bounded ancestor exists (the two code editor hosts, via
+// problem-statement-renderer.component.scss's `:host > *` rule, which turns this element into a definite-height flex
+// item); everywhere else the percentage falls back to `auto` and `overflow-y: auto` never triggers a scrollbar,
+// same as the legacy component's identical pattern behaves in those same four hosts today.
+:host {
+    height: 100%;
+    overflow-y: auto;
+}
