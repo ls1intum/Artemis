@@ -36,7 +36,7 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
     font-size: $step-font-size;
     line-height: 1;
     border-radius: 15px;
-    border: 2px solid var(--bs-gray-600, #6c757d);
+    border: 2px solid var(--secondary, #6c757d);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -55,7 +55,7 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
     &.stepwizard-step--not-executed,
     &.stepwizard-step--no-result {
-        color: var(--bs-gray-600, #6c757d);
+        color: var(--secondary, #6c757d);
         font-size: 0.4rem;
     }
 }
@@ -66,7 +66,7 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
     left: 0;
     right: 0;
     margin: 0;
-    border-top: 3px solid var(--bs-gray-500, #adb5bd);
+    border-top: 3px solid var(--gray-500, #adb5bd);
 }
 
 .icon-success {
