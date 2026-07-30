@@ -247,6 +247,37 @@ describe('deepClone', () => {
         expect(cloned.has(cloned)).toBe(true);
         expect(cloned).not.toBe(original);
     });
+
+    it('should preserve the prototype of class instances, including nested ones', () => {
+        class Attachment {
+            name?: string;
+
+            label(): string {
+                return `Attachment: ${this.name}`;
+            }
+        }
+        class Lecture {
+            title?: string;
+            attachment?: Attachment;
+
+            label(): string {
+                return `Lecture: ${this.title}`;
+            }
+        }
+        const original = new Lecture();
+        original.title = 'Intro';
+        original.attachment = new Attachment();
+        original.attachment.name = 'Slides';
+
+        const cloned = deepClone(original);
+
+        // Every entity conversion away from object spread relies on this: the copy must keep its class methods.
+        expect(cloned).toBeInstanceOf(Lecture);
+        expect(cloned.label()).toBe('Lecture: Intro');
+        expect(cloned.attachment).toBeInstanceOf(Attachment);
+        expect(cloned.attachment!.label()).toBe('Attachment: Slides');
+        expect(cloned.attachment).not.toBe(original.attachment);
+    });
 });
 
 describe('cloneWith', () => {
@@ -329,6 +360,23 @@ describe('cloneWith', () => {
         const updated = cloneWith({ value: 'source' }, { value: 'override' });
 
         expect(updated.value).toBe('override');
+    });
+
+    it('should keep the prototype of the copied source', () => {
+        class Lecture {
+            title?: string;
+
+            label(): string {
+                return `Lecture: ${this.title}`;
+            }
+        }
+        const original = new Lecture();
+        original.title = 'Intro';
+
+        const renamed = cloneWith(original, { title: 'Renamed' });
+
+        expect(renamed).toBeInstanceOf(Lecture);
+        expect(renamed.label()).toBe('Lecture: Renamed');
     });
 });
 
