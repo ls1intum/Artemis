@@ -31,7 +31,7 @@
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError" [translateValues]="pointsErrorTranslateValues()"></div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsErrorWithDecimals" [translateValues]="pointsErrorTranslateValues()"></div>
                     }
                 </div>
             </div>
@@ -56,7 +56,7 @@
                         <div
                             class="alert alert-danger"
                             [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            jhiTranslate="artemisApp.exercise.bonusPointsError"
+                            jhiTranslate="artemisApp.exercise.bonusPointsErrorWithDecimals"
                             [translateValues]="bonusPointsErrorTranslateValues()"
                         ></div>
                     }
