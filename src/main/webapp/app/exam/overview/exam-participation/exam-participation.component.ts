@@ -15,7 +15,6 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/course/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -63,6 +62,7 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -926,14 +926,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
         ).subscribe((event: WorkingTimeUpdateEvent) => {
             // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
+            this.studentExam.set(cloneWith(this.studentExam(), { workingTime: event.newWorkingTime }));
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
             // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
             // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
             // the schedule (the exam dates are only its availability window, not the student's conduction window), so
             // the exam dates are left untouched and the end date is derived from the student's own start below.
             if (event.newStartDate) {
-                this.exam.set({ ...this.exam(), startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+                this.exam.set(cloneWith(this.exam(), { startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate }));
             }
             // Derive the end date from the new start when present, otherwise from the start captured when the
             // subscription was created (the exam start for real exams, the student's startedDate for test exams),
@@ -1253,7 +1253,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // TODO: This is a dark hack to just make it work; the client assumes that ProgrammingSubmissionStateObj contains a submission
                         // TODO: but this is not always the case (only on the initial REST fetch call). WS submission updates are stripped down DTOs only.
                         const studentParticipation = exerciseForSubmission.studentParticipations?.[0] || {};
-                        exerciseForSubmission.studentParticipations[0] = { ...studentParticipation, ...submissionStateObj.submission.participation } satisfies StudentParticipation;
+                        // hydrate rather than a copy: the comment above asks to update the ORIGINAL object, and mutating in place keeps
+                        // every nested reference (notably the exercise back-reference) intact while detaching the DTO's own values.
+                        exerciseForSubmission.studentParticipations[0] = hydrate(studentParticipation, submissionStateObj.submission.participation) satisfies StudentParticipation;
                     }
                 }),
             )
@@ -1269,7 +1271,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 ) {
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
-                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        const submissionCopy = deepClone(programmingSubmissionObj.submission);
 
                         /**
                          * Syncs the navigation bar correctly when the student only uses an IDE or the code editor.

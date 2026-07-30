@@ -13,10 +13,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -208,7 +208,7 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
-        const studentExamCopy = cloneDeep(studentExam);
+        const studentExamCopy = deepClone(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
         return this.httpClient.post<void>(url, studentExamCopy).pipe(
@@ -289,7 +289,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         // if the following code fails, this should never affect the exam
         try {
-            const studentExamCopy = cloneDeep(studentExam);
+            const studentExamCopy = deepClone(studentExam);
             ExamParticipationService.breakCircularDependency(studentExamCopy);
             this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), studentExamCopy);
         } catch (error) {
@@ -331,7 +331,7 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam };
+            exercise.exerciseGroup = cloneWith(exercise.exerciseGroup!, { exam: studentExam.exam });
             return exercise;
         });
         return studentExam;
