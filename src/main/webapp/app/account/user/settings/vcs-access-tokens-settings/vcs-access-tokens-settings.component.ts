@@ -14,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-account-information',
@@ -76,7 +77,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                 if (current) {
                     current.vcsAccessTokenExpiryDate = undefined;
                     current.vcsAccessToken = undefined;
-                    this.currentUser.set(Object.assign(new User(), current));
+                    this.currentUser.set(hydrate(new User(), current));
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
@@ -103,7 +104,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
                     const user = res.body as User;
                     current.vcsAccessToken = user.vcsAccessToken;
                     current.vcsAccessTokenExpiryDate = user.vcsAccessTokenExpiryDate;
-                    this.currentUser.set(Object.assign(new User(), current));
+                    this.currentUser.set(hydrate(new User(), current));
                     this.edit.set(false);
                 }
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.addSuccess');
