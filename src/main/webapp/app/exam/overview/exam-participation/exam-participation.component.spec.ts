@@ -99,6 +99,15 @@ describe('ExamParticipationComponent', () => {
         };
     }
 
+    /**
+     * Points the route at a test exam by giving it the child route that carries the `studentExamId`, or clears it again
+     * to model a regular exam. The component reads this child snapshot directly, so tests that navigate between the two
+     * kinds of exam have to switch it explicitly.
+     */
+    function setRouteStudentExamId(activatedRoute: ActivatedRoute, studentExamId: string | undefined): void {
+        (activatedRoute as any).firstChild = studentExamId ? { snapshot: { params: { studentExamId } } } : undefined;
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -324,11 +333,7 @@ describe('ExamParticipationComponent', () => {
         studentExamWithExercises.id = 3;
         studentExamWithExercises.exam = new Exam();
         const activatedRoute = TestBed.inject(ActivatedRoute);
-        (activatedRoute as any).firstChild = {
-            snapshot: {
-                params: { studentExamId: '3' },
-            },
-        };
+        setRouteStudentExamId(activatedRoute, '3');
         activatedRoute.params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -499,7 +504,13 @@ describe('ExamParticipationComponent', () => {
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
-    const testExamStarted = (studentExam: StudentExam) => {
+    /**
+     * @param studentExam    the student exam to start
+     * @param prepareForStart installs the exam state under test. It runs after ngOnInit, because the route emission
+     *                        there resets whatever the previously displayed exam left behind, exactly as a real
+     *                        navigation does, so state arranged before it would be dropped again.
+     */
+    const testExamStarted = (studentExam: StudentExam, prepareForStart?: () => void) => {
         const exerciseWithParticipation = (type: 'programming' | 'modeling', withSubmission: boolean) => {
             let exercise = new ProgrammingExercise(new Course(), undefined);
             if (type === 'modeling') {
@@ -526,6 +537,7 @@ describe('ExamParticipationComponent', () => {
             } as ProgrammingSubmissionStateObj),
         ));
         comp.ngOnInit();
+        prepareForStart?.();
         const firstExercise = exerciseWithParticipation('programming', false);
         const secondExercise = exerciseWithParticipation('modeling', true);
 
@@ -563,9 +575,10 @@ describe('ExamParticipationComponent', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
         studentExam.testRun = true;
-        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
-        comp.exam.set(new Exam());
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+            comp.exam.set(new Exam());
+        });
     });
 
     it('should initialize test exam', () => {
@@ -574,9 +587,10 @@ describe('ExamParticipationComponent', () => {
         exam.examMode = ExamMode.TEST;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
-        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
-        comp.exam.set(exam);
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+            comp.exam.set(exam);
+        });
     });
 
     it('should initialize test exam with simulation using the fixed simulation end date', () => {
@@ -614,14 +628,14 @@ describe('ExamParticipationComponent', () => {
     it('should initialize exercise without test run', () => {
         // Should calculate time from exam start date when no test run, rest does not get effected
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        comp.ngOnInit();
         const startDate = dayjs();
-        comp.exam.set(new Exam());
-        comp.exam().startDate = dayjs(startDate);
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs(startDate);
+        });
         expect(comp.individualStudentEndDate()).toEqual(startDate.add(workingTime, 'seconds'));
     });
 
@@ -1359,11 +1373,15 @@ describe('ExamParticipationComponent', () => {
 
     it('should clear autoSaveInterval when exam ended', () => {
         const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
-        comp.autoSaveInterval = 1;
+        // captured before the call: the handle is dropped along with the interval, so reading it afterwards would
+        // compare the spy against undefined instead of the interval that had to be cleared
+        const autoSaveInterval = 1;
+        comp.autoSaveInterval = autoSaveInterval;
         comp.studentExam.set(new StudentExam());
         comp.exam.set(new Exam());
         comp.examEnded();
-        expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
+        expect(clearIntervalSpy).toHaveBeenCalledWith(autoSaveInterval);
+        expect(comp.autoSaveInterval).toBeUndefined();
     });
 
     describe('onPageChange', () => {
@@ -1563,10 +1581,14 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
-        comp.studentExam.set(new StudentExam());
-        comp.studentExam().exercises = [exercise0, exercise1];
         comp.ngOnInit();
-        comp.examStarted(comp.studentExam());
+        // after ngOnInit: its route emission resets whatever the previously displayed exam left behind, so the exam
+        // under test is installed afterwards, exactly as a real load does
+        comp.exam.set(new Exam());
+        comp.exam().startDate = dayjs().subtract(1, 'hours');
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exercise0, exercise1];
+        comp.examStarted(studentExam);
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
@@ -1648,6 +1670,349 @@ describe('ExamParticipationComponent', () => {
         expect(comp.showExamSummary()).toBe(true);
     });
 
+    describe('failed summary load', () => {
+        const summaryError = () => throwError(() => new HttpErrorResponse({ status: 500 }));
+
+        it('should withhold the summary and offer a retry when loadAndDisplaySummary fails', () => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            comp.loadingExam.set(true);
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.showExamSummary()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should not substitute the cached exam when loadAndDisplaySummary fails', () => {
+            const cachedStudentExam = new StudentExam();
+            cachedStudentExam.id = 3;
+            cachedStudentExam.exam = new Exam();
+            comp.exam.set(cachedStudentExam.exam);
+            comp.studentExam.set(cachedStudentExam);
+            const localStorageSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+
+            expect(localStorageSpy).not.toHaveBeenCalled();
+            expect(comp.showExamSummary()).toBe(false);
+        });
+
+        it('should show the retryable error state instead of the no-student-exam state when the initial test exam summary load fails', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            setRouteStudentExamId(activatedRoute, '3');
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+            const handleNoStudentExamSpy = vi.spyOn(comp, 'handleNoStudentExam');
+
+            comp.ngOnInit();
+
+            expect(summarySpy).toHaveBeenCalledOnce();
+            expect(handleNoStudentExamSpy).not.toHaveBeenCalled();
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should display the summary when the retry succeeds', () => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            const studentExamWithExercises = new StudentExam();
+            studentExamWithExercises.id = 3;
+            studentExamWithExercises.exam = new Exam();
+            const summarySpy = vi
+                .spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary')
+                .mockReturnValueOnce(summaryError())
+                .mockReturnValueOnce(of(studentExamWithExercises));
+
+            comp.loadAndDisplaySummary();
+            expect(comp.summaryLoadFailed()).toBe(true);
+
+            comp.retryLoadSummary();
+
+            expect(summarySpy).toHaveBeenCalledTimes(2);
+            expect(comp.summaryLoadFailed()).toBe(false);
+            expect(comp.showExamSummary()).toBe(true);
+            expect(comp.studentExam()).toEqual(studentExamWithExercises);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should render a retryable error message instead of the summary', () => {
+            // let Angular run its own first change detection (which re-runs ngOnInit) before arranging the state under test
+            fixture.changeDetectorRef.detectChanges();
+
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.submitted = true;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.loadingExam()).toBe(false);
+            expect(comp.isExamSummaryVisible()).toBe(true);
+            expect(fixture.debugElement.query(By.css('#summaryLoadFailedMessage'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-exam-participation-summary'))).toBeNull();
+            // the submission hint carries its own summary button, which would compete with the retry
+            expect(fixture.debugElement.query(By.css('#showExamSummaryButton'))).toBeNull();
+
+            const retryButton = fixture.debugElement.query(By.css('#retryLoadSummaryButton'));
+            expect(retryButton).not.toBeNull();
+
+            summarySpy.mockClear();
+            retryButton.nativeElement.click();
+            expect(summarySpy).toHaveBeenCalledOnce();
+        });
+
+        it('should clear the error state when the reused component navigates to another exam', () => {
+            // The component instance is reused when only the :examId route parameter changes, so a failure on one exam
+            // must not leave its error message on the next one
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const summaryError = throwError(() => new HttpErrorResponse({ status: 500 }));
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError);
+            setRouteStudentExamId(activatedRoute, '3');
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary fails
+            params.next({ courseId: '1', examId: '2' });
+            expect(comp.summaryLoadFailed()).toBe(true);
+
+            // exam B: still active, so it takes the regular loading branch and never touches the summary
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            // the route no longer carries a studentExamId, so the component itself has to drop the test exam state of exam A
+            setRouteStudentExamId(activatedRoute, undefined);
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.testExam()).toBe(false);
+            expect(comp.studentExamId()).toBeUndefined();
+            expect(comp.summaryLoadFailed()).toBe(false);
+            comp.retryLoadSummary();
+            expect(examParticipationService.loadStudentExamWithExercisesForSummary).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not keep the previous exam on screen while the next one is still loading', () => {
+            // The conduction view is gated on exam()/studentExam() alone, so an exam left behind by the previous route
+            // keeps rendering over the exam that is currently loading.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: loaded and started by the student
+            params.next({ courseId: '1', examId: '2' });
+            comp.examStartConfirmed.set(true);
+            expect(comp.exam()).toBeDefined();
+
+            // exam B: its request never completes, so nothing may be rendered for it yet
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject<StudentExam>().asObservable());
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.exam()).toBeUndefined();
+            expect(comp.studentExam()).toBeUndefined();
+            expect(comp.examStartConfirmed()).toBe(false);
+        });
+
+        it('should display the summary of a submitted test exam without requesting it a second time', () => {
+            // A test exam is loaded through the summary endpoint already, and isExamSummaryPublished never gates a test
+            // exam while isOver() is true once it is submitted, so handleStudentExam used to repeat the very same GET.
+            // A transient failure of that repeat now replaces a summary that had already loaded with the error state,
+            // so the redundant request has to go.
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            setRouteStudentExamId(activatedRoute, '3');
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const submittedTestExam = new StudentExam();
+            submittedTestExam.id = 3;
+            submittedTestExam.submitted = true;
+            submittedTestExam.exam = new Exam();
+            submittedTestExam.exam.testExam = true;
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(submittedTestExam));
+
+            comp.ngOnInit();
+
+            expect(summarySpy).toHaveBeenCalledOnce();
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+            expect(comp.showExamSummary()).toBe(true);
+            expect(comp.summaryLoadFailed()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should stop the conduction work of the previous exam when navigating after it was started', () => {
+            // Clearing the signals is not enough: the autosave timer and the live-event subscriptions of the started
+            // exam keep running against the next one, and a second startAutoSaveTimer would overwrite the only handle
+            // to the previous interval, leaving it ticking past even ngOnDestroy.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            activeStudentExam.exercises = [];
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: loaded and started, so its autosave timer and subscriptions are live
+            params.next({ courseId: '1', examId: '2' });
+            comp.examStarted(activeStudentExam);
+            const previousInterval = comp.autoSaveInterval;
+            const previousWorkingTimeSubscription = comp.workingTimeUpdateEventsSubscription;
+            const previousProgrammingSubscription = new Subject<void>().subscribe();
+            comp['programmingSubmissionSubscriptions'].push(previousProgrammingSubscription);
+            expect(previousInterval).toBeDefined();
+            const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
+
+            // exam B: its request never completes, so nothing of exam A may still be running
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject<StudentExam>().asObservable());
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(clearIntervalSpy).toHaveBeenCalledWith(previousInterval);
+            expect(comp.autoSaveInterval).toBeUndefined();
+            expect(previousWorkingTimeSubscription?.closed).toBe(true);
+            expect(comp.workingTimeUpdateEventsSubscription).toBeUndefined();
+            expect(previousProgrammingSubscription.closed).toBe(true);
+            expect(comp['programmingSubmissionSubscriptions']).toEqual([]);
+        });
+
+        it('should not keep the previous exam on screen underneath a failed summary load', () => {
+            // The failure message is rendered above the conduction view rather than instead of it, so an exam surviving
+            // from the previous route would appear as the exam the error is about.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: an active exam the student is working on
+            params.next({ courseId: '1', examId: '2' });
+            expect(comp.exam()).toBeDefined();
+
+            // exam B: a test exam whose initial summary load fails
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            setRouteStudentExamId(activatedRoute, '9');
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.exam()).toBeUndefined();
+            expect(comp.studentExam()).toBeUndefined();
+        });
+
+        it('should leave summary mode when the reused component navigates from a loaded summary to an active exam', () => {
+            // A successful summary is the one piece of state no summary request resets, so without an explicit reset it
+            // survives the navigation and renders the next exam's conduction data as if it were a finished summary.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const summaryStudentExam = new StudentExam();
+            summaryStudentExam.id = 3;
+            summaryStudentExam.exam = new Exam();
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(summaryStudentExam));
+            setRouteStudentExamId(activatedRoute, '3');
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary loads successfully
+            params.next({ courseId: '1', examId: '2' });
+            comp.loadAndDisplaySummary();
+            expect(comp.showExamSummary()).toBe(true);
+
+            // exam B: still active, so it takes the regular loading branch and never touches the summary
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.showExamSummary()).toBe(false);
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.css('jhi-exam-participation-summary'))).toBeNull();
+        });
+
+        it('should ignore a summary failure of the previous exam that arrives after another exam started loading', () => {
+            // The summary request of exam A is still in flight when the route switches to exam B. Its failure must not
+            // restore the error state on B, nor install a retry that would re-request with B's route parameters.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const pendingSummary = new Subject<StudentExam>();
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(pendingSummary.asObservable());
+            setRouteStudentExamId(activatedRoute, '3');
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary request never completes before the navigation
+            params.next({ courseId: '1', examId: '2' });
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+
+            // exam B: still active, so it takes the regular loading branch
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            params.next({ courseId: '1', examId: '7' });
+
+            summarySpy.mockClear();
+            pendingSummary.error(new HttpErrorResponse({ status: 500 }));
+
+            expect(comp.summaryLoadFailed()).toBe(false);
+            comp.retryLoadSummary();
+            expect(summarySpy).not.toHaveBeenCalled();
+        });
+
+        it('should repeat the initial test exam load on retry rather than the show-summary request', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            setRouteStudentExamId(activatedRoute, '3');
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.ngOnInit();
+            expect(comp.summaryLoadFailed()).toBe(true);
+            summarySpy.mockClear();
+
+            comp.retryLoadSummary();
+
+            // the student exam id from the route is used again, not the id of an exam that never loaded
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+            expect(comp.summaryLoadFailed()).toBe(true);
+        });
+    });
+
     it('should reset Exam Layout in onExamEndConfirmed if it is a test exam', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const examLayoutStub = vi.spyOn(examParticipationService, 'resetExamLayout');
@@ -1675,6 +2040,9 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
+        // let Angular run its own first change detection (which runs ngOnInit, whose route emission resets the state of
+        // a previously displayed exam) before arranging the state under test
+        fixture.changeDetectorRef.detectChanges();
         comp.exam.set(new Exam());
         comp.exam().startDate = dayjs().subtract(1, 'hours');
         comp.studentExam.set(new StudentExam());

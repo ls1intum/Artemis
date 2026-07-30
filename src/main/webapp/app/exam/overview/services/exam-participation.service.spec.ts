@@ -76,6 +76,39 @@ describe('ExamParticipationService', () => {
         req.flush(returnedFromService);
     });
 
+    it('should fall back to the locally cached exam when the conduction request fails', async () => {
+        studentExam.id = 42;
+        service.saveStudentExamToLocalStorage(1, 1, studentExam);
+
+        let received: StudentExam | undefined;
+        service
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (received = resp));
+
+        httpMock.expectOne({ method: 'GET' }).error(new ProgressEvent('error'), { status: 500 });
+
+        expect(received).toBeDefined();
+        expect(received!.id).toBe(42);
+    });
+
+    it('should propagate the error and not fall back to the locally cached exam when the summary request fails', async () => {
+        studentExam.id = 42;
+        service.saveStudentExamToLocalStorage(1, 1, studentExam);
+
+        let received: StudentExam | undefined;
+        let error: unknown;
+        service
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
+            .pipe(take(1))
+            .subscribe({ next: (resp) => (received = resp), error: (err) => (error = err) });
+
+        httpMock.expectOne({ method: 'GET' }).error(new ProgressEvent('error'), { status: 500 });
+
+        expect(received).toBeUndefined();
+        expect(error).toBeInstanceOf(HttpErrorResponse);
+    });
+
     it('should load a student exam grade info for summary', async () => {
         const studentExamWithGrade: StudentExamWithGradeDTO = {
             maxPoints: 100,
