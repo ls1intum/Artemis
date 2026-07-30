@@ -16,6 +16,12 @@
     invariant. A BEFORE INSERT trigger populates the column, which is permitted because modifying
     NEW.* on the trigger's own table is not a prohibited self-update. Hibernate keeps inserting only
     (team_id, student_id), so the @ManyToMany @JoinTable mapping on Team.students is unchanged.
+
+    The order of the changesets below matters and must not be rearranged: the triggers are installed
+    directly after the nullable column, before the backfill and the constraints. Artemis nodes
+    running the previous version keep inserting only (team_id, student_id) while the migration runs,
+    so any such insert landing after the NOT NULL constraint but before the trigger would fail, and
+    one landing between the backfill and the NOT NULL constraint would fail the migration itself.
     -->
 
     <changeSet id="20260728221528-1-add-exercise-id-to-team-student" author="krusche">
@@ -27,32 +33,10 @@
         </addColumn>
     </changeSet>
 
-    <!-- Correlated subquery form works identically on MySQL and PostgreSQL. -->
-    <changeSet id="20260728221528-2-backfill-exercise-id" author="krusche">
-        <update tableName="team_student">
-            <column name="exercise_id"
-                    valueComputed="(SELECT t.exercise_id FROM team t WHERE t.id = team_student.team_id)"/>
-            <where>exercise_id IS NULL</where>
-        </update>
-        <!-- UpdateDataChange has no automatic inverse; rolling back changeset -1 drops the column
-             and with it the backfilled data, so an empty rollback is correct here. -->
-        <rollback/>
-    </changeSet>
-
-    <changeSet id="20260728221528-3-exercise-id-not-null" author="krusche">
-        <addNotNullConstraint tableName="team_student" columnName="exercise_id" columnDataType="bigint"/>
-    </changeSet>
-
-    <!-- The actual guarantee. Fails loudly if any installation already violates the invariant. -->
-    <changeSet id="20260728221528-4-unique-exercise-student" author="krusche">
-        <addUniqueConstraint tableName="team_student" columnNames="exercise_id, student_id"
-                             constraintName="uk_team_student_exercise_student"/>
-    </changeSet>
-
     <!-- Keep exercise_id populated for inserts issued by Hibernate, which only writes two columns.
          splitStatements=false is required: the body contains semicolons. Note there is deliberately
          no DELIMITER directive - that is a mysql client feature and is invalid over JDBC. -->
-    <changeSet id="20260728221528-5-set-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
+    <changeSet id="20260728221528-2-set-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
         <sql splitStatements="false"><![CDATA[
 CREATE TRIGGER team_student_set_exercise_id
 BEFORE INSERT ON team_student
@@ -68,7 +52,7 @@ END
         </rollback>
     </changeSet>
 
-    <changeSet id="20260728221528-6-set-exercise-id-function-postgresql" author="krusche" dbms="postgresql">
+    <changeSet id="20260728221528-3-set-exercise-id-function-postgresql" author="krusche" dbms="postgresql">
         <sql splitStatements="false"><![CDATA[
 CREATE OR REPLACE FUNCTION team_student_set_exercise_id() RETURNS TRIGGER AS $$
 DECLARE
@@ -87,7 +71,7 @@ $$ LANGUAGE plpgsql
         </rollback>
     </changeSet>
 
-    <changeSet id="20260728221528-7-set-exercise-id-trigger-postgresql" author="krusche" dbms="postgresql">
+    <changeSet id="20260728221528-4-set-exercise-id-trigger-postgresql" author="krusche" dbms="postgresql">
         <sql splitStatements="false"><![CDATA[
 CREATE TRIGGER team_student_set_exercise_id
 BEFORE INSERT ON team_student
@@ -96,6 +80,28 @@ FOR EACH ROW EXECUTE FUNCTION team_student_set_exercise_id()
         <rollback>
             <sql>DROP TRIGGER IF EXISTS team_student_set_exercise_id ON team_student</sql>
         </rollback>
+    </changeSet>
+
+    <!-- Correlated subquery form works identically on MySQL and PostgreSQL. -->
+    <changeSet id="20260728221528-5-backfill-exercise-id" author="krusche">
+        <update tableName="team_student">
+            <column name="exercise_id"
+                    valueComputed="(SELECT t.exercise_id FROM team t WHERE t.id = team_student.team_id)"/>
+            <where>exercise_id IS NULL</where>
+        </update>
+        <!-- UpdateDataChange has no automatic inverse; rolling back changeset -1 drops the column
+             and with it the backfilled data, so an empty rollback is correct here. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260728221528-6-exercise-id-not-null" author="krusche">
+        <addNotNullConstraint tableName="team_student" columnName="exercise_id" columnDataType="bigint"/>
+    </changeSet>
+
+    <!-- The actual guarantee. Fails loudly if any installation already violates the invariant. -->
+    <changeSet id="20260728221528-7-unique-exercise-student" author="krusche">
+        <addUniqueConstraint tableName="team_student" columnNames="exercise_id, student_id"
+                             constraintName="uk_team_student_exercise_student"/>
     </changeSet>
 
     <!-- The legacy advisory trigger is now redundant: the unique index enforces the invariant
