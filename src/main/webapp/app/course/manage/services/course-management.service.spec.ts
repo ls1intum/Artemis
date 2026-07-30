@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -183,6 +184,63 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course);
+    });
+
+    it('should convert all course date fields from server ISO strings to dayjs on find', () => {
+        const isoDates = {
+            startDate: '2026-10-14T14:00:00Z',
+            endDate: '2027-02-01T00:00:00Z',
+            enrollmentStartDate: '2026-10-14T14:00:00Z',
+            enrollmentEndDate: '2026-11-01T13:00:00Z',
+            unenrollmentEndDate: '2026-12-01T18:00:00Z',
+        } as const;
+        const serverCourse = { ...course, ...isoDates } as any;
+
+        courseManagementService
+            .find(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => {
+                const body = res.body!;
+                for (const field of Object.keys(isoDates) as (keyof typeof isoDates)[]) {
+                    const value = body[field];
+                    expect(dayjs.isDayjs(value)).toBe(true);
+                    expect((value as dayjs.Dayjs).isValid()).toBe(true);
+                    expect((value as dayjs.Dayjs).toISOString()).toBe(dayjs(isoDates[field]).toISOString());
+                }
+            });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` });
+        req.flush(serverCourse);
+    });
+
+    it('should leave null or absent course date fields as undefined on find', () => {
+        // start/end are explicitly null, the three enrollment fields are absent: both paths must yield undefined.
+        const serverCourse = {
+            ...course,
+            startDate: null,
+            endDate: null,
+            enrollmentStartDate: undefined,
+            enrollmentEndDate: undefined,
+            unenrollmentEndDate: undefined,
+        } as any;
+        delete serverCourse.enrollmentStartDate;
+        delete serverCourse.enrollmentEndDate;
+        delete serverCourse.unenrollmentEndDate;
+
+        courseManagementService
+            .find(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => {
+                const body = res.body!;
+                expect(body.startDate).toBeUndefined();
+                expect(body.endDate).toBeUndefined();
+                expect(body.enrollmentStartDate).toBeUndefined();
+                expect(body.enrollmentEndDate).toBeUndefined();
+                expect(body.unenrollmentEndDate).toBeUndefined();
+            });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` });
+        req.flush(serverCourse);
     });
 
     it('should set accessRights with by using the AccountService', () => {
