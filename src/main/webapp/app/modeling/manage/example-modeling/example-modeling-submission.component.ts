@@ -35,6 +35,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -452,7 +453,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return;
         }
 
-        const exampleSubmission = Object.assign({}, this.exampleSubmission());
+        const exampleSubmission = deepClone(this.exampleSubmission());
         const result = new Result();
         setLatestSubmissionResult(exampleSubmission.submission, result);
         delete result.submission;
@@ -463,8 +464,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     markAllFeedbackToCorrect() {
-        this.referencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
-        this.unreferencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
+        this.referencedFeedback.update((list) => list.map((feedback) => cloneWith(feedback, { correctionStatus: 'CORRECT' })));
+        this.unreferencedFeedback.update((list) => list.map((feedback) => cloneWith(feedback, { correctionStatus: 'CORRECT' })));
     }
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {

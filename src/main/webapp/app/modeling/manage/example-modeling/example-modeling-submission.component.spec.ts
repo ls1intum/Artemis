@@ -268,7 +268,13 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(exampleSubmission, exerciseId);
+        // checkAssessment sends a detached copy carrying the new result, so the component's own example submission is
+        // no longer mutated as a side effect.
+        const [sentExampleSubmission, sentExerciseId] = assessExampleSubmissionSpy.mock.calls[0];
+        expect(sentExerciseId).toBe(exerciseId);
+        expect(sentExampleSubmission.submission!.id).toBe(exampleSubmission.submission!.id);
+        expect(sentExampleSubmission.submission!.latestResult).toBeDefined();
+        expect(exampleSubmission.submission!.latestResult).toBeUndefined();
     });
 
     it('should check invalid assessment', () => {

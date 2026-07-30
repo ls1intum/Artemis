@@ -49,6 +49,7 @@ import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -580,7 +581,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (submissionPatch.participation?.exercise) {
                 submissionPatch.participation.exercise.studentParticipations = [];
             }
-            this.submissionPatchObservable.next(Object.assign({}, submissionPatch));
+            this.submissionPatchObservable.next(deepClone(submissionPatch));
         }
     }
 
