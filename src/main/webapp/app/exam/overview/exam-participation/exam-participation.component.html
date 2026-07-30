@@ -11,7 +11,8 @@
         }
         <p-message id="summaryLoadFailedMessage" severity="error" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
             <div class="flex flex-col items-start gap-2">
-                <h6 class="mb-0" jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.title"></h6>
+                <!-- <strong> rather than a heading + Tailwind weight utility: PrimeNG injects its component CSS unlayered, so it wins over Tailwind's @layer utilities -->
+                <strong jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.title"></strong>
                 <span jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.explanation"></span>
                 <button pButton type="button" id="retryLoadSummaryButton" size="small" [disabled]="loadingExam()" (click)="retryLoadSummary()">
                     {{ 'artemisApp.examParticipation.summaryLoadFailed.retry' | artemisTranslate }}
