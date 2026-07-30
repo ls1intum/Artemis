@@ -1,5 +1,6 @@
 import { EditorOptions } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export const SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
     // Hide the gutter
@@ -47,8 +48,4 @@ const defaultMarkdownOptions: EditorOptions = {
 
 export const DEFAULT_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(defaultMarkdownOptions);
 
-export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
-    ...defaultMarkdownOptions,
-    // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
-    fixedOverflowWidgets: true,
-});
+export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(cloneWith(defaultMarkdownOptions, { fixedOverflowWidgets: true }));
