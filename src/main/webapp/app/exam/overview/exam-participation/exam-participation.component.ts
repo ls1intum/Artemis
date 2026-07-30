@@ -238,7 +238,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // may survive into the next one: neither an in-flight request, nor a summary failure, nor a summary that is
             // still on screen (not every branch below goes through a summary request that would reset those), nor the
             // route parameters themselves.
-            this.resetForNewLoad();
+            this.resetForNewRoute();
             this.examId.set(parseInt(params['examId'], 10));
             this.testRunId.set(parseInt(params['testRunId'], 10));
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
@@ -337,6 +337,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.cancelPendingExamLoad();
         this.clearFailedSummaryLoad();
         this.showExamSummary.set(false);
+    }
+
+    /**
+     * Drops everything the previous exam left on screen, on top of {@link resetForNewLoad}. Only the route subscription
+     * may call this: a summary load stays within one exam and has to keep the exam it is loading the summary for.
+     * <p>
+     * The conduction view is gated on {@link exam} and {@link studentExam} alone, so leaving them set would keep the
+     * previous exam rendered while the next one loads, and keep it rendered underneath the message if that load fails.
+     * The remaining signals decide how that view is rendered, and each of them describes the previous exam: an exam the
+     * student confirmed the start of would make the next one skip its start cover, and a handed-in or ended one would
+     * make the next one look like it was already over (#13317).
+     */
+    private resetForNewRoute(): void {
+        this.resetForNewLoad();
+        this.exam.set(undefined!);
+        this.studentExam.set(undefined!);
+        this.examStartConfirmed.set(false);
+        this.handInEarly.set(false);
+        this.activeExamPage.set(new ExamPage());
+        this.individualStudentEndDate.set(undefined!);
+        this.individualStudentEndDateWithGracePeriod.set(undefined!);
     }
 
     /**

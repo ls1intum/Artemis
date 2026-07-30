@@ -419,7 +419,13 @@ describe('ExamParticipationComponent', () => {
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
-    const testExamStarted = (studentExam: StudentExam) => {
+    /**
+     * @param studentExam    the student exam to start
+     * @param prepareForStart installs the exam state under test. It runs after ngOnInit, because the route emission
+     *                        there resets whatever the previously displayed exam left behind, exactly as a real
+     *                        navigation does, so state arranged before it would be dropped again.
+     */
+    const testExamStarted = (studentExam: StudentExam, prepareForStart?: () => void) => {
         const exerciseWithParticipation = (type: 'programming' | 'modeling', withSubmission: boolean) => {
             let exercise = new ProgrammingExercise(new Course(), undefined);
             if (type === 'modeling') {
@@ -446,6 +452,7 @@ describe('ExamParticipationComponent', () => {
             } as ProgrammingSubmissionStateObj),
         ));
         comp.ngOnInit();
+        prepareForStart?.();
         const firstExercise = exerciseWithParticipation('programming', false);
         const secondExercise = exerciseWithParticipation('modeling', true);
 
@@ -480,9 +487,10 @@ describe('ExamParticipationComponent', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
         studentExam.testRun = true;
-        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
-        comp.exam.set(new Exam());
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+            comp.exam.set(new Exam());
+        });
     });
 
     it('should initialize test exam', () => {
@@ -491,22 +499,23 @@ describe('ExamParticipationComponent', () => {
         exam.testExam = true;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
-        comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
-        comp.exam.set(exam);
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
+            comp.exam.set(exam);
+        });
     });
 
     it('should initialize exercise without test run', () => {
         // Should calculate time from exam start date when no test run, rest does not get effected
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        comp.ngOnInit();
         const startDate = dayjs();
-        comp.exam.set(new Exam());
-        comp.exam().startDate = dayjs(startDate);
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
-        testExamStarted(studentExam);
+        testExamStarted(studentExam, () => {
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs(startDate);
+        });
         expect(comp.individualStudentEndDate()).toEqual(startDate.add(workingTime, 'seconds'));
     });
 
@@ -1448,10 +1457,14 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
-        comp.studentExam.set(new StudentExam());
-        comp.studentExam().exercises = [exercise0, exercise1];
         comp.ngOnInit();
-        comp.examStarted(comp.studentExam());
+        // after ngOnInit: its route emission resets whatever the previously displayed exam left behind, so the exam
+        // under test is installed afterwards, exactly as a real load does
+        comp.exam.set(new Exam());
+        comp.exam().startDate = dayjs().subtract(1, 'hours');
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exercise0, exercise1];
+        comp.examStarted(studentExam);
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
@@ -1671,6 +1684,64 @@ describe('ExamParticipationComponent', () => {
             expect(examParticipationService.loadStudentExamWithExercisesForSummary).toHaveBeenCalledTimes(1);
         });
 
+        it('should not keep the previous exam on screen while the next one is still loading', () => {
+            // The conduction view is gated on exam()/studentExam() alone, so an exam left behind by the previous route
+            // keeps rendering over the exam that is currently loading.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: loaded and started by the student
+            params.next({ courseId: '1', examId: '2' });
+            comp.examStartConfirmed.set(true);
+            expect(comp.exam()).toBeDefined();
+
+            // exam B: its request never completes, so nothing may be rendered for it yet
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject<StudentExam>().asObservable());
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.exam()).toBeUndefined();
+            expect(comp.studentExam()).toBeUndefined();
+            expect(comp.examStartConfirmed()).toBe(false);
+        });
+
+        it('should not keep the previous exam on screen underneath a failed summary load', () => {
+            // The failure message is rendered above the conduction view rather than instead of it, so an exam surviving
+            // from the previous route would appear as the exam the error is about.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const activeStudentExam = new StudentExam();
+            activeStudentExam.id = 3;
+            activeStudentExam.exam = new Exam();
+            activeStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            activeStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(activeStudentExam));
+            setRouteStudentExamId(activatedRoute, undefined);
+            comp.ngOnInit();
+
+            // exam A: an active exam the student is working on
+            params.next({ courseId: '1', examId: '2' });
+            expect(comp.exam()).toBeDefined();
+
+            // exam B: a test exam whose initial summary load fails
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            setRouteStudentExamId(activatedRoute, '9');
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.exam()).toBeUndefined();
+            expect(comp.studentExam()).toBeUndefined();
+        });
+
         it('should leave summary mode when the reused component navigates from a loaded summary to an active exam', () => {
             // A successful summary is the one piece of state no summary request resets, so without an explicit reset it
             // survives the navigation and renders the next exam's conduction data as if it were a finished summary.
@@ -1782,6 +1853,9 @@ describe('ExamParticipationComponent', () => {
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
         exercise1.id = 6;
+        // let Angular run its own first change detection (which runs ngOnInit, whose route emission resets the state of
+        // a previously displayed exam) before arranging the state under test
+        fixture.changeDetectorRef.detectChanges();
         comp.exam.set(new Exam());
         comp.exam().startDate = dayjs().subtract(1, 'hours');
         comp.studentExam.set(new StudentExam());
