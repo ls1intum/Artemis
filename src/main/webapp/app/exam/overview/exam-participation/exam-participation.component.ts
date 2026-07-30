@@ -174,7 +174,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
-    studentExamSubscription?: Subscription;
+    /**
+     * The exam load belonging to the current route (test run, test exam summary, or own student exam). It is cancelled
+     * whenever the route changes, see {@link cancelPendingExamLoad}.
+     */
+    examLoadSubscription?: Subscription;
 
     readonly sidebarData = signal<SidebarData>(undefined!);
     readonly sidebarExercises = signal<SidebarCardElement[]>([]);
@@ -230,20 +234,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseId.set(parseInt(courseId, 10));
         });
         this.route.params.subscribe((params) => {
+            // This component is reused when only the :examId parameter changes, so nothing derived from the previous exam
+            // may survive into the next one: neither an in-flight request, nor a summary failure (not every branch below
+            // goes through a summary request that would reset it), nor the route parameters themselves.
+            this.cancelPendingExamLoad();
+            this.clearFailedSummaryLoad();
             this.examId.set(parseInt(params['examId'], 10));
             this.testRunId.set(parseInt(params['testRunId'], 10));
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
-            if (studentExamId) {
-                this.testExam.set(true);
-                this.studentExamId.set(parseInt(studentExamId, 10));
-            }
+            this.testExam.set(!!studentExamId);
+            this.studentExamId.set(studentExamId ? parseInt(studentExamId, 10) : undefined!);
             this.loadingExam.set(true);
-            // This component is reused when only the :examId parameter changes, so a summary failure on the previous exam
-            // must not leave its error state behind: not every branch below goes through a summary request that resets it
-            this.clearFailedSummaryLoad();
             if (this.testRunId()) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
+                this.examLoadSubscription = this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                     next: (studentExam) => {
                         this.studentExam.set(studentExam);
                         studentExam.exam!.course = new Course();
@@ -259,7 +263,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else if (this.testExam() && this.studentExamId()) {
                 this.loadTestExamStudentExamForSummary();
             } else {
-                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -291,8 +295,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
+        this.cancelPendingExamLoad();
         this.clearFailedSummaryLoad();
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
+        this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
                 this.studentExam.set(studentExamWithExercises);
                 this.showExamSummary.set(true);
@@ -312,8 +317,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * initial load, so it also has to set up the exam itself; the summary is then displayed by {@link handleStudentExam}.
      */
     private loadTestExamStudentExamForSummary(): void {
+        this.cancelPendingExamLoad();
         this.clearFailedSummaryLoad();
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
+        this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
             next: (studentExam) => {
                 this.handleStudentExam(studentExam);
             },
@@ -321,6 +327,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
             },
         });
+    }
+
+    /**
+     * Drops the exam load that is still in flight, if any. Without this, a response arriving after the route changed
+     * would apply to the exam that is no longer displayed: a late failure would restore the error state that was just
+     * cleared, together with a retry callback reading the route parameters of the exam now being loaded (#13317).
+     */
+    private cancelPendingExamLoad(): void {
+        this.examLoadSubscription?.unsubscribe();
+        this.examLoadSubscription = undefined;
     }
 
     /**
@@ -747,7 +763,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
-        this.studentExamSubscription?.unsubscribe();
+        this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
         window.clearInterval(this.autoSaveInterval);
     }

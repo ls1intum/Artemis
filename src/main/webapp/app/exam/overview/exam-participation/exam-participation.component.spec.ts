@@ -1655,14 +1655,48 @@ describe('ExamParticipationComponent', () => {
             ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
             ongoingStudentExam.workingTime = 3600;
             vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            // the route no longer carries a studentExamId, so the component itself has to drop the test exam state of exam A
             (activatedRoute as any).firstChild = undefined;
-            comp.testExam.set(false);
-            comp.studentExamId.set(undefined!);
             params.next({ courseId: '1', examId: '7' });
 
+            expect(comp.testExam()).toBe(false);
+            expect(comp.studentExamId()).toBeUndefined();
             expect(comp.summaryLoadFailed()).toBe(false);
             comp.retryLoadSummary();
             expect(examParticipationService.loadStudentExamWithExercisesForSummary).toHaveBeenCalledTimes(1);
+        });
+
+        it('should ignore a summary failure of the previous exam that arrives after another exam started loading', () => {
+            // The summary request of exam A is still in flight when the route switches to exam B. Its failure must not
+            // restore the error state on B, nor install a retry that would re-request with B's route parameters.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const pendingSummary = new Subject<StudentExam>();
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(pendingSummary.asObservable());
+            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary request never completes before the navigation
+            params.next({ courseId: '1', examId: '2' });
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+
+            // exam B: still active, so it takes the regular loading branch
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            (activatedRoute as any).firstChild = undefined;
+            params.next({ courseId: '1', examId: '7' });
+
+            summarySpy.mockClear();
+            pendingSummary.error(new HttpErrorResponse({ status: 500 }));
+
+            expect(comp.summaryLoadFailed()).toBe(false);
+            comp.retryLoadSummary();
+            expect(summarySpy).not.toHaveBeenCalled();
         });
 
         it('should repeat the initial test exam load on retry rather than the show-summary request', () => {
