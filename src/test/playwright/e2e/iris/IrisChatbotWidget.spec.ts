@@ -9,6 +9,14 @@ import { Commands } from '../../support/commands';
 import { IrisChatbotWidget } from '../../support/pageobjects/iris/IrisChatbotWidget';
 
 // Course 9022 (lectureManagement); studentOne (artemis_test_user_1) is enrolled.
+//
+// Keep this student distinct from IrisActivityFeed.spec.ts: the server reuses today's still-empty
+// COURSE_CHAT session per (user, course), so two specs running in parallel as the same student in the
+// same course would share one chat session and see each other's messages (issue #13301).
+//
+// The same applies WITHIN this file — `fullyParallel: true` parallelises tests in a file too, so the two
+// tests below also share one session. That is only safe because the first test never asserts on message
+// content. Any new test here that does must either use its own student or start a new chat first.
 const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as Course;
 
 /**
