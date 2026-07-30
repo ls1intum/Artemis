@@ -207,7 +207,10 @@ Organized by feature module:
     - `structuredClone()` is the worst option: it does not preserve prototypes, so a cloned `dayjs` date comes back as a plain object without its methods
     - Object spread (`{ ...obj }`) and `Object.assign({}, obj)` only copy one level deep, so nested objects and arrays stay shared with the original and later edits mutate both
     - This is why signal updates need care: a signal only notifies when the reference changes, so replace the object rather than mutating it — `const updated = deepClone(current); updated.field = value; return updated;` See `AccountService.setImageUrl` for the canonical pattern
-    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
+    - Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }` in a single expression (source deep-cloned, overrides applied by reference), and `hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server DTO a prototype
+    - Enforced by `localRules/prefer-deep-clone` (error, production client TS; specs exempt). Importing `cloneDeep` from `lodash-es` is blocked by `no-restricted-imports` so all copying goes through the wrappers
+    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably, as does object rest in destructuring (`const { id, ...rest } = post`)
+    - Rare exceptions — where only the top-level reference may change, or a nested value cannot survive cloning — need `// eslint-disable-next-line localRules/prefer-deep-clone -- <reason>` with the reason stated
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
 - **UI components: Use PrimeNG instead of Bootstrap components**

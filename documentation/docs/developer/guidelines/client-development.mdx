@@ -519,10 +519,27 @@ Do one of these:
 
 ### Cloning objects
 
-Copy objects with `deepClone` from `app/foundation/util/deep-clone.util` (a thin wrapper over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign({}, obj)` to copy an entity-like object — anything that may hold a `dayjs` date, a nested object, a `Map`/`Set`, or a circular reference.
+Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wrappers over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign` on an object — enforced in production client code by `localRules/prefer-deep-clone`.
+
+| Helper                       | Replaces                                           | Use for                                                    |
+| ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
+| `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
+
+`cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
+`cloneWith(option, { selected: signal(false) })` keeps the live signal instead of cloning it into a dead copy. Its
+result is typed `T & U`, so a call may add fields the source type does not declare.
+
+`hydrate` mutates and returns its target. Reach for it only when populating an object you just created, or when
+mutating in place is the deliberate intent; to derive a modified copy of an existing object use `cloneWith`, which
+leaves the original untouched.
+
+Importing lodash `cloneDeep` directly is blocked by `no-restricted-imports`: everything goes through these wrappers so
+there is a single place to change the implementation.
 
 ```ts
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 // Don't - structuredClone() does not preserve prototypes, so `startDate` loses every dayjs
 // method and `copy.startDate.format(...)` throws at runtime. Worse, `dayjs.isDayjs(copy.startDate)`
@@ -537,6 +554,9 @@ const copy = Object.assign({}, lecture);
 // Do
 const copy = deepClone(lecture);
 copy.title = 'New title';
+
+// Do - or in a single expression, which keeps signal updates on one line
+const renamed = cloneWith(lecture, { title: 'New title' });
 ```
 
 Why each alternative fails:
@@ -546,6 +566,7 @@ Why each alternative fails:
 | `structuredClone()`      | Drops prototypes — `dayjs` dates (and other class instances) lose their methods, while `isDayjs()` still says true |
 | `{ ...obj }`             | One level deep only — nested objects/arrays stay shared with the original                                          |
 | `Object.assign({}, obj)` | Same shallow-copy problem, and it reads as if the result were independent when it is not                           |
+| `Object.assign(obj, …)`  | Also mutates `obj` in place, which emits no signal notification because a signal compares with `Object.is`         |
 
 This matters most for **signals**, which only notify when the reference changes (see [Zoneless change detection & signal-based state](#zoneless-change-detection--signal-based-state)). Replace the object instead of mutating it:
 
@@ -566,7 +587,27 @@ this.userIdentity.update((current) => {
 Two things this rule does **not** cover:
 
 - **Arrays.** Array spread is the documented way to append immutably: `this.items.update((items) => [...items, newItem])`. Reach for `deepClone` only when you need the array's _elements_ detached as well.
-- **Merging a couple of primitive fields onto a fresh literal.** Writing the literal out is clearer than cloning; the rule targets copies of existing entity objects.
+- **Object rest in destructuring.** `const { id, ...rest } = post` reads properties rather than copying an object into a new one, and stays allowed.
+
+Writing out a fresh object literal is of course still fine — the rule only fires when you spread or assign an existing
+object into one. Prefer the literal when you are constructing a payload from individual fields rather than copying.
+
+#### When a shallow copy is genuinely required
+
+A deep clone detaches the whole graph, which is occasionally wrong. Two cases justify keeping a shallow copy behind
+`// eslint-disable-next-line localRules/prefer-deep-clone -- <reason>`, and both need the reason spelled out:
+
+- **Only the top-level reference may change.** Code that rebuilds a reference purely so a signal or observable notifies
+  must not detach the nested associations, or template `track`-by-identity re-creates every row and child inputs
+  re-notify on each change-detection pass — which ends in `NG0103`. `CourseUpdateComponent.commitCourse` and
+  `MetisService.createReaction` are the in-tree examples.
+- **A nested value cannot survive cloning.** lodash returns the original reference for tags it does not recognise
+  (`File`, `Blob`, DOM nodes, functions and therefore signals), so those pass through safely — but a class instance
+  lodash rebuilds from its prototype plus a shallow property copy does not. An RxJS `Subject` cloned this way looks
+  alive yet is disconnected from the original's subscribers.
+
+Assembling a view object from parts that must stay reference-identical usually reads better as explicit field
+assignments than as a disabled copy — see the `GradingComponent.gradingScale` getter.
 
 ### Prettier and ESLint
 
