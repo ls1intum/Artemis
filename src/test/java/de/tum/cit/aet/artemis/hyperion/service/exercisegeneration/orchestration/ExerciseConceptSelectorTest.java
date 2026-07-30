@@ -63,10 +63,12 @@ class ExerciseConceptSelectorTest {
                         "Student-owned reasoning:", "Likely supplied support:")
                 .contains("selection, injection, replacement, or delegation", "students implement", "same caller goal", "overlapping valid inputs")
                 .contains("Student-owned objective is exhaustive", "every consequential behavior students implement", "not proof that students implement it")
-                .contains("concrete qualitative control flow or data transformation", "distinct rules", "do not count")
+                .contains("concrete qualitative", "decision dependencies or data transformation", "one viable control flow", "must not require its syntax", "distinct rules",
+                        "do not count")
                 .contains("When the brief requests interchangeable variants", "write `Not applicable`", "must not invent strategies")
                 .contains("same caller-requested responsibility", "semantic meaning of the result", "must not change the operation")
                 .contains("do not prescribe exact class names", "method signatures", "formulas", "worked-example values")
+                .contains("choose a qualitative domain", "must not prescribe", "closed label list", "domain pressure")
                 .contains("semantic difference", "later", "specification", "facts, not a defense")
                 .doesNotContain("specify enough deterministic decision logic", "tie behavior", "justify why the candidate is intermediate", "Dijkstra", "routing");
     }
@@ -91,6 +93,7 @@ class ExerciseConceptSelectorTest {
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
         verify(loop, times(2)).runTextSession(anyString(), eq(null), prompts.capture(), anyInt(), any(), any(), any());
         assertThat(prompts.getAllValues().get(1)).contains("learner-owned learning fit", "objective-relative difficulty", "domain", "grounding")
+                .contains("Preserve a sound central interaction", "leave that detail open", "only when the interaction itself failed")
                 .doesNotContain("Every candidate is scalar formula transcription.", "clock repair", "potion scoring", "fragmented radio transmissions");
     }
 

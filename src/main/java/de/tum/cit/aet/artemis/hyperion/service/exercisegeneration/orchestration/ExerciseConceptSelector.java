@@ -37,8 +37,9 @@ public class ExerciseConceptSelector {
 
     private static final String REPLACEMENT_FEEDBACK = """
             The previous batch failed at least one of brief coverage, learner-owned learning fit, objective-relative difficulty after incidental boilerplate is removed, domain
-            grounding, or feasibility and proportionality. Generate genuinely different central interactions and satisfy every axis directly; do not rename or embellish a
-            rejected idea.
+            grounding, feasibility and proportionality, or concept-level precision. Preserve a sound central interaction when the defect is only an exact value, API, label set,
+            validation rule, or implementation mandate that belongs in the later specification; leave that detail open instead of merely renaming it. Generate a genuinely
+            different central interaction only when the interaction itself failed learning fit, grounding, equivalence, or feasibility.
             """;
 
     private static final String SYSTEM_PROMPT = """
@@ -64,9 +65,14 @@ public class ExerciseConceptSelector {
 
             A concept chooses a qualitative domain interaction, not its specification. Unless the brief already supplies them, do not include numeric literals, enum-member lists,
             exact transition tables, class or member names, exception types, return sentinels, or required implementation constructs; the later SPEC stage owns those decisions.
+            An open brief expects you to choose a qualitative domain, caller goal, and semantic outcome roles. Such roles may explain what outcomes mean, but must not prescribe
+            the exact returned strings, a closed label list, boundary count, or API. Real constraint must be a domain pressure that makes the behavior natural, never an invented
+            programming-technique mandate.
             Keep each field concise. Student-owned objective is exhaustive: name every consequential behavior students implement, including concrete policies when students own
-            them. Student-owned reasoning must state the concrete qualitative control flow or data transformation that remains after signatures and routine wiring are removed,
-            without prematurely fixing exact formulas or constants. Generic phrases such as `distinct rules`, `processes the input`, or `computes a result` do not count.
+            them, but describe behavior dimensions rather than specification-owned values, names, or partitions. Student-owned reasoning must state the concrete qualitative
+            decision dependencies or data transformation that remains after signatures and routine wiring are removed, without prematurely fixing exact formulas or constants.
+            It may illustrate one viable control flow, but must not require its syntax, comparison order, or construct when another implementation has the same public behavior.
+            Generic phrases such as `distinct rules`, `processes the input`, or `computes a result` do not count.
             Anything named only under Alternative policies is behavior to describe, not proof that students implement it. When the brief requests interchangeable variants
             such as Strategy, students must own at least one collaboration seam—selection, injection, replacement, or delegation—in addition to any concrete policy bodies; do
             not assign that collaboration to likely supplied support. Likely supplied support may contain only incidental input data, setup, and infrastructure.

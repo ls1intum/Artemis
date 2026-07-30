@@ -59,7 +59,9 @@ class CriticPromptContractTest {
                 // Selected-concept admission: independently reject invented, unobservable, or behaviorally redundant constraints before they become provenance.
                 rows(CONCEPT_ADMISSION, "instructor brief is the sole authority", "admission reviewer, not a designer", "public-API-equivalent implementations",
                         "normalize the candidate's claimed cases into public traces", "smallest behaviorally equivalent implementation independently",
-                        "unsupportedChoices, unobservableRequirements, and redundantDistinctions are all empty", "\"admissible\":false"),
+                        "unsupportedChoices, unobservableRequirements, and redundantDistinctions are all empty", "\"admissible\":false",
+                        "expects a concept to instantiate a qualitative domain", "Do not flag those choices merely because the brief left them open",
+                        "may describe one viable implementation", "does not constrain all", "normative field", "not redundant concept distinctions"),
 
                 // Specification review: the pre-freeze brief-to-spec audit.
                 rows(SPECIFICATION_REVIEW, "Design ownership table", "template supplies a type marked `student-creates`", "correct table does not cancel contradictory prose",
