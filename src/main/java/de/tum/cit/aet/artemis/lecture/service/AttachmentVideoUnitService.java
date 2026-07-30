@@ -4,8 +4,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,14 +24,18 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureEnabled.class)
 @Service
@@ -47,6 +52,12 @@ public class AttachmentVideoUnitService {
 
     private final AttachmentFileHashService attachmentFileHashService;
 
+    private final LectureContentUpdateClassifierService lectureContentUpdateClassifierService;
+
+    private final SlideRepository slideRepository;
+
+    private final IrisLectureUnitSyncService irisLectureUnitSyncService;
+
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -57,11 +68,15 @@ public class AttachmentVideoUnitService {
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService) {
+            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService,
+            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.attachmentFileHashService = attachmentFileHashService;
+        this.lectureContentUpdateClassifierService = lectureContentUpdateClassifierService;
+        this.slideRepository = slideRepository;
+        this.irisLectureUnitSyncService = irisLectureUnitSyncService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -87,6 +102,7 @@ public class AttachmentVideoUnitService {
 
         // Trigger automated content processing (transcription and ingestion)
         contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+        irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(buildSnapshot(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -107,7 +123,7 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
-        int payloadFingerprintBeforeUpdate = buildIngestionPayloadFingerprint(existingAttachmentVideoUnit);
+        LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
@@ -116,10 +132,13 @@ public class AttachmentVideoUnitService {
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
+        Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            fileUpdateResult = AttachmentFileUpdateResult.attachmentAdded(existingAttachmentVideoUnit.getAttachment().getVersion());
             createdNewAttachment = true;
         }
 
@@ -132,14 +151,15 @@ public class AttachmentVideoUnitService {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
                 if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                    projectedSlideHiddenUntilBySlideNumber = Map.of();
                 }
             }
             else if (existingAttachment != null) {
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
                 if (hasUploadedFile) {
-                    AttachmentFileUpdateResult fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                     if (fileUpdateResult.fileBytesChanged()) {
                         log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
                                 fileUpdateResult.newVersion());
@@ -150,51 +170,85 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
+                if (!hasUploadedFile && hiddenPages != null) {
+                    slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
+                }
+
                 // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
                 // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
                 if (updateFile != null) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null));
+                            if (fileUpdateResult.fileBytesChanged()) {
+                                projectedSlideHiddenUntilBySlideNumber = Map.of();
+                            }
                         }
                         else {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
+                            projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
                         }
                     }
                 }
             }
         }
 
-        // Trigger content processing if the ingestion payload changed and prepare unit for client response
-        triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
+        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
+        var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
 
-    private void triggerContentProcessingBasedOnPayloadChange(int payloadFingerprintBeforeUpdate, AttachmentVideoUnit savedAttachmentVideoUnit) {
-        int payloadFingerprintAfterUpdate = buildIngestionPayloadFingerprint(savedAttachmentVideoUnit);
-        boolean ingestionPayloadChanged = payloadFingerprintBeforeUpdate != payloadFingerprintAfterUpdate;
-
-        if (!ingestionPayloadChanged) {
-            // No changes in the ingestion payload - skip processing entirely
+    private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
+            Set<LectureContentUpdateKind> updateKinds) {
+        if (updateKinds.isEmpty()) {
             return;
         }
 
-        // Something changed in the payload (could be metadata or content)
-        // Use triggerProcessingForMetadataChange to force reprocessing even if only metadata changed
-        contentProcessingService.ifPresent(api -> api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit));
+        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
+            contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
+            irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
+            irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(afterSnapshot);
+        }
     }
 
-    private int buildIngestionPayloadFingerprint(AttachmentVideoUnit unit) {
-        var lecture = unit.getLecture();
-        var course = lecture != null ? lecture.getCourse() : null;
-        var attachment = unit.getAttachment();
-        return Objects.hash(unit.getId(), unit.getName(), lecture != null ? lecture.getId() : null, lecture != null ? lecture.getTitle() : null,
-                course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
-                attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
-                unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
+        return buildSnapshot(unit, null);
+    }
+
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
+        Lecture lecture = unit.getLecture();
+        Course course = lecture != null ? lecture.getCourse() : null;
+        Attachment attachment = unit.getAttachment();
+
+        return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
+                course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
+                unit.getVideoSource(), unit.resolveReleaseDate(),
+                projectedSlideHiddenUntilBySlideNumber != null ? projectedSlideHiddenUntilBySlideNumber : buildSlideHiddenUntilBySlideNumber(unit.getId()));
+    }
+
+    private static Map<Integer, ZonedDateTime> buildProjectedSlideHiddenUntilBySlideNumber(List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
+        var hiddenUntilBySlideId = new LinkedHashMap<String, ZonedDateTime>();
+        if (hiddenPages != null) {
+            hiddenPages.forEach(hiddenPage -> hiddenUntilBySlideId.put(hiddenPage.slideId(), hiddenPage.date()));
+        }
+
+        var hiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
+        pageOrder.forEach(page -> hiddenUntilBySlideNumber.put(page.order(), hiddenUntilBySlideId.get(page.slideId())));
+        return hiddenUntilBySlideNumber;
+    }
+
+    private Map<Integer, ZonedDateTime> buildSlideHiddenUntilBySlideNumber(Long attachmentVideoUnitId) {
+        return SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId));
     }
 
     private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {

@@ -201,6 +201,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+            expect(component.editForm.controls['isTestUser']).toBeDefined();
         });
 
         it('should include SUPER_ADMIN authority when current user is a super admin', () => {
@@ -640,6 +641,24 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
+        });
+
+        it('should patch the isTestUser flag so the checkbox reflects the persisted value', () => {
+            const testUser = new User(123);
+            testUser.isTestUser = true;
+            component.user.set(testUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBe(true);
+        });
+
+        it('should leave the isTestUser checkbox unchecked for a user that is not flagged', () => {
+            component.user.set(new User(123));
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBeFalsy();
         });
     });
 

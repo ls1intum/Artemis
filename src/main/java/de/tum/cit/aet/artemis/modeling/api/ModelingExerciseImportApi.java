@@ -34,26 +34,26 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
     }
 
     /**
-     * Imports a modeling exercise from the source exercise.
+     * Imports a modeling exercise, taking the content from the source exercise (looked up by id).
      *
      * @param sourceExerciseId the id of the source exercise to import from
-     * @param targetExercise   the target exercise to import into
+     * @param newExercise      the exercise to build; carries the destination and any overrides
      * @return the imported exercise, or empty if the source exercise was not found
      */
-    public Optional<ModelingExercise> importModelingExercise(long sourceExerciseId, @NonNull ModelingExercise targetExercise) {
-        Optional<ModelingExercise> optionalOriginal = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(sourceExerciseId);
-        return optionalOriginal.map(modelingExercise -> modelingExerciseImportService.importModelingExercise(modelingExercise, targetExercise));
+    public Optional<ModelingExercise> importModelingExercise(long sourceExerciseId, @NonNull ModelingExercise newExercise) {
+        Optional<ModelingExercise> optionalSource = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(sourceExerciseId);
+        return optionalSource.map(sourceExercise -> modelingExerciseImportService.importModelingExercise(newExercise, sourceExercise));
     }
 
     /**
-     * Imports a modeling exercise from a template exercise into a target exercise.
+     * Imports a modeling exercise, taking the content from {@code sourceExercise}.
      *
-     * @param templateExercise the template exercise to import from
-     * @param targetExercise   the target exercise to import into
+     * @param newExercise    the exercise to build; carries the destination and any overrides
+     * @param sourceExercise the original exercise whose content is copied
      * @return the imported exercise
      */
-    public ModelingExercise importModelingExercise(ModelingExercise templateExercise, @NonNull ModelingExercise targetExercise) {
-        return modelingExerciseImportService.importModelingExercise(templateExercise, targetExercise);
+    public ModelingExercise importModelingExercise(@NonNull ModelingExercise newExercise, ModelingExercise sourceExercise) {
+        return modelingExerciseImportService.importModelingExercise(newExercise, sourceExercise);
     }
 
     /**

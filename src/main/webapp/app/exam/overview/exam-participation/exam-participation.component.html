@@ -1,6 +1,26 @@
 @if (!!testRunId()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
+@if (summaryLoadFailed()) {
+    <!-- Persistent error state instead of the summary. Substituting the exam cached on this device would show a result-less exam as the current summary (#13317). -->
+    <div class="flex flex-col gap-2 p-4">
+        @if (isSidebarCollapsed()) {
+            <div>
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            </div>
+        }
+        <p-message id="summaryLoadFailedMessage" severity="error" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
+            <div class="flex flex-col items-start gap-2">
+                <!-- <strong> rather than a heading + Tailwind weight utility: PrimeNG injects its component CSS unlayered, so it wins over Tailwind's @layer utilities -->
+                <strong jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.title"></strong>
+                <span jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.explanation"></span>
+                <button pButton type="button" id="retryLoadSummaryButton" size="small" [disabled]="loadingExam()" (click)="retryLoadSummary()">
+                    {{ 'artemisApp.examParticipation.summaryLoadFailed.retry' | artemisTranslate }}
+                </button>
+            </div>
+        </p-message>
+    </div>
+}
 @if (exam()) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
         <jhi-exam-participation-cover
@@ -198,21 +218,30 @@
                 </div>
             }
         }
-        @if (this.studentExam()?.submitted && !showExamSummary() && !loadingExam()) {
+        @if (this.studentExam()?.submitted && !showExamSummary() && !loadingExam() && !summaryLoadFailed()) {
             <div class="submissionSuccessfulHint pb-3">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
-                <button
-                    type="button"
-                    id="showExamSummaryButton"
-                    class="btn btn-primary"
-                    [disabled]="examSummaryButtonSecondsLeft()"
-                    (click)="loadAndDisplaySummary()"
-                    jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
-                    [translateValues]="{ countdown: examSummaryButtonSecondsLeft() ? ' (' + examSummaryButtonSecondsLeft() + ')' : '' }"
-                ></button>
+                @if (isExamSummaryVisible()) {
+                    <button
+                        type="button"
+                        id="showExamSummaryButton"
+                        class="btn btn-primary"
+                        [disabled]="examSummaryButtonSecondsLeft()"
+                        (click)="loadAndDisplaySummary()"
+                        jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
+                        [translateValues]="{ countdown: examSummaryButtonSecondsLeft() ? ' (' + examSummaryButtonSecondsLeft() + ')' : '' }"
+                    ></button>
+                } @else {
+                    <p
+                        id="examSummaryUnavailableHint"
+                        class="mb-0"
+                        jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
+                        [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"
+                    ></p>
+                }
             </div>
         }
         @if (showExamSummary()) {
@@ -222,7 +251,7 @@
         }
     }
 }
-@if (!loadingExam() && !exam()) {
+@if (!loadingExam() && !exam() && !summaryLoadFailed()) {
     <div class="d-flex flex-column gap-2 p-3">
         @if (isSidebarCollapsed()) {
             <div>
