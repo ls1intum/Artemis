@@ -74,9 +74,21 @@ support `TCPRoute`: **Cilium**, **Istio**, **NGINX Gateway Fabric**.
 
 ### Install Envoy Gateway
 
-`--skip-crds` tells Envoy Gateway **not** to install its bundled Gateway API CRDs, so the v1.3.0 experimental CRDs you
-applied in [section 1](#1-gateway-api-crds) remain the single source and the install cannot hit the field-ownership
-conflict described there:
+Passing `--skip-crds` keeps the v1.3.0 Gateway API CRDs from [section 1](#1-gateway-api-crds) as the single source (and
+avoids the field-ownership conflict). But `--skip-crds` skips **every** CRD the chart bundles - including **Envoy
+Gateway's own CRDs** (`EnvoyProxy`, `SecurityPolicy`, `Backend`, ...). Install those from the chart bundle first,
+otherwise `kubectl apply` of the `EnvoyProxy` in the MetalLB / dual-stack step below fails with
+`no matches for kind "EnvoyProxy" in version "gateway.envoyproxy.io/v1alpha1"`:
+
+```bash
+helm pull oci://docker.io/envoyproxy/gateway-helm --version v1.8.3 --untar
+
+# Envoy Gateway's OWN CRDs (EnvoyProxy et al.). NOT the Gateway API CRDs - those came from section 1.
+kubectl apply --server-side --force-conflicts \
+  -f gateway-helm/charts/crds/crds/generated/
+```
+
+Then install the controller with `--skip-crds`:
 
 ```bash
 helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm \
@@ -87,16 +99,12 @@ helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm \
 kubectl -n envoy-gateway-system rollout status deploy/envoy-gateway
 ```
 
+The same `helm pull` bundle also carries the Gateway API CRDs at
+`gateway-helm/charts/crds/crds/gatewayapi-crds.yaml` (v1.3.0) if you prefer applying them from the chart instead of the
+upstream URL in section 1.
+
 > If the controller was installed before the correct CRDs and is crash-looping (`no matches for kind "TLSRoute" ...`),
 > apply the section-1 CRDs, then restart it: `kubectl -n envoy-gateway-system rollout restart deploy/envoy-gateway`.
->
-> Prefer the exact CRDs the chart ships? Extract and apply them instead of the upstream URL (note the nested path):
->
-> ```bash
-> helm pull oci://docker.io/envoyproxy/gateway-helm --version v1.8.3 --untar
-> kubectl apply --server-side --force-conflicts \
->   -f gateway-helm/charts/crds/crds/gatewayapi-crds.yaml
-> ```
 
 ### Create a GatewayClass
 

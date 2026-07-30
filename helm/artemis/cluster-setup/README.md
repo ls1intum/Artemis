@@ -36,6 +36,10 @@ kubectl apply -f cluster-setup/gatewayclass.yaml
 kubectl apply -f cluster-setup/metallb-dualstack/
 ```
 
+> Requires Envoy Gateway's own CRDs (the `EnvoyProxy` kind). If you installed the controller with `--skip-crds`, apply
+> them first - see `../CLUSTER-SETUP.md` section 2 - otherwise this fails with
+> `no matches for kind "EnvoyProxy"`.
+
 Optional TLS (after cert-manager is installed):
 
 ```bash
