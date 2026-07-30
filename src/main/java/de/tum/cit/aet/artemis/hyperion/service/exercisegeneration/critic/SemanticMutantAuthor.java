@@ -82,9 +82,9 @@ class SemanticMutantAuthor {
             requireReviewTextSafe("semantic-mutant/review-targets", targets);
         }
         String targetPrompt = targets.isBlank() ? ""
-                : "\n\nINDEPENDENT REVIEW TARGETS (source-backed risk hypotheses, not new authority):\n" + targets
-                        + "\nPrioritize semantically distinct proposals for these risks when the approved specification entails them. Do not repeat an already-covered "
-                        + "behavior merely because it is easier to mutate.";
+                : "\n\nINDEPENDENT REVIEW TARGETS AND PRIOR EXECUTED GAPS (not new authority):\n" + targets
+                        + "\nPrioritize semantically distinct proposals for source-backed risks when the approved specification entails them. An environment-proven item already "
+                        + "records that behavior: do not propose a renamed, recoded, or numerically varied equivalent; use another observable misconception.";
         String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt;
         try {
             return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
@@ -137,7 +137,10 @@ class SemanticMutantAuthor {
     }
 
     private static List<SpecFidelityReport.Finding> reviewTargets(List<SpecFidelityReport.Finding> findings) {
-        return findings.stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)
+        return findings.stream()
+                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
+                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
+                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL)
                 .limit(4).toList();
     }
 

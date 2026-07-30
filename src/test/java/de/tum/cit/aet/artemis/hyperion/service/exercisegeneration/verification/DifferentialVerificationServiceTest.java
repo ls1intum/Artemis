@@ -289,6 +289,25 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void authoritativeVerificationCarriesEnvironmentReportedTemplateFailuresIntoReviewContext() {
+        BuildReportSpec solution = BuildReportSpec.withJunitXml("""
+                <testsuite name="GeneratedSuite">
+                  <testcase name="classifiesBoundary"/>
+                </testsuite>
+                """, 0);
+        BuildReportSpec template = BuildReportSpec.withJunitXml("""
+                <testsuite name="GeneratedSuite">
+                  <testcase name="classifiesBoundary"><error message="TODO"/></testcase>
+                </testsuite>
+                """, 1);
+
+        VerificationResult result = verify(solution, template);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.templateFailureEvidence()).containsExactly(new AgentVerifyReport.TestFailureEvidence("classifiesBoundary", "TODO"));
+    }
+
+    @Test
     void buildEnvironmentPreflightDoesNotExposeBuildOutput() {
         BuildReportSpec failedBuild = result(0, 0, 0, 1);
         InteractiveSandbox sandbox = new ScriptedSandbox(failedBuild, failedBuild, PROBLEM_STATEMENT_WITH_TASK,

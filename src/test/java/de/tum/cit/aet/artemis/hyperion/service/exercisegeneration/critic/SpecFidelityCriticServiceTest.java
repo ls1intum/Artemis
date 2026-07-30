@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport.Kind;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -1196,24 +1197,58 @@ class SpecFidelityCriticServiceTest {
                  "contradictions": [], "hiddenRequirements": [], "weakOracle": [], "templateGaps": [],
                  "missingExamples": [], "invented": [], "unrequestedChanges": [], "missingRequestedChanges": []}
                 """), rawResponse("""
-                {"mutantChecks":[{"mutant":"reject CJK characters","killed":true,"reason":"the assertion kills it"}],
-                 "uncovered":[],"weakOracle":[]}
+                        {"mutantChecks":[{"mutant":"reject CJK characters","killed":true,"reason":"the assertion kills it"}],
+                         "uncovered":[],"weakOracle":[]}
                 """));
         SpecFidelityCriticService critic = scripted.critic();
-        SpecFidelityReport report = critique(critic,
+        SpecFidelityReport report = critic.critique(
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 """
                         # Rover
                         Worked example: the rover ends at (2,3) E\
-                        """, List.of("turnsLeft"), COMPLETE_ARTIFACTS, null);
+                        """, List.of("turnsLeft"), COMPLETE_ARTIFACTS, null, () -> false, null, null, null, null,
+                List.of(new AgentVerifyReport.TestFailureEvidence("turnsLeft", "UnsupportedOperationException at FixtureType.turnsLeft")));
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(Kind.CONTRACT_CONTRADICTION, Kind.HIDDEN_GRADED_REQUIREMENT,
                 Kind.TEMPLATE_QUALITY_GAP);
         assertThat(report.hasBlockingFindings()).isTrue();
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getAllValues())
-                .allSatisfy((value) -> assertThat(value.getContents()).contains("SOLUTION: src/Graphemes.java", "TEMPLATE: src/Graphemes.java", "TESTS: test/GraphemesTest.java")
-                        .contains("assertEquals(2, count(\"漢字\"))").contains("Do not treat test names or comments as proof"));
+                .allSatisfy((value) -> assertThat(value.getContents())
+                        .contains("SOLUTION: src/Graphemes.java", "TEMPLATE: src/Graphemes.java", "TESTS: test/GraphemesTest.java").contains("assertEquals(2, count(\"漢字\"))",
+                                "TEMPLATE FAILURE DIAGNOSTICS", "UnsupportedOperationException at FixtureType.turnsLeft", "generated-test-controlled")
+                        .contains("Do not treat test names or comments as proof"));
+    }
+
+    @Test
+    void templateDiagnosticsGetOneBoundedCorrectionForImpossibleOwnership() {
+        String invalidContractVerdict = """
+                {"exampleChecks":[],"apiChecks":[{"symbol":"FixtureType.count(String)","discoverable":true,"reason":"the starter exposes it"}],
+                 "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":false,"blockingCause":"PROVIDED_SCAFFOLD_DEFECT",
+                     "reason":"the intended count stub throws UnsupportedOperationException","evidenceQuote":"class Graphemes"}],
+                 "contradictions":[],"hiddenRequirements":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
+                """;
+        String correctedContractVerdict = """
+                {"exampleChecks":[],"apiChecks":[{"symbol":"FixtureType.count(String)","discoverable":true,"reason":"the starter exposes it"}],
+                 "templateChecks":[{"ownerType":"FixtureType","test":"count","targetReached":true,"blockingCause":null,
+                     "reason":"execution reaches the intended incomplete count seam"}],
+                 "contradictions":[],"hiddenRequirements":[],"missingExamples":[],"invented":[],"unrequestedChanges":[],"missingRequestedChanges":[]}
+                """;
+        ScriptedCritic scripted = criticScripted(rawResponse(invalidContractVerdict), rawResponse(correctedContractVerdict), rawResponse(COMPLETE_ORACLE_VERDICT));
+
+        SpecFidelityReport report = scripted.critic().critique("Implement count.", "Implement FixtureType.count.", List.of("count"), COMPLETE_ARTIFACTS, null, () -> false, null,
+                """
+                        ## Design
+                        | Type | Role | Template status |
+                        |---|---|---|
+                        | `FixtureType` | classifier | stubbed |
+                        """, null, null, List.of(new AgentVerifyReport.TestFailureEvidence("count", "UnsupportedOperationException at FixtureType.count")));
+
+        assertThat(report.findings()).isEmpty();
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(3)).call(prompt.capture());
+        assertThat(prompt.getAllValues().get(1).getContents()).contains("assigned a runtime blocker to an impossible owner", "TEMPLATE FAILURE DIAGNOSTICS",
+                "generated-test-controlled", "UnsupportedOperationException at FixtureType.count");
     }
 
     @Test
@@ -1264,7 +1299,10 @@ class SpecFidelityCriticServiceTest {
                 | `FireStrategy` | concrete policy | student-creates |
                 """, null, null);
 
-        assertThat(report.findings()).isEmpty();
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE);
+            assertThat(finding.detail()).contains("contract reviewer");
+        });
     }
 
     @Test

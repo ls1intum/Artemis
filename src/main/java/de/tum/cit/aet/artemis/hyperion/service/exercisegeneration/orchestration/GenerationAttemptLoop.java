@@ -236,8 +236,7 @@ class GenerationAttemptLoop {
 
     // Instrumentation only; nothing below is read by a scheduling decision, a gate, or the verdict.
 
-    // Why this loop stopped, recorded at the exit that takes it. Written once per run: the run's only reader is the owning service, which stamps it onto the outcome so the
-    // terminal event carries it. Prose in a log line cannot answer "budget or convergence"; this can.
+    // Written at the exit that takes it so the owning service can stamp the exact budget/convergence cause onto the terminal event.
     @Nullable
     private TerminationReason terminationReason;
 
@@ -383,8 +382,7 @@ class GenerationAttemptLoop {
             currentPrompt = mechanicalRejectionPrompt(attempt);
         }
         if (terminationReason == null) {
-            // Reachable only when the derived attempt cap is non-positive, so the body never ran and no exit above was taken. Recorded rather than left absent — a termination
-            // reason that can be missing is missing exactly when a campaign needs it — but logged, because a silent default here would hide a real regression in the exits above.
+            // Reachable only when the derived attempt cap is non-positive; record and log it rather than leaving a campaign's termination reason absent.
             log.warn("Exercise {} generation loop ended without recording a termination reason at any exit; attributing it to the attempt cap", exercise.getId());
             terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
         }
@@ -493,8 +491,7 @@ class GenerationAttemptLoop {
                 lastExtractedCandidate = new ExtractedCandidate(loopResult, candidateFiles, producedProblemStatement);
             }
         }
-        // Capture the grading plan with the repositories and statement. Final verification and persistence must decide on the same plan, not independently re-read a mutable
-        // workspace after the build.
+        // Capture the grading plan with the repositories and statement so verification and persistence decide on the same immutable candidate.
         String testPlanSnapshot = GenerationOrchestrationService.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
         VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                 baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), candidateFiles.getOrDefault(RepositoryType.TESTS, Map.of()),
@@ -537,7 +534,7 @@ class GenerationAttemptLoop {
         }
         List<String> reasons = new ArrayList<>(result.reasons());
         reasons.addAll(recheck.failureReasons());
-        return new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), List.copyOf(reasons));
+        return new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), List.copyOf(reasons), result.templateFailureEvidence());
     }
 
     private VerificationResult verifyWithInfrastructureRetry(VerificationRequest request, Runnable restoreCandidate) {
@@ -724,8 +721,10 @@ class GenerationAttemptLoop {
             int freshCapacity = MAX_TRACKED_SEMANTIC_MUTANTS
                     - (int) pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count();
             List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
-                    : specFidelityCritic.authorSemanticMutants(specDocumentSnapshot, solutionFiles, report.findings(), usageSink, cancelled).stream()
-                            .filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
+                    : specFidelityCritic
+                            .authorSemanticMutants(specDocumentSnapshot, solutionFiles,
+                                    GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), usageSink, cancelled)
+                            .stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
             List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
                     : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, freshMutantCandidates, restoreCandidate);
             List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), freshMutantOutcomes.stream()).toList();
@@ -817,7 +816,7 @@ class GenerationAttemptLoop {
             List<String> testNames = GenerationOrchestrationService.extractTaskBoundTestNames(problemStatement);
             SpecFidelityReport report = adaptationChanges == null
                     ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, producedFilesByType, usageSink, cancelled, previousReport, specSnapshotForReview,
-                            repairDelta, testPlanSnapshot)
+                            repairDelta, testPlanSnapshot, verification.templateFailureEvidence())
                     : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, producedFilesByType, usageSink, cancelled, previousReport);
             if (adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrationService.CHANGE_SUMMARY_TRUNCATED)) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());

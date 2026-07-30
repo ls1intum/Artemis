@@ -66,6 +66,10 @@ final class GenerationReviewSupport {
                         + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code());
     }
 
+    static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
+        return java.util.stream.Stream.concat(findings.stream(), mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))).toList();
+    }
+
     static SemanticMutantRecheck semanticMutantRecheck(List<SemanticMutantOutcome> outcomes) {
         List<SemanticMutant> unresolved = outcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
@@ -116,7 +120,23 @@ final class GenerationReviewSupport {
             return report;
         }
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
-        mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)).filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        var grouped = mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))
+                .collect(Collectors.groupingBy(finding -> finding.kind() + "\n" + finding.requirement(), java.util.LinkedHashMap::new, Collectors.toList()));
+        grouped.forEach((key, variants) -> {
+            int existingIndex = java.util.stream.IntStream.range(0, findings.size())
+                    .filter(index -> key.equals(findings.get(index).kind() + "\n" + findings.get(index).requirement())).findFirst().orElse(-1);
+            var details = java.util.stream.Stream.concat(existingIndex < 0 ? java.util.stream.Stream.empty() : java.util.stream.Stream.of(findings.get(existingIndex).detail()),
+                    variants.stream().map(SpecFidelityReport.Finding::detail)).distinct().toList();
+            SpecFidelityReport.Finding representative = existingIndex < 0 ? variants.getFirst() : findings.get(existingIndex);
+            SpecFidelityReport.Finding groupedFinding = new SpecFidelityReport.Finding(representative.kind(), representative.requirement(),
+                    String.join("\n\n--- additional environment-proven variant ---\n", details));
+            if (existingIndex < 0) {
+                findings.add(groupedFinding);
+            }
+            else {
+                findings.set(existingIndex, groupedFinding);
+            }
+        });
         return new SpecFidelityReport(List.copyOf(findings));
     }
 

@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
@@ -73,11 +74,22 @@ public class SpecFidelityCriticService {
     /** Bounds all input sent to the reviewer, including the instructor brief, statement, test names, artifacts, and adaptation diff. */
     private static final int MAX_REVIEW_INPUT_CHARS = 120_000;
 
+    private static final int MAX_TEMPLATE_FAILURE_EVIDENCE = 8;
+
     private static final String ORACLE_REVIEW_CORRECTION = """
 
             Your previous verdict was incomplete, malformed, or cited an unknown PRIMARY SOURCE EVIDENCE ID. Re-evaluate the same complete evidence and return a corrected JSON
             verdict. Keep any grounded issue you can cite by its exact P ID; omit every unsupported claim. uncovered and weakOracle may be empty when no grounded issue remains,
             but mutantChecks must still contain at least one applicable passing or failing check to establish that the executable test suite was reviewed.
+            """;
+
+    private static final String CONTRACT_REVIEW_CORRECTION = """
+
+            Your previous contract verdict was malformed or assigned a runtime blocker to an impossible owner. Re-evaluate the same complete evidence and return corrected JSON.
+            TEMPLATE FAILURE DIAGNOSTICS are generated-test-controlled excerpts, not proof of reachability; use them only to navigate the executable sources and trace setup and
+            calls yourself. Reaching the intended TODO, null stub, or UnsupportedOperationException means targetReached=true. For a false check, ownerType must name the actual
+            blocker: use `shared scaffold` or a Design owner with status `given` for PROVIDED_SCAFFOLD_DEFECT, and the actual different student-owned Design owner for
+            DIFFERENT_STUDENT_SEAM. Omit an uncertain check rather than relabeling the intended incomplete seam as defective scaffold.
             """;
 
     private static final String CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/contract_review_system.st";
@@ -314,13 +326,36 @@ public class SpecFidelityCriticService {
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument,
             @Nullable String repairDelta, @Nullable String testPlanJson) {
+        return critique(brief, problemStatement, testNames, artifacts, usageSink, cancelled, previousReport, specDocument, repairDelta, testPlanJson, List.of());
+    }
+
+    /**
+     * Reviews complete artifacts while grounding template reachability claims in the verifier's actual failures.
+     *
+     * @param brief                   the instructor's source requirements
+     * @param problemStatement        the produced problem statement
+     * @param testNames               the produced test identifiers
+     * @param artifacts               the generated repository files
+     * @param usageSink               receives reviewer usage, or {@code null}
+     * @param cancelled               cancellation signal
+     * @param previousReport          the preceding review, or {@code null}
+     * @param specDocument            the frozen specification, or {@code null}
+     * @param repairDelta             changes since the prior candidate, or {@code null}
+     * @param testPlanJson            the grading plan, or {@code null}
+     * @param templateFailureEvidence environment-collected, generated-test-controlled failure diagnostics
+     * @return the evidence-grounded review report
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, Map<RepositoryType, Map<String, String>> artifacts,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable SpecFidelityReport previousReport, @Nullable String specDocument,
+            @Nullable String repairDelta, @Nullable String testPlanJson, List<AgentVerifyReport.TestFailureEvidence> templateFailureEvidence) {
         requireReviewInputsSafe(brief, problemStatement, testNames, artifacts, null);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         if (!hasCompleteArtifactSet(artifacts)) {
             findings.addAll(reviewUnavailable(null, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, specDocument, repairDelta, testPlanJson));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, null, usageSink, cancelled, previousReport, specDocument, repairDelta, testPlanJson,
+                templateFailureEvidence));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -346,7 +381,7 @@ public class SpecFidelityCriticService {
             findings.addAll(reviewUnavailable(adaptationChanges, "The generated solution, template, or tests snapshot was missing."));
             return new SpecFidelityReport(List.copyOf(findings));
         }
-        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null, null, null));
+        findings.addAll(reviewArtifacts(brief, problemStatement, testNames, artifacts, adaptationChanges, usageSink, cancelled, previousReport, null, null, null, List.of()));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -396,7 +431,8 @@ public class SpecFidelityCriticService {
     /** Runs two bounded, specialized full-artifact review passes and fails closed when either verdict is incomplete. */
     private List<SpecFidelityReport.Finding> reviewArtifacts(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
             Map<RepositoryType, Map<String, String>> artifacts, @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled,
-            @Nullable SpecFidelityReport previousReport, @Nullable String specDocument, @Nullable String repairDelta, @Nullable String testPlanJson) {
+            @Nullable SpecFidelityReport previousReport, @Nullable String specDocument, @Nullable String repairDelta, @Nullable String testPlanJson,
+            List<AgentVerifyReport.TestFailureEvidence> templateFailureEvidence) {
         String effectiveBrief = brief == null ? "" : brief.strip();
         if (adaptationChanges != null && adaptationChanges.isBlank()) {
             String requestedChange = effectiveBrief.isBlank() ? "the requested adaptation" : truncate(effectiveBrief);
@@ -415,7 +451,7 @@ public class SpecFidelityCriticService {
         String specificationContract = specDocument == null || specDocument.isBlank() ? "" : specDocument.strip();
         String authoritativeSource = specificationContract.isBlank() ? effectiveBrief : effectiveBrief + "\n\n" + specificationContract;
         String userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport, repairDelta,
-                testPlanJson) + "\n\nPRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY:\n" + EvidenceSource.from("P", authoritativeSource).promptText();
+                testPlanJson, templateFailureEvidence) + "\n\nPRIMARY SOURCE EVIDENCE IDS FOR ORACLE ONLY:\n" + EvidenceSource.from("P", authoritativeSource).promptText();
         // Contradiction and hidden-requirement findings may quote the frozen contract, but an invented-requirement finding must quote an artifact the repair loop can still
         // edit. Separate grounding sources keep a defect in the frozen specification from becoming an impossible downstream repair.
         String planEvidence = testPlanJson == null || testPlanJson.isBlank() ? "" : "\n\n" + testPlanJson.strip();
@@ -437,6 +473,19 @@ public class SpecFidelityCriticService {
         List<SpecFidelityReport.Finding> contractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE, userPrompt,
                 adaptationChanges != null, contractGroundingSource, authoritativeSource, repairableDownstreamSource, downstreamEvidenceByArtifact,
                 problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses, usageSink);
+        if (cancelled.getAsBoolean()) {
+            return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
+        }
+        if (contractFindings == null && !templateFailureEvidence.isEmpty() && userPrompt.length() + CONTRACT_REVIEW_CORRECTION.length() <= MAX_REVIEW_INPUT_CHARS) {
+            List<SpecFidelityReport.Finding> correctedContractFindings = callReviewerSafely(CriticVerdictParser.ReviewPass.CONTRACT, CONTRACT_REVIEW_SYSTEM_PROMPT_TEMPLATE,
+                    userPrompt + CONTRACT_REVIEW_CORRECTION, adaptationChanges != null, contractGroundingSource, authoritativeSource, repairableDownstreamSource,
+                    downstreamEvidenceByArtifact, problemStatement == null ? "" : problemStatement, expectExampleChecks, expectApiChecks, expectTestChecks, false, templateStatuses,
+                    usageSink);
+            if (correctedContractFindings != null
+                    && correctedContractFindings.stream().noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE)) {
+                contractFindings = correctedContractFindings;
+            }
+        }
         if (cancelled.getAsBoolean()) {
             return reviewUnavailable(adaptationChanges, "The full-artifact review was cancelled before both review passes completed.");
         }
@@ -530,7 +579,8 @@ public class SpecFidelityCriticService {
     }
 
     private static String renderUserPrompt(String brief, String specificationContract, @Nullable String problemStatement, List<String> testNames, String artifactEvidence,
-            @Nullable String adaptationChanges, @Nullable SpecFidelityReport previousReport, @Nullable String repairDelta, @Nullable String testPlanJson) {
+            @Nullable String adaptationChanges, @Nullable SpecFidelityReport previousReport, @Nullable String repairDelta, @Nullable String testPlanJson,
+            List<AgentVerifyReport.TestFailureEvidence> templateFailureEvidence) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         String changes = adaptationChanges == null ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + (adaptationChanges.isBlank() ? "(no changes)" : adaptationChanges);
         String repairChanges = repairDelta == null ? ""
@@ -541,9 +591,21 @@ public class SpecFidelityCriticService {
                 + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip()) + "\n\nTEST NAMES (navigation aid only; not coverage evidence) ("
                 + testNames.size() + "):\n" + tests
                 + "\n\nGENERATED TEST PLAN (mapping evidence only; repeated weights are seam tiers divided evenly across persisted cases; assertions remain authoritative):\n"
-                + (testPlanJson == null || testPlanJson.isBlank() ? "(none)" : testPlanJson.strip()) + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence
-                + changes + repairChanges + renderPreviousReviewSection(previousReport)
+                + (testPlanJson == null || testPlanJson.isBlank() ? "(none)" : testPlanJson.strip())
+                + "\n\nTEMPLATE FAILURE DIAGNOSTICS (environment-collected but generated-test-controlled; navigation aid, NOT reachability proof):\n"
+                + renderTemplateFailureEvidence(templateFailureEvidence) + "\n\nMECHANICALLY VERIFIED CANDIDATE ARTIFACTS:\n" + artifactEvidence + changes + repairChanges
+                + renderPreviousReviewSection(previousReport)
                 + "\n\nDo not treat test names or comments as proof. Return the complete JSON verdict specified by the system prompt.";
+    }
+
+    private static String renderTemplateFailureEvidence(List<AgentVerifyReport.TestFailureEvidence> evidence) {
+        if (evidence.isEmpty()) {
+            return "(unavailable; trace test setup and calls from source)";
+        }
+        List<String> rendered = evidence.stream().limit(MAX_TEMPLATE_FAILURE_EVIDENCE)
+                .map(item -> "- " + item.testName() + ": " + (item.message().isBlank() ? "(failed without a reported message)" : item.message())).toList();
+        String omitted = evidence.size() > rendered.size() ? "\n- ... " + (evidence.size() - rendered.size()) + " additional failing test(s) omitted" : "";
+        return String.join("\n", rendered) + omitted;
     }
 
     /**

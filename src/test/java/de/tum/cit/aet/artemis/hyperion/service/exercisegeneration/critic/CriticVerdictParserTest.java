@@ -67,6 +67,33 @@ class CriticVerdictParserTest {
     }
 
     @Test
+    void stubbedOwnerCannotBeRelabeledAsProvidedScaffoldDefect() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [{
+                    "ownerType": "TemperatureClassifier",
+                    "test": "classify",
+                    "targetReached": false,
+                    "blockingCause": "PROVIDED_SCAFFOLD_DEFECT",
+                    "reason": "the intended method throws UnsupportedOperationException",
+                    "evidenceQuote": "throw new UnsupportedOperationException();"
+                  }],
+                  "contradictions": [],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Implement classify.", "throw new UnsupportedOperationException();", "", false, false, true, false,
+                Map.of("TemperatureClassifier", "stubbed"));
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
     void passingTemplateCheckCannotCarryAContradictoryBlockingCause() {
         List<SpecFidelityReport.Finding> findings = parseSingleTemplateCheck("""
                 "targetReached": true,

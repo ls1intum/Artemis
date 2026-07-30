@@ -101,6 +101,8 @@ Also mentally execute every repeated, randomized, ordered, or stateful policy ov
 proceed. Check that the rules define progress, termination, cardinality, skip-versus-stop behavior, and any determinism needed by their promised outcome. Report
 incompatible normative claims as an internal conflict. Report a permitted input or transition whose normative behavior, progress, or testable outcome is undefined in
 ambiguities. A Java reference type does not by itself make `null` a permitted educational input; require null behavior only when the brief or specification admits it.
+Do not call an admitted value undefined merely because it is not enumerated when the specified operators and control flow have total, deterministic language semantics for it;
+mentally execute those semantics. Report ambiguity only when the contract permits multiple observable outcomes or no normative rule applies.
 Do not invent a preferred seed, sentinel, exception, or boundary policy as the repair.
 Do not assess prose style, downstream test quality, example quantity, or aesthetics here.
 Judge whether explicitly assigned student design work remains meaningful; do not prescribe one scaffold layout. An empty compile shell may preserve interface-design

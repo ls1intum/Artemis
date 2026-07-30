@@ -129,10 +129,21 @@ class CriticVerdictParser {
                 || pass == ReviewPass.ORACLE && malformedOracleVerdict(parsed, expectMutantChecks, templateStatuses)) {
             return null;
         }
-        if (pass == ReviewPass.CONTRACT && !templateStatuses.isEmpty()
-                && parsed.templateChecks().stream().filter(item -> !item.targetReached()).map(item -> item.ownerType().strip().replace("`", ""))
-                        .anyMatch(owner -> !owner.equals("shared scaffold") && !owner.equals("student-creates") && !templateStatuses.containsKey(owner))) {
-            return null;
+        if (pass == ReviewPass.CONTRACT && !templateStatuses.isEmpty()) {
+            for (TemplateCheckItem item : parsed.templateChecks()) {
+                if (item.targetReached()) {
+                    continue;
+                }
+                String owner = normalizeOwnerType(item.ownerType());
+                if (!owner.equals("shared scaffold") && !owner.equals("student-creates") && !templateStatuses.containsKey(owner)) {
+                    return null;
+                }
+                // An intentionally incomplete student seam cannot simultaneously be a defect in provided scaffold. This rule comes from the frozen ownership contract rather
+                // than source syntax: TODO, null, and UnsupportedOperationException are all valid ways to expose a stub.
+                if ("PROVIDED_SCAFFOLD_DEFECT".equals(item.blockingCause()) && !owner.equals("shared scaffold") && !"given".equals(templateStatuses.get(owner))) {
+                    return null;
+                }
+            }
         }
         boolean hasUngroundedOracleClaim = pass == ReviewPass.ORACLE && hasUngroundedOracleClaim(parsed, authoritativeSource, templateStatuses);
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();

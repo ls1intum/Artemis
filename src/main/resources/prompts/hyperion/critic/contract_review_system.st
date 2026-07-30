@@ -83,5 +83,9 @@ requirement. For templateChecks, targetReached means that the named test can rea
 has already been implemented. Set targetReached=true when execution reaches the intended owner's TODO or UnsupportedOperationException, even if that intentionally stops
 execution before any student implementation exists. Set it false only when a different seam or provided-scaffold defect prevents reaching that intended owner. Every false
 templateCheck requires blockingCause set to exactly DIFFERENT_STUDENT_SEAM or PROVIDED_SCAFFOLD_DEFECT and evidenceQuote copied verbatim from a produced statement, solution,
-template, test, or test plan. Set blockingCause to null for a passing check. A false check that names the intended incomplete stub itself as the blocker is contradictory; correct
-it to targetReached=true rather than relabeling the intended seam as a scaffold defect. Omit a finding instead of inventing its quote.
+template, test, or test plan. For a false check, ownerType names the actual blocker, not the intended test target: PROVIDED_SCAFFOLD_DEFECT must name `shared scaffold` or a Design
+owner whose Template status is `given`; DIFFERENT_STUDENT_SEAM must name the different student-owned Design owner reached first. Set blockingCause to null for a passing check.
+A false check that names the intended incomplete stub itself as the blocker is contradictory; correct it to targetReached=true rather than relabeling the intended seam as a
+scaffold defect. TEMPLATE FAILURE DIAGNOSTICS are generated-test-controlled message excerpts, not authoritative exception types or stack traces. Use them only to navigate the
+produced sources; establish reachability by tracing executable test setup and calls yourself. Source incompleteness alone is not runtime reachability evidence. Omit a finding
+instead of inventing its quote.

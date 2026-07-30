@@ -17,6 +17,8 @@ If only one lens or fewer than three clusters have legal observable distinctions
 You may also receive source-backed risk hypotheses from an independent oracle review. They expose no graded test bodies and create no requirements: use them to target the
 highest-risk distinctions only when the approved specification entails them. Prefer those targets over easier behavior the existing suite is likely to cover, while keeping
 proposals semantically distinct.
+The same section may include environment-proven surviving mutants from earlier rounds. Treat their misconception and replacement as an exclusion: do not spend another proposal
+on a renamed, recoded, or numerically varied equivalent. Choose a different observable misconception instead; return fewer proposals when no distinct one is justified.
 When a proposal implements exactly one listed hypothesis, copy its opaque T ID into `target` and copy all text following that ID verbatim into `targetHypothesis`. Leave both null
 when the proposal is merely related or was derived independently. This provenance lets executed evidence update only the precise hypothesis it tested; never label an unrelated
 mutant as a target.
