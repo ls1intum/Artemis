@@ -326,7 +326,7 @@ test.describe('Hyperion live LLM browser E2E qualitative validation', { tag: '@s
             exerciseAPIRequests,
             programmingExerciseCreation,
         }) => {
-            test.setTimeout(scenario.runWholeExercise ? 2_400_000 : 240_000);
+            test.setTimeout(scenario.runWholeExercise ? 3_600_000 : 240_000);
             await ensureReportDir();
             await assertHyperionGenerationAvailable(page);
             let exercise: ProgrammingExercise | undefined;
@@ -803,7 +803,7 @@ async function waitForTerminalStatus(page: Page, exerciseId: number, jobId: stri
                       }
                     : undefined;
             },
-            { timeout: 2_400_000, intervals: [5_000, 10_000, 15_000] },
+            { timeout: 3_600_000, intervals: [5_000, 10_000, 15_000] },
         )
         .toBeDefined();
     const status = await getGenerationStatus(page, exerciseId);

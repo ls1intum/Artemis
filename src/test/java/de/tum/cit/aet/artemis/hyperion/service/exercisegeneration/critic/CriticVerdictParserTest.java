@@ -67,6 +67,33 @@ class CriticVerdictParserTest {
     }
 
     @Test
+    void sharedScaffoldLabelCannotTurnAnIntentionallyAbsentStudentCreatedTypeIntoAFinding() {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [],
+                  "apiChecks": [],
+                  "templateChecks": [{
+                    "ownerType": "shared scaffold",
+                    "test": "Dispatcher class missing in template",
+                    "targetReached": false,
+                    "blockingCause": "PROVIDED_SCAFFOLD_DEFECT",
+                    "reason": "Dispatcher is a student-creates type but no stub is present in the template",
+                    "evidenceQuote": "template only contains Elevator class"
+                  }],
+                  "contradictions": [],
+                  "hiddenRequirements": [],
+                  "missingExamples": [],
+                  "invented": [],
+                  "unrequestedChanges": [],
+                  "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, "Dispatcher is student-created.", "template only contains Elevator class", "", false, false, true, false,
+                Map.of("Dispatcher", "student-creates", "Elevator", "given"));
+
+        assertThat(findings).isEmpty();
+    }
+
+    @Test
     void stubbedOwnerCannotBeRelabeledAsProvidedScaffoldDefect() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {

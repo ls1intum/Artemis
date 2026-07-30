@@ -191,6 +191,10 @@ class CriticVerdictParser {
                                 ownerType);
                         continue;
                     }
+                    if ("shared scaffold".equals(ownerType) && reportsMissingStudentCreatedType(item, templateStatuses)) {
+                        log.info("Critic abstained on a shared-scaffold finding because it treats an intentionally absent student-created type as missing.");
+                        continue;
+                    }
                     if (!sourceQuoteIsGrounded(item.evidenceQuote(), repairableDownstreamSource)) {
                         abstainUngroundedFinding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, item.test());
                         continue;
@@ -493,6 +497,15 @@ class CriticVerdictParser {
 
     private static String normalizeOwnerType(@Nullable String ownerType) {
         return ownerType == null ? "" : ownerType.strip().replace("`", "");
+    }
+
+    private static boolean reportsMissingStudentCreatedType(TemplateCheckItem item, Map<String, String> templateStatuses) {
+        String text = String.join(" ", item.test() == null ? "" : item.test(), item.reason() == null ? "" : item.reason(), item.evidenceQuote() == null ? "" : item.evidenceQuote())
+                .toLowerCase(Locale.ROOT);
+        boolean reportsAbsence = List.of("absent", "missing", "lacks", "does not provide", "not provided", "no stub", "only contains", "only provides").stream()
+                .anyMatch(text::contains);
+        return reportsAbsence
+                && templateStatuses.entrySet().stream().anyMatch(entry -> "student-creates".equals(entry.getValue()) && text.contains(entry.getKey().toLowerCase(Locale.ROOT)));
     }
 
     private static void abstainNonStudentOracleFinding(@Nullable String ownerType, String requirement) {
