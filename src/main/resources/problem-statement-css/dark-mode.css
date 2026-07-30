@@ -46,6 +46,8 @@ body.artemis-ssr-body--dark {
     --artemis-modal-danger-color: #e57373;
     --artemis-modal-danger-border: rgba(220, 53, 69, 0.25);
     --artemis-modal-danger-item-bg: rgba(220, 53, 69, 0.08);
+    --artemis-modal-not-executed-bg: rgba(153, 153, 153, 0.2);
+    --artemis-modal-not-executed-color: #e8e8e8;
     --artemis-modal-subtle-bg: rgba(255, 255, 255, 0.05);
     --artemis-modal-subtle-border: rgba(255, 255, 255, 0.1);
     --artemis-modal-bar-track: rgba(255, 255, 255, 0.1);
