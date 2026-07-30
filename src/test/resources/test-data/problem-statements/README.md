@@ -22,7 +22,7 @@ compared.
   between the two pipelines (syntax highlighting, GitHub-style alerts, bare
   URL linkification). Do not remove its fenced code block, its `[!NOTE]`
   alert, or its bare URL without also updating the gap counts asserted in
-  `problem-statement-parity.spec.ts` — removing them silently weakens the
+  `problem-statement-parity.spec.ts`. Removing them silently weakens the
   gate rather than closing a gap.
 - Adding a new `.md` file here automatically extends the guardrail: both the
   server test (`@MethodSource` over this directory) and the client spec
@@ -40,6 +40,6 @@ overwrites them. Regenerate deliberately with:
 ./gradlew test --tests ProblemStatementRenderingParityTest -Dartemis.regenerateProblemStatementFixtures=true -x webapp
 ```
 
-Review the diff before committing — the fixture pins the renderer's exact
+Review the diff before committing: the fixture pins the renderer's exact
 HTML output, so any intentional renderer change requires a reviewed,
 deliberate regeneration.

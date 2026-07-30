@@ -46,7 +46,7 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
 
     // Mirrors the client's `taskRegex` (programming-exercise-task.extension.ts) and the server renderer's own
     // TASK_PATTERN (ProblemStatementRenderingService), not a simplified copy: a looser `[^)]*(?:\([^()]*\)[^)]*)*`
-    // group mis-parses a reference that is exactly "name()" — the greedy `[^)]*` swallows up to the first ')'
+    // group mis-parses a reference that is exactly "name()". The greedy `[^)]*` swallows up to the first ')'
     // before the nested-parens alternative ever gets a chance to run, truncating the capture to "name(" and
     // leaving the real closing ')' as stray text. The comma-separated, one-level-of-parens grammar below is the
     // one actually used to extract "tests" in production and must be used here too.
@@ -101,10 +101,18 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
         Path fixture = FIXTURE_DIRECTORY.resolve(corpusFile.getFileName().toString().replace(".md", ".html"));
         if (Boolean.getBoolean("artemis.regenerateProblemStatementFixtures")) {
             Files.createDirectories(fixture.getParent());
-            Files.writeString(fixture, result.html(), StandardCharsets.UTF_8);
+            // Written with a trailing newline: .editorconfig requires insert_final_newline = true for every file in
+            // this repo, so a fixture without one invites an editor or formatter to "fix" it later. The compare path
+            // below strips exactly one trailing newline back off before comparing, so that eventual fix-up can never
+            // break the parity gate for a reason unrelated to actual rendering differences.
+            Files.writeString(fixture, result.html() + "\n", StandardCharsets.UTF_8);
             return;
         }
         assertThat(fixture).as("fixture missing - regenerate with -Dartemis.regenerateProblemStatementFixtures=true").exists();
-        assertThat(Files.readString(fixture, StandardCharsets.UTF_8)).isEqualTo(result.html());
+        String fixtureContent = Files.readString(fixture, StandardCharsets.UTF_8);
+        // Strip exactly one trailing newline, matching what the write path above adds. This is not a general
+        // whitespace normalization: any other difference, including additional trailing newlines, still fails.
+        String normalizedFixtureContent = fixtureContent.endsWith("\n") ? fixtureContent.substring(0, fixtureContent.length() - 1) : fixtureContent;
+        assertThat(normalizedFixtureContent).isEqualTo(result.html());
     }
 }
