@@ -1,3 +1,4 @@
+<jhi-programming-exercise-instruction-ssr-step-wizard [tasks]="tasks()" (taskSelected)="openTaskFeedback($event)" />
 @if (isLoading()) {
     <div class="ssr-status" aria-busy="true">
         <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />

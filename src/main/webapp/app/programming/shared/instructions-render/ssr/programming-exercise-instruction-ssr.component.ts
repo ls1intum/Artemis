@@ -19,6 +19,7 @@ import { ProblemStatementSsrRenderService } from 'app/programming/shared/instruc
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
 import { ProblemStatementRenderRequest, RenderedProblemStatement, SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
+import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
 export type { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
@@ -36,7 +37,13 @@ export type SsrLiveUpdates = 'none' | 'personal' | 'exercise';
     selector: 'jhi-programming-exercise-instruction-ssr',
     templateUrl: './programming-exercise-instruction-ssr.component.html',
     styleUrls: ['./programming-exercise-instruction-ssr.component.scss'],
-    imports: [FaIconComponent, TumUiMessageComponent, ArtemisTranslatePipe, ProgrammingExerciseInstructionSsrContentComponent],
+    imports: [
+        FaIconComponent,
+        TumUiMessageComponent,
+        ArtemisTranslatePipe,
+        ProgrammingExerciseInstructionSsrContentComponent,
+        ProgrammingExerciseInstructionSsrStepWizardComponent,
+    ],
 })
 export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private renderService = inject(ProblemStatementSsrRenderService);
