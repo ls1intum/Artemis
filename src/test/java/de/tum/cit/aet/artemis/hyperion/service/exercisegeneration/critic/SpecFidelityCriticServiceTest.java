@@ -560,6 +560,24 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewIgnoresUnsolicitedConceptAlignmentWhenNoConceptWasSupplied() {
+        ScriptedCritic scripted = criticScripted(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement the requested observable behavior.",
+                         "remainingStudentReasoning":"Students must choose and implement the boundary behavior.","domainGrounding":"The behavior is grounded in the requested domain.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":null,"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"Unsolicited but irrelevant."},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],"boundaryChecks":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = scripted.critic().reviewSpecification("Create a boundary exercise.", "Students implement the boundary behavior.",
+                null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        verify(scripted.model()).call(any(Prompt.class));
+    }
+
+    @Test
     void specificationReviewCorrectionCanSupplyAMissingConceptAlignmentWithoutDiscardingPreservedJudgments() {
         ScriptedCritic scripted = criticScripted(
                 rawResponse(

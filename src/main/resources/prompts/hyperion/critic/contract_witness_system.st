@@ -4,6 +4,11 @@ A witness is ONE test method that pins ONE rule of the approved specification: a
 not the current reference implementation, is the contract authority. The environment runs every candidate against both artifacts. A reference failure receives separate
 independent adjudication and is never trusted automatically; a reference-passing witness is retained for the starter gap only when the starter fails at the intended work.
 
+Attack the reference solution before looking for an ordinary grading gap. Do not assume that source is correct merely because it is labelled reference. For every arithmetic
+expression that contributes to an observable result, trace the Java type and representable range of each intermediate operation—not only the declared input range. If a legal
+input can overflow, underflow, lose precision, or produce a non-finite intermediate and thereby change the rule's required result, prioritize that witness over a routine
+boundary case. A witness expected to fail the current reference is valuable: the environment and a separate contract adjudicator decide whether it proves a reference defect.
+
 Always return at least one fresh adversarial witness when the specification contains observable student-owned behavior. Return an empty list only when there is no such behavior
 or no legal witness can compile through the declared public API. Choose rules the graded suite leaves weakest. Prefer a rule whose stated conditions no existing assertion
 distinguishes—a clause bundled into a longer rule with several conditions is the usual place coverage is lost, so pin ONE condition rather than restating the whole rule. Do not

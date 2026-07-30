@@ -705,7 +705,9 @@ class SpecificationReviewCritic {
 
     private static @Nullable String conceptAlignmentValidationError(@Nullable SpecificationConceptAlignmentItem item, SpecificationReviewEvidence evidence) {
         if (!evidence.hasConcept()) {
-            return item == null ? null : "conceptAlignment must be null when no selected concept was supplied.";
+            // There is no concept claim to adjudicate, so an unsolicited value cannot affect the verdict. Treat it like an unknown optional response field instead of
+            // discarding an otherwise complete, grounded review. The downstream disposition is derived as ALIGNED without reading this value.
+            return null;
         }
         if (item == null) {
             return "the mandatory conceptAlignment object is missing.";
