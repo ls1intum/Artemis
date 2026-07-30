@@ -857,9 +857,21 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRenderNotExecutedWhenTestResultsAreEmptyList() throws Exception {
-        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", List.of(), null, "en", false, false, true, null);
+        // Hand-built JSON posted via the plainString overload, not a ProblemStatementRenderRequestDTO instance: the DTO
+        // carries @JsonInclude(NON_EMPTY), so serializing an empty testResults list through the object-based overload
+        // would silently drop the field, making "no result" and "result, nothing mappable" indistinguishable on the wire.
+        String requestBody = """
+                {
+                  "markdown": "[task][A](<testid>1</testid>)",
+                  "testResults": [],
+                  "locale": "en",
+                  "darkMode": false,
+                  "includeJs": false,
+                  "includeCss": true
+                }
+                """;
 
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, requestBody, true, RenderedProblemStatementDTO.class, HttpStatus.OK, null, null, null);
 
         assertThat(result.html()).contains("data-test-status=\"not-executed\"");
         assertThat(result.html()).doesNotContain("data-test-status=\"no-result\"");
