@@ -1,5 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAttemptSupport.addIfExtractionFailed;
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAttemptSupport.cancelledResult;
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAttemptSupport.copyProducedFiles;
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAttemptSupport.hasProducedChanges;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
@@ -34,6 +39,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -203,6 +209,8 @@ class GenerationAttemptLoop {
     /** Concise, run-local novelty exclusions for conclusive mutation proposals; unlike pending mutants these carry no blocker or contract authority. */
     private List<SemanticMutant.Exclusion> semanticMutantHistory = List.of();
 
+    private SeededStructuralTests seededStructuralTests = SeededStructuralTests.EMPTY;
+
     /** Independently adjudicated reference defects remain executable acceptance checks until a later candidate makes their exact witnesses pass. */
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
@@ -306,14 +314,14 @@ class GenerationAttemptLoop {
             }
 
             // Seeded structural names remain authoritative task bindings throughout repair.
-            Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
+            seededStructuralTests = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
 
             emit("Checking the exercise builds and grades (attempt " + attempt + " of " + maxGenerationAttempts + ")");
             workspace.cleanTransientBuildOutputs(sandbox, sessionId);
-            CandidateArtifacts artifacts = captureArtifacts(seededStructuralTestNames);
+            CandidateArtifacts artifacts = captureArtifacts(seededStructuralTests);
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
@@ -470,7 +478,7 @@ class GenerationAttemptLoop {
     }
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */
-    private CandidateArtifacts captureArtifacts(Set<String> seededStructuralTestNames) {
+    private CandidateArtifacts captureArtifacts(SeededStructuralTests seededStructuralTests) {
         GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS,
                 workspaceSeed.repositoryMetadata().getOrDefault(RepositoryType.TESTS, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
         GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE,
@@ -500,7 +508,7 @@ class GenerationAttemptLoop {
         VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                 baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), candidateFiles.getOrDefault(RepositoryType.TESTS, Map.of()),
                 candidateFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), Set.copyOf(extractionFailed),
-                Set.copyOf(seededStructuralTestNames), baselineGradedTestNames, producedProblemStatement, testPlanSnapshot, mode == GenerationMode.ADAPT);
+                seededStructuralTests, baselineGradedTestNames, producedProblemStatement, testPlanSnapshot, mode == GenerationMode.ADAPT);
         return new CandidateArtifacts(candidateFiles, Set.copyOf(extractionFailed), verificationRequest, testPlanSnapshot);
     }
 
@@ -530,7 +538,8 @@ class GenerationAttemptLoop {
             semanticMutantsAwaitingKill = List.of();
             return result;
         }
-        List<SemanticMutantOutcome> outcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, applicableMutants, restoreCandidate);
+        List<SemanticMutantOutcome> outcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests, applicableMutants,
+                restoreCandidate);
         GenerationReviewSupport.SemanticMutantRecheck recheck = GenerationReviewSupport.semanticMutantRecheck(outcomes);
         semanticMutantsAwaitingKill = recheck.unresolvedMutants();
         if (semanticMutantsAwaitingKill.isEmpty()) {
@@ -731,7 +740,7 @@ class GenerationAttemptLoop {
                         + " pending semantic mutant(s) because the reference source changed; the executable reviewer will propose replacements against the current solution.");
             }
             List<SemanticMutantOutcome> pendingMutantOutcomes = applicablePendingMutants.isEmpty() ? List.of()
-                    : verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, applicablePendingMutants, restoreCandidate);
+                    : verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, seededStructuralTests, applicablePendingMutants, restoreCandidate);
             int freshCapacity = MAX_TRACKED_SEMANTIC_MUTANTS
                     - (int) pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count();
             List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
@@ -740,7 +749,7 @@ class GenerationAttemptLoop {
                                     GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), semanticMutantHistory, usageSink, cancelled)
                             .stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
             List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
-                    : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, freshMutantCandidates, restoreCandidate);
+                    : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, seededStructuralTests, freshMutantCandidates, restoreCandidate);
             semanticMutantHistory = GenerationReviewSupport.rememberExecutedMutants(semanticMutantHistory, freshMutantOutcomes);
             List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), freshMutantOutcomes.stream()).toList();
             List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
@@ -761,7 +770,8 @@ class GenerationAttemptLoop {
                     positiveWitnessesAwaitingAdjudication, contractWitnessesPendingAdoption, specFidelityCritic.authorContractWitnesses(specDocumentSnapshot,
                             GenerationReviewSupport.renderArtifactSources(testsFiles), GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled));
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
-            List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate);
+            List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, seededStructuralTests, candidates,
+                    restoreCandidate);
             List<ContractWitnessOutcome> proposedAdjudications = ReferenceWitnessEvidence.adjudicationCandidates(freshMutantOutcomes, witnessOutcomes, pendingWitnessNames,
                     approvedAdoptionNames, mutatedRules);
             List<ContractWitnessOutcome> adjudicationCandidates = specificationApproved ? proposedAdjudications : List.of();
@@ -923,32 +933,6 @@ class GenerationAttemptLoop {
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
         return service.stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement, cancelledResult);
-    }
-
-    private static AgentLoopResult cancelledResult(AgentLoopResult lastResult) {
-        return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, lastResult.turns(), lastResult.finalMessage());
-    }
-
-    private static Map<RepositoryType, Map<String, String>> copyProducedFiles(Map<RepositoryType, Map<String, String>> producedFiles) {
-        Map<RepositoryType, Map<String, String>> copy = new EnumMap<>(RepositoryType.class);
-        producedFiles.forEach((type, files) -> copy.put(type, Map.copyOf(files)));
-        return Map.copyOf(copy);
-    }
-
-    private static boolean hasProducedChanges(Map<RepositoryType, Map<String, String>> baselineFiles, Map<RepositoryType, Map<String, String>> producedFiles,
-            @Nullable String baselineProblemStatement, String producedProblemStatement) {
-        if (!Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), producedProblemStatement)) {
-            return true;
-        }
-        return List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS).stream()
-                .anyMatch(type -> !baselineFiles.getOrDefault(type, Map.of()).equals(producedFiles.getOrDefault(type, Map.of())));
-    }
-
-    /** Records the repository's directory as extraction-failed so the verifier can fail CLOSED on a read-back error (distinct from a genuinely empty repo). */
-    private static void addIfExtractionFailed(Set<String> extractionFailed, GenerationWorkspaceService.RepositoryExtraction extraction, RepositoryType type) {
-        if (extraction.extractionFailed()) {
-            extractionFailed.add(GenerationWorkspaceService.directoryFor(type));
-        }
     }
 
     private void emit(String message) {

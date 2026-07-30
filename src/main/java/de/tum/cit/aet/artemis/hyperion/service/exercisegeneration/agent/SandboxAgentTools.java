@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
@@ -117,10 +118,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Nullable
     private volatile Set<String> repairWritableRoots;
 
-    private volatile Set<String> seededStructuralTestNames = Set.of();
+    private volatile SeededStructuralTests seededStructuralTests = SeededStructuralTests.EMPTY;
 
     @Nullable
-    private volatile Supplier<Set<String>> structuralOracleRefresh;
+    private volatile Supplier<SeededStructuralTests> structuralOracleRefresh;
 
     /** Makes {@link AgentLoopRunner} keep the loop going instead of ending the session on a rejected {@code submit}; cleared by {@link #consumeSubmitVeto()}. */
     private volatile boolean submitVetoed;
@@ -145,7 +146,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * restoring a callback captured from another sandbox would target the wrong session.
      */
     public record CheckpointState(int bashSequence, boolean sandboxSessionTerminated, @Nullable GenerationStage currentStage, @Nullable Set<String> repairWritableRoots,
-            Set<String> seededStructuralTestNames, boolean structuralOracleRefreshConfigured, boolean submitVetoed, boolean dirtySinceLastPassingCheck,
+            SeededStructuralTests seededStructuralTests, boolean structuralOracleRefreshConfigured, boolean submitVetoed, boolean dirtySinceLastPassingCheck,
             @Nullable GenerationStage cachedPassingCheckStage, @Nullable StageCheckResult cachedPassingCheck, @Nullable AgentVerifyReport lastTestsReport) {
     }
 
@@ -183,8 +184,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     CheckpointState checkpointState() {
         return new CheckpointState(bashSequence, sandboxSessionTerminated, currentStage, repairWritableRoots == null ? null : Set.copyOf(repairWritableRoots),
-                Set.copyOf(seededStructuralTestNames), structuralOracleRefresh != null, submitVetoed, dirtySinceLastPassingCheck, cachedPassingCheckStage, cachedPassingCheck,
-                lastTestsReport);
+                seededStructuralTests, structuralOracleRefresh != null, submitVetoed, dirtySinceLastPassingCheck, cachedPassingCheckStage, cachedPassingCheck, lastTestsReport);
     }
 
     void restoreCheckpointState(CheckpointState state) {
@@ -195,7 +195,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         sandboxSessionTerminated = state.sandboxSessionTerminated();
         currentStage = state.currentStage();
         repairWritableRoots = state.repairWritableRoots() == null ? null : Set.copyOf(state.repairWritableRoots());
-        seededStructuralTestNames = Set.copyOf(state.seededStructuralTestNames());
+        seededStructuralTests = state.seededStructuralTests();
         submitVetoed = state.submitVetoed();
         dirtySinceLastPassingCheck = state.dirtySinceLastPassingCheck();
         cachedPassingCheckStage = state.cachedPassingCheckStage();
@@ -657,7 +657,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     public Set<String> seededStructuralTestNames() {
-        return seededStructuralTestNames;
+        return seededStructuralTests.testNames();
+    }
+
+    public SeededStructuralTests seededStructuralTests() {
+        return seededStructuralTests;
     }
 
     /**
@@ -665,20 +669,20 @@ public class SandboxAgentTools implements SubmitVetoAware {
      *
      * @param refresh re-materializes the oracle and yields its authoritative test names
      */
-    public void configureStructuralOracleRefresh(Supplier<Set<String>> refresh) {
+    public void configureStructuralOracleRefresh(Supplier<SeededStructuralTests> refresh) {
         structuralOracleRefresh = refresh;
     }
 
     /**
      * @return the oracle's authoritative test names, empty when no refresh is installed
      */
-    public Set<String> refreshStructuralOracle() {
-        Supplier<Set<String>> refresh = structuralOracleRefresh;
+    public SeededStructuralTests refreshStructuralOracle() {
+        Supplier<SeededStructuralTests> refresh = structuralOracleRefresh;
         if (refresh != null) {
-            Set<String> names = refresh.get();
-            seededStructuralTestNames = names == null ? Set.of() : Set.copyOf(names);
+            SeededStructuralTests result = refresh.get();
+            seededStructuralTests = result == null ? SeededStructuralTests.EMPTY : result;
         }
-        return seededStructuralTestNames;
+        return seededStructuralTests;
     }
 
     /**
@@ -907,7 +911,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stage == GenerationStage.TESTS) {
             refreshStructuralOracle();
         }
-        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, seededStructuralTestNames);
+        StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, seededStructuralTests);
         if (stage == GenerationStage.TESTS && result.report() != null) {
             lastTestsReport = result.report();
         }

@@ -51,8 +51,9 @@ class SemanticMutantExecutionTest {
                 reports(List.of("existing", "globalChoice"), List.of("globalChoice")));
         AtomicInteger restores = new AtomicInteger();
 
-        List<SemanticMutant> result = verifier().validateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT),
-                restores::incrementAndGet);
+        List<SemanticMutant> result = verifier()
+                .evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), restores::incrementAndGet)
+                .stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
 
         assertThat(result).containsExactly(MUTANT);
         assertThat(restores).hasValue(6);
@@ -64,8 +65,8 @@ class SemanticMutantExecutionTest {
                 reports(List.of("existing", "globalChoice"), List.of("existing", "globalChoice")));
         AtomicInteger restores = new AtomicInteger();
 
-        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet))
-                .singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT),
+                restores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(restores).hasValue(6);
     }
 
@@ -74,7 +75,7 @@ class SemanticMutantExecutionTest {
         InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of("existing")), reports(List.of("existing", "globalChoice"), List.of()),
                 reports(List.of("existing", "globalChoice"), List.of("existing")));
 
-        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), () -> {
         })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
     }
 
@@ -82,7 +83,7 @@ class SemanticMutantExecutionTest {
     void compileFailureIsInconclusiveRatherThanAKill() {
         InteractiveSandbox sandbox = sandbox(reports(List.of(), List.of()));
 
-        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), () -> {
         })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
     }
 
@@ -91,8 +92,8 @@ class SemanticMutantExecutionTest {
         InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of()), reports(List.of("existing", "globalChoice"), List.of("globalChoice")));
         AtomicInteger restores = new AtomicInteger();
 
-        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet))
-                .singleElement().satisfies(outcome -> {
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT),
+                restores::incrementAndGet)).singleElement().satisfies(outcome -> {
                     assertThat(outcome.disposition()).isEqualTo(Disposition.REFERENCE_TEST_FAILED);
                     assertThat(outcome.diagnostic()).contains("expected behaviour not met");
                 });
@@ -103,19 +104,20 @@ class SemanticMutantExecutionTest {
     void ordinaryRecheckRequiresAnExecutedFailingTestRatherThanACompileFailure() {
         AtomicInteger killedRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of("globalChoice"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),
-                List.of(MUTANT), killedRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+                SeededStructuralTests.EMPTY, List.of(MUTANT), killedRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition)
+                .isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(killedRestores).hasValue(2);
 
         AtomicInteger compileFailureRestores = new AtomicInteger();
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of(), List.of())), "session", javaExercise(), Map.of(PATH, ORIGINAL), List.of(MUTANT),
-                compileFailureRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
+        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of(), List.of())), "session", javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY,
+                List.of(MUTANT), compileFailureRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
         assertThat(compileFailureRestores).hasValue(2);
     }
 
     @Test
     void anAdaptedOrRenamedFailingTestKillsTheProvenMutant() {
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
-                Map.of(PATH, ORIGINAL), List.of(MUTANT), () -> {
+                Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), () -> {
                 })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
     }
 
@@ -126,8 +128,8 @@ class SemanticMutantExecutionTest {
         when(sandbox.copyOut(anyString(), anyString())).thenThrow(new IllegalStateException("reports unavailable"));
         AtomicInteger restores = new AtomicInteger();
 
-        assertThatThrownBy(() -> verifier().checkSemanticMutants(sandbox, "session", javaExercise(), Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet))
-                .isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class);
+        assertThatThrownBy(() -> verifier().checkSemanticMutants(sandbox, "session", javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT),
+                restores::incrementAndGet)).isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class);
         assertThat(restores).hasValue(2);
     }
 
@@ -141,8 +143,8 @@ class SemanticMutantExecutionTest {
             }
         };
 
-        assertThatThrownBy(() -> verifier().validateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), failingFinalRestore))
-                .isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class).hasMessageContaining("could not restore");
+        assertThatThrownBy(() -> verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT),
+                failingFinalRestore)).isInstanceOf(DifferentialVerificationService.VerificationInfrastructureException.class).hasMessageContaining("could not restore");
         assertThat(restores).hasValue(2);
     }
 

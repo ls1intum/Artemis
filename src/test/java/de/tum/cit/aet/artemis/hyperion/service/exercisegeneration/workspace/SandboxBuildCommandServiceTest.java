@@ -209,8 +209,10 @@ class SandboxBuildCommandServiceTest {
         // The verifier runs the pristine copy outside /workspace, which the agent's tools cannot reach.
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
-        assertThat(factory.isolatedSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution isolate-sources");
-        assertThat(factory.isolatedTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template isolate-sources");
+        assertThat(factory.behavioralSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution behavior-isolated");
+        assertThat(factory.behavioralTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template behavior-isolated");
+        assertThat(factory.trustedStructuralSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution trusted-structural");
+        assertThat(factory.trustedStructuralTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template trusted-structural");
         assertThat(SandboxBuildCommandService.reportsDirectoryFor("solution")).isEqualTo("/opt/hyperion/reports/solution");
     }
 
@@ -265,7 +267,7 @@ class SandboxBuildCommandServiceTest {
         Path scriptFile = tempDir.resolve("verify.sh");
         VerifyScriptTestHarness.writeString(scriptFile, script);
 
-        ProcessBuilder processBuilder = new ProcessBuilder("sh", scriptFile.toString(), "solution", "isolate-sources").redirectErrorStream(true);
+        ProcessBuilder processBuilder = new ProcessBuilder("sh", scriptFile.toString(), "solution", "behavior-isolated").redirectErrorStream(true);
         processBuilder.environment().put("PATH", fakeBin + ":" + processBuilder.environment().get("PATH"));
         processBuilder.environment().put("HYPERION_TEST_WORKSPACE", workspace.toString());
         Process process = processBuilder.start();
@@ -279,13 +281,66 @@ class SandboxBuildCommandServiceTest {
         }
     }
 
+    @EnabledOnOs({ LINUX, MAC })
+    @Test
+    void trustedStructuralLaneRunsOnlyTheServerBundleWithAssignmentSource(@TempDir Path tempDir) throws Exception {
+        Path workspace = Files.createDirectories(tempDir.resolve("workspace"));
+        Path candidateTests = Files.createDirectories(workspace.resolve("tests/test/example"));
+        Path solution = Files.createDirectories(workspace.resolve("solution/src/example"));
+        Files.createDirectories(workspace.resolve("template/src/example"));
+        VerifyScriptTestHarness.writeString(workspace.resolve("tests/pom.xml"), "<project/>");
+        VerifyScriptTestHarness.writeString(candidateTests.resolve("CandidateBehaviorTest.java"), "class CandidateBehaviorTest {}");
+        VerifyScriptTestHarness.writeString(solution.resolve("Answer.java"), "class Answer {}");
+
+        Path trusted = Files.createDirectories(tempDir.resolve("trusted/test/example"));
+        VerifyScriptTestHarness.writeString(trusted.resolve("TrustedStructuralTest.java"), "class TrustedStructuralTest {}");
+        Path fakeBin = Files.createDirectories(tempDir.resolve("bin"));
+        Path fakeMaven = fakeBin.resolve("mvn");
+        VerifyScriptTestHarness.writeString(fakeMaven, """
+                #!/bin/sh
+                case "$*" in
+                  *test*)
+                    if find . -type f -name 'CandidateBehaviorTest.java' -print -quit | grep -q .; then
+                      echo "candidate behavior test entered the trusted lane" >&2
+                      exit 91
+                    fi
+                    find . -type f -name 'TrustedStructuralTest.java' -print -quit | grep -q . || exit 92
+                    find . -type f -name 'Answer.java' -print -quit | grep -q . || exit 93
+                    mkdir -p target/surefire-reports
+                    printf '%s\n' '<testsuite name="Structural" tests="1"><testcase name="testClass[Answer]"/></testsuite>' \
+                      > target/surefire-reports/TEST-Structural.xml
+                    exit 0 ;;
+                  *) exit 0 ;;
+                esac
+                """);
+        assertThat(fakeMaven.toFile().setExecutable(true)).isTrue();
+
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        Path reports = tempDir.resolve("reports");
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java)
+                .replace("WORKSPACE=\"/workspace\"", "WORKSPACE=\"" + workspace + "\"")
+                .replace("REPORTS_DIR=\"/opt/hyperion/reports/$ASSIGNMENT\"", "REPORTS_DIR=\"" + reports + "/$ASSIGNMENT\"")
+                .replace(SandboxBuildCommandService.TRUSTED_STRUCTURAL_DIR, trusted.getParent().getParent().toString());
+        Path scriptFile = tempDir.resolve("verify.sh");
+        VerifyScriptTestHarness.writeString(scriptFile, script);
+
+        ProcessBuilder processBuilder = new ProcessBuilder("sh", scriptFile.toString(), "solution", "trusted-structural").redirectErrorStream(true);
+        processBuilder.environment().put("PATH", fakeBin + ":" + processBuilder.environment().get("PATH"));
+        Process process = processBuilder.start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(process.waitFor(30, TimeUnit.SECONDS)).as(output).isTrue();
+        assertThat(process.exitValue()).as(output).isZero();
+        assertThat(Files.exists(reports.resolve("solution/0001__junit.xml"))).isTrue();
+    }
+
     @Test
     void ordinaryAgentBuild_keepsTheProductionPhasesWhileIsolationIsExplicit() {
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo exact-production-phase", null, false, List.of());
         String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
 
-        assertThat(script).contains("if [ \"$ISOLATION\" = \"isolate-sources\" ]", "echo exact-production-phase");
-        assertThat(new SandboxBuildCommandService(Optional.empty(), Optional.empty()).pristineSolutionBuildCommand()).doesNotContain("isolate-sources");
+        assertThat(script).contains("if [ \"$LANE\" = \"behavior-isolated\" ]", "echo exact-production-phase");
+        assertThat(new SandboxBuildCommandService(Optional.empty(), Optional.empty()).pristineSolutionBuildCommand()).doesNotContain("behavior-isolated");
     }
 
     @Test
@@ -437,7 +492,7 @@ class SandboxBuildCommandServiceTest {
 
         private String substitutionStanza() {
             String fullScript = VerifyScriptTestHarness.verifyScript();
-            return VerifyScriptTestHarness.slice(fullScript, "find \"$TEST_DEST\" -type f", "done");
+            return VerifyScriptTestHarness.slice(fullScript, "find \"$TEST_DEST\" -type f 2>/dev/null | while", "done");
         }
     }
 

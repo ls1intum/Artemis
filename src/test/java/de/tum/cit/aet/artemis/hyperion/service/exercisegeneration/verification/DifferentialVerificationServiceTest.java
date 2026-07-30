@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiv
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.WorkspaceArchive;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -170,6 +172,14 @@ class DifferentialVerificationServiceTest {
 
         private final BuildReportSpec template;
 
+        private BuildReportSpec structuralSolution;
+
+        private BuildReportSpec structuralTemplate;
+
+        private BuildReportSpec lastSolution;
+
+        private BuildReportSpec lastTemplate;
+
         private final String problemStatement;
 
         private final String buildOutput;
@@ -179,11 +189,13 @@ class DifferentialVerificationServiceTest {
 
         private String specDocument;
 
-        private Map<String, String> solutionRepositoryFiles;
+        private Map<String, String> solutionRepositoryFiles = Map.of();
 
-        private Map<String, String> templateRepositoryFiles;
+        private Map<String, String> templateRepositoryFiles = Map.of();
 
-        private Map<String, String> testsRepositoryFiles;
+        private Map<String, String> testsRepositoryFiles = Map.of();
+
+        private final List<Map<String, String>> restoredWorkspaceSources = new ArrayList<>();
 
         /** Served instead of the solution build's reports, for the hardened-reader rejection paths. */
         private TarArchiveInputStream tamperedSolutionReports;
@@ -207,6 +219,12 @@ class DifferentialVerificationServiceTest {
             return this;
         }
 
+        private ScriptedSandbox withStructuralReports(BuildReportSpec solutionReports, BuildReportSpec templateReports) {
+            structuralSolution = solutionReports;
+            structuralTemplate = templateReports;
+            return this;
+        }
+
         private ScriptedSandbox withRepositories(Map<String, String> solutionFiles, Map<String, String> templateFiles, Map<String, String> testsFiles) {
             this.solutionRepositoryFiles = solutionFiles;
             this.templateRepositoryFiles = templateFiles;
@@ -217,6 +235,8 @@ class DifferentialVerificationServiceTest {
         private ScriptedSandbox(BuildReportSpec solution, BuildReportSpec template, String problemStatement, String buildOutput) {
             this.solution = solution;
             this.template = template;
+            this.lastSolution = solution;
+            this.lastTemplate = template;
             this.problemStatement = problemStatement;
             this.buildOutput = buildOutput;
         }
@@ -236,7 +256,16 @@ class DifferentialVerificationServiceTest {
             if (!joined.contains("verify.sh")) {
                 return new SandboxExecResultDTO(0, "", "", false);
             }
-            BuildReportSpec spec = joined.contains("solution") ? solution : template;
+            boolean solutionBuild = joined.contains("solution");
+            boolean structural = joined.contains("trusted-structural");
+            BuildReportSpec spec = solutionBuild ? structural && structuralSolution != null ? structuralSolution : solution
+                    : structural && structuralTemplate != null ? structuralTemplate : template;
+            if (solutionBuild) {
+                lastSolution = spec;
+            }
+            else {
+                lastTemplate = spec;
+            }
             return new SandboxExecResultDTO(spec.exitCode(), buildOutput, "", spec.timedOut());
         }
 
@@ -252,12 +281,25 @@ class DifferentialVerificationServiceTest {
                 };
             }
             if (path.endsWith("/solution")) {
-                return tamperedSolutionReports != null ? tamperedSolutionReports : solution.reportsTar("solution");
+                return tamperedSolutionReports != null ? tamperedSolutionReports : lastSolution.reportsTar("solution");
             }
             if (path.endsWith("/template")) {
-                return template.reportsTar("template");
+                return lastTemplate.reportsTar("template");
             }
             return null;
+        }
+
+        @Override
+        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
+            if (!GenerationWorkspaceService.WORKSPACE.equals(destinationPath)) {
+                return;
+            }
+            try (TarArchiveInputStream tar = new TarArchiveInputStream(tarArchive)) {
+                restoredWorkspaceSources.add(WorkspaceArchive.readTar(tar, ""));
+            }
+            catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
         }
 
         private static TarArchiveInputStream repositoryTar(String directory, Map<String, String> files) {
@@ -282,10 +324,27 @@ class DifferentialVerificationServiceTest {
         AtomicInteger restorations = new AtomicInteger();
 
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), restorations::incrementAndGet);
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), restorations::incrementAndGet);
 
         assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(restorations).hasValue(3);
+    }
+
+    @Test
+    void inLoopSelfCheckRestoresExactJavaSourcesFromServerMemoryAfterEveryIsolatedBuild() {
+        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withRepositories(
+                Map.of("src/Answer.java", "class Answer {}", "README.md", "solution"), Map.of("src/Answer.java", "class Answer { /* TODO */ }"),
+                Map.of("test/AnswerTest.java", "class AnswerTest {}", "pom.xml", "<project/>"));
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+
+        newVerifier().selfCheck(sandbox, "s", exercise, Map.of(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(sandbox.restoredWorkspaceSources).hasSize(3)
+                .allSatisfy(restored -> assertThat(restored).containsEntry("solution/src/Answer.java", "class Answer {}")
+                        .containsEntry("template/src/Answer.java", "class Answer { /* TODO */ }").containsEntry("tests/test/AnswerTest.java", "class AnswerTest {}")
+                        .doesNotContainKeys("solution/README.md", "tests/pom.xml"));
     }
 
     @Test
@@ -385,7 +444,8 @@ class DifferentialVerificationServiceTest {
         DifferentialVerificationService verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
-                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK,
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
+                PROBLEM_STATEMENT_WITH_TASK,
                 // The plan maps BOTH verified tests, so the approved-test-plan gate is silent and the scaffolded-away contract is the only failing conjunct.
                 FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false);
 
@@ -415,7 +475,8 @@ class DifferentialVerificationServiceTest {
         DifferentialVerificationService verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.empty(), approvedSpecs);
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
-                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK, plan, false);
+                Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
+                PROBLEM_STATEMENT_WITH_TASK, plan, false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK).withSpec(clarifiedSpec), "s",
                 new ProgrammingExercise(), request, NO_RESTORE);
@@ -444,18 +505,68 @@ class DifferentialVerificationServiceTest {
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
     private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
-        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()),
+                NO_RESTORE);
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
     private static AgentVerifyReport selfCheck(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
-        return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), false, Set.of());
+        return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), false, SeededStructuralTests.EMPTY);
+    }
+
+    private static SeededStructuralTests structuralTests(Set<String> names) {
+        return names.isEmpty() ? SeededStructuralTests.EMPTY
+                : new SeededStructuralTests(names, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
+    }
+
+    private static BuildReportSpec onlyTests(BuildReportSpec reports, Set<String> selectedNames) {
+        List<String> names = reports.allNames().stream().filter(selectedNames::contains).toList();
+        List<String> failures = reports.failedNames().stream().filter(selectedNames::contains).toList();
+        int exitCode = failures.isEmpty() ? 0 : reports.exitCode();
+        return BuildReportSpec.withScaReports(names, failures, reports.scaReports(), exitCode);
     }
 
     /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of()), NO_RESTORE);
+        Set<String> behavioralNames = solution.allNames().stream().filter(name -> !seededStructural.contains(name)).collect(Collectors.toSet());
+        ScriptedSandbox sandbox = new ScriptedSandbox(onlyTests(solution, behavioralNames), onlyTests(template, behavioralNames), problemStatement)
+                .withStructuralReports(onlyTests(solution, seededStructural), onlyTests(template, seededStructural));
+        return newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), structuralTests(seededStructural), Set.of()), NO_RESTORE);
+    }
+
+    @Test
+    void provenanceSeparatedVerificationRunsFourLanesAndMergesOnlyExactTrustedStructuralResults() {
+        String structuralName = "testClass[Calculator]";
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.")
+                .withStructuralReports(BuildReportSpec.of(List.of(structuralName), List.of(), 0), BuildReportSpec.of(List.of(structuralName), List.of(), 0));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isTrue();
+        assertThat(result.testCount()).isEqualTo(3);
+        assertThat(sandbox.executedCommands()).filteredOn(command -> command.contains("verify.sh")).hasSize(4);
+        assertThat(sandbox.executedCommands()).anyMatch(command -> command.contains("solution behavior-isolated"))
+                .anyMatch(command -> command.contains("template behavior-isolated")).anyMatch(command -> command.contains("solution trusted-structural"))
+                .anyMatch(command -> command.contains("template trusted-structural"));
+    }
+
+    @Test
+    void provenanceSeparatedVerificationFailsClosedWhenTrustedLaneDoesNotReportTheExactSeededNames() {
+        String structuralName = "testClass[Calculator]";
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.")
+                .withStructuralReports(BuildReportSpec.of(List.of("candidateLookalike"), List.of(), 0), BuildReportSpec.of(List.of(structuralName), List.of(), 0));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("trusted structural solution lane") && reason.contains("exactly the server-seeded checks"));
     }
 
     @Test
@@ -476,7 +587,7 @@ class DifferentialVerificationServiceTest {
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), "No task bindings");
 
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), PROBLEM_STATEMENT_WITH_TASK), NO_RESTORE);
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of(), PROBLEM_STATEMENT_WITH_TASK), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isTrue();
     }
@@ -487,7 +598,8 @@ class DifferentialVerificationServiceTest {
         String statement = "# Exercise\n[task][Implement both cases](planned,addedDuringRepair)\nImplement both cases.\n";
         String plan = "{\"tests\":[{\"name\":\"planned\",\"seam\":\"S1\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}";
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), statement);
-        VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), statement, plan, false);
+        VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
+                statement, plan, false);
 
         VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise(), request, NO_RESTORE);
 
@@ -557,13 +669,13 @@ class DifferentialVerificationServiceTest {
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
     }
 
     /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
     private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames), NO_RESTORE);
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, baselineGradedTestNames), NO_RESTORE);
     }
 
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
@@ -603,7 +715,7 @@ class DifferentialVerificationServiceTest {
         var producedTests = Map.of("pom.xml", pom, "test/de/test/SortTest.java", plainJunitTest);
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
@@ -636,7 +748,7 @@ class DifferentialVerificationServiceTest {
                 """;
         Map<String, String> seedTests = Map.of("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest);
         Map<String, String> producedTests = Map.of("pom.xml", aresPom(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
-        VerificationRequest request = new VerificationRequest(seedTests, Map.of(), Map.of(), producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(),
+        VerificationRequest request = new VerificationRequest(seedTests, Map.of(), Map.of(), producedTests, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
                 PROBLEM_STATEMENT_WITH_TASK, true);
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, request,
@@ -671,7 +783,7 @@ class DifferentialVerificationServiceTest {
         Map<String, String> solution = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                new VerificationRequest(Map.of("pom.xml", pom), tests, template, solution, Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("canonical source roots") && reason.contains("FakeAres.java"));
@@ -693,7 +805,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -704,7 +816,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -1086,7 +1198,7 @@ class DifferentialVerificationServiceTest {
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", aresPom());
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
         }
 
         /**
@@ -1138,7 +1250,7 @@ class DifferentialVerificationServiceTest {
             var harness = Map.of("pom.xml", aresPom());
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), NO_RESTORE);
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
             assertThat(result.mechanicallyVerified()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -1230,9 +1342,8 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds() {
-            // The seeded structural names are deliberately ABSENT from the build report, so only the authoritative seeded set can resolve their bindings: with them present in the
-            // report the binding would resolve against the report instead and the seeded-structural exemption would never be consulted.
-            List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            // The seeded bundle's exact structural results run in their own trusted lane and are merged with the source-isolated behavioral results.
+            List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
             String problemStatement = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n";
 
             VerificationResult result = verifyWithSeededStructural(resultWithFails(0, allNames, List.of()), resultWithFails(1, allNames, allNames), problemStatement,
@@ -1299,9 +1410,9 @@ class DifferentialVerificationServiceTest {
             DifferentialVerificationService verifier = newVerifier();
 
             AgentVerifyReport stageReport = verifier.selfCheckTestsStage(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s",
-                    exercise, Map.of(), Set.of());
+                    exercise, Map.of(), SeededStructuralTests.EMPTY);
             AgentVerifyReport fullReport = verifier.selfCheck(new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ""), "s", exercise,
-                    Map.of(), false, Set.of());
+                    Map.of(), false, SeededStructuralTests.EMPTY);
 
             assertThat(stageReport.wouldBeAccepted()).isTrue();
             assertThat(stageReport.blockingReasons()).noneMatch(reason -> reason.contains("problem statement") || reason.contains("[task]"));
@@ -1378,13 +1489,13 @@ class DifferentialVerificationServiceTest {
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan)
                     .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO S1: create FireSpell\n}"), testsFiles);
-            AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise, Map.of(), false, Set.of());
+            AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise, Map.of(), false, SeededStructuralTests.EMPTY);
             assertThat(rejected.wouldBeAccepted()).isFalse();
             assertThat(rejected.blockingReasons()).anyMatch(reason -> reason.contains("student-created") && reason.contains("Mage.java"));
 
             ScriptedSandbox honest = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan).withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", mage), testsFiles);
-            assertThat(verifier.selfCheck(honest, "s", javaExercise, Map.of(), false, Set.of()).wouldBeAccepted()).isTrue();
+            assertThat(verifier.selfCheck(honest, "s", javaExercise, Map.of(), false, SeededStructuralTests.EMPTY).wouldBeAccepted()).isTrue();
         }
 
         @Test
@@ -1537,9 +1648,9 @@ class DifferentialVerificationServiceTest {
                 sandbox = sandbox.withSpec(specDocument);
             }
             DifferentialVerificationService verifier = specDocument == null ? newVerifier() : newVerifier(specDocument);
-            return verifier.verify(
-                    sandbox, "s", new ProgrammingExercise(), new VerificationRequest(Map.of(), Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, Map.of(),
-                            extractionFailedRepositories, Set.of(), Set.of(), problemStatement, specDocument == null ? null : FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false),
+            return verifier.verify(sandbox, "s", new ProgrammingExercise(),
+                    new VerificationRequest(Map.of(), Map.of(), Map.of(), producedTestsFiles, producedTemplateFiles, Map.of(), extractionFailedRepositories,
+                            SeededStructuralTests.EMPTY, Set.of(), problemStatement, specDocument == null ? null : FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false),
                     NO_RESTORE);
         }
 

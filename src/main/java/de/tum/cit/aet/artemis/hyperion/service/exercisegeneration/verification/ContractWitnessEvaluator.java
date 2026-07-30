@@ -74,6 +74,11 @@ final class ContractWitnessEvaluator {
                     outcomes.add(new ContractWitnessOutcome(candidate, ContractWitnessOutcome.Disposition.INCONCLUSIVE, solution.buildDiagnostic()));
                     continue;
                 }
+                // Source-isolated execution removes every live Java source before Surefire starts. Rebuild the exact probe workspace before the starter run rather than letting
+                // the second half observe the source-deleted residue of the reference run.
+                restoreCandidate.run();
+                sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
+                seedVerifyScript.run();
                 BuildSummary template = templateBuild.get();
                 if (ContractWitnessProbe.executed(candidate, template.testNames()) && ContractWitnessProbe.failed(candidate, template.testFailedNames()) && !template.timedOut()) {
                     outcomes.add(outcome(candidate, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, template));

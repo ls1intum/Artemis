@@ -147,18 +147,19 @@ public class StageCheckService {
     /**
      * Checks one stage's artifact against its mechanical gate.
      *
-     * @param stage                     the stage whose artifact is being checked
-     * @param sandbox                   the open sandbox session
-     * @param sessionId                 the sandbox session id
-     * @param exercise                  the exercise being generated (drives the per-language build recipe)
-     * @param seedTestsFiles            the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
-     * @param lastTestsReport           the TESTS stage's {@link AgentVerifyReport}, consumed by the STATEMENT stage to resolve {@code [task]} bindings against exact test names;
-     *                                      {@code null} before TESTS has run (or when TESTS never returned a report)
-     * @param seededStructuralTestNames server-authored structural test names currently materialized in the workspace
+     * @param stage                 the stage whose artifact is being checked
+     * @param sandbox               the open sandbox session
+     * @param sessionId             the sandbox session id
+     * @param exercise              the exercise being generated (drives the per-language build recipe)
+     * @param seedTestsFiles        the tests-repository snapshot taken before generation, forwarded to the TESTS stage's differential self-check
+     * @param lastTestsReport       the TESTS stage's {@link AgentVerifyReport}, consumed by the STATEMENT stage to resolve {@code [task]} bindings against exact test names;
+     *                                  {@code null} before TESTS has run (or when TESTS never returned a report)
+     * @param seededStructuralTests server-authored structural test names and exact trusted files currently materialized in the workspace
      * @return the gate's pass/fail verdict, an actionable observation, and — for TESTS only — the full {@link AgentVerifyReport}
      */
     public StageCheckResult check(GenerationStage stage, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
+            @Nullable AgentVerifyReport lastTestsReport, SeededStructuralTests seededStructuralTests) {
+        Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
         // A downstream or unstaged run may use only a specification frozen by the SPEC gate. Treating a candidate-authored workspace file as authority would let ADAPT define
         // its own ownership and grading exemptions.
         if (stage != GenerationStage.SPEC && approvedSpecs.approved(sessionId).isEmpty() && !readSpec(sandbox, sessionId).isBlank()) {
@@ -178,7 +179,7 @@ public class StageCheckService {
         }
         return switch (stage) {
             case SPEC -> checkSpec(sandbox, sessionId, exercise);
-            case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
+            case TESTS -> checkTests(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTests);
             case STATEMENT -> checkStatement(sandbox, sessionId, lastTestsReport, seededStructuralTestNames);
         };
     }
@@ -615,10 +616,11 @@ public class StageCheckService {
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Set<String> seededStructuralTestNames) {
+            SeededStructuralTests seededStructuralTests) {
+        Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
         AgentVerifyReport report;
         try {
-            report = verifier.selfCheckTestsStage(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTestNames);
+            report = verifier.selfCheckTestsStage(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTests);
         }
         catch (RuntimeException e) {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);

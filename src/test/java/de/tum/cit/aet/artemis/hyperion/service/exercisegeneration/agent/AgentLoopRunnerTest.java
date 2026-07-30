@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -36,6 +35,7 @@ import com.openai.errors.OpenAIIoException;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -286,7 +286,7 @@ class AgentLoopRunnerTest {
         // and only that second, passing submit() ends the loop.
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -500,7 +500,7 @@ class AgentLoopRunnerTest {
     void agentLoop_failedVerifyDiagnostic_resetsRejectedActionCounter() {
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
         SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session", null, exercise, Map.of(), false, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);

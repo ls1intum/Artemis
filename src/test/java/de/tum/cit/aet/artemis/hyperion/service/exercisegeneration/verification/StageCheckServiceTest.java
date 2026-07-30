@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -218,7 +217,9 @@ class StageCheckServiceTest {
     }
 
     private StageCheckResult check(GenerationStage stage, AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
-        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, seededStructuralTestNames);
+        SeededStructuralTests structuralTests = seededStructuralTestNames.isEmpty() ? SeededStructuralTests.EMPTY
+                : new SeededStructuralTests(seededStructuralTestNames, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
+        return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, structuralTests);
     }
 
     @Test
@@ -273,7 +274,7 @@ class StageCheckServiceTest {
         @Test
         void passes_andCarriesTheReport_whenSolutionPassesAndTemplateFails_andTheGradingPlanIsValid() {
             AgentVerifyReport report = report(true, true);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -285,7 +286,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheDifferentialPassesButTheGradingPlanIsMissing() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -295,7 +296,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_withTheParsersActionableMessage_whenTheGradingPlanIsInvalid() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":7,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -306,7 +307,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheGradingPlanNamesATestThatDoesNotExist() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testGhost\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -321,7 +322,7 @@ class StageCheckServiceTest {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -338,7 +339,7 @@ class StageCheckServiceTest {
                     | S2 | Calculator | boundary values | 2 | yes |
                     """);
             AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("ordinary", "boundary"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"ordinary\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"},"
                     + "{\"name\":\"boundary\",\"seam\":\"S2\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
 
@@ -351,7 +352,7 @@ class StageCheckServiceTest {
         @Test
         void rejectsUnplannedGradableTests_soNoneBypassTheApprovedPlan() {
             AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo", "testBar"), List.of(), List.of(), true, List.of());
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -362,7 +363,7 @@ class StageCheckServiceTest {
 
         @Test
         void rejectsWeightDriftAndUnexpectedHiddenTests() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
             assertThat(check(GenerationStage.TESTS).observation()).contains("weights do not match", "S1 requires 3");
 
@@ -376,7 +377,7 @@ class StageCheckServiceTest {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
             assertThat(check(GenerationStage.TESTS).observation()).contains("no ALWAYS-visible test", "S1", "formative visible evidence");
@@ -386,7 +387,7 @@ class StageCheckServiceTest {
         void rejectsAfterDueDateVisibilityWhenTheExerciseHasNoDueDate() {
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
             assertThat(check(GenerationStage.TESTS).observation()).contains("has no due date", "hidden indefinitely");
@@ -395,7 +396,7 @@ class StageCheckServiceTest {
         @Test
         void reportsTheDifferentialFailureFirst_neverTheMissingPlan_whenBothAreWrong() {
             // Feedback-priority contract: a failing differential is the real problem; plan noise on top of it would bury the actionable signal.
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(false, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(false, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -407,7 +408,7 @@ class StageCheckServiceTest {
         void rejectsACompleteBuildPairWhenAnotherTestArtifactGateFailsBeforeReadingThePlan() {
             AgentVerifyReport report = new AgentVerifyReport(5, true, List.of(), 5, true, true, List.of(), List.of("testFoo"), List.of(), List.of(), false,
                     List.of("The Java tests do not use @WhitelistPath."));
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -417,7 +418,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenAPlanEntryHasNoSeamOrNamesASeamTheSpecNeverDeclared() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report(true, true));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
 
             assertThat(check(GenerationStage.TESTS).observation()).contains("no seam").contains("S1");
@@ -430,7 +431,7 @@ class StageCheckServiceTest {
         @Test
         void fails_butStillCarriesTheReport_whenTheDifferentialDoesNotHold() {
             AgentVerifyReport report = report(false, true);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -444,7 +445,7 @@ class StageCheckServiceTest {
             sandbox.spec = specWithDesign("| FuelStrategy | designed by students | student-creates |\n");
             approvedSpecs.approve("s", sandbox.spec);
             AgentVerifyReport report = report(true, false);
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(report);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report);
 
             StageCheckResult result = check(GenerationStage.TESTS);
 
@@ -454,7 +455,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_gracefully_whenTheSelfCheckThrows() {
-            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenThrow(new RuntimeException("build agent lost"));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenThrow(new RuntimeException("build agent lost"));
 
             StageCheckResult result = check(GenerationStage.TESTS);
 

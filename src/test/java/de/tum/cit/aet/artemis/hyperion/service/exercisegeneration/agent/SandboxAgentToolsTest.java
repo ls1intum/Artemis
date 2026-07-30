@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
@@ -622,7 +622,7 @@ class SandboxAgentToolsTest {
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), false,
                 List.of("failure " + GITHUB_SENTINEL));
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), anySet())).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), any(SeededStructuralTests.class))).thenReturn(report);
 
         String result = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
 
@@ -645,11 +645,12 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         Set<String> names = Set.of("testClass[StudentStrategy]");
+        SeededStructuralTests structuralTests = new SeededStructuralTests(names, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("testFoo", "testClass[StudentStrategy]"), List.of(), List.of(), true,
                 List.of());
-        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), eq(names))).thenReturn(report);
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(false), eq(structuralTests))).thenReturn(report);
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise);
-        tools.configureStructuralOracleRefresh(() -> names);
+        tools.configureStructuralOracleRefresh(() -> structuralTests);
 
         assertThat(tools.verify()).isEqualTo(report.toObservation());
     }
@@ -666,7 +667,7 @@ class SandboxAgentToolsTest {
         StageCheckService stageCheckService = mock(StageCheckService.class);
 
         for (GenerationStage stage : GenerationStage.values()) {
-            when(stageCheckService.check(eq(stage), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+            when(stageCheckService.check(eq(stage), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                     .thenReturn(StageCheckResult.passed("stage " + stage + " note"));
             SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise, Map.of(), false, stageCheckService);
             tools.enterStage(stage);
@@ -683,7 +684,7 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("SPEC.md is missing required section(s)"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.SPEC);
@@ -700,7 +701,7 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(new StageCheckResult(true, report.toObservation(), report));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -717,9 +718,9 @@ class SandboxAgentToolsTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         AgentVerifyReport testsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull(), any(SeededStructuralTests.class)))
                 .thenReturn(new StageCheckResult(true, testsReport.toObservation(), testsReport));
-        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), eq(testsReport), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
 
@@ -752,7 +753,7 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -769,7 +770,7 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -809,7 +810,8 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
 
@@ -825,7 +827,8 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "DELETED", "", false));
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
 
@@ -841,7 +844,7 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), anySet()))
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -858,7 +861,8 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed("clean"));
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed("clean"));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
         tools.verify();
@@ -874,7 +878,8 @@ class SandboxAgentToolsTest {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
         StageCheckService stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), anySet())).thenReturn(StageCheckResult.passed(""));
+        when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed(""));
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.STATEMENT);
         tools.verify();

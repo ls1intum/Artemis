@@ -1,11 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -17,9 +13,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,8 +55,6 @@ public class DifferentialVerificationService {
     private static final Duration VERIFY_TIMEOUT = Duration.ofMinutes(10);
 
     private static final Set<String> READINESS_TEST_NAMES = Set.of("testPublicApi", "testRepresentativeScores", "testBoundaryScores", "testEmptyInput");
-
-    private static final int PRISTINE_SCRIPT_MODE = 0755;
 
     private static final int MAX_READINESS_DIAGNOSTIC_CHARS = 4_000;
 
@@ -196,14 +188,13 @@ public class DifferentialVerificationService {
      * @param sessionId        the sandbox session id
      * @param exercise         the exercise being verified (drives the per-language build recipe)
      * @param request          the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
-     * @param restoreCandidate resets the sandbox and re-materializes the exact captured candidate before each of the two builds, so generated tests or detached processes cannot
-     *                             change the second build's input and make the verifier approve a tree different from the one persistence receives
+     * @param restoreCandidate resets the sandbox and re-materializes the exact captured candidate before each build, so generated tests or detached processes cannot change a
+     *                             later build's input and make the verifier approve a tree different from the one persistence receives
      * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
         // Shared with the in-loop self-check so the agent's `verify` tool and this mechanical decision cannot diverge; only the integrity gates and the verdict are layered here.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement(), restoreCandidate,
-                true);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTests(), request.producedProblemStatement(), restoreCandidate);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -283,27 +274,31 @@ public class DifferentialVerificationService {
     }
 
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
-            Set<String> seededStructuralTestNames) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTestNames);
+            SeededStructuralTests seededStructuralTests) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, true, seededStructuralTests);
     }
 
     public AgentVerifyReport selfCheckTestsStage(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Set<String> seededStructuralTestNames) {
-        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false, seededStructuralTestNames);
+            SeededStructuralTests seededStructuralTests) {
+        return selfCheck(sandbox, sessionId, exercise, seedTestsFiles, false, false, seededStructuralTests);
     }
 
     /**
-     * The in-loop self-check the agent's {@code verify} tool calls: the same two pristine builds, production parse and actionable gates as {@link #verify}, rendered as an
-     * agent-readable {@link AgentVerifyReport}. It skips the sandbox-free integrity gates, so {@code wouldBeAccepted} covers the differential and actionable gates only and proves
-     * nothing about semantic quality. Each call re-runs both builds. Threading the server-authored {@code seededStructuralTestNames} through keeps the grading plan and statement
-     * contract identical to final verification instead of first revealing those gradable names in the outer repair loop; {@code includeStatementChecks} is false for the
-     * tests-stage entry point, which reports on test artifacts only.
+     * The in-loop self-check the agent's {@code verify} tool calls: the same provenance-separated pristine builds, production parse and actionable gates as {@link #verify},
+     * rendered as an agent-readable {@link AgentVerifyReport}. It skips the sandbox-free integrity gates, so {@code wouldBeAccepted} covers the differential and actionable gates
+     * only and proves nothing about semantic quality. Each call re-runs the behavioral solution/template lanes and, when structural authority exists, both trusted structural
+     * lanes. Threading the exact server-authored bundle through keeps the grading plan and statement contract identical to final verification; {@code includeStatementChecks} is
+     * false for the tests-stage entry point, which reports on test artifacts only.
      */
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
-            boolean includeStatementChecks, Set<String> seededStructuralTestNames) {
+            boolean includeStatementChecks, SeededStructuralTests seededStructuralTests) {
+        Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
+        JavaSourceSnapshot sourceSnapshot = JavaSourceSnapshot.capture(sandbox, sessionId);
+        Map<String, String> testsRepositoryFiles = sourceSnapshot.testsFiles();
+        Map<String, String> templateFiles = sourceSnapshot.templateFiles();
+        Map<String, String> solutionFiles = sourceSnapshot.solutionFiles();
         String problemStatement = readProblemStatement(sandbox, sessionId);
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTestNames, problemStatement, () -> {
-        }, false);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTests, problemStatement, () -> sourceSnapshot.restore(sandbox, sessionId));
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
 
@@ -313,7 +308,6 @@ public class DifferentialVerificationService {
         List<String> reasons = new ArrayList<>(includeStatementChecks ? analysis.actionableReasons() : analysis.testArtifactReasons());
         boolean javaAresConventionsHold = true;
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            Map<String, String> testsRepositoryFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
             List<String> javaAresConventionReasons = testsRepositoryFiles.isEmpty()
                     ? List.of("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.")
                     : ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation);
@@ -321,8 +315,6 @@ public class DifferentialVerificationService {
             reasons.addAll(javaAresConventionReasons);
         }
         List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);
-        Map<String, String> templateFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.TEMPLATE);
-        Map<String, String> solutionFiles = readRepositoryFiles(sandbox, sessionId, RepositoryType.SOLUTION);
         List<String> approvedSpecificationReasons = contractSpecifications.stream()
                 .flatMap(spec -> ExerciseIntegrityGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
@@ -420,45 +412,49 @@ public class DifferentialVerificationService {
         return approvedSpecs.approved(sessionId).filter(spec -> !spec.isBlank()).stream().toList();
     }
 
-    static Map<String, String> readRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
-        String directory = GenerationWorkspaceService.directoryFor(repositoryType);
-        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + directory)) {
-            return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, directory);
-        }
-        catch (IOException | RuntimeException e) {
-            return Map.of();
-        }
-    }
-
     /**
-     * Runs the shared, sandbox-dependent half of verification once: re-seeds and runs the two pristine builds, parses them with the production parsers, reads the problem
-     * statement, and applies every actionable gate. Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict
-     * are computed by identical code.
+     * Runs the shared, sandbox-dependent half of verification once: source-isolated behavioral builds plus, when present, exact server-owned structural builds for solution and
+     * template. Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
      */
-    private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames,
-            @Nullable String producedProblemStatement, Runnable restoreCandidate, boolean isolateSources) {
+    private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, SeededStructuralTests seededStructuralTests,
+            @Nullable String producedProblemStatement, Runnable restoreCandidate) {
         List<String> reasons = new ArrayList<>();
         List<String> statementReasons = new ArrayList<>();
+        Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
 
-        BuildSummary solution;
-        BuildSummary template;
+        BuildSummary behavioralSolution;
+        BuildSummary behavioralTemplate;
+        BuildSummary structuralSolution = null;
+        BuildSummary structuralTemplate = null;
         try {
             restoreCandidate.run();
-            seedPristineVerifyScript(sandbox, sessionId, exercise);
-            String solutionCommand = isolateSources ? sandboxBuildCommandService.isolatedSolutionBuildCommand() : sandboxBuildCommandService.pristineSolutionBuildCommand();
-            solution = runPristineBuild(sandbox, sessionId, solutionCommand, GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+            seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests);
+            behavioralSolution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralSolutionBuildCommand(),
+                    GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
             restoreCandidate.run();
-            seedPristineVerifyScript(sandbox, sessionId, exercise);
-            String templateCommand = isolateSources ? sandboxBuildCommandService.isolatedTemplateBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
-            template = runPristineBuild(sandbox, sessionId, templateCommand, GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
-        }
-        finally {
-            if (isolateSources) {
+            seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests);
+            behavioralTemplate = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralTemplateBuildCommand(),
+                    GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+            if (!seededStructuralTestNames.isEmpty()) {
                 restoreCandidate.run();
+                seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests);
+                structuralSolution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.trustedStructuralSolutionBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+                restoreCandidate.run();
+                seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests);
+                structuralTemplate = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.trustedStructuralTemplateBuildCommand(),
+                        GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
             }
         }
+        finally {
+            restoreCandidate.run();
+        }
+        BuildSummary solution = structuralSolution == null ? behavioralSolution : ProvenanceSeparatedBuilds.merge(behavioralSolution, structuralSolution);
+        BuildSummary template = structuralTemplate == null ? behavioralTemplate : ProvenanceSeparatedBuilds.merge(behavioralTemplate, structuralTemplate);
 
         int testCount = solution.tests();
+        boolean laneResultsSound = ProvenanceSeparatedBuilds.validate(behavioralSolution, behavioralTemplate, structuralSolution, structuralTemplate, seededStructuralTestNames,
+                reasons);
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
         boolean noDuplicateTestNames = checkNoDuplicateTestNames(solution, reasons);
         boolean templateBuildSound = checkTemplateBuildSound(solution, template, reasons);
@@ -555,7 +551,7 @@ public class DifferentialVerificationService {
                             + "the tasks it illustrates. The accepted diagram decision cannot be revoked after the specification gate.");
         }
 
-        boolean testArtifactGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && solutionScaClean;
+        boolean testArtifactGatesPass = laneResultsSound && solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && solutionScaClean;
         boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve
                 && noDuplicateTaskBindings && allGradableTestsBound && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve && noStrayUmlDirectives
                 && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
@@ -795,16 +791,17 @@ public class DifferentialVerificationService {
      * Runs every candidate witness against the reference solution and, when it passes there, the template. It preserves a named test failure in the reference solution as
      * evidence for later independent adjudication instead of silently discarding it.
      *
-     * @param sandbox            the open sandbox session
-     * @param sessionId          the sandbox session id
-     * @param exercise           the exercise being built
-     * @param producedTestsFiles the tests repository used to host the throwaway probe
-     * @param candidates         the unvalidated witnesses
-     * @param restoreCandidate   restores the mechanically verified candidate and removes probe residue
+     * @param sandbox               the open sandbox session
+     * @param sessionId             the sandbox session id
+     * @param exercise              the exercise being built
+     * @param producedTestsFiles    the tests repository used to host the throwaway probe
+     * @param seededStructuralTests the exact server-owned structural authority
+     * @param candidates            the unvalidated witnesses
+     * @param restoreCandidate      restores the mechanically verified candidate and removes probe residue
      * @return one environment outcome per candidate, or an empty list when there are no candidates
      */
     public List<ContractWitnessOutcome> evaluateContractWitnesses(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
-            Map<String, String> producedTestsFiles, List<ContractWitness> candidates, Runnable restoreCandidate) {
+            Map<String, String> producedTestsFiles, SeededStructuralTests seededStructuralTests, List<ContractWitness> candidates, Runnable restoreCandidate) {
         if (candidates.isEmpty()) {
             return List.of();
         }
@@ -812,29 +809,11 @@ public class DifferentialVerificationService {
             return ContractWitnessEvaluator.inconclusive(candidates, "No executable Java test host was available.");
         }
         return ContractWitnessEvaluator.evaluate(sandbox, sessionId, exercise.getId(), producedTestsFiles, candidates, restoreCandidate,
-                () -> seedPristineVerifyScript(sandbox, sessionId, exercise),
-                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                () -> seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests),
+                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralSolutionBuildCommand(),
                         GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION)),
-                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
+                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralTemplateBuildCommand(),
                         GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE)));
-    }
-
-    /**
-     * Executes the three restored builds that turn an authored semantic mutant into environment evidence; probe infrastructure failures propagate.
-     *
-     * @param sandbox               the active generation sandbox
-     * @param sessionId             the active sandbox session
-     * @param exercise              the exercise whose build commands should run
-     * @param producedTestsFiles    the mechanically verified graded tests
-     * @param producedSolutionFiles the pristine reference-solution sources
-     * @param candidates            independently authored mutant proposals
-     * @param restoreCandidate      restores the mechanically verified workspace
-     * @return mutants proven to survive the graded suite and fail their own counterexample
-     */
-    public List<SemanticMutant> validateSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
-            Map<String, String> producedSolutionFiles, List<SemanticMutant> candidates, Runnable restoreCandidate) {
-        return evaluateSemanticMutants(sandbox, sessionId, exercise, producedTestsFiles, producedSolutionFiles, candidates, restoreCandidate).stream()
-                .filter(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
     }
 
     /**
@@ -846,18 +825,19 @@ public class DifferentialVerificationService {
      * @param exercise              exercise whose build recipe is used
      * @param producedTestsFiles    mechanically verified graded tests
      * @param producedSolutionFiles pristine reference-solution sources
+     * @param seededStructuralTests the exact server-owned structural authority
      * @param candidates            independently authored mutant proposals
      * @param restoreCandidate      restores the verified candidate between probes
      * @return one evidence disposition per examined proposal
      */
     public List<SemanticMutantOutcome> evaluateSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTestsFiles,
-            Map<String, String> producedSolutionFiles, List<SemanticMutant> candidates, Runnable restoreCandidate) {
+            Map<String, String> producedSolutionFiles, SeededStructuralTests seededStructuralTests, List<SemanticMutant> candidates, Runnable restoreCandidate) {
         if (candidates.isEmpty() || producedTestsFiles.isEmpty() || producedSolutionFiles.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return List.of();
         }
         try {
             List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.evaluate(producedTestsFiles, producedSolutionFiles, candidates,
-                    (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
+                    (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
             Map<SemanticMutantOutcome.Disposition, Long> counts = outcomes.stream().collect(Collectors.groupingBy(SemanticMutantOutcome::disposition, Collectors.counting()));
             log.info("Semantic-mutant probe for exercise {}: {} proposal outcomes {}", exercise.getId(), outcomes.size(), counts);
             return outcomes;
@@ -879,24 +859,25 @@ public class DifferentialVerificationService {
      * @param sessionId             the active sandbox session
      * @param exercise              the exercise whose build commands should run
      * @param producedSolutionFiles the current reference-solution sources
+     * @param seededStructuralTests the exact server-owned structural authority
      * @param provenMutants         mutants previously proven by the three-probe validation
      * @param restoreCandidate      restores the mechanically verified workspace
      * @return one executed survivor, kill, or inconclusive disposition per proven mutant
      */
     public List<SemanticMutantOutcome> checkSemanticMutants(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedSolutionFiles,
-            List<SemanticMutant> provenMutants, Runnable restoreCandidate) {
+            SeededStructuralTests seededStructuralTests, List<SemanticMutant> provenMutants, Runnable restoreCandidate) {
         if (provenMutants.isEmpty() || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return List.of();
         }
         return SemanticMutantExecution.recheck(producedSolutionFiles, provenMutants,
-                (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, mutant, probe, restoreCandidate));
+                (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
     }
 
-    private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, @Nullable SemanticMutant mutant,
-            Map.@Nullable Entry<String, String> counterexampleProbe, Runnable restoreCandidate) {
-        return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate, () -> seedPristineVerifyScript(sandbox, sessionId, exercise),
-                () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
-                        GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION)));
+    private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, SeededStructuralTests seededStructuralTests,
+            @Nullable SemanticMutant mutant, Map.@Nullable Entry<String, String> counterexampleProbe, Runnable restoreCandidate) {
+        return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate,
+                () -> seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests), () -> runPristineBuild(sandbox, sessionId,
+                        sandboxBuildCommandService.behavioralSolutionBuildCommand(), GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION)));
     }
 
     /**
@@ -909,12 +890,15 @@ public class DifferentialVerificationService {
         return sandboxBuildCommandService.pristineSolutionBuildCommand();
     }
 
-    /** Recreates the verifier control directory, discarding anything the agent or an earlier in-loop verification left in it. */
-    private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.verifyScriptContent(exercise));
+    private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, SeededStructuralTests seededStructuralTests) {
+        seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.verifyScriptContent(exercise), seededStructuralTests);
     }
 
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, String script) {
+        seedPristineVerifyScript(sandbox, sessionId, script, SeededStructuralTests.EMPTY);
+    }
+
+    private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, String script, SeededStructuralTests seededStructuralTests) {
         try {
             // Empty the directory rather than recreating it: copy-to-container requires the destination to already exist.
             SandboxExecResultDTO preparation = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "sh", "-c",
@@ -922,7 +906,7 @@ public class DifferentialVerificationService {
             if (!preparation.isSuccess()) {
                 throw new VerificationInfrastructureException("The verifier could not prepare its script directory", null);
             }
-            sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, singleFileTar(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script));
+            sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, verifierFilesTar(script, seededStructuralTests));
         }
         catch (VerificationInfrastructureException exception) {
             throw exception;
@@ -932,22 +916,11 @@ public class DifferentialVerificationService {
         }
     }
 
-    private static InputStream singleFileTar(String name, String content) {
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
-            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-            TarArchiveEntry entry = new TarArchiveEntry(name);
-            entry.setSize(bytes.length);
-            entry.setMode(PRISTINE_SCRIPT_MODE);
-            tar.putArchiveEntry(entry);
-            tar.write(bytes);
-            tar.closeArchiveEntry();
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return new ByteArrayInputStream(out.toByteArray());
+    private static InputStream verifierFilesTar(String script, SeededStructuralTests seededStructuralTests) {
+        java.util.LinkedHashMap<String, String> files = new java.util.LinkedHashMap<>();
+        files.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script);
+        seededStructuralTests.repositoryFiles().forEach((path, content) -> files.put("trusted-structural/" + path, content));
+        return WorkspaceArchive.buildFilesTarStream(files, Map.of(), Set.of(SandboxBuildCommandService.VERIFY_SCRIPT_NAME));
     }
 
     /**

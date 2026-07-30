@@ -59,6 +59,8 @@ public class SandboxBuildCommandService {
 
     public static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
+    public static final String TRUSTED_STRUCTURAL_DIR = PRISTINE_VERIFY_DIR + "/trusted-structural";
+
     /** Fixture for the pre-provider readiness build. Outside the agent workspace, and consumed before the agent can run shell commands. */
     public static final String READINESS_FIXTURE_DIR = "/opt/hyperion-readiness-fixture";
 
@@ -103,11 +105,27 @@ public class SandboxBuildCommandService {
     }
 
     public String isolatedSolutionBuildCommand() {
-        return isolatedVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+        return behavioralSolutionBuildCommand();
     }
 
     public String isolatedTemplateBuildCommand() {
-        return isolatedVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+        return behavioralTemplateBuildCommand();
+    }
+
+    public String behavioralSolutionBuildCommand() {
+        return laneVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION), "behavior-isolated");
+    }
+
+    public String behavioralTemplateBuildCommand() {
+        return laneVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), "behavior-isolated");
+    }
+
+    public String trustedStructuralSolutionBuildCommand() {
+        return laneVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION), "trusted-structural");
+    }
+
+    public String trustedStructuralTemplateBuildCommand() {
+        return laneVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), "trusted-structural");
     }
 
     public static String reportsDirectoryFor(String assignment) {
@@ -118,8 +136,8 @@ public class SandboxBuildCommandService {
         return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory;
     }
 
-    private static String isolatedVerifyInvocation(String assignmentDirectory) {
-        return pristineVerifyInvocation(assignmentDirectory) + " isolate-sources";
+    private static String laneVerifyInvocation(String assignmentDirectory, String lane) {
+        return pristineVerifyInvocation(assignmentDirectory) + " " + lane;
     }
 
     /**
@@ -172,18 +190,21 @@ public class SandboxBuildCommandService {
                 # the build-fresh test/SCA reports into a verifier-owned directory. The verdict is NOT decided here: the verifier copies those reports out and parses them.
                 ASSIGNMENT="$1"
                 if [ "$ASSIGNMENT" != "solution" ] && [ "$ASSIGNMENT" != "template" ]; then
-                    echo "usage: verify.sh <solution|template> [isolate-sources]" >&2
+                    echo "usage: verify.sh <solution|template> [behavior-isolated|trusted-structural]" >&2
                     exit 64
                 fi
-                ISOLATION="$2"
-                if [ -n "$ISOLATION" ] && [ "$ISOLATION" != "isolate-sources" ]; then
-                    echo "usage: verify.sh <solution|template> [isolate-sources]" >&2
+                LANE="$2"
+                if [ -n "$LANE" ] && [ "$LANE" != "behavior-isolated" ] && [ "$LANE" != "trusted-structural" ]; then
+                    echo "usage: verify.sh <solution|template> [behavior-isolated|trusted-structural]" >&2
                     exit 64
                 fi
                 WORKSPACE="@@WORKSPACE@@"
                 REPORTS_DIR="@@REPORTS_DIR@@/$ASSIGNMENT"
                 BUILD_DIR=$(mktemp -d /tmp/hyperion-verify.XXXXXX) || exit 70
-                trap 'rm -rf "$BUILD_DIR"' EXIT
+                cleanup() {
+                    rm -rf "$BUILD_DIR"
+                }
+                trap cleanup EXIT
                 # Materialize the CI checkout layout (-a preserves exec bits and binaries).
                 TEST_DEST="@@TEST_DEST@@"
                 mkdir -p "$TEST_DEST"
@@ -191,6 +212,21 @@ public class SandboxBuildCommandService {
                 ASSIGNMENT_DEST="@@ASSIGNMENT_DEST@@"
                 mkdir -p "$ASSIGNMENT_DEST"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$ASSIGNMENT_DEST"/ 2>/dev/null || true
+                if [ "$LANE" = "behavior-isolated" ] && [ -d "@@TRUSTED_STRUCTURAL_DIR@@" ]; then
+                    TRUSTED_MANIFEST="$BUILD_DIR/.hyperion-trusted-structural-files"
+                    ( cd "@@TRUSTED_STRUCTURAL_DIR@@" && find . -type f -print ) > "$TRUSTED_MANIFEST" || exit 74
+                    while IFS= read -r trusted; do
+                        rm -f "$TEST_DEST/${trusted#./}" 2>/dev/null || exit 74
+                    done < "$TRUSTED_MANIFEST"
+                elif [ "$LANE" = "trusted-structural" ]; then
+                    if [ ! -d "@@TRUSTED_STRUCTURAL_DIR@@" ] || ! find "@@TRUSTED_STRUCTURAL_DIR@@" -type f -print -quit | grep -q .; then
+                        echo "trusted structural fixture is unavailable" >&2
+                        exit 66
+                    fi
+                    rm -rf "$TEST_DEST/test" "$TEST_DEST/structural/test" "$TEST_DEST/behavior/test"
+                    rm -f "$TEST_DEST/test.json" 2>/dev/null || exit 74
+                    cp -a "@@TRUSTED_STRUCTURAL_DIR@@/." "$TEST_DEST"/ || exit 74
+                fi
                 @@READINESS_OVERLAY@@
                 @@SOLUTION_COPY@@
                 # The standard Gradle tests scaffold applies the Teamscale coverage-upload plugin, which LocalCI resolves over the network and a generation sandbox cannot.
@@ -222,7 +258,7 @@ public class SandboxBuildCommandService {
                     phase_rc=$?
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
                 }
-                if [ "$ISOLATION" = "isolate-sources" ]; then
+                if [ "$LANE" = "behavior-isolated" ]; then
                     @@ISOLATED_PHASES@@
                 else
                     @@PHASES@@
@@ -255,7 +291,8 @@ public class SandboxBuildCommandService {
                 .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
                 .replace("@@ISOLATED_PHASES@@", isolatedPhaseSection).replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression))
                 .replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER)
-                .replace("@@READINESS_OVERLAY@@", readinessOverlay).replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
+                .replace("@@READINESS_OVERLAY@@", readinessOverlay).replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR)
+                .replace("@@TRUSTED_STRUCTURAL_DIR@@", TRUSTED_STRUCTURAL_DIR).replace("@@PRISTINE_VERIFY_DIR@@", PRISTINE_VERIFY_DIR);
     }
 
     /**
@@ -306,7 +343,6 @@ public class SandboxBuildCommandService {
         return setup + "\n" + compileTests + staticAnalysis + """
 
                 if [ "$rc" -eq 0 ]; then
-                    # Source is deliberately destroyed, not hidden at a guessable path. The verifier owns restoration from its immutable in-memory candidate.
                     find "$BUILD_DIR" "$WORKSPACE" -type f -name '*.java' -delete 2>/dev/null || exit 74
                 """ + executeTests + """
 

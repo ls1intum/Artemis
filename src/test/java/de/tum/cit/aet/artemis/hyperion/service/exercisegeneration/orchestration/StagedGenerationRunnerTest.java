@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -50,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -153,7 +153,9 @@ class StagedGenerationRunnerTest {
 
     private StagedGenerationRunner runner;
 
-    private AtomicReference<Supplier<Set<String>>> structuralRefresh;
+    private AtomicReference<Supplier<SeededStructuralTests>> structuralRefresh;
+
+    private AtomicReference<SeededStructuralTests> currentStructuralTests;
 
     @BeforeEach
     void setUp() {
@@ -163,12 +165,18 @@ class StagedGenerationRunnerTest {
         approvedSpecs = new ApprovedSpecRegistry();
         stageCheckService = new StageCheckService(verifier, approvedSpecs);
         baseTools = mock(SandboxAgentTools.class);
-        structuralRefresh = new AtomicReference<>(Set::of);
+        structuralRefresh = new AtomicReference<>(() -> SeededStructuralTests.EMPTY);
+        currentStructuralTests = new AtomicReference<>(SeededStructuralTests.EMPTY);
         doAnswer(invocation -> {
             structuralRefresh.set(invocation.getArgument(0));
             return null;
         }).when(baseTools).configureStructuralOracleRefresh(any());
-        when(baseTools.refreshStructuralOracle()).thenAnswer(invocation -> structuralRefresh.get().get());
+        when(baseTools.refreshStructuralOracle()).thenAnswer(invocation -> {
+            SeededStructuralTests refreshed = structuralRefresh.get().get();
+            currentStructuralTests.set(refreshed);
+            return refreshed;
+        });
+        when(baseTools.seededStructuralTests()).thenAnswer(invocation -> currentStructuralTests.get());
         when(baseTools.seededStructuralTestNames()).thenReturn(Set.of());
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
@@ -185,6 +193,10 @@ class StagedGenerationRunnerTest {
         return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turns, message);
     }
 
+    private static SeededStructuralTests structuralTests(Set<String> names) {
+        return new SeededStructuralTests(names, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
+    }
+
     private static AgentVerifyReport passingReport(String... names) {
         List<String> exactNames = List.of(names);
         return new AgentVerifyReport(exactNames.size(), true, List.of(), List.of(), exactNames.size(), true, true, List.of(), List.of(), exactNames, List.of(), List.of(), true,
@@ -196,7 +208,7 @@ class StagedGenerationRunnerTest {
                 List.of("the solution does not pass"));
     }
 
-    private AgentLoopResult run(BooleanSupplier cancelled, Supplier<Set<String>> structuralSeedHook) {
+    private AgentLoopResult run(BooleanSupplier cancelled, Supplier<SeededStructuralTests> structuralSeedHook) {
         return runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", cancelled, null, null, structuralSeedHook).result();
     }
 
@@ -204,12 +216,12 @@ class StagedGenerationRunnerTest {
     void runsSpecificationExecutableBuildAndStatementInOrder() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(2, "spec"), completed(10, "build"),
                 completed(3, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
         AtomicInteger structuralRefreshes = new AtomicInteger();
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> {
             structuralRefreshes.incrementAndGet();
-            return Set.of();
+            return SeededStructuralTests.EMPTY;
         });
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
@@ -228,9 +240,9 @@ class StagedGenerationRunnerTest {
     void executableBuildFailureGetsOneBoundedReentryAndStillUsesTheReservedStatementPhase() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build one"),
                 completed(2, "build two"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(failingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(failingReport());
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.finalMessage()).isEqualTo("statement");
         verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -248,12 +260,12 @@ class StagedGenerationRunnerTest {
                 new AgentLoopRunner.AgentLoopSession(completed(2, "build one"), failedBuildConversation),
                 new AgentLoopRunner.AgentLoopSession(completed(2, "build two"), retryConversation),
                 new AgentLoopRunner.AgentLoopSession(completed(1, "statement"), List.of(new UserMessage("statement trajectory"))));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(failingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(failingReport());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Message>> priorConversations = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.finalMessage()).isEqualTo("statement");
         verify(agentLoopRunner, times(4)).runSession(anyString(), priorConversations.capture(), prompts.capture(), any(), anyInt(), any(), any(), any());
@@ -272,11 +284,11 @@ class StagedGenerationRunnerTest {
         when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("visibleCase", "hiddenCase"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("visibleCase", "hiddenCase"));
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
 
         runner.run(exercise, baseTools, baseTools, "raw brief\n\nINITIAL WORKSPACE LAYOUT: reference/problem-statement.md", "raw brief", Map.of(), sandbox, "s", NEVER_CANCELLED,
-                null, null, Set::of, true, null);
+                null, null, () -> SeededStructuralTests.EMPTY, true, null);
 
         verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
         String statementPrompt = prompts.getAllValues().get(2);
@@ -293,10 +305,10 @@ class StagedGenerationRunnerTest {
                 + "Create the calculator type and implement its operation.";
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), eq(structuralChecks))).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), eq(structuralTests(structuralChecks)))).thenReturn(passingReport("testFoo"));
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
 
-        AgentLoopResult result = run(NEVER_CANCELLED, () -> structuralChecks);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> structuralTests(structuralChecks));
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
@@ -310,7 +322,7 @@ class StagedGenerationRunnerTest {
         sandbox.specMarkdown = "# incomplete";
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "invalid"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -328,10 +340,10 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "first spec"), completed(1, VALID_SPEC_DOCUMENT),
                 completed(3, "build"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
@@ -351,9 +363,10 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec one"), completed(1, "spec two"),
                 completed(1, "spec three"), completed(1, "spec four"), completed(3, "build"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(outcome.unresolvedSpecificationFindings()).containsExactly("R1 still invents a source-level technique");
@@ -380,9 +393,9 @@ class StagedGenerationRunnerTest {
                 "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
                 completed(1, "# SPEC.md\n" + VALID_SPEC_DOCUMENT), completed(3, "build"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(conceptSelector).select(eq("brief"), anyString(), any(), any(), any());
@@ -404,10 +417,10 @@ class StagedGenerationRunnerTest {
                 "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(1, VALID_SPEC_DOCUMENT),
                 completed(3, "build"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "authoritative elevator statement", "authoritative elevator statement",
-                Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, false, null);
+                Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, false, null);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(reviewer).reviewSpecification(eq("authoritative elevator statement"), anyString(), any(), any());
@@ -428,9 +441,9 @@ class StagedGenerationRunnerTest {
                 "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, VALID_SPEC_DOCUMENT), completed(3, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
@@ -447,9 +460,10 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive", "instructor review");
@@ -468,9 +482,10 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.unresolvedSpecificationFindings()).hasSize(2)
                 .allSatisfy(finding -> assertThat(finding).startsWith("Unresolved specification-review hypothesis from grounded evidence:"));
@@ -497,9 +512,10 @@ class StagedGenerationRunnerTest {
             return completed(1, "done");
         });
         when(baseTools.writeFile("SPEC.md", measuredDraft)).thenReturn("ERROR: workspace unavailable");
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(approvedSpecs.approved("s")).contains(unmeasuredDraft);
@@ -509,12 +525,12 @@ class StagedGenerationRunnerTest {
     @Test
     void specificationReadBackFailureAfterTheGateFailsClosedBeforeApproval() {
         stageCheckService = mock(StageCheckService.class);
-        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), anySet())).thenReturn(StageCheckResult.passed("SPEC gate passed"));
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("SPEC gate passed"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         sandbox.specMarkdown = null;
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(result.finalMessage()).contains("could not be read back", "unfrozen contract");
@@ -526,10 +542,10 @@ class StagedGenerationRunnerTest {
     void approvedSpecificationIsPublishedToTheSink() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build"),
                 completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
         AtomicReference<String> published = new AtomicReference<>();
 
-        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of, true, published::set);
+        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, published::set);
 
         assertThat(published).hasValue(VALID_SPEC_DOCUMENT);
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
@@ -544,7 +560,7 @@ class StagedGenerationRunnerTest {
             return completed(2, "spec");
         });
 
-        AgentLoopResult result = run(cancelled, Set::of);
+        AgentLoopResult result = run(cancelled, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -561,7 +577,7 @@ class StagedGenerationRunnerTest {
         Instant start = Instant.parse("2026-07-23T10:00:00Z");
         runner.setClockForTests(() -> firstPhaseCompleted.get() ? start.plus(Duration.ofMinutes(23)) : start);
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.turns()).isEqualTo(2);
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -579,11 +595,11 @@ class StagedGenerationRunnerTest {
             firstPhaseCompleted.set(true);
             return completed(2, "phase");
         });
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
         Instant start = Instant.parse("2026-07-23T10:00:00Z");
         runner.setClockForTests(() -> firstPhaseCompleted.get() ? start.plus(Duration.ofMinutes(23)) : start);
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
@@ -654,9 +670,9 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(1, "spec"), completed(1, "spec"),
                 completed(1, "spec"), completed(3, "build"), completed(1, "statement"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
-        AgentLoopResult result = run(NEVER_CANCELLED, Set::of);
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(approvedSpecs.approved("s")).as("the frozen contract is the best draft this concept reached, not the last one written").contains(draftB);

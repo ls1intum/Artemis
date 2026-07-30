@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -128,7 +129,7 @@ class GenerationAttemptLoopTest {
         when(exercise.getProgrammingLanguage()).thenReturn(ProgrammingLanguage.JAVA);
 
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(Set.of());
+        when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(SeededStructuralTests.EMPTY);
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         java.util.concurrent.atomic.AtomicInteger candidate = new java.util.concurrent.atomic.AtomicInteger();
         when(workspace.extractProblemStatement(any(), anyString())).thenAnswer(ignored -> "PROBLEM STATEMENT " + candidate.incrementAndGet());
@@ -227,10 +228,10 @@ class GenerationAttemptLoopTest {
         ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Cycle.java", "class Cycle {}", "class Cycle { int stopsEarly; }", witness);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The first full-artifact review did not complete."), SpecFidelityReport.empty());
@@ -253,7 +254,7 @@ class GenerationAttemptLoopTest {
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
         ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
         when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of(), List.of(), List.of(witness)));
@@ -281,11 +282,11 @@ class GenerationAttemptLoopTest {
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("recheck failed",
                 new IllegalStateException("reports unavailable"));
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenThrow(failure);
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);
         GenerationAttemptLoop loop = newGenerateLoop(2, 1);
 
         assertThatThrownBy(loop::run).isSameAs(failure);
@@ -306,16 +307,16 @@ class GenerationAttemptLoopTest {
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int localOnly; }", counterexample);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
 
         GenerationAttemptLoop loop = newGenerateLoop(2, 1);
         loop.run();
 
         verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
-        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), any());
+        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
         assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
     }
@@ -337,9 +338,9 @@ class GenerationAttemptLoopTest {
                 "chooses within the first batch");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int localOnly; }", counterexample);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)));
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
         loop.run();
@@ -362,9 +363,9 @@ class GenerationAttemptLoopTest {
                 .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
         SemanticMutant mutant = mutant("R1", "globalChoice", "chooses within the first batch");
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of())
                 .thenThrow(new IllegalStateException("witness reviewer unavailable"));
@@ -389,10 +390,10 @@ class GenerationAttemptLoopTest {
         SemanticMutant firstOnly = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
         SemanticMutant fifo = mutant("R2", "lexicalTie", "uses FIFO insertion order");
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(firstOnly, fifo), List.of(), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenReturn(
                 List.of(new SemanticMutantOutcome(firstOnly, Disposition.SURVIVED_GRADED_SUITE), new SemanticMutantOutcome(fifo, Disposition.SURVIVED_GRADED_SUITE)), List.of(),
                 List.of());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
                 List.of(new SemanticMutantOutcome(firstOnly, Disposition.SURVIVED_GRADED_SUITE), new SemanticMutantOutcome(fifo, Disposition.INCONCLUSIVE)),
                 List.of(new SemanticMutantOutcome(firstOnly, Disposition.KILLED_BY_GRADED_SUITE)), List.of(new SemanticMutantOutcome(fifo, Disposition.KILLED_BY_GRADED_SUITE)));
 
@@ -401,7 +402,7 @@ class GenerationAttemptLoopTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<SemanticMutant>> checkedMutants = ArgumentCaptor.forClass(List.class);
-        verify(verifier, times(3)).checkSemanticMutants(any(), anyString(), any(), any(), checkedMutants.capture(), any());
+        verify(verifier, times(3)).checkSemanticMutants(any(), anyString(), any(), any(), any(), checkedMutants.capture(), any());
         assertThat(checkedMutants.getAllValues()).containsExactly(List.of(firstOnly, fifo), List.of(firstOnly), List.of(fifo));
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
@@ -418,9 +419,9 @@ class GenerationAttemptLoopTest {
         List<SemanticMutant> mutants = List.of(mutant("R1", "one", "wrong one"), mutant("R2", "two", "wrong two"), mutant("R3", "three", "wrong three"),
                 mutant("R4", "four", "wrong four"));
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(mutants);
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(mutants.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(mutants.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList());
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
@@ -447,9 +448,9 @@ class GenerationAttemptLoopTest {
                 "honors only the first prerequisite");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler { int firstOnly; }", counterexample);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of(), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(), List.of());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any())).thenReturn(
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
                 List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
@@ -458,7 +459,7 @@ class GenerationAttemptLoopTest {
         InOrder scopes = Mockito.inOrder(baseTools);
         scopes.verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
         scopes.verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
-        verify(verifier, times(2)).checkSemanticMutants(any(), anyString(), any(), any(), any(), any());
+        verify(verifier, times(2)).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
         assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
@@ -473,7 +474,7 @@ class GenerationAttemptLoopTest {
         SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                 "Reference solution violates R1 in executable witness extremeBoundary", "the named reference assertion failed and independent review grounded it");
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
                 List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
                 List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
         when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
@@ -498,9 +499,9 @@ class GenerationAttemptLoopTest {
         SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                 "Reference solution violates R1 in executable witness extremeBoundary", "the named reference assertion failed and independent review grounded it");
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.REFERENCE_TEST_FAILED, "extremeBoundary expected zero")), List.of());
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(List.of(),
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(),
                 List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
         when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.ReferenceWitnessReview(List.of(defect), List.of(witness)));
@@ -531,7 +532,7 @@ class GenerationAttemptLoopTest {
                 "uses overflowing integer subtraction");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Nearest.java", "class Nearest {}", "class Nearest { int overflow; }", witness);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.REFERENCE_TEST_FAILED, "extremeBoundary expected zero")));
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 1, 0, true);
@@ -553,7 +554,7 @@ class GenerationAttemptLoopTest {
                 .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
         SemanticMutant mutant = mutant("R1", "localChoice", "chooses only within the first batch");
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)), List.of());
 
         newGenerateLoop(2, 1).run();
@@ -574,7 +575,7 @@ class GenerationAttemptLoopTest {
         SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                 "Reference solution violates R1 in executable witness extremeBoundary", "the named reference assertion failed and independent review grounded it");
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
                 List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
                 List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.INCONCLUSIVE, "test report unavailable")));
         when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
@@ -595,7 +596,7 @@ class GenerationAttemptLoopTest {
         ContractWitness witness = new ContractWitness("R1", "extremeBoundary", "@Test void extremeBoundary() { assertEquals(0, choose()); }",
                 "uses overflowing integer subtraction");
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")));
         when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(SpecFidelityCriticService.ReferenceWitnessReview.empty());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
@@ -620,7 +621,7 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
         DifferentialVerificationService.VerificationInfrastructureException failure = new DifferentialVerificationService.VerificationInfrastructureException("restore failed",
                 new IllegalStateException("session lost"));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenThrow(failure);
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenThrow(failure);
         GenerationAttemptLoop loop = newGenerateLoop(2, 1);
 
         assertThatThrownBy(loop::run).isSameAs(failure);
@@ -727,7 +728,7 @@ class GenerationAttemptLoopTest {
         ContractWitness counterexample = new ContractWitness("R1", "keepsEarlierTie", "@Test void keepsEarlierTie() {}", "chooses the later equal-distance value");
         SemanticMutant mutant = new SemanticMutant("R1", "src/Nearest.java", "class Nearest {}", "class Nearest { int later; }", counterexample, weakOracle);
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
 
         GenerationAttemptLoop loop = newGenerateLoop(1, 0);
@@ -823,7 +824,7 @@ class GenerationAttemptLoopTest {
             String wrongBehavior = "narrows the input before computing";
             ContractWitness witness = new ContractWitness("R1", "handlesExtremeInput", witnessCode, wrongBehavior);
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness), List.of(), List.of());
-            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
                     List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")),
                     List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")), List.of());
             when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(approvedForAdoption(witness));
@@ -879,7 +880,7 @@ class GenerationAttemptLoopTest {
                     .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
             ContractWitness witness = new ContractWitness("R1", "computesTheResult", "void computesTheResult() {}", "returns an incorrect result");
             when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any()))
+            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
             when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(approvedForAdoption(witness));
 

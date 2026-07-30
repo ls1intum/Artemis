@@ -155,9 +155,9 @@ public class StructuralOracleSeedingService {
      * @param exercise  the exercise being generated
      * @return the structural test-case names seeded this run (empty when none)
      */
-    public Set<String> seedIfStructuralDiff(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+    public SeededStructuralTests seedIfStructuralDiff(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            return Set.of();
+            return SeededStructuralTests.EMPTY;
         }
         var approvedSpecification = approvedSpecs.approved(sessionId);
         Set<String> expectedStudentCreatedTypes = approvedSpecification.map(StageCheckService::specStudentCreatedTypes).map(Set::copyOf).orElse(Set.of());
@@ -183,7 +183,7 @@ public class StructuralOracleSeedingService {
             if (ownership == StructuralAssetOwnership.UNMANAGED) {
                 if (expectedStudentCreatedTypes.isEmpty()) {
                     log.info("Preserving existing structural test assets for exercise {} because they are not managed by Hyperion", exercise.getId());
-                    return Set.of();
+                    return SeededStructuralTests.EMPTY;
                 }
                 throw new IllegalStateException("The tests repository already contains structural Ares assets not managed by Hyperion. Refusing to overwrite the existing "
                         + "grading harness while materializing approved student-created types " + expectedStudentCreatedTypes);
@@ -199,20 +199,22 @@ public class StructuralOracleSeedingService {
                 if (managedAssetsDetected && !cleanupStructuralFiles(sandbox, sessionId, testDirectory)) {
                     throw new IllegalStateException("The previous Hyperion-managed structural assets could not be removed");
                 }
-                return Set.of();
+                return SeededStructuralTests.EMPTY;
             }
 
-            Map<String, String> seededFiles = new LinkedHashMap<>();
-            String dirPrefix = GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + testDirectory;
-            seededFiles.put(dirPrefix + "/" + ORACLE_FILE, oracle);
+            Map<String, String> structuralFiles = new LinkedHashMap<>();
+            String repositoryPrefix = testDirectory.isEmpty() ? "" : testDirectory + "/";
+            structuralFiles.put(repositoryPrefix + ORACLE_FILE, oracle);
             List<String> requiredStructuralClasses = requiredStructuralClasses(oracle);
             for (String className : requiredStructuralClasses) {
-                seededFiles.put(dirPrefix + "/" + className, structuralClassContent(className, packageName));
+                structuralFiles.put(repositoryPrefix + className, structuralClassContent(className, packageName));
             }
             if (managedAssetsDetected && !cleanupStructuralFiles(sandbox, sessionId, testDirectory)) {
                 throw new IllegalStateException("The previous Hyperion-managed structural assets could not be removed before refresh");
             }
-            sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(seededFiles, Map.of()));
+            Map<String, String> workspaceFiles = new LinkedHashMap<>();
+            structuralFiles.forEach((path, content) -> workspaceFiles.put(GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + path, content));
+            sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of()));
             Set<String> seededTestNames = structuralTestNames(oracle);
             List<String> missingExpectedTypes = expectedStudentCreatedTypes.stream().filter(type -> !seededTestNames.contains("testClass[" + type + "]")).sorted().toList();
             if (!missingExpectedTypes.isEmpty()) {
@@ -220,7 +222,7 @@ public class StructuralOracleSeedingService {
             }
             log.info("Seeded {} structural test classes and a structure oracle for exercise {} (package '{}'), structural test names {}", requiredStructuralClasses.size(),
                     exercise.getId(), packageName, seededTestNames);
-            return seededTestNames;
+            return new SeededStructuralTests(seededTestNames, structuralFiles);
         }
         catch (RuntimeException | IOException e) {
             log.warn("Could not seed structural tests for exercise {}: {}", exercise.getId(), e.getMessage());
@@ -228,11 +230,11 @@ public class StructuralOracleSeedingService {
                 throw new IllegalStateException("Could not safely materialize the structural grading contract"
                         + (expectedStudentCreatedTypes.isEmpty() ? "" : " for approved student-created type(s) " + expectedStudentCreatedTypes) + ": " + e.getMessage(), e);
             }
-            return Set.of();
+            return SeededStructuralTests.EMPTY;
         }
     }
 
-    private Set<String> restoreBaselineStructuralBundle(InteractiveSandbox sandbox, String sessionId) {
+    private SeededStructuralTests restoreBaselineStructuralBundle(InteractiveSandbox sandbox, String sessionId) {
         BaselineStructuralBundle baseline = sessionId == null ? null : baselineBundles.get(sessionId);
         if (baseline == null) {
             throw new IllegalStateException(
@@ -250,7 +252,7 @@ public class StructuralOracleSeedingService {
             boolean baselineIntact = baseline.assets().entrySet().stream().allMatch(entry -> entry.getValue().equals(liveFiles.get(entry.getKey())))
                     && liveAssets.keySet().stream().allMatch(baseline.assets()::containsKey);
             if (baselineIntact) {
-                return baseline.testNames();
+                return baseline.seededTests();
             }
             for (String directory : liveDirectories) {
                 if (!cleanupStructuralFiles(sandbox, sessionId, directory)) {
@@ -262,7 +264,7 @@ public class StructuralOracleSeedingService {
                 baseline.assets().forEach((path, content) -> workspaceFiles.put(GenerationWorkspaceService.directoryFor(RepositoryType.TESTS) + "/" + path, content));
                 sandbox.copyIn(sessionId, GenerationWorkspaceService.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(workspaceFiles, Map.of()));
             }
-            return baseline.testNames();
+            return baseline.seededTests();
         }
         catch (RuntimeException exception) {
             throw new IllegalStateException("Could not restore the pre-authoring structural grading bundle: " + exception.getMessage(), exception);
@@ -283,6 +285,10 @@ public class StructuralOracleSeedingService {
     private record BaselineStructuralBundle(Map<String, String> assets, Set<String> testNames) {
 
         private static final BaselineStructuralBundle EMPTY = new BaselineStructuralBundle(Map.of(), Set.of());
+
+        private SeededStructuralTests seededTests() {
+            return assets.isEmpty() ? SeededStructuralTests.EMPTY : new SeededStructuralTests(testNames, assets);
+        }
     }
 
     /**

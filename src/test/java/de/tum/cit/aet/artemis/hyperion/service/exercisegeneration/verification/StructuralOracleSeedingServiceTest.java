@@ -107,7 +107,7 @@ class StructuralOracleSeedingServiceTest {
                 """);
         ProgrammingExercise exercise = javaExercise();
         exercise.setPackageName("sorting");
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
@@ -118,9 +118,12 @@ class StructuralOracleSeedingServiceTest {
         assertThat(seeded.get("tests/test/sorting/ClassTest.java")).startsWith(GENERATED_MARKER).contains("package sorting;").doesNotContain("${packageName}");
         // The oracle enforces the created class, not the already-present interface.
         assertThat(seeded.get("tests/test/sorting/test.json")).contains("MergeSort");
+        assertThat(seededTests.repositoryFiles()).containsOnlyKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/ConstructorTest.java",
+                "test/sorting/test.json");
+        assertThat(seededTests.repositoryFiles().get("test/sorting/test.json")).isEqualTo(seeded.get("tests/test/sorting/test.json"));
         // Only providers with something to check are seeded. Empty AttributeTest/ConstructorTest factories are reported by JUnit under their shared factory-method name,
         // generateTestsForAllClasses, which creates duplicate production test cases and fails an otherwise correct solution.
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
     }
 
     @Test
@@ -138,13 +141,13 @@ class StructuralOracleSeedingServiceTest {
                 """);
         ProgrammingExercise exercise = javaExercise();
         exercise.setPackageName("navigation");
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, harnessOnly, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, harnessOnly, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
         assertThat(readTar(tarCaptor.getValue())).containsKeys("tests/test/navigation/ClassTest.java", "tests/test/navigation/MethodTest.java",
                 "tests/test/navigation/ConstructorTest.java", "tests/test/navigation/test.json");
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]", "testConstructors[Warp]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]", "testConstructors[Warp]");
     }
 
     @Test
@@ -199,8 +202,8 @@ class StructuralOracleSeedingServiceTest {
 
         ProgrammingExercise exercise = javaExercise();
         exercise.setPackageName("lift");
-        Set<String> firstNames = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
-        Set<String> laterNames = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
+        SeededStructuralTests firstTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
+        SeededStructuralTests laterTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox, org.mockito.Mockito.times(2)).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
@@ -208,7 +211,7 @@ class StructuralOracleSeedingServiceTest {
         String laterOracle = readTar(tarCaptor.getAllValues().get(1)).get("tests/test/lift/test.json");
         assertThat(firstOracle).isEqualTo(laterOracle).contains("\"List\"", "\"DispatchStrategy\"", "\"int\"").doesNotContain("ArrayList", "Collection", "\"long\"",
                 "\"parameters\" : [ \"String\" ]");
-        assertThat(firstNames).isEqualTo(laterNames).containsExactlyInAnyOrder("testClass[ElevatorDispatcher]", "testMethods[ElevatorDispatcher]",
+        assertThat(firstTests.testNames()).isEqualTo(laterTests.testNames()).containsExactlyInAnyOrder("testClass[ElevatorDispatcher]", "testMethods[ElevatorDispatcher]",
                 "testConstructors[ElevatorDispatcher]");
     }
 
@@ -283,10 +286,10 @@ class StructuralOracleSeedingServiceTest {
 
         StructuralOracleSeedingService seeder = seederWith(sandbox, solution, template, tests);
         seeder.captureBaseline("s", tests);
-        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
-        assertThat(seededNames).as("a behaviour-only diff seeds nothing, so there are no exempt structural names").isEmpty();
+        assertThat(seededTests.testNames()).as("a behaviour-only diff seeds nothing, so there are no exempt structural names").isEmpty();
     }
 
     @Test
@@ -301,11 +304,11 @@ class StructuralOracleSeedingServiceTest {
 
         StructuralOracleSeedingService seeder = seederWith(sandbox, solution, template, tests);
         seeder.captureBaseline("s", tests);
-        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         verify(sandbox, never()).exec(any(), any(), any(), any(), any());
-        assertThat(seededNames).isEmpty();
+        assertThat(seededTests.testNames()).isEmpty();
     }
 
     @Test
@@ -336,9 +339,9 @@ class StructuralOracleSeedingServiceTest {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         approvedSpecs = approvedSpec("ScoreProcessor", "public class ScoreProcessor { public void process(); }");
 
-        Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
-        assertThat(seededNames).contains("testClass[ScoreProcessor]");
+        assertThat(seededTests.testNames()).contains("testClass[ScoreProcessor]");
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
     }
 
@@ -354,9 +357,9 @@ class StructuralOracleSeedingServiceTest {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         approvedSpecs = approvedSpec("ScoreProcessor", "public class ScoreProcessor { public void process(); }");
 
-        Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
-        assertThat(seededNames).contains("testClass[ScoreProcessor]");
+        assertThat(seededTests.testNames()).contains("testClass[ScoreProcessor]");
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
     }
 
@@ -373,7 +376,7 @@ class StructuralOracleSeedingServiceTest {
         ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", "public class MergeSort { public void sort(); }");
         ProgrammingExercise exercise = javaExercise();
         exercise.setPackageName("sorting");
-        java.util.Set<String> seededNames = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
         ArgumentCaptor<String[]> cleanupCommand = ArgumentCaptor.forClass(String[].class);
@@ -381,7 +384,7 @@ class StructuralOracleSeedingServiceTest {
         assertThat(cleanupCommand.getValue()).anyMatch(argument -> argument.contains("ClassTest.java")).anyMatch(argument -> argument.contains("MethodTest.java"))
                 .anyMatch(argument -> argument.contains("AttributeTest.java")).anyMatch(argument -> argument.contains("ConstructorTest.java"))
                 .anyMatch(argument -> argument.contains("test.json"));
-        assertThat(seededNames).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
     }
 
     @Test
@@ -396,10 +399,10 @@ class StructuralOracleSeedingServiceTest {
         }
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), tests);
         seeder.captureBaseline("s", Map.of());
-        java.util.Set<String> seededNames = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
 
         verify(sandbox, never()).copyIn(any(), any(), any());
-        assertThat(seededNames).isEmpty();
+        assertThat(seededTests.testNames()).isEmpty();
         ArgumentCaptor<String[]> cleanupCommand = ArgumentCaptor.forClass(String[].class);
         verify(sandbox).exec(eq("s"), any(), cleanupCommand.capture());
         assertThat(cleanupCommand.getValue()).startsWith("rm", "-f", "--").anyMatch(argument -> argument.contains("/workspace/tests/test/structural/test.json"))
@@ -414,7 +417,7 @@ class StructuralOracleSeedingServiceTest {
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), ordinaryFiles);
         seeder.captureBaseline("s", ordinaryFiles);
 
-        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).isEmpty();
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).isEqualTo(SeededStructuralTests.EMPTY);
         verify(sandbox, never()).exec(any(), any(), any(String[].class));
         verify(sandbox, never()).copyIn(any(), any(), any());
     }
@@ -442,7 +445,7 @@ class StructuralOracleSeedingServiceTest {
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
         seeder.captureBaseline("s", baseline);
 
-        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).containsExactly("testClass[X]");
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise()).testNames()).containsExactly("testClass[X]");
         verify(sandbox, never()).exec(any(), any(), any(String[].class));
         verify(sandbox, never()).copyIn(any(), any(), any());
         assertThatThrownBy(() -> seeder.captureBaseline("s", Map.of())).isInstanceOf(IllegalStateException.class).hasMessageContaining("already captured");
@@ -457,7 +460,7 @@ class StructuralOracleSeedingServiceTest {
         StructuralOracleSeedingService seeder = seederWith(sandbox, Map.of(), Map.of(), Map.of());
         seeder.captureBaseline("s", baseline);
 
-        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise())).containsExactly("testClass[X]");
+        assertThat(seeder.seedIfStructuralDiff(sandbox, "s", javaExercise()).testNames()).containsExactly("testClass[X]");
         ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tar.capture());
         assertThat(readTar(tar.getValue())).containsEntry("tests/test/x/test.json", oracle).containsEntry("tests/test/x/ClassTest.java", classProvider);
@@ -479,11 +482,11 @@ class StructuralOracleSeedingServiceTest {
         ProgrammingExercise python = new ProgrammingExercise();
         python.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
 
-        java.util.Set<String> seededNames = new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir)).seedIfStructuralDiff(sandbox, "s", python);
+        SeededStructuralTests seededTests = new StructuralOracleSeedingService(workspace, new TempFileUtilService(tempDir)).seedIfStructuralDiff(sandbox, "s", python);
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         verify(workspace, never()).extractRepositoryFiles(any(), any(), any());
-        assertThat(seededNames).isEmpty();
+        assertThat(seededTests.testNames()).isEmpty();
     }
 
     @Test
@@ -535,9 +538,9 @@ class StructuralOracleSeedingServiceTest {
                 ```
                 """);
 
-        Set<String> seededNames = seederWith(sandbox, solution, template, Map.of(), approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        SeededStructuralTests seededTests = seederWith(sandbox, solution, template, Map.of(), approvedSpecs).seedIfStructuralDiff(sandbox, "s", javaExercise());
 
-        assertThat(seededNames).isEmpty();
+        assertThat(seededTests.testNames()).isEmpty();
         verify(sandbox, never()).copyIn(any(), any(), any());
     }
 
