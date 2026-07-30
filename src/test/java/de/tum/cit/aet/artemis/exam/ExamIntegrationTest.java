@@ -2546,8 +2546,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);
 
-        QuizExercise importedQuizStub = (QuizExercise) importResult.exerciseGroups().getFirst().getExercises().iterator().next();
-        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizStub.getId());
+        long importedQuizId = importResult.exerciseGroups().getFirst().exercises().getFirst().id();
+        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizId);
         assertThat(importedQuiz.isRandomizeQuestionOrder()).isFalse();
         assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
         assertThat(importedQuiz.getDuration()).isEqualTo(999);
