@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
@@ -997,6 +998,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
         textExercise.setChannelName("testchannel" + textExercise.getId());
@@ -1009,6 +1011,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // The import DTO does not carry assessmentType; without setting it explicitly the new exercise would be
         // persisted with assessmentType == null instead of the MANUAL mode the old entity payload preserved.
         assertThat(newTextExercise.getAssessmentType()).as("imported text exercise keeps the MANUAL assessment type").isEqualTo(AssessmentType.MANUAL);
+        // Verify the content fields (problem statement, difficulty, example solution, points, ...) are preserved.
+        ImportedExerciseAssertions.assertContentPreserved(textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(textExercise.getId()),
+                textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(newTextExercise.getId()));
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));

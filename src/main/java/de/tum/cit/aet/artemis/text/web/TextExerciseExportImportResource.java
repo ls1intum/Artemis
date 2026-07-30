@@ -138,7 +138,7 @@ public class TextExerciseExportImportResource {
             importedExercise.setFeedbackSuggestionModule(null);
         }
 
-        final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
+        final var newTextExercise = textExerciseImportService.importTextExercise(importedExercise, originalTextExercise);
         exerciseVersionService.createExerciseVersion(newTextExercise, user);
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(TextExerciseResponseDTO.of(newTextExercise));
     }
