@@ -86,6 +86,7 @@
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
                 "editConfigurationButton": "Globale Konfiguration bearbeiten",
                 "configurationRequiredForTutor": "Die Übungsgruppenverwaltung ist erst verfügbar, nachdem Lehrende die Übungsgruppen für diesen Kurs konfiguriert haben.",
+                "notAuthorized": "Du bist nicht berechtigt, auf die Übungsgruppenverwaltung dieses Kurses zuzugreifen.",
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"

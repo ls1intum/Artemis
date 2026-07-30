@@ -86,6 +86,7 @@
                 "creatTutorialGroupButton": "Create New Tutorial Group",
                 "editConfigurationButton": "Edit Global Configuration",
                 "configurationRequiredForTutor": "Tutorial group management is only available after an instructor has configured tutorial groups for this course.",
+                "notAuthorized": "You are not authorized to access the tutorial group management of this course.",
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."

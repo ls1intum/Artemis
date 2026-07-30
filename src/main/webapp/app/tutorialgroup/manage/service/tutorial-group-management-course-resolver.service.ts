@@ -33,6 +33,11 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 return course;
             }),
             tap((course: Course) => {
+                if (!course.isAtLeastTutor) {
+                    this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+                    void this.router.navigate(['/course-management']);
+                    return;
+                }
                 if (course.tutorialGroupsConfiguration) {
                     const editUrl = '/course-management/' + course.id + '/tutorial-groups/configuration/' + course.tutorialGroupsConfiguration.id + '/edit';
                     if (state.url === editUrl) {

@@ -51,6 +51,7 @@ describe('TutorialGroupManagementResolve', () => {
     it('should navigate instructors to tutorial-groups-checklist if course has no tutorialGroupsConfiguration', () => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.isAtLeastInstructor = true;
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(router, 'navigate');
@@ -61,6 +62,7 @@ describe('TutorialGroupManagementResolve', () => {
     it('should navigate instructors to tutorial-groups-checklist if course has no timeZone', () => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.isAtLeastInstructor = true;
         course.tutorialGroupsConfiguration = { id: 1 };
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
@@ -75,6 +77,7 @@ describe('TutorialGroupManagementResolve', () => {
     ])('should warn tutors and navigate to course management if the tutorial group configuration is incomplete', ({ tutorialGroupsConfiguration, timeZone }) => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.isAtLeastInstructor = false;
         course.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
         course.timeZone = timeZone;
@@ -92,6 +95,7 @@ describe('TutorialGroupManagementResolve', () => {
     it('should allow tutors to access tutorial group management if the configuration is complete', () => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.isAtLeastInstructor = false;
         course.tutorialGroupsConfiguration = { id: 1 };
         course.timeZone = 'Europe/Berlin';
@@ -108,6 +112,7 @@ describe('TutorialGroupManagementResolve', () => {
     it('should not redirect if only the configuration endpoint knows the configuration', () => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.isAtLeastInstructor = false;
         course.timeZone = 'Europe/Berlin';
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
@@ -125,9 +130,27 @@ describe('TutorialGroupManagementResolve', () => {
         expect(resolvedCourse?.tutorialGroupsConfiguration?.id).toBe(5);
     });
 
+    it('should show an error and navigate to course management if the user is not at least tutor in the course', () => {
+        const course: Course = new Course();
+        course.id = 1;
+        course.isAtLeastTutor = false;
+        course.timeZone = 'Europe/Berlin';
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
+        vi.spyOn(router, 'navigate');
+        vi.spyOn(alertService, 'error');
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
+
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+    });
+
     it('should not navigate to tutorial-groups-checklist if state url matches edit configuration url', () => {
         const course: Course = new Course();
         course.id = 1;
+        course.isAtLeastTutor = true;
         course.tutorialGroupsConfiguration = { id: 2 };
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(router, 'navigate');
