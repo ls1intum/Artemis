@@ -1717,6 +1717,30 @@ describe('ExamParticipationComponent', () => {
             expect(comp.examStartConfirmed()).toBe(false);
         });
 
+        it('should display the summary of a submitted test exam without requesting it a second time', () => {
+            // A test exam is loaded through the summary endpoint already, and isExamSummaryPublished never gates a test
+            // exam while isOver() is true once it is submitted, so handleStudentExam used to repeat the very same GET.
+            // A transient failure of that repeat now replaces a summary that had already loaded with the error state,
+            // so the redundant request has to go.
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            setRouteStudentExamId(activatedRoute, '3');
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const submittedTestExam = new StudentExam();
+            submittedTestExam.id = 3;
+            submittedTestExam.submitted = true;
+            submittedTestExam.exam = new Exam();
+            submittedTestExam.exam.testExam = true;
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(submittedTestExam));
+
+            comp.ngOnInit();
+
+            expect(summarySpy).toHaveBeenCalledOnce();
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+            expect(comp.showExamSummary()).toBe(true);
+            expect(comp.summaryLoadFailed()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
         it('should stop the conduction work of the previous exam when navigating after it was started', () => {
             // Clearing the signals is not enough: the autosave timer and the live-event subscriptions of the started
             // exam keep running against the next one, and a second startAutoSaveTimer would overwrite the only handle

@@ -319,7 +319,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.resetForNewLoad();
         this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
             next: (studentExam) => {
-                this.handleStudentExam(studentExam);
+                this.handleStudentExam(studentExam, true);
             },
             error: () => {
                 this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
@@ -827,7 +827,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.stopAutoSaveTimer();
     }
 
-    handleStudentExam(studentExam: StudentExam | undefined) {
+    /**
+     * Takes over a loaded student exam and decides what to show for it: the conduction view, the submission
+     * confirmation, or the summary.
+     *
+     * @param studentExam      the loaded student exam
+     * @param loadedForSummary whether it was already loaded through the summary endpoint and therefore carries the
+     *                         exercises the summary needs. The summary is then displayed directly instead of being
+     *                         requested again: the repeat is the very same GET, and a transient failure of it would
+     *                         replace a summary that had already loaded successfully with the error state (#13317).
+     */
+    handleStudentExam(studentExam: StudentExam | undefined, loadedForSummary = false) {
         if (!studentExam) {
             // Leave the loading state; otherwise the view would keep showing the spinner with nothing to render
             this.loadingExam.set(false);
@@ -842,11 +852,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // only show the summary if the student was able to submit on time and the summary is already visible (see examSummaryPublicationDate).
         if (this.isOver() && this.studentExam().submitted) {
-            if (this.isExamSummaryVisible()) {
-                this.loadAndDisplaySummary();
-            } else {
+            if (!this.isExamSummaryVisible()) {
                 // the instructor delayed the submission overview; withhold it and only show the submission confirmation with the release date
                 this.loadingExam.set(false);
+            } else if (loadedForSummary) {
+                // already loaded through the summary endpoint, so it can be shown right away
+                this.showExamSummary.set(true);
+                this.loadingExam.set(false);
+            } else {
+                this.loadAndDisplaySummary();
             }
         } else {
             // Directly start the exam when we continue from a failed save
