@@ -60,7 +60,7 @@ class GenerationAttemptLoop {
     /** Initial candidate plus at most three mechanical repairs. */
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
-    private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 4;
+    private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
 
     record Dependencies(GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner, DifferentialVerificationService verifier,
             StructuralOracleSeedingService structuralOracleSeeder, SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService,

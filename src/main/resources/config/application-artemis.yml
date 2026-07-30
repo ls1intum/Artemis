@@ -100,14 +100,14 @@ artemis:
       max-turns: 60 # Bounds one attempt, not the whole run; the staged workflow needs headroom for per-test differential checks.
       staged-generation: true # Enforce the specification->tests->statement stage order (each with its own gate) for Java GENERATE runs; ADAPT and other languages are unaffected.
       staged-context: CONTINUOUS # CONTINUOUS|FRESH. CONTINUOUS carries one conversation across the stages, so the model keeps what it learned earlier; FRESH starts each stage blank.
-      max-job-duration: PT30M # Admission-to-cooperative-cancellation deadline; keep provider/sandbox/repository timeouts bounded too.
+      max-job-duration: PT45M # Allows contract closure plus one complete review/repair cycle after staged authoring; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
       token-budget-window: PT24H
       admission-max-tokens-per-user: 12000000 # Four worst-case jobs per user within the rolling window; tune to provider pricing.
       admission-max-tokens-per-course: 120000000 # Forty worst-case jobs per course within the rolling window.
       admission-max-tokens-global: 600000000 # Fleet-wide rolling ceiling; 0 explicitly disables a budget.
       owner-heartbeat-interval: PT15S
-      stale-job-timeout: PT35M # Recovers jobs whose owner left the cluster; keep above max-job-duration.
+      stale-job-timeout: PT50M # Recovers jobs whose owner left the cluster; keep above max-job-duration.
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
       provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)

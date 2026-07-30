@@ -169,6 +169,7 @@ class AgentSystemPromptServiceTest {
                 .contains("provenance, not permission to add requirements")
                 .contains("complete declared input domain", "numeric ranges exhaustive without gaps", "reference solution silently choose behavior")
                 .contains("floating-point type admits non-finite values", "finite/range precondition")
+                .contains("## Contract Risk Inventory", "every source/target pair", "intermediate overflow", "longer cycles")
                 .contains("Do not move a call-time rejection into construction", "legal public setup");
         // SPEC's guidance is inlined, so the stage must NOT send the agent to a style guide (there is none, and re-reading would burn its bounded turns).
         assertThat(prompt).doesNotContain("reference/style/spec.md").doesNotContain("reference/style/solution.md").doesNotContain("reference/style/template.md")

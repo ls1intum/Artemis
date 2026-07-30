@@ -409,7 +409,7 @@ class GenerationAttemptLoopTest {
 
     @Test
     void priorInconclusiveEvidenceOwnsTheBoundedStateBeforeFreshSampling() {
-        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | one |\n| R2 | two |\n| R3 | three |\n| R4 | four |");
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | one |\n| R2 | two |\n| R3 | three |\n| R4 | four |\n| R5 | five |\n| R6 | six |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.SOLUTION), any()))
@@ -417,7 +417,7 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
         List<SemanticMutant> mutants = List.of(mutant("R1", "one", "wrong one"), mutant("R2", "two", "wrong two"), mutant("R3", "three", "wrong three"),
-                mutant("R4", "four", "wrong four"));
+                mutant("R4", "four", "wrong four"), mutant("R5", "five", "wrong five"), mutant("R6", "six", "wrong six"));
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(mutants);
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(mutants.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList());
@@ -428,10 +428,11 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         verify(specFidelityCritic, times(1)).authorSemanticMutants(anyString(), any(), any(), any(), any(), any());
-        assertThat(loop.specFidelityReport().findings()).filteredOn(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE).hasSize(4);
+        assertThat(loop.specFidelityReport().findings()).filteredOn(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE).hasSize(6);
         assertThat(loop.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::detail).anySatisfy(evidence -> assertThat(evidence).contains("R1"))
                 .anySatisfy(evidence -> assertThat(evidence).contains("R2")).anySatisfy(evidence -> assertThat(evidence).contains("R3"))
-                .anySatisfy(evidence -> assertThat(evidence).contains("R4"));
+                .anySatisfy(evidence -> assertThat(evidence).contains("R4")).anySatisfy(evidence -> assertThat(evidence).contains("R5"))
+                .anySatisfy(evidence -> assertThat(evidence).contains("R6"));
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
     }
 

@@ -172,6 +172,11 @@ class StageCheckServiceTest {
                 |------|------------|------------|--------|----------------|
                 | S1 | %s | typical; zero | 3 | no |
 
+                ## Contract Risk Inventory
+                | Seam | Rules | Admitted partitions | Excluded inputs |
+                |------|-------|---------------------|-----------------|
+                | S1 | R1 | typical; zero; negative; int extrema | none |
+
                 ## Diagram
                 no — single-class exercise
                 """.formatted(publicApi, ownerType);
@@ -846,6 +851,11 @@ class StageCheckServiceTest {
                 |------|------------|------------|--------|----------------|
                 | S1 | Calculator | typical and zero | 3 | yes |
 
+                ## Contract Risk Inventory
+                | Seam | Rules | Admitted partitions | Excluded inputs |
+                |------|-------|---------------------|-----------------|
+                | S1 | R1 | typical; zero; negative; int extrema | none |
+
                 ## Diagram
                 no — single-class exercise
                 """;
@@ -870,8 +880,10 @@ class StageCheckServiceTest {
                 ruleRows.append("| R").append(rule).append(" | the calculator handles case ").append(rule).append(". |\n");
             }
             StringBuilder seamRows = new StringBuilder();
+            StringBuilder riskRows = new StringBuilder();
             for (int seam = 1; seam <= seams; seam++) {
                 seamRows.append("| S").append(seam).append(" | Calculator | behaviour ").append(seam).append(" | 3 | no |\n");
+                riskRows.append("| S").append(seam).append(" | R").append(Math.min(seam, rules)).append(" | typical; zero; int extrema | none |\n");
             }
             return """
                     # Exercise
@@ -904,6 +916,11 @@ class StageCheckServiceTest {
                     | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                     |------|------------|------------|--------|----------------|
                     """ + seamRows + """
+
+                    ## Contract Risk Inventory
+                    | Seam | Rules | Admitted partitions | Excluded inputs |
+                    |------|-------|---------------------|-----------------|
+                    """ + riskRows + """
 
                     ## Diagram
                     no — single-class exercise
@@ -943,6 +960,11 @@ class StageCheckServiceTest {
                     | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
                     |------|------------|------------|--------|----------------|
                     | S1 | Calculator | typical and zero | 3 | no |
+
+                    ## Contract Risk Inventory
+                    | Seam | Rules | Admitted partitions | Excluded inputs |
+                    |------|-------|---------------------|-----------------|
+                    | S1 | R1 | typical; zero; int extrema | none |
 
                     ## Diagram
                     no — single-class exercise
@@ -1185,7 +1207,21 @@ class StageCheckServiceTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples").contains("## Design")
-                    .contains("## Public API").contains("## Testing Strategy").contains("## Diagram");
+                    .contains("## Public API").contains("## Testing Strategy").contains("## Contract Risk Inventory").contains("## Diagram");
+        }
+
+        @Test
+        void rejectsAnIncompleteOrUnauthorizedContractRiskInventory() {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S2 | R1 | typical | none |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("cover every Testing Strategy seam exactly once").contains("Missing seams: [S1]")
+                    .contains("unknown seams: [S2]");
+
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S1 | R9 | typical | none |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("do not cite a declared rule", "S1");
+
+            sandbox.spec = VALID_SPEC.replace("| S1 | R1 | typical; zero; negative; int extrema | none |", "| S1 | R1 |  | none |");
+            assertThat(check(GenerationStage.SPEC).observation()).contains("concrete admitted partitions", "S1");
         }
 
         @Test

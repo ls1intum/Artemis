@@ -43,12 +43,13 @@ class SemanticMutantAuthorTest {
     }
 
     @Test
-    void capsIndependentExecutionWorkAtFourMutants() {
-        String five = "{\"mutants\":[" + item("src/example/Scheduler.java", "R1", "globalChoice") + "," + item("src/example/Scheduler.java", "R1", "globalChoiceAgain") + ","
+    void capsIndependentExecutionWorkAtSixMutants() {
+        String seven = "{\"mutants\":[" + item("src/example/Scheduler.java", "R1", "globalChoice") + "," + item("src/example/Scheduler.java", "R1", "globalChoiceAgain") + ","
                 + item("src/example/Scheduler.java", "R1", "thirdGlobalChoice") + "," + item("src/example/Scheduler.java", "R1", "fourthGlobalChoice") + ","
-                + item("src/example/Scheduler.java", "R1", "fifthGlobalChoice") + "]}";
+                + item("src/example/Scheduler.java", "R1", "fifthGlobalChoice") + "," + item("src/example/Scheduler.java", "R1", "sixthGlobalChoice") + ","
+                + item("src/example/Scheduler.java", "R1", "seventhGlobalChoice") + "]}";
 
-        assertThat(author.parse(five, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).hasSize(4);
+        assertThat(author.parse(seven, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).hasSize(6);
     }
 
     @Test
@@ -87,10 +88,10 @@ class SemanticMutantAuthorTest {
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>();
         findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "executed hard-coded configuration",
                 "the environment already proved fixed thresholds survive"));
-        java.util.stream.IntStream.rangeClosed(1, 4)
+        java.util.stream.IntStream.rangeClosed(1, 6)
                 .mapToObj(index -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "static risk " + index, "hypothesis")).forEach(findings::add);
 
-        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("executed hard-coded configuration", "static risk 3").doesNotContain("static risk 4");
+        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("executed hard-coded configuration", "static risk 5").doesNotContain("static risk 6");
     }
 
     @Test

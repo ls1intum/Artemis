@@ -292,6 +292,7 @@ public class AgentLoopRunner {
         Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
+        int consecutiveRejectedActions = 0;
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
         boolean checkpointsEnabled = checkpointManager.enabled();
@@ -409,15 +410,30 @@ public class AgentLoopRunner {
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
                 if (hasRejectedToolAction(conversation)) {
-                    consecutiveToolFailures++;
-                    log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
-                    if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                        finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
-                        return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    if (hasOnlyRecoverableFileToolRejections(conversation)) {
+                        consecutiveRejectedActions++;
+                        consecutiveToolFailures = 0;
+                        log.warn("Agent loop file-tool action was rejected on turn {} (consecutive recoverable rejections: {})", turn, consecutiveRejectedActions);
+                        if (consecutiveRejectedActions == 2) {
+                            conversation.add(new UserMessage("Two file-tool actions were rejected. Do not repeat the same call. Re-read the target file, then use a uniquely "
+                                    + "anchored edit_file call or rewrite the complete small file with write_file. Search accepts only one-line text; use read_file when locating "
+                                    + "a multiline block. Continue from the unchanged workspace."));
+                        }
+                    }
+                    else {
+                        consecutiveRejectedActions = 0;
+                        consecutiveToolFailures++;
+                        log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
+                        if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
+                            finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall,
+                                    AgentLoopResult.Status.ERROR);
+                            return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                        }
                     }
                 }
                 else {
                     consecutiveToolFailures = 0;
+                    consecutiveRejectedActions = 0;
                 }
             }
             catch (RuntimeException e) {
@@ -480,6 +496,16 @@ public class AgentLoopRunner {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
                 return toolResponse.getResponses().stream().anyMatch(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData()));
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasOnlyRecoverableFileToolRejections(List<Message> conversation) {
+        for (int i = conversation.size() - 1; i >= 0; i--) {
+            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
+                List<ToolResponseMessage.ToolResponse> rejected = toolResponse.getResponses().stream().filter(response -> isErrorResponse(response.responseData())).toList();
+                return !rejected.isEmpty() && rejected.stream().allMatch(response -> "edit_file".equals(response.name()) || "search".equals(response.name()));
             }
         }
         return false;

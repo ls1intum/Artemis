@@ -82,6 +82,11 @@ class StagedGenerationRunnerTest {
             |---|---|---|---|---|
             | S1 | Calculator | typical and zero | 3 | no |
 
+            ## Contract Risk Inventory
+            | Seam | Rules | Admitted partitions | Excluded inputs |
+            |---|---|---|---|
+            | S1 | R1 | zero; positive values | negative values |
+
             ## Diagram
             no — single-class exercise
             """;

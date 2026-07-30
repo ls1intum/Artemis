@@ -251,6 +251,16 @@ final class HyperionMockedLlmE2eSupport {
                         """);
     }
 
+    static ChatResponse cleanConceptAdmission() {
+        return text("""
+                {"auditedCandidateEvidenceIds":["C1.2"],
+                 "smallestEquivalentImplementation":"Students implement the observable state transitions at both configured bounds.",
+                 "observablePartitionAudit":"Commands below, at, and crossing a bound produce caller-visible counter states.",
+                 "unsupportedChoices":[],"unobservableRequirements":[],"redundantDistinctions":[],
+                 "admissible":true,"summary":"The selected concept is grounded, observable, and leaves exact contract choices to specification."}
+                """);
+    }
+
     static ChatResponse writeFile(String path, String content) {
         return toolCall("write_file", "{\"path\":\"" + jsonEscape(path) + "\",\"content\":\"" + jsonEscape(content) + "\"}");
     }

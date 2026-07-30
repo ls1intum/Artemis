@@ -238,6 +238,14 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             | S3 | BoundedCounter | above, at, and below zero | 3 | no |
             | S4 | BoundedCounter | zero and negative maximum | 2 | no |
 
+            ## Contract Risk Inventory
+            | Seam | Rules | Admitted partitions | Excluded inputs |
+            |------|-------|---------------------|-----------------|
+            | S1 | R1 | newly constructed counter | none |
+            | S2 | R2 | below maximum; at maximum; repeated increments | none |
+            | S3 | R3 | above zero; at zero; repeated decrements | none |
+            | S4 | R4 | zero maximum; negative maximum | positive maximum |
+
             ## Diagram
             no — one class with no structural relationship to explain.
             """;
@@ -337,10 +345,11 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     }
 
     private void script(ChatResponse... responses) {
-        ChatResponse[] completeScript = new ChatResponse[responses.length + 2];
+        ChatResponse[] completeScript = new ChatResponse[responses.length + 3];
         completeScript[0] = HyperionMockedLlmE2eSupport.conceptCandidates();
         completeScript[1] = HyperionMockedLlmE2eSupport.cleanConceptReview();
-        System.arraycopy(responses, 0, completeScript, 2, responses.length);
+        completeScript[2] = HyperionMockedLlmE2eSupport.cleanConceptAdmission();
+        System.arraycopy(responses, 0, completeScript, 3, responses.length);
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(completeScript[0], Arrays.copyOfRange(completeScript, 1, completeScript.length));
     }
 

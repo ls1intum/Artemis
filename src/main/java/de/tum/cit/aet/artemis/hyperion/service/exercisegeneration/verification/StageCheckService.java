@@ -44,7 +44,8 @@ public class StageCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(StageCheckService.class);
 
-    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy", "## Diagram");
+    private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy",
+            "## Contract Risk Inventory", "## Diagram");
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -189,7 +190,8 @@ public class StageCheckService {
         String spec = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/SPEC.md");
         if (spec.isBlank()) {
             return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
-                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Diagram' decision before continuing.");
+                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', a '## Contract Risk Inventory', and a '## Diagram' decision "
+                    + "before continuing.");
         }
         Set<String> exactSpecLines = spec.lines().map(String::strip).collect(Collectors.toSet());
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
@@ -320,6 +322,30 @@ public class StageCheckService {
             return StageCheckResult.failed("The Testing Strategy requests hidden after-due-date coverage, but this exercise has no due date. Mark every Hidden variant cell 'no'; "
                     + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
         }
+        List<RiskInventoryRow> riskRows = riskInventoryRows(spec);
+        List<String> riskSeamIds = riskRows.stream().map(RiskInventoryRow::seamId).toList();
+        List<String> duplicateRiskSeams = riskSeamIds.stream().filter(id -> Collections.frequency(riskSeamIds, id) > 1).distinct().toList();
+        if (!duplicateRiskSeams.isEmpty()) {
+            return StageCheckResult.failed("The Contract Risk Inventory contains duplicate seam IDs: " + duplicateRiskSeams
+                    + ". Keep one row per Testing Strategy seam and combine that seam's admitted partitions in its row.");
+        }
+        List<String> missingRiskSeams = seamIds.stream().filter(id -> !riskSeamIds.contains(id)).toList();
+        List<String> unknownRiskSeams = riskSeamIds.stream().filter(id -> !seamIds.contains(id)).toList();
+        if (!missingRiskSeams.isEmpty() || !unknownRiskSeams.isEmpty()) {
+            return StageCheckResult.failed("The Contract Risk Inventory must cover every Testing Strategy seam exactly once. Missing seams: " + missingRiskSeams
+                    + "; unknown seams: " + unknownRiskSeams + ".");
+        }
+        String rulesSection = section(spec, "## Rules");
+        Set<String> declaredRuleIds = Pattern.compile("(?<![A-Za-z0-9_])R[1-9][0-9]*(?![A-Za-z0-9_])").matcher(rulesSection).results().map(java.util.regex.MatchResult::group)
+                .collect(Collectors.toSet());
+        List<String> invalidRiskRows = riskRows.stream().filter(row -> {
+            List<String> citedRules = Pattern.compile("R[1-9][0-9]*").matcher(row.ruleIds()).results().map(java.util.regex.MatchResult::group).toList();
+            return row.admittedPartitions().isBlank() || citedRules.isEmpty() || citedRules.stream().anyMatch(rule -> !declaredRuleIds.contains(rule));
+        }).map(RiskInventoryRow::seamId).toList();
+        if (!invalidRiskRows.isEmpty()) {
+            return StageCheckResult.failed("These Contract Risk Inventory rows do not cite a declared rule and state concrete admitted partitions: " + invalidRiskRows
+                    + ". Cite exact R IDs and enumerate the legal boundary, state, collection, interaction, or representation partitions that tests must distinguish.");
+        }
         // Echo the parsed plan back so the agent sees exactly what the later gates will hold it to, rather than only the absence of errors.
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
@@ -354,6 +380,10 @@ public class StageCheckService {
 
     /** One Testing Strategy row. Owner type links to the Design table; observable responsibility states the student-owned behavior the seam grades. */
     record TestingStrategyRow(String seamId, String ownerType, String observableResponsibility, String weightTier, String hiddenDecision) {
+    }
+
+    /** One contract-closure row linking a graded seam to exact rules and the admitted partitions its tests must distinguish. */
+    record RiskInventoryRow(String seamId, String ruleIds, String admittedPartitions) {
     }
 
     /** The first cell is the type and the FINAL cell is the closed-set template status, whatever columns a specification puts in between. */
@@ -578,6 +608,47 @@ public class StageCheckService {
     /** Empty when the section is not a table, which the SPEC gate reports as a missing decision. */
     private static List<String> hiddenVariantCells(String spec) {
         return testingStrategyRows(spec).stream().map(TestingStrategyRow::hiddenDecision).filter(cell -> !cell.isBlank()).toList();
+    }
+
+    /** Invalid and incomplete rows are retained so the SPEC gate can reject them with their exact seam ID. */
+    static List<RiskInventoryRow> riskInventoryRows(String spec) {
+        int start = spec.indexOf("## Contract Risk Inventory");
+        if (start < 0) {
+            return List.of();
+        }
+        List<RiskInventoryRow> rows = new ArrayList<>();
+        boolean pastHeader = false;
+        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
+            if (line.startsWith("## ") && !line.startsWith("## Contract Risk Inventory")) {
+                break;
+            }
+            if (!line.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                    pastHeader = true;
+                }
+                continue;
+            }
+            String[] columns = line.split("\\|", -1);
+            String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
+            String rules = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";
+            String partitions = columns.length > 3 ? normalizeTestingCell(columns[3]) : "";
+            if (!seam.isBlank()) {
+                rows.add(new RiskInventoryRow(seam, rules, partitions));
+            }
+        }
+        return List.copyOf(rows);
+    }
+
+    private static String section(String document, String heading) {
+        int start = document.indexOf(heading);
+        if (start < 0) {
+            return "";
+        }
+        int next = document.indexOf("\n## ", start + heading.length());
+        return next < 0 ? document.substring(start) : document.substring(start, next);
     }
 
     /** The {@code student-creates} types from the frozen specification. */

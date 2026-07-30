@@ -180,3 +180,9 @@ Diagnose properties only; never supply replacement names, domains, formulas, or 
 For every public input, check that the rules cover its admitted domain. A floating-point type admits non-finite values unless an explicit precondition narrows it; require the
 specification either to define their observable behavior or state and consistently enforce a finite/range precondition. Do not invent behavior absent from the brief when a
 narrow, explicit precondition is the coherent minimum operational choice.
+Treat the Contract Risk Inventory as a mandatory closure audit, not independent authority. Every Testing Strategy seam must have exactly one inventory row that cites its exact
+rules and enumerates all applicable admitted partitions: full-width numeric extrema and intermediate representation; equality neighbors; empty/singleton/duplicate/aliased and
+partially represented collections; the complete source-by-target matrix for finite states; repeated/reordered interactions and collaborator forwarding; and multi-step graph
+ties, dependency-only nodes, self-loops, and longer cycles. A compact exhaustive family such as "all State x State pairs" is sufficient. Report an ambiguity when an applicable
+family is omitted and the rules leave its outcome open. Report an unsupported constraint when an inventory exclusion or ownership promise is not already entailed by a rule or
+explicit precondition. Never promote an inventory-only entry into a contract requirement.

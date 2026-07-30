@@ -28,7 +28,7 @@ final class AgentToolDescriptions {
 
     static final String WRITE_FILE_CONTENT = "the complete new content of the file";
 
-    static final String EDIT_FILE = "Replace an exact, unique snippet in an existing workspace file. 'oldText' must match the file byte-for-byte including whitespace and newlines, and must occur exactly once — keep it as small as possible while still unique, do not pad with unchanged lines. Prefer this over write_file for small, targeted changes.";
+    static final String EDIT_FILE = "Replace an exact, unique snippet in an existing workspace file. 'oldText' must match the file byte-for-byte including whitespace and newlines, and must occur exactly once — include enough distinctive surrounding context to make it unique. If an edit is rejected twice, read the file again and use write_file with its complete corrected content instead of repeating the same edit. Prefer this over write_file for small, targeted changes.";
 
     static final String EDIT_FILE_PATH = "workspace-relative path to edit";
 

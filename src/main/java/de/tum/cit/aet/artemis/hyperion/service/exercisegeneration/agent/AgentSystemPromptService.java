@@ -275,6 +275,13 @@ public class AgentSystemPromptService {
             domain rationale; complexity unchanged by removing the abstraction is not evidence of fit.
             For a non-standard theme, choose domain constraints that genuinely cause the variants' behavior. If erasing its nouns leaves a familiar example unchanged, deepen the
             central interaction instead of adding themed vocabulary, variants, selectors, validation, or task counts.
+            After the Testing Strategy, add `## Contract Risk Inventory` with a table
+            (| Seam | Rules | Admitted partitions | Excluded inputs |). Give every Testing Strategy seam exactly one row, cite its exact R IDs, and enumerate the legal
+            distinctions its tests must cover before any code is authored. Audit the full Java type domain unless an explicit rule narrows it: numeric minima/maxima and
+            intermediate overflow; equality neighbors; empty, singleton, duplicate, aliased, and partially represented collections when admitted; every source/target pair for
+            finite states; repeated/reordered calls and collaborator forwarding for stateful interactions; and multi-step ties, dependency-only nodes, self-loops, and longer
+            cycles for graphs when admitted. Write `none` in Excluded inputs when the domain is total; otherwise cite only exclusions already stated as explicit rule
+            preconditions. This inventory enumerates the frozen rules and must never introduce defensive copying, null rejection, validation, or another obligation by itself.
             When the user prompt includes a selected generator-authored concept, instantiate it coherently and do not reopen theme selection; it already survived a separate
             multi-candidate learning-fit review. Preserve its central situation, constraint, and student-owned behavior while choosing the minimal concrete API. Do not accidentally
             reduce it to independently assigned constants, multipliers, or thresholds over one scalar input when that would contradict the requested learning fit.

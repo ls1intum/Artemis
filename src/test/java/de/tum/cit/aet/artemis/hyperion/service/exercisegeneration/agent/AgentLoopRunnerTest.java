@@ -107,6 +107,23 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_recoverableFileToolRejectionsDoNotTerminateTheJob() {
+        ChatModel chatModel = mock(ChatModel.class);
+        ChatResponse rejectedSearch = toolCallResponse("search", "{\"path\":\"solution/A.java\",\"query\":\"}\\n}\"}");
+        when(chatModel.call(any(Prompt.class))).thenReturn(rejectedSearch, rejectedSearch, rejectedSearch, rejectedSearch, rejectedSearch, rejectedSearch, textResponse("DONE"));
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(7)).call(prompts.capture());
+        String recoveryPrompt = prompts.getAllValues().get(2).getInstructions().stream().map(Message::getText).collect(Collectors.joining("\n"));
+        assertThat(recoveryPrompt).contains("Two file-tool actions were rejected", "rewrite the complete small file with write_file", "Search accepts only one-line text");
+    }
+
+    @Test
     void agentLoopFailsImmediatelyWhenATimedOutCommandTerminatesTheSandbox() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"sleep 999\"}"), textResponse("must not be called"));

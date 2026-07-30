@@ -35,7 +35,7 @@ class SemanticMutantAuthor {
 
     private static final int MAX_OUTPUT_TOKENS = 16_384;
 
-    private static final int MAX_MUTANTS = 4;
+    private static final int MAX_MUTANTS = 6;
 
     private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");
 
@@ -161,7 +161,7 @@ class SemanticMutantAuthor {
                 .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
                         || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
                         || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL)
-                .limit(4).toList();
+                .limit(MAX_MUTANTS).toList();
     }
 
     private static SpecFidelityReport.@Nullable Finding reviewTarget(Item item, List<SpecFidelityReport.Finding> targets) {
