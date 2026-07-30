@@ -17,7 +17,7 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ProgrammingSubmissionState {
@@ -752,7 +752,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
+                this.exerciseBuildState = cloneWith(this.exerciseBuildState, { [exerciseId]: exerciseBuildState });
                 this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
@@ -868,8 +868,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
+                const exerciseSubmissionState: ExerciseSubmissionState = cloneWith(this.exerciseBuildState[exerciseId] || {}, { [participationId]: submissionStateObj });
+                this.exerciseBuildState = cloneWith(this.exerciseBuildState, { [exerciseId]: exerciseSubmissionState });
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
@@ -884,7 +884,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             return {};
         }
         const { participationId, submission, submissionState } = programmingSubmissionState;
-        return { ...exerciseSubmissionState, [participationId]: { participationId, submissionState, submission } };
+        return cloneWith(exerciseSubmissionState, { [participationId]: { participationId, submissionState, submission } });
     }
 
     private didSubmissionStartProcessing(commitHash: string): boolean {
@@ -955,13 +955,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
             this.convertItemWithLatestSubmissionResultFromServer(submission);
-            convertedSubmissions.push({ ...submission });
+            convertedSubmissions.push(deepClone(submission));
         }
         return res.clone({ body: convertedSubmissions });
     }
 
     private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
-        const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
+        const convertedProgrammingSubmission = deepClone(programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
         convertedProgrammingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(programmingSubmission.participation);
         return convertedProgrammingSubmission;

@@ -5,6 +5,7 @@ import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface FilterData {
     tasks: string[];
@@ -53,7 +54,7 @@ export class FeedbackFilterModalComponent {
         this._filters.set(value);
     }
     private commitFilters(): void {
-        this._filters.update((filters) => ({ ...filters }));
+        this._filters.update((filters) => deepClone(filters));
     }
 
     applyFilter(): void {

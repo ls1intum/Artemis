@@ -39,6 +39,7 @@ import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.co
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
 import { Message } from 'primeng/message';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Describes the editableField
@@ -137,7 +138,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this._programmingExercise.set(value);
     }
     private commitProgrammingExercise(): void {
-        this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        this._programmingExercise.update((exercise) => hydrate(new ProgrammingExercise(undefined, undefined), exercise));
     }
     testCaseSubscription?: Subscription;
     testCaseChangedSubscription?: Subscription;
@@ -458,7 +459,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.isSaving.set(true);
 
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map((category) =>
-            category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
+            category.state === StaticCodeAnalysisCategoryState.Graded ? category : cloneWith(category, { penalty: 0, maxPenalty: 0 }),
         );
 
         const categoriesToUpdate = _intersectionWith(
@@ -674,7 +675,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.testCasePointsRelative[testCase.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course());
             });
         } else {
-            const editedTestCaseNewValue = { ...editedTestCase, [field]: newValue };
+            const editedTestCaseNewValue = cloneWith(editedTestCase, { [field]: newValue });
             const points =
                 (this.totalWeight > 0 ? (editedTestCaseNewValue.weight! * editedTestCaseNewValue.bonusMultiplier!) / this.totalWeight : 0) * maxPoints +
                 (editedTestCaseNewValue.bonusPoints ?? 0);
@@ -842,7 +843,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: EditableFieldValue, displayType: TestCaseView): void {
         const mapFunction = (testCase: ProgrammingExerciseTestCase): ProgrammingExerciseTestCase =>
-            testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue };
+            testCase.id !== editedTestCase.id ? testCase : cloneWith(testCase, { [field]: newValue });
         switch (displayType) {
             case TestCaseView.TABLE:
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
@@ -867,7 +868,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: EditableFieldValue): void {
         const filterFunction = (category: StaticCodeAnalysisCategory): StaticCodeAnalysisCategory =>
-            category.id !== editedCategory.id ? category : { ...category, [field]: newValue };
+            category.id !== editedCategory.id ? category : cloneWith(category, { [field]: newValue });
 
         this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);

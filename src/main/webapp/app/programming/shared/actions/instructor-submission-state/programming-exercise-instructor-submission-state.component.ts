@@ -13,6 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -97,6 +98,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>
         Object.values(buildState).reduce((acc: { [state: string]: number }, { submissionState }) => {
-            return { ...acc, [submissionState]: (acc[submissionState] || 0) + 1 };
+            return cloneWith(acc, { [submissionState]: (acc[submissionState] || 0) + 1 });
         }, {});
 }

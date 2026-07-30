@@ -32,7 +32,6 @@ import {
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -64,6 +63,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -551,7 +551,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.backupExercise = cloneDeep(this.programmingExercise);
+            this.backupExercise = deepClone(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
@@ -1597,7 +1597,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private createProgrammingExerciseForImportFromFile() {
-        this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
+        this.programmingExercise = deepClone(history.state.programmingExerciseForImportFromFile);
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
@@ -1646,10 +1646,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
      * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
      */
-    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = Object.assign({}) as ProgrammingExerciseCreationConfig;
+    private readonly programmingExerciseCreationConfig: Partial<ProgrammingExerciseCreationConfig> = {};
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
-        return Object.assign(this.programmingExerciseCreationConfig, {
+        return hydrate(this.programmingExerciseCreationConfig, {
             isImportFromFile: this.isImportFromFile,
             isImportFromSharing: this.isImportFromSharing,
             isImportFromExistingExercise: this.isImportFromExistingExercise,
@@ -1668,7 +1668,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            exerciseCategories: this.exerciseCategories,
+            // The config requires a non-optional array; `?? []` mirrors the defensive default already applied in
+            // validateExerciseCategories. The previous `Object.assign` typing hid the mismatch.
+            exerciseCategories: this.exerciseCategories ?? [],
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
             modePickerOptions: this.modePickerOptions,

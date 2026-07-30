@@ -13,6 +13,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
@@ -106,11 +107,12 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         // update colors for category table
         const categoryColors: { [key: string]: string } = {};
         const categoryPenalties = categories
-            .map((category) => ({
-                ...category,
-                penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
-                maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
-            }))
+            .map((category) =>
+                cloneWith(category, {
+                    penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
+                    maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
+                }),
+            )
             .map((category) => {
                 const issuesMap = categoryIssuesMap ? categoryIssuesMap[category.name] || {} : {};
 
