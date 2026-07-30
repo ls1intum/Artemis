@@ -153,10 +153,12 @@ await esbuild.build({
 
 if (!serveFlag) {
     await new Promise((resolve, reject) => {
-        const child = spawn('pnpm', ['run', `tum-ui:build${developFlag ? ':dev' : ''}`], {
+        const buildScript = `tum-ui:build${developFlag ? ':dev' : ''}`;
+        const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
+        const commandArguments = process.platform === 'win32' ? ['/d', '/s', '/c', `pnpm run ${buildScript}`] : ['run', buildScript];
+        const child = spawn(command, commandArguments, {
             cwd: __dirname,
             stdio: 'inherit',
-            shell: process.platform === 'win32',
         });
         child.once('error', reject);
         child.once('exit', (code, signal) => {
