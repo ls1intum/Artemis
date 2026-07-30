@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -131,7 +132,11 @@ describe('ExamParticipationComponent', () => {
                     useValue: setupActivatedRouteMock(),
                 },
                 { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
-                MockProvider(ExamParticipationService),
+                // submissionSyncVersion is a field-initialised readonly signal, which ng-mocks' MockProvider
+                // does not stub (it only mocks prototype members). The exam exercise overview page and the
+                // save button read it to stay reactive to in-place `isSynced` mutations, so without it they
+                // throw "submissionSyncVersion is not a function" as soon as they render.
+                MockProvider(ExamParticipationService, { submissionSyncVersion: signal(0).asReadonly() }),
                 MockProvider(ModelingSubmissionService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(TextSubmissionService),

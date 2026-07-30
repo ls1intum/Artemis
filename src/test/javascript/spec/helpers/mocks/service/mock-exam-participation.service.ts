@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { BehaviorSubject, of } from 'rxjs';
@@ -13,6 +14,11 @@ const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExa
 const examEndViewSubject = new BehaviorSubject<boolean>(false);
 
 export class MockExamParticipationService {
+    /** Mirrors the real service: bindings that must react to in-place `isSynced` mutations read this. */
+    submissionSyncVersion = signal(0).asReadonly();
+
+    notifySubmissionSyncStateChanged(): void {}
+
     loadStudentExam = (courseId: number, examId: number): Observable<StudentExam> => {
         return examParticipationSubjectMock;
     };
