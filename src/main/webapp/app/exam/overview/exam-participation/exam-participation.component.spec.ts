@@ -67,6 +67,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('ExamParticipationComponent', () => {
+    // Backing signal for the mocked submission-sync contract; see the MockProvider below.
+    const submissionSyncVersion = signal(0);
     let fixture: ComponentFixture<ExamParticipationComponent>;
     let comp: ExamParticipationComponent;
     let examParticipationService: ExamParticipationService;
@@ -135,8 +137,13 @@ describe('ExamParticipationComponent', () => {
                 // submissionSyncVersion is a field-initialised readonly signal, which ng-mocks' MockProvider
                 // does not stub (it only mocks prototype members). The exam exercise overview page and the
                 // save button read it to stay reactive to in-place `isSynced` mutations, so without it they
-                // throw "submissionSyncVersion is not a function" as soon as they render.
-                MockProvider(ExamParticipationService, { submissionSyncVersion: signal(0).asReadonly() }),
+                // throw "submissionSyncVersion is not a function" as soon as they render. Wire the notifier to
+                // the same signal instance too: a no-op notifier would leave those bindings permanently stale,
+                // which is the staleness bug this contract exists to prevent.
+                MockProvider(ExamParticipationService, {
+                    submissionSyncVersion: submissionSyncVersion.asReadonly(),
+                    notifySubmissionSyncStateChanged: () => submissionSyncVersion.update((version) => version + 1),
+                }),
                 MockProvider(ModelingSubmissionService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(TextSubmissionService),
