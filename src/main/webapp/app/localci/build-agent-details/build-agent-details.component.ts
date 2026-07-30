@@ -31,6 +31,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
 import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -514,7 +515,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
                 const start = dayjs(buildJob.buildStartDate);
                 const end = dayjs(buildJob.buildCompletionDate);
-                return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
+                return cloneWith(buildJob, { buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' });
             }
             return buildJob;
         });
@@ -575,7 +576,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

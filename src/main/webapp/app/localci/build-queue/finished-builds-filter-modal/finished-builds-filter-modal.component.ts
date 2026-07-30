@@ -11,6 +11,7 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
 import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export class FinishedBuildJobFilter {
     status?: string = undefined;
@@ -163,9 +164,7 @@ export class FinishedBuildsFilterModalComponent {
 
     /** Rebuilds the filter reference so signal consumers (the template) react to deep in-place mutations. */
     private commitFinishedBuildJobFilter(): void {
-        this.finishedBuildJobFilterSignal.update((filter) =>
-            Object.assign(new FinishedBuildJobFilter(filter.buildAgentAddress), filter, { appliedFilters: filter.appliedFilters }),
-        );
+        this.finishedBuildJobFilterSignal.update((filter) => hydrate(new FinishedBuildJobFilter(filter.buildAgentAddress), filter, { appliedFilters: filter.appliedFilters }));
     }
 
     /** Available status values for the status filter dropdown */
@@ -183,7 +182,7 @@ export class FinishedBuildsFilterModalComponent {
                 untracked(() => {
                     const source = this.finishedBuildJobFilterInput();
                     if (source) {
-                        this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, {
+                        this.finishedBuildJobFilter = hydrate(new FinishedBuildJobFilter(source.buildAgentAddress), source, {
                             appliedFilters: new Map(source.appliedFilters),
                         });
                     } else {
