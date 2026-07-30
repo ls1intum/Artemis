@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -78,7 +79,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             next: () => {
                 exercise.exampleSubmissions!.splice(index, 1);
                 // Re-set with a fresh reference so the signal notifies consumers (same-reference set is a no-op).
-                this.exercise.set(Object.assign(Object.create(Object.getPrototypeOf(exercise)), exercise));
+                this.exercise.set(hydrate(Object.create(Object.getPrototypeOf(exercise)), exercise));
                 this.createdExampleAssessment.update((created) => {
                     const updated = [...created];
                     updated.splice(index, 1);

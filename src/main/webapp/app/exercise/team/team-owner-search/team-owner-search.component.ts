@@ -6,10 +6,10 @@ import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-owner-search',
@@ -47,7 +47,7 @@ export class TeamOwnerSearchComponent implements OnInit {
     ngOnInit() {
         const team = this.team();
         if (team.owner) {
-            this.owner = cloneDeep(team.owner);
+            this.owner = deepClone(team.owner);
             this.inputDisplayValue = this.searchResultFormatter(this.owner);
         }
     }

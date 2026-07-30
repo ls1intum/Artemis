@@ -34,7 +34,6 @@ import { multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters'
 import { barChartOptions } from 'app/shared-ui/chart/chart-options';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
-import { cloneDeep } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet, UpperCasePipe } from '@angular/common';
@@ -43,6 +42,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 // Modal -> Result details view
 @Component({
@@ -195,7 +195,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isPrinting) {
             if (changes.isPrinting.currentValue) {
-                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes());
+                this.feedbackItemNodesBeforePrinting = deepClone(this.feedbackItemNodes());
                 this.expandFeedbackItemGroups();
             } else {
                 this.feedbackItemNodes.set(this.feedbackItemNodesBeforePrinting);
