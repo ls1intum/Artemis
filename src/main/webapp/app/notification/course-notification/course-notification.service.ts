@@ -11,6 +11,7 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Service for managing course notifications.
@@ -346,7 +347,7 @@ export class CourseNotificationService implements OnDestroy {
      * Creates a new object to ensure change detection.
      */
     private notifyCountSubscribers(): void {
-        this.notificationCountSubject.next({ ...this.courseNotificationCountMap });
+        this.notificationCountSubject.next(deepClone(this.courseNotificationCountMap));
     }
 
     /**
@@ -370,7 +371,7 @@ export class CourseNotificationService implements OnDestroy {
      * Creates a new object to ensure change detection.
      */
     private notifyNotificationSubscribers(): void {
-        this.notificationSubject.next({ ...this.courseNotificationMap });
+        this.notificationSubject.next(deepClone(this.courseNotificationMap));
     }
 
     /**
