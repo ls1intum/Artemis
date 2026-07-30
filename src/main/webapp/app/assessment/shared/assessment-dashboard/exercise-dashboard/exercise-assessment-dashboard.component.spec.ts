@@ -40,7 +40,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/subm
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -224,7 +224,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(CollapsableAssessmentInstructionsComponent),
         MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
         MockComponent(LanguageTableCellComponent),
-        MockComponent(ProgrammingExerciseInstructionComponent),
+        MockComponent(ProblemStatementRendererComponent),
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
         MockDirective(ExtensionPointDirective),

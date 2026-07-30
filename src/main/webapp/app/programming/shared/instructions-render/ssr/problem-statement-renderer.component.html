@@ -1,0 +1,16 @@
+@if (ssrEnabled()) {
+    <jhi-programming-exercise-instruction-ssr
+        [exercise]="exercise()"
+        [participation]="participation()"
+        [result]="result()"
+        [liveUpdates]="liveUpdates()"
+        (onNoInstructionsAvailable)="onNoInstructionsAvailable.emit()"
+    />
+} @else {
+    <jhi-programming-exercise-instructions
+        [exercise]="exercise()"
+        [participation]="participation()"
+        [personalParticipation]="personalParticipation()"
+        (onNoInstructionsAvailable)="onNoInstructionsAvailable.emit()"
+    />
+}

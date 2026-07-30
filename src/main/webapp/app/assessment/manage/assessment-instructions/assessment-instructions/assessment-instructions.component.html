@@ -21,10 +21,11 @@
         @case (ExerciseType.PROGRAMMING) {
             @let programmingParticipationValue = this.programmingParticipation();
             @let programmingExerciseValue = this.programmingExercise();
-            <jhi-programming-exercise-instructions
+            <jhi-problem-statement-renderer
                 [exercise]="programmingExerciseValue!"
                 [participation]="programmingParticipationValue ? programmingParticipationValue : programmingExerciseValue!.templateParticipation!"
                 [personalParticipation]="false"
+                liveUpdates="none"
             />
         }
         @default {

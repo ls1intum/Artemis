@@ -18,10 +18,11 @@
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             <dd class="p-3 border" id="detail-value-{{ detail.title }}">
-                                <jhi-programming-exercise-instructions
+                                <jhi-problem-statement-renderer
                                     [exercise]="detail.data.exercise"
                                     [participation]="detail.data.exercise.templateParticipation!"
                                     [personalParticipation]="true"
+                                    liveUpdates="none"
                                 />
                             </dd>
                         }

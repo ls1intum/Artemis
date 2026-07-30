@@ -20,7 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -37,7 +37,7 @@ import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/m
         CodeButtonComponent,
         ProgrammingExerciseStudentRepoDownloadComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
-        ProgrammingExerciseInstructionComponent,
+        ProblemStatementRendererComponent,
     ],
 })
 export class RepositoryViewComponent implements OnInit, OnDestroy {

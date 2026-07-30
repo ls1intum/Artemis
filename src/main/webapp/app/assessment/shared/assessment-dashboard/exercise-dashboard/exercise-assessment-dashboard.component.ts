@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -100,7 +100,7 @@ export interface ExampleSubmissionQueryParams {
         RouterLink,
         FaIconComponent,
         InfoPanelComponent,
-        ProgrammingExerciseInstructionComponent,
+        ProblemStatementRendererComponent,
         ModelingEditorComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,

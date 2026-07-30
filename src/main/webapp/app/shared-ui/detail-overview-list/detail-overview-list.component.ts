@@ -9,7 +9,7 @@ import { UMLModel } from '@tumaet/apollon';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -55,7 +55,7 @@ export enum DetailType {
     imports: [
         DetailOverviewNavigationBarComponent,
         HelpIconComponent,
-        ProgrammingExerciseInstructionComponent,
+        ProblemStatementRendererComponent,
         NgTemplateOutlet,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TranslateDirective,

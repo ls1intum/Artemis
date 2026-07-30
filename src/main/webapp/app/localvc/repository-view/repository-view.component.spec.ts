@@ -24,7 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -73,7 +73,7 @@ describe('RepositoryViewComponent', () => {
                 remove: {
                     imports: [
                         CodeEditorContainerComponent,
-                        ProgrammingExerciseInstructionComponent,
+                        ProblemStatementRendererComponent,
                         ButtonComponent,
                         ResultComponent,
                         CodeButtonComponent,
@@ -85,7 +85,7 @@ describe('RepositoryViewComponent', () => {
                 add: {
                     imports: [
                         MockComponent(CodeEditorContainerComponent),
-                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(ProblemStatementRendererComponent),
                         MockComponent(ButtonComponent),
                         MockComponent(ResultComponent),
                         MockComponent(CodeButtonComponent),
@@ -101,9 +101,9 @@ describe('RepositoryViewComponent', () => {
                 component = fixture.componentInstance;
                 // Intentionally do not call fixture.detectChanges() here.
                 // The tests assert on component state directly via ngOnInit(),
-                // never on rendered DOM. Triggering change detection would
-                // instantiate the ProgrammingExerciseInstructionComponent
-                // child template node, whose ngOnInit reads
+                // never on rendered DOM. This spec mocks jhi-problem-statement-renderer
+                // (see the overrideComponent above) precisely so change detection can
+                // never reach its real legacy child, whose ngOnInit reads
                 // `participation.id` before bindings settle and throws an
                 // unhandled TypeError under Vitest (which exits non-zero on
                 // unhandled async errors).

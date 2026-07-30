@@ -21,6 +21,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
@@ -51,6 +52,11 @@ describe('ProblemStatementComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                // The real FeatureToggleService starts with every toggle "active" (see defaultActiveFeatureState),
+                // which would make the wrapper render the SSR renderer and require DialogService et al. that this
+                // spec never provides. Force the toggle off so the deterministic legacy branch renders, matching
+                // what these tests actually exercise.
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(false) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -128,7 +134,7 @@ describe('ProblemStatementComponent', () => {
         fixture.componentRef.setInput('participationInput', participation);
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('jhi-programming-exercise-instructions')).toBeTruthy();
+        expect(compiled.querySelector('jhi-problem-statement-renderer')).toBeTruthy();
     });
 
     it('should not render programming exercise instructions when exercise is not a programming exercise', () => {
@@ -139,6 +145,6 @@ describe('ProblemStatementComponent', () => {
         fixture.componentRef.setInput('participationInput', participation);
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('jhi-programming-exercise-instructions')).toBeFalsy();
+        expect(compiled.querySelector('jhi-problem-statement-renderer')).toBeFalsy();
     });
 });

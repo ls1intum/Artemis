@@ -15,7 +15,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { Component, input, output } from '@angular/core';
 
 // Stub for ModelingEditorComponent
@@ -60,7 +60,7 @@ describe('AssessmentInstructionsComponent', () => {
                     imports: [
                         ExpandableSectionComponent,
                         StructuredGradingInstructionsAssessmentLayoutComponent,
-                        ProgrammingExerciseInstructionComponent,
+                        ProblemStatementRendererComponent,
                         SecureLinkDirective,
                         ButtonComponent,
                         TranslateDirective,
@@ -71,7 +71,7 @@ describe('AssessmentInstructionsComponent', () => {
                     imports: [
                         MockComponent(ExpandableSectionComponent),
                         MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
-                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(ProblemStatementRendererComponent),
                         MockDirective(SecureLinkDirective),
                         MockComponent(ButtonComponent),
                         MockDirective(TranslateDirective),
