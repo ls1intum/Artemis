@@ -336,14 +336,6 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Creates and saves a ProgrammingExerciseStudentParticipation for the given ProgrammingExercise given the Participant's login. If an existing
-     * ProgrammingExerciseStudentParticipation exists for the given ProgrammingExercise and Participant, it will be returned instead.
-     *
-     * @param exercise The ProgrammingExercise the ProgrammingExerciseStudentParticipation belongs to
-     * @param login    The login of the Participant the ProgrammingExerciseStudentParticipation belongs to
-     * @return The created or existing ProgrammingExerciseStudentParticipation with eagerly loaded submissions, results and assessors
-     */
-    /**
      * Creates (or reuses) a programming participation for the given login and marks it as a test-run participation.
      *
      * @param exercise the programming exercise the participation belongs to
@@ -356,6 +348,14 @@ public class ParticipationUtilService {
         return programmingExerciseStudentParticipationRepo.save(participation);
     }
 
+    /**
+     * Creates and saves a ProgrammingExerciseStudentParticipation for the given ProgrammingExercise given the Participant's login. If an existing
+     * ProgrammingExerciseStudentParticipation exists for the given ProgrammingExercise and Participant, it will be returned instead.
+     *
+     * @param exercise The ProgrammingExercise the ProgrammingExerciseStudentParticipation belongs to
+     * @param login    The login of the Participant the ProgrammingExerciseStudentParticipation belongs to
+     * @return The created or existing ProgrammingExerciseStudentParticipation with eagerly loaded submissions, results and assessors
+     */
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
