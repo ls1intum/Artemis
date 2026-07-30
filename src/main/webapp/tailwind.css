@@ -51,7 +51,6 @@
 /* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* Map the TUM UI theme contract to Artemis tokens. */
 :root {
     --tum-ui-primary: var(--p-primary-color);
     --tum-ui-primary-contrast: var(--p-primary-contrast-color);

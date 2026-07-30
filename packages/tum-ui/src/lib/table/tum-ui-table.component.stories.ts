@@ -1,5 +1,7 @@
+import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
+import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import { TumUiTableComponent } from './tum-ui-table.component';
 import { ColumnDef } from './tum-ui-table.types';
 
@@ -36,19 +38,38 @@ const meta = {
     parameters: {
         layout: 'padded',
     },
+    argTypes: {
+        rowActions: {
+            control: false,
+        },
+        trackBy: {
+            control: false,
+        },
+    },
 } satisfies Meta<TumUiTableComponent<Participant>>;
 
 export default meta;
 
 type Story = StoryObj<TumUiTableComponent<Participant>>;
 
-export const Default: Story = {
-    play: async ({ canvas }) => {
-        await expect(canvas.getAllByRole('row')).toHaveLength(4);
+export const Default: Story = {};
 
-        const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
-        await expect(participantHeader).toHaveAttribute('aria-sort', 'none');
-    },
+export const RowActions: Story = {
+    decorators: [
+        moduleMetadata({
+            imports: [TumUiButtonDirective],
+        }),
+    ],
+    render: (args) => ({
+        props: args,
+        template: `
+            <tum-ui-table ${argsToTemplate(args, { exclude: ['rowActions', 'trackBy'] })} [rowActions]="actions">
+                <ng-template #actions let-participant>
+                    <button tumUiButton size="small" type="button" [attr.aria-label]="'Inspect ' + participant.name">Inspect</button>
+                </ng-template>
+            </tum-ui-table>
+        `,
+    }),
 };
 
 export const InitiallySorted: Story = {

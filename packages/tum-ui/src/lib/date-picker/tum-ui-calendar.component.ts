@@ -122,12 +122,12 @@ export class TumUiCalendarComponent {
     }
 
     private formatDate(day: dayjs.Dayjs, options: Intl.DateTimeFormatOptions): string {
-        this.translator.changes?.();
+        this.translator.translationChanges?.();
         return new Intl.DateTimeFormat(this.translator.locale?.(), options).format(day.toDate());
     }
 
     private translate(key: string, params: Readonly<Record<string, string>>): string {
-        this.translator.changes?.();
+        this.translator.translationChanges?.();
         return this.translator.translate(key, params);
     }
 

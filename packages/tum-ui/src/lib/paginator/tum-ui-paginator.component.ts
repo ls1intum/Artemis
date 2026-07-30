@@ -8,6 +8,7 @@ const PAGE_LINK_SIZE = 5;
 const NAV_BUTTON_CLASSES =
     'tum:inline-flex tum:h-[35px] tum:w-[35px] tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-sm tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-hover-background tum:disabled:pointer-events-none tum:disabled:opacity-50';
 
+/** Controlled paginator using zero-based page indexes. */
 @Component({
     selector: 'tum-ui-paginator',
     templateUrl: './tum-ui-paginator.component.html',
@@ -17,6 +18,7 @@ const NAV_BUTTON_CLASSES =
 export class TumUiPaginatorComponent {
     readonly ariaLabel = input('Pagination');
     readonly totalRecords = input(0);
+    /** Zero-based active page index. */
     readonly page = input(0);
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);

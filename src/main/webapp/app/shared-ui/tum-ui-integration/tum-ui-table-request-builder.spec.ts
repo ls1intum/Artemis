@@ -3,12 +3,12 @@ import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { buildDbQueryFromTableEvent } from './tum-ui-table-request-builder';
 
 function event(overrides: Partial<TumUiTableQueryEvent> = {}): TumUiTableQueryEvent {
-    return { page: 0, pageSize: 50, ...overrides };
+    return { pageIndex: 0, pageSize: 50, ...overrides };
 }
 
 describe('buildDbQueryFromTableEvent', () => {
     it('maps a complete table event', () => {
-        expect(buildDbQueryFromTableEvent(event({ page: 4, pageSize: 20, sort: { field: 'name', direction: 'desc' }, searchTerm: '  alice  ' }))).toEqual({
+        expect(buildDbQueryFromTableEvent(event({ pageIndex: 4, pageSize: 20, sort: { field: 'name', direction: 'desc' }, searchTerm: '  alice  ' }))).toEqual({
             page: 4,
             pageSize: 20,
             sortedColumn: 'name',

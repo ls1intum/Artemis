@@ -12,7 +12,7 @@ export class TumUiTranslatePipe implements PipeTransform {
         if (!key) {
             return '';
         }
-        this.translator.changes?.();
+        this.translator.translationChanges?.();
         return this.translator.translate(key, params);
     }
 }

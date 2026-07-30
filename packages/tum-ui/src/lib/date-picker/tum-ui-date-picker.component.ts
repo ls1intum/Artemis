@@ -47,11 +47,11 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     /**
      * Last committed date. Invalid text remains visible without updating it.
-     * Observe {@link parseValidChange} when validity must react to uncommitted text.
+     * Observe {@link inputValidityChange} when validity must react to uncommitted text.
      */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
-    readonly error = input(false);
+    readonly invalid = input(false);
     readonly disabled = input(false);
     readonly hideLabelName = input(false);
     readonly hideValidationMessage = input(false);
@@ -60,8 +60,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
     readonly labelName = input<string>();
     readonly ariaLabel = input<string>();
-    /** Emits whether the entered text parses successfully; the external {@link error} state is excluded. */
-    readonly parseValidChange = output<boolean>();
+    /** Emits text-input validity independently of the external {@link invalid} state. */
+    readonly inputValidityChange = output<boolean>();
     readonly touch = output<void>();
 
     protected readonly faCalendar = faCalendar;
@@ -74,6 +74,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
+    // Equivalent Dayjs instances must not reset uncommitted text; key linked state by its displayed value.
     private readonly valueKey = computed(() => {
         const current = this.value();
         return current ? formatDisplay(current) : '';
@@ -94,23 +95,22 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     private overlayRef?: OverlayRef;
     private restoreFocusElement?: HTMLElement;
 
-    protected readonly showErrorBorder = computed(() => this.error() || !this.isInputValid());
+    protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
     protected readonly showClear = computed(() => !!this.inputText());
     protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
     protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
-        effect(() => this.parseValidChange.emit(this.isInputValid()));
+        effect(() => this.inputValidityChange.emit(this.isInputValid()));
         effect(() => {
             if (this.disabled()) {
                 this.close();
             }
         });
     }
-    /** Whether the entered text parses successfully and the external {@link error} state is clear. */
-    readonly isValid = computed(() => !this.error() && this.isInputValid());
-    readonly hasValidInput = computed(() => this.isInputValid());
+    /** Whether the entered text parses successfully and the external {@link invalid} state is clear. */
+    readonly isValid = computed(() => !this.invalid() && this.isInputValid());
 
     protected onInput(raw: string): void {
         this.inputText.set(raw);

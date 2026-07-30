@@ -63,7 +63,7 @@ describe('OrganizationManagementComponent', () => {
 
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
-        component.loadOrganizations({ page: 0, pageSize: 50 });
+        component.loadOrganizations({ pageIndex: 0, pageSize: 50 });
 
         expect(organizationService.getOrganizations).toHaveBeenCalledWith(expect.anything(), true);
         expect(component).not.toBeNull();
@@ -79,7 +79,7 @@ describe('OrganizationManagementComponent', () => {
     it('should handle error when loading organizations', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
 
-        component.loadOrganizations({ page: 0, pageSize: 50 });
+        component.loadOrganizations({ pageIndex: 0, pageSize: 50 });
         expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(0);
         expect(component.organizations()).toHaveLength(0);
@@ -95,7 +95,7 @@ describe('OrganizationManagementComponent', () => {
             .mockReturnValueOnce(of({ content: [organization1], totalElements: 1 }))
             .mockReturnValueOnce(of({ content: [], totalElements: 0 }));
 
-        const event: TumUiTableQueryEvent = { page: 0, pageSize: 50 };
+        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadOrganizations(event);
 
         vi.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));

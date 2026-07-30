@@ -41,7 +41,7 @@ describe('TumUiChipComponent', () => {
         expect(removeButton()).toBeNull();
     });
 
-    it('renders a labeled remove button when removable and emits onRemove on click', () => {
+    it('renders a labeled remove button and emits removed on click', () => {
         fixture.componentRef.setInput('label', 'Alpha');
         fixture.componentRef.setInput('removable', true);
         fixture.componentRef.setInput('removeAriaLabel', 'Remove group');
@@ -50,16 +50,16 @@ describe('TumUiChipComponent', () => {
         expect(button).not.toBeNull();
         expect(button.getAttribute('aria-label')).toBe('Remove group');
 
-        const emitSpy = vi.spyOn(component.onRemove, 'emit');
+        const emitSpy = vi.spyOn(component.removed, 'emit');
         button.click();
         expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('emits onRemove when Backspace is pressed on the focused remove button', () => {
+    it('emits removed when Backspace is pressed on the focused remove button', () => {
         fixture.componentRef.setInput('label', 'Alpha');
         fixture.componentRef.setInput('removable', true);
         fixture.detectChanges();
-        const emitSpy = vi.spyOn(component.onRemove, 'emit');
+        const emitSpy = vi.spyOn(component.removed, 'emit');
         removeButton()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
         expect(emitSpy).toHaveBeenCalledTimes(1);
     });
@@ -68,7 +68,7 @@ describe('TumUiChipComponent', () => {
         fixture.componentRef.setInput('label', 'Alpha');
         fixture.componentRef.setInput('removable', true);
         fixture.detectChanges();
-        const emitSpy = vi.spyOn(component.onRemove, 'emit');
+        const emitSpy = vi.spyOn(component.removed, 'emit');
         removeButton()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
         expect(emitSpy).not.toHaveBeenCalled();
     });

@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
-import { FormField, form } from '@angular/forms/signals';
+import { FormField, form, required } from '@angular/forms/signals';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import dayjs from 'dayjs/esm';
 import { TumUiDatePickerComponent } from './tum-ui-date-picker.component';
@@ -21,7 +21,7 @@ class TwoWayHostComponent {
 })
 class SignalFormHostComponent {
     readonly model = signal<dayjs.Dayjs | undefined>(dayjs('2026-06-13T08:30'));
-    readonly date = form(this.model);
+    readonly date = form(this.model, (path) => required(path));
 }
 
 describe('TumUiDatePickerComponent', () => {
@@ -106,22 +106,30 @@ describe('TumUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
-    it('exposes an external error to assistive technology and is invalid', () => {
-        fixture.componentRef.setInput('error', true);
+    it('exposes external invalid state to assistive technology', () => {
+        fixture.componentRef.setInput('invalid', true);
         fixture.detectChanges();
         expect(input().getAttribute('aria-invalid')).toBe('true');
         expect(component.isValid()).toBe(false);
     });
 
-    it('reports valid parsed input via hasValidInput() even while an external [error] is set', () => {
-        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
-        fixture.componentRef.setInput('error', true);
+    it('emits text-input validity independently of external invalid state', () => {
+        const validityChanges = vi.fn();
+        component.inputValidityChange.subscribe(validityChanges);
+        fixture.componentRef.setInput('invalid', true);
         fixture.detectChanges();
-        expect(component.isValid()).toBe(false);
-        expect(component.hasValidInput()).toBe(true);
+
         input().value = 'not a date';
         input().dispatchEvent(new Event('input'));
-        expect(component.hasValidInput()).toBe(false);
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false);
+
+        input().value = '13.06.2026 09:15';
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false);
+        expect(validityChanges).toHaveBeenCalledWith(false);
+        expect(validityChanges).toHaveBeenLastCalledWith(true);
     });
 
     it('opens the calendar overlay on trigger click and closes via Done', () => {
@@ -347,6 +355,12 @@ describe('TumUiDatePickerComponent', () => {
         expect(dateInput.value).toBe('13.06.2026 08:30');
         expect(host.componentInstance.date().touched()).toBe(false);
 
+        host.componentInstance.model.set(undefined);
+        host.detectChanges();
+        expect(dateInput.getAttribute('aria-invalid')).toBe('true');
+
+        host.componentInstance.model.set(dayjs('2026-06-13T08:30'));
+        host.detectChanges();
         field.focus();
         expect(document.activeElement).toBe(dateInput);
         dateInput.dispatchEvent(new FocusEvent('blur'));

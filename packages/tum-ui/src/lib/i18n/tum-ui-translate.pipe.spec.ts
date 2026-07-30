@@ -17,7 +17,7 @@ describe('TumUiTranslatePipe', () => {
     it('delegates to a host translator and observes its invalidation signal', () => {
         const revision = signal(0);
         const translator: TumUiTranslator = {
-            changes: revision,
+            translationChanges: revision,
             translate: vi.fn((key, params) => `${key}:${params?.name}`),
         };
         TestBed.configureTestingModule({

@@ -28,7 +28,7 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
 
     readonly checked = model(false);
 
-    readonly onChange = output<TumUiCheckboxChangeEvent>();
+    readonly changed = output<TumUiCheckboxChangeEvent>();
 
     protected readonly faCheck = faCheck;
 
@@ -55,7 +55,7 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
         this.checked.set(newChecked);
         this.onModelChange(newChecked);
         this.onModelTouched();
-        this.onChange.emit({ originalEvent: event, checked: newChecked });
+        this.changed.emit({ originalEvent: event, checked: newChecked });
     }
 
     protected onBlur(): void {

@@ -45,9 +45,9 @@ describe('TumUiCheckboxComponent', () => {
         expect(tick()).not.toBeUndefined();
     });
 
-    it('emits onChange with the new checked value and toggles the model on user interaction', () => {
+    it('emits changed with the new checked value and toggles the model', () => {
         const events: TumUiCheckboxChangeEvent[] = [];
-        component.onChange.subscribe((event) => events.push(event));
+        component.changed.subscribe((event) => events.push(event));
 
         input().click();
         fixture.detectChanges();
@@ -71,7 +71,7 @@ describe('TumUiCheckboxComponent', () => {
 
     it('disables the native input and does not emit on a disabled toggle attempt', () => {
         const onChangeSpy = vi.fn();
-        component.onChange.subscribe(onChangeSpy);
+        component.changed.subscribe(onChangeSpy);
         fixture.componentRef.setInput('checked', true);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
@@ -85,7 +85,7 @@ describe('TumUiCheckboxComponent', () => {
 });
 
 @Component({
-    template: `<tum-ui-checkbox [(ngModel)]="value" (onChange)="lastEvent = $event" />`,
+    template: `<tum-ui-checkbox [(ngModel)]="value" (changed)="lastEvent = $event" />`,
     imports: [TumUiCheckboxComponent, FormsModule],
 })
 class TwoWayNgModelHostComponent {
@@ -116,7 +116,7 @@ describe('TumUiCheckboxComponent (two-way ngModel via CVA)', () => {
 });
 
 @Component({
-    template: `<tum-ui-checkbox [ngModel]="selected()" [ngModelOptions]="{ standalone: true }" (onChange)="toggle()" />`,
+    template: `<tum-ui-checkbox [ngModel]="selected()" [ngModelOptions]="{ standalone: true }" (changed)="toggle()" />`,
     imports: [TumUiCheckboxComponent, FormsModule],
 })
 class ControlledOneWayHostComponent {
@@ -126,7 +126,7 @@ class ControlledOneWayHostComponent {
     }
 }
 
-describe('TumUiCheckboxComponent (one-way [ngModel] + (onChange) controlled pattern)', () => {
+describe('TumUiCheckboxComponent controlled pattern', () => {
     it('runs the handler and reflects the controlled value flowing back through writeValue', async () => {
         await TestBed.configureTestingModule({
             imports: [ControlledOneWayHostComponent, FontAwesomeTestingModule],

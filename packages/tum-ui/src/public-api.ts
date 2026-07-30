@@ -1,9 +1,4 @@
-export {
-    TumUiAutoCompleteComponent,
-    type TumUiAutoCompleteCompleteEvent,
-    type TumUiAutoCompleteSelectEvent,
-    type TumUiAutoCompleteUnselectEvent,
-} from './lib/autocomplete/tum-ui-autocomplete.component';
+export { TumUiAutoCompleteComponent, type TumUiAutoCompleteOptionEvent, type TumUiAutoCompleteSearchEvent } from './lib/autocomplete/tum-ui-autocomplete.component';
 export { TumUiButtonGroupComponent } from './lib/button-group/tum-ui-button-group.component';
 export { TumUiButtonComponent } from './lib/button/tum-ui-button.component';
 export { TumUiButtonDirective } from './lib/button/tum-ui-button.directive';
@@ -24,7 +19,7 @@ export { TumUiPaginatorComponent } from './lib/paginator/tum-ui-paginator.compon
 export { TumUiPanelComponent } from './lib/panel/tum-ui-panel.component';
 export { TumUiProgressBarComponent } from './lib/progress-bar/tum-ui-progress-bar.component';
 export { TumUiProgressSpinnerComponent } from './lib/progress-spinner/tum-ui-progress-spinner.component';
-export { TumUiRadioButtonComponent, type TumUiRadioButtonClickEvent } from './lib/radio-button/tum-ui-radio-button.component';
+export { TumUiRadioButtonComponent, type TumUiRadioButtonSelectEvent } from './lib/radio-button/tum-ui-radio-button.component';
 export { TumUiSelectButtonComponent, type TumUiSelectButtonOption, type TumUiSelectButtonSize } from './lib/select-button/tum-ui-select-button.component';
 export { TumUiSelectComponent, type TumUiSelectSize } from './lib/select/tum-ui-select.component';
 export { TumUiTableSortableColumnComponent } from './lib/table-directive/tum-ui-table-sortable-column.component';

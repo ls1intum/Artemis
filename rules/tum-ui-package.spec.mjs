@@ -5,6 +5,7 @@ import postcss from 'postcss';
 import { compile } from 'sass';
 import semver from 'semver';
 import ts from 'typescript';
+import { parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
@@ -30,6 +31,11 @@ const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}
     .join('\n');
 const packageTemplates = globSync('packages/tum-ui/src/**/*.html', { cwd: repoRoot }).map((file) => ({
     file,
+    source: readFileSync(resolve(repoRoot, file), 'utf8'),
+}));
+const artemisExternalTemplates = globSync('src/main/webapp/**/*.html', { cwd: repoRoot }).map((file) => ({
+    file,
+    lineOffset: 0,
     source: readFileSync(resolve(repoRoot, file), 'utf8'),
 }));
 const packageStyles = globSync(['packages/tum-ui/src/**/*.{css,scss}', 'packages/tum-ui/tailwind.css', 'packages/tum-ui/themes.css'], { cwd: repoRoot })
@@ -125,11 +131,7 @@ function stringRecord(source, variableName) {
     }
     return Object.fromEntries(
         initializer.properties.map((property) => {
-            if (
-                !ts.isPropertyAssignment(property) ||
-                (!ts.isStringLiteral(property.name) && !ts.isIdentifier(property.name)) ||
-                !ts.isStringLiteral(property.initializer)
-            ) {
+            if (!ts.isPropertyAssignment(property) || (!ts.isStringLiteral(property.name) && !ts.isIdentifier(property.name)) || !ts.isStringLiteral(property.initializer)) {
                 throw new Error(`${variableName} must contain only string literal entries`);
             }
             return [property.name.text, property.initializer.text];
@@ -142,7 +144,68 @@ function hasTranslation(catalog, key) {
     return typeof translation === 'string';
 }
 
+function inlineTemplates(file, source) {
+    const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+    const templates = [];
+
+    function visit(node) {
+        if (ts.isPropertyAssignment(node) && (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) && node.name.text === 'template') {
+            if (!ts.isStringLiteralLike(node.initializer)) {
+                throw new Error(`${file}: inline Angular templates must be static string literals`);
+            }
+            templates.push({
+                file,
+                lineOffset: sourceFile.getLineAndCharacterOfPosition(node.initializer.getStart(sourceFile)).line,
+                source: node.initializer.text,
+            });
+        }
+        ts.forEachChild(node, visit);
+    }
+
+    visit(sourceFile);
+    return templates;
+}
+
+const artemisInlineTemplates = globSync('src/main/webapp/**/*.ts', { cwd: repoRoot })
+    .filter((file) => !file.endsWith('.spec.ts'))
+    .flatMap((file) => {
+        const source = readFileSync(resolve(repoRoot, file), 'utf8');
+        return source.includes('<tum-ui-') ? inlineTemplates(file, source) : [];
+    });
+const artemisTemplates = [...artemisExternalTemplates, ...artemisInlineTemplates].filter(({ source }) => source.includes('<tum-ui-'));
+
 const themeColorUtility = /^(?:bg|text|border(?:-[trblxy])?|outline|ring(?:-offset)?)-(tum-ui-[\w-]+)$/;
+const removedOutputBindings = new Set(['completeMethod', 'onSelect', 'onUnselect', 'onChange', 'onRemove', 'parseValidChange', 'onShow', 'onHide', 'onClick']);
+
+class RemovedOutputBindingVisitor extends TmplAstRecursiveVisitor {
+    constructor(file, lineOffset, violations) {
+        super();
+        this.file = file;
+        this.lineOffset = lineOffset;
+        this.violations = violations;
+    }
+
+    visitElement(element) {
+        if (element.name.startsWith('tum-ui-')) {
+            for (const output of element.outputs.filter(({ name }) => removedOutputBindings.has(name))) {
+                this.violations.push(`${this.file}:${this.lineOffset + output.sourceSpan.start.line + 1}: ${element.name} (${output.name})`);
+            }
+        }
+        return super.visitElement(element);
+    }
+}
+
+function removedOutputBindingViolations(templates) {
+    const violations = [];
+    for (const { file, lineOffset, source } of templates) {
+        const parsed = parseTemplate(source, file);
+        if (parsed.errors?.length) {
+            throw new Error(parsed.errors.map((error) => `${file}: ${error}`).join('\n'));
+        }
+        tmplAstVisitAll(new RemovedOutputBindingVisitor(file, lineOffset, violations), parsed.nodes);
+    }
+    return violations;
+}
 
 function themeColorFromUtilityToken(token) {
     const prefixIndex = token.indexOf('tum:');
@@ -157,7 +220,14 @@ function themeColorFromUtilityToken(token) {
     return themeColorUtility.exec(utility)?.[1];
 }
 
-describe('@tumaet/ui-angular package manifest', () => {
+describe('@tumaet/ui-angular integration contract', () => {
+    it('rejects removed package output bindings in Artemis templates', () => {
+        expect(removedOutputBindingViolations(artemisTemplates)).toEqual([]);
+        expect(removedOutputBindingViolations([{ file: 'fixture.html', lineOffset: 0, source: '<tum-ui-checkbox (onChange)="save()" />' }])).toEqual([
+            'fixture.html:1: tum-ui-checkbox (onChange)',
+        ]);
+    });
+
     it('uses the catalog as the installed version and keeps it within every peer range', () => {
         const rootDependencies = { ...rootPackageJson.dependencies, ...rootPackageJson.devDependencies };
 

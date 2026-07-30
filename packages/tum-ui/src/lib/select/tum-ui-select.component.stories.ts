@@ -1,6 +1,5 @@
 import { FormsModule } from '@angular/forms';
-import { END } from '@angular/cdk/keycodes';
-import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
+import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect, fireEvent, fn, screen, waitForElementToBeRemoved } from 'storybook/test';
 import { TumUiSelectComponent } from './tum-ui-select.component';
@@ -16,7 +15,7 @@ const meta = {
     component: TumUiSelectComponent,
     args: {
         ariaLabel: 'Course language',
-        onChange: fn(),
+        selectionChange: fn(),
         optionLabel: 'label',
         optionValue: 'code',
         options: languages,
@@ -46,10 +45,17 @@ type Story = StoryObj<TumUiSelectComponent>;
 export const Default: Story = {};
 
 export const Selected: Story = {
-    render: (args) => ({
-        props: { ...args, selected: 'de' },
-        template: `<tum-ui-select ${argsToTemplate(args)} [(ngModel)]="selected" />`,
-    }),
+    parameters: {
+        docs: {
+            story: { autoplay: true },
+        },
+    },
+    play: async ({ canvas, userEvent }) => {
+        const trigger = canvas.getByRole('combobox', { name: 'Course language' });
+        await userEvent.click(trigger);
+        await userEvent.click(await screen.findByRole('option', { name: 'German' }));
+        await expect(trigger).toHaveTextContent('German');
+    },
 };
 
 export const SelectsOption: Story = {
@@ -61,11 +67,11 @@ export const SelectsOption: Story = {
         const listbox = await screen.findByRole('listbox', { name: 'Course language' });
         await expect(trigger).toHaveFocus();
         const listboxRemoved = waitForElementToBeRemoved(listbox);
-        await fireEvent.keyDown(trigger, { key: 'End', keyCode: END });
+        await fireEvent.keyDown(trigger, { key: 'End', keyCode: 35 });
         await userEvent.keyboard('{Enter}');
 
         await expect(trigger).toHaveTextContent('Spanish');
-        await expect(args.onChange).toHaveBeenCalledWith('es');
+        await expect(args.selectionChange).toHaveBeenCalledWith('es');
         await listboxRemoved;
         await expect(trigger).toHaveFocus();
 
@@ -83,6 +89,7 @@ export const Empty: Story = {
         emptyMessage: 'No languages available',
         options: [],
     },
+    tags: ['!autodocs'],
     play: async ({ canvas, userEvent }) => {
         await userEvent.click(canvas.getByRole('combobox', { name: 'Course language' }));
         await expect(await screen.findByText('No languages available')).toBeVisible();

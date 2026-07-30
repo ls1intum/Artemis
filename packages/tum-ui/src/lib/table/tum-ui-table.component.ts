@@ -35,6 +35,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     '2xl': 'tum:hidden tum:2xl:table-cell',
 };
 
+/** Server-driven table whose consumer owns rows and responds to query changes. */
 @Component({
     selector: 'tum-ui-table',
     templateUrl: './tum-ui-table.component.html',
@@ -43,12 +44,16 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableComponent<T> {
+    /** Columns displayed in declaration order. Nested field paths use lodash path syntax. */
     readonly columns = input.required<ColumnDef<T>[]>();
+    /** Rows for the current page. Sorting and filtering are not applied locally. */
     readonly rows = input.required<T[]>();
     readonly totalRecords = input(0);
     readonly loading = input(false);
+    /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
 
+    /** Identity function forwarded to the CDK table. */
     readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
     readonly striped = input(false);
     readonly scrollable = input(false);
@@ -65,6 +70,7 @@ export class TumUiTableComponent<T> {
     readonly initialSortField = input<string | undefined>(undefined);
     readonly initialSortDirection = input<TumUiSortDirection>('asc');
 
+    /** Requests a zero-based page with the active page size, sort, and search term. */
     readonly dataRequest = output<TumUiTableQueryEvent>();
 
     protected readonly ACTIONS_COLUMN = ACTIONS_COLUMN;
@@ -201,7 +207,7 @@ export class TumUiTableComponent<T> {
 
     private emitDataRequest(): void {
         this.dataRequest.emit({
-            page: this.page(),
+            pageIndex: this.page(),
             pageSize: this.effectivePageSize(),
             sort: this.sortState(),
             searchTerm: this.searchTerm().trim() || undefined,

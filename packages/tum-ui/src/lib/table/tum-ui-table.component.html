@@ -64,7 +64,9 @@
 
         @if (rowActions(); as actions) {
             <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
-                <th cdk-header-cell *cdkHeaderCellDef class="tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2"></th>
+                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2">
+                    <span class="tum:sr-only">{{ 'tumUi.table.actions' | tumUiTranslate }}</span>
+                </th>
                 <td cdk-cell *cdkCellDef="let row" class="tum:border-tum-ui-border tum:px-4 tum:py-2 tum:text-right">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>

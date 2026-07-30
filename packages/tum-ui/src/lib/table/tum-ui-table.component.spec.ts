@@ -82,7 +82,7 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(spy).toHaveBeenCalledTimes(1);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ page: 0, pageSize: 50 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ pageIndex: 0, pageSize: 50 }));
     });
 
     it('emits sort on a sortable header click and toggles asc/desc with aria-sort', async () => {
@@ -92,7 +92,7 @@ describe('TumUiTableComponent', () => {
         const sortButton: HTMLButtonElement = headerCells()[0].querySelector('button')!;
         sortButton.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sort: { field: 'name', direction: 'asc' }, page: 0 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ sort: { field: 'name', direction: 'asc' }, pageIndex: 0 }));
         expect(headerCells()[0].getAttribute('aria-sort')).toBe('ascending');
         sortButton.click();
         fixture.detectChanges();
@@ -116,7 +116,7 @@ describe('TumUiTableComponent', () => {
         search.dispatchEvent(new Event('input'));
         expect(spy).not.toHaveBeenCalled();
         vi.advanceTimersByTime(300);
-        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ searchTerm: 'alp', page: 0 }));
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ searchTerm: 'alp', pageIndex: 0 }));
         vi.useRealTimers();
     });
 
@@ -125,7 +125,9 @@ describe('TumUiTableComponent', () => {
         host.detectChanges();
         await host.whenStable();
         host.detectChanges();
-        expect(host.debugElement.queryAll(By.css('th[cdk-header-cell]')).length).toBe(3);
+        const headers = host.debugElement.queryAll(By.css('th[cdk-header-cell]'));
+        expect(headers.length).toBe(3);
+        expect(headers.at(-1)?.nativeElement.textContent.trim()).toBe('Actions');
         const actions = host.debugElement.queryAll(By.css('td[cdk-cell] button'));
         expect(actions.length).toBe(2);
         expect(actions[0].nativeElement.textContent).toContain('Edit Alpha');
@@ -152,7 +154,7 @@ describe('TumUiTableComponent', () => {
         const next: HTMLButtonElement = fixture.debugElement.query(By.css('button[aria-label="Next page"]')).nativeElement;
         next.click();
         fixture.detectChanges();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, pageSize: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ pageIndex: 1, pageSize: 50 }));
     });
 
     it('clamps to the last valid page and re-emits when totalRecords shrinks below the current page', async () => {
@@ -165,6 +167,6 @@ describe('TumUiTableComponent', () => {
         fixture.componentRef.setInput('totalRecords', 30);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ page: 0, pageSize: 50 }));
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ pageIndex: 0, pageSize: 50 }));
     });
 });

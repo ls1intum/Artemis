@@ -46,15 +46,11 @@ const tumUiConsumerImportPatterns = [
     },
     {
         group: ['app/shared-ui/tum-ui/**'],
-        message: 'The former in-application TUM UI path no longer exists. Import from @tumaet/ui-angular.',
+        message: 'Import TUM UI symbols from the @tumaet/ui-angular public entry point.',
     },
 ];
 export default tseslint.config(
     {
-        // The Angular application, test support, and in-repo UI package contain lintable client code.
-        // The lint command targets src/main/webapp explicitly, but these ignores also
-        // protect against scanning irrelevant directories when ESLint is invoked
-        // without explicit paths (e.g. by IDEs or lint-staged).
         ignores: [
             // Top-level directories
             '.cache/',

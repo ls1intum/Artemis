@@ -21,6 +21,7 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 let nextDialogId = 0;
 
+/** Controlled modal dialog built on Angular CDK Dialog. */
 @Component({
     selector: 'tum-ui-dialog',
     templateUrl: './tum-ui-dialog.component.html',
@@ -44,8 +45,8 @@ export class TumUiDialogComponent implements OnDestroy {
     readonly role = input<DialogRole>('dialog');
     readonly ariaDescribedBy = input<string>();
 
-    readonly onShow = output<void>();
-    readonly onHide = output<void>();
+    readonly shown = output<void>();
+    readonly hidden = output<void>();
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     protected readonly headerTemplate = contentChild('header', { read: TemplateRef });
@@ -109,9 +110,9 @@ export class TumUiDialogComponent implements OnDestroy {
             if (this.visible()) {
                 this.visible.set(false);
             }
-            this.onHide.emit();
+            this.hidden.emit();
         });
-        this.onShow.emit();
+        this.shown.emit();
     }
 
     ngOnDestroy(): void {

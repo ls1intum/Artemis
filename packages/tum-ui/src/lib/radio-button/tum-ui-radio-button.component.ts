@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export interface TumUiRadioButtonClickEvent {
+export interface TumUiRadioButtonSelectEvent {
     originalEvent: MouseEvent;
     value: unknown;
 }
@@ -26,7 +26,7 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
 
     readonly ariaLabel = input<string>();
 
-    readonly onClick = output<TumUiRadioButtonClickEvent>();
+    readonly selected = output<TumUiRadioButtonSelectEvent>();
 
     private readonly cvaValue = signal<unknown>(UNSET);
     protected readonly isChecked = computed(() => this.cvaValue() !== UNSET && this.cvaValue() === this.value());
@@ -56,7 +56,7 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
         this.cvaValue.set(this.value());
         this.onModelChange(this.value());
         this.onModelTouched();
-        this.onClick.emit({ originalEvent: event, value: this.value() });
+        this.selected.emit({ originalEvent: event, value: this.value() });
     }
 
     protected onBlur(): void {

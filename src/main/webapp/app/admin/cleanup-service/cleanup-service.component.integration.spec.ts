@@ -85,7 +85,6 @@ describe('CleanupServiceComponent date range integration', () => {
 
         expect(executeButton().disabled).toBe(false);
 
-        // Invalid text keeps the committed date, so parse validity must independently disable cleanup.
         const fromInput = row.query(By.css('[data-testid="delete-from-picker"] input')).nativeElement as HTMLInputElement;
         fromInput.value = 'not a date';
         fromInput.dispatchEvent(new Event('input'));

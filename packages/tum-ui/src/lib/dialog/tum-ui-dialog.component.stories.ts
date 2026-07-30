@@ -13,8 +13,8 @@ interface DialogStoryArgs {
     confirmLabel: string;
     description: string;
     header: string;
-    onHide: () => void;
-    onShow: () => void;
+    hidden: () => void;
+    shown: () => void;
     openLabel: string;
     visible: boolean;
 }
@@ -30,8 +30,8 @@ const meta = {
         confirmLabel: 'Enroll',
         description: 'Enroll in Advanced Software Engineering?',
         header: 'Confirm enrollment',
-        onHide: fn(),
-        onShow: fn(),
+        hidden: fn(),
+        shown: fn(),
         openLabel: 'Open confirmation',
         visible: false,
     },
@@ -84,7 +84,7 @@ export const Open: Story = {
         const dialog = await screen.findByRole('dialog', { name: 'Confirm enrollment' });
         await expect(dialog).toHaveAccessibleDescription('Enroll in Advanced Software Engineering?');
         await expect(within(dialog).getByRole('button', { name: 'Close' })).toHaveFocus();
-        await expect(args.onShow).toHaveBeenCalledOnce();
+        await expect(args.shown).toHaveBeenCalledOnce();
     },
 };
 
@@ -98,7 +98,7 @@ export const ClosesDialog: Story = {
         const dialogRemoved = waitForElementToBeRemoved(dialog);
         await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
         await dialogRemoved;
-        await expect(args.onHide).toHaveBeenCalledOnce();
+        await expect(args.hidden).toHaveBeenCalledOnce();
         await expect(canvas.queryByText('Enroll in Advanced Software Engineering?')).not.toBeInTheDocument();
         await expect(launcher).toHaveFocus();
     },

@@ -60,7 +60,8 @@ details or static class maps.
 Colocate each top-level consumer story with its component or directive. Document supporting pieces
 of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
 package's [CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
-TypeScript's `satisfies` operator. Keep configuration in `packages/tum-ui/.storybook`; do not add
+TypeScript's `satisfies` operator. Type component stories with the component or explicit story args,
+following the Angular Vite examples. Keep configuration in `packages/tum-ui/.storybook`; do not add
 root Storybook configuration or import Artemis into a story.
 
 Prefer an args-driven default story and only the additional states that expose a meaningful visual
@@ -75,13 +76,6 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
-CSF Next remains a preview API. Keep stories on stable CSF3 and reevaluate when Storybook declares
-CSF Next stable.
-
-Before upgrading Storybook or its
-[Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite),
-verify the browser tests and static build.
-
 ## Consuming the package
 
 Import only from the package root:
@@ -90,13 +84,14 @@ Import only from the package root:
 import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 ```
 
-The TypeScript declarations at that entry point are the component API reference. Do not duplicate
-input and output tables in documentation; they drift from the compiled contract.
+Storybook AutoDocs derives the component API from those declarations and their source JSDoc.
+Document non-obvious public behavior beside the declaration; do not maintain separate input and
+output tables.
 
 Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
 tests consume `packages/tum-ui/dist`; their root commands build the package first. Development serve
-mode maps the package entry point to its source for component HMR. The stylesheet watcher updates the
-package's generated CSS independently so style changes remain hot updates.
+mode maps the package entry point to its source. `pnpm start` enables Angular HMR for package
+template and style edits; Angular reloads the page when an update cannot be applied in place.
 
 ### Theme contract
 
@@ -118,67 +113,36 @@ Package-owned text uses `tumUi.*` keys and has English defaults. A host can impl
 providers: [provideTumUiTranslator(ApplicationTranslator)];
 ```
 
-The adapter's `changes` signal invalidates translated views, and its `locale` signal controls
-locale-sensitive formatting. Artemis registers `provideArtemisTumUiTranslator()` in
+The adapter's `translationChanges` signal invalidates translated views, and its `locale` signal
+controls locale-sensitive formatting. Artemis registers `provideArtemisTumUiTranslator()` in
 `app.config.ts`; its key mapping belongs in `app/shared-ui/tum-ui-integration`, not in the package.
 
 ## Local workflow
 
-From the repository root:
+Run focused commands while developing:
 
-| Command                                              | Purpose                                                                   |
-| ---------------------------------------------------- | ------------------------------------------------------------------------- |
-| `pnpm run tum-ui:build`                              | Build the production Angular package in `packages/tum-ui/dist`            |
-| `pnpm run tum-ui:build:watch`                        | Watch package sources and its precompiled stylesheet                      |
-| `pnpm run tum-ui:test`                               | Run package unit tests with Angular's Vitest runner                       |
-| `pnpm run tum-ui:test:coverage`                      | Run package specs with the CI coverage thresholds                         |
-| `pnpm run tum-ui:stylelint`                          | Check package CSS and SCSS                                                |
-| `pnpm run tum-ui:pack:check`                         | Build and validate an isolated artifact with publint and AreTheTypesWrong |
-| `pnpm run tum-ui:source:check`                       | Build Artemis against the package source entry point                      |
-| `pnpm --dir packages/tum-ui run storybook`           | Build package styles and start its isolated Storybook                     |
-| `pnpm --dir packages/tum-ui run storybook:typecheck` | Type-check Storybook configuration and stories                            |
-| `pnpm --dir packages/tum-ui run storybook:test`      | Run stories and accessibility checks in Chromium                          |
-| `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
-| `pnpm --dir packages/tum-ui run storybook:docs:test` | Build Storybook and test AutoDocs themes and responsive viewports         |
+| Command                                         | Purpose                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `pnpm run tum-ui:test`                          | Run package unit tests with Angular's Vitest runner                       |
+| `pnpm run tum-ui:test:coverage`                 | Run package specs with the CI coverage thresholds                         |
+| `pnpm run tum-ui:pack:check`                    | Build and validate an isolated artifact with publint and AreTheTypesWrong |
+| `pnpm run tum-ui:source:check`                  | Build Artemis against the package source entry point                      |
+| `pnpm --dir packages/tum-ui run storybook`      | Build package styles and start its isolated Storybook                     |
+| `pnpm --dir packages/tum-ui run storybook:test` | Run stories and accessibility checks in Chromium                          |
+| `pnpm run docs:test`                            | Build the combined documentation and test its navigation and themes       |
 
-`pnpm start` and the shared IntelliJ client configuration first build `packages/tum-ui/dist` for
-editor resolution, then serve package sources with HMR. Changes to package sources and styles update
-the running Artemis client. Restart the client after changing the package manifest or build
-configuration. Production builds consume `packages/tum-ui/dist`; package validation writes to
-`packages/tum-ui/dist-pack`.
-
-### Validation
-
-Before submitting a package change, run the relevant focused checks during development and this
-complete package validation:
+Before submitting a package change, run the complete validation from the repository root:
 
 ```bash
-pnpm --dir packages/tum-ui run test:coverage
-pnpm run lint
-pnpm --dir packages/tum-ui run stylelint
-pnpm --dir packages/tum-ui run pack:check
-pnpm run tum-ui:source:check
-pnpm run test:rules
-pnpm run compile:tests
-pnpm --dir packages/tum-ui run storybook:typecheck
-pnpm --dir packages/tum-ui run storybook:test
-pnpm --dir packages/tum-ui run storybook:docs:test
-pnpm run docs:test
+pnpm run tum-ui:validate
 ```
+
+`pnpm start` and the shared IntelliJ client configuration first build `packages/tum-ui/dist` for
+editor resolution, then serve package sources with HMR. Restart the client after changing the
+package manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
+validation writes to `packages/tum-ui/dist-pack`.
 
 The workspace catalog pins the exact versions installed by Artemis. Package dependencies use those
 same versions, while peer dependencies declare compatible ranges containing the catalog version.
 `pnpm run test:rules` enforces that contract and verifies the development and production package
 configurations remain equivalent apart from incremental-output cleanup.
-
-## Review checklist
-
-- The need belongs in this package rather than PrimeNG or Artemis application code.
-- Consumer imports use the `@tumaet/ui-angular` package entry point.
-- The public API contains only supported symbols.
-- Host-specific translations, routes, services, theme values, and request types stay in Artemis.
-- Interaction behavior delegates to stable native HTML or CDK primitives where available.
-- Accessible names, keyboard behavior, focus, and forms integration have behavioral tests.
-- Stories cover representative states without duplicating unit tests.
-- Styling and text remain host-independent through semantic tokens and the translation adapter.
-- Dependency changes keep the workspace catalog and package manifest in sync.

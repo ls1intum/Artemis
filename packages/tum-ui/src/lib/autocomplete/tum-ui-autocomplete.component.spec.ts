@@ -15,7 +15,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         fixture = TestBed.createComponent(TumUiAutoCompleteComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('multiple', true);
-        fixture.componentRef.setInput('delay', 0);
+        fixture.componentRef.setInput('debounceMs', 0);
         fixture.detectChanges();
     });
 
@@ -54,8 +54,8 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
 
     it('emits the debounced complete query once rapid keystrokes settle', () => {
         vi.useFakeTimers();
-        fixture.componentRef.setInput('delay', 300);
-        const emitSpy = vi.spyOn(component.completeMethod, 'emit');
+        fixture.componentRef.setInput('debounceMs', 300);
+        const emitSpy = vi.spyOn(component.searchRequested, 'emit');
         typeQuery('a');
         vi.advanceTimersByTime(100);
         typeQuery('ad');
@@ -69,8 +69,8 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     it('does not emit the complete query below minLength', () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('minLength', 2);
-        fixture.componentRef.setInput('delay', 300);
-        const emitSpy = vi.spyOn(component.completeMethod, 'emit');
+        fixture.componentRef.setInput('debounceMs', 300);
+        const emitSpy = vi.spyOn(component.searchRequested, 'emit');
         typeQuery('a');
         vi.advanceTimersByTime(500);
         expect(emitSpy).not.toHaveBeenCalled();
@@ -88,10 +88,10 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         expect(input().getAttribute('aria-controls')).toBe(listbox()!.id);
     });
 
-    it('selecting a suggestion adds a chip, pushes the array through the CVA, emits onSelect, and closes the panel', async () => {
+    it('selecting a suggestion adds a chip, updates the CVA, emits optionSelected, and closes the panel', async () => {
         const onChangeCallback = vi.fn();
         component.registerOnChange(onChangeCallback);
-        const selectSpy = vi.spyOn(component.onSelect, 'emit');
+        const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         await search('ad', ['admin', 'artemis']);
         options()[0].click();
         fixture.detectChanges();
@@ -116,10 +116,10 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         expect(onChangeCallback).not.toHaveBeenCalled();
     });
 
-    it('removing a chip emits onUnselect and updates the CVA value', async () => {
+    it('removing a chip emits optionRemoved and updates the CVA value', async () => {
         const onChangeCallback = vi.fn();
         component.registerOnChange(onChangeCallback);
-        const unselectSpy = vi.spyOn(component.onUnselect, 'emit');
+        const unselectSpy = vi.spyOn(component.optionRemoved, 'emit');
         component.writeValue(['admin', 'artemis']);
         fixture.detectChanges();
         const removeButton = chips()[0].querySelector('button') as HTMLButtonElement;
@@ -133,7 +133,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     });
 
     it('Backspace on an empty input removes the last chip', () => {
-        const unselectSpy = vi.spyOn(component.onUnselect, 'emit');
+        const unselectSpy = vi.spyOn(component.optionRemoved, 'emit');
         component.writeValue(['admin', 'artemis']);
         fixture.detectChanges();
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
@@ -143,7 +143,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     });
 
     it('keyboard: ArrowDown activates an option (aria-activedescendant) and Enter selects it', async () => {
-        const selectSpy = vi.spyOn(component.onSelect, 'emit');
+        const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         await search('a', ['admin', 'artemis']);
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
         fixture.detectChanges();
@@ -154,7 +154,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
     });
 
     it('does not intercept native text-editing or Tab keys', async () => {
-        const selectSpy = vi.spyOn(component.onSelect, 'emit');
+        const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         await search('a', ['admin', 'artemis']);
 
         input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
@@ -203,7 +203,7 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         const org = { id: 1, name: 'TUM' };
         await search('tu', [org]);
         expect(options()[0].textContent?.trim()).toBe('TUM');
-        const selectSpy = vi.spyOn(component.onSelect, 'emit');
+        const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         options()[0].click();
         fixture.detectChanges();
         expect(selectSpy).toHaveBeenCalledWith(expect.objectContaining({ value: org }));
@@ -293,7 +293,7 @@ describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () =>
         await TestBed.configureTestingModule({ imports: [TumUiAutoCompleteComponent, FontAwesomeTestingModule] }).compileComponents();
         fixture = TestBed.createComponent(TumUiAutoCompleteComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('delay', 0);
+        fixture.componentRef.setInput('debounceMs', 0);
         fixture.detectChanges();
         input = fixture.debugElement.query(By.css('input[role="combobox"]')).nativeElement as HTMLInputElement;
     });
@@ -314,11 +314,11 @@ describe('TumUiAutoCompleteComponent single-mode value + completeOnFocus', () =>
         expect(onChange).toHaveBeenLastCalledWith(undefined);
     });
 
-    it('completeOnFocus: focusing fires completeMethod even with an empty query', () => {
+    it('requests suggestions on focus when completeOnFocus is enabled', () => {
         fixture.componentRef.setInput('completeOnFocus', true);
         fixture.detectChanges();
         const complete = vi.fn();
-        component.completeMethod.subscribe(complete);
+        component.searchRequested.subscribe(complete);
         const focusEvent = new FocusEvent('focus');
         input.dispatchEvent(focusEvent);
         expect(complete).toHaveBeenCalledWith({ originalEvent: focusEvent, query: '' });

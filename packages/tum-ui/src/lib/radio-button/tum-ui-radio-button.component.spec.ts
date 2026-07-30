@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { Component, signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TumUiRadioButtonClickEvent, TumUiRadioButtonComponent } from './tum-ui-radio-button.component';
+import { TumUiRadioButtonComponent, TumUiRadioButtonSelectEvent } from './tum-ui-radio-button.component';
 
 describe('TumUiRadioButtonComponent', () => {
     let fixture: ComponentFixture<TumUiRadioButtonComponent>;
@@ -33,9 +33,9 @@ describe('TumUiRadioButtonComponent', () => {
         expect(input().checked).toBe(false);
     });
 
-    it('emits onClick with the radio value on every click', () => {
-        const events: TumUiRadioButtonClickEvent[] = [];
-        component.onClick.subscribe((event) => events.push(event));
+    it('emits selected with the radio value on every click', () => {
+        const events: TumUiRadioButtonSelectEvent[] = [];
+        component.selected.subscribe((event) => events.push(event));
 
         input().click();
         input().click();
@@ -56,9 +56,9 @@ describe('TumUiRadioButtonComponent', () => {
         expect(input().getAttribute('aria-label')).toBe('Option A');
     });
 
-    it('does not emit onClick when disabled', () => {
+    it('does not emit selected when disabled', () => {
         const onClickSpy = vi.fn();
-        component.onClick.subscribe(onClickSpy);
+        component.selected.subscribe(onClickSpy);
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
 
@@ -76,7 +76,7 @@ describe('TumUiRadioButtonComponent', () => {
                 name="group"
                 [ngModel]="selected() === option ? option : undefined"
                 [ngModelOptions]="{ standalone: true }"
-                (onClick)="select(option)"
+                (selected)="select(option)"
             />
         }
     `,
@@ -90,7 +90,7 @@ class OneWayGroupHostComponent {
     }
 }
 
-describe('TumUiRadioButtonComponent (one-way [ngModel] + (onClick) group)', () => {
+describe('TumUiRadioButtonComponent controlled group', () => {
     it('checks exactly the radio whose value matches the selection and updates on click', async () => {
         await TestBed.configureTestingModule({
             imports: [OneWayGroupHostComponent],

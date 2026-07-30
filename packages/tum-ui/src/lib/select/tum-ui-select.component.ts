@@ -33,7 +33,9 @@ const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
 };
 
 let nextSelectId = 0;
+const TYPEAHEAD_DEBOUNCE_MS = 500;
 
+/** Single-value ControlValueAccessor backed by a listbox overlay. */
 @Component({
     selector: 'tum-ui-select',
     templateUrl: './tum-ui-select.component.html',
@@ -54,8 +56,10 @@ export class TumUiSelectComponent implements ControlValueAccessor {
 
     readonly options = input<readonly unknown[]>([]);
 
+    /** Property name used as the visible label for object options. */
     readonly optionLabel = input<string>();
 
+    /** Property name written to the form value; omit it to write the option itself. */
     readonly optionValue = input<string>();
 
     readonly placeholder = input<string>();
@@ -73,7 +77,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     readonly ariaLabel = input<string>();
     readonly clearAriaLabel = input<string>();
     readonly emptyMessage = input<string>();
-    readonly onChange = output<unknown>();
+    readonly selectionChange = output<unknown>();
 
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCheck = faCheck;
@@ -111,7 +115,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     protected readonly triggerClasses = computed(() => this.buildTriggerClasses());
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
     private readonly keyManagerOptions = computed(() => this.options().map((option) => ({ getLabel: () => this.label(option) })));
-    private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(500);
+    private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(TYPEAHEAD_DEBOUNCE_MS);
     private typeaheadSequence = '';
     private typeaheadReset?: ReturnType<typeof setTimeout>;
 
@@ -249,7 +253,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         const value = this.resolveValue(option);
         this.selectedValue.set(value);
         this.onChangeCallback(value);
-        this.onChange.emit(value);
+        this.selectionChange.emit(value);
         this.close();
     }
 
@@ -257,7 +261,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         event.stopPropagation();
         this.selectedValue.set(undefined);
         this.onChangeCallback(undefined);
-        this.onChange.emit(undefined);
+        this.selectionChange.emit(undefined);
         this.onTouchedCallback();
         this.trigger().nativeElement.focus();
     }
@@ -342,7 +346,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         }
         this.typeaheadReset = setTimeout(() => {
             this.typeaheadSequence = '';
-        }, 500);
+        }, TYPEAHEAD_DEBOUNCE_MS);
     }
 
     private resetTypeahead(): void {

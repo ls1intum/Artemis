@@ -11,7 +11,7 @@ const sourcePath = resolve(packageRoot, 'tailwind.css');
 const outputPath = resolve(packageRoot, 'styles.css');
 const watching = process.argv.includes('--watch');
 const development = process.argv.includes('--development');
-const hmrStyleDelay = 1250;
+const watchDebounce = 50;
 
 async function writeIfChanged(outputPath, contents) {
     try {
@@ -85,17 +85,14 @@ if (watching) {
 
     function scheduleRebuild() {
         clearTimeout(rebuildTimer);
-        // Keep generated styles in a separate Angular polling cycle so component edits remain hot updates.
-        rebuildTimer = setTimeout(() => void rebuild(), hmrStyleDelay);
+        rebuildTimer = setTimeout(() => void rebuild(), watchDebounce);
     }
 
     chokidar
         .watch([componentSourcePath, sourcePath], {
             ignoreInitial: true,
             ignored: (path, stats) =>
-                stats?.isFile() &&
-                path !== sourcePath &&
-                (path.endsWith('.spec.ts') || path.endsWith('.stories.ts') || (!path.endsWith('.html') && !path.endsWith('.ts'))),
+                stats?.isFile() && path !== sourcePath && (path.endsWith('.spec.ts') || path.endsWith('.stories.ts') || (!path.endsWith('.html') && !path.endsWith('.ts'))),
         })
         .on('all', scheduleRebuild);
 }

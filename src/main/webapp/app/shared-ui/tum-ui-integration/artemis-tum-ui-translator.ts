@@ -33,6 +33,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.paginator.rowsPerPage': 'global.paginator.rowsPerPage',
     'tumUi.select.clear': 'entity.action.clear',
     'tumUi.select.empty': 'global.generic.emptyList',
+    'tumUi.table.actions': 'entity.actions',
     'tumUi.table.noResults': 'artemisApp.dataTable.search.noResults',
     'tumUi.table.searchPlaceholder': 'artemisApp.course.exercise.search.searchPlaceholder',
 } as const satisfies Readonly<Record<TumUiTranslationKey, string>>;
@@ -40,9 +41,12 @@ const ARTEMIS_TRANSLATION_KEYS = {
 class ArtemisTumUiTranslator implements TumUiTranslator {
     private readonly translateService = inject(TranslateService);
 
-    readonly changes: Signal<unknown> = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange, this.translateService.onFallbackLangChange), {
-        initialValue: undefined,
-    });
+    readonly translationChanges: Signal<unknown> = toSignal(
+        merge(this.translateService.onLangChange, this.translateService.onTranslationChange, this.translateService.onFallbackLangChange),
+        {
+            initialValue: undefined,
+        },
+    );
     readonly locale: Signal<string | undefined> = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang as string | undefined)), {
         initialValue: this.translateService.getCurrentLang() ?? undefined,
     });

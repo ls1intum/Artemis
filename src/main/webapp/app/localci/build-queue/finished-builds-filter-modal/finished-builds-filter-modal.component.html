@@ -22,7 +22,7 @@
                                 name="buildStatusFilter"
                                 [value]="status"
                                 [ngModel]="this.finishedBuildJobFilter.status"
-                                (onClick)="this.toggleBuildStatusFilter(status)"
+                                (selected)="this.toggleBuildStatusFilter(status)"
                             />
                             <label for="buildStatusFilter-{{ status }}">
                                 <span jhiTranslate="artemisApp.buildQueue.filter.buildStatus.{{ status }}"></span>
@@ -35,7 +35,7 @@
                             name="buildStatusFilter"
                             [value]="undefined"
                             [ngModel]="this.finishedBuildJobFilter.status"
-                            (onClick)="this.toggleBuildStatusFilter()"
+                            (selected)="this.toggleBuildStatusFilter()"
                         />
                         <label for="buildStatusFilter-none">
                             <span jhiTranslate="artemisApp.buildQueue.filter.none"></span>
@@ -58,8 +58,8 @@
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
                         [suggestions]="buildAgentAddressSuggestions()"
                         [completeOnFocus]="true"
-                        (completeMethod)="searchBuildAgentAddresses($event)"
-                        (onSelect)="filterBuildAgentAddressChanged()"
+                        (searchRequested)="searchBuildAgentAddresses($event)"
+                        (optionSelected)="filterBuildAgentAddressChanged()"
                         (focusout)="filterBuildAgentAddressChanged()"
                     />
                 </div>

@@ -65,7 +65,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     protected readonly VcsAccessTokenType = VcsAccessTokenType;
     protected readonly RepositoryType = RepositoryType;
 
-    private lastQuery: TumUiTableQueryEvent = { page: 0, pageSize: 20 };
+    private lastQuery: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 20 };
 
     ngOnInit(): void {
         this.loadTokens();
@@ -118,7 +118,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
             sorted.sort((a, b) => (a[sortField] ?? '').localeCompare(b[sortField] ?? '') * direction);
         }
         this.totalCount.set(sorted.length);
-        const from = event.page * event.pageSize;
+        const from = event.pageIndex * event.pageSize;
         this.rows.set(sorted.slice(from, from + event.pageSize));
     }
 

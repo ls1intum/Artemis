@@ -9,7 +9,7 @@ interface CheckboxStoryArgs {
     label: string;
     checked: boolean;
     disabled: boolean;
-    onChange: (event: TumUiCheckboxChangeEvent) => void;
+    changed: (event: TumUiCheckboxChangeEvent) => void;
 }
 
 const meta = {
@@ -19,7 +19,7 @@ const meta = {
         label: 'Accept the terms and conditions',
         checked: false,
         disabled: false,
-        onChange: fn(),
+        changed: fn(),
     },
     render: function Render(args) {
         const [{ checked }, updateArgs] = useArgs<CheckboxStoryArgs>();
@@ -29,7 +29,7 @@ const meta = {
                 checked,
                 change: (event: TumUiCheckboxChangeEvent) => {
                     updateArgs({ checked: event.checked });
-                    args.onChange(event);
+                    args.changed(event);
                 },
             },
             template: `
@@ -38,8 +38,8 @@ const meta = {
                         inputId="terms"
                         name="terms"
                         [checked]="checked"
-                        ${argsToTemplate(args, { exclude: ['checked', 'label', 'onChange'] })}
-                        (onChange)="change($event)"
+                        ${argsToTemplate(args, { exclude: ['checked', 'label', 'changed'] })}
+                        (changed)="change($event)"
                     />
                     {{ label }}
                 </label>

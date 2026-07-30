@@ -47,7 +47,7 @@ export const CalendarInteraction: Story = {
 
 export const Invalid: Story = {
     args: {
-        error: true,
+        invalid: true,
         value: undefined,
     },
 };

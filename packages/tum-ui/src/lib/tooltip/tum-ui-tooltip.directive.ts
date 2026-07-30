@@ -7,6 +7,7 @@ import { TumUiTooltipContentComponent } from './tum-ui-tooltip-content.component
 
 let nextTooltipId = 0;
 
+/** Tooltip shown on hover or focus and associated with its host through `aria-describedby`. */
 @Directive({
     selector: '[tumUiTooltip]',
     host: {
@@ -23,8 +24,8 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     readonly content = input.required<string>({ alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
-    readonly showDelay = input(150);
-    readonly hideDelay = input(100);
+    readonly showDelayMs = input(150);
+    readonly hideDelayMs = input(100);
 
     private overlayRef?: OverlayRef;
     private contentRef?: ComponentRef<TumUiTooltipContentComponent>;
@@ -40,6 +41,7 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     constructor() {
         effect(() => {
+            // Read content unconditionally so changes remain tracked while the tooltip is hidden.
             const text = this.content();
             if (!text) {
                 this.hideNow();
@@ -81,13 +83,13 @@ export class TumUiTooltipDirective implements OnDestroy {
         if (this.overlayRef?.hasAttached() || !this.content()) {
             return;
         }
-        this.showTimer = setTimeout(() => this.show(), this.showDelay());
+        this.showTimer = setTimeout(() => this.show(), this.showDelayMs());
     }
 
     private scheduleHide(): void {
         clearTimeout(this.showTimer);
         clearTimeout(this.hideTimer);
-        this.hideTimer = setTimeout(() => this.hideNow(), this.hideDelay());
+        this.hideTimer = setTimeout(() => this.hideNow(), this.hideDelayMs());
     }
 
     protected hideNow(): void {
@@ -111,6 +113,7 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.overlayRef = this.overlayService.createConnectedOverlay(this.elementRef, this.placement());
         const strategy = this.overlayRef.getConfig().positionStrategy as FlexibleConnectedPositionStrategy;
         let appliedPlacement = this.placement();
+        // CDK may emit the initial flipped position synchronously during attachment.
         this.positionSub = strategy.positionChanges.subscribe((change) => {
             appliedPlacement = this.overlayService.placementFromPosition(change.connectionPair);
             this.contentRef?.setInput('placement', appliedPlacement);

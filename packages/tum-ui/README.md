@@ -1,7 +1,7 @@
 # @tumaet/ui-angular
 
-Internal Angular component package maintained in the Artemis workspace and designed for eventual
-independent publication.
+Internal Angular component package maintained in the Artemis workspace. The built artifact exposes
+package-owned APIs and assets; Artemis-specific integration remains in the host.
 
 The package contains reusable TUM UI code. It is not the default component library for new Artemis
 UI; Artemis uses PrimeNG according to the repository's client-development guidelines.
@@ -43,8 +43,7 @@ Every component must inherit valid values for the package's semantic custom prop
   `--tum-ui-tooltip-color`.
 
 The values describe the active theme and must change with it. Contrast tokens must remain readable
-on their matching background. The package deliberately exposes roles rather than a numbered color
-ramp.
+on their matching background. The package exposes semantic roles rather than a numbered color ramp.
 
 Applications without an existing token system can load the optional reference themes before the
 component stylesheet:
@@ -76,9 +75,9 @@ bootstrapApplication(AppComponent, {
 });
 ```
 
-`ApplicationTranslator` must implement `TumUiTranslator`. Its optional `changes` and `locale`
-signals keep translations and locale-sensitive formatting reactive. Register one translator
-adapter when the application starts.
+`ApplicationTranslator` must implement `TumUiTranslator`. Its optional `translationChanges` and
+`locale` signals keep translations and locale-sensitive formatting reactive. Register one
+translator adapter when the application starts.
 
 ## Contributing
 

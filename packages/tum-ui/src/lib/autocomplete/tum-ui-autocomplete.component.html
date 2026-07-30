@@ -6,7 +6,7 @@
                 [label]="valueLabel(value)"
                 [removable]="!isDisabled()"
                 [removeAriaLabel]="removeAriaLabel() ?? ('tumUi.autocomplete.remove' | tumUiTranslate)"
-                (onRemove)="removeAt(i, $event)"
+                (removed)="removeAt(i, $event)"
             />
         }
     }

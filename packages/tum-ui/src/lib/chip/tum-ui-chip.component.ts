@@ -23,7 +23,7 @@ export class TumUiChipComponent {
 
     readonly styleClass = input<string>('');
 
-    readonly onRemove = output<Event>();
+    readonly removed = output<Event>();
 
     protected readonly faXmark = faXmark;
 
@@ -36,7 +36,7 @@ export class TumUiChipComponent {
     });
 
     protected remove(event: Event): void {
-        this.onRemove.emit(event);
+        this.removed.emit(event);
     }
     protected onRemoveKeydown(event: KeyboardEvent): void {
         if (event.key === 'Backspace' || event.key === 'Delete') {

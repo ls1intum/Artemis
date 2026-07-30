@@ -7,8 +7,8 @@ import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 import {
-    TumUiAutoCompleteCompleteEvent,
     TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
     TumUiButtonComponent,
     TumUiDialogComponent,
     TumUiInputDirective,
@@ -213,7 +213,7 @@ export class FinishedBuildsFilterModalComponent {
      * Called by the autocomplete on each keystroke to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
-    searchBuildAgentAddresses(event: TumUiAutoCompleteCompleteEvent): void {
+    searchBuildAgentAddresses(event: TumUiAutoCompleteSearchEvent): void {
         const term = event.query;
         const buildAgentAddresses = this.buildAgentAddresses;
         const filtered = (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10);

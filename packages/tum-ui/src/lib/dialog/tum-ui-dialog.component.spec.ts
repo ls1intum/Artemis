@@ -90,8 +90,8 @@ describe('TumUiDialogComponent', () => {
         expect(panel()).toBeNull();
     });
 
-    it('opens on visible=true: portals a modal dialog and emits onShow', () => {
-        const showSpy = vi.spyOn(dialog.onShow, 'emit');
+    it('opens on visible=true, portals a modal dialog, and emits shown', () => {
+        const showSpy = vi.spyOn(dialog.shown, 'emit');
         host.open.set(true);
         fixture.detectChanges();
 
@@ -101,10 +101,10 @@ describe('TumUiDialogComponent', () => {
         expect(showSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('closes on visible=false: disposes overlay, emits onHide, keeps [(visible)] in sync', () => {
+    it('closes on visible=false, emits hidden, and keeps [(visible)] in sync', () => {
         host.open.set(true);
         fixture.detectChanges();
-        const hideSpy = vi.spyOn(dialog.onHide, 'emit');
+        const hideSpy = vi.spyOn(dialog.hidden, 'emit');
 
         host.open.set(false);
         fixture.detectChanges();

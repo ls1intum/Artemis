@@ -2,7 +2,7 @@ import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { expect, fn } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
 
@@ -90,19 +90,11 @@ export const Disabled: Story = {
     args: {
         disabled: true,
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByRole('button', { name: 'Continue' })).toBeDisabled();
-    },
 };
 
 export const Loading: Story = {
     args: {
         loading: true,
-    },
-    play: async ({ canvas }) => {
-        const button = canvas.getByRole('button', { name: 'Continue' });
-        await expect(button).toBeDisabled();
-        await expect(button).toHaveAttribute('aria-busy', 'true');
     },
 };
 

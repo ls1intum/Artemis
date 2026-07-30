@@ -1,7 +1,7 @@
 import { TemplateRef } from '@angular/core';
 
 export interface ColumnDef<T> {
-    /** Top-level property or lodash-compatible nested property path. */
+    /** Top-level property or nested path such as `owner.name` or `items[0].label`. */
     field?: (keyof T & string) | (string & {});
     header?: string;
     headerKey?: string;
@@ -29,8 +29,7 @@ export interface TumUiSortState {
 }
 
 export interface TumUiTableQueryEvent {
-    /** Zero-based page index. */
-    page: number;
+    pageIndex: number;
     pageSize: number;
     sort?: TumUiSortState;
     searchTerm?: string;

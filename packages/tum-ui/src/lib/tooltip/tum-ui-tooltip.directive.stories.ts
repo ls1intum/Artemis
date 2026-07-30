@@ -7,8 +7,8 @@ import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
 interface TooltipStoryArgs {
     tumUiTooltip: string;
     tumUiTooltipPlacement: 'top' | 'right' | 'bottom' | 'left';
-    showDelay: number;
-    hideDelay: number;
+    showDelayMs: number;
+    hideDelayMs: number;
 }
 
 const meta = {
@@ -17,8 +17,8 @@ const meta = {
     args: {
         tumUiTooltip: 'Downloads the current result as a CSV file',
         tumUiTooltipPlacement: 'top',
-        showDelay: 150,
-        hideDelay: 100,
+        showDelayMs: 150,
+        hideDelayMs: 100,
     },
     argTypes: {
         tumUiTooltipPlacement: {
@@ -38,8 +38,8 @@ const meta = {
                 tumUiButton
                 [tumUiTooltip]="tooltip.tumUiTooltip"
                 [tumUiTooltipPlacement]="tooltip.tumUiTooltipPlacement"
-                [showDelay]="tooltip.showDelay"
-                [hideDelay]="tooltip.hideDelay"
+                [showDelayMs]="tooltip.showDelayMs"
+                [hideDelayMs]="tooltip.hideDelayMs"
             >
                 Export
             </button>

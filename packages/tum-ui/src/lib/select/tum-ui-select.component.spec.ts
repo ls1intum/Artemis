@@ -95,10 +95,10 @@ describe('TumUiSelectComponent', () => {
         }
     });
 
-    it('selecting an option pushes the resolved optionValue through the CVA and emits onChange, then closes', () => {
+    it('selecting an option updates the CVA, emits selectionChange, and closes', () => {
         const onChangeCallback = vi.fn();
         component.registerOnChange(onChangeCallback);
-        const emitSpy = vi.spyOn(component.onChange, 'emit');
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
         triggerButton().focus();
         openPanel();
         optionElements()[1].click();
@@ -113,7 +113,7 @@ describe('TumUiSelectComponent', () => {
     it('emits the whole option object when optionValue is not set', () => {
         fixture.componentRef.setInput('optionValue', undefined);
         fixture.detectChanges();
-        const emitSpy = vi.spyOn(component.onChange, 'emit');
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
         openPanel();
         optionElements()[0].click();
         fixture.detectChanges();
@@ -122,7 +122,7 @@ describe('TumUiSelectComponent', () => {
     });
 
     it('keyboard: ArrowDown advances the active option and Enter selects it', () => {
-        const emitSpy = vi.spyOn(component.onChange, 'emit');
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
         openPanel();
         triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
         fixture.detectChanges();
@@ -149,7 +149,7 @@ describe('TumUiSelectComponent', () => {
     });
 
     it('keyboard: Escape closes the panel without selecting', () => {
-        const emitSpy = vi.spyOn(component.onChange, 'emit');
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
         openPanel();
         triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         fixture.detectChanges();
@@ -193,7 +193,7 @@ describe('TumUiSelectComponent', () => {
     });
 
     it('commits the active option on Tab without preventing focus navigation', () => {
-        const emitSpy = vi.spyOn(component.onChange, 'emit');
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
         openPanel();
         triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
         const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });

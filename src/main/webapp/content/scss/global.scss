@@ -45,7 +45,6 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase link contrast without overriding component and navigation styles. */
 a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
     cursor: pointer;

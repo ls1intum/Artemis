@@ -9,6 +9,7 @@ const HEADER_PADDING: Record<TumUiTableSize, string> = {
     large: 'tum:px-5 tum:py-4',
 };
 
+/** Fixed-row-height virtual table for large in-memory collections. */
 @Component({
     selector: 'tum-ui-table-virtual-scroll',
     templateUrl: './tum-ui-table-virtual-scroll.component.html',
@@ -19,7 +20,7 @@ const HEADER_PADDING: Record<TumUiTableSize, string> = {
 export class TumUiTableVirtualScrollComponent<T> {
     readonly items = input.required<readonly T[]>();
 
-    /** Fixed row height in pixels; the rendered row uses this value as its CSS height. */
+    /** Row height in CSS pixels used by the CDK fixed-size virtual-scroll strategy. */
     readonly itemSize = input.required<number>();
 
     readonly rowTemplate = input.required<TemplateRef<{ $implicit: T; index: number }>>();

@@ -22,23 +22,19 @@ import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiChipComponent } from '../chip/tum-ui-chip.component';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
-export interface TumUiAutoCompleteCompleteEvent {
+export interface TumUiAutoCompleteSearchEvent {
     originalEvent?: Event;
     query: string;
 }
 
-export interface TumUiAutoCompleteSelectEvent {
-    originalEvent?: Event;
-    value: unknown;
-}
-
-export interface TumUiAutoCompleteUnselectEvent {
+export interface TumUiAutoCompleteOptionEvent {
     originalEvent?: Event;
     value: unknown;
 }
 
 let nextAutoCompleteId = 0;
 
+/** Single- or multi-value ControlValueAccessor with consumer-supplied suggestions. */
 @Component({
     selector: 'tum-ui-autocomplete',
     templateUrl: './tum-ui-autocomplete.component.html',
@@ -56,11 +52,11 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
 
+    /** Suggestions supplied in response to {@link searchRequested}. */
     readonly suggestions = input<readonly unknown[]>([]);
 
+    /** Property name used as the visible label for object values. */
     readonly optionLabel = input<string>();
-
-    readonly field = input<string>();
 
     readonly multiple = input(false);
 
@@ -70,7 +66,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     readonly minLength = input(1);
 
-    readonly delay = input(300);
+    readonly debounceMs = input(300);
 
     readonly completeOnFocus = input(false);
 
@@ -80,13 +76,14 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     readonly removeAriaLabel = input<string>();
     readonly styleClass = input<string>('');
     readonly emptyMessage = input<string>();
-    readonly completeMethod = output<TumUiAutoCompleteCompleteEvent>();
-    readonly onSelect = output<TumUiAutoCompleteSelectEvent>();
-    readonly onUnselect = output<TumUiAutoCompleteUnselectEvent>();
+    readonly searchRequested = output<TumUiAutoCompleteSearchEvent>();
+    readonly optionSelected = output<TumUiAutoCompleteOptionEvent>();
+    readonly optionRemoved = output<TumUiAutoCompleteOptionEvent>();
 
     protected readonly listboxId = `tum-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
 
     private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
+    // ControlValueAccessor may receive a value before the optional input is rendered.
     private readonly textInput = viewChild<ElementRef<HTMLInputElement>>('textInput');
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
@@ -104,7 +101,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     private onTouchedCallback: () => void = () => {};
 
     protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
-    private readonly labelKey = computed(() => this.optionLabel() ?? this.field());
+    private readonly labelKey = computed(() => this.optionLabel());
     protected readonly panelVisible = computed(
         () => this.isFocused() && this.hasSearched() && !this.isDisabled() && (this.query().length >= this.minLength() || this.completeOnFocus()),
     );
@@ -215,7 +212,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
             clearTimeout(this.debounceTimer);
         }
         if (value.length >= this.minLength()) {
-            this.debounceTimer = setTimeout(() => this.fireComplete(value, event), this.delay());
+            this.debounceTimer = setTimeout(() => this.fireComplete(value, event), this.debounceMs());
         } else if (this.completeOnFocus()) {
             this.fireComplete(value, event);
         } else {
@@ -223,7 +220,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         }
     }
     private fireComplete(query: string, originalEvent?: Event): void {
-        this.completeMethod.emit({ originalEvent, query });
+        this.searchRequested.emit({ originalEvent, query });
         this.hasSearched.set(true);
     }
 
@@ -273,12 +270,12 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
                 const next = [...this.selectedValues(), option];
                 this.selectedValues.set(next);
                 this.onChangeCallback(next);
-                this.onSelect.emit({ originalEvent: event, value: option });
+                this.optionSelected.emit({ originalEvent: event, value: option });
             }
         } else {
             this.singleValue.set(option);
             this.onChangeCallback(option);
-            this.onSelect.emit({ originalEvent: event, value: option });
+            this.optionSelected.emit({ originalEvent: event, value: option });
             this.syncSingleInputText();
         }
         this.clearInput();
@@ -294,7 +291,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
         const next = current.filter((_, i) => i !== index);
         this.selectedValues.set(next);
         this.onChangeCallback(next);
-        this.onUnselect.emit({ originalEvent: event, value: removed });
+        this.optionRemoved.emit({ originalEvent: event, value: removed });
         this.focusInput();
     }
 

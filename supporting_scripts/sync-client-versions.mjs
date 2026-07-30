@@ -70,14 +70,7 @@ function writePkg(path, pkg) {
 // ── Version mapping: which .env variable controls which packages ─────────────
 
 /** Packages with independent release cycles, excluded from ANGULAR_VERSION sync. */
-const ANGULAR_INDEPENDENT_PACKAGES = new Set([
-    '@angular/cdk', // Angular Components team, separate releases
-    '@angular/material', // Angular Components team, separate releases
-    '@angular/youtube-player', // Angular Components team, separate releases
-    '@angular-devkit/build-angular', // Angular CLI team, separate releases
-    '@angular/build', // Angular CLI team, separate releases
-    '@angular/cli', // Angular CLI team, separate releases
-]);
+const ANGULAR_INDEPENDENT_PACKAGES = new Set(['@angular/cdk', '@angular/material', '@angular/youtube-player', '@angular-devkit/build-angular', '@angular/build', '@angular/cli']);
 
 /** Given a package name and current version, return the .env key that controls it. */
 function envKeyForPackage(name) {

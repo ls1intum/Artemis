@@ -34,13 +34,17 @@
         "test:coverage": "ng test tum-ui --no-watch --no-progress --coverage",
         "test:watch": "ng test tum-ui",
         "storybook": "pnpm run build:styles -- --development && pnpm run storybook:docs && concurrently --kill-others --names styles,storybook \"node build-styles.mjs --development --watch\" \"storybook dev --port 6006 --no-open\"",
-        "storybook:build": "pnpm run storybook:prepare && storybook build --output-dir ../../build/storybook/tum-ui",
+        "storybook:build": "pnpm run storybook:prepare && pnpm run storybook:build:prepared",
+        "storybook:build:prepared": "storybook build --output-dir ../../build/storybook/tum-ui",
         "storybook:docs": "compodoc -p tsconfig.lib.json -e json -d . --silent",
         "storybook:docs:test": "pnpm run storybook:build && pnpm run storybook:docs:test:built",
         "storybook:docs:test:built": "playwright test --config .storybook/playwright.config.ts",
         "storybook:prepare": "pnpm run build:styles -- --development && pnpm run storybook:docs",
-        "storybook:test": "pnpm run storybook:prepare && vitest run --config vitest.storybook.config.ts",
-        "storybook:typecheck": "pnpm run storybook:docs && tsc --noEmit --project .storybook/tsconfig.json"
+        "storybook:test": "pnpm run storybook:prepare && pnpm run storybook:test:prepared",
+        "storybook:test:prepared": "vitest run --config vitest.storybook.config.ts",
+        "storybook:typecheck": "pnpm run storybook:docs && pnpm run storybook:typecheck:prepared",
+        "storybook:typecheck:prepared": "tsc --noEmit --project .storybook/tsconfig.json",
+        "storybook:validate": "pnpm run storybook:prepare && pnpm run storybook:typecheck:prepared && pnpm run storybook:test:prepared && pnpm run storybook:build:prepared && pnpm run storybook:docs:test:built"
     },
     "exports": {
         "./styles.css": "./styles.css",

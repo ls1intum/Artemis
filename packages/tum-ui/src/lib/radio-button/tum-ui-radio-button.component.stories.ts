@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { expect, fn, waitFor } from 'storybook/test';
 
-import { TumUiRadioButtonClickEvent, TumUiRadioButtonComponent } from './tum-ui-radio-button.component';
+import { TumUiRadioButtonComponent, TumUiRadioButtonSelectEvent } from './tum-ui-radio-button.component';
 
 interface RadioOption {
     label: string;
@@ -14,9 +14,9 @@ interface RadioOption {
 interface RadioButtonStoryArgs {
     legend: string;
     options: readonly RadioOption[];
-    selected: string | undefined;
+    selectedValue: string | undefined;
     disabled: boolean;
-    onClick: (event: TumUiRadioButtonClickEvent) => void;
+    selected: (event: TumUiRadioButtonSelectEvent) => void;
 }
 
 const OPTIONS: readonly RadioOption[] = [
@@ -36,28 +36,28 @@ const meta = {
     args: {
         legend: 'Email summary',
         options: OPTIONS,
-        selected: 'weekly',
+        selectedValue: 'weekly',
         disabled: false,
-        onClick: fn(),
+        selected: fn(),
     },
     argTypes: {
         options: {
             control: false,
         },
-        selected: {
+        selectedValue: {
             control: 'inline-radio',
             options: OPTIONS.map((option) => option.value),
         },
     },
     render: function Render(args) {
-        const [{ selected }, updateArgs] = useArgs<RadioButtonStoryArgs>();
+        const [{ selectedValue }, updateArgs] = useArgs<RadioButtonStoryArgs>();
         return {
             props: {
                 ...args,
-                selected,
+                selectedValue,
                 selectValue(this: RadioButtonStoryArgs, value: string) {
-                    this.selected = value;
-                    updateArgs({ selected: value });
+                    this.selectedValue = value;
+                    updateArgs({ selectedValue: value });
                 },
             },
             template: `
@@ -69,11 +69,11 @@ const meta = {
                                 [inputId]="'summary-' + option.value"
                                 name="summary"
                                 [value]="option.value"
-                                [ngModel]="selected"
+                                [ngModel]="selectedValue"
                                 (ngModelChange)="selectValue($event)"
                                 [ngModelOptions]="{ standalone: true }"
                                 [disabled]="disabled"
-                                (onClick)="onClick($event)"
+                                (selected)="selected($event)"
                             />
                             {{ option.label }}
                         </label>
@@ -107,7 +107,7 @@ export const Selection: Story = {
             await expect(backgrounds[0]).toBe(backgrounds[1]);
             await expect(backgrounds[2]).not.toBe(backgrounds[0]);
         });
-        await expect(args.onClick).toHaveBeenCalledWith(expect.objectContaining({ value: 'daily' }));
+        await expect(args.selected).toHaveBeenCalledWith(expect.objectContaining({ value: 'daily' }));
     },
 };
 

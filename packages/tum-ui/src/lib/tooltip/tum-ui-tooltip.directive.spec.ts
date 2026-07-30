@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
 
 @Component({
-    template: `<button [tumUiTooltip]="text()" [showDelay]="0" [hideDelay]="0">Hover me</button>`,
+    template: `<button [tumUiTooltip]="text()" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
     imports: [TumUiTooltipDirective],
 })
 class TooltipHostComponent {

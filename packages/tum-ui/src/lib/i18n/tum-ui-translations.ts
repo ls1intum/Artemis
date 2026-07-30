@@ -31,6 +31,7 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
     'tumUi.paginator.rowsPerPage': 'Rows per page',
     'tumUi.select.clear': 'Clear selection',
     'tumUi.select.empty': 'No available options',
+    'tumUi.table.actions': 'Actions',
     'tumUi.table.noResults': 'No results found',
     'tumUi.table.searchPlaceholder': 'Search',
 } as const satisfies Readonly<Record<string, string>>;
@@ -38,9 +39,9 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
 export type TumUiTranslationKey = keyof typeof TUM_UI_DEFAULT_TRANSLATIONS;
 
 export interface TumUiTranslator {
-    /** Optional invalidation signal; update it when the active translation catalog changes. */
-    readonly changes?: Signal<unknown>;
-    /** Optional locale used by components for locale-sensitive formatting. */
+    /** Optional signal that changes whenever the active translation catalog changes. */
+    readonly translationChanges?: Signal<unknown>;
+    /** Optional locale passed to locale-sensitive browser formatting APIs. */
     readonly locale?: Signal<string | undefined>;
 
     translate(key: string, params?: TumUiTranslationParams): string;
