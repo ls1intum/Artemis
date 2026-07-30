@@ -1666,6 +1666,39 @@ describe('ExamParticipationComponent', () => {
             expect(examParticipationService.loadStudentExamWithExercisesForSummary).toHaveBeenCalledTimes(1);
         });
 
+        it('should leave summary mode when the reused component navigates from a loaded summary to an active exam', () => {
+            // A successful summary is the one piece of state no summary request resets, so without an explicit reset it
+            // survives the navigation and renders the next exam's conduction data as if it were a finished summary.
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            const summaryStudentExam = new StudentExam();
+            summaryStudentExam.id = 3;
+            summaryStudentExam.exam = new Exam();
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(summaryStudentExam));
+            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            comp.ngOnInit();
+
+            // exam A: a test exam whose summary loads successfully
+            params.next({ courseId: '1', examId: '2' });
+            comp.loadAndDisplaySummary();
+            expect(comp.showExamSummary()).toBe(true);
+
+            // exam B: still active, so it takes the regular loading branch and never touches the summary
+            const ongoingStudentExam = new StudentExam();
+            ongoingStudentExam.id = 9;
+            ongoingStudentExam.exam = new Exam();
+            ongoingStudentExam.exam.startDate = dayjs().subtract(1, 'minutes');
+            ongoingStudentExam.workingTime = 3600;
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(ongoingStudentExam));
+            (activatedRoute as any).firstChild = undefined;
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(comp.showExamSummary()).toBe(false);
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.css('jhi-exam-participation-summary'))).toBeNull();
+        });
+
         it('should ignore a summary failure of the previous exam that arrives after another exam started loading', () => {
             // The summary request of exam A is still in flight when the route switches to exam B. Its failure must not
             // restore the error state on B, nor install a retry that would re-request with B's route parameters.

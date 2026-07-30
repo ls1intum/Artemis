@@ -235,10 +235,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
         this.route.params.subscribe((params) => {
             // This component is reused when only the :examId parameter changes, so nothing derived from the previous exam
-            // may survive into the next one: neither an in-flight request, nor a summary failure (not every branch below
-            // goes through a summary request that would reset it), nor the route parameters themselves.
-            this.cancelPendingExamLoad();
-            this.clearFailedSummaryLoad();
+            // may survive into the next one: neither an in-flight request, nor a summary failure, nor a summary that is
+            // still on screen (not every branch below goes through a summary request that would reset those), nor the
+            // route parameters themselves.
+            this.resetForNewLoad();
             this.examId.set(parseInt(params['examId'], 10));
             this.testRunId.set(parseInt(params['testRunId'], 10));
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
@@ -295,8 +295,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
-        this.cancelPendingExamLoad();
-        this.clearFailedSummaryLoad();
+        this.resetForNewLoad();
         this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
                 this.studentExam.set(studentExamWithExercises);
@@ -317,8 +316,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * initial load, so it also has to set up the exam itself; the summary is then displayed by {@link handleStudentExam}.
      */
     private loadTestExamStudentExamForSummary(): void {
-        this.cancelPendingExamLoad();
-        this.clearFailedSummaryLoad();
+        this.resetForNewLoad();
         this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
             next: (studentExam) => {
                 this.handleStudentExam(studentExam);
@@ -327,6 +325,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
             },
         });
+    }
+
+    /**
+     * Drops everything the previously displayed exam left behind before a new load starts: the request still in flight,
+     * the retryable summary-failure state, and the summary view itself. Every entry point that begins a load goes
+     * through here, so a new call site cannot silently keep one of them alive — the component is reused when only the
+     * :examId parameter changes, and each of these surviving into the next exam is a bug of its own (#13317).
+     */
+    private resetForNewLoad(): void {
+        this.cancelPendingExamLoad();
+        this.clearFailedSummaryLoad();
+        this.showExamSummary.set(false);
     }
 
     /**
