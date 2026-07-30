@@ -299,26 +299,39 @@ public class ProblemStatementRenderingService {
             String testsStr = matcher.group("tests");
 
             boolean hasTestRefs = testsStr != null && !testsStr.isBlank();
+            List<String> authoredRefs = TestReferenceParser.splitTestReferences(testsStr);
+            TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
 
             List<Long> testIds = new ArrayList<>();
-            if (testsStr != null && !testsStr.isEmpty()) {
-                Matcher testIdMatcher = TESTID_PATTERN.matcher(testsStr);
-                while (testIdMatcher.find()) {
-                    testIds.add(Long.parseLong(testIdMatcher.group(1)));
+            int unresolvedRefs = 0;
+            for (String ref : authoredRefs) {
+                // find(), not matches(): the canonical ProgrammingExerciseTaskService also accepts a reference that
+                // merely contains a <testid> wrapper. Switching to matches() would silently drop such references.
+                Matcher idMatcher = TESTID_PATTERN.matcher(ref);
+                if (idMatcher.find()) {
+                    // An authored id stays authoritative even when no feedback carries it: it then counts as not executed.
+                    testIds.add(Long.parseLong(idMatcher.group(1)));
+                    continue;
+                }
+                TestFeedbackInputDTO named = lookup.resolve(ref);
+                if (named != null) {
+                    testIds.add(named.testId());
+                }
+                else {
+                    unresolvedRefs++;
                 }
             }
 
-            // A task may reference tests by name (e.g. on an unbuilt exercise) instead of by <testid>, possibly
-            // mixed with ids. Name refs cannot be mapped to feedback here; detect whether any unresolved ref remains
-            // by stripping the <testid> wrappers and the separators and checking for leftover content.
-            boolean hasUnresolvedRefs = hasTestRefs && !TESTID_PATTERN.matcher(testsStr).replaceAll("").replace(",", "").isBlank();
-
-            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, hasUnresolvedRefs, testResults);
+            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, unresolvedRefs > 0, testResults);
             int successCount = countPassedTests(testIds, testResults);
-            int total = testIds.size();
+            int authoredCount = authoredRefs.size();
+            int notExecutedCount = unresolvedRefs + countNotExecutedTests(testIds, testResults);
 
-            boolean hasFeedback = testResults != null && !testIds.isEmpty();
-            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null, locale);
+            // Only emit data-feedback when at least one referenced test actually has feedback. Authored ids are always
+            // added to testIds, so `!testIds.isEmpty()` alone would emit an empty data-feedback="[]" for an empty
+            // (but present) result map.
+            boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, hasFeedback ? testResults : null, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
         }
@@ -326,13 +339,14 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int total, @Nullable Map<Long, TestFeedbackInputDTO> testResults,
-            Locale locale) {
+    private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int authoredCount, int notExecutedCount,
+            @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         StringBuilder html = new StringBuilder();
         html.append("<span class=\"artemis-task artemis-task-").append(testStatus).append("\" data-task-name=\"").append(HtmlEscaper.escapeAttribute(taskName))
-                .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\"");
+                .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\" data-authored-count=\"").append(authoredCount)
+                .append("\" data-not-executed-count=\"").append(notExecutedCount).append("\"");
 
         if (testResults != null) {
             html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
@@ -346,8 +360,8 @@ public class ProblemStatementRenderingService {
         };
         html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
         html.append(HtmlEscaper.escapeText(taskName));
-        if (testResults != null && !testIds.isEmpty()) {
-            String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, total }, locale);
+        if (testResults != null && authoredCount > 0) {
+            String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, authoredCount }, locale);
             html.append(" <span class=\"artemis-task-stats\">").append(HtmlEscaper.escapeText(statsText)).append("</span>");
         }
         else if ("no-result".equals(testStatus)) {
@@ -440,6 +454,17 @@ public class ProblemStatementRenderingService {
             }
         }
         return success;
+    }
+
+    private static int countNotExecutedTests(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        int notExecuted = 0;
+        for (Long testId : testIds) {
+            TestFeedbackInputDTO detail = testResults == null ? null : testResults.get(testId);
+            if (TestFeedbackLookup.outcomeOf(detail) == TestOutcome.NOT_EXECUTED) {
+                notExecuted++;
+            }
+        }
+        return notExecuted;
     }
 
     private String renderWithCommonMark(String markdown) {
@@ -589,7 +614,8 @@ public class ProblemStatementRenderingService {
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
         safelist.addAttributes("div", "class", "data-diagram-id", "data-result");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode");
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
+                "data-authored-count", "data-not-executed-count");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
         safelist.addAttributes("p", "class");

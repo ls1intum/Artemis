@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -68,12 +70,13 @@ public class ProblemStatementRenderingResource {
         Map<Long, TestFeedbackInputDTO> testResults = null;
         if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
             testResults = new HashMap<>();
+            Set<String> seenNames = new HashSet<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
-                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT,
-                            "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
-                    problem.setTitle("Duplicate test id");
-                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
+                    return unprocessable("Duplicate test id", "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
+                }
+                if (!seenNames.add(input.testName())) {
+                    return unprocessable("Duplicate test name", "Duplicate test name in testResults. Each test name must appear at most once.");
                 }
                 testResults.put(input.testId(), input);
             }
@@ -88,5 +91,11 @@ public class ProblemStatementRenderingResource {
                 renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.shouldInlineImages());
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
+    }
+
+    private static ResponseEntity<?> unprocessable(String title, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, detail);
+        problem.setTitle(title);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
     }
 }

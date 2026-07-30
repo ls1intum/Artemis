@@ -472,6 +472,80 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
+    // --- Task reference resolution by test name ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveTaskReferenceByTestName() throws Exception {
+        var feedback = new TestFeedbackInputDTO(7L, "testDoOverlap()", true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Overlap](testDoOverlap())", List.of(feedback), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"success\"");
+        assertThat(result.html()).contains("data-test-ids=\"7\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveParameterizedNameContainingComma() throws Exception {
+        var feedback = new TestFeedbackInputDTO(3L, "testInsert(InsertMock, 1)", false, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Insert](testInsert(InsertMock, 1))", List.of(feedback), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"fail\"");
+        assertThat(result.html()).contains("data-test-ids=\"3\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldMatchTestNamesCaseSensitivelyAndKeepParentheses() throws Exception {
+        var feedback = new TestFeedbackInputDTO(4L, "testFoo()", true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][A](TESTFOO()),[task][B](testFoo)", List.of(feedback), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // Neither the differently-cased nor the parenthesis-stripped variant may resolve.
+        assertThat(result.html()).doesNotContain("data-test-status=\"success\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveMixedIdAndNameReferences() throws Exception {
+        var byId = new TestFeedbackInputDTO(1L, "testById", true, null, null);
+        var byName = new TestFeedbackInputDTO(2L, "testByName()", true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Mixed](<testid>1</testid>,testByName())", List.of(byId, byName), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"success\"");
+        assertThat(result.html()).contains("data-authored-count=\"2\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCountUnresolvedReferencesAsNotExecutedInStats() throws Exception {
+        var known = new TestFeedbackInputDTO(1L, "testKnown()", true, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Partial](testKnown(),testMissing())", List.of(known), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"not-executed\"");
+        assertThat(result.html()).contains("data-authored-count=\"2\"");
+        assertThat(result.html()).contains("data-not-executed-count=\"1\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectDuplicateTestNames() throws Exception {
+        var first = new TestFeedbackInputDTO(1L, "sameName()", true, null, null);
+        var second = new TestFeedbackInputDTO(2L, "sameName()", false, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][Dup](sameName())", List.of(first, second), null, "en", false, false, true, null);
+
+        request.postWithoutResponseBody(POST_URL, body, HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
     // --- PlantUML diagram limit ---
 
     @Test
