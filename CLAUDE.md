@@ -202,7 +202,13 @@ Organized by feature module:
     - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` _does_ fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
-- Avoid spread operator for objects
+- **Copy objects with `deepClone`, never with object spread, `Object.assign`, or `structuredClone`**
+    - Use `deepClone` from `app/foundation/util/deep-clone.util` (a thin wrapper over lodash `cloneDeep`) whenever you copy an entity-like object — anything that may hold a `dayjs` date, a nested object, a `Map`/`Set`, or a circular reference
+    - `structuredClone()` is the worst option: it does not preserve prototypes, so a cloned `dayjs` date comes back as a plain object without its methods
+    - Object spread (`{ ...obj }`) and `Object.assign({}, obj)` only copy one level deep, so nested objects and arrays stay shared with the original and later edits mutate both
+    - This is why signal updates need care: a signal only notifies when the reference changes, so replace the object rather than mutating it — `const updated = deepClone(current); updated.field = value; return updated;` See `AccountService.setImageUrl` for the canonical pattern
+    - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
+    - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
 - **UI components: Use PrimeNG instead of Bootstrap components**
     - All new UI elements must be implemented using PrimeNG components
