@@ -281,21 +281,39 @@
     <!--
     Rating.result is @OneToOne, so result_rating.result_id must be unique. Long-lived installations
     have this constraint (auto-named "result_id"); the consolidated initial schema lost it, so fresh
-    installations and every test environment do not enforce it. Verified safe against production:
-    10,818 rows / 10,818 distinct result_id.
+    installations and every test environment do not enforce it. Verified against production, which
+    retained the constraint: 10,818 rows / 10,818 distinct result_id.
 
     The FK on this column is backed by the separate non-unique index fk_result_rating_result_id, so
     dropping the old unique index does not leave the FK unsupported.
     -->
 
-    <changeSet id="20260728220917-26-add-uk-result-rating-result-id" author="krusche">
+    <!--
+    Production is verified clean because it kept the old constraint, but that says nothing about the
+    installations that lost it: RatingService.saveRating inserts unconditionally, so repeated or
+    concurrent requests can have left several ratings for one result there, and the constraint below
+    would abort their upgrade. Reduce every duplicate group to its newest row first, i.e. the rating
+    the student gave last, which is the one the application would show. This is a no-op wherever the
+    constraint was retained. The derived-table wrapper is required by MySQL, which rejects a subquery
+    reading the table that is being deleted from, and is accepted by PostgreSQL as well.
+    -->
+    <changeSet id="20260728220917-26-deduplicate-result-rating" author="krusche">
+        <sql>
+            DELETE FROM result_rating
+            WHERE id NOT IN (SELECT keep_id FROM (SELECT MAX(id) AS keep_id FROM result_rating GROUP BY result_id) AS newest_per_result)
+        </sql>
+        <!-- Deleting the superseded duplicates cannot be undone, so there is nothing to roll back. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260728220917-27-add-uk-result-rating-result-id" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not><indexExists tableName="result_rating" indexName="uk_result_rating_result_id"/></not>
         </preConditions>
         <addUniqueConstraint tableName="result_rating" columnNames="result_id"
                              constraintName="uk_result_rating_result_id"/>
     </changeSet>
-    <changeSet id="20260728220917-27-drop-result-rating-result-id-autoname-mysql" author="krusche" dbms="mysql">
+    <changeSet id="20260728220917-28-drop-result-rating-result-id-autoname-mysql" author="krusche" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="result_rating" indexName="result_id"/>
         </preConditions>
