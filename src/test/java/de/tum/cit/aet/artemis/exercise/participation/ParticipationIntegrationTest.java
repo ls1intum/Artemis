@@ -1646,6 +1646,21 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getParticipationIncludesCourseContextRequiredForClientAccessRights() throws Exception {
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation.exercise()).isNotNull();
+        assertThat(actualParticipation.exercise().course()).isNotNull();
+        assertThat(actualParticipation.exercise().course().studentGroupName()).isEqualTo(course.getStudentGroupName());
+        assertThat(actualParticipation.exercise().course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
+        assertThat(actualParticipation.exercise().course().editorGroupName()).isEqualTo(course.getEditorGroupName());
+        assertThat(actualParticipation.exercise().course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmissionOfParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission1 = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));

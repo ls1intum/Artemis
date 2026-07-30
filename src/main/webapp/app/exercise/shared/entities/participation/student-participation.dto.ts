@@ -48,6 +48,10 @@ export interface ParticipationCourseContextDTO {
     title?: string;
     shortName?: string;
     accuracyOfScores?: number;
+    studentGroupName?: string;
+    teachingAssistantGroupName?: string;
+    editorGroupName?: string;
+    instructorGroupName?: string;
 }
 
 export interface ParticipationExerciseContextDTO {

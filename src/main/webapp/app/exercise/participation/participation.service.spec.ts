@@ -48,6 +48,15 @@ describe('Participation Service', () => {
             initializationDate: currentDate.toISOString(),
             testRun: false,
             type: ParticipationType.STUDENT,
+            exercise: {
+                id: 42,
+                type: ExerciseType.TEXT,
+                exerciseType: ExerciseType.TEXT,
+                course: {
+                    id: 7,
+                    instructorGroupName: 'course-instructors',
+                },
+            },
             submissions: [
                 {
                     id: 456,
@@ -64,6 +73,7 @@ describe('Participation Service', () => {
                 expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
                 expect(resp.body?.submissions?.[0].participation).toBe(resp.body);
                 expect(resp.body?.submissions?.[0].results?.[0].submission).toBe(resp.body?.submissions?.[0]);
+                expect(resp.body?.exercise?.course?.instructorGroupName).toBe('course-instructors');
             });
 
         const req = httpMock.expectOne({ method: 'GET' });
