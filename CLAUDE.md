@@ -52,7 +52,7 @@ pnpm run build                       # Alternative production build
 ./gradlew modernizer                 # Check for legacy API usage
 pnpm run lint                        # ESLint
 pnpm run lint:fix                    # Fix ESLint issues
-pnpm run stylelint                   # SCSS linting
+pnpm exec stylelint "src/main/webapp/**/*.scss"   # SCSS linting (no npm script; config in .stylelintrc.json)
 pnpm run prettier:check              # Check formatting
 pnpm run prettier:write              # Fix formatting
 ```
@@ -210,13 +210,15 @@ Organized by feature module:
     - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
-- **UI components: Use PrimeNG instead of Bootstrap components**
-    - All new UI elements must be implemented using PrimeNG components
-    - We are migrating from Bootstrap to **Tailwind CSS v4 (utilities) + PrimeNG (components)**; do not introduce new Bootstrap components, classes, or raw colours
-    - Existing Bootstrap usage will be migrated incrementally
+- **UI components: Use the TUM UI Kit. PrimeNG and Bootstrap are both deprecated.**
+    - All new UI elements must use the in-repo TUM UI Kit under `app/shared-ui/tum-ui/` (`tum-ui-button`, `tum-ui-message`, `tum-ui-tag`, `tum-ui-dialog`, `tum-ui-tooltip`, …), built on Angular CDK + Tailwind design tokens. Migrate pages you are already touching toward it.
+    - Do not add new PrimeNG or Bootstrap components, classes, or raw colours. Every component with its API, examples, and light/dark screenshots: `documentation/docs/developer/guidelines/tum-ui-kit.mdx`
+    - Kit components document which PrimeNG component they replace. Note `tum-ui-dialog` is a **declarative** `p-dialog` replacement (`[(visible)]` + projected templates); there is no kit equivalent of PrimeNG's `DialogService` for opening an arbitrary component dynamically, so existing `DialogService` call sites stay until that gap is closed.
+    - Missing a component? Ask on Slack rather than reaching back for PrimeNG.
+    - Existing Bootstrap and PrimeNG usage will be migrated incrementally
     - **Colours use semantic tokens, never primitives or Bootstrap classes**: `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` (named state tokens; or PrimeNG `severity`, or `text-muted-color`/`bg-surface-*`) — never `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full standard, decision rules, and the Bootstrap→Tailwind/PrimeNG quick reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling)
     - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`): PrimeNG injects component CSS lazily, so a bare element renders non-deterministically. Render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) — enforced by `localRules/no-primeng-component-classes`
-    - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
+    - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Reach for the kit equivalent (`tum-ui-dialog`, `tum-ui-tooltip`, …); the one gap is dynamically opening an arbitrary component, where PrimeNG's `DialogService` is still the only option (see above). ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
 
 ### General
 
