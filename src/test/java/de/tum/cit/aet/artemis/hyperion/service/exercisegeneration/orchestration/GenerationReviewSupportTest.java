@@ -34,9 +34,20 @@ class GenerationReviewSupportTest {
         List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(List.of(staticRisk), List.of(executed));
 
         assertThat(targets).hasSize(2);
-        assertThat(targets.getFirst()).isEqualTo(staticRisk);
-        assertThat(targets.get(1).kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
-        assertThat(targets.get(1).detail()).contains("uses fixed thresholds");
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.getFirst().detail()).contains("uses fixed thresholds");
+        assertThat(targets.get(1)).isEqualTo(staticRisk);
+    }
+
+    @Test
+    void priorExecutedMutantsCannotBePushedPastTheAuthorTargetCap() {
+        List<SpecFidelityReport.Finding> staticRisks = java.util.stream.IntStream.rangeClosed(1, 4)
+                .mapToObj(index -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "risk " + index, "static hypothesis")).toList();
+
+        List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(staticRisks, List.of(mutant("hardCodedThresholds", "uses fixed thresholds")));
+
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.subList(0, 4)).extracting(SpecFidelityReport.Finding::requirement).contains("Rule R3 has an environment-proven surviving semantic mutant");
     }
 
     private static SemanticMutant mutant(String testName, String wrongBehavior) {

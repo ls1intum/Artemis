@@ -67,7 +67,7 @@ final class GenerationReviewSupport {
     }
 
     static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
-        return java.util.stream.Stream.concat(findings.stream(), mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))).toList();
+        return java.util.stream.Stream.concat(mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)), findings.stream()).toList();
     }
 
     static SemanticMutantRecheck semanticMutantRecheck(List<SemanticMutantOutcome> outcomes) {

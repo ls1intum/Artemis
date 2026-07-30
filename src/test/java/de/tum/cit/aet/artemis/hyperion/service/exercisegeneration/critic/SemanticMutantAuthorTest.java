@@ -83,6 +83,17 @@ class SemanticMutantAuthorTest {
     }
 
     @Test
+    void targetCapRetainsPriorExecutedExclusionsPlacedBeforeStaticRisks() {
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>();
+        findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "executed hard-coded configuration",
+                "the environment already proved fixed thresholds survive"));
+        java.util.stream.IntStream.rangeClosed(1, 4)
+                .mapToObj(index -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "static risk " + index, "hypothesis")).forEach(findings::add);
+
+        assertThat(SemanticMutantAuthor.renderReviewTargets(findings)).contains("executed hard-coded configuration", "static risk 3").doesNotContain("static risk 4");
+    }
+
+    @Test
     void preservesExactReviewProvenanceAndRejectsAMismatchedEcho() {
         SpecFidelityReport.Finding target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "an exclusive comparison may pass");
         String targeted = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose(), \"R1 global choice\");")
