@@ -155,7 +155,7 @@
         "prepare": "husky",
         "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\" \"packages/tum-ui/**/*.{json,ts,js,css,scss,html}\"",
         "prettier:write": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\" \"packages/tum-ui/**/*.{json,ts,js,css,scss,html}\"",
-        "start": "pnpm run prebuild -- --develop --serve && pnpm run tum-ui:build:styles -- --development && concurrently --kill-others --names \"tum-ui-styles,artemis\" \"pnpm run tum-ui:build:styles -- --development --watch\" \"ng serve --hmr --poll 1000\"",
+        "start": "pnpm run prebuild -- --develop && pnpm run tum-ui:build:styles -- --development && concurrently --kill-others --names \"tum-ui-styles,artemis\" \"pnpm run tum-ui:build:styles -- --development --watch\" \"ng serve --hmr --poll 1000\"",
         "test-diff:ci": "git fetch origin develop && pnpm run prebuild && pnpm run vitest:diff",
         "test-diff": "pnpm run prebuild && pnpm run vitest:diff",
         "test:ci": "pnpm run prebuild && pnpm run vitest:ci && pnpm run vitest:monaco",

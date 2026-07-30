@@ -141,10 +141,11 @@ From the repository root:
 | `pnpm --dir packages/tum-ui run storybook:build`     | Build the static package Storybook                                        |
 | `pnpm --dir packages/tum-ui run storybook:docs:test` | Build Storybook and test AutoDocs themes and responsive viewports         |
 
-`pnpm start` and the shared IntelliJ client configuration use the same HMR-enabled workflow. Changes
-to package sources and styles update the running Artemis client. Restart the client after changing
-the package manifest or build configuration. Non-serve builds continue to compile and consume
-`packages/tum-ui/dist`; package validation writes to `packages/tum-ui/dist-pack`.
+`pnpm start` and the shared IntelliJ client configuration first build `packages/tum-ui/dist` for
+editor resolution, then serve package sources with HMR. Changes to package sources and styles update
+the running Artemis client. Restart the client after changing the package manifest or build
+configuration. Production builds consume `packages/tum-ui/dist`; package validation writes to
+`packages/tum-ui/dist-pack`.
 
 ### Validation
 

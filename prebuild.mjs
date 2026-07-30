@@ -53,7 +53,6 @@ function inferVersion() {
 // --develop flag is used to enable debug mode
 const args = process.argv.slice(2);
 const developFlag = args.includes('--develop');
-const serveFlag = args.includes('--serve');
 const environmentConfig = `// Don't change this file manually, it will be overwritten by the build process!
 export const __DEBUG_INFO_ENABLED__ = ${developFlag};
 export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
@@ -151,24 +150,22 @@ await esbuild.build({
     outdir: 'node_modules/monaco-editor/bundles',
 });
 
-if (!serveFlag) {
-    await new Promise((resolve, reject) => {
-        const buildScript = `tum-ui:build${developFlag ? ':dev' : ''}`;
-        const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
-        const commandArguments = process.platform === 'win32' ? ['/d', '/s', '/c', `pnpm run ${buildScript}`] : ['run', buildScript];
-        const child = spawn(command, commandArguments, {
-            cwd: __dirname,
-            stdio: 'inherit',
-        });
-        child.once('error', reject);
-        child.once('exit', (code, signal) => {
-            if (code === 0) {
-                resolve();
-                return;
-            }
-            reject(new Error(`TUM UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
-        });
+await new Promise((resolve, reject) => {
+    const buildScript = `tum-ui:build${developFlag ? ':dev' : ''}`;
+    const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
+    const commandArguments = process.platform === 'win32' ? ['/d', '/s', '/c', `pnpm run ${buildScript}`] : ['run', buildScript];
+    const child = spawn(command, commandArguments, {
+        cwd: __dirname,
+        stdio: 'inherit',
     });
-}
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
+        if (code === 0) {
+            resolve();
+            return;
+        }
+        reject(new Error(`TUM UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
+    });
+});
 
 console.log('Pre-Build complete!');
