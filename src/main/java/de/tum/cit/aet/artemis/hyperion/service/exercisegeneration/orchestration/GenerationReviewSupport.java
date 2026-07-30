@@ -193,7 +193,8 @@ final class GenerationReviewSupport {
      * contract, so an unsupported critic inference is never reclassified.
      */
     static SpecFidelityReport reclassifyUngradeableTechniqueFindings(SpecFidelityReport report, @Nullable String specification) {
-        if (ExerciseIntegrityGate.techniqueMandatesInRules(specification).isEmpty() || report.findings().stream().noneMatch(GenerationReviewSupport::demandsUngradeableTechnique)) {
+        if (ExerciseIntegrityGate.techniqueMandatesInSpecification(specification).isEmpty()
+                || report.findings().stream().noneMatch(GenerationReviewSupport::demandsUngradeableTechnique)) {
             return report;
         }
         List<SpecFidelityReport.Finding> reclassified = report.findings().stream()

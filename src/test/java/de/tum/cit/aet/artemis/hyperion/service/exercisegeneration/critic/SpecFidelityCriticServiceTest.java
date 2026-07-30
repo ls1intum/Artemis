@@ -215,6 +215,36 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void conceptReviewCannotSelectACandidateThatPrematurelyRequiresAnImplementationConstruct() {
+        Map<Integer, String> candidates = Map.of(1, "Classify temperatures. The solution must rely on if-else statements (no switch).", 2,
+                "Reconcile overlapping fragments with a selected conflict policy.", 3, "Classify battery readings with explicit boundaries.");
+        SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(), "Candidate 1 is selected.",
+                "The model accepted candidate 1.");
+
+        SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept("Practice comparisons and branching.", candidates,
+                modelReview);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.selectedCandidate()).isNull();
+        assertThat(review.findings()).singleElement().asString().contains("prematurely fixes an implementation construct", "if-else", "non-graded pedagogy");
+        assertThat(review.auditSummary()).contains("Server concept invariant: rejected selected candidate");
+    }
+
+    @Test
+    void conceptReviewPreservesAnImplementationConstructExplicitlyRequiredByTheInstructor() {
+        Map<Integer, String> candidates = Map.of(1, "Compute the digital root recursively without loops.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
+        SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(),
+                "Candidate 1 directly preserves the instructor's recursion requirement.", "The model accepted candidate 1.");
+
+        SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept("The exercise must be implemented recursively.", candidates,
+                modelReview);
+
+        assertThat(review).isEqualTo(modelReview);
+        assertThat(review.accepted()).isTrue();
+    }
+
+    @Test
     void conceptReviewRejectsScalarReskinsAndRequestsPropertiesNotAReplacementDesign() {
         Map<Integer, String> candidates = conceptCandidates("Strategies multiply potion volume by different constants.",
                 "Strategies multiply artifact size by different constants.", "Strategies multiply robot distance by different constants.");
@@ -349,6 +379,30 @@ class SpecFidelityCriticServiceTest {
 
                 ## Testing Strategy
                 S1 | TemperatureClassifier | classification result | 1 | no
+                """, null, () -> false);
+
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.findings()).singleElement().asString().contains("Ungradeable normative technique rule", "if-else", "externally observable correctness");
+    }
+
+    @Test
+    void specificationReviewCannotHideAnUngradeableTechniqueInTheDecisionLedger() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],
+                         "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students classify public inputs.",
+                         "remainingStudentReasoning":"Students derive the classification boundaries.","domainGrounding":"The temperature domain makes outcomes observable.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"boundaryChecks":[],"priorFindingChecks":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an introductory branching exercise.", """
+                ## Rules
+                R1: Return "Cold" for values below zero.
+
+                ## Decision Ledger
+                | Decision | Provenance | Why necessary | Observable |
+                |---|---|---|---|
+                | Require use of if-else | PEDAGOGICAL_OBJECTIVE | Practice branching | Not observable through the public API |
                 """, null, () -> false);
 
         assertThat(review.accepted()).isFalse();
@@ -2424,7 +2478,7 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
             assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
-            assertThat(finding.isBlocking()).as("nothing downstream can repair it, so scheduling it would burn repair rounds on impossible work").isFalse();
+            assertThat(finding.isBlocking()).as("nothing downstream can repair it, so it blocks publication without scheduling impossible work").isTrue();
             assertThat(finding.requirement()).containsIgnoringCase("must be recursive");
         });
     }
@@ -2436,6 +2490,25 @@ class SpecFidelityCriticServiceTest {
 
         assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement()
                 .satisfies(finding -> assertThat(finding.requirement()).containsIgnoringCase("must use a Stream"));
+    }
+
+    @Test
+    void techniqueRules_discloseANonNormativePedagogicalObjectiveWithoutTurningItIntoOracleWork() {
+        String spec = """
+                ## Rules
+                R1: Return Cold below the lower boundary.
+
+                ## Decision Ledger
+                | Decision | Provenance | Why necessary | Observable |
+                |---|---|---|---|
+                | Require use of if-else | PEDAGOGICAL_OBJECTIVE | Practice branching | Not observable through the public API |
+                """;
+
+        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+            assertThat(finding.isBlocking()).isTrue();
+            assertThat(finding.requirement()).containsIgnoringCase("require use of if-else");
+        });
     }
 
     @Test

@@ -65,8 +65,9 @@ public record SpecFidelityReport(List<Finding> findings) {
         TEMPLATE_QUALITY_GAP,
         /**
          * The specification states a rule mandating an implementation technique — that a method be recursive, use a stream pipeline, avoid loops — which behavioural tests
-         * cannot observe through the public API. Advisory and, unusually, not repairable: no assertion distinguishes a recursive implementation from an iterative one returning
-         * the same values, so a student who ignores the mandate scores full marks. The finding exists to stop the exercise silently claiming to grade its own objective.
+         * cannot observe through the public API. Blocking publication but intentionally not auto-repairable: no assertion distinguishes a recursive implementation from an
+         * iterative one returning the same values, so a student who ignores the mandate scores full marks. Instructor review must either accept the objective as ungraded,
+         * provide a vetted assessment capability, or remove the mandate.
          */
         UNENFORCEABLE_TECHNIQUE_RULE,
         /**
@@ -97,9 +98,8 @@ public record SpecFidelityReport(List<Finding> findings) {
                     true;
                 case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,
-                        UNENFORCEABLE_TECHNIQUE_RULE ->
-                    false;
+                case UNENFORCEABLE_TECHNIQUE_RULE -> true;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE -> false;
             };
         }
     }

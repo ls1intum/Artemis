@@ -208,7 +208,82 @@ class SandboxBuildCommandServiceTest {
         // The verifier runs the pristine copy outside /workspace, which the agent's tools cannot reach.
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
+        assertThat(factory.isolatedSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution isolate-sources");
+        assertThat(factory.isolatedTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template isolate-sources");
         assertThat(SandboxBuildCommandService.reportsDirectoryFor("solution")).isEqualTo("/opt/hyperion/reports/solution");
+    }
+
+    @Test
+    void authoritativeJavaBuild_executesCompiledTestsWithoutAnyGeneratedSource() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
+
+        assertThat(script).contains("mvn -B clean test-compile -DskipTests", "find \"$BUILD_DIR\" \"$WORKSPACE\" -type f -name '*.java' -delete", "mvn -B surefire:test");
+        assertThat(script.indexOf("test-compile -DskipTests")).isLessThan(script.indexOf("-name '*.java' -delete"));
+        assertThat(script.indexOf("-name '*.java' -delete")).isLessThan(script.indexOf("mvn -B surefire:test"));
+    }
+
+    @EnabledOnOs({ LINUX, MAC })
+    @Test
+    void authoritativeJavaBuild_removesGeneratedSourcesBeforeTheTestProcessStarts(@TempDir Path tempDir) throws Exception {
+        Path workspace = Files.createDirectories(tempDir.resolve("workspace"));
+        Path tests = Files.createDirectories(workspace.resolve("tests/test/example"));
+        Path solution = Files.createDirectories(workspace.resolve("solution/src/example"));
+        Files.createDirectories(workspace.resolve("template/src/example"));
+        VerifyScriptTestHarness.writeString(workspace.resolve("tests/pom.xml"), "<project/>");
+        VerifyScriptTestHarness.writeString(tests.resolve("SourceProbeTest.java"), "class SourceProbeTest {}");
+        VerifyScriptTestHarness.writeString(solution.resolve("Answer.java"), "class Answer {}");
+
+        Path fakeBin = Files.createDirectories(tempDir.resolve("bin"));
+        Path fakeMaven = fakeBin.resolve("mvn");
+        VerifyScriptTestHarness.writeString(fakeMaven, """
+                #!/bin/sh
+                case "$*" in
+                  *test-compile*) mkdir -p target/test-classes; exit 0 ;;
+                  *surefire:test*)
+                    if find "$HYPERION_TEST_WORKSPACE" . -type f -name '*.java' -print -quit | grep -q .; then
+                      echo "generated source remained visible to the test process" >&2
+                      exit 91
+                    fi
+                    mkdir -p target/surefire-reports
+                    printf '%s\n' '<testsuite name="Isolation" tests="1"><testcase name="sourceIsUnavailable"/></testsuite>' > target/surefire-reports/TEST-Isolation.xml
+                    exit 0 ;;
+                  *) exit 0 ;;
+                esac
+                """);
+        assertThat(fakeMaven.toFile().setExecutable(true)).isTrue();
+
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String reports = tempDir.resolve("reports").toString();
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java)
+                .replace("WORKSPACE=\"/workspace\"", "WORKSPACE=\"" + workspace + "\"")
+                .replace("REPORTS_DIR=\"/opt/hyperion/reports/$ASSIGNMENT\"", "REPORTS_DIR=\"" + reports + "/$ASSIGNMENT\"");
+        Path scriptFile = tempDir.resolve("verify.sh");
+        VerifyScriptTestHarness.writeString(scriptFile, script);
+
+        ProcessBuilder processBuilder = new ProcessBuilder("sh", scriptFile.toString(), "solution", "isolate-sources").redirectErrorStream(true);
+        processBuilder.environment().put("PATH", fakeBin + ":" + processBuilder.environment().get("PATH"));
+        processBuilder.environment().put("HYPERION_TEST_WORKSPACE", workspace.toString());
+        Process process = processBuilder.start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(process.waitFor(30, TimeUnit.SECONDS)).as(output).isTrue();
+
+        assertThat(process.exitValue()).as(output).isZero();
+        assertThat(Files.exists(Path.of(reports, "solution", "0001__junit.xml"))).isTrue();
+        try (var generatedSources = Files.find(workspace, Integer.MAX_VALUE, (path, attributes) -> attributes.isRegularFile() && path.toString().endsWith(".java"))) {
+            assertThat(generatedSources).isEmpty();
+        }
+    }
+
+    @Test
+    void ordinaryAgentBuild_keepsTheProductionPhasesWhileIsolationIsExplicit() {
+        BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo exact-production-phase", null, false, List.of());
+        String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
+
+        assertThat(script).contains("if [ \"$ISOLATION\" = \"isolate-sources\" ]", "echo exact-production-phase");
+        assertThat(new SandboxBuildCommandService(Optional.empty(), Optional.empty()).pristineSolutionBuildCommand()).doesNotContain("isolate-sources");
     }
 
     @Test

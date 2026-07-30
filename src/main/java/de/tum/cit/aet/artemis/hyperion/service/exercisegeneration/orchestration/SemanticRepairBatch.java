@@ -77,8 +77,8 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
             case TEMPLATE_QUALITY_GAP -> RepairSurface.SCAFFOLD;
             case MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT ->
                 RepairSurface.CONTRACT;
-            // A technique mandate is advisory precisely because no repair surface can fix it: no assertion distinguishes a recursive implementation from an
-            // iterative one with the same results, so scheduling it would burn rounds on work that cannot succeed.
+            // A technique mandate blocks autonomous publication but has no repair surface: no assertion distinguishes a recursive implementation from an iterative one with the
+            // same results. Leaving it unscheduled saves the verified candidate for an instructor decision instead of burning rounds on source inspection or proxy metrics.
             case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE,
                     SPECIFICATION_REVIEW_FINDING ->
                 null;

@@ -50,6 +50,29 @@ class GenerationReviewSupportTest {
         assertThat(targets.subList(0, 4)).extracting(SpecFidelityReport.Finding::requirement).contains("Rule R3 has an environment-proven surviving semantic mutant");
     }
 
+    @Test
+    void pedagogicalTechniqueObjectiveCannotTriggerAnImpossibleOracleRepair() {
+        String specification = """
+                ## Rules
+                R1: Return Cold below the lower boundary.
+
+                ## Decision Ledger
+                | Decision | Provenance | Why necessary | Observable |
+                |---|---|---|---|
+                | Require use of if-else | PEDAGOGICAL_OBJECTIVE | Practice branching | Not observable through the public API |
+                """;
+        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                "an implementation using a ternary rather than if-else passes", "the suite does not distinguish the required implementation technique")));
+
+        SpecFidelityReport reclassified = GenerationReviewSupport.reclassifyUngradeableTechniqueFindings(report, specification);
+
+        assertThat(reclassified.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+            assertThat(finding.isBlocking()).isTrue();
+            assertThat(finding.detail()).contains("No assertion through the public API can observe this");
+        });
+    }
+
     private static SemanticMutant mutant(String testName, String wrongBehavior) {
         return new SemanticMutant("R3", "src/Classifier.java", "class Classifier {}", "class Classifier { int " + testName + "; }",
                 new ContractWitness("R3", testName, "@Test void " + testName + "() {}", wrongBehavior));

@@ -93,12 +93,24 @@ public class SandboxBuildCommandService {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
     }
 
+    public String isolatedSolutionBuildCommand() {
+        return isolatedVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+    }
+
+    public String isolatedTemplateBuildCommand() {
+        return isolatedVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+    }
+
     public static String reportsDirectoryFor(String assignment) {
         return REPORTS_DIR + "/" + assignment;
     }
 
     private static String pristineVerifyInvocation(String assignmentDirectory) {
         return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory;
+    }
+
+    private static String isolatedVerifyInvocation(String assignmentDirectory) {
+        return pristineVerifyInvocation(assignmentDirectory) + " isolate-sources";
     }
 
     /**
@@ -121,6 +133,7 @@ public class SandboxBuildCommandService {
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
         boolean java = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+        String isolatedPhaseSection = java ? buildIsolatedJavaPhaseSection(exercise) : phaseSection;
         String javaSecurityManagerAllow = java
                 ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
                 : ": # no Java/Ares security-manager compatibility flags needed";
@@ -150,7 +163,12 @@ public class SandboxBuildCommandService {
                 # the build-fresh test/SCA reports into a verifier-owned directory. The verdict is NOT decided here: the verifier copies those reports out and parses them.
                 ASSIGNMENT="$1"
                 if [ "$ASSIGNMENT" != "solution" ] && [ "$ASSIGNMENT" != "template" ]; then
-                    echo "usage: verify.sh <solution|template>" >&2
+                    echo "usage: verify.sh <solution|template> [isolate-sources]" >&2
+                    exit 64
+                fi
+                ISOLATION="$2"
+                if [ -n "$ISOLATION" ] && [ "$ISOLATION" != "isolate-sources" ]; then
+                    echo "usage: verify.sh <solution|template> [isolate-sources]" >&2
                     exit 64
                 fi
                 WORKSPACE="@@WORKSPACE@@"
@@ -195,7 +213,11 @@ public class SandboxBuildCommandService {
                     phase_rc=$?
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
                 }
-                @@PHASES@@
+                if [ "$ISOLATION" = "isolate-sources" ]; then
+                    @@ISOLATED_PHASES@@
+                else
+                    @@PHASES@@
+                fi
                 # Collect the build-fresh reports into the verifier-owned REPORTS_DIR, re-seeded empty so a previous run's reports cannot leak in. Each file is renamed to
                 # <seq>__<canonical> so the verifier can route it: JUnit reports get the fixed token "@@JUNIT_TOKEN@@", SCA reports keep their per-tool canonical name.
                 rm -rf "$REPORTS_DIR" 2>/dev/null || true
@@ -222,9 +244,9 @@ public class SandboxBuildCommandService {
                 .replace("@@ASSIGNMENT_DIR@@", recipe.assignmentDir()).replace("@@ASSIGNMENT_PARENT@@", assignmentParentPlaceholderValue).replace("@@TEST_DEST@@", testDestination)
                 .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
                 .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
-                .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
-                .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER).replace("@@READINESS_OVERLAY@@", readinessOverlay)
-                .replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
+                .replace("@@ISOLATED_PHASES@@", isolatedPhaseSection).replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression))
+                .replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER)
+                .replace("@@READINESS_OVERLAY@@", readinessOverlay).replace("@@READINESS_FIXTURE@@", READINESS_FIXTURE_DIR);
     }
 
     /**
@@ -233,6 +255,26 @@ public class SandboxBuildCommandService {
      */
     private static String buildPhaseSection(List<String> phases) {
         return phases.stream().map(phase -> "run_phase '" + singleQuote(phase) + "'").collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Compiles Java tests before removing every generated Java source from both the disposable build and live workspace. Surefire then executes only the compiled classes, so a
+     * graded test cannot inspect generated source text. Final verification restores the captured workspace after each run.
+     */
+    private static String buildIsolatedJavaPhaseSection(ProgrammingExercise exercise) {
+        boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
+        String compile = sequential ? "run_phase 'cd structural\nmvn -B clean test-compile -DskipTests'\nrun_phase 'cd behavior\nmvn -B clean test-compile -DskipTests'"
+                : "run_phase 'mvn -B clean test-compile -DskipTests'";
+        String staticAnalysis = Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) ? "\nrun_phase 'mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'" : "";
+        String test = sequential ? "run_phase 'cd structural\nmvn -B surefire:test'\nrun_phase 'cd behavior\nmvn -B surefire:test'" : "run_phase 'mvn -B surefire:test'";
+        return compile + staticAnalysis + """
+
+                if [ "$rc" -eq 0 ]; then
+                    # Source is deliberately destroyed, not hidden at a guessable path. The verifier owns restoration from its immutable in-memory candidate.
+                    find "$BUILD_DIR" "$WORKSPACE" -type f -name '*.java' -delete 2>/dev/null || exit 74
+                """ + test + """
+
+                fi""";
     }
 
     /**

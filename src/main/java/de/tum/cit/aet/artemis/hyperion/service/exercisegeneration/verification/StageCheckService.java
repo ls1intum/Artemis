@@ -334,7 +334,7 @@ public class StageCheckService {
         // Advice on a pass, never a rejection: the mandate detector is not precise enough to justify discarding a sound contract with no recourse, and the harm comes from the
         // Testing Strategy seam the agent would write for such a rule rather than from the rule itself. Delivered here because this is the last point at which the spec is still
         // editable. The advice must also forbid instrumenting the API (call counters, invocation flags) — that grades nothing and burdens the student's contract.
-        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(spec);
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInSpecification(spec);
         String techniqueAdvice = techniqueMandates.isEmpty() ? ""
                 : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
                         + "implementation from an iterative one returning identical values, so keep this as guidance in the student-facing statement and do NOT give it a "

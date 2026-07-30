@@ -1240,9 +1240,9 @@ class GenerationOrchestrationServiceTest {
         String mandatingContract = "| R1 | `sum` must be implemented recursively |";
         String silentContract = "| R1 | negative salary invalid |";
         return Stream.of(
-                // Both conditions hold: the finding is real but unrepairable, so it is downgraded to an advisory disclosure and must not hold a repair round.
+                // Both conditions hold: the finding is real but unrepairable, so it blocks publication without consuming an impossible repair round.
                 Arguments.of("contract mandates a technique and the finding demands one", mandatingContract, techniqueProse, "it survives every assertion",
-                        SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, false),
+                        SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, true),
                 // Provenance is what keeps the downgrade honest: against a contract that mandates nothing the same prose describes a behavioural gap the tests can be made to
                 // see, so it keeps its round. Without this gate a misread finding would cost a round on every exercise, not only the ones carrying the defect.
                 Arguments.of("contract mandates nothing", silentContract, techniqueProse, "it survives every assertion", SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, true),
@@ -1256,7 +1256,7 @@ class GenerationOrchestrationServiceTest {
     void aFindingIsDowngradedOnlyWhenTheContractAndTheFindingBothDemandAnUngradeableTechnique(String scenario, String rulesBody, String findingRequirement, String findingDetail,
             SpecFidelityReport.Kind expectedKind, boolean expectedBlocking) {
         acceptedCandidateWithSpecAndTests(rulesBody);
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
                 new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, findingRequirement, findingDetail))));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -1265,16 +1265,18 @@ class GenerationOrchestrationServiceTest {
                 assertThat(finding.isBlocking()).isEqualTo(expectedBlocking);
             });
         }
-        // A downgraded finding leaves the loop nothing schedulable, so no repair round is spent on impossible work; a blocking one still buys its round.
-        verify(agentLoopRunner, expectedBlocking ? atLeast(2) : times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        // An ungradeable technique blocks publication but has no repair surface, so it still spends no impossible repair round.
+        boolean schedulable = expectedBlocking && expectedKind != SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE;
+        verify(agentLoopRunner, schedulable ? atLeast(2) : times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     @Test
-    void anUngradeableTechniqueRuleReachesTheReportWithoutBlockingTheCandidate() {
+    void anUngradeableTechniqueRuleBlocksPublicationWithoutInvalidatingMechanicalVerification() {
         // The detector itself is covered in the critic's own tests; what is covered here is the wiring, which nothing else exercises: the orchestrator must call it and merge
-        // its findings into the report. An exercise whose brief asks for recursion still awards full marks to an iterative implementation, so this is the only channel that
-        // tells the instructor so.
+        // its findings into the report. An exercise whose brief asks for recursion still awards full marks to an iterative implementation, so this channel must stop autonomous
+        // publication while preserving the mechanically verified candidate for instructor review.
         acceptedCandidateWithSpecAndTests();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         SpecFidelityReport.Finding techniqueRule = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "must be recursive",
                 "behavioural tests cannot see how a result was produced");
         when(specFidelityCritic.detectUnenforceableTechniqueRules(any())).thenReturn(List.of(techniqueRule));
@@ -1283,7 +1285,7 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.isMechanicallyVerified()).as("an ungradeable technique rule is a disclosure, never a rejection").isTrue();
             assertThat(outcome.specFidelityReport().findings()).anySatisfy(finding -> {
                 assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
-                assertThat(finding.isBlocking()).isFalse();
+                assertThat(finding.isBlocking()).isTrue();
                 assertThat(finding.requirement()).contains("must be recursive");
             });
         }

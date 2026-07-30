@@ -276,7 +276,7 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void authoritativeVerificationRestoresTheCapturedCandidateBeforeEachBuild() {
+    void authoritativeVerificationRestoresTheCapturedCandidateBeforeAndAfterSourceIsolatedBuilds() {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         AtomicInteger restorations = new AtomicInteger();
@@ -285,7 +285,7 @@ class DifferentialVerificationServiceTest {
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()), restorations::incrementAndGet);
 
         assertThat(result.mechanicallyVerified()).isTrue();
-        assertThat(restorations).hasValue(2);
+        assertThat(restorations).hasValue(3);
     }
 
     @Test

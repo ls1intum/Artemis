@@ -182,6 +182,8 @@ class AgentSystemPromptServiceTest {
         assertOnlyOwnStageHeaderPresent(prompt, GenerationStage.TESTS);
         assertThat(prompt).contains("Earlier stages already produced: the approved specification.")
                 .contains("reference/style/solution.md", "reference/style/template.md", "reference/style/tests.md")
+                .contains("Never inspect or measure assignment/solution/template source or bytecode")
+                .contains("proxies such as file size", "unobservable technique as ungraded pedagogy", "pad production code")
                 // Statement-only sections must not leak into the TESTS stage prompt.
                 .doesNotContain("STUDENT-FACING STATEMENT").doesNotContain("ARTEMIS TASK BINDINGS");
     }

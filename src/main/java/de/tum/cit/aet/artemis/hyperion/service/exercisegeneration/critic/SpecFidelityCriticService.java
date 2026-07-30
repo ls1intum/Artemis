@@ -277,7 +277,7 @@ public class SpecFidelityCriticService {
      * invariant prevents a missed exact-technique mandate from becoming a known-but-ungraded requirement downstream.
      */
     private static SpecificationReview ensureGradeableSpecification(String specification, SpecificationReview review) {
-        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(specification);
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInSpecification(specification);
         if (techniqueMandates.isEmpty()) {
             return review;
         }
@@ -292,7 +292,51 @@ public class SpecFidelityCriticService {
     }
 
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled);
+        return enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
+    }
+
+    static ConceptSelectionReview enforceExploratoryConcept(String brief, Map<Integer, String> candidates, ConceptSelectionReview review) {
+        if (!review.accepted()) {
+            return review;
+        }
+        String selected = candidates.get(review.selectedCandidate());
+        List<String> prematureMandates = ExerciseIntegrityGate.techniqueMandates(selected);
+        Set<String> selectedFamilies = techniqueFamilies(prematureMandates);
+        if (prematureMandates.isEmpty() || techniqueFamilies(ExerciseIntegrityGate.techniqueMandates(brief)).containsAll(selectedFamilies)) {
+            return review;
+        }
+        String finding = "Candidate " + review.selectedCandidate() + " prematurely fixes an implementation construct (" + String.join(", ", prematureMandates)
+                + ") during concept exploration. Keep the qualitative learner-owned branching or transformation, but leave exact constructs to the specification and preserve "
+                + "an instructor-requested technique there as non-graded pedagogy when public behavior cannot prove it.";
+        String audit = review.auditSummary() + "\n\nServer concept invariant: rejected selected candidate — " + finding;
+        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit);
+    }
+
+    private static Set<String> techniqueFamilies(List<String> mandates) {
+        Set<String> families = new HashSet<>();
+        String text = String.join(" ", mandates).toLowerCase(Locale.ROOT).replaceAll("\\p{Pd}", "-");
+        if (text.contains("recurs")) {
+            families.add("recursion");
+        }
+        if (text.contains("loop") || text.contains("iterat")) {
+            families.add("iteration");
+        }
+        if (text.contains("stream") || text.contains("pipeline")) {
+            families.add("stream");
+        }
+        if (text.contains("lambda")) {
+            families.add("lambda");
+        }
+        if (text.contains("if-else")) {
+            families.add("if-else");
+        }
+        if (text.contains("ternary")) {
+            families.add("ternary");
+        }
+        if (text.contains("switch")) {
+            families.add("switch");
+        }
+        return Set.copyOf(families);
     }
 
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
@@ -754,7 +798,7 @@ public class SpecFidelityCriticService {
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         // One definition, shared with the specification gate that rejects these outright; this pass is the backstop for a mandate that reaches a later stage anyway.
-        for (String mandate : ExerciseIntegrityGate.techniqueMandatesInRules(specificationContract)) {
+        for (String mandate : ExerciseIntegrityGate.techniqueMandatesInSpecification(specificationContract)) {
             if (findings.size() >= MAX_TECHNIQUE_RULE_FINDINGS || !seen.add(mandate.toLowerCase(Locale.ROOT))) {
                 continue;
             }

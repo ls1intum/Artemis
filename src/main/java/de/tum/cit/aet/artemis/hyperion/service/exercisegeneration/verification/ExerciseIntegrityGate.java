@@ -808,6 +808,8 @@ public final class ExerciseIntegrityGate {
                     + "(?<![-\\w])(?:recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?)\\**\\b"
                     + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}(?<![-\\w])(?:recursion|loops?|iteration)\\b" + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
                     + "|must\\**\\s+be\\s+implemented\\s+as\\s+(?:a\\s+)?[^.|\\n]{0,30}\\bif\\p{Pd}?else\\b"
+                    + "|must\\s+(?:rely\\s+on|employ|use)\\s+(?:(?:only|plain|nested)\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
+                    + "|require(?:s|d)?\\s+(?:the\\s+)?use\\s+of\\s+(?:a\\s+)?(?:if\\p{Pd}?else|ternary|switch|stream\\s+pipeline|lambda\\s+expression)\\b"
                     + "|(?<![-\\w])(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed"
                     + "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))",
             Pattern.CASE_INSENSITIVE);
@@ -825,20 +827,10 @@ public final class ExerciseIntegrityGate {
                     + "|(?:uses?|using|written\\s+with|replaces?\\s+\\w+\\s+with)\\s+(?:an?\\s+|the\\s+)?(?:for|while|do-while)\\s+loops?"
                     + "|(?:is|be|being)\\s+(?:actually\\s+)?(?:implemented\\s+)?(?:recursiv\\w*|iterativ\\w*)\\b", Pattern.CASE_INSENSITIVE);
 
-    /** File-reading entry points a behavioural test has no reason to call. */
-    private static final Pattern FILE_READING_API = Pattern.compile("Files\\s*\\.\\s*(read|exists|lines|newBufferedReader)|new\\s+FileReader|new\\s+FileInputStream");
-
-    /**
-     * A literal naming a repository <em>source tree</em>: one of the directories production lays out, followed by a source root or source file. Naming the directory alone is
-     * deliberately not enough — "fixtures/template/simple.mustache" is an ordinary fixture in a template-rendering exercise, and rejecting it would discard valid work.
-     */
-    private static final Pattern ASSIGNMENT_DIRECTORY_LITERAL = Pattern.compile(
-            "\"(?:[^\"]*/)?(?:solution|template|assignment)/(?:[^\"]*/)?" + "(?:src/[^\"]*|[^\"/]*\\.(?:java|kt|py|ts|js|cpp|cc|c|h|hpp|rs|go|rb|cs|swift|hs|dart|scala|php|m))\"");
-
     /**
      * Implementation-technique mandates stated as {@code ## Rules} — that a method be recursive, use a stream pipeline, avoid loops. No assertion over the public API separates a
      * recursive implementation from an iterative one returning identical values, so an agent obliged to cover every rule either leaves the mandate ungraded or reaches for the
-     * student's source text, which {@link #gradedTestsReadingSourceTreeReasons} then has to reject. Deliberately narrow, and scoped to {@code ## Rules}: a technique named as
+     * student's source text, which runtime source isolation rejects. Deliberately narrow, and scoped to {@code ## Rules}: a technique named as
      * guidance in the student-facing statement is fine and often desirable.
      *
      * @param spec the specification document
@@ -849,11 +841,40 @@ public final class ExerciseIntegrityGate {
             return List.of();
         }
         String rules = markdownSectionBody(spec, "## Rules");
-        if (rules.isBlank()) {
+        return techniqueMandates(rules);
+    }
+
+    /**
+     * Technique requirements from the normative Rules plus explicitly recorded pedagogical objectives; other ledger rationale remains descriptive and out of scope.
+     *
+     * @param spec the specification document
+     * @return distinct implementation-technique mandates in the recognized contract surfaces
+     */
+    public static List<String> techniqueMandatesInSpecification(@Nullable String spec) {
+        if (spec == null || spec.isBlank()) {
+            return List.of();
+        }
+        LinkedHashSet<String> mandates = new LinkedHashSet<>(techniqueMandatesInRules(spec));
+        String ledger = markdownSectionBody(spec, "## Decision Ledger");
+        for (String row : ledger.lines().filter(line -> line.contains("PEDAGOGICAL_OBJECTIVE")).toList()) {
+            mandates.addAll(techniqueMandates(row));
+        }
+        return List.copyOf(mandates);
+    }
+
+    /**
+     * Finds exact implementation-shape mandates in arbitrary authoring text. Concept selection uses this before a candidate can become provenance; concepts choose a qualitative
+     * interaction, while normative implementation constructs belong either to explicit instructor guidance or to a later non-graded pedagogical objective.
+     *
+     * @param text authoring text to inspect
+     * @return distinct exact implementation-technique mandates
+     */
+    public static List<String> techniqueMandates(@Nullable String text) {
+        if (text == null || text.isBlank()) {
             return List.of();
         }
         List<String> mandates = new ArrayList<>();
-        Matcher matcher = TECHNIQUE_MANDATE.matcher(rules);
+        Matcher matcher = TECHNIQUE_MANDATE.matcher(text);
         while (matcher.find()) {
             // Markdown emphasis is presentation, not content: "must be recursive" and "must be **recursive**" state one mandate and must be reported once.
             String mandate = matcher.group().strip().replace("*", "").replaceAll("\\s+", " ").strip();
@@ -888,32 +909,6 @@ public final class ExerciseIntegrityGate {
             next = nextSubsection;
         }
         return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
-    }
-
-    /**
-     * Rejects a graded test that reads the exercise's own source tree instead of exercising behaviour through the public API. Production checks the student's repository out as
-     * {@code assignment/}, so such a test grades source text — an otherwise-correct submission that still carries a {@code TODO} comment fails. Reading those directories is also
-     * how a test learns which assignment it is grading, so one that branches on the answer can pass on both solution and template, subverting the differential.
-     */
-    static List<String> gradedTestsReadingSourceTreeReasons(Map<String, String> producedTestsFiles) {
-        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
-            return List.of();
-        }
-        List<String> reasons = new ArrayList<>();
-        for (Map.Entry<String, String> file : producedTestsFiles.entrySet()) {
-            String content = file.getValue();
-            if (content == null || isHarnessFile(file.getKey())) {
-                continue;
-            }
-            if (FILE_READING_API.matcher(content).find() && ASSIGNMENT_DIRECTORY_LITERAL.matcher(content).find()) {
-                reasons.add("the graded test file '" + file.getKey() + "' reads the exercise's own source tree (it names the solution/template/assignment directories and opens "
-                        + "files). Production checks the student's repository out as 'assignment', so such a test grades the student's SOURCE TEXT rather than their behaviour "
-                        + "and can fail correct work — an implementation that still carries a TODO comment, for instance. It also lets the test discover which assignment it is "
-                        + "running against, so it can pass on the template as well as the solution. Assert the behaviour through the public API instead, and drop the check "
-                        + "entirely if the property is not observable that way.");
-            }
-        }
-        return List.copyOf(reasons);
     }
 
     /**

@@ -1175,105 +1175,6 @@ class ExerciseIntegrityGateTest {
                         "do not add server-seeded structural checks [testClass[Strategy]]", "zero-weight");
     }
 
-    // --- Graded tests reading the source tree ---
-
-    @Test
-    void sourceTreeReading_rejectsATestThatGradesTheStudentsSourceTextInsteadOfBehaviour() {
-        // Shape taken verbatim from a live run: a test named testNoLoopsInImplementation that never looks for a loop. It hunts for the implementation file across the
-        // repository directories, reads it, and asserts the source carries no TODO. Production checks the student's repository out as 'assignment', so a correct solution that
-        // still has a TODO comment fails a graded test.
-        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsLoopTest.java", """
-                class RecursionUtilsLoopTest {
-                    @Test
-                    void testNoLoopsInImplementation() throws Exception {
-                        String[] candidates = { "solution/src/de/tum/cit/aet/nodraft/RecursionUtils.java", "assignment/src/de/tum/cit/aet/nodraft/RecursionUtils.java" };
-                        Path source = null;
-                        for (String candidate : candidates) {
-                            if (Files.exists(Path.of(candidate))) { source = Path.of(candidate); break; }
-                        }
-                        String code = Files.readString(source, StandardCharsets.UTF_8);
-                        assertFalse(code.contains("TODO"), "Implementation must not contain TODO markers");
-                    }
-                }
-                """);
-
-        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).singleElement().asString().contains("RecursionUtilsLoopTest.java")
-                .contains("reads the exercise's own source tree").contains("can fail correct work");
-    }
-
-    @Test
-    void sourceTreeReading_acceptsATestThatOnlyExercisesThePublicApi() {
-        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsTest.java", """
-                class RecursionUtilsTest {
-                    @Test
-                    void testDigitalRoot() {
-                        assertEquals(3, RecursionUtils.digitalRoot(9876), "digital root of 9876 is 3");
-                    }
-                }
-                """);
-
-        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
-    }
-
-    @Test
-    void sourceTreeReading_acceptsATestThatReadsAFixtureWithoutNamingARepositoryDirectory() {
-        // Reading a file is not itself the defect — knowing the repository layout is. A fixture under the test's own resources must not be flagged.
-        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/ParserTest.java", """
-                class ParserTest {
-                    @Test
-                    void testParsesFixture() throws Exception {
-                        String csv = Files.readString(Path.of("fixtures/sample.csv"), StandardCharsets.UTF_8);
-                        assertEquals(3, Parser.count(csv), "three records");
-                    }
-                }
-                """);
-
-        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
-    }
-
-    @Test
-    void sourceTreeReading_acceptsATestThatReadsAFixtureUnderADirectoryNamedLikeARepository() {
-        // A template-rendering exercise legitimately keeps fixtures under "template/". Naming the directory is not the defect; naming a source tree is. Rejecting this would
-        // discard a sound exercise, and the instructor never sees what was discarded.
-        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RendererTest.java", """
-                class RendererTest {
-                    @Test
-                    void testRendersTemplate() throws Exception {
-                        String tpl = Files.readString(Path.of("src/test/resources/fixtures/template/simple.mustache"), StandardCharsets.UTF_8);
-                        assertEquals("Hello Ada", Renderer.render(tpl, Map.of("name", "Ada")), "renders the name");
-                    }
-                }
-                """);
-
-        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).isEmpty();
-    }
-
-    @Test
-    void sourceTreeReading_rejectsATestThatHoistsTheSourceRootsAwayFromTheRead() {
-        // The same defect written the way a competent author would write it: candidate roots as a constant at the top, the read far below. A proximity rule missed this.
-        Map<String, String> tests = map("test/de/tum/cit/aet/nodraft/RecursionUtilsTest.java", """
-                class RecursionUtilsTest {
-                    private static final List<String> ROOTS = List.of("assignment/src/main/java/de/tum/cit/aet/nodraft/", "src/main/java/de/tum/cit/aet/nodraft/");
-
-                    @Test
-                    void testDigitalRoot() {
-                        assertEquals(3, RecursionUtils.digitalRoot(9876), "digital root of 9876 is 3");
-                    }
-
-                    @Test
-                    void testSumToN() {
-                        assertEquals(15, RecursionUtils.sumToN(5), "sum to five");
-                    }
-
-                    private String source() throws Exception {
-                        return Files.readString(Path.of(ROOTS.get(0) + "RecursionUtils.java"), StandardCharsets.UTF_8);
-                    }
-                }
-                """);
-
-        assertThat(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(tests)).singleElement().asString().contains("RecursionUtilsTest.java");
-    }
-
     // --- Technique-mandate detection ---
 
     @ParameterizedTest
@@ -1296,6 +1197,13 @@ class ExerciseIntegrityGateTest {
             "The `grade(int)` method **must** be implemented as a single `if‑else` chain." })
     void techniqueMandates_fireOnRulesNoAssertionCanObserve(String rule) {
         assertThat(ExerciseIntegrityGate.techniqueMandatesInRules("## Rules\n" + rule)).isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "The solution must rely on if-else statements.", "Students must employ only plain if‑else statements.",
+            "The implementation must use nested if-else constructs." })
+    void techniqueMandates_recogniseExactControlFlowConstraintsSeenInConcepts(String text) {
+        assertThat(ExerciseIntegrityGate.techniqueMandates(text)).isNotEmpty();
     }
 
     @ParameterizedTest

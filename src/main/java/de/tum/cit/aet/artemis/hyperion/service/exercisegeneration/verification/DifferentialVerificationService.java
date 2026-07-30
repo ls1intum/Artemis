@@ -202,7 +202,8 @@ public class DifferentialVerificationService {
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
         // Shared with the in-loop self-check so the agent's `verify` tool and this mechanical decision cannot diverge; only the integrity gates and the verdict are layered here.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement(), restoreCandidate);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames(), request.producedProblemStatement(), restoreCandidate,
+                true);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -221,10 +222,7 @@ public class DifferentialVerificationService {
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
-        List<String> gradingContextSniffingReasons = new ArrayList<>(
-                ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles()));
-        // The same defect seen from the tests side: a graded test reading the solution/template/assignment tree grades source text rather than behaviour.
-        gradingContextSniffingReasons.addAll(ExerciseIntegrityGate.gradedTestsReadingSourceTreeReasons(request.producedTestsFiles()));
+        List<String> gradingContextSniffingReasons = ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noGradingContextSniffing = gradingContextSniffingReasons.isEmpty();
         reasons.addAll(gradingContextSniffingReasons);
         List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
@@ -305,7 +303,7 @@ public class DifferentialVerificationService {
             boolean includeStatementChecks, Set<String> seededStructuralTestNames) {
         String problemStatement = readProblemStatement(sandbox, sessionId);
         DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTestNames, problemStatement, () -> {
-        });
+        }, false);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
 
@@ -438,18 +436,27 @@ public class DifferentialVerificationService {
      * are computed by identical code.
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames,
-            @Nullable String producedProblemStatement, Runnable restoreCandidate) {
+            @Nullable String producedProblemStatement, Runnable restoreCandidate, boolean isolateSources) {
         List<String> reasons = new ArrayList<>();
         List<String> statementReasons = new ArrayList<>();
 
-        restoreCandidate.run();
-        seedPristineVerifyScript(sandbox, sessionId, exercise);
-        BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
-                GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-        restoreCandidate.run();
-        seedPristineVerifyScript(sandbox, sessionId, exercise);
-        BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
-                GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+        BuildSummary solution;
+        BuildSummary template;
+        try {
+            restoreCandidate.run();
+            seedPristineVerifyScript(sandbox, sessionId, exercise);
+            String solutionCommand = isolateSources ? sandboxBuildCommandService.isolatedSolutionBuildCommand() : sandboxBuildCommandService.pristineSolutionBuildCommand();
+            solution = runPristineBuild(sandbox, sessionId, solutionCommand, GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+            restoreCandidate.run();
+            seedPristineVerifyScript(sandbox, sessionId, exercise);
+            String templateCommand = isolateSources ? sandboxBuildCommandService.isolatedTemplateBuildCommand() : sandboxBuildCommandService.pristineTemplateBuildCommand();
+            template = runPristineBuild(sandbox, sessionId, templateCommand, GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+        }
+        finally {
+            if (isolateSources) {
+                restoreCandidate.run();
+            }
+        }
 
         int testCount = solution.tests();
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
