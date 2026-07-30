@@ -43,6 +43,16 @@ record EvidenceSource(Map<String, String> passages) {
         return containsAll(evidenceIds) && evidenceIds.stream().allMatch(this::isSubstantive);
     }
 
+    /**
+     * Whether every cited ID exists and at least one citation contains evidence rather than markdown structure.
+     * <p>
+     * Summary judgments often cite a whole section and can harmlessly include its heading alongside real evidence. Requiring every citation to be substantive made an otherwise
+     * correct review disappear when the model included that heading. Individual findings still use {@link #containsSubstantive(List)} so a heading can never authorize a finding.
+     */
+    boolean containsAllWithSubstantive(@Nullable List<String> evidenceIds) {
+        return containsAll(evidenceIds) && evidenceIds.stream().anyMatch(this::isSubstantive);
+    }
+
     List<String> idsUnderHeading(String heading) {
         boolean inSection = false;
         List<String> ids = new java.util.ArrayList<>();

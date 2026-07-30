@@ -61,6 +61,10 @@ exceptions, or edge cases. Set selectedCandidate to null only when every candida
 implementation and what non-routine reasoning remains after prescribed transcription and baseline mechanics are removed. The complete candidate text is already available;
 do not copy it into a ceremonial evidence field. Analysis fields diagnose properties only and must not prescribe replacement content.
 
+Normalize every claimed branch, range, policy, and state transition by its complete public trace. Adjacent cases with the same returned value, exception, mutation, and subsequent
+state are one observable case, not two. If the candidate counts a boundary or branch that disappears from its own smallest behaviorally equivalent implementation, set
+prematureContractClosure true and do not count that distinction as reasoning.
+
 Candidate lines carry server-generated Cn.m evidence IDs. Cite the few lines that entail the student-owned work and variant mechanisms you counted; do not cite another
 candidate or invent an ID. objectiveCounterfactual must reconstruct the simplest behaviorally equivalent design without the requested objective. objectiveEssential may
 be true only when that simpler design loses consequential behavior or collaboration grounded in the cited candidate. For interchangeable policies, use this check:

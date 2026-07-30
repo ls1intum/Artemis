@@ -200,6 +200,8 @@ public class SpecFidelityCriticService {
 
     private final ConceptSelectionCritic conceptCritic;
 
+    private final ConceptAdmissionCritic conceptAdmissionCritic;
+
     private final SpecificationReviewCritic specificationCritic;
 
     private final ContractWitnessAuthor witnessAuthor;
@@ -237,6 +239,7 @@ public class SpecFidelityCriticService {
                 configuredOptions, checkpointManager);
         this.verdictParser = new CriticVerdictParser(objectMapper);
         this.conceptCritic = new ConceptSelectionCritic(reviewer, objectMapper);
+        this.conceptAdmissionCritic = new ConceptAdmissionCritic(reviewer, objectMapper);
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);
         this.witnessAuthor = new ContractWitnessAuthor(reviewer, objectMapper);
         this.semanticMutantAuthor = new SemanticMutantAuthor(reviewer, objectMapper);
@@ -291,8 +294,21 @@ public class SpecFidelityCriticService {
                 review.riskHistory());
     }
 
+    /**
+     * Compares the proposed concepts, then independently audits the selected candidate before it can become specification provenance.
+     *
+     * @param brief      the authoritative instructor brief
+     * @param candidates the candidate concepts keyed by their prompt ordinal
+     * @param usageSink  optional model-usage observer
+     * @param cancelled  cancellation signal
+     * @return the selected and admitted concept, or a rejection that requests another candidate batch
+     */
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
+        ConceptSelectionReview selection = enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
+        if (!selection.accepted()) {
+            return selection;
+        }
+        return conceptAdmissionCritic.admit(brief, selection.selectedCandidate(), candidates.get(selection.selectedCandidate()), selection, usageSink, cancelled);
     }
 
     static ConceptSelectionReview enforceExploratoryConcept(String brief, Map<Integer, String> candidates, ConceptSelectionReview review) {

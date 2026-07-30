@@ -25,6 +25,8 @@ class CriticPromptContractTest {
 
     private static final String CONCEPT_REVIEW = "/prompts/hyperion/critic/concept_review_system.st";
 
+    private static final String CONCEPT_ADMISSION = "/prompts/hyperion/critic/concept_admission_system.st";
+
     private static final String SPECIFICATION_REVIEW = "/prompts/hyperion/critic/specification_review_system.st";
 
     private static final String CONTRACT_REVIEW = "/prompts/hyperion/critic/contract_review_system.st";
@@ -53,6 +55,11 @@ class CriticPromptContractTest {
                         // The prompt asks for the concrete analysis prose and boolean shape its parser demands, so a compliant response is never discarded as malformed.
                         "concise brief-coverage analysis", "concise grounding analysis", "concise feasibility analysis", "same caller goal",
                         "\"learnerOwnsObjectiveMechanism\":false", "\"prematureContractClosure\":true"),
+
+                // Selected-concept admission: independently reject invented, unobservable, or behaviorally redundant constraints before they become provenance.
+                rows(CONCEPT_ADMISSION, "instructor brief is the sole authority", "admission reviewer, not a designer", "public-API-equivalent implementations",
+                        "normalize the candidate's claimed cases into public traces", "smallest behaviorally equivalent implementation independently",
+                        "unsupportedChoices, unobservableRequirements, and redundantDistinctions are all empty", "\"admissible\":false"),
 
                 // Specification review: the pre-freeze brief-to-spec audit.
                 rows(SPECIFICATION_REVIEW, "Design ownership table", "template supplies a type marked `student-creates`", "correct table does not cancel contradictory prose",
@@ -111,6 +118,7 @@ class CriticPromptContractTest {
                 // Concrete themes and analysis placeholders the prompt must not put in the reviewer's mouth.
                 rows(CONCEPT_REVIEW, "spacecraft docking", "artifact restoration", "Strategy learning", "\"briefCoverage\":\"analysis\"", "\"domainGrounding\":\"analysis\"",
                         "\"feasibility\":\"analysis\""),
+                rows(CONCEPT_ADMISSION, "spacecraft docking", "artifact restoration", "Strategy learning"),
                 rows(SPECIFICATION_REVIEW, "compression, payment, sorting, and navigation"),
                 // The contract pass must not be handed the oracle pass's vocabulary, and it must not excuse a template failure as intended.
                 rows(CONTRACT_REVIEW, "mutantChecks", "weakOracle", "uncovered", "first failure is the intended placeholder", "breadcrumb for a type the student must still create",

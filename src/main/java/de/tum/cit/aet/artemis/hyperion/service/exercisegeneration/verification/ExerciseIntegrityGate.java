@@ -809,6 +809,7 @@ public final class ExerciseIntegrityGate {
                     + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}(?<![-\\w])(?:recursion|loops?|iteration)\\b" + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
                     + "|must\\**\\s+be\\s+implemented\\s+as\\s+(?:a\\s+)?[^.|\\n]{0,30}\\bif\\p{Pd}?else\\b"
                     + "|must\\s+(?:rely\\s+on|employ|use)\\s+(?:(?:only|plain|nested)\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
+                    + "|(?:use|using)\\s+only\\s+(?:plain\\s+|nested\\s+|sequential\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
                     + "|require(?:s|d)?\\s+(?:the\\s+)?use\\s+of\\s+(?:a\\s+)?(?:if\\p{Pd}?else|ternary|switch|stream\\s+pipeline|lambda\\s+expression)\\b"
                     + "|(?<![-\\w])(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed"
                     + "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))",

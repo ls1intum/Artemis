@@ -82,6 +82,9 @@ public class ExerciseConceptSelector {
             independently. Do not add unrelated algorithms, validation, optimization, arithmetic, or state work merely to inflate difficulty. Reject noun-swapped textbook examples
             and scalar formulas disguised by themed labels. Do not choose a winner; a context-separated reviewer will select at most one.
 
+            Before answering, scrub every candidate-authored literal, API name, exact label list, and required implementation construct that the brief did not supply. Merge claimed
+            cases or boundaries whose complete caller-visible outcome and state transition are identical; a cut point that changes nothing is not a learner-owned decision.
+
             INSTRUCTOR BRIEF:
             """;
 

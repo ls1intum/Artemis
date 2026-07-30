@@ -685,19 +685,19 @@ class SpecificationReviewCritic {
         if (derivedSufficient != (item.direction() == SpecificationLearningFitDirection.SUFFICIENT)) {
             return "direction must be SUFFICIENT exactly when sufficient is true.";
         }
-        if (!evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+        if (!evidence.brief().containsAllWithSubstantive(item.briefEvidenceIds())) {
             return "briefEvidenceIds must cite known, substantive B evidence from this review.";
         }
-        if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+        if (!evidence.specification().containsAllWithSubstantive(item.specEvidenceIds())) {
             return "specEvidenceIds must cite known, substantive E evidence from this review.";
         }
-        if (!evidence.specification().containsSubstantive(item.objectiveEvidenceIds())) {
+        if (!evidence.specification().containsAllWithSubstantive(item.objectiveEvidenceIds())) {
             return "objectiveEvidenceIds must cite known, substantive E evidence from this review.";
         }
-        if (!evidence.specification().containsSubstantive(item.studentOwnershipEvidenceIds())) {
+        if (!evidence.specification().containsAllWithSubstantive(item.studentOwnershipEvidenceIds())) {
             return "studentOwnershipEvidenceIds must cite known, substantive E evidence from this review.";
         }
-        if (!evidence.specification().containsSubstantive(item.assessmentEvidenceIds())) {
+        if (!evidence.specification().containsAllWithSubstantive(item.assessmentEvidenceIds())) {
             return "assessmentEvidenceIds must cite known, substantive E evidence from this review.";
         }
         return null;
@@ -716,13 +716,13 @@ class SpecificationReviewCritic {
         if (item.reason() == null || item.reason().isBlank()) {
             return "reason is mandatory.";
         }
-        if (!evidence.brief().containsSubstantive(item.briefEvidenceIds())) {
+        if (!evidence.brief().containsAllWithSubstantive(item.briefEvidenceIds())) {
             return "briefEvidenceIds must cite known, substantive B evidence from this review.";
         }
-        if (!evidence.concept().containsSubstantive(item.conceptEvidenceIds())) {
+        if (!evidence.concept().containsAllWithSubstantive(item.conceptEvidenceIds())) {
             return "conceptEvidenceIds must cite known, substantive C evidence from this review; a candidate heading alone is not evidence.";
         }
-        if (!evidence.specification().containsSubstantive(item.specEvidenceIds())) {
+        if (!evidence.specification().containsAllWithSubstantive(item.specEvidenceIds())) {
             return "specEvidenceIds must cite known, substantive E evidence from this review.";
         }
         return null;

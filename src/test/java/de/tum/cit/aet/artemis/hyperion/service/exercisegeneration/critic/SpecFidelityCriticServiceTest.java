@@ -181,29 +181,37 @@ class SpecFidelityCriticServiceTest {
     void conceptReviewSelectsAnExactGeneratorAuthoredCandidateWithoutWritingTheDesign() {
         Map<Integer, String> candidates = conceptCandidates("Strategies multiply a score by different constants.",
                 "Strategies reconcile overlapping radio fragments using different conflict policies.", "Strategies return different fixed labels.");
-        SpecFidelityCriticService critic = criticReturning(rawResponse(
-                """
-                        {"selectedCandidate":2,
-                         "selectionReason":"Candidate 2 is the simplest complete fit.",
-                         "evaluations":[
-                          {"candidate":1,"candidateEvidenceIds":["C1.2"],"briefCoverage":"The surface requirements are present.",
-                           "objectiveCounterfactual":"Only constants distinguish the interchangeable behavior.","difficultyFit":"Only scalar transcription remains after plumbing.",
-                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
-                           "domainGrounding":"The score theme does not cause the formula.","feasibility":"The concept is feasible but too shallow.",
-                           "objectiveEssential":false,"briefCovered":true,"learningFitSufficient":false,"learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true},
-                          {"candidate":2,"candidateEvidenceIds":["C2.2"],
-                           "briefCoverage":"The candidate teaches Strategy in Java with an unusual theme.","objectiveCounterfactual":"Interchangeable policies own meaningfully different conflict behavior.",
-                           "difficultyFit":"Ordered overlap reconciliation requires multi-step collection processing.",
-                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.","domainGrounding":"Conflicting fragments are inherent to damaged transmissions.",
-                           "feasibility":"The bounded reconstruction behavior is deterministic and proportionate.",
-                           "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
-                          {"candidate":3,"candidateEvidenceIds":["C3.2"],"briefCoverage":"The surface requirements are present.",
-                           "objectiveCounterfactual":"Fixed labels leave no meaningful strategy-owned behavior.","difficultyFit":"Routine return statements are below the requested level.",
-                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
-                           "domainGrounding":"The labels have no stated domain constraint.","feasibility":"The concept is feasible but too shallow.",
-                           "objectiveEssential":false,"briefCovered":true,"learningFitSufficient":false,"learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true}
-                         ]}
-                        """));
+        SpecFidelityCriticService critic = criticScripted(
+                rawResponse(
+                        """
+                                {"selectedCandidate":2,
+                                 "selectionReason":"Candidate 2 is the simplest complete fit.",
+                                 "evaluations":[
+                                  {"candidate":1,"candidateEvidenceIds":["C1.2"],"briefCoverage":"The surface requirements are present.",
+                                   "objectiveCounterfactual":"Only constants distinguish the interchangeable behavior.","difficultyFit":"Only scalar transcription remains after plumbing.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                                   "domainGrounding":"The score theme does not cause the formula.","feasibility":"The concept is feasible but too shallow.",
+                                   "objectiveEssential":false,"briefCovered":true,"learningFitSufficient":false,"learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true},
+                                  {"candidate":2,"candidateEvidenceIds":["C2.2"],
+                                   "briefCoverage":"The candidate teaches Strategy in Java with an unusual theme.","objectiveCounterfactual":"Interchangeable policies own meaningfully different conflict behavior.",
+                                   "difficultyFit":"Ordered overlap reconciliation requires multi-step collection processing.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.","domainGrounding":"Conflicting fragments are inherent to damaged transmissions.",
+                                   "feasibility":"The bounded reconstruction behavior is deterministic and proportionate.",
+                                   "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true},
+                                  {"candidate":3,"candidateEvidenceIds":["C3.2"],"briefCoverage":"The surface requirements are present.",
+                                   "objectiveCounterfactual":"Fixed labels leave no meaningful strategy-owned behavior.","difficultyFit":"Routine return statements are below the requested level.",
+                                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                                   "domainGrounding":"The labels have no stated domain constraint.","feasibility":"The concept is feasible but too shallow.",
+                                   "objectiveEssential":false,"briefCovered":true,"learningFitSufficient":false,"learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true}
+                                 ]}
+                                """),
+                rawResponse("""
+                        {"auditedCandidateEvidenceIds":["C2.2"],
+                         "smallestEquivalentImplementation":"Students implement observable conflict-resolution policies behind one interchangeable strategy seam.",
+                         "observablePartitionAudit":"Each policy produces a distinct reconstruction result for overlapping fragments through the shared public operation.",
+                         "unsupportedChoices":[],"unobservableRequirements":[],"redundantDistinctions":[],
+                         "admissible":true,"summary":"The selected qualitative concept remains open enough for specification and its distinctions are observable."}
+                        """)).critic();
         SpecFidelityCriticService.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate unusual Strategy exercise.", candidates, null,
                 () -> false);
         assertThat(review.complete()).isTrue();

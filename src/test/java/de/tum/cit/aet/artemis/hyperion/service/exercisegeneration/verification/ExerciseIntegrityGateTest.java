@@ -1201,7 +1201,7 @@ class ExerciseIntegrityGateTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "The solution must rely on if-else statements.", "Students must employ only plain if‑else statements.",
-            "The implementation must use nested if-else constructs." })
+            "The implementation must use nested if-else constructs.", "Use only if‑else branching, no loops or external libraries." })
     void techniqueMandates_recogniseExactControlFlowConstraintsSeenInConcepts(String text) {
         assertThat(ExerciseIntegrityGate.techniqueMandates(text)).isNotEmpty();
     }

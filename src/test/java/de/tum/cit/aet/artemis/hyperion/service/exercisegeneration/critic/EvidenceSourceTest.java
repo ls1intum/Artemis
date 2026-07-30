@@ -32,6 +32,9 @@ class EvidenceSourceTest {
         assertThat(evidence.containsSubstantive(List.of("E8"))).isFalse();
         assertThat(evidence.containsSubstantive(List.of("E9"))).isFalse();
         assertThat(evidence.containsSubstantive(List.of("E2", "E4"))).isFalse();
+        assertThat(evidence.containsAllWithSubstantive(List.of("E1", "E4"))).isTrue();
+        assertThat(evidence.containsAllWithSubstantive(List.of("E1", "E2"))).isFalse();
+        assertThat(evidence.containsAllWithSubstantive(List.of("E1", "missing"))).isFalse();
     }
 
     @Test
