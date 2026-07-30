@@ -229,6 +229,22 @@
                     "options": {
                         "lintFilePatterns": ["packages/tum-ui/**/*.ts", "packages/tum-ui/**/*.html"]
                     }
+                },
+                "test": {
+                    "builder": "@angular/build:unit-test",
+                    "options": {
+                        "tsConfig": "packages/tum-ui/tsconfig.spec.json",
+                        "providersFile": "packages/tum-ui/test-providers.ts",
+                        "coverageInclude": ["packages/tum-ui/src/lib/**/*.ts"],
+                        "coverageExclude": ["packages/tum-ui/src/**/*.spec.ts", "packages/tum-ui/src/**/*.stories.ts"],
+                        "coverageReporters": ["text", "json-summary"],
+                        "coverageThresholds": {
+                            "lines": 90,
+                            "statements": 90,
+                            "functions": 90,
+                            "branches": 75
+                        }
+                    }
                 }
             }
         }

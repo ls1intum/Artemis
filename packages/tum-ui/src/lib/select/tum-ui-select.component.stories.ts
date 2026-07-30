@@ -1,5 +1,8 @@
+import { FormsModule } from '@angular/forms';
+import { END } from '@angular/cdk/keycodes';
+import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fn, screen, waitForElementToBeRemoved } from 'storybook/test';
+import { expect, fireEvent, fn, screen, waitForElementToBeRemoved } from 'storybook/test';
 import { TumUiSelectComponent } from './tum-ui-select.component';
 
 const languages = [
@@ -29,6 +32,11 @@ const meta = {
     parameters: {
         layout: 'centered',
     },
+    decorators: [
+        moduleMetadata({
+            imports: [FormsModule],
+        }),
+    ],
 } satisfies Meta<TumUiSelectComponent>;
 
 export default meta;
@@ -37,21 +45,36 @@ type Story = StoryObj<TumUiSelectComponent>;
 
 export const Default: Story = {};
 
+export const Selected: Story = {
+    render: (args) => ({
+        props: { ...args, selected: 'de' },
+        template: `<tum-ui-select ${argsToTemplate(args)} [(ngModel)]="selected" />`,
+    }),
+};
+
 export const SelectsOption: Story = {
     tags: ['!dev', '!autodocs'],
     play: async ({ args, canvas, userEvent }) => {
-        const trigger = canvas.getByRole('button', { name: 'Course language' });
+        const trigger = canvas.getByRole('combobox', { name: 'Course language' });
         await userEvent.click(trigger);
 
         const listbox = await screen.findByRole('listbox', { name: 'Course language' });
-        await expect(listbox).toHaveFocus();
+        await expect(trigger).toHaveFocus();
         const listboxRemoved = waitForElementToBeRemoved(listbox);
-        await userEvent.keyboard('{End}{Enter}');
+        await fireEvent.keyDown(trigger, { key: 'End', keyCode: END });
+        await userEvent.keyboard('{Enter}');
 
         await expect(trigger).toHaveTextContent('Spanish');
         await expect(args.onChange).toHaveBeenCalledWith('es');
         await listboxRemoved;
         await expect(trigger).toHaveFocus();
+
+        await userEvent.tab();
+        const clear = canvas.getByRole('button', { name: 'Clear selection' });
+        await expect(clear).toHaveFocus();
+        await userEvent.keyboard('{Enter}');
+        await expect(trigger).toHaveFocus();
+        await expect(trigger).toHaveTextContent('Choose a language');
     },
 };
 
@@ -61,7 +84,7 @@ export const Empty: Story = {
         options: [],
     },
     play: async ({ canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Course language' }));
+        await userEvent.click(canvas.getByRole('combobox', { name: 'Course language' }));
         await expect(await screen.findByText('No languages available')).toBeVisible();
     },
 };

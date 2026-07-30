@@ -119,6 +119,7 @@ export default tseslint.config(
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
+                tsconfigRootDir: import.meta.dirname,
                 project: [
                     './tsconfig.json',
                     './tsconfig.app.json',
@@ -465,6 +466,7 @@ export default tseslint.config(
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
+                tsconfigRootDir: import.meta.dirname,
                 project: ['./tsconfig.spec.json'],
             },
         },

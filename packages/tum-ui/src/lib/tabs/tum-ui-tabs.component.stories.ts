@@ -1,7 +1,8 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { END, RIGHT_ARROW } from '@angular/cdk/keycodes';
 import { useArgs } from 'storybook/preview-api';
-import { expect, fn } from 'storybook/test';
+import { expect, fireEvent, fn, waitFor } from 'storybook/test';
 import { TumUiTabListComponent } from './tum-ui-tab-list.component';
 import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
 import { TumUiTabPanelsComponent } from './tum-ui-tab-panels.component';
@@ -68,15 +69,15 @@ export const KeyboardNavigation: Story = {
     play: async ({ args, canvas, userEvent }) => {
         const overview = canvas.getByRole('tab', { name: 'Overview' });
         await userEvent.tab();
-        await userEvent.keyboard('{End}');
+        await fireEvent.keyDown(overview, { key: 'End', keyCode: END });
 
         const settings = canvas.getByRole('tab', { name: 'Settings' });
         await expect(settings).toHaveFocus();
-        await expect(settings).toHaveAttribute('aria-selected', 'true');
+        await waitFor(() => expect(settings).toHaveAttribute('aria-selected', 'true'));
         await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
         await expect(args.valueChange).toHaveBeenCalledWith('settings');
 
-        await userEvent.keyboard('{ArrowRight}');
+        await fireEvent.keyDown(settings, { key: 'ArrowRight', keyCode: RIGHT_ARROW });
         await expect(overview).toHaveFocus();
     },
 };

@@ -52,6 +52,7 @@
         }
         <button
             type="button"
+            tabindex="-1"
             class="tum:absolute tum:right-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
             [disabled]="disabled()"
             (click)="toggle()"
@@ -77,7 +78,7 @@
         class="tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:p-3 tum:shadow-lg"
         role="dialog"
         aria-modal="true"
-        [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
+        [attr.aria-label]="'tumUi.datePicker.dialog' | tumUiTranslate"
         cdkTrapFocus
     >
         <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" [focusOnInit]="true" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Component, signal } from '@angular/core';
 import { Directionality } from '@angular/cdk/bidi';
+import { END, HOME, LEFT_ARROW, RIGHT_ARROW } from '@angular/cdk/keycodes';
 import { vi } from 'vitest';
 import { TumUiTabsComponent } from './tum-ui-tabs.component';
 import { TumUiTabListComponent } from './tum-ui-tab-list.component';
@@ -15,7 +16,7 @@ import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
             <tum-ui-tab-list>
                 <tum-ui-tab [value]="1">One</tum-ui-tab>
                 <tum-ui-tab [value]="2">Two</tum-ui-tab>
-                <tum-ui-tab [value]="3">Three</tum-ui-tab>
+                <tum-ui-tab [value]="3" [disabled]="thirdDisabled()">Three</tum-ui-tab>
                 <tum-ui-tab [value]="4" [disabled]="true">Four</tum-ui-tab>
             </tum-ui-tab-list>
             <tum-ui-tab-panels>
@@ -30,6 +31,7 @@ import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
 })
 class TabsHostComponent {
     readonly value = signal<number | string>(1);
+    readonly thirdDisabled = signal(false);
     changes: (number | string | undefined)[] = [];
 
     onValueChange(next: number | string | undefined): void {
@@ -66,6 +68,10 @@ describe('TumUiTabs family', () => {
 
     function panels(): HTMLElement[] {
         return fixture.debugElement.queryAll(By.css('tum-ui-tab-panel')).map((debug) => debug.nativeElement);
+    }
+
+    function press(tab: HTMLElement, key: string, keyCode: number): void {
+        tab.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode, bubbles: true }));
     }
 
     it('renders the ARIA tabs structure (tablist / tab / tabpanel roles)', () => {
@@ -111,33 +117,34 @@ describe('TumUiTabs family', () => {
         fixture.detectChanges();
         expect(host.value()).toBe(1);
         expect(tabs()[3].getAttribute('aria-disabled')).toBe('true');
+        expect(tabs()[3].getAttribute('tabindex')).toBe('-1');
     });
 
     it('moves focus and activates with ArrowRight / ArrowLeft (wrapping, skipping disabled)', () => {
-        tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        press(tabs()[0], 'ArrowRight', RIGHT_ARROW);
         fixture.detectChanges();
         expect(host.value()).toBe(2);
         expect(document.activeElement).toBe(tabs()[1]);
 
-        tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        press(tabs()[0], 'ArrowLeft', LEFT_ARROW);
         fixture.detectChanges();
         expect(host.value()).toBe(3);
         expect(document.activeElement).toBe(tabs()[2]);
     });
 
     it('jumps to first / last enabled tab with Home / End', () => {
-        tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+        press(tabs()[0], 'End', END);
         fixture.detectChanges();
         expect(host.value()).toBe(3);
 
-        tabs()[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+        press(tabs()[2], 'Home', HOME);
         fixture.detectChanges();
         expect(host.value()).toBe(1);
     });
 
     it('reverses horizontal arrow navigation in right-to-left layouts', () => {
         directionality.value = 'rtl';
-        tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        press(tabs()[0], 'ArrowRight', RIGHT_ARROW);
         fixture.detectChanges();
         expect(host.value()).toBe(3);
         expect(document.activeElement).toBe(tabs()[2]);
@@ -149,39 +156,68 @@ describe('TumUiTabs family', () => {
         expect(tabs()[2].getAttribute('aria-selected')).toBe('true');
         expect(element.textContent).toContain('Panel Three');
     });
+
+    it('selects the first enabled tab when the active value is missing', () => {
+        host.value.set('missing');
+        fixture.detectChanges();
+        expect(host.value()).toBe(1);
+        expect(tabs()[0].getAttribute('tabindex')).toBe('0');
+    });
+
+    it('reacts when the active tab becomes disabled', () => {
+        host.value.set(3);
+        fixture.detectChanges();
+        host.thirdDisabled.set(true);
+        fixture.detectChanges();
+        expect(host.value()).toBe(1);
+        expect(tabs()[2].getAttribute('aria-disabled')).toBe('true');
+        expect(tabs()[2].getAttribute('tabindex')).toBe('-1');
+    });
 });
 
 @Component({
     template: `
         <tum-ui-tabs [(value)]="value">
             <tum-ui-tab-list>
-                <tum-ui-tab [value]="'a'">A</tum-ui-tab>
-                <tum-ui-tab [value]="'b'">B</tum-ui-tab>
+                <tum-ui-tab value="course settings">Course settings</tum-ui-tab>
+                <tum-ui-tab [value]="1">Number one</tum-ui-tab>
+                <tum-ui-tab value="1">String one</tum-ui-tab>
             </tum-ui-tab-list>
             <tum-ui-tab-panels>
-                <tum-ui-tab-panel [value]="'a'">Panel A</tum-ui-tab-panel>
-                <tum-ui-tab-panel [value]="'b'">Panel B</tum-ui-tab-panel>
+                <tum-ui-tab-panel value="course settings">Course settings panel</tum-ui-tab-panel>
+                <tum-ui-tab-panel [value]="1">Number one panel</tum-ui-tab-panel>
+                <tum-ui-tab-panel value="1">String one panel</tum-ui-tab-panel>
             </tum-ui-tab-panels>
         </tum-ui-tabs>
     `,
     imports: [TumUiTabsComponent, TumUiTabListComponent, TumUiTabComponent, TumUiTabPanelsComponent, TumUiTabPanelComponent],
 })
 class StringTabsHostComponent {
-    value = 'a';
+    value: number | string = 'course settings';
 }
 
 describe('TumUiTabs family (string values)', () => {
-    it('supports string tab keys', () => {
+    it('creates valid, distinct ARIA relationships for string and numeric values', () => {
         const fixture = TestBed.createComponent(StringTabsHostComponent);
         fixture.detectChanges();
         const element = fixture.nativeElement as HTMLElement;
-        expect(element.textContent).toContain('Panel A');
-        expect(element.textContent).not.toContain('Panel B');
+        const tabs = fixture.debugElement.queryAll(By.css('tum-ui-tab')).map((debug) => debug.nativeElement as HTMLElement);
+        const panels = fixture.debugElement.queryAll(By.css('tum-ui-tab-panel')).map((debug) => debug.nativeElement as HTMLElement);
 
-        const secondTab = fixture.debugElement.queryAll(By.css('tum-ui-tab'))[1].nativeElement as HTMLElement;
-        secondTab.click();
+        expect(tabs.map((tab) => tab.id)).toHaveLength(new Set(tabs.map((tab) => tab.id)).size);
+        expect(panels.map((panel) => panel.id)).toHaveLength(new Set(panels.map((panel) => panel.id)).size);
+        expect([...tabs, ...panels].every((item) => !/\s/.test(item.id))).toBe(true);
+        tabs.forEach((tab, index) => {
+            expect(tab.getAttribute('aria-controls')).toBe(panels[index].id);
+            expect(panels[index].getAttribute('aria-labelledby')).toBe(tab.id);
+        });
+
+        tabs[1].click();
         fixture.detectChanges();
-        expect(fixture.componentInstance.value).toBe('b');
-        expect(element.textContent).toContain('Panel B');
+        expect(fixture.componentInstance.value).toBe(1);
+        tabs[2].click();
+        fixture.detectChanges();
+        expect(fixture.componentInstance.value).toBe('1');
+        expect(element.textContent).toContain('String one');
     });
 });

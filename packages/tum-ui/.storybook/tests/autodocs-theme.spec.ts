@@ -72,6 +72,9 @@ for (const operatingSystemTheme of ['light', 'dark'] satisfies ColorScheme[]) {
             const frame = await findPreviewFrame(page);
             await expectTheme(page, frame, operatingSystemTheme);
             await expect(page.getByRole('button', { name: /Theme/ })).toContainText(`${operatingSystemTheme} theme`);
+            if (operatingSystemTheme === 'light') {
+                await expect(page.getByRole('link', { name: 'TUM UI package guide' })).toHaveAttribute('href', 'https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit');
+            }
         });
 
         if (operatingSystemTheme === 'light') {

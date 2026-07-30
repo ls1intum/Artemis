@@ -62,6 +62,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly ariaLabel = input<string>();
     /** Emits whether the entered text parses successfully; the external {@link error} state is excluded. */
     readonly parseValidChange = output<boolean>();
+    readonly touch = output<void>();
 
     protected readonly faCalendar = faCalendar;
     protected readonly faXmark = faXmark;
@@ -88,6 +89,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     protected readonly inputText = linkedSignal(() => this.valueKey());
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
+    private readonly dateInput = viewChild.required<ElementRef<HTMLInputElement>>('dateInput');
     private readonly triggerWrapper = viewChild.required<ElementRef<HTMLElement>>('triggerWrapper');
     private overlayRef?: OverlayRef;
     private restoreFocusElement?: HTMLElement;
@@ -131,6 +133,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         if (trimmed && !DISPLAY_REGEX.test(trimmed)) {
             this.isInputValid.set(false);
         }
+        this.touch.emit();
     }
     protected stepHour(delta: number): void {
         const { hour, minute } = this.currentTimeParts();
@@ -198,7 +201,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     }
 
     protected onDaySelect(day: dayjs.Dayjs): void {
-        const time = this.value() ?? dayjs();
+        const time = this.value() ?? dayjs().startOf('day');
         this.commit(combineDateAndTime(day, time));
     }
 
@@ -208,6 +211,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         if (this.value() !== undefined) {
             this.value.set(undefined);
         }
+        this.dateInput().nativeElement.focus();
     }
 
     protected toggle(): void {
@@ -254,6 +258,10 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
             this.restoreFocusElement.focus();
         }
         this.restoreFocusElement = undefined;
+    }
+
+    focus(options?: FocusOptions): void {
+        this.dateInput().nativeElement.focus(options);
     }
 
     private commit(next: dayjs.Dayjs): void {

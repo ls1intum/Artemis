@@ -85,7 +85,7 @@ if (watching) {
 
     function scheduleRebuild() {
         clearTimeout(rebuildTimer);
-        // Separate component and generated-style changes so Angular can hot-update both without reloading the page.
+        // Keep generated styles in a separate Angular polling cycle so component edits remain hot updates.
         rebuildTimer = setTimeout(() => void rebuild(), hmrStyleDelay);
     }
 
@@ -94,9 +94,8 @@ if (watching) {
             ignoreInitial: true,
             ignored: (path, stats) =>
                 stats?.isFile() &&
-                (path.endsWith('.spec.ts') ||
-                    path.endsWith('.stories.ts') ||
-                    (!path.endsWith('.html') && !path.endsWith('.ts') && !path.endsWith('.css') && !path.endsWith('.scss'))),
+                path !== sourcePath &&
+                (path.endsWith('.spec.ts') || path.endsWith('.stories.ts') || (!path.endsWith('.html') && !path.endsWith('.ts'))),
         })
         .on('all', scheduleRebuild);
 }

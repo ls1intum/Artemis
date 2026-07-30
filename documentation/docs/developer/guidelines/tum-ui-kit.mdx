@@ -13,7 +13,7 @@ stylesheet.
 
 <Callout variant={CalloutVariant.warning}>
     New Artemis UI uses PrimeNG. Do not add a package component for an Artemis-only need. A new public contract requires a concrete cross-application use case in the pull request.
-    Delegate interaction behavior to native HTML, Angular CDK, or Angular Aria instead of reimplementing it.
+    Delegate interaction behavior to stable native HTML or Angular CDK primitives instead of reimplementing it.
 </Callout>
 
 Use the [TUM UI component reference](/developer/tum-ui-reference) to inspect
@@ -43,13 +43,13 @@ Before writing code:
 1. For Artemis-only UI, use the PrimeNG component selected by
    [Client development](/developer/guidelines/client-development).
 2. For package work, confirm that a reusable TUM UI contract is required and that an existing
-   native, CDK, or Angular Aria primitive cannot supply the behavior.
+   stable native or CDK primitive cannot supply the behavior.
 3. Keep host policy outside the package. Add an adapter in Artemis when integration requires
    application translations, request types, routing, or theme values.
 
 Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`, and
-semantic Tailwind utilities. Prefer native controls and CDK or Angular Aria behavior over custom
-keyboard, focus, overlay, or selection machinery.
+semantic Tailwind utilities. Prefer stable native controls and CDK behavior over custom keyboard,
+focus, overlay, or selection machinery.
 
 Tests should assert public behavior: accessible role and name, keyboard interaction, focus changes,
 disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
@@ -75,8 +75,8 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
-CSF Next remains a preview API. Keep stories on stable CSF3 until the Angular renderer and repository
-toolchain support a deliberate migration.
+CSF Next remains a preview API. Keep stories on stable CSF3 and reevaluate when Storybook declares
+CSF Next stable.
 
 Before upgrading Storybook or its
 [Angular Vite framework](https://storybook.js.org/docs/get-started/frameworks/angular-vite),
@@ -93,10 +93,10 @@ import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 The TypeScript declarations at that entry point are the component API reference. Do not duplicate
 input and output tables in documentation; they drift from the compiled contract.
 
-Artemis declares the package through pnpm's `workspace:*` protocol. Non-serve application builds map
-`@tumaet/ui-angular` to `packages/tum-ui/dist`, while Vitest aliases the package
-source so a focused test works on a cold checkout; the production build and package checks continue
-to validate the compiled ng-packagr boundary.
+Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
+tests consume `packages/tum-ui/dist`; their root commands build the package first. Development serve
+mode maps the package entry point to its source for component HMR. The stylesheet watcher updates the
+package's generated CSS independently so style changes remain hot updates.
 
 ### Theme contract
 
@@ -130,7 +130,7 @@ From the repository root:
 | ---------------------------------------------------- | ------------------------------------------------------------------------- |
 | `pnpm run tum-ui:build`                              | Build the production Angular package in `packages/tum-ui/dist`            |
 | `pnpm run tum-ui:build:watch`                        | Watch package sources and its precompiled stylesheet                      |
-| `pnpm run tum-ui:test`                               | Run package Vitest specs                                                  |
+| `pnpm run tum-ui:test`                               | Run package unit tests with Angular's Vitest runner                       |
 | `pnpm run tum-ui:test:coverage`                      | Run package specs with the CI coverage thresholds                         |
 | `pnpm run tum-ui:stylelint`                          | Check package CSS and SCSS                                                |
 | `pnpm run tum-ui:pack:check`                         | Build and validate an isolated artifact with publint and AreTheTypesWrong |
@@ -153,10 +153,10 @@ Before submitting a package change, run the relevant focused checks during devel
 complete package validation:
 
 ```bash
-pnpm run tum-ui:test:coverage
+pnpm --dir packages/tum-ui run test:coverage
 pnpm run lint
-pnpm run tum-ui:stylelint
-pnpm run tum-ui:pack:check
+pnpm --dir packages/tum-ui run stylelint
+pnpm --dir packages/tum-ui run pack:check
 pnpm run tum-ui:source:check
 pnpm run test:rules
 pnpm run compile:tests
@@ -166,9 +166,10 @@ pnpm --dir packages/tum-ui run storybook:docs:test
 pnpm run docs:test
 ```
 
-`pnpm run test:rules` checks the package manifest against the canonical versions in
-`pnpm-workspace.yaml` and verifies the development and production package configurations remain
-equivalent apart from incremental-output cleanup.
+The workspace catalog pins the exact versions installed by Artemis. Package dependencies use those
+same versions, while peer dependencies declare compatible ranges containing the catalog version.
+`pnpm run test:rules` enforces that contract and verifies the development and production package
+configurations remain equivalent apart from incremental-output cleanup.
 
 ## Review checklist
 
@@ -176,7 +177,7 @@ equivalent apart from incremental-output cleanup.
 - Consumer imports use the `@tumaet/ui-angular` package entry point.
 - The public API contains only supported symbols.
 - Host-specific translations, routes, services, theme values, and request types stay in Artemis.
-- Interaction behavior delegates to native HTML, CDK, or Angular Aria where available.
+- Interaction behavior delegates to stable native HTML or CDK primitives where available.
 - Accessible names, keyboard behavior, focus, and forms integration have behavioral tests.
 - Stories cover representative states without duplicating unit tests.
 - Styling and text remain host-independent through semantic tokens and the translation adapter.

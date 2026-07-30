@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { FormField, form } from '@angular/forms/signals';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import dayjs from 'dayjs/esm';
 import { TumUiDatePickerComponent } from './tum-ui-date-picker.component';
@@ -12,6 +13,15 @@ import { TumUiDatePickerComponent } from './tum-ui-date-picker.component';
 })
 class TwoWayHostComponent {
     value?: dayjs.Dayjs;
+}
+
+@Component({
+    imports: [TumUiDatePickerComponent, FormField],
+    template: `<tum-ui-date-picker [formField]="date" />`,
+})
+class SignalFormHostComponent {
+    readonly model = signal<dayjs.Dayjs | undefined>(dayjs('2026-06-13T08:30'));
+    readonly date = form(this.model);
 }
 
 describe('TumUiDatePickerComponent', () => {
@@ -65,10 +75,13 @@ describe('TumUiDatePickerComponent', () => {
     it('clears the value and the displayed text', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('button[aria-label="Clear date"]')).nativeElement.click();
+        const clear = fixture.debugElement.query(By.css('button[aria-label="Clear date"]')).nativeElement as HTMLButtonElement;
+        clear.focus();
+        clear.click();
         fixture.detectChanges();
         expect(component.value()).toBeUndefined();
         expect(input().value).toBe('');
+        expect(document.activeElement).toBe(input());
     });
 
     it('re-validates when the value changes externally after invalid input (no stuck error border)', () => {
@@ -119,6 +132,7 @@ describe('TumUiDatePickerComponent', () => {
         const dialog = document.querySelector('[role="dialog"]');
         expect(dialog).not.toBeNull();
         expect(dialog?.getAttribute('aria-modal')).toBe('true');
+        expect(dialog?.getAttribute('aria-label')).toBe('Choose date and time');
         expect(input().getAttribute('role')).toBe('combobox');
         expect(input().getAttribute('aria-expanded')).toBe('true');
         expect(input().getAttribute('aria-controls')).toBe(dialog?.id);
@@ -126,6 +140,11 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
         expect(document.querySelector('tum-ui-calendar')).toBeNull();
         expect(document.activeElement).toBe(trigger);
+    });
+
+    it('keeps the calendar icon out of the tab order because the input opens the same dialog', () => {
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
+        expect(trigger.tabIndex).toBe(-1);
     });
 
     it('opens the calendar from the input with ArrowDown', () => {
@@ -241,6 +260,7 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
         (document.querySelector('td[role="gridcell"] button') as HTMLElement).click();
         expect(component.value()).toBeDefined();
+        expect(component.value()?.format('HH:mm')).toBe('00:00');
     });
 
     it('does not open when disabled', () => {
@@ -315,5 +335,27 @@ describe('TumUiDatePickerComponent', () => {
             expect(inp.value).toBe('13.06.2026 08:3');
             expect(host.componentInstance.value?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 08:30');
         });
+    });
+
+    it('integrates value, touch, and focus with Signal Forms', () => {
+        const host = TestBed.createComponent(SignalFormHostComponent);
+        host.detectChanges();
+        const picker = host.debugElement.query(By.directive(TumUiDatePickerComponent));
+        const field = picker.injector.get(FormField);
+        const dateInput = picker.query(By.css('input[type="text"]')).nativeElement as HTMLInputElement;
+
+        expect(dateInput.value).toBe('13.06.2026 08:30');
+        expect(host.componentInstance.date().touched()).toBe(false);
+
+        field.focus();
+        expect(document.activeElement).toBe(dateInput);
+        dateInput.dispatchEvent(new FocusEvent('blur'));
+        host.detectChanges();
+        expect(host.componentInstance.date().touched()).toBe(true);
+
+        dateInput.value = '14.06.2026 09:45';
+        dateInput.dispatchEvent(new Event('input'));
+        host.detectChanges();
+        expect(host.componentInstance.model()?.format('DD.MM.YYYY HH:mm')).toBe('14.06.2026 09:45');
     });
 });

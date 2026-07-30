@@ -1,8 +1,8 @@
 import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/blocks';
-import type { PropsWithChildren } from 'react';
+import { type PropsWithChildren, createElement } from 'react';
 import { themes } from 'storybook/theming';
 
-import { resolveTheme, type ThemeName } from './theme';
+import { type ThemeName, resolveTheme } from './theme';
 
 function currentTheme(context: DocsContainerProps['context']): ThemeName {
     const story = context.componentStories()[0];
@@ -10,9 +10,5 @@ function currentTheme(context: DocsContainerProps['context']): ThemeName {
 }
 
 export function ThemedDocsContainer({ children, context }: PropsWithChildren<DocsContainerProps>) {
-    return (
-        <DocsContainer context={context} theme={themes[currentTheme(context)]}>
-            {children}
-        </DocsContainer>
-    );
+    return createElement(DocsContainer, { context, theme: themes[currentTheme(context)] }, children);
 }

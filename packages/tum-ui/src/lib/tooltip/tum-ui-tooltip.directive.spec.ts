@@ -50,6 +50,21 @@ describe('TumUiTooltipDirective', () => {
         expect(button.getAttribute('aria-describedby')).toBeNull();
     });
 
+    it('stays visible while the pointer moves from the trigger into the tooltip', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        const tooltip = bubble()!;
+
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        tooltip.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBe(tooltip);
+
+        tooltip.dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
     it('hides the tooltip on Escape', () => {
         button.dispatchEvent(new MouseEvent('mouseenter'));
         vi.advanceTimersByTime(1);

@@ -11,6 +11,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.datePicker.clear': 'global.datePicker.clear',
     'tumUi.datePicker.decrementHour': 'global.datePicker.decrementHour',
     'tumUi.datePicker.decrementMinute': 'global.datePicker.decrementMinute',
+    'tumUi.datePicker.dialog': 'global.datePicker.dialog',
     'tumUi.datePicker.done': 'global.datePicker.done',
     'tumUi.datePicker.hour': 'global.datePicker.hour',
     'tumUi.datePicker.incrementHour': 'global.datePicker.incrementHour',

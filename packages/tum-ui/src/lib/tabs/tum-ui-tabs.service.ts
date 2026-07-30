@@ -19,9 +19,13 @@ export class TumUiTabsService {
         this.onSelect(value);
     }
     tabId(value: TumUiTabValue): string {
-        return `${this.groupId}-tab-${value}`;
+        return `${this.groupId}-tab-${this.idSegment(value)}`;
     }
     panelId(value: TumUiTabValue): string {
-        return `${this.groupId}-panel-${value}`;
+        return `${this.groupId}-panel-${this.idSegment(value)}`;
+    }
+    private idSegment(value: TumUiTabValue): string {
+        const type = typeof value === 'number' ? 'number' : typeof value === 'string' ? 'string' : 'undefined';
+        return `${type}-${encodeURIComponent(String(value))}`;
     }
 }

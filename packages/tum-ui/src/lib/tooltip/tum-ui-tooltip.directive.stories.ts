@@ -74,3 +74,19 @@ export const DismissesWithEscape: Story = {
         await tooltipRemoved;
     },
 };
+
+export const Hoverable: Story = {
+    tags: ['!dev', '!autodocs'],
+    play: async ({ canvas, userEvent }) => {
+        const trigger = canvas.getByRole('button', { name: 'Export' });
+        await userEvent.hover(trigger);
+        const tooltip = await screen.findByRole('tooltip', { name: 'Downloads the current result as a CSV file' });
+
+        await userEvent.hover(tooltip);
+        await expect(tooltip).toBeVisible();
+
+        const tooltipRemoved = waitForElementToBeRemoved(tooltip);
+        await userEvent.keyboard('{Escape}');
+        await tooltipRemoved;
+    },
+};

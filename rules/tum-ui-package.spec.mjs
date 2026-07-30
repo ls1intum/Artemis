@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
 import { compile } from 'sass';
+import semver from 'semver';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
@@ -21,6 +22,7 @@ if (rootTsconfigError) {
     throw new Error(ts.flattenDiagnosticMessageText(rootTsconfigError.messageText, '\n'));
 }
 const publicApi = readFileSync(resolve(repoRoot, 'packages/tum-ui/src/public-api.ts'), 'utf8');
+const artemisTranslatorSource = readFileSync(resolve(repoRoot, 'src/main/webapp/app/shared-ui/tum-ui-integration/artemis-tum-ui-translator.ts'), 'utf8');
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind.css'), 'utf8');
 const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
@@ -108,6 +110,38 @@ function dependencyCatalog(specifier) {
     return name ? namedCatalogs[name] : catalog;
 }
 
+function stringRecord(source, variableName) {
+    const sourceFile = ts.createSourceFile('source.ts', source, ts.ScriptTarget.Latest, true);
+    const declaration = sourceFile.statements
+        .filter(ts.isVariableStatement)
+        .flatMap((statement) => [...statement.declarationList.declarations])
+        .find((candidate) => ts.isIdentifier(candidate.name) && candidate.name.text === variableName);
+    let initializer = declaration?.initializer;
+    while (initializer && (ts.isAsExpression(initializer) || ts.isSatisfiesExpression(initializer) || ts.isParenthesizedExpression(initializer))) {
+        initializer = initializer.expression;
+    }
+    if (!initializer || !ts.isObjectLiteralExpression(initializer)) {
+        throw new Error(`${variableName} must be an object literal`);
+    }
+    return Object.fromEntries(
+        initializer.properties.map((property) => {
+            if (
+                !ts.isPropertyAssignment(property) ||
+                (!ts.isStringLiteral(property.name) && !ts.isIdentifier(property.name)) ||
+                !ts.isStringLiteral(property.initializer)
+            ) {
+                throw new Error(`${variableName} must contain only string literal entries`);
+            }
+            return [property.name.text, property.initializer.text];
+        }),
+    );
+}
+
+function hasTranslation(catalog, key) {
+    const translation = key.split('.').reduce((value, segment) => value?.[segment], catalog);
+    return typeof translation === 'string';
+}
+
 const themeColorUtility = /^(?:bg|text|border(?:-[trblxy])?|outline|ring(?:-offset)?)-(tum-ui-[\w-]+)$/;
 
 function themeColorFromUtilityToken(token) {
@@ -124,16 +158,21 @@ function themeColorFromUtilityToken(token) {
 }
 
 describe('@tumaet/ui-angular package manifest', () => {
-    it('pins every dependency to the root pnpm catalog version', () => {
-        const dependencies = { ...packageJson.peerDependencies, ...packageJson.dependencies };
+    it('uses the catalog as the installed version and keeps it within every peer range', () => {
         const rootDependencies = { ...rootPackageJson.dependencies, ...rootPackageJson.devDependencies };
 
         expect(rootPackageJson.dependencies['@tumaet/ui-angular']).toBe('workspace:*');
         expect(Object.keys(catalog).length).toBeGreaterThan(0);
-        for (const [name, version] of Object.entries(dependencies)) {
+        for (const [name, version] of Object.entries(packageJson.dependencies)) {
             expect(catalog[name], `${name} must have one canonical workspace version`).toBe(version);
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
+        }
+        for (const [name, range] of Object.entries(packageJson.peerDependencies)) {
+            expect(semver.validRange(range), `${name} must declare a valid compatibility range`).not.toBeNull();
+            expect(semver.satisfies(catalog[name], range), `${name} catalog version must satisfy ${range}`).toBe(true);
+            expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
+            expect(packageJson.devDependencies[name], `${name} must be installed for isolated package development`).toBe('catalog:');
         }
         for (const [name, version] of Object.entries(packageJson.devDependencies)) {
             expect(version, `${name} is package-only tooling and must use a workspace catalog`).toMatch(/^catalog:(?:[\w-]+)?$/);
@@ -255,6 +294,18 @@ describe('@tumaet/ui-angular package manifest', () => {
                 expect(contrastRatio(color, tagBackground), `${theme}: tinted ${state}`).toBeGreaterThanOrEqual(4.5);
             }
         }
+    });
+
+    it('maps every package translation to an existing Artemis translation in each locale', () => {
+        const mappings = stringRecord(artemisTranslatorSource, 'ARTEMIS_TRANSLATION_KEYS');
+        const missing = ['en', 'de'].flatMap((locale) => {
+            const catalogs = globSync(`src/main/webapp/i18n/${locale}/*.json`, { cwd: repoRoot }).map((file) => JSON.parse(readFileSync(resolve(repoRoot, file), 'utf8')));
+            return Object.entries(mappings)
+                .filter(([, target]) => !catalogs.some((catalog) => hasTranslation(catalog, target)))
+                .map(([source, target]) => `${locale}: ${source} -> ${target}`);
+        });
+
+        expect(missing).toEqual([]);
     });
 
     it('keeps the reference themes readable', () => {

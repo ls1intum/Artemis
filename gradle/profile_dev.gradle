@@ -45,6 +45,9 @@ tasks.register("webapp", PnpmTask) {
     inputs.files("pnpm-lock.yaml")
         .withPropertyName("pnpm-lock")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files("package.json", "pnpm-workspace.yaml", "prebuild.mjs", ".postcssrc.json", ".browserslistrc")
+        .withPropertyName("client-build-config")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("build.gradle")
         .withPropertyName("build.gradle")
         .withPathSensitivity(PathSensitivity.RELATIVE)
@@ -56,6 +59,21 @@ tasks.register("webapp", PnpmTask) {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir("src/main/webapp/")
         .withPropertyName("webapp-source-dir")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir("packages/tum-ui/src/")
+        .withPropertyName("tum-ui-source-dir")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        "packages/tum-ui/package.json",
+        "packages/tum-ui/ng-package.dev.json",
+        "packages/tum-ui/tsconfig.base.json",
+        "packages/tum-ui/tsconfig.lib.json",
+        "packages/tum-ui/tailwind.css",
+        "packages/tum-ui/themes.css",
+        "packages/tum-ui/build-styles.mjs",
+        "packages/tum-ui/check-styles.mjs",
+    )
+        .withPropertyName("tum-ui-build-config")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir("build/resources/main/static/")
         .withPropertyName("webapp-build-dir")

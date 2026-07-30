@@ -26,6 +26,7 @@ title: TUM UI component reference
 description: Browse the existing TUM UI package components, supported states, accessibility checks, and APIs.
 pagination_prev: null
 pagination_next: null
+custom_edit_url: null
 ---
 
 import StorybookRedirect from '../../src/components/StorybookRedirect/StorybookRedirect';

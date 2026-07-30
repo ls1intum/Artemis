@@ -88,6 +88,16 @@ describe('TumUiCalendarComponent', () => {
         expect(document.activeElement).toBe(buttons[13]);
     });
 
+    it('continues into the adjacent month at the grid boundary', () => {
+        const monthChange = vi.spyOn(component.monthChange, 'emit');
+        dayButton('2026-06-01').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+        expect(monthChange.mock.calls[0][0].isSame(dayjs('2026-05-01'), 'month')).toBe(true);
+
+        fixture.componentRef.setInput('activeMonth', dayjs('2026-05-01'));
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(dayButton('2026-05-31'));
+    });
+
     it('changes the month via PageUp/PageDown and the previous button', () => {
         const spy = vi.spyOn(component.monthChange, 'emit');
         const buttons = dayButtons();

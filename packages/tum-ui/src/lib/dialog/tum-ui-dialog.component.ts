@@ -88,7 +88,6 @@ export class TumUiDialogComponent implements OnDestroy {
             ariaLabel: ariaLabel ?? null,
             ariaLabelledBy: labelledBy ?? null,
             ariaDescribedBy: this.ariaDescribedBy() ?? null,
-            autoFocus: 'dialog',
             restoreFocus: true,
         });
         this.dialogRef = ref;

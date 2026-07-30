@@ -11,19 +11,19 @@
     <div data-testid="save-status">
         @if (!unsavedChanges() && !isSaving()) {
             <div data-testid="status-saved">
-                <fa-icon [icon]="faCheckCircle" class="text-state-success me-1" [tumUiTooltip]="'artemisApp.legal.savedTooltip' | artemisTranslate" />
+                <fa-icon [icon]="faCheckCircle" class="text-state-success me-1" />
                 <span class="text-state-info" jhiTranslate="artemisApp.legal.saved"></span>
             </div>
         }
         @if (unsavedChanges() && !isSaving()) {
             <div data-testid="status-unsaved">
-                <fa-icon [icon]="faExclamationTriangle" class="text-state-warning me-1" [tumUiTooltip]="'artemisApp.legal.unsavedTooltip' | artemisTranslate" />
+                <fa-icon [icon]="faExclamationTriangle" class="text-state-warning me-1" />
                 <span class="text-state-info" jhiTranslate="artemisApp.legal.unsaved"></span>
             </div>
         }
         @if (isSaving()) {
             <div data-testid="status-saving">
-                <fa-icon [icon]="faCircleNotch" class="me-1" [tumUiTooltip]="'artemisApp.legal.savingTooltip' | artemisTranslate" />
+                <fa-icon [icon]="faCircleNotch" class="me-1" />
                 <span class="text-state-info" jhiTranslate="artemisApp.legal.saving"></span>
             </div>
         }

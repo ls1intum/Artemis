@@ -10,6 +10,7 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
     'tumUi.datePicker.clear': 'Clear date',
     'tumUi.datePicker.decrementHour': 'Decrement hour',
     'tumUi.datePicker.decrementMinute': 'Decrement minute',
+    'tumUi.datePicker.dialog': 'Choose date and time',
     'tumUi.datePicker.done': 'Done',
     'tumUi.datePicker.hour': 'Hour',
     'tumUi.datePicker.incrementHour': 'Increment hour',

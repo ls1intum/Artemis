@@ -83,7 +83,7 @@ export const Open: Story = {
     play: async ({ args }) => {
         const dialog = await screen.findByRole('dialog', { name: 'Confirm enrollment' });
         await expect(dialog).toHaveAccessibleDescription('Enroll in Advanced Software Engineering?');
-        await expect(dialog).toHaveFocus();
+        await expect(within(dialog).getByRole('button', { name: 'Close' })).toHaveFocus();
         await expect(args.onShow).toHaveBeenCalledOnce();
     },
 };

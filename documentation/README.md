@@ -35,6 +35,8 @@ To build and serve the complete deployed site, including the TUM UI Storybook at
 `/developer/tum-ui/`, run from the repository root:
 
 ```bash
+pnpm install --frozen-lockfile
+pnpm --dir documentation install --frozen-lockfile
 pnpm run docs:build
 pnpm run docs:serve
 ```

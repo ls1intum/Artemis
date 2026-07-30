@@ -337,6 +337,7 @@
         "datePicker": {
             "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Kalender öffnen",
+            "dialog": "Datum und Uhrzeit auswählen",
             "previousMonth": "Vorheriger Monat: {{ month }}",
             "nextMonth": "Nächster Monat: {{ month }}",
             "clear": "Löschen",
@@ -361,6 +362,7 @@
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
             "cancel": "Abbrechen",
+            "clear": "Leeren",
             "continue": "Fortfahren",
             "delete": "Löschen",
             "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",

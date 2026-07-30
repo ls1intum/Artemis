@@ -1,7 +1,7 @@
 import { ComponentRef, Directive, ElementRef, OnDestroy, effect, inject, input } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
-import { Subscription } from 'rxjs';
+import { Subscription, fromEvent } from 'rxjs';
 import { TumUiOverlayPlacement, TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiTooltipContentComponent } from './tum-ui-tooltip-content.component';
 
@@ -32,8 +32,10 @@ export class TumUiTooltipDirective implements OnDestroy {
     private showTimer?: ReturnType<typeof setTimeout>;
     private hideTimer?: ReturnType<typeof setTimeout>;
     private readonly tooltipId = `tum-ui-tooltip-${nextTooltipId++}`;
+    private interactionSub?: Subscription;
 
-    private hovered = false;
+    private triggerHovered = false;
+    private tooltipHovered = false;
     private focused = false;
 
     constructor() {
@@ -48,12 +50,12 @@ export class TumUiTooltipDirective implements OnDestroy {
     }
 
     protected onHoverStart(): void {
-        this.hovered = true;
+        this.triggerHovered = true;
         this.scheduleShow();
     }
 
     protected onHoverEnd(): void {
-        this.hovered = false;
+        this.triggerHovered = false;
         this.scheduleHideIfInactive();
     }
 
@@ -67,7 +69,7 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.scheduleHideIfInactive();
     }
     private scheduleHideIfInactive(): void {
-        if (this.hovered || this.focused) {
+        if (this.triggerHovered || this.tooltipHovered || this.focused) {
             return;
         }
         this.scheduleHide();
@@ -94,6 +96,9 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.removeDescribedBy();
         this.positionSub?.unsubscribe();
         this.positionSub = undefined;
+        this.interactionSub?.unsubscribe();
+        this.interactionSub = undefined;
+        this.tooltipHovered = false;
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
         this.contentRef = undefined;
@@ -114,6 +119,27 @@ export class TumUiTooltipDirective implements OnDestroy {
         this.contentRef.setInput('text', this.content());
         this.contentRef.setInput('id', this.tooltipId);
         this.contentRef.setInput('placement', appliedPlacement);
+        const contentElement = this.contentRef.location.nativeElement as HTMLElement;
+        this.interactionSub = new Subscription();
+        this.interactionSub.add(
+            fromEvent(contentElement, 'mouseenter').subscribe(() => {
+                this.tooltipHovered = true;
+                clearTimeout(this.hideTimer);
+            }),
+        );
+        this.interactionSub.add(
+            fromEvent(contentElement, 'mouseleave').subscribe(() => {
+                this.tooltipHovered = false;
+                this.scheduleHideIfInactive();
+            }),
+        );
+        this.interactionSub.add(
+            this.overlayRef.keydownEvents().subscribe((event) => {
+                if (event.key === 'Escape') {
+                    this.hideNow();
+                }
+            }),
+        );
         this.addDescribedBy();
     }
     private addDescribedBy(): void {

@@ -25,20 +25,21 @@ async function selectDocumentationTheme(page: Page, theme: 'light' | 'dark') {
 test('connects the coding guidelines and component reference with the selected theme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('./developer/intro');
-    await page.getByRole('main').getByRole('link', { name: 'Artemis client' }).click();
-    await expect(page).toHaveURL(/\/developer\/artemis-client$/);
+    await page.getByRole('main').getByRole('link', { name: 'Client Guidelines' }).click();
+    await expect(page).toHaveURL(/\/developer\/guidelines\/client$/);
     await expect(page.getByRole('complementary').getByRole('link', { name: 'TUM UI component reference' })).toBeVisible();
 
     await selectDocumentationTheme(page, 'dark');
     await page
         .getByRole('main')
-        .getByRole('link', { name: /TUM UI components/ })
+        .getByRole('link', { name: /TUM UI component reference/ })
         .click();
     const darkReferenceBackground = await expectReferenceTheme(page, 'dark');
-    await expect(page.getByRole('link', { name: 'Back to TUM UI package guide' })).toBeVisible();
-    await expect(page.frameLocator('#storybook-preview-iframe').getByRole('heading', { level: 1, name: 'Introduction' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'TUM UI package guide' })).toHaveAttribute('href', '/developer/guidelines/tum-ui-kit');
+    const introduction = page.frameLocator('#storybook-preview-iframe');
+    await expect(introduction.getByRole('heading', { level: 1, name: 'Introduction' })).toBeVisible();
 
-    await page.getByRole('link', { name: 'Back to TUM UI package guide' }).click();
+    await introduction.getByRole('link', { name: 'TUM UI package guide' }).click();
     await expect(page).toHaveURL(/\/developer\/guidelines\/tum-ui-kit$/);
     await expect(page.getByRole('heading', { level: 1, name: 'TUM UI package' })).toBeVisible();
 

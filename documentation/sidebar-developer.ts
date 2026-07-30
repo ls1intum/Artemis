@@ -16,10 +16,10 @@ const sidebars: SidebarsConfig = {
             items: [
                 {
                     type: 'category',
-                    label: 'Artemis client',
+                    label: 'Client Guidelines',
                     link: {
                         type: 'doc',
-                        id: 'artemis-client',
+                        id: 'guidelines/client',
                     },
                     items: [
                         'guidelines/client-development',
@@ -27,9 +27,9 @@ const sidebars: SidebarsConfig = {
                         'guidelines/client-tests',
                         'guidelines/tum-ui-kit',
                         {
-                            type: 'link',
+                            type: 'doc',
                             label: 'TUM UI component reference',
-                            href: '/developer/tum-ui-reference',
+                            id: 'tum-ui',
                         },
                     ],
                 },

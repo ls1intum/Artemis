@@ -21,7 +21,6 @@ export default defineConfig({
     logLevel: 'error',
     resolve: {
         alias: {
-            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-ui/src/public-api.ts'),
             'monaco-editor': path.resolve(__dirname, 'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts'),
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),

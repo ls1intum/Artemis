@@ -153,6 +153,42 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         expect(selectSpy).toHaveBeenCalledWith(expect.objectContaining({ value: 'admin' }));
     });
 
+    it('does not intercept native text-editing or Tab keys', async () => {
+        const selectSpy = vi.spyOn(component.onSelect, 'emit');
+        await search('a', ['admin', 'artemis']);
+
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        fixture.detectChanges();
+        expect(selectSpy).not.toHaveBeenCalled();
+    });
+
+    it('clears aria-activedescendant when Escape closes the suggestions', async () => {
+        await search('a', ['admin', 'artemis']);
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-activedescendant')).toBe(options()[0].id);
+
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(input().getAttribute('aria-activedescendant')).toBeNull();
+    });
+
+    it('keeps aria-activedescendant valid when asynchronous results shrink', async () => {
+        await search('a', ['admin', 'artemis']);
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('suggestions', ['admin']);
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-activedescendant')).toBe(options()[0].id);
+
+        fixture.componentRef.setInput('suggestions', []);
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-activedescendant')).toBeNull();
+    });
+
     it('shows the empty message when a search returns no suggestions', async () => {
         fixture.componentRef.setInput('emptyMessage', 'Nothing found');
         await search('zzz', []);

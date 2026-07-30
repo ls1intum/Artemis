@@ -108,7 +108,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected readonly panelVisible = computed(
         () => this.isFocused() && this.hasSearched() && !this.isDisabled() && (this.query().length >= this.minLength() || this.completeOnFocus()),
     );
-    protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
+    protected readonly activeOptionId = computed(() => (this.panelVisible() && this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
     protected readonly inputPlaceholder = computed(() => (this.multiple() && this.selectedValues().length > 0 ? undefined : this.placeholder()));
 
     constructor() {
@@ -123,6 +123,12 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
                 this.openPanel();
             } else {
                 this.closePanel();
+            }
+        });
+        effect(() => {
+            const optionCount = this.suggestions().length;
+            if (this.activeIndex() >= optionCount) {
+                this.activeIndex.set(optionCount > 0 ? optionCount - 1 : -1);
             }
         });
         effect(() => this.syncSingleInputText());

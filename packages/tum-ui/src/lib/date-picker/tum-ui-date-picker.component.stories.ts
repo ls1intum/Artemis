@@ -30,7 +30,7 @@ export const CalendarInteraction: Story = {
         const trigger = canvas.getByRole('button', { name: 'Open calendar' });
         await userEvent.click(trigger);
 
-        const dialog = await screen.findByRole('dialog', { name: 'Open calendar' });
+        const dialog = await screen.findByRole('dialog', { name: 'Choose date and time' });
         await expect(within(dialog).getByRole('grid')).toBeVisible();
         const selectedDay = within(dialog).getByRole('gridcell', { selected: true }).querySelector('button');
         await expect(selectedDay).toHaveFocus();
@@ -39,6 +39,9 @@ export const CalendarInteraction: Story = {
         await userEvent.keyboard('{Escape}');
         await dialogRemoved;
         await expect(trigger).toHaveFocus();
+
+        await userEvent.click(canvas.getByRole('button', { name: 'Clear date' }));
+        await expect(canvas.getByRole('combobox', { name: 'Deadline' })).toHaveFocus();
     },
 };
 

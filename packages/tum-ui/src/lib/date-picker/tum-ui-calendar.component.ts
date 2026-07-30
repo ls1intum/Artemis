@@ -135,9 +135,15 @@ export class TumUiCalendarComponent {
         const total = this.flatDays().length;
         const moveTo = (target: number): void => {
             event.preventDefault();
-            const clamped = Math.max(0, Math.min(total - 1, target));
-            this.focusedDate.set(this.flatDays()[clamped]);
-            this.dayButtons()[clamped]?.nativeElement.focus();
+            if (target >= 0 && target < total) {
+                this.focusedDate.set(this.flatDays()[target]);
+                this.dayButtons()[target]?.nativeElement.focus();
+                return;
+            }
+            const targetDay = this.flatDays()[index].add(target - index, 'day');
+            this.focusedDate.set(targetDay);
+            this.restoreFocusAfterRender = true;
+            this.monthChange.emit(targetDay.startOf('month'));
         };
         switch (event.key) {
             case 'ArrowRight':

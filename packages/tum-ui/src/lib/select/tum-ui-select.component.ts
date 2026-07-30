@@ -3,6 +3,7 @@ import {
     Component,
     DestroyRef,
     ElementRef,
+    Injector,
     TemplateRef,
     ViewContainerRef,
     computed,
@@ -17,6 +18,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DOCUMENT } from '@angular/common';
 import { OverlayRef } from '@angular/cdk/overlay';
+import { ListKeyManager } from '@angular/cdk/a11y';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -48,6 +50,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
+    private readonly injector = inject(Injector);
 
     readonly options = input<readonly unknown[]>([]);
 
@@ -90,9 +93,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     private onChangeCallback: (value: unknown) => void = () => {};
     private onTouchedCallback: () => void = () => {};
 
-    private typeaheadBuffer = '';
-    private typeaheadTimer?: ReturnType<typeof setTimeout>;
-
     protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
     protected readonly selectedOption = computed(() => {
         const current = this.selectedValue();
@@ -110,17 +110,34 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     protected readonly showClearButton = computed(() => this.showClear() && this.hasSelection() && !this.isDisabled());
     protected readonly triggerClasses = computed(() => this.buildTriggerClasses());
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
+    private readonly keyManagerOptions = computed(() => this.options().map((option) => ({ getLabel: () => this.label(option) })));
+    private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(500);
+    private typeaheadSequence = '';
+    private typeaheadReset?: ReturnType<typeof setTimeout>;
 
     constructor() {
         this.destroyRef.onDestroy(() => {
             this.overlayRef?.dispose();
-            if (this.typeaheadTimer) {
-                clearTimeout(this.typeaheadTimer);
-            }
+            this.resetTypeahead();
+            this.keyManager.destroy();
+        });
+        this.keyManager.change.subscribe((index) => {
+            this.activeIndex.set(index);
+            this.scrollOptionIntoView(index);
         });
         effect(() => {
             if (this.isDisabled()) {
                 this.close();
+            }
+        });
+        effect(() => {
+            const optionCount = this.options().length;
+            if (optionCount === 0) {
+                this.keyManager.setActiveItem(-1);
+            } else if (this.activeIndex() >= optionCount) {
+                this.keyManager.setActiveItem(optionCount - 1);
+            } else if (this.isOpen() && this.activeIndex() < 0) {
+                this.keyManager.setFirstItemActive();
             }
         });
     }
@@ -198,12 +215,13 @@ export class TumUiSelectComponent implements ControlValueAccessor {
             return;
         }
         const selectedIndex = this.options().findIndex((option) => this.isSelected(option));
-        this.activeIndex.set(selectedIndex >= 0 ? selectedIndex : this.options().length > 0 ? 0 : -1);
+        const initialIndex = selectedIndex >= 0 ? selectedIndex : this.options().length > 0 ? 0 : -1;
+        this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
         this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
-        this.overlayRef.overlayElement.querySelector<HTMLElement>('[role="listbox"]')?.focus();
+        this.scrollOptionIntoView(initialIndex);
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
             if (event.key === 'Escape') {
@@ -213,15 +231,16 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         this.isOpen.set(true);
     }
 
-    private close(): void {
+    private close(restoreFocus = true): void {
         if (!this.isOpen()) {
             return;
         }
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
         this.isOpen.set(false);
+        this.resetTypeahead();
         this.onTouchedCallback();
-        if (!this.isDisabled()) {
+        if (restoreFocus && !this.isDisabled()) {
             this.trigger().nativeElement.focus();
         }
     }
@@ -240,54 +259,42 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         this.onChangeCallback(undefined);
         this.onChange.emit(undefined);
         this.onTouchedCallback();
+        this.trigger().nativeElement.focus();
     }
 
     protected setActive(index: number): void {
-        this.activeIndex.set(index);
-        this.document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
+        this.keyManager.setActiveItem(index);
     }
 
     protected onTriggerKeydown(event: KeyboardEvent): void {
         if (this.isDisabled()) {
             return;
         }
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-            event.preventDefault();
-            if (!this.isOpen()) {
+        if (!this.isOpen()) {
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                event.preventDefault();
                 this.open();
+                return;
             }
-        } else if (event.key === 'Escape' && this.isOpen()) {
-            this.close();
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                this.open();
+                return;
+            }
+            if (event.key === 'Home' || event.key === 'End') {
+                event.preventDefault();
+                this.open();
+                this.setActive(event.key === 'Home' ? 0 : this.options().length - 1);
+                return;
+            }
+            if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                this.open();
+                this.handleTypeahead(event);
+            }
+            return;
         }
-    }
-
-    protected onListKeydown(event: KeyboardEvent): void {
         const count = this.options().length;
         switch (event.key) {
-            case 'ArrowDown':
-                event.preventDefault();
-                if (count > 0) {
-                    this.setActive(Math.min(count - 1, this.activeIndex() + 1));
-                }
-                break;
-            case 'ArrowUp':
-                event.preventDefault();
-                if (count > 0) {
-                    this.setActive(Math.max(0, this.activeIndex() - 1));
-                }
-                break;
-            case 'Home':
-                event.preventDefault();
-                if (count > 0) {
-                    this.setActive(0);
-                }
-                break;
-            case 'End':
-                event.preventDefault();
-                if (count > 0) {
-                    this.setActive(count - 1);
-                }
-                break;
             case 'Enter':
             case ' ':
             case 'Spacebar':
@@ -297,26 +304,55 @@ export class TumUiSelectComponent implements ControlValueAccessor {
                 }
                 break;
             case 'Escape':
-            case 'Tab':
                 this.close();
                 break;
+            case 'Tab':
+                if (this.activeIndex() >= 0 && this.activeIndex() < count) {
+                    this.selectOption(this.options()[this.activeIndex()]);
+                } else {
+                    this.close(false);
+                }
+                break;
             default:
-                if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-                    this.typeahead(event.key);
+                if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                    this.handleTypeahead(event);
+                } else {
+                    this.keyManager.onKeydown(event);
                 }
         }
     }
 
-    private typeahead(char: string): void {
-        if (this.typeaheadTimer) {
-            clearTimeout(this.typeaheadTimer);
+    private handleTypeahead(event: KeyboardEvent): void {
+        const character = event.key.toLocaleLowerCase();
+        const repeatsSequence = this.typeaheadSequence.length > 0 && [...this.typeaheadSequence].every((value) => value === character);
+
+        clearTimeout(this.typeaheadReset);
+        if (repeatsSequence) {
+            this.keyManager.cancelTypeahead();
+            const options = this.keyManagerOptions();
+            const start = Math.max(this.activeIndex(), -1);
+            const nextMatch = options.findIndex((_, offset) => options[(start + offset + 1) % options.length]?.getLabel().toLocaleLowerCase().startsWith(character));
+            if (nextMatch >= 0) {
+                this.keyManager.setActiveItem((start + nextMatch + 1) % options.length);
+            }
+            this.typeaheadSequence = character;
+        } else {
+            this.typeaheadSequence += character;
+            this.keyManager.onKeydown(event);
         }
-        this.typeaheadBuffer += char.toLowerCase();
-        const index = this.options().findIndex((option) => this.label(option).toLowerCase().startsWith(this.typeaheadBuffer));
-        if (index >= 0) {
-            this.setActive(index);
-        }
-        this.typeaheadTimer = setTimeout(() => (this.typeaheadBuffer = ''), 500);
+        this.typeaheadReset = setTimeout(() => {
+            this.typeaheadSequence = '';
+        }, 500);
+    }
+
+    private resetTypeahead(): void {
+        this.keyManager.cancelTypeahead();
+        clearTimeout(this.typeaheadReset);
+        this.typeaheadSequence = '';
+    }
+
+    private scrollOptionIntoView(index: number): void {
+        this.document.getElementById(this.optionId(index))?.scrollIntoView?.({ block: 'nearest' });
     }
 
     private buildTriggerClasses(): string {

@@ -90,6 +90,7 @@
                     <tr>
                         <td>
                             <fa-icon [icon]="getIcon(exercise.type)" [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                            <span class="sr-only">{{ getIconTooltip(exercise.type) | artemisTranslate }}</span>
                         </td>
                         <td>
                             <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>

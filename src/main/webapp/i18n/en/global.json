@@ -337,6 +337,7 @@
         "datePicker": {
             "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Open calendar",
+            "dialog": "Choose date and time",
             "previousMonth": "Previous month: {{ month }}",
             "nextMonth": "Next month: {{ month }}",
             "clear": "Clear",
@@ -361,6 +362,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "clear": "Clear",
             "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",
