@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
@@ -80,13 +79,5 @@ public class BlobCacheConfiguration {
             case null, default -> 1024;
         };
         return Math.min(weight, MAXIMUM_CACHED_VALUE_BYTES);
-    }
-
-    /**
-     * @param cache the cache to test
-     * @return true if the cache is served by this per-node cache manager
-     */
-    public static boolean isBlobCache(Cache cache) {
-        return cache != null && BLOB_CACHE_NAMES.contains(cache.getName());
     }
 }

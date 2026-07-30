@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,33 @@ class OfflineBuildAgentDetectorTest {
     @Test
     void testHazelcastClientWithEphemeralPortIsNotOffline() {
         assertThat(OfflineBuildAgentDetector.isOffline("[192.168.1.9]:54321", HAZELCAST_MEMBERS, false)).isFalse();
+    }
+
+    /**
+     * An address that looks Hazelcast-shaped but carries no port cannot be classified, so it must not be treated as a
+     * departed member.
+     */
+    @Test
+    void testHazelcastStyleAddressWithoutPortIsNotOffline() {
+        assertThat(OfflineBuildAgentDetector.isOffline("[192.168.1.9]:", HAZELCAST_MEMBERS, false)).isFalse();
+    }
+
+    /**
+     * A live-node set containing a malformed entry must not derail the port comparison for the others.
+     */
+    @Test
+    void testMalformedLiveNodeEntriesAreIgnored() {
+        Set<String> membersWithMalformedEntry = new HashSet<>(HAZELCAST_MEMBERS);
+        membersWithMalformedEntry.add("no-port-here");
+        membersWithMalformedEntry.add(null);
+
+        assertThat(OfflineBuildAgentDetector.isOffline("[192.168.1.9]:5701", membersWithMalformedEntry, false)).isTrue();
+    }
+
+    @Test
+    void testNullStoredIdentifierIsNotOffline() {
+        assertThat(OfflineBuildAgentDetector.isOffline(null, HAZELCAST_MEMBERS, false)).isFalse();
+        assertThat(OfflineBuildAgentDetector.isOffline("artemis-1001", null, true)).isFalse();
     }
 
     /**

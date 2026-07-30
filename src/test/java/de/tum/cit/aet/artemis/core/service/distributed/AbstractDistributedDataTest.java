@@ -497,6 +497,89 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     }
 
     @Test
+    void testMapPutIfAbsentOnlyStoresWhenKeyIsFree() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("putIfAbsentMapTest");
+        map.clear();
+
+        assertThat(map.putIfAbsent("key", "first")).as("storing into a free key reports no previous value").isNull();
+        assertThat(map.putIfAbsent("key", "second")).as("a second attempt reports the value that won").isEqualTo("first");
+        assertThat(map.get("key")).isEqualTo("first");
+
+        map.clear();
+    }
+
+    @Test
+    void testMapConditionalRemoveOnlyRemovesMatchingValue() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("conditionalRemoveMapTest");
+        map.clear();
+        map.put("key", "current");
+
+        assertThat(map.remove("key", "stale")).as("an entry replaced by another node must not be removed").isFalse();
+        assertThat(map.get("key")).isEqualTo("current");
+
+        assertThat(map.remove("key", "current")).isTrue();
+        assertThat(map.get("key")).isNull();
+    }
+
+    @Test
+    void testMapComputeIfAbsentStoresAndThenReuses() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("computeIfAbsentMapTest");
+        map.clear();
+
+        assertThat(map.computeIfAbsent("key", key -> "computed-" + key)).isEqualTo("computed-key");
+        // The second call must reuse the stored value instead of recomputing over it.
+        assertThat(map.computeIfAbsent("key", key -> "recomputed")).isEqualTo("computed-key");
+        assertThat(map.get("key")).isEqualTo("computed-key");
+
+        assertThat(map.computeIfAbsent("nullKey", key -> null)).as("a mapping function returning null stores nothing").isNull();
+        assertThat(map.containsKey("nullKey")).isFalse();
+
+        map.clear();
+    }
+
+    @Test
+    void testMapContainsKeyIsEmptyAndPutAll() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("bulkMapTest");
+        map.clear();
+
+        assertThat(map.isEmpty()).isTrue();
+        assertThat(map.containsKey("a")).isFalse();
+
+        map.putAll(Map.of("a", "1", "b", "2"));
+
+        assertThat(map.isEmpty()).isFalse();
+        assertThat(map.containsKey("a")).isTrue();
+        assertThat(map.containsKey("b")).isTrue();
+        assertThat(map.size()).isEqualTo(2);
+
+        map.clear();
+        assertThat(map.isEmpty()).isTrue();
+    }
+
+    @Test
+    void testExpiringMapPutIfAbsentAppliesDefaultTimeToLive() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("expiringPutIfAbsentTest", Duration.ofSeconds(1));
+        map.clear();
+
+        // A claim made through putIfAbsent must not outlive the map, otherwise a crashed claimant blocks the key forever.
+        assertThat(map.putIfAbsent("claim", "owner")).isNull();
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> assertThat(map.get("claim")).isNull());
+    }
+
+    @Test
+    void testDistributedLockTryLockSucceedsWhenFree() {
+        DistributedLock lock = getDistributedDataProvider().getLock("freeTryLockTest");
+
+        assertThat(lock.tryLock(Duration.ofSeconds(5))).isTrue();
+        lock.unlock();
+
+        // Releasing must make it available again rather than leaving it wedged.
+        assertThat(lock.tryLock(Duration.ofSeconds(5))).isTrue();
+        lock.unlock();
+    }
+
+    @Test
     void testDistributedSetAddRemoveContains() {
         DistributedSet<Long> set = getDistributedDataProvider().getSet("distributedSetTest");
         set.clear();
