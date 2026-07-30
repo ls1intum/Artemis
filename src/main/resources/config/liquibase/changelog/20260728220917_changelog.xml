@@ -125,12 +125,15 @@
         <dropIndex tableName="jhi_user" indexName="idx_user_login"/>
     </changeSet>
 
+    <!-- Unlike the other two, this one was created with addUniqueConstraint (on the table's former
+         name learning_goal_user), so on PostgreSQL the index is owned by a constraint and DROP INDEX
+         is rejected. Dropping the constraint removes the index with it on both databases. -->
     <changeSet id="20260728220917-08-drop-redundant-uc-learning-goal-user" author="krusche">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="competency_user" indexName="uc_learning_goal_user"/>
         </preConditions>
         <comment>Duplicates the primary key (competency_id, user_id) exactly.</comment>
-        <dropIndex tableName="competency_user" indexName="uc_learning_goal_user"/>
+        <dropUniqueConstraint tableName="competency_user" constraintName="uc_learning_goal_user"/>
     </changeSet>
 
     <changeSet id="20260728220917-09-drop-redundant-participation-vcs-token-index" author="krusche">
