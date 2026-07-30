@@ -27,7 +27,8 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 }
 
 .stepwizard-circle {
-    cursor: default;
+    // Every circle is actionable: the click handler emits for all statuses, so the pointer must not depend on colour.
+    cursor: pointer;
     background-color: var(--module-bg);
     width: $step-button-size;
     height: $step-button-size;
@@ -41,14 +42,19 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
     align-items: center;
     justify-content: center;
 
+    // The circles are keyboard-activatable buttons, so they need a visible focus ring of their own: the border colour
+    // already encodes the status and cannot double as the focus indicator.
+    &:focus-visible {
+        outline: 2px solid var(--link-color);
+        outline-offset: 2px;
+    }
+
     &.stepwizard-step--failed {
-        cursor: pointer;
         color: var(--danger, #dc3545);
         border-color: var(--danger, #dc3545);
     }
 
     &.stepwizard-step--success {
-        cursor: pointer;
         color: var(--success, #28a745);
         border-color: var(--success, #28a745);
     }
