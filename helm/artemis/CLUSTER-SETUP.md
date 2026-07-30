@@ -24,26 +24,42 @@ Cluster prerequisites at a glance:
 
 ## 1. Gateway API CRDs
 
-The chart renders `Gateway`, `HTTPRoute` and (for git-over-SSH) `TCPRoute`. `TCPRoute` lives in the Gateway API
-**experimental channel**, so the standard-channel CRDs are not enough.
+The chart renders `Gateway`, `HTTPRoute` and (for git-over-SSH) `TCPRoute`. `TCPRoute` (along with `TLSRoute` and
+`UDPRoute`, which the controller also watches) lives **only in the Gateway API experimental channel**, so the
+standard-channel install is not enough.
+
+**Envoy Gateway v1.8.3 requires Gateway API v1.3.0 (experimental channel).** Install exactly that, and apply it with
+`--server-side --force-conflicts` so it works whether or not the cluster already has Gateway API CRDs (see the callout
+below):
 
 ```bash
-# Installs BOTH standard (HTTPRoute, Gateway, GatewayClass) and experimental (TCPRoute, ...) CRDs.
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+kubectl apply --server-side --force-conflicts \
+  -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
 ```
 
-Verify:
+Verify the experimental kinds are present and serve `v1`:
 
 ```bash
 kubectl get crd | grep gateway.networking.k8s.io
-# expect: gateways, gatewayclasses, httproutes, tcproutes, ...
+# expect: gateways, gatewayclasses, httproutes, tcproutes, tlsroutes, udproutes, ...
+kubectl get crd tcproutes.gateway.networking.k8s.io \
+  -o jsonpath='{range .spec.versions[*]}{.name}{" "}{end}{"\n"}'
 ```
 
-> Some controllers (Envoy Gateway, Cilium, Istio) bundle their own copy of the Gateway API CRDs. To avoid version
-> conflicts, either install the CRDs first (as above) and tell the controller to skip them - for Envoy Gateway pass
-> `--skip-crds` to its `helm install` (see [section 2](#2-gateway-controller-envoy-gateway)) - or rely on the
-> controller's bundled set and make sure it includes the **experimental** channel (TCPRoute). Only one source of these
-> CRDs should win.
+> **Cluster already has Gateway API CRDs?** Then let this `kubectl apply --server-side --force-conflicts` be the single
+> source and pass `--skip-crds` to the Envoy Gateway install ([section 2](#2-gateway-controller-envoy-gateway)). This
+> avoids two failure modes:
+> - **Helm CRD step conflicts** - if the existing CRDs were installed with `kubectl apply`, the Envoy Gateway chart's
+>   server-side apply refuses to overwrite fields owned by another manager
+>   (`conflict occurred while applying object /gatewayclasses...`). `--force-conflicts` on the command above takes
+>   ownership and updates them in place.
+> - **Controller crash-loop on stale CRDs** - if you `--skip-crds` but the pre-existing CRDs are older than v1.3.0, the
+>   controller crash-loops with `no matches for kind "TLSRoute" in version "gateway.networking.k8s.io/v1"` and the
+>   Deployment reports `exceeded its progress deadline`. Applying the v1.3.0 experimental CRDs (as above) and then
+>   `kubectl -n envoy-gateway-system rollout restart deploy/envoy-gateway` fixes it.
+>
+> **Do NOT fix a conflict by deleting the CRDs.** Deleting a CRD deletes every custom resource of that kind in the
+> cluster (all Gateways, HTTPRoutes, TCPRoutes, ...). Always update in place with `--server-side --force-conflicts`.
 >
 > If your controller cannot do `TCPRoute`, skip it and use the SSH fallback (`gateway.ssh.mode=loadbalancer` or
 > `nodeport`) - then only the standard-channel CRDs are required.
@@ -58,8 +74,9 @@ support `TCPRoute`: **Cilium**, **Istio**, **NGINX Gateway Fabric**.
 
 ### Install Envoy Gateway
 
-`--skip-crds` tells Envoy Gateway **not** to install its bundled (standard-channel) Gateway API CRDs, so the
-experimental-channel CRDs from [section 1](#1-gateway-api-crds) (which include `TCPRoute`) remain the single source:
+`--skip-crds` tells Envoy Gateway **not** to install its bundled Gateway API CRDs, so the v1.3.0 experimental CRDs you
+applied in [section 1](#1-gateway-api-crds) remain the single source and the install cannot hit the field-ownership
+conflict described there:
 
 ```bash
 helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm \
@@ -69,6 +86,17 @@ helm install envoy-gateway oci://docker.io/envoyproxy/gateway-helm \
 
 kubectl -n envoy-gateway-system rollout status deploy/envoy-gateway
 ```
+
+> If the controller was installed before the correct CRDs and is crash-looping (`no matches for kind "TLSRoute" ...`),
+> apply the section-1 CRDs, then restart it: `kubectl -n envoy-gateway-system rollout restart deploy/envoy-gateway`.
+>
+> Prefer the exact CRDs the chart ships? Extract and apply them instead of the upstream URL (note the nested path):
+>
+> ```bash
+> helm pull oci://docker.io/envoyproxy/gateway-helm --version v1.8.3 --untar
+> kubectl apply --server-side --force-conflicts \
+>   -f gateway-helm/charts/crds/crds/gatewayapi-crds.yaml
+> ```
 
 ### Create a GatewayClass
 
