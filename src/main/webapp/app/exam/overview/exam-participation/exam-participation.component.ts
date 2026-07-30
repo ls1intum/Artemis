@@ -61,6 +61,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { Message } from 'primeng/message';
+import { ButtonDirective } from 'primeng/button';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -90,6 +92,8 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
+        Message,
+        ButtonDirective,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -158,6 +162,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly examSummaryButtonSecondsLeft = signal(10);
     examSummaryButtonTimer?: ReturnType<typeof setInterval>;
     readonly showExamSummary = signal(false);
+    // True while the last summary request failed. The summary is then withheld entirely instead of falling back to the
+    // conduction-era exam cached on this device, which carries no results and would read as a complete summary (#13317).
+    readonly summaryLoadFailed = signal(false);
+    // Repeats whichever summary request failed; set alongside summaryLoadFailed
+    private retrySummaryLoad?: () => void;
 
     readonly exerciseIndex = signal(0);
 
@@ -245,14 +254,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                 });
             } else if (this.testExam() && this.studentExamId()) {
-                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
+                this.loadTestExamStudentExamForSummary();
             } else {
                 this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                     next: (studentExam) => {
@@ -286,21 +288,60 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
+        this.summaryLoadFailed.set(false);
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
-            next: (studentExamWithExercises: StudentExam | undefined) => {
-                if (studentExamWithExercises) {
-                    this.studentExam.set(studentExamWithExercises);
-                }
+            next: (studentExamWithExercises: StudentExam) => {
+                this.studentExam.set(studentExamWithExercises);
                 this.showExamSummary.set(true);
                 this.loadingExam.set(false);
             },
             error: () => {
-                this.loadingExam.set(false);
+                this.handleFailedSummaryLoad(() => this.loadAndDisplaySummary());
             },
         });
         if (!this.testExam()) {
             this.examParticipationService.resetExamLayout();
         }
+    }
+
+    /**
+     * Loads the student exam of a test exam via the summary endpoint. Unlike {@link loadAndDisplaySummary} this is the
+     * initial load, so it also has to set up the exam itself; the summary is then displayed by {@link handleStudentExam}.
+     */
+    private loadTestExamStudentExamForSummary(): void {
+        this.summaryLoadFailed.set(false);
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
+            next: (studentExam) => {
+                this.handleStudentExam(studentExam);
+            },
+            error: () => {
+                this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
+            },
+        });
+    }
+
+    /**
+     * Keeps the summary withheld and surfaces a retryable error state. Showing the previously loaded student exam instead
+     * would present an exam without results as a complete summary long after the error toast expired (#13317).
+     *
+     * @param retry repeats the request that just failed, see {@link retryLoadSummary}
+     */
+    private handleFailedSummaryLoad(retry: () => void): void {
+        this.retrySummaryLoad = retry;
+        this.showExamSummary.set(false);
+        this.summaryLoadFailed.set(true);
+        this.loadingExam.set(false);
+    }
+
+    /**
+     * Retries loading the summary after a failed request.
+     */
+    retryLoadSummary(): void {
+        if (!this.retrySummaryLoad) {
+            return;
+        }
+        this.loadingExam.set(true);
+        this.retrySummaryLoad();
     }
 
     canDeactivate() {
@@ -702,6 +743,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     handleStudentExam(studentExam: StudentExam | undefined) {
         if (!studentExam) {
+            // Leave the loading state; otherwise the view would keep showing the spinner with nothing to render
+            this.loadingExam.set(false);
             return;
         }
         this.studentExam.set(studentExam);

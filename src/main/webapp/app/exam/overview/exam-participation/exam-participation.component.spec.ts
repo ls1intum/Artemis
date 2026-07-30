@@ -1528,6 +1528,129 @@ describe('ExamParticipationComponent', () => {
         expect(comp.showExamSummary()).toBe(true);
     });
 
+    describe('failed summary load', () => {
+        const summaryError = () => throwError(() => new HttpErrorResponse({ status: 500 }));
+
+        it('should withhold the summary and offer a retry when loadAndDisplaySummary fails', () => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            comp.loadingExam.set(true);
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.showExamSummary()).toBe(false);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should not substitute the cached exam when loadAndDisplaySummary fails', () => {
+            const cachedStudentExam = new StudentExam();
+            cachedStudentExam.id = 3;
+            cachedStudentExam.exam = new Exam();
+            comp.exam.set(cachedStudentExam.exam);
+            comp.studentExam.set(cachedStudentExam);
+            const localStorageSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+            vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+
+            expect(localStorageSpy).not.toHaveBeenCalled();
+            expect(comp.showExamSummary()).toBe(false);
+        });
+
+        it('should show the retryable error state instead of the no-student-exam state when the initial test exam summary load fails', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+            const handleNoStudentExamSpy = vi.spyOn(comp, 'handleNoStudentExam');
+
+            comp.ngOnInit();
+
+            expect(summarySpy).toHaveBeenCalledOnce();
+            expect(handleNoStudentExamSpy).not.toHaveBeenCalled();
+            expect(comp.summaryLoadFailed()).toBe(true);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should display the summary when the retry succeeds', () => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            const studentExamWithExercises = new StudentExam();
+            studentExamWithExercises.id = 3;
+            studentExamWithExercises.exam = new Exam();
+            const summarySpy = vi
+                .spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary')
+                .mockReturnValueOnce(summaryError())
+                .mockReturnValueOnce(of(studentExamWithExercises));
+
+            comp.loadAndDisplaySummary();
+            expect(comp.summaryLoadFailed()).toBe(true);
+
+            comp.retryLoadSummary();
+
+            expect(summarySpy).toHaveBeenCalledTimes(2);
+            expect(comp.summaryLoadFailed()).toBe(false);
+            expect(comp.showExamSummary()).toBe(true);
+            expect(comp.studentExam()).toEqual(studentExamWithExercises);
+            expect(comp.loadingExam()).toBe(false);
+        });
+
+        it('should render a retryable error message instead of the summary', () => {
+            // let Angular run its own first change detection (which re-runs ngOnInit) before arranging the state under test
+            fixture.changeDetectorRef.detectChanges();
+
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.submitted = true;
+            studentExam.exam = new Exam();
+            comp.exam.set(studentExam.exam);
+            comp.studentExam.set(studentExam);
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.loadAndDisplaySummary();
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.loadingExam()).toBe(false);
+            expect(comp.isExamSummaryVisible()).toBe(true);
+            expect(fixture.debugElement.query(By.css('#summaryLoadFailedMessage'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-exam-participation-summary'))).toBeNull();
+            // the submission hint carries its own summary button, which would compete with the retry
+            expect(fixture.debugElement.query(By.css('#showExamSummaryButton'))).toBeNull();
+
+            const retryButton = fixture.debugElement.query(By.css('#retryLoadSummaryButton'));
+            expect(retryButton).not.toBeNull();
+
+            summarySpy.mockClear();
+            retryButton.nativeElement.click();
+            expect(summarySpy).toHaveBeenCalledOnce();
+        });
+
+        it('should repeat the initial test exam load on retry rather than the show-summary request', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            (activatedRoute as any).firstChild = { snapshot: { params: { studentExamId: '3' } } };
+            activatedRoute.params = of({ courseId: '1', examId: '2' });
+            const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(summaryError());
+
+            comp.ngOnInit();
+            expect(comp.summaryLoadFailed()).toBe(true);
+            summarySpy.mockClear();
+
+            comp.retryLoadSummary();
+
+            // the student exam id from the route is used again, not the id of an exam that never loaded
+            expect(summarySpy).toHaveBeenCalledWith(1, 2, 3);
+            expect(comp.summaryLoadFailed()).toBe(true);
+        });
+    });
+
     it('should reset Exam Layout in onExamEndConfirmed if it is a test exam', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const examLayoutStub = vi.spyOn(examParticipationService, 'resetExamLayout');
