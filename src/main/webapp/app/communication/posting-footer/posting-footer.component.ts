@@ -10,6 +10,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface PostGroup {
     author: User | undefined;
@@ -100,7 +101,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
         const groups: PostGroup[] = [];
         let currentGroup: PostGroup = {
             author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+            posts: [cloneWith(sortedPosts[0], { isConsecutive: false })],
         };
 
         for (let i = 1; i < sortedPosts.length; i++) {
@@ -113,12 +114,12 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+                currentGroup.posts.push(cloneWith(currentPost, { isConsecutive: true })); // consecutive post
             } else {
                 groups.push(currentGroup);
                 currentGroup = {
                     author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
+                    posts: [cloneWith(currentPost, { isConsecutive: false })],
                 };
             }
         }

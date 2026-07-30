@@ -64,6 +64,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -226,7 +227,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this._courseWideSearchConfig.set(value);
     }
     private commitCourseWideSearchConfig(): void {
-        this._courseWideSearchConfig.update((config) => Object.assign(new CourseWideSearchConfig(), config));
+        this._courseWideSearchConfig.update((config) => hydrate(new CourseWideSearchConfig(), config));
     }
 
     // Icons
@@ -518,7 +519,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
         this.accordionConversationGroups.set(
-            this.messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS,
+            this.messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS,
         );
     }
 
@@ -654,10 +655,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateGroupChatDialog() {
-        const ref = this.dialogService.open(GroupChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(GroupChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO[] | undefined) => !!result),
@@ -673,10 +671,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateOneToOneChatDialog() {
-        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO | undefined) => !!result),
@@ -698,10 +693,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      * Emits a create action for the given channel on confirmation.
      */
     openCreateChannelDialog() {
-        const ref = this.dialogService.open(ChannelsCreateDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(ChannelsCreateDialogComponent, cloneWith(defaultSecondLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: ChannelDTO | undefined) => !!result),
@@ -727,14 +719,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openChannelOverviewDialog() {
         const subType = undefined;
-        const ref = this.dialogService.open(ChannelsOverviewDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course(),
-                createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
-                channelSubType: subType,
-            },
-        });
+        const ref = this.dialogService.open(
+            ChannelsOverviewDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
+                    channelSubType: subType,
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),
@@ -869,12 +863,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (id) {
             try {
                 await firstValueFrom(this.metisService.enable(id, withMessaging));
-                const updatedCourse = {
-                    ...this.course()!,
+                const updatedCourse = cloneWith(this.course()!, {
                     courseInformationSharingConfiguration: withMessaging
                         ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
                         : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                };
+                });
                 this.course.set(updatedCourse);
 
                 this.eventManager.broadcast({

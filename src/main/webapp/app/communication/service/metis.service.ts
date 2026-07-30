@@ -36,11 +36,11 @@ import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -269,7 +269,7 @@ export class MetisService implements OnDestroy {
                         const post = this.cachedPosts[indexOfCachedPost];
                         // Always create new array+post to make sure Angular detects changes
                         const answers = [...(post.answers ?? []), createdAnswerPost];
-                        this.cachedPosts[indexOfCachedPost] = { ...post, answers: answers };
+                        this.cachedPosts[indexOfCachedPost] = cloneWith(post, { answers: answers });
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -323,7 +323,7 @@ export class MetisService implements OnDestroy {
                 if (indexOfCachedPost > -1) {
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
                     if (indexOfAnswer > -1) {
-                        updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        updatedAnswerPost.post = cloneWith(this.cachedPosts[indexOfCachedPost], { answers: [], reactions: [] });
                         updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
@@ -443,6 +443,7 @@ export class MetisService implements OnDestroy {
                         cachedPost.reactions = cachedPost.reactions ?? [];
                         cachedPost.reactions.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
+                        // eslint-disable-next-line localRules/prefer-deep-clone -- a shallow copy is required: only the top-level reference must change so the message re-renders. deepClone would detach the whole post graph (author, answers, and the reaction -> post back-reference), re-creating every child on each reaction click.
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -468,6 +469,7 @@ export class MetisService implements OnDestroy {
                     if (indexOfReaction > -1) {
                         cachedPost.reactions!.splice(indexOfReaction, 1);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
+                        // eslint-disable-next-line localRules/prefer-deep-clone -- see createReaction above: only the top-level reference may change, or the whole post graph is detached on every reaction click.
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -710,13 +712,13 @@ export class MetisService implements OnDestroy {
         if (post instanceof AnswerPost) {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.post!.id);
             const indexOfAnswer = this.cachedPosts[indexToUpdate].answers?.findIndex((answer) => answer.id === post.id) ?? -1;
-            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
+            const postCopy = deepClone(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
             postCopy.isSaved = isSaved;
             postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate].answers![indexOfAnswer] = postCopy;
         } else {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
-            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate]);
+            const postCopy = deepClone(this.cachedPosts[indexToUpdate]);
             postCopy.isSaved = isSaved;
             postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate] = postCopy;
@@ -987,7 +989,7 @@ export class MetisService implements OnDestroy {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
                                 if (postIndex > -1) {
                                     const post = this.cachedPosts[postIndex];
-                                    this.cachedPosts[postIndex] = { ...post, hasForwardedMessages: true };
+                                    this.cachedPosts[postIndex] = cloneWith(post, { hasForwardedMessages: true });
                                 }
                             });
 

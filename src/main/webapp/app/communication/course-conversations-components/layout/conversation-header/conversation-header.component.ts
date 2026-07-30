@@ -29,6 +29,7 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -131,13 +132,15 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course(),
-                activeConversation: this.activeConversation(),
-            },
-        });
+        const ref = this.dialogService.open(
+            ConversationAddUsersDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    activeConversation: this.activeConversation(),
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),
@@ -158,18 +161,20 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
         const selectedTab = this.getAsOneToOneChat(this.activeConversation()) ? ConversationDetailTabs.INFO : tab;
-        const ref = this.dialogService.open(ConversationDetailDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course(),
-                activeConversation: this.activeConversation(),
-                selectedTab,
-                onUserNameClicked: (userId: number) => {
-                    ref?.destroy();
-                    this.metisConversationService.createOneToOneChatWithId(userId).subscribe();
+        const ref = this.dialogService.open(
+            ConversationDetailDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    activeConversation: this.activeConversation(),
+                    selectedTab,
+                    onUserNameClicked: (userId: number) => {
+                        ref?.destroy();
+                        this.metisConversationService.createOneToOneChatWithId(userId).subscribe();
+                    },
                 },
-            },
-        });
+            }),
+        );
 
         ref?.onClose
             .pipe(

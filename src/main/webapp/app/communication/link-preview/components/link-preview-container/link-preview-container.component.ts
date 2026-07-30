@@ -5,6 +5,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
 import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-link-preview-container',
@@ -84,7 +85,7 @@ export class LinkPreviewContainerComponent implements OnInit {
                     if (existingLinkPreviewIndex !== -1) {
                         this.linkPreviews.update((previews) => {
                             const existingLinkPreview = previews[existingLinkPreviewIndex];
-                            Object.assign(existingLinkPreview, linkPreview);
+                            hydrate(existingLinkPreview, linkPreview);
                             return previews;
                         });
                     } else {

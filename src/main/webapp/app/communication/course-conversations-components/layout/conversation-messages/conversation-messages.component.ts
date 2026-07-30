@@ -43,6 +43,7 @@ import { canCreateNewMessageInConversation } from 'app/communication/conversatio
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface PostGroup {
     author: User | undefined;
@@ -361,7 +362,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
                 // Start new group if none exists.
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [cloneWith(post, { isConsecutive: false })] };
                 return;
             }
 
@@ -375,10 +376,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
 
             if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...post, isConsecutive: true });
+                currentGroup.posts.push(cloneWith(post, { isConsecutive: true }));
             } else {
                 computedGroups.push(currentGroup);
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [cloneWith(post, { isConsecutive: false })] };
             }
         });
         if (currentGroup) {
