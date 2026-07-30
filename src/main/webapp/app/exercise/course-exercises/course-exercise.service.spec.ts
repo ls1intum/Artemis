@@ -184,7 +184,7 @@ describe('Course Management Service', () => {
         req.flush(participationDTO);
         expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
         expect(participation?.id).toBe(participationId);
-        expectDateConversionToBeDone(participation!.exercise!, true);
+        expectDateConversionToBeDone(participation!.exercise!);
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
@@ -206,7 +206,7 @@ describe('Course Management Service', () => {
         req.flush(participationDTO);
         expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
         expect(participation?.testRun).toBe(true);
-        expectDateConversionToBeDone(participation!.exercise!, true);
+        expectDateConversionToBeDone(participation!.exercise!);
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
@@ -228,7 +228,7 @@ describe('Course Management Service', () => {
         req.flush(participationDTO);
         expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
         expect((participation as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
-        expectDateConversionToBeDone(participation!.exercise!, true);
+        expectDateConversionToBeDone(participation!.exercise!);
         expect(participation?.exercise?.studentParticipations?.[0]).toBe(participation);
     });
 
