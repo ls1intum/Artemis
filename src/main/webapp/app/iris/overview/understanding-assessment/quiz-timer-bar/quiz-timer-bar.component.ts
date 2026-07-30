@@ -12,7 +12,7 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuizTimerBarComponent {
-    timeLimit = input(0);
+    timeLimit = input<number | undefined>(0);
     timerExpiresAt = input<dayjs.Dayjs>();
     open = input(false);
     showProgress = input(true);
@@ -24,7 +24,7 @@ export class QuizTimerBarComponent {
 
     private readonly remainingSeconds = signal<number | undefined>(undefined);
 
-    protected readonly displayedRemainingSeconds = computed(() => this.remainingSeconds() ?? this.timeLimit());
+    protected readonly displayedRemainingSeconds = computed(() => this.remainingSeconds() ?? this.timeLimit() ?? 0);
 
     protected readonly displayedRemainingTime = computed(() => {
         const remainingSeconds = this.displayedRemainingSeconds();
@@ -45,6 +45,10 @@ export class QuizTimerBarComponent {
 
     protected readonly progress = computed(() => {
         const timeLimit = this.timeLimit();
+
+        if (timeLimit === undefined) {
+            return 0;
+        }
 
         if (timeLimit <= 0) {
             return 100;

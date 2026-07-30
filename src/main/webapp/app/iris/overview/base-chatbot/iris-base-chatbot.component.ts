@@ -366,12 +366,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
-    readonly showClearSessionButton = input<boolean>(true);
     readonly showOnlyPromptingModeMessage = input<boolean>(false);
     readonly currentlyPrompting = input<boolean>(false);
     readonly promptingInitiated = input<boolean>(false);
     readonly timerExpiresAt = input<dayjs.Dayjs | undefined>(undefined);
-    readonly timeLimit = input<number>(0);
+    readonly timeLimit = input<number | undefined>();
     readonly timerExpired = output<void>();
 
     // ViewChilds

@@ -206,7 +206,7 @@
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
-                        @if (showClearSessionButton() && !isChatHistoryAvailable() && messages().length >= 1 && !promptingInitiated()) {
+                        @if (!isChatHistoryAvailable() && messages().length >= 1 && !promptingInitiated()) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -378,7 +378,12 @@
                                 <jhi-iris-thinking-bubble [message]="thinkingMessage()" />
                             </div>
                         }
-                        <jhi-quiz-timer-bar [open]="currentlyPrompting()" [timeLimit]="timeLimit()" [timerExpiresAt]="timerExpiresAt()" (timerExpired)="timerExpired.emit()" />
+                        <jhi-quiz-timer-bar
+                            [open]="currentlyPrompting() && timerExpiresAt() !== undefined"
+                            [timeLimit]="timeLimit()"
+                            [timerExpiresAt]="timerExpiresAt()"
+                            (timerExpired)="timerExpired.emit()"
+                        />
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [runInfo]="runInfo()" />
                         }
@@ -466,7 +471,7 @@
                             }
                             <div class="textarea-controls">
                                 <jhi-context-selection
-                                    [disabled]="isInputDisabled()"
+                                    [disabled]="isInputDisabled() || promptingInitiated()"
                                     data-onboarding-target="context-selector"
                                     (contextChanged)="onContextChangedDuringOnboarding()"
                                 />

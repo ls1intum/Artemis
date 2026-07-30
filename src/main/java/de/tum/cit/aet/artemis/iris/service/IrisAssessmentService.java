@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
@@ -14,8 +18,11 @@ import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
 import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -26,14 +33,32 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 @Conditional(IrisEnabled.class)
 public class IrisAssessmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisAssessmentService.class);
+
     private final IrisAssessmentRepository irisAssessmentRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public IrisAssessmentService(IrisAssessmentRepository irisAssessmentRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+    private final IrisSettingsService irisSettingsService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final UserRepository userRepository;
+
+    public IrisAssessmentService(IrisAssessmentRepository irisAssessmentRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, IrisSettingsService irisSettingsService,
+            AuthorizationCheckService authCheckService, IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository) {
         this.irisAssessmentRepository = irisAssessmentRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.irisSettingsService = irisSettingsService;
+        this.authCheckService = authCheckService;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.userRepository = userRepository;
     }
 
     /**

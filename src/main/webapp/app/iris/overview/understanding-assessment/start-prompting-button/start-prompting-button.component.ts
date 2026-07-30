@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { catchError, of, switchMap, take } from 'rxjs';
@@ -32,7 +32,6 @@ export class IrisStartPromptingButtonComponent {
     protected readonly faBrain = faBrain;
 
     protected readonly isPromptingMode = signal(false);
-    private readonly localQuizCompleted = signal(false);
     private readonly exerciseId = computed(() => this.exercise().id);
 
     private readonly latestSubmissionHasPoints = toSignal(
@@ -51,7 +50,6 @@ export class IrisStartPromptingButtonComponent {
     protected readonly latestEvent = toSignal(this.irisChatService.currentLatestEvent(), { initialValue: undefined });
     private readonly hasBuildWithPoints = computed(() => this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
     private readonly promptingFinished = computed(() => this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED);
-    private readonly activePromptingMode = computed(() => this.isPromptingMode() && !this.promptingFinished());
 
     private readonly quizAlreadyDoneFromServer = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -79,56 +77,31 @@ export class IrisStartPromptingButtonComponent {
         { initialValue: false },
     );
 
-    protected readonly quizAlreadyDone = computed(
-        () => (!this.activePromptingMode() && !this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || this.localQuizCompleted(),
-    );
+    protected readonly quizAlreadyDone = computed(() => (!this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || (this.isPromptingMode() && this.promptingFinished()));
 
     protected readonly canBeStarted = computed(
-        () => (this.hasBuildWithPoints() || this.latestSubmissionHasPoints()) && !this.quizAlreadyDone() && !this.activePromptingMode() && !this.inClassPromptingModeStarted(),
+        () => (this.hasBuildWithPoints() || this.latestSubmissionHasPoints()) && !this.quizAlreadyDone() && !this.isPromptingMode() && !this.inClassPromptingModeStarted(),
     );
 
     protected readonly buttonLabel = computed(() => {
-        if (this.activePromptingMode() || this.inClassPromptingModeStarted()) {
-            return 'artemisApp.exerciseActions.prompting.currently';
-        } else if (this.quizAlreadyDone()) {
+        if (this.quizAlreadyDone()) {
             return 'artemisApp.exerciseActions.prompting.finished';
         } else if (this.canBeStarted()) {
             return 'artemisApp.exerciseActions.prompting.start';
+        } else if (this.isPromptingMode() || this.inClassPromptingModeStarted()) {
+            return 'artemisApp.exerciseActions.prompting.currently';
         } else {
             return 'artemisApp.exerciseActions.prompting.noSubmission';
         }
     });
 
-    constructor() {
-        effect(() => {
-            const latestEvent = this.latestEvent();
-            if (latestEvent === IrisPipeEvent.BUILD_WITH_POINTS) {
-                this.localQuizCompleted.set(false);
-                this.isPromptingMode.set(false);
-            } else if (latestEvent === IrisPipeEvent.PROMPTING_FINISHED) {
-                this.localQuizCompleted.set(true);
-                this.isPromptingMode.set(false);
-            }
-        });
-    }
-
     protected startPromptingMode(): void {
-        if (!this.canBeStarted()) {
-            return;
-        }
-
         const exerciseId = this.exerciseId();
-        if (exerciseId === undefined) {
+        if (!this.canBeStarted() || exerciseId === undefined) {
             return;
         }
 
         this.isPromptingMode.set(true);
-        this.localQuizCompleted.set(false);
-        this.irisChatService
-            .startPromptingMode(exerciseId)
-            .pipe(take(1))
-            .subscribe({
-                error: () => this.isPromptingMode.set(false),
-            });
+        this.irisChatService.startPromptingMode(exerciseId).pipe(take(1)).subscribe();
     }
 }

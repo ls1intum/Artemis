@@ -123,7 +123,6 @@ export class IrisChatService implements OnDestroy {
     private knownRunIds = new Set<string>();
     private terminalRunStateByRunId = new Map<string, IrisRunState>();
     private currentRunId?: string;
-    private emittedRunEvents = new Set<string>();
 
     private finalizedRunIds = new Set<string>();
     private pendingRunGeneration = signal(false);
@@ -678,6 +677,7 @@ export class IrisChatService implements OnDestroy {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 this.handleMessageWebsocketPayload(payload);
                 this.applyPipeEvent(payload);
+                this.stopQuizTimer(payload);
                 break;
             case IrisChatWebsocketPayloadType.PARTIAL:
                 this.handlePartialWebsocketMessage(payload);
@@ -695,14 +695,14 @@ export class IrisChatService implements OnDestroy {
         if (!payload.event) {
             return;
         }
-
-        const eventKey = payload.runId ? `${payload.runId}:${payload.event}` : payload.event;
-        if (this.emittedRunEvents.has(eventKey)) {
-            return;
-        }
-
-        this.emittedRunEvents.add(eventKey);
         this.latestEvent.next(payload.event);
+    }
+
+    private stopQuizTimer(payload: IrisChatWebsocketDTO): void {
+        // Stop chat timer when user sends a message
+        if (payload.message?.sender === IrisSender.USER) {
+            this.stopTimer$.next();
+        }
     }
 
     private shouldApplyRunScopedPayload(payload: IrisChatWebsocketDTO): boolean {
@@ -852,7 +852,6 @@ export class IrisChatService implements OnDestroy {
         this.knownRunIds.clear();
         this.terminalRunStateByRunId.clear();
         this.currentRunId = undefined;
-        this.emittedRunEvents.clear();
         this.pendingRunGeneration.set(false);
         this.answeredRunIds.set(new Set<string>());
     }
