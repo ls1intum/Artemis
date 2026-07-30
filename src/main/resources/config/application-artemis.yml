@@ -203,7 +203,8 @@ spring:
       ## Variant 1 (active here): Azure OpenAI / Microsoft Foundry
       base-url: https://endpoint.openai.azure.com
       api-key: my-api-key-for-azure-openai
-      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
+      # Microsoft Foundry authentication is auto-detected for *.openai.azure.com. Set microsoft-foundry: true explicitly only when using a custom Foundry domain;
+      # forcing it globally sends an api-key header to ordinary OpenAI-compatible endpoints, which require Authorization: Bearer instead.
       # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
       # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
       timeout: 5m
