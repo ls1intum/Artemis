@@ -857,7 +857,12 @@ public final class ExerciseIntegrityGate {
         LinkedHashSet<String> mandates = new LinkedHashSet<>(techniqueMandatesInRules(spec));
         String ledger = markdownSectionBody(spec, "## Decision Ledger");
         for (String row : ledger.lines().filter(line -> line.contains("PEDAGOGICAL_OBJECTIVE")).toList()) {
-            mandates.addAll(techniqueMandates(row));
+            String[] cells = row.split("\\|", -1);
+            for (int i = 1; i < cells.length; i++) {
+                if ("PEDAGOGICAL_OBJECTIVE".equals(cells[i].strip()) && i > 0) {
+                    mandates.addAll(techniqueMandates(cells[i - 1]));
+                }
+            }
         }
         return List.copyOf(mandates);
     }
@@ -873,9 +878,14 @@ public final class ExerciseIntegrityGate {
         if (text == null || text.isBlank()) {
             return List.of();
         }
+        String normalized = text.replace("`", "");
         List<String> mandates = new ArrayList<>();
-        Matcher matcher = TECHNIQUE_MANDATE.matcher(text);
+        Matcher matcher = TECHNIQUE_MANDATE.matcher(normalized);
         while (matcher.find()) {
+            String prefix = normalized.substring(Math.max(0, matcher.start() - 32), matcher.start());
+            if (prefix.matches("(?is).*\\b(?:(?:does?|did|is|are|was|were|must)\\s+)?not\\s+$")) {
+                continue;
+            }
             // Markdown emphasis is presentation, not content: "must be recursive" and "must be **recursive**" state one mandate and must be reported once.
             String mandate = matcher.group().strip().replace("*", "").replaceAll("\\s+", " ").strip();
             if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {

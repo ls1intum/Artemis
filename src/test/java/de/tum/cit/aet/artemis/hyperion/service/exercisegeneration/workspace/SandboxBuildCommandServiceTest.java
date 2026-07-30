@@ -219,7 +219,8 @@ class SandboxBuildCommandServiceTest {
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
 
-        assertThat(script).contains("mvn -B clean test-compile -DskipTests", "find \"$BUILD_DIR\" \"$WORKSPACE\" -type f -name '*.java' -delete", "mvn -B surefire:test");
+        assertThat(script).contains("mvn -B clean compile", "mvn -B test-compile -DskipTests", "find \"$BUILD_DIR\" \"$WORKSPACE\" -type f -name '*.java' -delete",
+                "mvn -B surefire:test");
         assertThat(script.indexOf("test-compile -DskipTests")).isLessThan(script.indexOf("-name '*.java' -delete"));
         assertThat(script.indexOf("-name '*.java' -delete")).isLessThan(script.indexOf("mvn -B surefire:test"));
     }
@@ -284,6 +285,28 @@ class SandboxBuildCommandServiceTest {
 
         assertThat(script).contains("if [ \"$ISOLATION\" = \"isolate-sources\" ]", "echo exact-production-phase");
         assertThat(new SandboxBuildCommandService(Optional.empty(), Optional.empty()).pristineSolutionBuildCommand()).doesNotContain("isolate-sources");
+    }
+
+    @Test
+    void authoritativeJavaBuild_derivesBothHalvesFromTheResolvedMavenPhase() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn -B -Pcourse clean compile", null, false, List.of());
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn -B -Pcourse test -Dstudent.profile=true", null, false, List.of());
+        String script = factoryWithPhases(List.of(compile, test)).verifyScriptContent(java);
+
+        assertThat(script).contains("mvn -B -Pcourse clean compile", "mvn -B -Pcourse test-compile -DskipTests -Dstudent.profile=true",
+                "mvn -B -Pcourse surefire:test -Dstudent.profile=true");
+    }
+
+    @Test
+    void authoritativeJavaBuild_failsClosedWhenTheResolvedRecipeCannotBeSplitSafely() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        BuildPhaseDTO combined = new BuildPhaseDTO("test", "mvn -B test && echo after", null, false, List.of());
+        String script = factoryWithPhases(List.of(combined)).verifyScriptContent(java);
+
+        assertThat(script).contains("Source-isolated verification requires a standalone Maven test phase", "exit 65");
     }
 
     @Test

@@ -277,7 +277,7 @@ public class SpecFidelityCriticService {
      * invariant prevents a missed exact-technique mandate from becoming a known-but-ungraded requirement downstream.
      */
     private static SpecificationReview ensureGradeableSpecification(String specification, SpecificationReview review) {
-        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInSpecification(specification);
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(specification);
         if (techniqueMandates.isEmpty()) {
             return review;
         }

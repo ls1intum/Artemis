@@ -5,8 +5,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -42,6 +45,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 public class SandboxBuildCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(SandboxBuildCommandService.class);
+
+    private static final Pattern MAVEN_TEST_PHASE = Pattern.compile("(?s)^(\\s*(?:cd\\s+[^\\n]+\\n)?\\s*mvn\\s+)(.*?)(?<![\\w-])test(?![\\w-])([^\\n;&|]*)\\s*$");
 
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
@@ -133,7 +138,7 @@ public class SandboxBuildCommandService {
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
         boolean java = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-        String isolatedPhaseSection = java ? buildIsolatedJavaPhaseSection(exercise) : phaseSection;
+        String isolatedPhaseSection = java ? buildIsolatedJavaPhaseSection(recipe, exercise) : phaseSection;
         String javaSecurityManagerAllow = java
                 ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
                 : ": # no Java/Ares security-manager compatibility flags needed";
@@ -261,20 +266,57 @@ public class SandboxBuildCommandService {
      * Compiles Java tests before removing every generated Java source from both the disposable build and live workspace. Surefire then executes only the compiled classes, so a
      * graded test cannot inspect generated source text. Final verification restores the captured workspace after each run.
      */
-    private static String buildIsolatedJavaPhaseSection(ProgrammingExercise exercise) {
-        boolean sequential = exercise.getBuildConfig() != null && exercise.getBuildConfig().hasSequentialTestRuns();
-        String compile = sequential ? "run_phase 'cd structural\nmvn -B clean test-compile -DskipTests'\nrun_phase 'cd behavior\nmvn -B clean test-compile -DskipTests'"
-                : "run_phase 'mvn -B clean test-compile -DskipTests'";
+    private static String buildIsolatedJavaPhaseSection(BuildRecipe recipe, ProgrammingExercise exercise) {
+        List<String> setupPhases = new ArrayList<>();
+        List<MavenTestPhase> testPhases = new ArrayList<>();
+        boolean reachedTests = false;
+        for (String phase : recipe.phases()) {
+            MavenTestPhase split = splitMavenTestPhase(phase);
+            if (split != null) {
+                reachedTests = true;
+                testPhases.add(split);
+            }
+            else if (reachedTests) {
+                return "run_phase 'echo \"Source-isolated verification requires compile/setup phases before Maven test phases\" >&2; exit 65'";
+            }
+            else {
+                setupPhases.add(phase);
+            }
+        }
+        if (testPhases.isEmpty()) {
+            return "run_phase 'echo \"Source-isolated verification requires a standalone Maven test phase\" >&2; exit 65'";
+        }
+        String setup = buildPhaseSection(setupPhases);
+        String compileTests = testPhases.stream().map(MavenTestPhase::compileTests).map(SandboxBuildCommandService::singleQuote).map(command -> "run_phase '" + command + "'")
+                .collect(Collectors.joining("\n"));
         String staticAnalysis = Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) ? "\nrun_phase 'mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'" : "";
-        String test = sequential ? "run_phase 'cd structural\nmvn -B surefire:test'\nrun_phase 'cd behavior\nmvn -B surefire:test'" : "run_phase 'mvn -B surefire:test'";
-        return compile + staticAnalysis + """
+        String executeTests = testPhases.stream().map(MavenTestPhase::executeTests).map(SandboxBuildCommandService::singleQuote).map(command -> "run_phase '" + command + "'")
+                .collect(Collectors.joining("\n"));
+        return setup + "\n" + compileTests + staticAnalysis + """
 
                 if [ "$rc" -eq 0 ]; then
                     # Source is deliberately destroyed, not hidden at a guessable path. The verifier owns restoration from its immutable in-memory candidate.
                     find "$BUILD_DIR" "$WORKSPACE" -type f -name '*.java' -delete 2>/dev/null || exit 74
-                """ + test + """
+                """ + executeTests + """
 
                 fi""";
+    }
+
+    private static @Nullable MavenTestPhase splitMavenTestPhase(String phase) {
+        Matcher matcher = MAVEN_TEST_PHASE.matcher(phase);
+        if (!matcher.matches()) {
+            return null;
+        }
+        String commandPrefix = matcher.group(1);
+        String beforeGoal = matcher.group(2);
+        String afterGoal = matcher.group(3);
+        String compileTests = commandPrefix + beforeGoal + "test-compile -DskipTests" + afterGoal;
+        String executionPrefix = beforeGoal.replaceAll("(?<![\\w-])clean(?![\\w-])\\s*", "");
+        String executeTests = commandPrefix + executionPrefix + "surefire:test" + afterGoal;
+        return new MavenTestPhase(compileTests.strip(), executeTests.strip());
+    }
+
+    private record MavenTestPhase(String compileTests, String executeTests) {
     }
 
     /**

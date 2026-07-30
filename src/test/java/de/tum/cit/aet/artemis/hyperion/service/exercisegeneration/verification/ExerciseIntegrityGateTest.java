@@ -1206,6 +1206,31 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.techniqueMandates(text)).isNotEmpty();
     }
 
+    @Test
+    void techniqueMandates_parseTheExactMarkdownLedgerDecisionWithoutReadingItsRationale() {
+        String specification = """
+                ## Decision Ledger
+                | Decision | Provenance | Why necessary | Observable |
+                |---|---|---|---|
+                | Require use of `if‑else` | PEDAGOGICAL_OBJECTIVE | Practice branching | Not observable through the public API |
+                | Keep public behavior | BRIEF | The rationale says require use of recursion only as a historical quote | yes |
+                """;
+
+        assertThat(ExerciseIntegrityGate.techniqueMandatesInSpecification(specification)).singleElement().asString().contains("if‑else");
+    }
+
+    @Test
+    void techniqueMandates_doNotTurnExplicitNegationIntoARequirement() {
+        String specification = """
+                ## Decision Ledger
+                | Decision | Provenance | Why necessary | Observable |
+                |---|---|---|---|
+                | Does not require the use of if-else; behavior is graded | PEDAGOGICAL_OBJECTIVE | Avoid syntax grading | yes |
+                """;
+
+        assertThat(ExerciseIntegrityGate.techniqueMandatesInSpecification(specification)).isEmpty();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "an implementation that uses a for loop instead of recursion", "an iterative implementation using an explicit stack",
             "a version that computes the result with a while loop rather than recursively", "the tests do not check that the implementation is recursive",
