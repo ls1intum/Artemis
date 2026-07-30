@@ -53,7 +53,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     // Backed by a signal because the template reads it; the getter/setter facade keeps the existing in-place
     // mutations (and pass-by-reference into services) working. Call commitMaxSize() after in-place mutations in
     // async paths so the template re-renders.
-    private readonly _maxSize = signal<Dimensions>(undefined!);
+    private readonly _maxSize = signal<Dimensions>(undefined!, { equal: () => false });
     get maxSize(): Dimensions {
         return this._maxSize();
     }
@@ -61,7 +61,9 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         this._maxSize.set(value);
     }
     private commitMaxSize(): void {
-        this._maxSize.set(deepClone(this._maxSize()));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits. The
+        // cropper services hold this object and mutate it, so it must stay the same instance.
+        this._maxSize.set(this._maxSize());
     }
     moveTypes = MoveTypes;
     readonly imageVisible = signal(false);
@@ -72,7 +74,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
      * pass-by-reference contract with the cropper services. Call commitCropper() after in-place mutations in
      * async paths so the template re-renders.
      */
-    private readonly _cropper = signal<CropperPosition>(defaultCropperPosition());
+    private readonly _cropper = signal<CropperPosition>(defaultCropperPosition(), { equal: () => false });
     get cropper(): CropperPosition {
         return this._cropper();
     }
@@ -80,7 +82,9 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         this._cropper.set(value);
     }
     private commitCropper(): void {
-        this._cropper.set(deepClone(this._cropper()));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits. The
+        // cropper services mutate this position in place and rely on the pass-by-reference contract.
+        this._cropper.set(this._cropper());
     }
 
     readonly wrapper = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
@@ -172,8 +176,13 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private onChangesUpdateSettings(changes: SimpleChanges) {
-        // Translate signal-input change keys into the option names CropperSettings expects.
-        const optionChanges: SimpleChanges = deepClone(changes);
+        // Translate signal-input change keys into the option names CropperSettings expects. The SimpleChange entries
+        // are carried over by reference: they wrap the actual input values (events, files, transforms), which must
+        // reach setOptionsFromChanges as they are.
+        const optionChanges: SimpleChanges = {};
+        for (const key of Object.keys(changes)) {
+            optionChanges[key] = changes[key];
+        }
         if (changes.cropperInput) {
             optionChanges.cropper = changes.cropperInput;
             delete optionChanges.cropperInput;
