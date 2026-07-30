@@ -1,0 +1,12 @@
+@if (isLoading()) {
+    <div class="ssr-status" aria-busy="true">
+        <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
+    </div>
+}
+@if (initialLoadFailed()) {
+    <p-message severity="warn" [text]="errorMessageKey() | artemisTranslate" />
+}
+@if (refreshFailed()) {
+    <p-message severity="info" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
+}
+<div #renderTarget class="artemis-problem-statement-host" [attr.aria-busy]="isRefreshing()" [innerHTML]="safeHtml()"></div>
