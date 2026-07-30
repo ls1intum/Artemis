@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -841,6 +842,41 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).doesNotContain("data:image/png;base64,");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderNoResultWhenTestResultsAreNull() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"no-result\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderNotExecutedWhenTestResultsAreEmptyList() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", List.of(), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"not-executed\"");
+        assertThat(result.html()).doesNotContain("data-test-status=\"no-result\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldAcceptMoreThanOneHundredTestResults() throws Exception {
+        List<TestFeedbackInputDTO> many = new ArrayList<>();
+        for (int i = 1; i <= 150; i++) {
+            many.add(new TestFeedbackInputDTO((long) i, "test" + i, true, null, null));
+        }
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", many, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"success\"");
     }
 
     private static byte[] createMinimalPng() {

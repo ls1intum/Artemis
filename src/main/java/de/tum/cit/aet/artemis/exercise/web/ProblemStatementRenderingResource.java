@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,9 @@ public class ProblemStatementRenderingResource {
 
     private final ProblemStatementRenderingService renderingService;
 
+    @Value("${artemis.problem-statement-rendering.max-test-results:1000}")
+    private int maxTestResults;
+
     public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService) {
         this.renderingService = renderingService;
     }
@@ -68,7 +72,10 @@ public class ProblemStatementRenderingResource {
         log.debug("REST request to render problem statement (stateless)");
 
         Map<Long, TestFeedbackInputDTO> testResults = null;
-        if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
+        if (renderRequest.testResults() != null) {
+            if (renderRequest.testResults().size() > maxTestResults) {
+                return unprocessable("Too many test results", "testResults contains " + renderRequest.testResults().size() + " entries, the maximum is " + maxTestResults + ".");
+            }
             testResults = new HashMap<>();
             Set<String> seenNames = new HashSet<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
