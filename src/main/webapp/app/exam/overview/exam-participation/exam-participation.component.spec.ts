@@ -1849,7 +1849,7 @@ describe('ExamParticipationComponent', () => {
             submittedTestExam.id = 3;
             submittedTestExam.submitted = true;
             submittedTestExam.exam = new Exam();
-            submittedTestExam.exam.testExam = true;
+            submittedTestExam.exam.examMode = ExamMode.TEST;
             const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(submittedTestExam));
 
             comp.ngOnInit();
