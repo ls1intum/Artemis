@@ -154,8 +154,27 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     savedExercisesCount(): number {
-        this.syncStateVersion();
+        this.trackSyncState();
         return this.exercises().filter((exercise) => ExamParticipationService.getSubmissionForExercise(exercise)?.submitted).length;
+    }
+
+    /**
+     * Read every signal that marks a submission's `isSynced` flag as changed, so the template bindings
+     * below re-evaluate under zoneless change detection.
+     *
+     * `isSynced` is mutated in place on a plain submission object, which schedules no change detection
+     * on its own. Two independent producers exist: {@link syncStateVersion}, bumped locally when a
+     * programming repository reports uncommitted changes, and the service-wide
+     * {@link ExamParticipationService.submissionSyncVersion}, bumped by every exam submission editor
+     * (text, quiz, modeling, file upload, programming) when the student edits their answer. Reading
+     * only the local one left this sidebar blind to ordinary edits: after typing into a text exercise
+     * the status icon kept showing the "not started" hourglass and the "Exercise not saved" tooltip
+     * never appeared, until some unrelated interaction happened to trigger change detection. During an
+     * exam that hid the unsaved-changes warning from students.
+     */
+    private trackSyncState(): void {
+        this.syncStateVersion();
+        this.examParticipationService.submissionSyncVersion();
     }
 
     /**
@@ -166,7 +185,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     getExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.syncStateVersion();
+        this.trackSyncState();
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
         if (this.examTimeLineView()) {

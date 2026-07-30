@@ -196,8 +196,9 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # directories:
 #   pnpm run webapp:prod      -> build/resources/main/static/   (Angular bundle)
 #   ./gradlew compileJava     -> build/classes/                  (.class files)
-# Then re-enter Gradle for the assembly step with `-x webapp` so Gradle just runs
-# processResources + bootWar against the Angular bundle already on disk.
+# The bundle is then moved to build/webapp-dist and Gradle is re-entered for the assembly step, where
+# the copy-only `webapp` task puts it back inside the tracked task graph (see the comment at that
+# step for why handing it over through build/resources/main/static directly does not work).
 #
 # SBOM generation (server cyclonedxBom + client cdxgen + filter-shipped) is opt-in
 # via `-Psbom`. The E2E path does not need an SBOM in the WAR, so we omit it here.
@@ -232,9 +233,22 @@ if [ "$SKIP_BUILD" = false ]; then
         exit 1
     fi
     echo -e "${GREEN}  ✓ client + server built; assembling WAR...${NC}"
+    # Hand the bundle to Gradle via build/webapp-dist instead of leaving it at the Angular config's
+    # default build/resources/main/static. That directory is processResources' declared output, and
+    # Gradle deletes every declared task-output directory it does not already recognize from a previous
+    # build in this workspace *before* any task runs. In a fresh worktree (or any workspace where no
+    # build has run processResources yet) that wiped the bundle we had just built, and bootWar then
+    # produced a WAR with no client — the sanity check below caught it, costing a full rebuild cycle.
+    # build/webapp-dist is not declared as any task's output, so it survives the cleanup, and the
+    # `webapp` task (gradle/profile_prod.gradle registers a copy-only variant when that directory
+    # exists) materialises it into place as part of the tracked task graph. This mirrors what CI's
+    # build-war job does; note the deliberate absence of `-x webapp` below, which is what lets that
+    # copy run. See .github/workflows/ci-build.yml and gradle/profile_prod.gradle for the rationale.
+    rm -rf build/webapp-dist
+    mv build/resources/main/static build/webapp-dist
     # bootWar without `-Psbom` skips the SBOM dependency chain entirely; the
     # cyclonedxBom and generateClientSbom tasks are not wired into copySbomsToResources.
-    ./gradlew -Pprod -Pwar bootWar -x test -x webapp
+    ./gradlew -Pprod -Pwar bootWar -x test
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
