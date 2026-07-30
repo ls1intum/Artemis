@@ -330,6 +330,32 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
+    void specificationReviewCannotApproveANormativeTechniqueThatTheAllowedAssessmentCannotObserve() {
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"learningFit":{"briefEvidenceIds":["B1"],
+                         "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"Students implement branching over explicit boundaries.",
+                         "remainingStudentReasoning":"Students translate the exhaustive boundary partition into control flow.","domainGrounding":"The classification domain makes each branch observable.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
+                         "omissions":[],"conflicts":[],"internalConflicts":[],"boundaryChecks":[],"priorFindingChecks":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
+                        """));
+
+        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an introductory branching exercise.", """
+                ## Rules
+                R1: Return "Cold" for values below zero.
+                R2: The method must be implemented as an if-else-if chain.
+
+                ## Design
+                TemperatureClassifier | student implements classify | stubbed
+
+                ## Testing Strategy
+                S1 | TemperatureClassifier | classification result | 1 | no
+                """, null, () -> false);
+
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.findings()).singleElement().asString().contains("Ungradeable normative technique rule", "if-else", "externally observable correctness");
+    }
+
+    @Test
     void specificationReviewRejectsRelocatingARequiredOperationBoundary() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
@@ -1091,7 +1117,8 @@ class SpecFidelityCriticServiceTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("[F1] Unsupported constraint", "Adjudicate every F ID",
-                "Do not repeat an F finding in an ordinary finding array");
+                "Do not repeat an F finding in an ordinary finding array", "preserve their values and evidence IDs", "objectiveEvidenceIds: E candidates",
+                "Every briefEvidenceIds field: B candidates");
     }
 
     @Test

@@ -259,17 +259,36 @@ public class SpecFidelityCriticService {
     }
 
     public SpecificationReview reviewSpecification(String brief, String specification, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return specificationCritic.reviewSpecification(brief, null, specification, usageSink, cancelled);
+        return ensureGradeableSpecification(specification, specificationCritic.reviewSpecification(brief, null, specification, usageSink, cancelled));
     }
 
     public SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
-        return specificationCritic.reviewSpecification(brief, selectedConcept, specification, usageSink, cancelled);
+        return ensureGradeableSpecification(specification, specificationCritic.reviewSpecification(brief, selectedConcept, specification, usageSink, cancelled));
     }
 
     public SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable SpecificationReview previousReview,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, usageSink, cancelled);
+        return ensureGradeableSpecification(specification, specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, usageSink, cancelled));
+    }
+
+    /**
+     * A frozen correctness rule must be enforceable by the assessment mode the generator is allowed to build. The semantic reviewer still decides scope and pedagogy; this
+     * invariant prevents a missed exact-technique mandate from becoming a known-but-ungraded requirement downstream.
+     */
+    private static SpecificationReview ensureGradeableSpecification(String specification, SpecificationReview review) {
+        List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(specification);
+        if (techniqueMandates.isEmpty()) {
+            return review;
+        }
+        List<String> findings = new ArrayList<>(review.findings());
+        techniqueMandates.stream().limit(MAX_TECHNIQUE_RULE_FINDINGS)
+                .map(rule -> "Ungradeable normative technique rule — current SPEC says \"" + truncate(rule)
+                        + "\". Put externally observable correctness in Rules. Preserve a requested implementation technique as a non-normative pedagogical objective unless "
+                        + "the configured assessment can enforce it without source, bytecode, stack, or grader-context inspection.")
+                .filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecificationReview(review.complete(), review.conceptualReworkRequired(), true, List.copyOf(findings), review.auditSummary(), review.learningFitDirection(),
+                review.riskHistory());
     }
 
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {

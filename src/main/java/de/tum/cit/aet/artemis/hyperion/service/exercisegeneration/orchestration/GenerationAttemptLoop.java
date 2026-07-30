@@ -281,15 +281,8 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Runs attempts until the candidate is accepted, a budget is exhausted, or the run ends early.
-     * <p>
-     * On mechanical rejection, the verifier's reasons are fed back and the attempt is retried within a bounded budget. The verifier enforces rules the agent's own verify.sh
-     * cannot show — the template must fail a meaningful fraction, the problem statement must bind tasks — so a "builds, but not quite right" candidate is repaired here rather
-     * than reaching an instructor.
-     * <p>
-     * The loop deliberately holds no wall-clock ceiling of its own; its bounds are the attempt count and, per attempt, the turn budget. Wall-clock is owned entirely by
-     * {@code cancelled}, which carries the job deadline configured as {@code artemis.hyperion.agent.max-job-duration}: it is polled before every model turn, and a run it stops
-     * still keeps (and saves) the last verified candidate. A private ceiling here could only duplicate that or silently contradict an operator who changed it.
+     * Runs bounded attempts until acceptance or an explicit stop. Mechanical failures feed the verifier's reasons back to the author; {@code cancelled} alone owns the configured
+     * wall-clock deadline so this loop cannot silently contradict it.
      *
      * @return the outcome when the run ended inside the loop (cancelled, errored, or a preserved checkpoint), or {@code null} when the loop ran to completion and the caller
      *         resolves the outcome from the final state
@@ -303,8 +296,7 @@ class GenerationAttemptLoop {
                 return stoppedOutcome;
             }
 
-            // Seeded structural names are authoritative enough to resolve task bindings, but the verifier still requires every seeded grading check to appear in the student
-            // checklist, so a first-attempt omission comes back to the agent as a repair.
+            // Seeded structural names remain authoritative task bindings throughout repair.
             Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
@@ -565,6 +557,16 @@ class GenerationAttemptLoop {
     /** Returns an outcome only when a cancellation arrived during the review; {@code null} means the run continues. */
     @Nullable
     private GenerationOutcome reviewCandidate(int attempt, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+        if (candidateBeforeCurrentRepair != null && candidateBeforeCurrentRepair.producedFiles().equals(producedFilesByType)
+                && candidateBeforeCurrentRepair.problemStatement().equals(producedProblemStatement)
+                && Objects.equals(candidateBeforeCurrentRepair.specDocument(), specDocumentSnapshot)
+                && Objects.equals(candidateBeforeCurrentRepair.testPlanJson(), artifacts.testPlanJson())) {
+            specFidelityReport = candidateBeforeCurrentRepair.reviewReport();
+            lastMechanicallyVerifiedCandidate = candidateBeforeCurrentRepair;
+            candidateBeforeCurrentRepair = null;
+            emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review instead of re-rolling a verdict on the same candidate.");
+            return null;
+        }
         @Nullable
         String adaptationChanges = mode == GenerationMode.ADAPT
                 ? GenerationOrchestrationService.renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)

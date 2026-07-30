@@ -130,7 +130,8 @@ class GenerationAttemptLoopTest {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(structuralOracleSeeder.seedIfStructuralDiff(any(), anyString(), any())).thenReturn(Set.of());
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
-        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
+        java.util.concurrent.atomic.AtomicInteger candidate = new java.util.concurrent.atomic.AtomicInteger();
+        when(workspace.extractProblemStatement(any(), anyString())).thenAnswer(ignored -> "PROBLEM STATEMENT " + candidate.incrementAndGet());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         when(specFidelityCritic.detectMessagelessAssertions(any(), any())).thenReturn(List.of());
@@ -698,6 +699,21 @@ class GenerationAttemptLoopTest {
 
             verify(baseTools, never()).enterRepairScope(any());
             assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        }
+
+        @Test
+        void anUnchangedSemanticRepairCannotRerollAwayThePreviousVerdict() {
+            SpecFidelityReport blocker = report(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT);
+            reviewAlwaysReturns(blocker);
+            when(workspace.extractProblemStatement(any(), anyString())).thenReturn("UNCHANGED");
+
+            GenerationAttemptLoop loop = newGenerateLoop(4, 2);
+            loop.run();
+
+            verify(specFidelityCritic, times(1)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+            assertThat(loop.specFidelityReport()).isEqualTo(blocker);
+            assertThat(progressLines).anyMatch(line -> line.contains("made no artifact changes") && line.contains("retaining the previous environment evidence"));
+            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_BUDGET_EXHAUSTED);
         }
 
         @Test

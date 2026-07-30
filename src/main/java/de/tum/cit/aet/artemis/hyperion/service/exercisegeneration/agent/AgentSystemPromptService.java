@@ -149,8 +149,10 @@ public class AgentSystemPromptService {
             THE CONTRACT — FINAL STATEMENT
             Translate the approved specification and completed executable artifacts into a clear student contract without expanding either one. The statement must expose the
             exact public API and task boundaries compactly, while leaving stub bodies and member-level Javadoc in the template where students use them. Generate explanatory
-            examples independently from the rules: do not mine graded test bodies for fixture data, and do not reuse a worked specification example when the generated tests
-            already use that witness. Replay every example and self-check table columns, arrows, maps, and before/after state in the direction a student will read them.
+            examples independently from the rules: do not mine graded test bodies for fixture data. Never claim that an example is absent from the tests, promise how hidden tests
+            enforce a rule, or otherwise describe test fixtures or grader implementation; only the task bindings are student-facing grading metadata. Replay every example and
+            self-check table columns, arrows, maps, and before/after state in the direction a student will read them. End after the tasks or required diagram, without a sign-off,
+            generic encouragement, or a repeated summary.
 
             """;
 

@@ -58,7 +58,9 @@ class SpecificationReviewCritic {
             Your previous response was malformed, incomplete, cited an unknown or wrong-source evidence ID, or failed to adjudicate every supplied F finding. Re-review the same
             evidence and return one complete JSON verdict. Cite only the server-generated B, C, E, and F IDs exactly as shown. Do not copy source text or invent IDs. The F findings
             below are independently grounded hypotheses retained from this or an earlier review response; adjudicate every one in priorFindingChecks as RESOLVED or STILL_PRESENT
-            against current E evidence. Do not repeat an F finding in an ordinary finding array unless the current evidence reveals a distinct new defect.
+            against current E evidence. Do not repeat an F finding in an ordinary finding array unless the current evidence reveals a distinct new defect. Correct the named
+            validation failure without gratuitously rewriting fields that already obeyed the schema; preserve their values and evidence IDs unless the correction logically changes
+            their verdict.
             """;
 
     private record SpecificationReviewResponse(@Nullable List<SpecificationReviewItem> omissions, @Nullable List<SpecificationReviewItem> conflicts,
@@ -220,7 +222,10 @@ class SpecificationReviewCritic {
 
     private static String evidenceCorrectionGuide(SpecificationReviewEvidence evidence) {
         return "\n\nFIELD-SPECIFIC SPEC EVIDENCE GUIDE (prompt-local IDs; choose actual data rows, not the heading, table header, or separator):\n"
-                + "- studentOwnershipEvidenceIds: Design-section candidates " + evidence.specification().idsUnderHeading("## Design")
+                + "- Every briefEvidenceIds field: B candidates " + evidence.brief().passages().keySet() + "\n- Every conceptEvidenceIds field: C candidates "
+                + evidence.concept().passages().keySet()
+                + "\n- specEvidenceIds and objectiveEvidenceIds: E candidates from Rules, Design, Public API, or Testing Strategy; never B, C, S, or F IDs"
+                + "\n- studentOwnershipEvidenceIds: Design-section candidates " + evidence.specification().idsUnderHeading("## Design")
                 + "\n- assessmentEvidenceIds: Testing Strategy-section candidates " + evidence.specification().idsUnderHeading("## Testing Strategy")
                 + "\nThese are E evidence IDs. Authored S labels inside a Testing Strategy row are content, " + "not evidence IDs.";
     }

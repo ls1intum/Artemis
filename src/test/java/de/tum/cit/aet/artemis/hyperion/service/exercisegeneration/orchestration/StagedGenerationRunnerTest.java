@@ -459,6 +459,26 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void inconclusiveSpecificationReviewPreservesItsGroundedRiskHistoryForInstructorReview() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        List<String> groundedRisks = List.of("Omission — brief requires elevators never move but SPEC does not preserve that guarantee",
+                "Ambiguity — int distance subtraction can overflow at the admitted extremes");
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "correction response malformed", null, groundedRisks));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), anySet())).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, Set::of);
+
+        assertThat(outcome.unresolvedSpecificationFindings()).hasSize(2)
+                .allSatisfy(finding -> assertThat(finding).startsWith("Unresolved specification-review hypothesis from grounded evidence:"));
+        assertThat(outcome.unresolvedSpecificationFindings()).anyMatch(finding -> finding.contains("elevators never move"))
+                .anyMatch(finding -> finding.contains("distance subtraction can overflow"));
+    }
+
+    @Test
     void failedBestSpecificationRestoreKeepsUncertaintyAttachedToTheDraftActuallyApproved() {
         String measuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- measured -->\n";
         String unmeasuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- unmeasured -->\n";

@@ -507,8 +507,7 @@ public class StagedGenerationRunner {
                                                     + "concerns for instructor review.";
                                 }
                                 else {
-                                    unresolvedSpecificationFindings = List
-                                            .of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");
+                                    unresolvedSpecificationFindings = unresolvedInconclusiveReviewFindings(review);
                                     reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification and attaching that "
                                             + "uncertainty for instructor review.";
                                 }
@@ -669,6 +668,13 @@ public class StagedGenerationRunner {
 
         }
         return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
+    }
+
+    private static List<String> unresolvedInconclusiveReviewFindings(SpecFidelityCriticService.SpecificationReview review) {
+        if (review.riskHistory().isEmpty()) {
+            return List.of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");
+        }
+        return review.riskHistory().stream().map(finding -> "Unresolved specification-review hypothesis from grounded evidence: " + finding).toList();
     }
 
     private static String semanticSpecRefinementPrompt(String reviewFeedback) {
