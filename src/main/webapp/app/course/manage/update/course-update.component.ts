@@ -5,7 +5,7 @@ import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModu
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
@@ -18,14 +18,18 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
+import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -64,12 +68,10 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
-        NgbTypeahead,
         NgTemplateOutlet,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -81,6 +83,11 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         TumUiDialogComponent,
         TumUiCheckboxComponent,
         TumUiTooltipDirective,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
+        TumUiChipComponent,
+        TumUiAutoCompleteComponent,
+        TumUiInputDirective,
         OrganizationSelectorComponent,
     ],
 })
@@ -107,7 +114,6 @@ export class CourseUpdateComponent implements OnInit {
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faExclamationTriangle = faExclamationTriangle;
@@ -115,11 +121,9 @@ export class CourseUpdateComponent implements OnInit {
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
-    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
     timeZones: string[] = [];
+    readonly filteredTimeZones = signal<string[]>([]);
     originalTimeZone?: string;
 
     courseForm!: FormGroup; // built in ngOnInit()
@@ -321,18 +325,10 @@ export class CourseUpdateComponent implements OnInit {
         this.isAdmin.set(this.accountService.isAdmin());
         this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    tzResultFormatter = (timeZone: string) => timeZone;
-    tzInputFormatter = (timeZone: string) => timeZone;
-
-    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
-    };
+    onTimeZoneSearch(event: TumUiAutoCompleteCompleteEvent): void {
+        const term = event.query;
+        this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
+    }
 
     get timeZoneChanged() {
         return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;

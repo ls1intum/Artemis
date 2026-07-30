@@ -7,11 +7,21 @@
                     <div class="position-relative">
                         <jhi-image class="secured-image" [src]="croppedImage" />
 
-                        <button id="delete-course-icon" type="button" class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0" (click)="deleteCourseIcon()">
+                        <button
+                            id="delete-course-icon"
+                            type="button"
+                            class="icon-button-wrapper bg-state-danger position-absolute bottom-0 start-0 text-surface-0"
+                            (click)="deleteCourseIcon()"
+                        >
                             <fa-icon [icon]="faTrash" />
                         </button>
 
-                        <button id="edit-course-icon" type="button" class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0" (click)="triggerFileInput()">
+                        <button
+                            id="edit-course-icon"
+                            type="button"
+                            class="icon-button-wrapper bg-state-warning position-absolute bottom-0 end-0 text-surface-0"
+                            (click)="triggerFileInput()"
+                        >
                             <fa-icon [icon]="faPen" />
                         </button>
                     </div>
@@ -33,7 +43,9 @@
             @if (course.id) {
                 <div class="mb-3">
                     <a
-                        class="btn btn-outline-primary btn-sm"
+                        tumUiButton
+                        size="small"
+                        variant="outlined"
                         [routerLink]="['/course-management', course.id, 'onboarding']"
                         jhiTranslate="artemisApp.course.onboarding.replayWizard"
                     ></a>
@@ -47,7 +59,7 @@
                     <div class="col">
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title"></label>
-                            <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required />
+                            <input type="text" tumUiInput name="title" id="field_title" formControlName="title" required />
                         </div>
                     </div>
                     <div class="col-2">
@@ -69,7 +81,7 @@
                     <input
                         required
                         type="text"
-                        class="form-control"
+                        tumUiInput
                         name="shortName"
                         id="field_shortName"
                         formControlName="shortName"
@@ -78,46 +90,37 @@
                     />
                     @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
                         @if ((shortName.errors! | keyvalue | removekeys: ['required']).length > 0) {
-                            <div class="alert alert-danger">
+                            <tum-ui-message severity="error" styleClass="mt-2">
                                 @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {
-                                    <div>
-                                        <div [jhiTranslate]="'artemisApp.course.form.shortname' + '.' + e.key"></div>
-                                    </div>
+                                    <div>{{ 'artemisApp.course.form.shortname.' + e.key | artemisTranslate }}</div>
                                 }
-                            </div>
+                            </tum-ui-message>
                         }
                     }
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
-                    <textarea id="field_description" class="form-control" rows="2" formControlName="description"></textarea>
+                    <textarea id="field_description" tumUiTextarea rows="2" formControlName="description"></textarea>
                 </div>
                 @if (isAdmin()) {
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
-                        <div class="btn-group d-flex flex-wrap">
+                        <div class="mb-2 flex flex-wrap gap-2">
                             @for (organization of courseOrganizations(); track organization) {
-                                <div>
-                                    <h5>
-                                        <span class="badge bg-primary font-weight-normal m-2 ps-2">
-                                            {{ organization.name }}
-                                            <button
-                                                id="removeOrganizationButton-{{ organization.id }}"
-                                                type="button"
-                                                class="btn text-light"
-                                                (click)="removeOrganizationFromCourse(organization)"
-                                            >
-                                                <fa-icon [icon]="faTimes" />
-                                            </button>
-                                        </span>
-                                    </h5>
-                                </div>
+                                <tum-ui-chip
+                                    id="removeOrganizationButton-{{ organization.id }}"
+                                    [label]="organization.name"
+                                    [removable]="true"
+                                    (onRemove)="removeOrganizationFromCourse(organization)"
+                                />
                             }
                         </div>
                         <button
                             id="addOrganizationButton"
                             type="button"
-                            class="btn btn-outline-primary"
+                            tumUiButton
+                            size="small"
+                            variant="outlined"
                             (click)="openOrganizationsModal()"
                             jhiTranslate="entity.action.add"
                         ></button>
@@ -147,7 +150,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.startDate.invalid"></span>
+                            <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                     <div class="form-group col-md">
@@ -158,22 +161,20 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.endDate.invalid"></span>
+                            <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                 </div>
-                <div class="form-group form-check">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
+                <div class="form-group flex items-center gap-2">
+                    <tum-ui-checkbox
+                        inputId="field_testCourse"
                         name="testCourse"
-                        id="field_testCourse"
                         formControlName="testCourse"
-                        [checked]="course.testCourse"
-                        (change)="changeTestCourseEnabled()"
+                        [checked]="!!course.testCourse"
+                        (onChange)="changeTestCourseEnabled()"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.testCourse.description' | artemisTranslate }}" />
+                    <label jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.testCourse.description' | artemisTranslate" />
                 </div>
                 <div class="form-group">
                     <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
@@ -186,23 +187,22 @@
                 <!-- timezone -->
                 <div class="form-group">
                     <label class="form-control-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
-                    <input
-                        id="timeZone"
-                        type="text"
-                        class="form-control"
+                    <tum-ui-autocomplete
+                        inputId="timeZone"
                         formControlName="timeZone"
-                        [placeholder]="'Europe/Berlin'"
-                        [resultFormatter]="tzResultFormatter"
-                        [inputFormatter]="tzInputFormatter"
-                        [ngbTypeahead]="tzSearch"
-                        [editable]="false"
-                        #timeZoneInput="ngbTypeahead"
-                        (focus)="tzFocus$.next($any($event).target.value)"
-                        (click)="tzClick$.next($any($event).target.value)"
+                        [suggestions]="filteredTimeZones()"
+                        (completeMethod)="onTimeZoneSearch($event)"
+                        [minLength]="3"
+                        [delay]="200"
+                        [completeOnFocus]="true"
+                        placeholder="Europe/Berlin"
+                        styleClass="w-full"
                     />
-                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
+                    <div class="text-sm text-muted-color" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
                     @if (timeZoneChanged) {
-                        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.changeWarning"></div>
+                        <tum-ui-message severity="error" styleClass="mt-2">{{
+                            'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate
+                        }}</tum-ui-message>
                     }
                 </div>
                 <!-- Section: Exercises & Grading -->
@@ -211,31 +211,24 @@
                 <div class="row">
                     <div class="form-group col-xl mb-2 mb-xl-3">
                         <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxPoints.info' | artemisTranslate }}" />
-                        <input
-                            type="number"
-                            class="form-control"
-                            name="maxPoints"
-                            id="field_maxPoints"
-                            min="1"
-                            step="1"
-                            [attr.max]="MAX_GRADING_POINTS"
-                            formControlName="maxPoints"
-                        />
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
+                        <input type="number" tumUiInput name="maxPoints" id="field_maxPoints" min="1" step="1" [attr.max]="MAX_GRADING_POINTS" formControlName="maxPoints" />
                         @if (courseForm.get('maxPoints')?.hasError('min')) {
-                            <div class="alert alert-danger" jhiTranslate="artemisApp.course.maxPoints.min"></div>
+                            <tum-ui-message severity="error" styleClass="mt-2">{{ 'artemisApp.course.maxPoints.min' | artemisTranslate }}</tum-ui-message>
                         }
                         @if (courseForm.get('maxPoints')?.hasError('max')) {
-                            <div class="alert alert-danger" jhiTranslate="artemisApp.course.maxPoints.max" [translateValues]="{ max: MAX_GRADING_POINTS }"></div>
+                            <tum-ui-message severity="error" styleClass="mt-2">{{
+                                'artemisApp.course.maxPoints.max' | artemisTranslate: { max: MAX_GRADING_POINTS }
+                            }}</tum-ui-message>
                         }
                         @if (courseForm.get('maxPoints')?.hasError('notInteger')) {
-                            <div class="alert alert-danger" jhiTranslate="artemisApp.course.maxPoints.wholeNumber"></div>
+                            <tum-ui-message severity="error" styleClass="mt-2">{{ 'artemisApp.course.maxPoints.wholeNumber' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                     <div class="form-group col-xl">
                         <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.accuracyOfScores.info' | artemisTranslate }}" />
-                        <input required type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.accuracyOfScores.info' | artemisTranslate" />
+                        <input required type="number" tumUiInput name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
                     </div>
                 </div>
                 <div class="form-group">
@@ -248,30 +241,28 @@
                     </select>
                 </div>
                 <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
-                    <div class="form-check nested-form-group-head">
-                        <input
-                            type="checkbox"
-                            [checked]="customizeGroupNames()"
-                            (change)="changeCustomizeGroupNames()"
-                            class="form-check-input"
+                    <div class="nested-form-group-head flex items-center gap-2">
+                        <tum-ui-checkbox
+                            inputId="field_customizeGroupNamesEnabled"
                             name="customizeGroupNamesEnabled"
-                            id="field_customizeGroupNamesEnabled"
                             formControlName="customizeGroupNames"
+                            [checked]="customizeGroupNames()"
+                            (onChange)="changeCustomizeGroupNames()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"></label>
-                        <fa-icon [icon]="faExclamationTriangle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
+                        <label jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"></label>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.customizeGroupNames.description' | artemisTranslate" />
                     </div>
                     @if (customizeGroupNames()) {
                         <div>
                             <div class="nested-form-group">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName"></label>
-                                <input type="text" class="form-control" name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
+                                <input type="text" tumUiInput name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
                             </div>
                             <div class="nested-form-group">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName"></label>
                                 <input
                                     type="text"
-                                    class="form-control"
+                                    tumUiInput
                                     name="teachingAssistantGroupName"
                                     id="field_teachingAssistantGroupName"
                                     formControlName="teachingAssistantGroupName"
@@ -279,46 +270,44 @@
                             </div>
                             <div class="nested-form-group">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.editorGroupName" for="field_editorGroupName"></label>
-                                <input type="text" class="form-control" name="editorGroupName" id="field_editorGroupName" formControlName="editorGroupName" />
+                                <input type="text" tumUiInput name="editorGroupName" id="field_editorGroupName" formControlName="editorGroupName" />
                             </div>
                             <div class="nested-form-group last">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName"></label>
-                                <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" />
+                                <input type="text" tumUiInput name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" />
                             </div>
                         </div>
                     }
                 </div>
-                <div class="form-check nested-form-group-head">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
+                <div class="nested-form-group-head flex items-center gap-2">
+                    <tum-ui-checkbox
+                        inputId="field_maxComplaintSettingEnabled"
                         name="complaintsEnabled"
-                        [checked]="complaintsEnabled()"
-                        id="field_maxComplaintSettingEnabled"
-                        (change)="changeComplaintsEnabled()"
                         formControlName="complaintsEnabled"
+                        [checked]="complaintsEnabled()"
+                        (onChange)="changeComplaintsEnabled()"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}" />
+                    <label jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.complaintsEnabled.description' | artemisTranslate" />
                 </div>
                 @if (complaintsEnabled()) {
                     <div>
                         <div class="row nested-form-group">
                             <div class="col-md">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaints.description' | artemisTranslate }}" />
-                                <input required type="number" class="form-control" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
+                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaints.description' | artemisTranslate" />
+                                <input required type="number" tumUiInput name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                             </div>
                             <div class="col-md">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title" for="field_maxTeamComplaints"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | artemisTranslate }}" />
-                                <input required type="number" class="form-control" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
+                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxTeamComplaints.description' | artemisTranslate" />
+                                <input required type="number" tumUiInput name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
                             </div>
                         </div>
                         <div class="nested-form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays"></label>
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate }}" />
-                            <input required type="number" class="form-control" name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
+                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate" />
+                            <input required type="number" tumUiInput name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
                         </div>
                         <div class="row nested-form-group last">
                             <div class="col-xl mb-2 mb-xl-3">
@@ -326,16 +315,9 @@
                                 <fa-icon
                                     [icon]="faQuestionCircle"
                                     class="text-secondary"
-                                    ngbTooltip="{{ 'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate }}"
+                                    [tumUiTooltip]="'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate"
                                 />
-                                <input
-                                    required
-                                    type="number"
-                                    class="form-control"
-                                    name="maxComplaintTextLimit"
-                                    id="field_maxComplaintTextLimit"
-                                    formControlName="maxComplaintTextLimit"
-                                />
+                                <input required type="number" tumUiInput name="maxComplaintTextLimit" id="field_maxComplaintTextLimit" formControlName="maxComplaintTextLimit" />
                             </div>
                             <div class="col-xl">
                                 <label
@@ -346,12 +328,12 @@
                                 <fa-icon
                                     [icon]="faQuestionCircle"
                                     class="text-secondary"
-                                    ngbTooltip="{{ 'artemisApp.course.maxComplaintResponseTextLimit.description' | artemisTranslate }}"
+                                    [tumUiTooltip]="'artemisApp.course.maxComplaintResponseTextLimit.description' | artemisTranslate"
                                 />
                                 <input
                                     required
                                     type="number"
-                                    class="form-control"
+                                    tumUiInput
                                     name="maxComplaintResponseTextLimit"
                                     id="field_maxComplaintResponseTextLimit"
                                     formControlName="maxComplaintResponseTextLimit"
@@ -360,18 +342,16 @@
                         </div>
                     </div>
                 }
-                <div class="form-check nested-form-group-head">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
+                <div class="nested-form-group-head flex items-center gap-2">
+                    <tum-ui-checkbox
+                        inputId="field_maxRequestMoreFeedbackSettingEnabled"
                         name="requestMoreFeedbackEnabled"
-                        [checked]="requestMoreFeedbackEnabled()"
-                        id="field_maxRequestMoreFeedbackSettingEnabled"
-                        (change)="changeRequestMoreFeedbackEnabled()"
                         formControlName="requestMoreFeedbackEnabled"
+                        [checked]="requestMoreFeedbackEnabled()"
+                        (onChange)="changeRequestMoreFeedbackEnabled()"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}" />
+                    <label jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate" />
                 </div>
                 @if (requestMoreFeedbackEnabled()) {
                     <div class="nested-form-group last">
@@ -379,12 +359,12 @@
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"
-                            ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | artemisTranslate }}"
+                            [tumUiTooltip]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | artemisTranslate"
                         />
                         <input
                             required
                             type="number"
-                            class="form-control"
+                            tumUiInput
                             name="maxRequestMoreFeedbackTimeDays"
                             id="field_maxRequestMoreFeedbackTimeDays"
                             formControlName="maxRequestMoreFeedbackTimeDays"
@@ -397,10 +377,10 @@
                 <span class="d-block form-text mb-3" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></span>
                 <jhi-feature-overlay [enabled]="atlasEnabled()">
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" name="learningPathsEnabled" id="field_learningPathsEnabled" formControlName="learningPathsEnabled" />
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
-                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
+                        <div class="flex items-center gap-2">
+                            <tum-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
+                            <label jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.learningPaths.tooltip' | artemisTranslate" />
                         </div>
                     </div>
                 </jhi-feature-overlay>
@@ -420,7 +400,7 @@
                             <tum-ui-checkbox
                                 inputId="field_athenaFormativeFeedbackEnabled"
                                 name="athenaFormativeFeedbackEnabled"
-                                [checked]="course.athenaFormativeFeedbackEnabled"
+                                [checked]="!!course.athenaFormativeFeedbackEnabled"
                                 (onChange)="changeAthenaFormativeFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label" for="field_athenaFormativeFeedbackEnabled"></label>
@@ -434,7 +414,7 @@
                             <tum-ui-checkbox
                                 inputId="field_athenaGradingFeedbackEnabled"
                                 name="athenaGradingFeedbackEnabled"
-                                [checked]="course.athenaGradingFeedbackEnabled"
+                                [checked]="!!course.athenaGradingFeedbackEnabled"
                                 (onChange)="changeAthenaGradingFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label" for="field_athenaGradingFeedbackEnabled"></label>
@@ -447,32 +427,30 @@
                     }
                 }
                 <!-- Not part of model -->
-                <div class="nested-form-group-head form-check">
-                    <input
-                        id="field_communicationEnabled"
-                        class="form-check-input"
-                        type="checkbox"
+                <div class="nested-form-group-head flex items-center gap-2">
+                    <tum-ui-checkbox
+                        inputId="field_communicationEnabled"
                         [(ngModel)]="communicationEnabled"
                         [ngModelOptions]="{ standalone: true }"
-                        (change)="changeCommunicationEnabled()"
+                        (onChange)="changeCommunicationEnabled()"
                     />
-                    <label for="field_communicationEnabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></label>
+                    <label for="field_communicationEnabled" jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></label>
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate }}"
+                        [tumUiTooltip]="'artemisApp.course.courseCommunicationSetting.communicationEnabled.tooltip' | artemisTranslate"
                     />
                 </div>
                 <!-- Not part of model -->
                 @if (communicationEnabled) {
                     <div>
-                        <div class="nested-form-group form-check">
-                            <input id="field_messagingEnabled" class="form-check-input" type="checkbox" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
-                            <label for="field_messagingEnabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></label>
+                        <div class="nested-form-group flex items-center gap-2">
+                            <tum-ui-checkbox inputId="field_messagingEnabled" [(ngModel)]="messagingEnabled" [ngModelOptions]="{ standalone: true }" />
+                            <label for="field_messagingEnabled" jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></label>
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 class="text-secondary"
-                                ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate }}"
+                                [tumUiTooltip]="'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate"
                             />
                         </div>
                         <div class="nested-form-group last">
@@ -490,33 +468,24 @@
                 <hr />
                 <h4 jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
                 @if (ltiEnabled() && !course.enrollmentEnabled) {
-                    <div class="form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
+                    <div class="form-group flex items-center gap-2">
+                        <tum-ui-checkbox
+                            inputId="field_onlineCourse"
                             name="onlineCourse"
-                            id="field_onlineCourse"
                             formControlName="onlineCourse"
-                            [checked]="course.onlineCourse"
-                            (change)="changeOnlineCourse()"
+                            [checked]="!!course.onlineCourse"
+                            (onChange)="changeOnlineCourse()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}" />
+                        <label jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.onlineCourse.description' | artemisTranslate" />
                     </div>
                 }
                 <!-- enrollment -->
                 @if (!course.onlineCourse) {
-                    <div class="nested-form-group-head form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            name="enrollmentEnabled"
-                            id="field_enrollmentEnabled"
-                            [checked]="course.enrollmentEnabled"
-                            (change)="changeEnrollmentEnabled()"
-                        />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.enrollmentEnabled.description' | artemisTranslate }}" />
+                    <div class="nested-form-group-head flex items-center gap-2">
+                        <tum-ui-checkbox inputId="field_enrollmentEnabled" name="enrollmentEnabled" [checked]="!!course.enrollmentEnabled" (onChange)="changeEnrollmentEnabled()" />
+                        <label jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.enrollmentEnabled.description' | artemisTranslate" />
                     </div>
                 }
                 @if (course.enrollmentEnabled) {
@@ -530,7 +499,9 @@
                                     [error]="!isValidEnrollmentPeriod"
                                 />
                                 @if (!isValidEnrollmentPeriod) {
-                                    <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentStartDate.invalid"></span>
+                                    <tum-ui-message severity="error" styleClass="mt-1">{{
+                                        'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate
+                                    }}</tum-ui-message>
                                 }
                             </div>
                             <div class="col-md">
@@ -541,7 +512,7 @@
                                     [error]="!isValidEnrollmentPeriod"
                                 />
                                 @if (!isValidEnrollmentPeriod) {
-                                    <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.enrollmentEndDate.invalid"></span>
+                                    <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</tum-ui-message>
                                 }
                             </div>
                         </div>
@@ -555,20 +526,18 @@
                         </div>
                         <div class="nested-form-group">
                             <div class="nested-form-group-head">
-                                <div class="form-check">
-                                    <input
-                                        type="checkbox"
-                                        class="form-check-input"
+                                <div class="flex items-center gap-2">
+                                    <tum-ui-checkbox
+                                        inputId="field_unenrollmentEnabled"
                                         name="unenrollmentEnabled"
-                                        id="field_unenrollmentEnabled"
-                                        [checked]="course.unenrollmentEnabled"
-                                        (change)="changeUnenrollmentEnabled()"
+                                        [checked]="!!course.unenrollmentEnabled"
+                                        (onChange)="changeUnenrollmentEnabled()"
                                     />
-                                    <label class="form-control-label" jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
+                                    <label jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         class="text-secondary"
-                                        ngbTooltip="{{ 'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate }}"
+                                        [tumUiTooltip]="'artemisApp.course.unenrollmentEnabled.description' | artemisTranslate"
                                     />
                                 </div>
                                 @if (course.unenrollmentEnabled) {
@@ -580,7 +549,9 @@
                                             [error]="!isValidUnenrollmentEndDate"
                                         />
                                         @if (!isValidUnenrollmentEndDate) {
-                                            <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.unenrollmentEndDate.invalid"></span>
+                                            <tum-ui-message severity="error" styleClass="mt-1">{{
+                                                'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate
+                                            }}</tum-ui-message>
                                         }
                                     </div>
                                 }
@@ -590,18 +561,18 @@
                 }
             </div>
             <div class="mt-3 d-flex">
-                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                <button type="button" id="cancel-save" tumUiButton severity="secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 @if (courseForm.invalid) {
-                    <span [ngbTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
+                    <span [tumUiTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
                         <ng-container *ngTemplateOutlet="saveButtonTpl" />
                     </span>
                 } @else {
                     <ng-container *ngTemplateOutlet="saveButtonTpl" />
                 }
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration" class="btn btn-primary ms-2">
+                    <button type="submit" id="save-entity" tumUiButton class="ml-2" [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration">
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </ng-template>
