@@ -1,0 +1,150 @@
+import { ChangeDetectionStrategy, Component, inject, input, model, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCheckCircle, faCloudUploadAlt, faFileZipper } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
+
+/**
+ * Dialog that lets an instructor upload a zip file with manual assessments for the participants of a programming exercise. The file can be selected via the file system or dropped
+ * onto the drop zone. The server validates the whole file (all-or-nothing) and either reports per-row validation errors or the number of created assessments.
+ * <p>
+ * Rendered with the tum-ui kit: a declarative {@link TumUiDialogComponent} whose visibility the parent controls via {@code [(visible)]}.
+ * <p>
+ * Invariant: at most one of {@link errors} and {@link successResult} is populated at any time, and {@link isUploading} is true only while an upload request is in flight.
+ */
+@Component({
+    selector: 'jhi-assessment-upload-dialog',
+    templateUrl: './assessment-upload-dialog.component.html',
+    styleUrls: ['./assessment-upload-dialog.component.scss'],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent, TumUiButtonComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AssessmentUploadDialogComponent {
+    private readonly assessmentUploadService = inject(AssessmentUploadService);
+    private readonly alertService = inject(AlertService);
+
+    /** Two-way visibility of the dialog, controlled by the parent. */
+    readonly visible = model(false);
+    /** The id of the programming exercise whose participants are assessed. */
+    readonly exerciseId = input.required<number>();
+
+    protected readonly selectedFile = signal<File | undefined>(undefined);
+    protected readonly isDragOver = signal(false);
+    protected readonly isUploading = signal(false);
+    protected readonly errors = signal<AssessmentUploadError[]>([]);
+    protected readonly successResult = signal<AssessmentUploadResult | undefined>(undefined);
+
+    protected readonly faCloudUploadAlt = faCloudUploadAlt;
+    protected readonly faFileZipper = faFileZipper;
+    protected readonly faCheckCircle = faCheckCircle;
+
+    /** Marks the drop zone as active while a file is dragged over it. */
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragOver.set(true);
+    }
+
+    /** Clears the drop-zone active state when the drag leaves it. */
+    onDragLeave(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragOver.set(false);
+    }
+
+    /**
+     * Handles a file dropped onto the drop zone.
+     * Postcondition: if a file was dropped it is validated and, when valid, selected; otherwise nothing changes.
+     */
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.isDragOver.set(false);
+        const files = event.dataTransfer?.files;
+        if (files?.length) {
+            this.handleFile(files[0]);
+        }
+    }
+
+    /**
+     * Handles a file chosen via the hidden file input.
+     * Postcondition: a chosen file is validated and, when valid, selected, and the input is reset so the same file can be re-selected.
+     */
+    onFileInputChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files?.length) {
+            this.handleFile(input.files[0]);
+            // Reset the input so selecting the same file again re-triggers the change event.
+            input.value = '';
+        }
+    }
+
+    /**
+     * Validates a candidate file and, if it is an acceptable `.zip` within the size limit, selects it and clears any previous result.
+     * Postcondition: on success `selectedFile()` is the file and both `errors()` and `successResult()` are cleared; on rejection an alert is shown and the selection is unchanged.
+     */
+    private handleFile(file: File): void {
+        if (!file.name.toLowerCase().endsWith('.zip')) {
+            this.alertService.error('artemisApp.assessmentUpload.error.fileTypeNotSupported');
+            return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            this.alertService.error('artemisApp.assessmentUpload.error.fileTooLarge', { fileName: file.name });
+            return;
+        }
+        // Reset any previous outcome when a new file is chosen.
+        this.errors.set([]);
+        this.successResult.set(undefined);
+        this.selectedFile.set(file);
+    }
+
+    /**
+     * Uploads the currently selected file and reflects the outcome in the component state.
+     * Precondition: a file is selected (otherwise this is a no-op).
+     * Postcondition: while in flight `isUploading()` is true; on completion it is false and exactly one of `successResult()` (with a success alert) or `errors()` is populated.
+     */
+    upload(): void {
+        const file = this.selectedFile();
+        if (!file) {
+            return;
+        }
+        this.isUploading.set(true);
+        this.errors.set([]);
+        this.successResult.set(undefined);
+        this.assessmentUploadService.uploadManualAssessments(this.exerciseId(), file).subscribe({
+            next: (response) => this.handleUploadResult(response.body ?? { numberOfCreatedAssessments: 0 }),
+            // Malformed-request errors (empty/oversized/not a zip) carry an Artemis error header and are surfaced by the global alert interceptor.
+            error: (_error: HttpErrorResponse) => this.isUploading.set(false),
+        });
+    }
+
+    /** Reflects the server's parsing/storing result in the component state: shows the per-row errors, or the success summary with a success alert. */
+    private handleUploadResult(result: AssessmentUploadResult): void {
+        this.isUploading.set(false);
+        if (result.errors?.length) {
+            this.errors.set(result.errors);
+        } else {
+            this.successResult.set(result);
+            this.alertService.success('artemisApp.assessmentUpload.success', { count: result.numberOfCreatedAssessments });
+        }
+    }
+
+    /** Closes the dialog. */
+    close(): void {
+        this.visible.set(false);
+    }
+
+    /** Resets the transient state when the dialog is shown, so every open starts from a clean slate. */
+    resetState(): void {
+        this.selectedFile.set(undefined);
+        this.errors.set([]);
+        this.successResult.set(undefined);
+        this.isUploading.set(false);
+    }
+}

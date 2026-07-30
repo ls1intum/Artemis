@@ -1,0 +1,76 @@
+.assessment-upload {
+    .upload-drop-zone {
+        border: 2px dashed var(--bs-border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease;
+
+        &:hover,
+        &:focus {
+            border-color: var(--bs-primary);
+            background-color: color-mix(in srgb, var(--bs-primary) 5%, transparent);
+            outline: none;
+        }
+
+        &.drag-over {
+            border-color: var(--bs-primary);
+            border-style: solid;
+            background-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .drop-zone-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--bs-primary);
+        }
+
+        .drop-zone-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drop-zone-title {
+            font-weight: 500;
+            color: var(--bs-body-color);
+        }
+
+        .drop-zone-hint {
+            font-size: 0.875rem;
+            color: var(--bs-secondary-color);
+        }
+    }
+
+    .selected-file {
+        font-size: 0.875rem;
+    }
+
+    .error-table {
+        border-collapse: collapse;
+
+        th,
+        td {
+            text-align: left;
+            vertical-align: top;
+            padding: 0.375rem 0.5rem;
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        th {
+            font-weight: 600;
+        }
+    }
+}
