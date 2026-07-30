@@ -51,7 +51,6 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -77,6 +76,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
@@ -1137,37 +1137,38 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateTestRun_fromDetailedExamDtoEcho_deserializesQuizQuestions() throws Exception {
-        // Reproduces the create-test-run modal (CreateTestRunModalComponent): it builds a StudentExam whose exam and
-        // exercises are the objects it fetched from GET ?withExerciseGroups=true (the detailed ExamWithExerciseGroupsDTO)
-        // and POSTs it to test-runs. The quiz exercise's quizQuestions (and the programming build-plan participations) are
-        // echoed back; each polymorphic stub must carry its "type" discriminator or Spring rejects the whole body with 400
-        // (the CI regression, reproduced by the negative check below). This fixture carries all exercise types including a
-        // programming exercise with populated build-plan participations, so both echo hazards are exercised.
+    void testCreateTestRun_fromDetailedExamDto_createsTestRunFromExerciseIds() throws Exception {
+        // Reproduces the create-test-run modal (CreateTestRunModalComponent): it loads the detailed exam from
+        // GET ?withExerciseGroups=true and creates the test run from the exercises the instructor picked there.
+        // The modal no longer echoes the fetched graph back: the endpoint takes a CreateTestRunDTO carrying only the
+        // exam id, the ordered exercise ids and the working time, so the polymorphic quiz-question / participation
+        // stubs never travel on the request. The typed-stub guarantee the echo relied on is still asserted below,
+        // because the detailed GET response itself must keep carrying it (the exercise-groups page renders from it).
         Exam exam = examWithAllExerciseTypesAndQuizQuestions();
-        ObjectMapper mapper = request.getObjectMapper();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withExerciseGroups", "true");
 
         JsonNode examJson = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, JsonNode.class, params);
-        // Sanity: the fetched graph actually carries a typed quiz-question stub (the thing the client echoes).
+        // The fetched graph still carries a typed quiz-question stub.
         JsonNode fetchedQuizQuestions = findQuizQuestions(examJson.get("exerciseGroups"));
         assertThat(fetchedQuizQuestions).isNotNull();
         assertThat(fetchedQuizQuestions.get(0).get("type").asText()).isNotBlank();
 
-        String createTestRunUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs";
+        List<Long> exerciseIds = new ArrayList<>();
+        for (JsonNode group : examJson.get("exerciseGroups")) {
+            JsonNode groupExercises = group.get("exercises");
+            if (groupExercises != null && !groupExercises.isEmpty()) {
+                exerciseIds.add(groupExercises.get(0).get("id").asLong());
+            }
+        }
+        assertThat(exerciseIds).isNotEmpty();
 
-        // FIX path: the echoed body (typed quiz-question + participation stubs) deserializes and the test run is created (200).
-        JsonNode createdTestRun = request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(testRunBodyFrom(examJson, mapper)), true, JsonNode.class, HttpStatus.OK,
-                null, null, null);
+        StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
+                new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
+
         assertThat(createdTestRun).isNotNull();
-        assertThat(createdTestRun.get("id").asLong()).isPositive();
-
-        // Negative check (deterministic regression reproduction): strip the "type" discriminator from every quiz-question
-        // stub and the same body is rejected with 400, proving the discriminator is what makes the echo round-trip.
-        ObjectNode strippedBody = testRunBodyFrom(examJson, mapper);
-        stripQuizQuestionTypes(strippedBody);
-        request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(strippedBody), true, JsonNode.class, HttpStatus.BAD_REQUEST, null, null, null);
+        assertThat(createdTestRun.id()).isPositive();
+        assertThat(createdTestRun.workingTime()).isEqualTo(6000);
     }
 
     @Test
@@ -1197,24 +1198,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     /**
-     * Builds the request body the create-test-run modal sends: the whole fetched exam plus one exercise per group.
-     */
-    private static ObjectNode testRunBodyFrom(JsonNode examJson, ObjectMapper mapper) {
-        ObjectNode body = mapper.createObjectNode();
-        body.set("exam", examJson.deepCopy());
-        ArrayNode exercises = mapper.createArrayNode();
-        for (JsonNode group : examJson.get("exerciseGroups")) {
-            JsonNode groupExercises = group.get("exercises");
-            if (groupExercises != null && !groupExercises.isEmpty()) {
-                exercises.add(groupExercises.get(0).deepCopy());
-            }
-        }
-        body.set("exercises", exercises);
-        body.put("workingTime", 6000);
-        return body;
-    }
-
-    /**
      * Returns the first {@code quizQuestions} array found across the given exercise groups, or {@code null} if none carry one.
      */
     private static JsonNode findQuizQuestions(JsonNode exerciseGroups) {
@@ -1229,27 +1212,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             }
         }
         return null;
-    }
-
-    /**
-     * Removes the polymorphic {@code type} discriminator from every {@code quizQuestions} element anywhere in the tree, so
-     * the resulting body reproduces the pre-fix id-only stub that fails polymorphic deserialization.
-     */
-    private static void stripQuizQuestionTypes(JsonNode node) {
-        if (node.isObject()) {
-            JsonNode quizQuestions = node.get("quizQuestions");
-            if (quizQuestions != null && quizQuestions.isArray()) {
-                for (JsonNode question : quizQuestions) {
-                    if (question.isObject()) {
-                        ((ObjectNode) question).remove("type");
-                    }
-                }
-            }
-            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
-        }
-        else if (node.isArray()) {
-            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
-        }
     }
 
     /**
