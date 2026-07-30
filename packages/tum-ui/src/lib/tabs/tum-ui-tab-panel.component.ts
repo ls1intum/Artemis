@@ -6,7 +6,7 @@ import { TumUiTabsService } from './tum-ui-tabs.service';
     template: '@if (active()) { <ng-content /> }',
     host: {
         role: 'tabpanel',
-        class: 'tum-ui-tab-panel tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-tum-ui-primary',
+        class: 'tum-ui-tab-panel tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-primary',
         '[id]': 'id()',
         '[attr.aria-labelledby]': 'tabId()',
         '[attr.tabindex]': 'active() ? 0 : undefined',

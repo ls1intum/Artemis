@@ -25,27 +25,29 @@ framework styles. For an Angular CLI application:
 }
 ```
 
-Every component must inherit valid values for the package's semantic custom properties:
+Every component must inherit valid values for the Artemis semantic custom properties:
 
-- brand: `--tum-ui-primary`, `--tum-ui-primary-contrast`;
-- text: `--tum-ui-text-color`, `--tum-ui-text-hover-color`, `--tum-ui-muted-color`,
-  `--tum-ui-disabled-color`;
-- backgrounds: `--tum-ui-content-background`, `--tum-ui-control-background`,
-  `--tum-ui-overlay-background`, `--tum-ui-hover-background`, `--tum-ui-disabled-background`;
-- borders: `--tum-ui-border-color`, `--tum-ui-control-border-color`,
-  `--tum-ui-control-border-hover-color`;
-- selection: `--tum-ui-highlight-color`, `--tum-ui-highlight-background`,
-  `--tum-ui-highlight-focus-background`;
-- states: `--tum-ui-state-{danger,success,warning,info}` and each corresponding
-  `--tum-ui-state-*-contrast` and `--tum-ui-state-*-foreground`;
-- specialized roles: `--tum-ui-contrast-background`, `--tum-ui-contrast-color`,
-  `--tum-ui-table-striped-background`, `--tum-ui-tooltip-background`,
-  `--tum-ui-tooltip-color`.
+- brand: `--artemis-primary-color`, `--artemis-primary-contrast-color`,
+  `--artemis-accent-color`;
+- text: `--artemis-text-color`, `--artemis-text-hover-color`, `--artemis-muted-color`,
+  `--artemis-disabled-color`;
+- backgrounds: `--artemis-content-background`, `--artemis-control-background`,
+  `--artemis-overlay-background`, `--artemis-hover-background`, `--artemis-disabled-background`;
+- borders: `--artemis-border-color`, `--artemis-control-border-color`,
+  `--artemis-control-border-hover-color`;
+- selection: `--artemis-highlight-color`, `--artemis-highlight-background`,
+  `--artemis-highlight-focus-background`;
+- states: `--artemis-state-{danger,success,warning,info}` and each corresponding
+  `--artemis-state-*-contrast` and `--artemis-state-*-foreground`;
+- specialized roles: `--artemis-contrast-background`, `--artemis-contrast-color`,
+  `--artemis-table-striped-background`, `--artemis-tooltip-background`,
+  `--artemis-tooltip-color`.
 
 The values describe the active theme and must change with it. Contrast tokens must remain readable
-on their matching background. The package exposes semantic roles rather than a numbered color ramp.
+on their matching background. Primary is the brand fill; accent is the accessible brand foreground
+for content and controls. The package exposes semantic roles rather than a numbered color ramp.
 
-Applications without an existing token system can load the optional reference themes before the
+Applications that do not provide the token contract can load the reference theme before the
 component stylesheet:
 
 ```json
@@ -55,11 +57,15 @@ component stylesheet:
 ```
 
 Set `data-theme="dark"` on the document element to activate the dark reference theme. Artemis maps
-the same contract to its own design tokens and therefore does not load this optional file.
+the same contract directly to its existing light and dark design tokens instead.
 
-The stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and does not
-depend on the host's Tailwind build or source scanner. Theme changes flow through the semantic
-custom properties; package components do not contain light/dark palette branches.
+Tailwind hosts can also import `@tumaet/ui-angular/tailwind-theme.css` to expose the same semantic
+tokens through their own unprefixed utilities.
+
+The component stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and
+does not depend on the host's source scanner. The prefix is internal; semantic utility names after
+it match the shared Tailwind theme. Theme changes flow through the custom properties, and package
+components do not contain light/dark palette branches.
 
 `styleClass` inputs append classes already defined by the host; they do not cause the package
 Tailwind build to generate utilities. Use them for non-conflicting layout hooks. Prefer component

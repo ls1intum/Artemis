@@ -1,13 +1,13 @@
 export type TumUiInputSize = 'small' | 'large';
 
 const INPUT_BASE =
-    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:shadow-xs tum:outline-none ' +
-    'tum:transition-colors tum:duration-200 tum:placeholder:text-tum-ui-muted ' +
-    'tum:disabled:opacity-100 tum:disabled:bg-tum-ui-disabled-background tum:disabled:text-tum-ui-disabled';
+    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-control-background tum:text-text tum:shadow-xs tum:outline-none ' +
+    'tum:transition-colors tum:duration-200 tum:placeholder:text-muted ' +
+    'tum:disabled:opacity-100 tum:disabled:bg-disabled-background tum:disabled:text-disabled';
 
-const INPUT_BORDER = 'tum:border-tum-ui-control-border tum:enabled:hover:border-tum-ui-control-border-hover tum:enabled:focus:border-tum-ui-primary';
+const INPUT_BORDER = 'tum:border-control-border tum:enabled:hover:border-control-border-hover tum:enabled:focus:border-primary';
 
-const INPUT_BORDER_INVALID = 'tum:border-tum-ui-state-danger';
+const INPUT_BORDER_INVALID = 'tum:border-state-danger';
 
 const INPUT_SIZE: Record<TumUiInputSize, string> = {
     small: 'tum:text-sm tum:px-2.5 tum:py-1.5',

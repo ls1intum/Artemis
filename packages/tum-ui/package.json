@@ -14,6 +14,7 @@
         "types",
         "styles.css",
         "themes.css",
+        "tailwind-theme.css",
         "README.md",
         "LICENSE"
     ],
@@ -29,7 +30,7 @@
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "pack:check": "pnpm run build:styles && ng-packagr -p ng-package.pack.json -c tsconfig.lib.prod.json && node check-styles.mjs --package-dir dist-pack && publint --strict dist-pack && attw --pack dist-pack --entrypoints . --profile esm-only",
-        "stylelint": "stylelint \"{src,.storybook}/**/*.{css,scss}\" \"{tailwind,themes}.css\"",
+        "stylelint": "stylelint \"{src,.storybook}/**/*.{css,scss}\" \"{tailwind,tailwind-theme,themes}.css\"",
         "test": "ng test tum-ui --no-watch --no-progress",
         "test:coverage": "ng test tum-ui --no-watch --no-progress --coverage",
         "test:watch": "ng test tum-ui",
@@ -48,7 +49,8 @@
     },
     "exports": {
         "./styles.css": "./styles.css",
-        "./themes.css": "./themes.css"
+        "./themes.css": "./themes.css",
+        "./tailwind-theme.css": "./tailwind-theme.css"
     },
     "peerDependencies": {
         "@angular/cdk": "^22.1.0",
@@ -116,6 +118,7 @@
     },
     "sideEffects": [
         "./styles.css",
-        "./themes.css"
+        "./themes.css",
+        "./tailwind-theme.css"
     ]
 }

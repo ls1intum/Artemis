@@ -1,5 +1,5 @@
-<div class="tum-ui-progress-bar-value tum:bg-tum-ui-primary" [style.width.%]="normalizedValue()" [style.background]="color()">
-    <span class="tum-ui-progress-bar-label tum:text-tum-ui-primary-contrast">
+<div class="tum-ui-progress-bar-value tum:bg-primary" [style.width.%]="normalizedValue()" [style.background]="color()">
+    <span class="tum-ui-progress-bar-label tum:text-primary-contrast">
         <ng-content>
             @if (showValue() && normalizedValue() !== 0) {
                 {{ normalizedValue() }}{{ unit() }}

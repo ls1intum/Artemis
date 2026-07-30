@@ -364,11 +364,11 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         const size = TRIGGER_SIZE[this.size() ?? 'default'];
         let state: string;
         if (this.isDisabled()) {
-            state = 'tum:cursor-default tum:bg-tum-ui-disabled-background tum:text-tum-ui-disabled tum:border-tum-ui-control-border';
+            state = 'tum:cursor-default tum:bg-disabled-background tum:text-disabled tum:border-control-border';
         } else if (this.isOpen()) {
-            state = 'tum:cursor-pointer tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-primary';
+            state = 'tum:cursor-pointer tum:bg-control-background tum:text-text tum:border-primary';
         } else {
-            state = 'tum:cursor-pointer tum:bg-tum-ui-control-background tum:text-tum-ui-text tum:border-tum-ui-control-border tum:hover:border-tum-ui-control-border-hover';
+            state = 'tum:cursor-pointer tum:bg-control-background tum:text-text tum:border-control-border tum:hover:border-control-border-hover';
         }
         return `${base} ${size} ${state}`;
     }
@@ -376,10 +376,10 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         const base = 'tum-ui-select-option tum:flex tum:cursor-pointer tum:items-center tum:px-3 tum:py-2';
         const active = this.activeIndex() === index;
         if (this.isSelected(option)) {
-            const background = active ? 'tum:bg-tum-ui-highlight-focus-background' : 'tum:bg-tum-ui-highlight-background';
-            return `${base} tum:text-tum-ui-highlight ${background}`;
+            const background = active ? 'tum:bg-highlight-focus-background' : 'tum:bg-highlight-background';
+            return `${base} tum:text-highlight ${background}`;
         }
-        const activeState = active ? ' tum:bg-tum-ui-highlight-focus-background tum:text-tum-ui-highlight' : '';
-        return `${base} tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background tum:hover:text-tum-ui-text-hover${activeState}`;
+        const activeState = active ? ' tum:bg-highlight-focus-background tum:text-highlight' : '';
+        return `${base} tum:text-text tum:hover:bg-hover-background tum:hover:text-text-hover${activeState}`;
     }
 }

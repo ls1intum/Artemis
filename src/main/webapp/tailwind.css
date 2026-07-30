@@ -5,16 +5,9 @@
 
 /* Limit scanning because Bootstrap classes such as `collapse` and `table` are also valid Tailwind utilities. */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@import '../../../packages/tum-ui/tailwind-theme.css';
 
 @plugin 'tailwindcss-primeui';
-
-/* The `state-*` names avoid Bootstrap's `text-danger`/`text-success` utility selectors. */
-@theme inline {
-    --color-state-danger: var(--danger);
-    --color-state-success: var(--success);
-    --color-state-warning: var(--warning);
-    --color-state-info: var(--info);
-}
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
@@ -52,40 +45,50 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-    --tum-ui-primary: var(--p-primary-color);
-    --tum-ui-primary-contrast: var(--p-primary-contrast-color);
-    --tum-ui-border-color: var(--p-content-border-color);
-    --tum-ui-control-border-color: var(--p-form-field-border-color);
-    --tum-ui-control-border-hover-color: var(--p-form-field-hover-border-color);
-    --tum-ui-text-color: var(--p-text-color);
-    --tum-ui-text-hover-color: var(--p-text-hover-color);
-    --tum-ui-muted-color: var(--p-text-muted-color);
-    --tum-ui-disabled-color: var(--p-form-field-disabled-color);
-    --tum-ui-content-background: var(--p-content-background);
-    --tum-ui-control-background: var(--p-form-field-background);
-    --tum-ui-overlay-background: var(--p-overlay-popover-background);
-    --tum-ui-hover-background: var(--p-content-hover-background);
-    --tum-ui-disabled-background: var(--p-form-field-disabled-background);
-    --tum-ui-contrast-background: var(--p-text-color);
-    --tum-ui-contrast-color: var(--p-content-background);
-    --tum-ui-highlight-color: var(--p-highlight-color);
-    --tum-ui-highlight-background: var(--p-highlight-background);
-    --tum-ui-highlight-focus-background: var(--p-highlight-focus-background);
-    --tum-ui-state-danger: var(--artemis-alert-danger-color);
-    --tum-ui-state-danger-contrast: var(--artemis-alert-danger-background);
-    --tum-ui-state-danger-foreground: var(--artemis-alert-danger-color);
-    --tum-ui-state-success: var(--artemis-alert-success-color);
-    --tum-ui-state-success-contrast: var(--artemis-alert-success-background);
-    --tum-ui-state-success-foreground: var(--artemis-alert-success-color);
-    --tum-ui-state-warning: var(--artemis-alert-warning-color);
-    --tum-ui-state-warning-contrast: var(--artemis-alert-warning-background);
-    --tum-ui-state-warning-foreground: var(--artemis-alert-warning-color);
-    --tum-ui-state-info: var(--artemis-alert-info-color);
-    --tum-ui-state-info-contrast: var(--artemis-alert-info-background);
-    --tum-ui-state-info-foreground: var(--artemis-alert-info-color);
-    --tum-ui-table-striped-background: color-mix(in srgb, var(--p-content-background), var(--p-text-color) 3%);
-    --tum-ui-tooltip-background: var(--p-text-color);
-    --tum-ui-tooltip-color: var(--p-content-background);
+    --artemis-primary-color: var(--primary-dark);
+    --artemis-primary-contrast-color: var(--colored-btn-font);
+    --artemis-accent-color: var(--primary-dark);
+    --artemis-border-color: var(--border-color);
+    --artemis-control-border-color: var(--secondary);
+    --artemis-control-border-hover-color: var(--body-color);
+    --artemis-text-color: var(--body-color);
+    --artemis-text-hover-color: var(--body-color);
+    --artemis-muted-color: var(--text-body-secondary);
+    --artemis-disabled-color: var(--secondary);
+    --artemis-content-background: var(--module-bg);
+    --artemis-control-background: var(--default-btn-background);
+    --artemis-overlay-background: var(--popover-bg);
+    --artemis-hover-background: var(--hover-slightly-darker-body-bg);
+    --artemis-disabled-background: var(--gray-200);
+    --artemis-contrast-background: var(--body-color);
+    --artemis-contrast-color: var(--module-bg);
+    --artemis-highlight-color: var(--primary-dark);
+    --artemis-highlight-background: var(--sidebar-card-selected-bg);
+    --artemis-highlight-focus-background: color-mix(in srgb, var(--sidebar-card-selected-bg), var(--primary) 12%);
+    --artemis-state-danger: var(--artemis-alert-danger-color);
+    --artemis-state-danger-contrast: var(--artemis-alert-danger-background);
+    --artemis-state-danger-foreground: var(--artemis-alert-danger-color);
+    --artemis-state-success: var(--artemis-alert-success-color);
+    --artemis-state-success-contrast: var(--artemis-alert-success-background);
+    --artemis-state-success-foreground: var(--artemis-alert-success-color);
+    --artemis-state-warning: var(--artemis-alert-warning-color);
+    --artemis-state-warning-contrast: var(--artemis-alert-warning-background);
+    --artemis-state-warning-foreground: var(--artemis-alert-warning-color);
+    --artemis-state-info: var(--artemis-alert-info-color);
+    --artemis-state-info-contrast: var(--artemis-alert-info-background);
+    --artemis-state-info-foreground: var(--artemis-alert-info-color);
+    --artemis-table-striped-background: color-mix(in srgb, var(--module-bg), var(--body-color) 3%);
+    --artemis-tooltip-background: var(--artemis-dark);
+    --artemis-tooltip-color: var(--tooltip-color);
+}
+
+[data-theme='dark'] {
+    --artemis-accent-color: color-mix(in srgb, var(--link-color), var(--body-color) 35%);
+    --artemis-muted-color: var(--gray-500);
+    --artemis-disabled-color: var(--gray-500);
+    --artemis-disabled-background: color-mix(in srgb, var(--module-bg), var(--body-color) 14%);
+    --artemis-highlight-color: var(--body-color);
+    --artemis-highlight-focus-background: color-mix(in srgb, var(--sidebar-card-selected-bg), var(--body-color) 10%);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */

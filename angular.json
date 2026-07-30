@@ -177,9 +177,7 @@
                     "builder": "@angular/build:dev-server",
                     "options": {
                         "buildTarget": "artemis:build:development,tum-ui-source",
-                        "prebundle": {
-                            "exclude": ["@tumaet/ui-angular"]
-                        },
+                        "prebundle": false,
                         "proxyConfig": "proxy.conf.mjs",
                         "port": 9000
                     },

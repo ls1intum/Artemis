@@ -16,6 +16,6 @@ export class TumUiCardComponent {
     readonly styleClass = input<string>('');
 
     protected readonly hostClasses = computed(() =>
-        `tum-ui-card tum:flex tum:flex-col tum:rounded-xl tum:shadow-sm tum:bg-tum-ui-content-background tum:text-tum-ui-text ${this.styleClass()}`.trim(),
+        `tum-ui-card tum:flex tum:flex-col tum:rounded-xl tum:shadow-sm tum:bg-content-background tum:text-text ${this.styleClass()}`.trim(),
     );
 }

@@ -11,8 +11,8 @@ const MESSAGE_SEVERITY: Record<TumUiMessageSeverity, string> = {
     success: '',
     warn: '',
     error: '',
-    secondary: 'tum:bg-tum-ui-hover-background tum:text-tum-ui-text tum:outline-tum-ui-border',
-    contrast: 'tum:bg-tum-ui-contrast-background tum:text-tum-ui-contrast tum:outline-tum-ui-contrast-background',
+    secondary: 'tum:bg-hover-background tum:text-text tum:outline-border',
+    contrast: 'tum:bg-contrast-background tum:text-contrast tum:outline-contrast-background',
 };
 
 @Component({

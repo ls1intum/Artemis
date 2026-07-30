@@ -22,7 +22,7 @@
 }
 
 :host(:has(.tum-ui-toggle-switch-input:focus-visible)) {
-    outline: 1px solid var(--tum-ui-primary);
+    outline: 1px solid var(--artemis-primary-color);
     outline-offset: 2px;
 }
 

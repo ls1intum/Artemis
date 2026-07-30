@@ -2,7 +2,7 @@
     @if ((!hideLabelName() && labelName()) || shouldDisplayTimeZoneWarning()) {
         <div class="tum:flex tum:items-center tum:gap-1">
             @if (!hideLabelName() && labelName()) {
-                <label [attr.for]="inputId()" class="tum:font-semibold tum:text-tum-ui-text">{{ labelName()! | tumUiTranslate }}</label>
+                <label [attr.for]="inputId()" class="tum:font-semibold tum:text-text">{{ labelName()! | tumUiTranslate }}</label>
             }
             @if (shouldDisplayTimeZoneWarning()) {
                 <fa-stack
@@ -12,8 +12,8 @@
                     [attr.aria-label]="'tumUi.datePicker.timeZoneWarning' | tumUiTranslate: { timeZone: currentTimeZone }"
                     [tumUiTooltip]="'tumUi.datePicker.timeZoneWarning' | tumUiTranslate: { timeZone: currentTimeZone }"
                 >
-                    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="tum:text-tum-ui-muted" />
-                    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="tum:text-tum-ui-muted" />
+                    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="tum:text-muted" />
+                    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="tum:text-muted" />
                 </fa-stack>
             }
         </div>
@@ -37,13 +37,13 @@
             (input)="onInput(dateInput.value)"
             (blur)="onBlur(dateInput.value)"
             (keydown.arrowdown)="openFromInput($event)"
-            class="tum:w-full tum:rounded-md tum:border tum:bg-tum-ui-control-background tum:py-2 tum:pl-3 tum:pr-17 tum:text-tum-ui-text"
-            [class]="showErrorBorder() ? 'tum:border-tum-ui-state-danger' : 'tum:border-tum-ui-control-border'"
+            class="tum:w-full tum:rounded-md tum:border tum:bg-control-background tum:py-2 tum:pl-3 tum:pr-17 tum:text-text"
+            [class]="showErrorBorder() ? 'tum:border-state-danger' : 'tum:border-control-border'"
         />
         @if (showClear() && !disabled()) {
             <button
                 type="button"
-                class="tum:absolute tum:right-9 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-text-hover"
+                class="tum:absolute tum:right-9 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
                 (click)="clear()"
                 [attr.aria-label]="'tumUi.datePicker.clear' | tumUiTranslate"
             >
@@ -53,7 +53,7 @@
         <button
             type="button"
             tabindex="-1"
-            class="tum:absolute tum:right-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+            class="tum:absolute tum:right-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-accent"
             [disabled]="disabled()"
             (click)="toggle()"
             [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"
@@ -66,7 +66,7 @@
     </div>
 
     @if (!hideValidationMessage() && showErrorBorder()) {
-        <span [id]="inputId() + '-error'" role="alert" class="tum:text-sm tum:text-tum-ui-state-danger">
+        <span [id]="inputId() + '-error'" role="alert" class="tum:text-sm tum:text-state-danger">
             {{ 'tumUi.datePicker.invalid' | tumUiTranslate }}
         </span>
     }
@@ -75,7 +75,7 @@
 <ng-template #panel>
     <div
         [id]="panelId()"
-        class="tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:p-3 tum:shadow-lg"
+        class="tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:p-3 tum:shadow-lg"
         role="dialog"
         aria-modal="true"
         [attr.aria-label]="'tumUi.datePicker.dialog' | tumUiTranslate"
@@ -86,7 +86,7 @@
             <div class="tum:flex tum:flex-col tum:items-center">
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepHour(1)"
                     [attr.aria-label]="'tumUi.datePicker.incrementHour' | tumUiTranslate"
@@ -102,12 +102,12 @@
                     [disabled]="disabled()"
                     (change)="onHourInput(hourInput)"
                     (keydown)="onTimeKeydown($event, hourInput, 'hour')"
-                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:py-1 tum:text-center tum:text-tum-ui-text"
+                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text"
                     [attr.aria-label]="'tumUi.datePicker.hour' | tumUiTranslate"
                 />
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepHour(-1)"
                     [attr.aria-label]="'tumUi.datePicker.decrementHour' | tumUiTranslate"
@@ -115,11 +115,11 @@
                     <fa-icon [icon]="faChevronDown" />
                 </button>
             </div>
-            <span class="tum:pb-0.5 tum:font-semibold tum:text-tum-ui-text">:</span>
+            <span class="tum:pb-0.5 tum:font-semibold tum:text-text">:</span>
             <div class="tum:flex tum:flex-col tum:items-center">
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepMinute(1)"
                     [attr.aria-label]="'tumUi.datePicker.incrementMinute' | tumUiTranslate"
@@ -135,12 +135,12 @@
                     [disabled]="disabled()"
                     (change)="onMinuteInput(minuteInput)"
                     (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
-                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:py-1 tum:text-center tum:text-tum-ui-text"
+                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text"
                     [attr.aria-label]="'tumUi.datePicker.minute' | tumUiTranslate"
                 />
                 <button
                     type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-muted tum:hover:text-tum-ui-primary"
+                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
                     [disabled]="disabled()"
                     (click)="stepMinute(-1)"
                     [attr.aria-label]="'tumUi.datePicker.decrementMinute' | tumUiTranslate"

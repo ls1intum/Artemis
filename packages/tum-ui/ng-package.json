@@ -1,7 +1,7 @@
 {
     "$schema": "./node_modules/ng-packagr/ng-package.schema.json",
     "dest": "./dist",
-    "assets": ["README.md", "LICENSE", "styles.css", "themes.css"],
+    "assets": ["README.md", "LICENSE", "styles.css", "themes.css", "tailwind-theme.css"],
     "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
     "lib": {
         "entryFile": "src/public-api.ts"

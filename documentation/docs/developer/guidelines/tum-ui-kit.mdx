@@ -26,8 +26,8 @@ Package code:
 
 - imports only its declared dependencies;
 - exposes supported contracts through `src/public-api.ts`;
-- uses package-owned translation keys and semantic `--tum-ui-*` theme variables;
-- contains no Artemis routes, services, translation keys, theme variables, or request models.
+- uses package-owned translation keys and the shared semantic theme contract;
+- contains no Artemis routes, services, translation keys outside that contract, or request models.
 
 Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integration`. Artemis
 imports package symbols from `@tumaet/ui-angular`; deep imports and imports from the former
@@ -90,8 +90,8 @@ output tables.
 
 Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
 tests consume `packages/tum-ui/dist`; their root commands build the package first. Development serve
-mode maps the package entry point to its source. `pnpm start` enables Angular HMR for package
-template and style edits; Angular reloads the page when an update cannot be applied in place.
+mode maps the package entry point to its source so changes participate in Angular's normal watch and
+reload cycle.
 
 ### Theme contract
 
@@ -99,10 +99,11 @@ The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/t
 the source of truth for stylesheet loading, token semantics, dark mode, and `styleClass`.
 
 The style build emits the ignored package-root `styles.css`; ng-packagr copies that asset into the
-compiled package. Artemis loads `@tumaet/ui-angular/styles.css` after its framework styles and maps
-package tokens to PrimeNG and Artemis tokens in `src/main/webapp/tailwind.css`. Package styles must
-not read Artemis or PrimeNG variables directly. Artemis sets `data-theme="dark"` on the document
-element when dark mode is active.
+compiled package. Artemis loads the component styles after its framework styles and maps the shared
+semantic contract directly to its light and dark design tokens. Both Tailwind builds import
+`tailwind-theme.css`, so prefixed package utilities and unprefixed Artemis utilities use the same
+vocabulary. `themes.css` supplies standalone defaults for Storybook and other hosts without a token
+implementation. Artemis sets `data-theme="dark"` on the document element when dark mode is active.
 
 ### Translation contract
 
@@ -138,8 +139,8 @@ pnpm run tum-ui:validate
 ```
 
 `pnpm start` and the shared IntelliJ client configuration first build `packages/tum-ui/dist` for
-editor resolution, then serve package sources with HMR. Restart the client after changing the
-package manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
+editor resolution, then serve package sources. Restart the client after changing the package
+manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
 validation writes to `packages/tum-ui/dist-pack`.
 
 The workspace catalog pins the exact versions installed by Artemis. Package dependencies use those

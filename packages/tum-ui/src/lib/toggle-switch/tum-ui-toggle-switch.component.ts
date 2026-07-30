@@ -37,11 +37,11 @@ export class TumUiToggleSwitchComponent implements ControlValueAccessor {
     protected onTouched: () => void = () => {};
 
     protected readonly hostClasses = computed(() => {
-        const track = this.checked() ? 'tum:bg-tum-ui-primary' : 'tum:bg-tum-ui-control-border';
+        const track = this.checked() ? 'tum:bg-primary' : 'tum:bg-control-border';
         return `tum-ui-toggle-switch ${track} ${this.effectiveDisabled() ? 'tum:opacity-60' : ''}`.trim();
     });
 
-    protected readonly handleClasses = computed(() => 'tum-ui-toggle-switch-handle tum:bg-tum-ui-content-background');
+    protected readonly handleClasses = computed(() => 'tum-ui-toggle-switch-handle tum:bg-content-background');
 
     protected onInputChange(event: Event): void {
         const next = (event.target as HTMLInputElement).checked;

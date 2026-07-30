@@ -2,16 +2,16 @@
     <div class="tum:mb-2 tum:flex tum:items-center tum:justify-between">
         <button
             type="button"
-            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background"
+            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-text tum:hover:bg-hover-background"
             (click)="previousMonth()"
             [attr.aria-label]="previousMonthLabel()"
         >
             <fa-icon [icon]="faChevronLeft" />
         </button>
-        <span class="tum:font-semibold tum:text-tum-ui-text" aria-live="polite">{{ monthLabel() }}</span>
+        <span class="tum:font-semibold tum:text-text" aria-live="polite">{{ monthLabel() }}</span>
         <button
             type="button"
-            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-tum-ui-text tum:hover:bg-tum-ui-hover-background"
+            class="tum:appearance-none tum:rounded tum:border-0 tum:bg-transparent tum:p-1 tum:text-text tum:hover:bg-hover-background"
             (click)="nextMonth()"
             [attr.aria-label]="nextMonthLabel()"
         >
@@ -22,7 +22,7 @@
         <thead>
             <tr>
                 @for (label of weekdayLabels(); track $index) {
-                    <th scope="col" [attr.aria-label]="weekdayFullLabels()[$index]" class="tum:p-1 tum:font-medium tum:text-tum-ui-muted">{{ label }}</th>
+                    <th scope="col" [attr.aria-label]="weekdayFullLabels()[$index]" class="tum:p-1 tum:font-medium tum:text-muted">{{ label }}</th>
                 }
             </tr>
         </thead>

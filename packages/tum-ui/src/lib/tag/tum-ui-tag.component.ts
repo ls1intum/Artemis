@@ -5,12 +5,12 @@ export type TumUiTagSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'dang
 const TAG_BASE = 'tum:inline-flex tum:items-center tum:gap-1 tum:px-2 tum:py-1 tum:text-sm tum:font-bold';
 
 const TAG_SEVERITY: Record<TumUiTagSeverity, string> = {
-    secondary: 'tum:bg-tum-ui-hover-background tum:text-tum-ui-text',
+    secondary: 'tum:bg-hover-background tum:text-text',
     success: '',
     info: '',
     warn: '',
     danger: '',
-    contrast: 'tum:bg-tum-ui-contrast-background tum:text-tum-ui-contrast',
+    contrast: 'tum:bg-contrast-background tum:text-contrast',
 };
 
 @Component({

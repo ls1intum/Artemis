@@ -1,6 +1,6 @@
 <nav
     [attr.aria-label]="ariaLabel()"
-    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-tum-ui-border tum:pt-2 tum:text-sm tum:text-tum-ui-muted"
+    class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-border tum:pt-2 tum:text-sm tum:text-muted"
 >
     @if (showCurrentPageReport()) {
         <span class="tum:px-2" aria-live="polite">
@@ -36,7 +36,7 @@
 
     @if (showRowsPerPage()) {
         <select
-            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-tum-ui-text"
+            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-text"
             [ngModel]="pageSize()"
             [disabled]="disabled()"
             (ngModelChange)="onPageSizeChange($event)"

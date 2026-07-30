@@ -36,15 +36,15 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
 
     protected readonly boxClasses = computed(() => {
         if (this.isDisabled()) {
-            return 'tum:bg-tum-ui-disabled-background tum:border-tum-ui-control-border';
+            return 'tum:bg-disabled-background tum:border-control-border';
         }
         if (this.isChecked()) {
-            return 'tum:bg-tum-ui-primary tum:border-tum-ui-primary';
+            return 'tum:bg-primary tum:border-primary';
         }
-        return 'tum:bg-tum-ui-control-background tum:border-tum-ui-control-border';
+        return 'tum:bg-control-background tum:border-control-border';
     });
 
-    protected readonly iconClasses = computed(() => (this.isDisabled() ? 'tum:bg-tum-ui-disabled' : 'tum:bg-tum-ui-primary-contrast'));
+    protected readonly iconClasses = computed(() => (this.isDisabled() ? 'tum:bg-disabled' : 'tum:bg-primary-contrast'));
 
     private onModelChange: (value: unknown) => void = () => {};
     private onModelTouched: () => void = () => {};

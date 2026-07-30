@@ -48,7 +48,7 @@
 .tum-ui-select-button-option:focus-visible {
     position: relative;
     z-index: 1;
-    outline: 1px solid var(--tum-ui-primary);
+    outline: 1px solid var(--artemis-primary-color);
     outline-offset: -1px;
 }
 
@@ -62,5 +62,5 @@
 }
 
 .tum-ui-select-button-option:not(:disabled):hover::after {
-    background-color: color-mix(in srgb, var(--tum-ui-text-color) 5%, transparent);
+    background-color: color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
 }

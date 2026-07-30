@@ -1,12 +1,3 @@
-:root,
-[data-theme='light'] {
-    --tum-ui-storybook-canvas: #fff;
-}
-
-[data-theme='dark'] {
-    --tum-ui-storybook-canvas: #020617;
-}
-
 html,
 body,
 #storybook-root {
@@ -15,7 +6,7 @@ body,
 
 body {
     margin: 0;
-    background: var(--tum-ui-storybook-canvas);
-    color: var(--tum-ui-text-color);
+    background: var(--artemis-content-background);
+    color: var(--artemis-text-color);
     font-family: ui-sans-serif, system-ui, sans-serif;
 }

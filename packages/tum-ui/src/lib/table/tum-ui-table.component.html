@@ -1,14 +1,14 @@
 @if (showSearch()) {
     <div class="tum:mb-3">
         <div class="tum:relative">
-            <fa-icon [icon]="faMagnifyingGlass" class="tum:pointer-events-none tum:absolute tum:left-3 tum:top-1/2 tum:-translate-y-1/2 tum:text-tum-ui-muted" />
+            <fa-icon [icon]="faMagnifyingGlass" class="tum:pointer-events-none tum:absolute tum:left-3 tum:top-1/2 tum:-translate-y-1/2 tum:text-muted" />
             <input
                 #searchInput
                 type="search"
                 [placeholder]="searchPlaceholder() | tumUiTranslate"
                 [attr.aria-label]="searchPlaceholder() | tumUiTranslate"
                 (input)="onSearchInput(searchInput.value)"
-                class="tum:w-full tum:rounded-md tum:border tum:border-tum-ui-control-border tum:bg-tum-ui-control-background tum:py-1.5 tum:pl-10 tum:pr-3 tum:text-sm tum:text-tum-ui-text"
+                class="tum:w-full tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1.5 tum:pl-10 tum:pr-3 tum:text-sm tum:text-text"
             />
         </div>
     </div>
@@ -31,12 +31,12 @@
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
                     [ngClass]="columnVisibilityClasses(col)"
-                    class="tum:whitespace-nowrap tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2 tum:text-left tum:font-semibold tum:text-tum-ui-text"
+                    class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-left tum:font-semibold tum:text-text"
                 >
                     @if (col.sort && col.field) {
                         <button
                             type="button"
-                            class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-tum-ui-text tum:hover:text-tum-ui-primary"
+                            class="tum:inline-flex tum:cursor-pointer tum:appearance-none tum:items-center tum:gap-2 tum:border-0 tum:bg-transparent tum:p-0 tum:font-semibold tum:text-text tum:hover:text-accent"
                             (click)="onSortClick(col)"
                         >
                             @if (col.headerKey) {
@@ -44,7 +44,7 @@
                             } @else {
                                 <span>{{ col.header }}</span>
                             }
-                            <fa-icon [icon]="sortIcon(col)" class="tum:shrink-0 tum:text-tum-ui-muted" />
+                            <fa-icon [icon]="sortIcon(col)" class="tum:shrink-0 tum:text-muted" />
                         </button>
                     } @else if (col.headerKey) {
                         <span>{{ col.headerKey | tumUiTranslate }}</span>
@@ -52,7 +52,7 @@
                         <span>{{ col.header }}</span>
                     }
                 </th>
-                <td cdk-cell *cdkCellDef="let row; let i = index" [ngClass]="columnVisibilityClasses(col)" class="tum:border-tum-ui-border tum:px-4 tum:py-2 tum:text-tum-ui-text">
+                <td cdk-cell *cdkCellDef="let row; let i = index" [ngClass]="columnVisibilityClasses(col)" class="tum:border-border tum:px-4 tum:py-2 tum:text-text">
                     @if (col.templateRef) {
                         <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: cellParams(row, col, i) }" />
                     } @else {
@@ -64,28 +64,28 @@
 
         @if (rowActions(); as actions) {
             <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
-                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tum:border-tum-ui-border tum:bg-tum-ui-content-background tum:px-4 tum:py-2">
+                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tum:border-border tum:bg-content-background tum:px-4 tum:py-2">
                     <span class="tum:sr-only">{{ 'tumUi.table.actions' | tumUiTranslate }}</span>
                 </th>
-                <td cdk-cell *cdkCellDef="let row" class="tum:border-tum-ui-border tum:px-4 tum:py-2 tum:text-right">
+                <td cdk-cell *cdkCellDef="let row" class="tum:border-border tum:px-4 tum:py-2 tum:text-right">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>
             </ng-container>
         }
 
-        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tum:bg-tum-ui-content-background"></tr>
+        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tum:bg-content-background"></tr>
         <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()"></tr>
 
         <tr *cdkNoDataRow>
-            <td [attr.colspan]="displayedColumns().length" class="tum:px-4 tum:py-6 tum:text-center tum:text-tum-ui-muted">
+            <td [attr.colspan]="displayedColumns().length" class="tum:bg-content-background tum:px-4 tum:py-6 tum:text-center tum:text-muted">
                 <span>{{ emptyMessage() | tumUiTranslate }}</span>
             </td>
         </tr>
     </table>
 
     @if (loading()) {
-        <div class="tum:absolute tum:inset-0 tum:flex tum:items-center tum:justify-center tum:bg-tum-ui-content-background/60" aria-hidden="true">
-            <span class="tum:h-6 tum:w-6 tum:animate-spin tum:rounded-full tum:border-2 tum:border-tum-ui-border tum:border-t-tum-ui-primary tum:motion-reduce:animate-none"></span>
+        <div class="tum:absolute tum:inset-0 tum:flex tum:items-center tum:justify-center tum:bg-content-background/60" aria-hidden="true">
+            <span class="tum:h-6 tum:w-6 tum:animate-spin tum:rounded-full tum:border-2 tum:border-border tum:border-t-primary tum:motion-reduce:animate-none"></span>
         </div>
     }
 </div>

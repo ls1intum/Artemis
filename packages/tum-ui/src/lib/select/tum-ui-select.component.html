@@ -16,16 +16,16 @@
         (click)="toggle()"
         (keydown)="onTriggerKeydown($event)"
     >
-        <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-tum-ui-muted' : ''">{{ displayLabel() }}</span>
+        <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-muted' : ''">{{ displayLabel() }}</span>
     </button>
-    <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:right-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-tum-ui-muted">
+    <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:right-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-muted">
         <fa-icon [icon]="faChevronDown" />
     </span>
 
     @if (showClearButton()) {
         <button
             type="button"
-            class="tum:absolute tum:inset-y-0 tum:right-10 tum:flex tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-tum-ui-muted tum:hover:text-tum-ui-text-hover"
+            class="tum:absolute tum:inset-y-0 tum:right-10 tum:flex tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
             (click)="clear($event)"
             [attr.aria-label]="clearAriaLabel() ?? ('tumUi.select.clear' | tumUiTranslate)"
         >
@@ -35,7 +35,7 @@
 </div>
 
 <ng-template #panel>
-    <div class="tum-ui-select-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:text-tum-ui-text tum:shadow-md">
+    <div class="tum-ui-select-panel tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-md">
         <ul
             [id]="listboxId"
             role="listbox"
@@ -57,7 +57,7 @@
                     }
                 </li>
             } @empty {
-                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted">
+                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
                     {{ emptyMessage() ?? ('tumUi.select.empty' | tumUiTranslate) }}
                 </li>
             }

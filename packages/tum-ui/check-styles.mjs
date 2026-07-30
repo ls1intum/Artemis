@@ -63,15 +63,15 @@ function declarationValue(rule, property) {
     return rule?.nodes.find((node) => node.type === 'decl' && node.prop === property)?.value;
 }
 
-const contrastRule = ruleFor('tum:text-tum-ui-primary-contrast');
-if (declarationValue(contrastRule, 'color') !== 'var(--tum-ui-primary-contrast)') {
+const contrastRule = ruleFor('tum:text-primary-contrast');
+if (declarationValue(contrastRule, 'color') !== 'var(--artemis-primary-contrast-color)') {
     errors.push('the primary contrast selector does not use its package token');
 }
-const controlBackgroundRule = ruleFor('tum:bg-tum-ui-control-background');
-if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tum-ui-control-background)') {
+const controlBackgroundRule = ruleFor('tum:bg-control-background');
+if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--artemis-control-background)') {
     errors.push('the control background selector does not use its semantic package token');
 }
-if (css.includes('--tum-ui-surface-')) {
+if (css.includes('--artemis-surface-')) {
     errors.push('the compiled stylesheet exposes a primitive surface token');
 }
 if ([...compiledClasses].some((className) => className.startsWith('tum:dark:'))) {
@@ -120,7 +120,8 @@ stylesheet.walkDecls(/^--tum-animate-/, (declaration) => {
 if (
     manifest.exports?.['./styles.css'] !== './styles.css' ||
     manifest.exports?.['./themes.css'] !== './themes.css' ||
-    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css"]'
+    manifest.exports?.['./tailwind-theme.css'] !== './tailwind-theme.css' ||
+    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css","./tailwind-theme.css"]'
 ) {
     errors.push('the built manifest does not expose the stylesheet and theme contracts');
 }

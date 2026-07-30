@@ -6,7 +6,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     styleUrl: './tum-ui-input-group-addon.component.scss',
     host: {
         class:
-            'tum-ui-input-group-addon tum:bg-tum-ui-control-background tum:text-tum-ui-muted tum:border-y tum:border-tum-ui-control-border ' +
+            'tum-ui-input-group-addon tum:bg-control-background tum:text-muted tum:border-y tum:border-control-border ' +
             'tum:first:border-s tum:first:rounded-s-md tum:last:border-e tum:last:rounded-e-md',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,

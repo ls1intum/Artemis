@@ -31,5 +31,5 @@ export class TumUiProgressBarComponent {
         const value = this.value();
         return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
     });
-    protected readonly hostClasses = computed(() => `tum-ui-progress-bar tum:bg-tum-ui-border ${this.styleClass()}`.trim());
+    protected readonly hostClasses = computed(() => `tum-ui-progress-bar tum:bg-border ${this.styleClass()}`.trim());
 }

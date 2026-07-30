@@ -25,11 +25,11 @@
     }
 
     &:hover:not(:disabled)::after {
-        background-color: color-mix(in srgb, var(--tum-ui-text-color) 5%, transparent);
+        background-color: color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
     }
 
     &:focus-visible {
-        outline: 2px solid var(--tum-ui-primary);
+        outline: 2px solid var(--artemis-primary-color);
         outline-offset: 2px;
     }
 

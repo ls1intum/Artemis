@@ -30,9 +30,7 @@ export class TumUiPanelComponent {
     protected readonly faChevronUp = faChevronUp;
     protected readonly isCollapsed = computed(() => this.toggleable() && this.collapsed());
 
-    protected readonly hostClasses = computed(() =>
-        `tum-ui-panel tum:border tum:border-tum-ui-border tum:rounded-md tum:bg-tum-ui-content-background tum:text-tum-ui-text ${this.styleClass()}`.trim(),
-    );
+    protected readonly hostClasses = computed(() => `tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text ${this.styleClass()}`.trim());
 
     protected toggle(): void {
         if (this.toggleable()) {

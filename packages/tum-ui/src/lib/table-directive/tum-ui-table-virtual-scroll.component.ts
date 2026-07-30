@@ -43,18 +43,16 @@ export class TumUiTableVirtualScrollComponent<T> {
     protected readonly effectiveTrackBy = computed<TrackByFunction<T>>(() => this.trackBy() ?? ((_, item) => item));
 
     protected readonly headerClasses = computed(() => {
-        const base =
-            'tum-ui-vs-header tum:box-border tum:flex tum:text-sm tum:font-semibold tum:text-tum-ui-text tum:bg-tum-ui-content-background ' +
-            'tum:border-b tum:border-tum-ui-border';
+        const base = 'tum-ui-vs-header tum:box-border tum:flex tum:text-sm tum:font-semibold tum:text-text tum:bg-content-background ' + 'tum:border-b tum:border-border';
         return `${base} ${HEADER_PADDING[this.size()]}`;
     });
 
     protected readonly rowClasses = computed(() => {
-        const base = 'tum-ui-vs-row tum:box-border tum:flex tum:items-center tum:text-sm tum:text-tum-ui-text tum:border-b tum:border-tum-ui-border';
-        const hover = this.rowHover() ? ' tum:hover:bg-tum-ui-hover-background' : '';
+        const base = 'tum-ui-vs-row tum:box-border tum:flex tum:items-center tum:text-sm tum:text-text tum:border-b tum:border-border';
+        const hover = this.rowHover() ? ' tum:hover:bg-hover-background' : '';
         return `${base}${hover} ${HEADER_PADDING[this.size()]}`;
     });
     protected stripeClass(index: number): string {
-        return this.striped() && index % 2 === 0 ? ' tum:bg-tum-ui-table-striped-background' : '';
+        return this.striped() && index % 2 === 0 ? ' tum:bg-table-striped-background' : '';
     }
 }

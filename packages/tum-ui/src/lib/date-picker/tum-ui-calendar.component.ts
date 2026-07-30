@@ -79,16 +79,16 @@ export class TumUiCalendarComponent {
 
     protected dayButtonClasses(day: dayjs.Dayjs): string {
         const base =
-            'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:hover:bg-tum-ui-hover-background tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-tum-ui-primary';
+            'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:hover:bg-hover-background tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-primary';
         let color: string;
         if (this.isSelected(day)) {
-            color = 'tum:bg-tum-ui-primary tum:text-tum-ui-primary-contrast';
+            color = 'tum:bg-primary tum:text-primary-contrast';
         } else if (this.isOtherMonth(day)) {
-            color = 'tum:bg-transparent tum:text-tum-ui-muted';
+            color = 'tum:bg-transparent tum:text-muted';
         } else {
-            color = 'tum:bg-transparent tum:text-tum-ui-text';
+            color = 'tum:bg-transparent tum:text-text';
         }
-        const today = this.isToday(day) && !this.isSelected(day) ? 'tum:ring-1 tum:ring-tum-ui-primary' : '';
+        const today = this.isToday(day) && !this.isSelected(day) ? 'tum:ring-1 tum:ring-primary' : '';
         return `${base} ${color} ${today}`.trim();
     }
 

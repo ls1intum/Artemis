@@ -36,9 +36,9 @@ export class TumUiTabComponent {
     protected readonly panelId = computed(() => this.tabsService.panelId(this.value()));
 
     protected readonly hostClasses = computed(() => {
-        const state = this.active() ? 'tum:text-tum-ui-primary tum:border-b-tum-ui-primary' : 'tum:border-b-tum-ui-border tum:text-tum-ui-muted tum:hover:text-tum-ui-text';
+        const state = this.active() ? 'tum:text-accent tum:border-b-primary' : 'tum:border-b-border tum:text-muted tum:hover:text-text';
         const disabled = this.disabled ? 'tum-ui-tab-disabled' : '';
-        return `tum-ui-tab tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-tum-ui-primary ${state} ${disabled}`.trim();
+        return `tum-ui-tab tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-primary ${state} ${disabled}`.trim();
     });
 
     protected onClick(): void {

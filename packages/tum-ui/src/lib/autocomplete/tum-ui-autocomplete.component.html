@@ -16,7 +16,7 @@
         role="combobox"
         [id]="inputId()"
         [attr.name]="name()"
-        class="tum-ui-autocomplete-input tum:min-w-16 tum:flex-1 tum:border-0 tum:bg-transparent tum:p-0 tum:text-base tum:text-inherit tum:outline-none tum:placeholder:text-tum-ui-muted"
+        class="tum-ui-autocomplete-input tum:min-w-16 tum:flex-1 tum:border-0 tum:bg-transparent tum:p-0 tum:text-base tum:text-inherit tum:outline-none tum:placeholder:text-muted"
         [attr.placeholder]="inputPlaceholder()"
         [disabled]="isDisabled()"
         autocomplete="off"
@@ -33,7 +33,7 @@
 </div>
 
 <ng-template #panel>
-    <div class="tum-ui-autocomplete-panel tum:rounded-md tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:text-tum-ui-text tum:shadow-md">
+    <div class="tum-ui-autocomplete-panel tum:rounded-md tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-md">
         <ul
             [id]="listboxId"
             role="listbox"
@@ -54,7 +54,7 @@
                     <span class="tum:flex-1 tum:truncate">{{ valueLabel(option) }}</span>
                 </li>
             } @empty {
-                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-tum-ui-muted">
+                <li role="option" aria-selected="false" aria-disabled="true" class="tum:px-3 tum:py-2 tum:text-muted">
                     {{ emptyMessage() ?? ('tumUi.autocomplete.empty' | tumUiTranslate) }}
                 </li>
             }

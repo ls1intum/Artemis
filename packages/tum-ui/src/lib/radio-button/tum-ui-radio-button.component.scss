@@ -38,7 +38,7 @@
     box-shadow:
         0 0 transparent,
         0 0 transparent,
-        0 1px 2px 0 color-mix(in srgb, var(--tum-ui-text-color) 5%, transparent);
+        0 1px 2px 0 color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
     transition:
         background 0.2s,
         border-color 0.2s,
@@ -74,11 +74,11 @@
 }
 
 :host:has(.tum-ui-radio-button-input:hover:not(:disabled)) .tum-ui-radio-button-box::after {
-    background-color: color-mix(in srgb, var(--tum-ui-text-color) 5%, transparent);
+    background-color: color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
 }
 
 :host:has(.tum-ui-radio-button-input:focus-visible) .tum-ui-radio-button-box {
-    outline: 2px solid var(--tum-ui-primary);
+    outline: 2px solid var(--artemis-primary-color);
     outline-offset: 2px;
 }
 

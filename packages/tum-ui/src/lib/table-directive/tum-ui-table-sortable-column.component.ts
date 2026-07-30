@@ -55,7 +55,7 @@ export class TumUiTableSortableColumnComponent {
         }
     });
 
-    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tum:cursor-pointer tum:select-none tum:hover:bg-tum-ui-hover-background'));
+    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tum:cursor-pointer tum:select-none tum:hover:bg-hover-background'));
 
     protected onActivate(): void {
         this.table.requestSort(this.field());

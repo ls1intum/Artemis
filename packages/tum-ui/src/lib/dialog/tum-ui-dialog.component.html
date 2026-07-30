@@ -1,6 +1,6 @@
 <ng-template #panel>
     <div
-        class="tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-tum-ui-border tum:bg-tum-ui-overlay-background tum:text-tum-ui-text tum:shadow-xl"
+        class="tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-xl"
         [style]="style()"
     >
         @if (showHeader()) {
@@ -15,7 +15,7 @@
                 @if (closable()) {
                     <button
                         type="button"
-                        class="tum-ui-dialog-close tum:inline-flex tum:h-8 tum:w-8 tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-tum-ui-muted tum:transition-colors tum:hover:bg-tum-ui-hover-background"
+                        class="tum-ui-dialog-close tum:inline-flex tum:h-8 tum:w-8 tum:shrink-0 tum:cursor-pointer tum:appearance-none tum:items-center tum:justify-center tum:rounded-full tum:border-0 tum:bg-transparent tum:text-muted tum:transition-colors tum:hover:bg-hover-background"
                         [attr.aria-label]="closeButtonAriaLabel() ?? ('tumUi.dialog.close' | tumUiTranslate)"
                         (click)="close()"
                     >
