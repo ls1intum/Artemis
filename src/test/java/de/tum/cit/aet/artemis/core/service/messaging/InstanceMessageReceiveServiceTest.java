@@ -23,19 +23,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserScheduleService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideUnhideScheduleApi;
 import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 
 /**
@@ -72,15 +72,15 @@ class InstanceMessageReceiveServiceTest {
 
     private DistributedDataProvider distributedDataProvider;
 
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     private AthenaApi athenaApi;
 
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private UserScheduleService userScheduleService;
 
@@ -105,11 +105,11 @@ class InstanceMessageReceiveServiceTest {
             return topic;
         });
 
-        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
+        programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         programmingExerciseScheduleService = mock(ProgrammingExerciseScheduleService.class);
-        exerciseRepository = mock(ExerciseRepository.class);
+        exerciseRepository = mock(ExerciseTestRepository.class);
         athenaApi = mock(AthenaApi.class);
-        userRepository = mock(UserRepository.class);
+        userRepository = mock(UserTestRepository.class);
         userScheduleService = mock(UserScheduleService.class);
         notificationScheduleService = mock(NotificationScheduleService.class);
         participantScoreScheduleService = mock(ParticipantScoreScheduleService.class);
