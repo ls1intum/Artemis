@@ -419,6 +419,9 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.8.0(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0)(supports-color@10.2.2))
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.62.0
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.3.3

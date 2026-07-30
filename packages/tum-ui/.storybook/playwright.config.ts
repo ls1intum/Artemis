@@ -3,9 +3,9 @@ import { resolve } from 'node:path';
 
 export default defineConfig({
     testDir: './tests',
-    fullyParallel: true,
     forbidOnly: true,
     retries: 0,
+    workers: 1,
     reporter: 'list',
     outputDir: resolve(process.cwd(), '../../build/test-results/tum-ui-storybook'),
     use: {

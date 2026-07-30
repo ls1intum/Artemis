@@ -20,6 +20,7 @@ interface ButtonStoryArgs {
 }
 
 const meta = {
+    id: 'actions-button',
     title: 'Actions/Button',
     component: TumUiButtonComponent,
     args: {

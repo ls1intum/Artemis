@@ -1,0 +1,84 @@
+---
+id: artemis-client
+title: Artemis client guide
+sidebar_label: Artemis client
+description: Develop the Artemis Angular client and choose the right UI component, styling, theming, and testing path.
+---
+
+import Link from '@docusaurus/Link';
+import DocCardList from '@theme/DocCardList';
+import { faArrowRight, faCode, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+# Artemis client guide
+
+Artemis uses Angular, with PrimeNG as the component library and Tailwind CSS for styling. Start with the primary path for new UI. Use the TUM UI reference only when maintaining or reusing components that already belong to the private extraction package.
+
+## Choose the right component path
+
+<div className="row">
+    <div className="col col--6 margin-bottom--md">
+        <Link className="card padding--lg client-path-card" to="/developer/guidelines/client-development#ui-components">
+            <span className="client-path-card__header">
+                <span className="client-path-card__icon" aria-hidden="true">
+                    <FontAwesomeIcon icon={faCode} />
+                </span>
+                <span className="badge badge--primary">Default path</span>
+            </span>
+            <h2>Build new Artemis UI</h2>
+            <p>Use PrimeNG components, Tailwind utilities, and native HTML according to the client guidelines.</p>
+            <span className="client-path-card__action">
+                {'Open client guidelines'}
+                <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+            </span>
+        </Link>
+    </div>
+    <div className="col col--6 margin-bottom--md">
+        <Link className="card padding--lg client-path-card" to="pathname:///developer/tum-ui/?path=/docs/actions-button--docs" target="_self">
+            <span className="client-path-card__header">
+                <span className="client-path-card__icon" aria-hidden="true">
+                    <FontAwesomeIcon icon={faLayerGroup} />
+                </span>
+                <span className="badge badge--secondary">Existing package</span>
+            </span>
+            <h2>Existing TUM UI components</h2>
+            <p>Explore supported states in the private TUM UI package.</p>
+            <span className="client-path-card__action">
+                {'Browse component reference'}
+                <FontAwesomeIcon icon={faArrowRight} aria-hidden="true" />
+            </span>
+        </Link>
+    </div>
+</div>
+
+## Client reference
+
+<DocCardList
+    className="client-guide-cards"
+    items={[
+        {
+            type: 'link',
+            label: 'Client development',
+            href: '/developer/guidelines/client-development',
+            description: 'Angular architecture, component choices, signals, accessibility, and styling conventions.',
+        },
+        {
+            type: 'link',
+            label: 'Client theming',
+            href: '/developer/guidelines/client-theming',
+            description: 'Theme tokens, color modes, and semantic color usage.',
+        },
+        {
+            type: 'link',
+            label: 'Client testing',
+            href: '/developer/guidelines/client-tests',
+            description: 'Focused, maintainable tests for Angular client behavior.',
+        },
+        {
+            type: 'link',
+            label: 'TUM UI package guide',
+            href: '/developer/guidelines/tum-ui-kit',
+            description: 'Ownership boundaries, contribution rules, local workflow, and extraction constraints.',
+        },
+    ]}
+/>

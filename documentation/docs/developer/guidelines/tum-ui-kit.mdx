@@ -1,3 +1,8 @@
+---
+description: Ownership, integration, contribution, and testing rules for the existing TUM UI component package and Storybook reference.
+---
+
+import Link from '@docusaurus/Link';
 import Callout from '../../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
@@ -14,9 +19,10 @@ consume its compiled public entry point and stylesheet instead of application-in
 <Callout variant={CalloutVariant.info}>
     **Interactive component catalog**
 
-    [Open TUM UI Storybook](pathname:///tum-ui/) to inspect supported states, controls,
-    accessibility results, and rendered API details. This guide owns architecture and contribution
-    policy; Storybook owns the live component reference.
+    <Link to="pathname:///developer/tum-ui/?path=/docs/actions-button--docs" target="_self">Existing TUM UI components</Link> provides
+    supported states, controls, accessibility results, and rendered API details. This guide owns
+    architecture and contribution policy; Storybook owns the live component reference.
+
 </Callout>
 
 ## Ownership boundary

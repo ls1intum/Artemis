@@ -2,15 +2,11 @@ import { DocsContainer, type DocsContainerProps } from '@storybook/addon-docs/bl
 import type { PropsWithChildren } from 'react';
 import { themes } from 'storybook/theming';
 
-type ThemeName = 'light' | 'dark';
-
-function themeName(value: unknown): ThemeName {
-    return value === 'dark' ? 'dark' : 'light';
-}
+import { resolveTheme, type ThemeName } from './theme';
 
 function currentTheme(context: DocsContainerProps['context']): ThemeName {
     const story = context.componentStories()[0];
-    return story ? themeName(context.getStoryContext(story).globals.theme) : 'light';
+    return resolveTheme(story ? context.getStoryContext(story).globals.theme : undefined);
 }
 
 export function ThemedDocsContainer({ children, context }: PropsWithChildren<DocsContainerProps>) {

@@ -9,6 +9,7 @@ import '../styles.css';
 import '../themes.css';
 import documentationJson from '../documentation.json';
 import { ThemedDocsContainer } from './docs-container';
+import { preferredTheme } from './theme';
 import './theme.css';
 
 setCompodocJson(documentationJson);
@@ -21,7 +22,7 @@ export default definePreview({
                 light: 'light',
                 dark: 'dark',
             },
-            defaultTheme: 'light',
+            defaultTheme: preferredTheme(),
             attributeName: 'data-theme',
             parentSelector: 'html',
         }),

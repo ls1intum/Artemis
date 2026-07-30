@@ -49,8 +49,18 @@ jobs:
         working-directory: documentation
         run: pnpm run lint
 
+      - name: Documentation Type Check
+        working-directory: documentation
+        run: pnpm run typecheck
+
       - name: Build documentation site
         run: pnpm run docs:build
+
+      - name: Install documentation browser
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: Test documentation integration
+        run: pnpm run docs:integration:test
 
       # Only on the deploy paths (develop push / manual redeploy); the deploy job consumes this.
       # Uploading the artifact needs no extra permissions — `pages: write` lives on the deploy job.

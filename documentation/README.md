@@ -31,13 +31,16 @@ To test the build locally, you can run:
 pnpm run serve
 ```
 
-To build and serve the complete deployed site, including the TUM UI Storybook at `/tum-ui/`, run
-from the repository root:
+To build and serve the complete deployed site, including the TUM UI Storybook at
+`/developer/tum-ui/`, run from the repository root:
 
 ```bash
 pnpm run docs:build
 pnpm run docs:serve
 ```
+
+`pnpm run docs:test` builds the same combined artifact and checks the developer-guide navigation into
+Storybook and back.
 
 ## Deployment
 

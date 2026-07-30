@@ -1,0 +1,41 @@
+---
+id: intro
+title: Welcome to the Development Guide
+sidebar_label: Introduction
+---
+
+import DocCardList from '@theme/DocCardList';
+
+# 🧑‍💻 Development Guide
+
+This section provides the technical setup and configuration details needed to develop, maintain, or extend Artemis.
+
+You'll find information on:
+
+- Setting up a **local development environment**
+- Running the **Artemis server (Spring Boot)** and **client (Angular)**
+- Database and build configuration
+- Integration with version control and CI/CD systems
+- Setting up **local LLM services** for AI-assisted features
+
+Start with the **[Setup Guide](./setup.mdx)** to install and run Artemis on your local machine.
+
+## Work by area
+
+<DocCardList
+    className="client-guide-cards"
+    items={[
+        {
+            type: 'link',
+            label: 'Artemis client',
+            href: '/developer/artemis-client',
+            description: 'Build and test the Angular client, choose UI components, and apply Artemis theming.',
+        },
+        {
+            type: 'link',
+            label: 'Server development',
+            href: '/developer/guidelines/server-development',
+            description: 'Build Spring Boot features using the project’s Java, API, persistence, and security conventions.',
+        },
+    ]}
+/>

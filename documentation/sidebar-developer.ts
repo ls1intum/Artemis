@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        'artemis-client',
         'development-process',
         'reviewer-guidelines',
         {
@@ -22,11 +23,6 @@ const sidebars: SidebarsConfig = {
                         'guidelines/client-theming',
                         'guidelines/client-tests',
                         'guidelines/tum-ui-kit',
-                        {
-                            type: 'link',
-                            label: 'TUM UI component catalog',
-                            href: 'pathname:///tum-ui/',
-                        },
                     ],
                 },
                 {
