@@ -200,6 +200,9 @@ class GenerationAttemptLoop {
 
     private List<SemanticMutant> semanticMutantsPendingSpecApproval = List.of();
 
+    /** Concise, run-local novelty exclusions for conclusive mutation proposals; unlike pending mutants these carry no blocker or contract authority. */
+    private List<SemanticMutant.Exclusion> semanticMutantHistory = List.of();
+
     /** Independently adjudicated reference defects remain executable acceptance checks until a later candidate makes their exact witnesses pass. */
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
@@ -732,10 +735,11 @@ class GenerationAttemptLoop {
             List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
                     : specFidelityCritic
                             .authorSemanticMutants(specDocumentSnapshot, solutionFiles,
-                                    GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), usageSink, cancelled)
+                                    GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), semanticMutantHistory, usageSink, cancelled)
                             .stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
             List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
                     : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, freshMutantCandidates, restoreCandidate);
+            semanticMutantHistory = GenerationReviewSupport.rememberExecutedMutants(semanticMutantHistory, freshMutantOutcomes);
             List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), freshMutantOutcomes.stream()).toList();
             List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
                     .map(SemanticMutantOutcome::mutant).distinct().toList();
@@ -749,15 +753,9 @@ class GenerationAttemptLoop {
 
             Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
             Set<String> pendingAdjudicationNames = referenceWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
-            List<ContractWitness> candidates = new ArrayList<>(referenceWitnessesAwaitingPass);
-            referenceWitnessesAwaitingAdjudication.stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName())))
-                    .forEach(candidates::add);
-            contractWitnessesPendingAdoption.stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName())))
-                    .forEach(candidates::add);
-            specFidelityCritic
-                    .authorContractWitnesses(specDocumentSnapshot, GenerationReviewSupport.renderArtifactSources(testsFiles),
-                            GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled)
-                    .stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName()))).forEach(candidates::add);
+            List<ContractWitness> candidates = ReferenceWitnessEvidence.candidates(referenceWitnessesAwaitingPass, referenceWitnessesAwaitingAdjudication,
+                    contractWitnessesPendingAdoption, specFidelityCritic.authorContractWitnesses(specDocumentSnapshot, GenerationReviewSupport.renderArtifactSources(testsFiles),
+                            GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled));
             Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
             List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate);
             List<ContractWitness> environmentValidated = witnessOutcomes.stream()
@@ -765,35 +763,26 @@ class GenerationAttemptLoop {
             List<ContractWitness> adoptableWitnesses = specificationApproved ? environmentValidated.stream().filter(witness -> !mutatedRules.contains(witness.ruleId())).toList()
                     : List.of();
             contractWitnessesPendingAdoption = adoptableWitnesses;
-            List<ContractWitnessOutcome> freshReferenceFailures = witnessOutcomes.stream()
-                    .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
-                    .filter(outcome -> !pendingWitnessNames.contains(outcome.witness().testName())).toList();
-            SpecFidelityCriticService.ReferenceWitnessReview referenceReview = Optional.ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specDocumentSnapshot,
-                    GenerationReviewSupport.renderArtifactSources(solutionFiles), freshReferenceFailures, usageSink, cancelled))
-                    .orElseGet(SpecFidelityCriticService.ReferenceWitnessReview::empty);
-            Set<String> adjudicatedNames = java.util.stream.Stream
-                    .of(referenceReview.supportedWitnesses(), referenceReview.invalidWitnesses(), referenceReview.unresolvedWitnesses()).flatMap(List::stream)
-                    .map(ContractWitness::testName).collect(Collectors.toSet());
-            List<ContractWitness> omittedFromAdjudication = freshReferenceFailures.stream().map(ContractWitnessOutcome::witness)
-                    .filter(witness -> !adjudicatedNames.contains(witness.testName())).toList();
-            List<ContractWitness> stillFailing = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
-                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingWitnessNames.contains(witness.testName())).toList();
-            List<ContractWitness> pendingInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE)
-                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingWitnessNames.contains(witness.testName())).toList();
-            List<ContractWitness> adjudicationInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE)
-                    .map(ContractWitnessOutcome::witness).filter(witness -> pendingAdjudicationNames.contains(witness.testName())).toList();
-            referenceWitnessesAwaitingPass = java.util.stream.Stream
-                    .concat(java.util.stream.Stream.concat(stillFailing.stream(), pendingInconclusive.stream()), referenceReview.supportedWitnesses().stream()).distinct().toList();
-            referenceWitnessesAwaitingAdjudication = java.util.stream.Stream
-                    .concat(java.util.stream.Stream.concat(adjudicationInconclusive.stream(), referenceReview.unresolvedWitnesses().stream()), omittedFromAdjudication.stream())
-                    .distinct().toList();
+            List<ContractWitnessOutcome> freshReferenceFailures = ReferenceWitnessEvidence.freshFailures(freshMutantOutcomes, witnessOutcomes, pendingWitnessNames);
+            List<ContractWitnessOutcome> adjudicationCandidates = specificationApproved ? freshReferenceFailures : List.of();
+            SpecFidelityCriticService.ReferenceWitnessReview referenceReview = adjudicationCandidates
+                    .isEmpty()
+                            ? SpecFidelityCriticService.ReferenceWitnessReview.empty()
+                            : Optional.ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specDocumentSnapshot,
+                                    GenerationReviewSupport.renderArtifactSources(solutionFiles), adjudicationCandidates, usageSink, cancelled))
+                                    .orElseGet(SpecFidelityCriticService.ReferenceWitnessReview::empty);
+            ReferenceWitnessEvidence.State witnessState = ReferenceWitnessEvidence.reconcile(freshReferenceFailures, witnessOutcomes, pendingWitnessNames, pendingAdjudicationNames,
+                    referenceReview);
+            referenceWitnessesAwaitingPass = witnessState.awaitingPass();
+            referenceWitnessesAwaitingAdjudication = witnessState.awaitingAdjudication();
             emit(new GenerationReviewSupport.ExecutableProbeSummary(mutantOutcomes, witnessOutcomes, adoptableWitnesses.size(), referenceWitnessesAwaitingPass.size(),
                     referenceWitnessesAwaitingAdjudication.size()).render());
             List<SpecFidelityReport.Finding> combined = new ArrayList<>(SemanticEvidenceReconciler.reconcile(report, mutantOutcomes));
             combined.addAll(referenceReview.findings());
-            GenerationReviewSupport.addReferenceUnavailability(combined, omittedFromAdjudication.size(), pendingInconclusive.size(), adjudicationInconclusive.size());
+            GenerationReviewSupport.addReferenceUnavailability(combined, witnessState.omittedFromAdjudication().size(), witnessState.pendingInconclusive().size(),
+                    witnessState.adjudicationInconclusive().size());
             inconclusivePendingMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
-            stillFailing.forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
+            witnessState.stillFailing().forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
             validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant, specificationApproved)));
             adoptableWitnesses.forEach(witness -> combined.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
                     "Rule " + witness.ruleId() + " has an executable counterexample witness",

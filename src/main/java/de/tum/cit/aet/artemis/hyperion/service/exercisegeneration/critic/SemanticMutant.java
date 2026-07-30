@@ -15,7 +15,15 @@ import org.jspecify.annotations.Nullable;
 public record SemanticMutant(String ruleId, String solutionPath, String originalSolutionSource, String mutantSource, ContractWitness counterexample,
         SpecFidelityReport.@Nullable Finding reviewTarget) {
 
+    /** Concise run-local history used only to keep later mutation samples novel; it carries no contract authority or executable-evidence claim. */
+    public record Exclusion(String ruleId, String solutionPath, String misconception) {
+    }
+
     public SemanticMutant(String ruleId, String solutionPath, String originalSolutionSource, String mutantSource, ContractWitness counterexample) {
         this(ruleId, solutionPath, originalSolutionSource, mutantSource, counterexample, null);
+    }
+
+    public Exclusion exclusion() {
+        return new Exclusion(ruleId, solutionPath, counterexample.wrongBehavior());
     }
 }

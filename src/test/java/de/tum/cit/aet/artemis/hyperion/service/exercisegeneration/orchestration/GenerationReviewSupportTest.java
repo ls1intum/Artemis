@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SemanticMutantOutcome.Disposition;
 
 class GenerationReviewSupportTest {
 
@@ -48,6 +50,21 @@ class GenerationReviewSupportTest {
 
         assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
         assertThat(targets.subList(0, 4)).extracting(SpecFidelityReport.Finding::requirement).contains("Rule R3 has an environment-proven surviving semantic mutant");
+    }
+
+    @Test
+    void boundedHistoryRemembersOnlyConclusiveExecutedProposalsWithoutDuplicates() {
+        SemanticMutant killed = mutant("hardCodedThresholds", "uses fixed thresholds");
+        SemanticMutant referenceFailed = mutant("narrowedArithmetic", "narrows values before comparing");
+        SemanticMutant inconclusive = mutant("didNotCompile", "uses an invalid replacement");
+
+        List<SemanticMutant.Exclusion> history = GenerationReviewSupport
+                .rememberExecutedMutants(List.of(killed.exclusion()),
+                        List.of(new SemanticMutantOutcome(killed, Disposition.KILLED_BY_GRADED_SUITE),
+                                new SemanticMutantOutcome(referenceFailed, Disposition.REFERENCE_TEST_FAILED), new SemanticMutantOutcome(inconclusive, Disposition.INCONCLUSIVE)),
+                        2);
+
+        assertThat(history).containsExactly(killed.exclusion(), referenceFailed.exclusion());
     }
 
     @Test

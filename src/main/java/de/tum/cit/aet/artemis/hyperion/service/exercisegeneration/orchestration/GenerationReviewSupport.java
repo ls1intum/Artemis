@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 /** Pure rendering and classification rules shared by the generation review loop. */
 final class GenerationReviewSupport {
 
+    private static final int MAX_EXECUTED_MUTANT_HISTORY = 12;
+
     record SemanticMutantRecheck(List<SemanticMutant> unresolvedMutants, List<String> failureReasons) {
     }
 
@@ -26,6 +28,7 @@ final class GenerationReviewSupport {
         String render() {
             long survivors = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).count();
             long killed = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
+            long referenceFailedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED).count();
             long mutantInconclusive = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
             long validatedWitnesses = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED)
                     .count();
@@ -34,10 +37,10 @@ final class GenerationReviewSupport {
             long referenceFailed = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED).count();
             long witnessInconclusive = witnessOutcomes.stream().filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE).count();
             return "Executable semantic probes: " + mutantOutcomes.size() + " mutant probe(s): " + survivors + " survived, " + killed + " killed by existing tests, "
-                    + mutantInconclusive + " inconclusive; " + witnessOutcomes.size() + " contract-witness proposal(s): " + validatedWitnesses + " reference-pass/starter-fail, "
-                    + starterDidNotFail + " reference-pass/starter-not-fail, " + referenceFailed + " reference-fail, " + witnessInconclusive + " inconclusive, "
-                    + adoptableWitnesses + " eligible for adoption; " + awaitingReferencePass + " adjudicated reference defect(s) still failing, " + awaitingAdjudication
-                    + " unresolved adjudication(s).";
+                    + referenceFailedMutants + " reference-fail, " + mutantInconclusive + " inconclusive; " + witnessOutcomes.size() + " contract-witness proposal(s): "
+                    + validatedWitnesses + " reference-pass/starter-fail, " + starterDidNotFail + " reference-pass/starter-not-fail, " + referenceFailed + " reference-fail, "
+                    + witnessInconclusive + " inconclusive, " + adoptableWitnesses + " eligible for adoption; " + awaitingReferencePass
+                    + " adjudicated reference defect(s) still failing, " + awaitingAdjudication + " unresolved adjudication(s).";
         }
     }
 
@@ -68,6 +71,16 @@ final class GenerationReviewSupport {
 
     static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
         return java.util.stream.Stream.concat(mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)), findings.stream()).toList();
+    }
+
+    static List<SemanticMutant.Exclusion> rememberExecutedMutants(List<SemanticMutant.Exclusion> history, List<SemanticMutantOutcome> freshOutcomes, int limit) {
+        return java.util.stream.Stream
+                .concat(history.stream(), freshOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.INCONCLUSIVE).map(outcome -> outcome.mutant().exclusion()))
+                .distinct().limit(limit).toList();
+    }
+
+    static List<SemanticMutant.Exclusion> rememberExecutedMutants(List<SemanticMutant.Exclusion> history, List<SemanticMutantOutcome> freshOutcomes) {
+        return rememberExecutedMutants(history, freshOutcomes, MAX_EXECUTED_MUTANT_HISTORY);
     }
 
     static SemanticMutantRecheck semanticMutantRecheck(List<SemanticMutantOutcome> outcomes) {

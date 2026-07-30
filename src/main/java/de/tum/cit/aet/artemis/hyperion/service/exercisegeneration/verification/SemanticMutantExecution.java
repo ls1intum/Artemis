@@ -58,6 +58,11 @@ final class SemanticMutantExecution {
                 continue;
             }
             BuildSummary pristine = runner.run(null, Map.entry(probePath, source));
+            if (ContractWitnessProbe.executed(mutant.counterexample(), pristine.testNames()) && ContractWitnessProbe.failed(mutant.counterexample(), pristine.testFailedNames())
+                    && !pristine.timedOut()) {
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.REFERENCE_TEST_FAILED, ContractWitnessProbe.failureDiagnostic(mutant.counterexample(), pristine)));
+                continue;
+            }
             if (ContractWitnessProbe.validated(pristine.testNames(), pristine.testFailedNames(), List.of(mutant.counterexample())).isEmpty()) {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;

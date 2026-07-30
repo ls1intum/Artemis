@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ReviewGuardrails.MAX_ARTIFACT_EVIDENCE_CHARS;
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ReviewGuardrails.extractJsonPayload;
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ReviewGuardrails.requireReviewTextSafe;
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ReviewGuardrails.truncate;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -62,6 +63,11 @@ class SemanticMutantAuthor {
 
     List<SemanticMutant> author(String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
+        return author(specification, solutionFiles, reviewTargets, List.of(), usageSink, cancelled);
+    }
+
+    List<SemanticMutant> author(String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets, List<SemanticMutant.Exclusion> exclusions,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         requireReviewTextSafe("semantic-mutant/specification", specification);
         solutionFiles.forEach((path, source) -> {
             requireReviewTextSafe("semantic-mutant/path", path);
@@ -81,11 +87,19 @@ class SemanticMutantAuthor {
         if (!targets.isBlank()) {
             requireReviewTextSafe("semantic-mutant/review-targets", targets);
         }
+        String priorProposals = renderExclusions(exclusions);
+        if (!priorProposals.isBlank()) {
+            requireReviewTextSafe("semantic-mutant/prior-proposals", priorProposals);
+        }
         String targetPrompt = targets.isBlank() ? ""
                 : "\n\nINDEPENDENT REVIEW TARGETS AND PRIOR EXECUTED GAPS (not new authority):\n" + targets
                         + "\nPrioritize semantically distinct proposals for source-backed risks when the approved specification entails them. An environment-proven item already "
                         + "records that behavior: do not propose a renamed, recoded, or numerically varied equivalent; use another observable misconception.";
-        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt;
+        String exclusionPrompt = priorProposals.isBlank() ? ""
+                : "\n\nPRIOR ENVIRONMENT-EXECUTED PROPOSALS (novelty exclusions only; NOT requirements or contract evidence):\n" + priorProposals
+                        + "\nDo not repeat a renamed, recoded, or numerically varied equivalent. Choose another applicable observable misconception or return fewer proposals.";
+        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
+                + exclusionPrompt;
         try {
             return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
         }
@@ -99,6 +113,12 @@ class SemanticMutantAuthor {
         List<SpecFidelityReport.Finding> targets = reviewTargets(reviewTargets);
         return java.util.stream.IntStream.range(0, targets.size())
                 .mapToObj(index -> "- [T" + (index + 1) + "] " + targets.get(index).requirement() + ": " + targets.get(index).detail()).collect(Collectors.joining("\n"));
+    }
+
+    static String renderExclusions(List<SemanticMutant.Exclusion> exclusions) {
+        return exclusions.stream().distinct()
+                .map(exclusion -> "- " + truncate(exclusion.ruleId()) + " at " + truncate(exclusion.solutionPath()) + ": " + truncate(exclusion.misconception()))
+                .collect(Collectors.joining("\n"));
     }
 
     List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles) {

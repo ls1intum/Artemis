@@ -87,6 +87,19 @@ class SemanticMutantExecutionTest {
     }
 
     @Test
+    void preservesAnExecutedPristineReferenceFailureForIndependentAdjudication() {
+        InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of()), reports(List.of("existing", "globalChoice"), List.of("globalChoice")));
+        AtomicInteger restores = new AtomicInteger();
+
+        assertThat(verifier().evaluateSemanticMutants(sandbox, "session", javaExercise(), TESTS, Map.of(PATH, ORIGINAL), List.of(MUTANT), restores::incrementAndGet))
+                .singleElement().satisfies(outcome -> {
+                    assertThat(outcome.disposition()).isEqualTo(Disposition.REFERENCE_TEST_FAILED);
+                    assertThat(outcome.diagnostic()).contains("expected behaviour not met");
+                });
+        assertThat(restores).hasValue(4);
+    }
+
+    @Test
     void ordinaryRecheckRequiresAnExecutedFailingTestRatherThanACompileFailure() {
         AtomicInteger killedRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of("globalChoice"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),

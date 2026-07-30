@@ -28,7 +28,7 @@ final class SemanticEvidenceReconciler {
                 return true;
             }
             List<Disposition> dispositions = dispositionsByTarget.get(finding);
-            return dispositions == null || dispositions.isEmpty() || dispositions.contains(Disposition.INCONCLUSIVE);
+            return dispositions == null || dispositions.isEmpty() || dispositions.contains(Disposition.INCONCLUSIVE) || dispositions.contains(Disposition.REFERENCE_TEST_FAILED);
         }).toList();
     }
 }

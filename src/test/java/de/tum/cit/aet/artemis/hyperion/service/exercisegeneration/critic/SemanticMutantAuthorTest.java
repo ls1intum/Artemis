@@ -94,6 +94,14 @@ class SemanticMutantAuthorTest {
     }
 
     @Test
+    void rendersExecutedHistoryAsConciseNonAuthoritativeNoveltyExclusions() {
+        SemanticMutant.Exclusion exclusion = new SemanticMutant.Exclusion("R1", "src/example/Scheduler.java", "chooses within the first batch instead of globally");
+
+        assertThat(SemanticMutantAuthor.renderExclusions(List.of(exclusion, exclusion)))
+                .isEqualTo("- R1 at src/example/Scheduler.java: chooses within the first batch instead of globally");
+    }
+
+    @Test
     void preservesExactReviewProvenanceAndRejectsAMismatchedEcho() {
         SpecFidelityReport.Finding target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "an exclusive comparison may pass");
         String targeted = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose(), \"R1 global choice\");")

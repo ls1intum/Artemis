@@ -378,7 +378,12 @@ public class SpecFidelityCriticService {
      */
     public List<SemanticMutant> authorSemanticMutants(String specificationContract, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return semanticMutantAuthor.author(specificationContract, solutionFiles, reviewTargets, usageSink, cancelled);
+        return authorSemanticMutants(specificationContract, solutionFiles, reviewTargets, List.of(), usageSink, cancelled);
+    }
+
+    public List<SemanticMutant> authorSemanticMutants(String specificationContract, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets,
+            List<SemanticMutant.Exclusion> exclusions, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return semanticMutantAuthor.author(specificationContract, solutionFiles, reviewTargets, exclusions, usageSink, cancelled);
     }
 
     /**
