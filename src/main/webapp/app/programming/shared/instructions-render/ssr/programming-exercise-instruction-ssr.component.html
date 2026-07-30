@@ -10,10 +10,12 @@
 @if (refreshFailed()) {
     <tum-ui-message severity="info" styleClass="mb-3" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
 }
-<jhi-programming-exercise-instruction-ssr-content
-    [html]="renderedHtml()"
-    [tasks]="tasks()"
-    [interactive]="canOpenFeedback()"
-    [attr.aria-busy]="isRefreshing()"
-    (taskActivated)="onTaskActivated($event)"
-/>
+<div class="ssr-scroll-area">
+    <jhi-programming-exercise-instruction-ssr-content
+        [html]="renderedHtml()"
+        [tasks]="tasks()"
+        [interactive]="canOpenFeedback()"
+        [attr.aria-busy]="isRefreshing()"
+        (taskActivated)="onTaskActivated($event)"
+    />
+</div>
