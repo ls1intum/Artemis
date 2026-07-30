@@ -187,6 +187,12 @@ export default tseslint.config(
                     caughtErrors: 'none',
                 },
             ],
+            // The core `no-redeclare` rule does not understand TypeScript function overloads and reports every
+            // signature after the first as a redeclaration (e.g. the `hydrate` overloads in deep-clone.util.ts).
+            // Swap in the typescript-eslint extension, which is overload-aware and otherwise equivalent; genuine
+            // redeclarations remain errors, and tsc catches them independently.
+            'no-redeclare': 'off',
+            '@typescript-eslint/no-redeclare': 'error',
             'no-unused-private-class-members': 'error',
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
