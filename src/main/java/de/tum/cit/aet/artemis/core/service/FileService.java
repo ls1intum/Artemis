@@ -17,12 +17,13 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 
 @Profile(PROFILE_CORE)
@@ -32,7 +33,30 @@ public class FileService implements DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
+    /**
+     * Resolved lazily because {@code BlobCacheEvictionService} is itself declared {@code @Lazy}, so Spring injects a
+     * deferred proxy. That matters here: this service is wired very early, and eagerly creating the eviction service
+     * would pull up the cache manager, and with it the distributed data provider, ahead of the deferred initialisation
+     * the rest of the startup sequence relies on.
+     */
+    @Nullable
+    private final BlobCacheEvictionService blobCacheEvictionService;
+
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
+
+    /**
+     * For the JPA entities that construct this service directly to reach its path helpers. Such an instance cannot
+     * broadcast cache evictions, and {@link #evictCacheForPath(Path)} reports that loudly rather than silently skipping
+     * the eviction.
+     */
+    public FileService() {
+        this.blobCacheEvictionService = null;
+    }
+
+    @Autowired
+    public FileService(BlobCacheEvictionService blobCacheEvictionService) {
+        this.blobCacheEvictionService = blobCacheEvictionService;
+    }
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -58,14 +82,22 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Evict the cache for the given path
+     * Evict the cache for the given path on every node.
+     *
+     * <p>
+     * The {@code files} cache is per-node (see {@link de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration}),
+     * so a local {@code @CacheEvict} would leave the other nodes serving the previous file content. The broadcast below is
+     * what makes the eviction cluster-wide.
      *
      * @param path the path for the file to evict from cache
      */
-    @CacheEvict(value = "files", key = "#path")
     public void evictCacheForPath(Path path) {
         log.debug("Invalidate files cache for {}", path);
-        // Intentionally blank
+        if (blobCacheEvictionService == null) {
+            log.error("Cannot evict the files cache for {}: this FileService was constructed directly instead of being injected", path);
+            return;
+        }
+        blobCacheEvictionService.evictEverywhere("files", path);
     }
 
     /**

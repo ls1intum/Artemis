@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.repository.passkey;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.WEBAUTHN_CHALLENGE_COOKIE_NAME;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -25,9 +25,8 @@ import org.springframework.security.web.webauthn.authentication.PublicKeyCredent
 import org.springframework.stereotype.Repository;
 import org.springframework.web.util.WebUtils;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
@@ -67,14 +66,14 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     /** Time-to-live in seconds: 5 minutes to support conditional mediation (passkey autofill) */
     private static final int AUTH_OPTIONS_TIME_TO_LIVE_SECONDS = 300;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final Environment environment;
 
-    private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
+    private DistributedMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
 
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Environment environment) {
-        this.hazelcastInstance = hazelcastInstance;
+    public HazelcastPublicKeyCredentialRequestOptionsRepository(DistributedDataProvider distributedDataProvider, Environment environment) {
+        this.distributedDataProvider = distributedDataProvider;
         this.environment = environment;
     }
 
@@ -86,9 +85,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
      */
     @PostConstruct
     public void init() {
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_SECONDS);
-        authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+        authOptionsMap = distributedDataProvider.getExpiringMap(MAP_NAME, Duration.ofSeconds(AUTH_OPTIONS_TIME_TO_LIVE_SECONDS));
     }
 
     /**

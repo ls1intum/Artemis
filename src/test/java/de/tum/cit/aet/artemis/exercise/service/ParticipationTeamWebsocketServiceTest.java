@@ -92,8 +92,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
         verify(websocketMessagingService).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was added to destination tracker.").hasSize(1);
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
 
     @Test
@@ -114,8 +114,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
 
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was removed from destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was removed from destination tracker.").hasSize(1);
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }
 
     @Test

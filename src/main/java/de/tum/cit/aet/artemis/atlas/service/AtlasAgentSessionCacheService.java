@@ -6,15 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -23,6 +19,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * Service for managing cached session data for the Atlas Agent.
@@ -71,11 +69,11 @@ public class AtlasAgentSessionCacheService {
 
     private final CacheManager cacheManager;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    public AtlasAgentSessionCacheService(CacheManager cacheManager, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public AtlasAgentSessionCacheService(CacheManager cacheManager, DistributedDataProvider distributedDataProvider) {
         this.cacheManager = cacheManager;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -212,10 +210,9 @@ public class AtlasAgentSessionCacheService {
      * @param previewData  the preview data to store
      */
     public void storePreviewForMessage(String sessionId, int messageIndex, MessagePreviewData previewData) {
-        // Serialize per-session read-modify-write across the Hazelcast cluster: IMap.lock(key) is a
-        // distributed per-key lock, so concurrent writers on any node observe a consistent history
-        // map and neither one's messageIndex entry is dropped by the final put.
-        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        // Serialize the per-session read-modify-write across the cluster, so concurrent writers on any node observe a
+        // consistent history map and neither one's messageIndex entry is dropped by the final put.
+        DistributedMap<String, Map<Integer, MessagePreviewData>> history = previewHistory();
         history.lock(sessionId);
         try {
             Map<Integer, MessagePreviewData> entries = history.get(sessionId);
@@ -237,8 +234,7 @@ public class AtlasAgentSessionCacheService {
      * @return map of assistant message index to preview data, or empty map if none exist
      */
     public Map<Integer, MessagePreviewData> getPreviewHistory(String sessionId) {
-        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        Map<Integer, MessagePreviewData> entries = history.get(sessionId);
+        Map<Integer, MessagePreviewData> entries = previewHistory().get(sessionId);
         return entries != null ? entries : Map.of();
     }
 
@@ -248,7 +244,13 @@ public class AtlasAgentSessionCacheService {
      * @param sessionId the session ID
      */
     public void clearPreviewHistory(String sessionId) {
-        IMap<String, Map<Integer, MessagePreviewData>> history = hazelcastInstance.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
-        history.delete(sessionId);
+        previewHistory().remove(sessionId);
+    }
+
+    /**
+     * @return the distributed map holding per-session assistant message previews
+     */
+    private DistributedMap<String, Map<Integer, MessagePreviewData>> previewHistory() {
+        return distributedDataProvider.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
     }
 }

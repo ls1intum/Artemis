@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.Batc
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.atlas.service.util.AtlasPromptSanitizer;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 

@@ -9,16 +9,20 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
- * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
+ * All requests are forwarded to a reliable distributed topic and a node with the 'scheduling' profile will then process
+ * it.
+ *
+ * <p>
+ * The topics are reliable rather than fire-and-forget on purpose: losing one of these messages does not degrade
+ * gracefully, it means an exercise, quiz or slide is never scheduled at all.
  */
 @Lazy
 @Service
@@ -29,10 +33,10 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    public DistributedInstanceMessageSendService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public DistributedInstanceMessageSendService(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     @Override
@@ -103,11 +107,11 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     // NOTE: Don't remove any of the following methods despite the warning.
     private void sendMessageDelayed(MessageTopic topic, Long payload) {
-        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+        exec.schedule(() -> distributedDataProvider.getReliableTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
 
     private void sendMessageDelayed(MessageTopic topic, Long... payload) {
-        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+        exec.schedule(() -> distributedDataProvider.<Long[]>getReliableTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
 
     @Override

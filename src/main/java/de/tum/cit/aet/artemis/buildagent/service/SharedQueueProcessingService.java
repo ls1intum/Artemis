@@ -42,9 +42,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -686,85 +686,24 @@ public class SharedQueueProcessingService {
      * cleanup) should be used for client-mode agent cleanup if needed.
      */
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
+        Set<String> liveNodeIdentifiers = distributedDataAccessService.getClusterMemberAddresses();
+        boolean agentsAppearInLiveList = distributedDataAccessService.buildAgentsAppearInClusterMemberList();
         var buildAgentMap = distributedDataAccessService.getBuildAgentInformationMap();
 
-        log.debug("removeOfflineNodes: cluster member addresses = {}, build agent map keys = {}", memberAddresses, buildAgentMap.keySet());
+        log.debug("removeOfflineNodes: live node identifiers = {}, agents appear in live list = {}, build agent map keys = {}", liveNodeIdentifiers, agentsAppearInLiveList,
+                buildAgentMap.keySet());
 
         // Iterate over entries to access both the key (short name) and the stored member address
         for (var entry : buildAgentMap.entrySet()) {
             String agentKey = entry.getKey();
             String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
-            boolean isClusterMember = isClusterMemberAddress(storedMemberAddress, memberAddresses);
-            boolean isInMemberSet = memberAddresses.contains(storedMemberAddress);
 
-            log.debug("removeOfflineNodes: checking agent '{}' with address '{}': isClusterMemberAddress={}, isInMemberSet={}", agentKey, storedMemberAddress, isClusterMember,
-                    isInMemberSet);
-
-            // Only clean up agents whose stored address matches the exact format of current cluster members
-            // AND is not in the current cluster member set (i.e., the member went offline).
-            // Client-mode agents have ephemeral port addresses that won't match cluster member addresses,
-            // so they are safely ignored by this cleanup logic.
-            if (isClusterMember && !isInMemberSet) {
-                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (was cluster member but is now offline)", agentKey, storedMemberAddress);
+            if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers, agentsAppearInLiveList)) {
+                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (node is no longer alive)", agentKey, storedMemberAddress);
                 removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
                 removeProcessingJobsForNode(storedMemberAddress);
             }
         }
-    }
-
-    /**
-     * Checks if the given address appears to be a cluster member address.
-     * <p>
-     * For Hazelcast: Cluster members use configured ports (typically 5701, 5702, etc.), while clients
-     * use ephemeral ports assigned by the OS. We check by comparing ports.
-     * <p>
-     * For Redisson: Addresses are simple client names (e.g., "artemis-node") without ports.
-     * We check if the address is directly contained in the member addresses set.
-     *
-     * @param address         the address to check
-     * @param memberAddresses the current set of cluster member addresses
-     * @return true if the address appears to be a cluster member address
-     */
-    private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
-        if (address == null || memberAddresses == null || memberAddresses.isEmpty()) {
-            return false;
-        }
-
-        // First, check if the address is directly in the member addresses set (Redisson-style plain names)
-        if (memberAddresses.contains(address)) {
-            return true;
-        }
-
-        // For Hazelcast-style addresses with [host]:port format
-        if (!address.contains("]:")) {
-            return false;
-        }
-        // Extract port from the address (format: [host]:port)
-        String addressPort = extractPort(address);
-        if (addressPort == null) {
-            return false;
-        }
-        // Check if any cluster member uses the same port - this indicates it's a cluster member address
-        // Clients use random ephemeral ports, so they won't match cluster member ports
-        return memberAddresses.stream().map(this::extractPort).filter(Objects::nonNull).anyMatch(addressPort::equals);
-    }
-
-    /**
-     * Extracts the port from an address in [host]:port format.
-     *
-     * @param address the address string
-     * @return the port string, or null if extraction fails
-     */
-    private String extractPort(String address) {
-        if (address == null) {
-            return null;
-        }
-        int lastColon = address.lastIndexOf(':');
-        if (lastColon >= 0 && lastColon < address.length() - 1) {
-            return address.substring(lastColon + 1);
-        }
-        return null;
     }
 
     /**

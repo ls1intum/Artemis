@@ -22,10 +22,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 
 /**
  * This service is used to access the distributed data structures.
@@ -408,6 +408,13 @@ public class DistributedDataAccessService {
      */
     public Set<String> getClusterMemberAddresses() {
         return distributedDataProvider.getClusterMemberAddresses();
+    }
+
+    /**
+     * @return true if build agents appear in {@link #getClusterMemberAddresses()}, so that absence means offline
+     */
+    public boolean buildAgentsAppearInClusterMemberList() {
+        return distributedDataProvider.buildAgentsAppearInClusterMemberList();
     }
 
     /**

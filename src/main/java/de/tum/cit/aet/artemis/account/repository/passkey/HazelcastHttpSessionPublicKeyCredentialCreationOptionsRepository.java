@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.account.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.annotation.PostConstruct;
+import java.time.Duration;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -10,18 +11,15 @@ import jakarta.servlet.http.HttpSession;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Repository;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast
@@ -53,49 +51,40 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    /** Name of the Hazelcast map used for credential creation options */
+    /** Name of the distributed map used for credential creation options */
     private static final String MAP_NAME = "http-session-public-key-credential-creation-options-map";
 
+    private static final int REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS = 60 * 5;
+
     @Nullable
-    private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
+    private DistributedMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
 
     /**
-     * Constructs the repository using the injected Hazelcast instance.
+     * Constructs the repository using the injected distributed data provider.
      *
-     * @param hazelcastInstance the Hazelcast cluster instance
+     * @param distributedDataProvider the distributed data provider
      */
-    public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
-     * Initializes the Hazelcast map with a TTL of 5 minutes for credential creation options.
-     */
-    @PostConstruct
-    public void init() {
-        int registrationOptionsTimeToLive = 60 * 5; // 5 minutes
-
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(registrationOptionsTimeToLive);
-    }
-
-    /**
-     * Lazy init: Retrieves the Hazelcast map that stores the public key credential creation options.
+     * Lazy init: Retrieves the distributed map that stores the public key credential creation options.
      * If the map is not initialized, it initializes it.
      *
      * @return The map of public key credential creation options.
      */
-    private IMap<String, PublicKeyCredentialCreationOptionsDTO> getCreationOptionsMap() {
+    private DistributedMap<String, PublicKeyCredentialCreationOptionsDTO> getCreationOptionsMap() {
         if (this.creationOptionsMap == null) {
-            this.creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+            this.creationOptionsMap = distributedDataProvider.getExpiringMap(MAP_NAME, Duration.ofSeconds(REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS));
         }
         return this.creationOptionsMap;
     }
 
     /**
-     * Saves the {@link PublicKeyCredentialCreationOptions} both in the HTTP session and the distributed Hazelcast map.
+     * Saves the {@link PublicKeyCredentialCreationOptions} both in the HTTP session and the distributed map.
      *
      * <p>
      * The HTTP session is used locally, while the Hazelcast map ensures distributed availability.

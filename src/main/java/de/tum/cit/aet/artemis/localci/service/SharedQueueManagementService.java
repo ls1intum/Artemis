@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -37,13 +38,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryAddedEvent;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryListener;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryRemovedEvent;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -101,21 +102,55 @@ public class SharedQueueManagementService {
      * Removes the build agent's entry from the distributed map, which triggers
      * the MapEntryRemovedEvent and the orphan job handling.
      *
-     * @param clientName the name of the disconnected client (build agent short name)
+     * @param clientIdentifier the identifier of the disconnected client, as reported by the distributed data provider
      */
-    private void handleClientDisconnection(String clientName) {
-        if (StringUtils.isBlank(clientName)) {
+    // package-private so the cleanup logic can be verified directly
+    void handleClientDisconnection(String clientIdentifier) {
+        if (StringUtils.isBlank(clientIdentifier)) {
             log.warn("Build agent client disconnected with blank name. Skipping map removal.");
             return;
         }
-        log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientName);
-        var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(clientName);
+        log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientIdentifier);
+        String agentKey = resolveBuildAgentKey(clientIdentifier);
+        if (agentKey == null) {
+            log.debug("Build agent {} was not found in the distributed map (may have already been removed).", clientIdentifier);
+            return;
+        }
+        var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(agentKey);
         if (removedAgent != null) {
-            log.info("Removed build agent {} from distributed map. MapEntryRemovedEvent will trigger orphan job handling.", clientName);
+            log.info("Removed build agent {} (map key {}) from distributed map. MapEntryRemovedEvent will trigger orphan job handling.", clientIdentifier, agentKey);
         }
-        else {
-            log.debug("Build agent {} was not found in the distributed map (may have already been removed).", clientName);
+    }
+
+    /**
+     * Resolves the key under which a disconnected client is stored in the build agent information map.
+     *
+     * <p>
+     * The identifier a provider reports is its own notion of client identity, and it does not have to be the map key:
+     * <ul>
+     * <li>Hazelcast names its client after {@code artemis.continuous-integration.build-agent.short-name}, which is
+     * exactly the map key, so the identifier matches directly.</li>
+     * <li>The Redis provider reports {@code spring.data.redis.client-name}, a property unrelated to the short name.
+     * It only ever matches the member address the agent stored for itself, so looking up by key alone silently misses
+     * and crashed agents would stay in the map forever.</li>
+     * </ul>
+     *
+     * @param clientIdentifier the identifier of the disconnected client
+     * @return the map key of the matching build agent, or {@code null} if no agent matches
+     */
+    @Nullable
+    private String resolveBuildAgentKey(String clientIdentifier) {
+        var buildAgents = this.distributedDataAccessService.getDistributedBuildAgentInformation();
+        if (buildAgents.get(clientIdentifier) != null) {
+            return clientIdentifier;
         }
+        for (var entry : buildAgents.entrySet()) {
+            BuildAgentInformation agentInformation = entry.getValue();
+            if (agentInformation != null && clientIdentifier.equals(agentInformation.buildAgent().memberAddress())) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     /**

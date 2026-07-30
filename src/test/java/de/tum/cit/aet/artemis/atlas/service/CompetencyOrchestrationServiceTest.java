@@ -59,11 +59,11 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 

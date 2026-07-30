@@ -16,8 +16,8 @@ public class CoreOrHazelcastBuildAgent implements Condition {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
-        String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", HAZELCAST);
 
-        return activeProfiles.contains(PROFILE_CORE) || (activeProfiles.contains(PROFILE_BUILDAGENT) && dataStoreConfig.equalsIgnoreCase(HAZELCAST));
+        return activeProfiles.contains(PROFILE_CORE)
+                || (activeProfiles.contains(PROFILE_BUILDAGENT) && DistributedDataProviderResolver.isProvider(context.getEnvironment(), HAZELCAST));
     }
 }

@@ -20,15 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService.MessagePreviewData;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentSessionCacheServiceTest {
@@ -43,7 +41,7 @@ class AtlasAgentSessionCacheServiceTest {
     private Cache relationsCache;
 
     @Mock
-    private HazelcastInstance mockHazelcastInstance;
+    private DistributedDataProvider mockDistributedDataProvider;
 
     private AtlasAgentSessionCacheService service;
 
@@ -51,7 +49,7 @@ class AtlasAgentSessionCacheServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AtlasAgentSessionCacheService(cacheManager, mockHazelcastInstance);
+        service = new AtlasAgentSessionCacheService(cacheManager, mockDistributedDataProvider);
     }
 
     @Test
@@ -112,10 +110,11 @@ class AtlasAgentSessionCacheServiceTest {
 
     @Test
     void shouldNotLoseEntriesUnderConcurrentStoreCalls() throws Exception {
-        // Use a real local Hazelcast instance so the distributed IMap.lock() contract is actually exercised.
-        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(new Config().setClusterName("atlas-session-cache-test-" + System.nanoTime()));
-        try {
-            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, hazelcast);
+        // Use a real provider so the per-key locking that guards the read-modify-write is actually exercised. The local
+        // provider is enough for that: the cross-backend lock contract itself is covered by AbstractDistributedDataTest.
+        LocalDataProviderService provider = new LocalDataProviderService();
+        {
+            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, provider);
 
             int threads = 32;
             ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -136,9 +135,6 @@ class AtlasAgentSessionCacheServiceTest {
             pool.shutdown();
 
             assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
-        }
-        finally {
-            hazelcast.shutdown();
         }
     }
 

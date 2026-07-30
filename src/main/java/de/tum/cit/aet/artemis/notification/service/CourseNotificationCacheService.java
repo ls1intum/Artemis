@@ -13,11 +13,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
-
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * Service for managing course notification caches.
@@ -42,8 +40,11 @@ public class CourseNotificationCacheService {
 
     private final CacheManager cacheManager;
 
-    public CourseNotificationCacheService(CacheManager cacheManager) {
+    private final DistributedDataProvider distributedDataProvider;
+
+    public CourseNotificationCacheService(CacheManager cacheManager, DistributedDataProvider distributedDataProvider) {
         this.cacheManager = cacheManager;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -97,13 +98,13 @@ public class CourseNotificationCacheService {
      * @param key   The key prefix to match against cache entries
      */
     private void invalidateCacheForKeyStartingWith(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
-
-        Set<Object> keys = cacheMap.keySet();
-        keys.stream().filter(k -> k.toString().startsWith(key)).forEach(k -> {
+        // Spring's Cache API cannot enumerate keys, so the prefix scan goes through the distributed map that backs the
+        // cache. Both are addressed by the cache name, which is what makes this work without reaching for a
+        // backend-specific cache manager.
+        DistributedMap<Object, Object> cacheMap = distributedDataProvider.getMap(cache);
+        cacheMap.keySet().stream().filter(k -> k.toString().startsWith(key)).forEach(k -> {
             try {
-                cacheMap.delete(k);
+                cacheMap.remove(k);
             }
             catch (ClassCastException | NullPointerException e) {
                 log.error("Failed to delete cache entry with key: {}", k, e);
@@ -118,10 +119,8 @@ public class CourseNotificationCacheService {
      * @param key   The key to delete
      */
     private void invalidateCacheForKey(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
         try {
-            cacheMap.delete(key);
+            distributedDataProvider.getMap(cache).remove(key);
         }
         catch (ClassCastException | NullPointerException e) {
             // Nothing needs to be done

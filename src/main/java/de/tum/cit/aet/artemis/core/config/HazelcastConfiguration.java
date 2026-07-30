@@ -286,8 +286,8 @@ public class HazelcastConfiguration {
      * @param hazelcastInstance the Hazelcast instance to back the cache
      * @return the Hazelcast-backed CacheManager for Spring's caching abstraction
      */
-    @Bean
-    public CacheManager cacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    @Bean("distributedCacheManager")
+    public CacheManager distributedCacheManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         log.debug("Starting HazelcastCacheManager");
         return new HazelcastCacheManager(hazelcastInstance);
     }
@@ -532,6 +532,10 @@ public class HazelcastConfiguration {
 
         configureCacheMaps(config, artemisProperties);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
+        // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
+        // production dispatches by priority, which would make any test of priority-based dispatch meaningless.
+        configureLocalCIQueueIfNeeded(config, artemisProperties);
 
         configureIsolatedNetworkingForTests(config);
 
