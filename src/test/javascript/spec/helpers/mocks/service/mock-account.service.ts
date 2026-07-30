@@ -5,6 +5,7 @@ import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -52,9 +53,15 @@ export class MockAccountService implements IAccountService {
     restoreUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => this.applyLLMSelectionDecision(accepted, timestamp);
 
     private applyLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => {
-        this.userIdentity.update((currentUserIdentity) =>
-            currentUserIdentity ? Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: timestamp }) : currentUserIdentity,
-        );
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
+        });
     };
 
     askToSetupPasskey = () => false;

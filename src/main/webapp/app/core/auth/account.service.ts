@@ -428,7 +428,13 @@ export class AccountService implements IAccountService {
                 return currentUserIdentity;
             }
 
-            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: timestamp });
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification. deepClone (not Object.assign) because User carries a Day.js
+            // date — see deep-clone.util.ts. Mirrors setImageUrl.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
         });
     }
 
