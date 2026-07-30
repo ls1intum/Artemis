@@ -2380,6 +2380,25 @@ class SpecFidelityCriticServiceTest {
                 .doesNotContain("Add a test that asserts it");
     }
 
+    @Test
+    void renderForRetryPrompt_includesTheExactEnvironmentValidatedWitness() {
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
+        String code = """
+                @Test
+                void forwardsTheChangedFloor() {
+                    assertEquals("B", dispatcher.dispatch(37).getId());
+                }
+                """;
+        String wrongBehavior = "forwards a constant floor instead of the caller's changed floor";
+        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(Kind.CONTRACT_WITNESS_AVAILABLE,
+                "Rule R4 has an executable counterexample witness", "The reference passes and the starter fails. Plausible wrong behavior: " + wrongBehavior + "\n" + code)));
+
+        String rendered = critic.renderForRetryPrompt(report);
+
+        assertThat(rendered).contains("optional quality improvements", "Optional environment-validated contract witness", "Rule R4 has an executable counterexample witness",
+                wrongBehavior, code);
+    }
+
     private SpecFidelityCriticService detector() {
         return new SpecFidelityCriticService(null, objectMapper);
     }

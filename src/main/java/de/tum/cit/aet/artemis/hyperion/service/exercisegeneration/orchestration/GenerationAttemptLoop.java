@@ -206,6 +206,10 @@ class GenerationAttemptLoop {
     /** Executed reference failures remain pending until independent review explicitly supports or invalidates them. */
     private List<ContractWitness> referenceWitnessesAwaitingAdjudication = List.of();
 
+    // Reference-pass/starter-fail witnesses remain available across unrelated repair surfaces. A full-artifact re-review must not erase environment evidence merely because it
+    // did not independently propose the same witness again. They are re-executed against every changed candidate before being offered.
+    private List<ContractWitness> contractWitnessesPendingAdoption = List.of();
+
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
 
@@ -338,9 +342,12 @@ class GenerationAttemptLoop {
                 specFidelityReport = SpecFidelityReport.empty();
             }
 
-            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses, but only after the specification and every blocker are approved.
-            boolean adoptWitnesses = verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && attempt < maxGenerationAttempts
-                    && mode == GenerationMode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
+            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An instructor-only blocker must not discard unrelated environment-proven coverage,
+            // but a failed or unapproved specification cannot authorize new grading.
+            boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(specFidelityReport).isPresent();
+            boolean adoptWitnesses = verification.mechanicallyVerified() && !hasSchedulableRepair && !RepairRoundScheduler.hasReviewUnavailableFinding(specFidelityReport)
+                    && unresolvedSpecificationFindings.isEmpty() && attempt < maxGenerationAttempts && mode == GenerationMode.GENERATE
+                    && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
                 break;
@@ -745,6 +752,8 @@ class GenerationAttemptLoop {
             List<ContractWitness> candidates = new ArrayList<>(referenceWitnessesAwaitingPass);
             referenceWitnessesAwaitingAdjudication.stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName())))
                     .forEach(candidates::add);
+            contractWitnessesPendingAdoption.stream().filter(witness -> candidates.stream().noneMatch(existing -> existing.testName().equals(witness.testName())))
+                    .forEach(candidates::add);
             specFidelityCritic
                     .authorContractWitnesses(specDocumentSnapshot, GenerationReviewSupport.renderArtifactSources(testsFiles),
                             GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled)
@@ -753,7 +762,9 @@ class GenerationAttemptLoop {
             List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, candidates, restoreCandidate);
             List<ContractWitness> environmentValidated = witnessOutcomes.stream()
                     .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED).map(ContractWitnessOutcome::witness).toList();
-            List<ContractWitness> adoptableWitnesses = environmentValidated.stream().filter(witness -> !mutatedRules.contains(witness.ruleId())).toList();
+            List<ContractWitness> adoptableWitnesses = specificationApproved ? environmentValidated.stream().filter(witness -> !mutatedRules.contains(witness.ruleId())).toList()
+                    : List.of();
+            contractWitnessesPendingAdoption = adoptableWitnesses;
             List<ContractWitnessOutcome> freshReferenceFailures = witnessOutcomes.stream()
                     .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED)
                     .filter(outcome -> !pendingWitnessNames.contains(outcome.witness().testName())).toList();

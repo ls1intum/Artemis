@@ -27,10 +27,10 @@ class ConceptAdmissionCriticTest {
     void rejectsUnsupportedTechniqueAndBehaviorallyRedundantBoundary() {
         when(reviewer.call(anyString(), anyString(), any(), anyInt())).thenReturn(
                 """
-                        {"auditedCandidateEvidenceIds":["C1.2","C1.3"],
+                        {"auditedCandidateEvidenceIds":["C1.1","C1.2","C1.3"],
                          "smallestEquivalentImplementation":"Compare the temperature with zero, twenty, and thirty and return the corresponding category.",
                          "observablePartitionAudit":"The regions below and above minus ten both return Freezing without changing state, so they merge.",
-                         "unsupportedChoices":[{"candidateEvidenceIds":["C1.2"],"detail":"The exact numeric thresholds and labels are not supplied by the open instructor brief."}],
+                         "unsupportedChoices":[{"candidateEvidenceIds":["C1.1","C1.2"],"detail":"The exact numeric thresholds and labels are not supplied by the open instructor brief."}],
                          "unobservableRequirements":[{"candidateEvidenceIds":["C1.3"],"detail":"A switch or ternary implementation can return the same public results as the required if-else form."}],
                          "redundantDistinctions":[{"candidateEvidenceIds":["C1.2"],"detail":"The claimed minus-ten boundary has the same returned value and state on both sides."}],
                          "admissible":false,"summary":"The selected candidate closes unsupported details and counts an unobservable, redundant branch as reasoning."}

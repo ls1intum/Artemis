@@ -242,6 +242,7 @@ class GenerationAttemptLoopTest {
         verify(baseTools, never()).enterRepairScope(any());
         assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL
                 && finding.detail().contains(witness.testName()) && !finding.isBlocking());
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
@@ -699,6 +700,34 @@ class GenerationAttemptLoopTest {
 
             verify(baseTools, never()).enterRepairScope(any());
             assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        }
+
+        @Test
+        void validatedWitnessSurvivesAnUnrelatedRepairAndIsOfferedBeforeAnInstructorOnlyStop() {
+            SpecFidelityReport contractRepair = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+            SpecFidelityReport instructorOnly = report(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+            when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractRepair, instructorOnly,
+                    instructorOnly);
+            sandbox.withFile(SPEC_PATH, "# Exercise\n\n## Rules\n- R1: computes a result.");
+            when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                    .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CalculatorTest.java", "class CalculatorTest {}"), false));
+            String witnessCode = "@Test void handlesExtremeInput() { assertEquals(42, compute(Integer.MAX_VALUE)); }";
+            String wrongBehavior = "narrows the input before computing";
+            ContractWitness witness = new ContractWitness("R1", "handlesExtremeInput", witnessCode, wrongBehavior);
+            when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness), List.of(), List.of());
+            when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any())).thenReturn(
+                    List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")),
+                    List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")), List.of());
+
+            GenerationAttemptLoop loop = newGenerateLoop(4, 3);
+            loop.run();
+
+            assertThat(enteredRepairScopes()).containsExactly(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"),
+                    Set.of("tests", "test-plan.json", "problem-statement.md"));
+            ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+            verify(agentLoopRunner, times(3)).runSession(anyString(), isNull(), prompts.capture(), any(), anyInt(), any(), any(), any());
+            assertThat(prompts.getAllValues()).anySatisfy(prompt -> assertThat(prompt).contains("tests below", witness.testName(), wrongBehavior, witnessCode));
+            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
         }
 
         @Test

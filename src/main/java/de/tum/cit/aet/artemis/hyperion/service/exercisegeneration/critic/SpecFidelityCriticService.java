@@ -931,6 +931,8 @@ public class SpecFidelityCriticService {
             case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL -> builder.append(
                     "\n- Preserve this executed grading-gap evidence for instructor review until the frozen specification is approved; do not autonomously add grading for it: \"")
                     .append(finding.requirement()).append("\". ").append(finding.detail());
+            case CONTRACT_WITNESS_AVAILABLE ->
+                builder.append("\n- Optional environment-validated contract witness: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP ->
                 builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");

@@ -73,7 +73,8 @@ final class ConceptAdmissionCritic {
                 parsed = parse(reviewer.call(SYSTEM_PROMPT, userPrompt + CORRECTION + "\n\nSERVER VALIDATION FAILURE:\n" + parsed.audit(), usageSink, MAX_OUTPUT_TOKENS), evidence);
             }
             if (!parsed.complete()) {
-                return new ConceptSelectionReview(false, null, List.of(), "Selected-concept admission review was unavailable.", parsed.audit());
+                String audit = selection.auditSummary() + "\n\n# Selected-concept admission\n\nReview unavailable: " + parsed.audit();
+                return new ConceptSelectionReview(false, null, List.of(), "Selected-concept admission review was unavailable.", audit);
             }
             String audit = selection.auditSummary() + "\n\n# Selected-concept admission\n\n" + parsed.audit();
             if (parsed.admitted()) {
@@ -83,7 +84,8 @@ final class ConceptAdmissionCritic {
         }
         catch (RuntimeException e) {
             log.warn("Selected-concept admission review failed: {}", e.getMessage());
-            return new ConceptSelectionReview(false, null, List.of(), "Selected-concept admission review was unavailable.");
+            String audit = selection.auditSummary() + "\n\n# Selected-concept admission\n\nReview unavailable because the provider call failed.";
+            return new ConceptSelectionReview(false, null, List.of(), "Selected-concept admission review was unavailable.", audit);
         }
     }
 
@@ -95,10 +97,26 @@ final class ConceptAdmissionCritic {
         catch (Exception e) {
             return incomplete("The response was not valid JSON in the required admission shape.");
         }
-        if (response == null || !substantive(response.smallestEquivalentImplementation()) || !substantive(response.observablePartitionAudit()) || !substantive(response.summary())
-                || response.admissible() == null || !evidence.containsAllWithSubstantive(response.auditedCandidateEvidenceIds()) || response.unsupportedChoices() == null
-                || response.unobservableRequirements() == null || response.redundantDistinctions() == null) {
-            return incomplete("The admission response omitted a required grounded field.");
+        if (response == null) {
+            return incomplete("The admission response was empty.");
+        }
+        if (!substantive(response.smallestEquivalentImplementation())) {
+            return incomplete("smallestEquivalentImplementation was missing or not substantive.");
+        }
+        if (!substantive(response.observablePartitionAudit())) {
+            return incomplete("observablePartitionAudit was missing or not substantive.");
+        }
+        if (!substantive(response.summary())) {
+            return incomplete("summary was missing or not substantive.");
+        }
+        if (response.admissible() == null) {
+            return incomplete("admissible was missing.");
+        }
+        if (!evidence.containsSubstantive(response.auditedCandidateEvidenceIds())) {
+            return incomplete("auditedCandidateEvidenceIds did not cite known substantive candidate evidence.");
+        }
+        if (response.unsupportedChoices() == null || response.unobservableRequirements() == null || response.redundantDistinctions() == null) {
+            return incomplete("One or more required finding arrays were missing.");
         }
         List<AdmissionFinding> findings = new ArrayList<>();
         findings.addAll(response.unsupportedChoices());
