@@ -1,0 +1,286 @@
+# =============================================================================
+# Default values for the Artemis multi-node Helm chart (PostgreSQL + Hades).
+#
+# This chart deploys ONLY the components required to run a clustered Artemis
+# instance with an EXTERNAL Hades build system:
+#   - Artemis application nodes (a single scalable "core" pool)
+#   - PostgreSQL (bundled by default; can point at an external database)
+#   - JHipster Registry (Eureka) - required for Hazelcast member discovery
+#   - ActiveMQ broker - STOMP relay for cross-node WebSocket messages
+#   - Kubernetes Gateway API resources for HTTP(S) + git-over-SSH
+#
+# It intentionally does NOT deploy: the Hades scheduler/adapter, Keycloak,
+# Iris/Pyris, Athena, Hermes, Weaviate or any other Eduteligence service.
+# See README.md for the full picture.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Common
+# -----------------------------------------------------------------------------
+# Override the generated resource names. Usually leave empty.
+nameOverride: ""
+fullnameOverride: ""
+
+# -----------------------------------------------------------------------------
+# Artemis application image
+# -----------------------------------------------------------------------------
+image:
+  repository: ghcr.io/ls1intum/artemis
+  # Image tag. Defaults to .Chart.appVersion when empty.
+  # IMPORTANT: the image MUST contain the Hades integration (the `hades` Spring
+  # profile). A plain `develop` image silently ignores the profile. For per-PR
+  # deployments set this to the PR image tag (e.g. "pr-1234" or the commit SHA).
+  tag: ""
+  pullPolicy: IfNotPresent
+# Optional image pull secrets (list of {name: ...}).
+imagePullSecrets: []
+
+# -----------------------------------------------------------------------------
+# Artemis application nodes ("core" pool)
+# -----------------------------------------------------------------------------
+artemis:
+  # Total number of Artemis core nodes. All nodes are Hazelcast members that
+  # serve HTTP/API and host LocalVC git. Exactly ONE node (the leader) also
+  # runs the `scheduling` profile so cron jobs don't double-fire.
+  #   replicaCount = 1  -> only the leader
+  #   replicaCount = N  -> leader (1) + members (N-1)
+  replicaCount: 1
+
+  # Extra Spring profiles appended to every node, on top of the base set
+  # (prod,core,artemis,localvc,hades,docker). Rarely needed.
+  extraProfiles: []
+
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2560Mi"
+    limits:
+      cpu: "2000m"
+      memory: "5120Mi"
+
+  # Startup can take several minutes; probes hit the Spring Boot health groups.
+  probes:
+    startup:
+      # failureThreshold * periodSeconds = max boot time (default ~10 min).
+      periodSeconds: 10
+      failureThreshold: 60
+      timeoutSeconds: 5
+    readiness:
+      periodSeconds: 10
+      failureThreshold: 3
+      timeoutSeconds: 5
+    liveness:
+      periodSeconds: 20
+      failureThreshold: 6
+      timeoutSeconds: 5
+
+  # The container runs as uid/gid 1337 (non-root). fsGroup helps, but many RWX
+  # provisioners ignore it, so a root init container also chowns the volumes.
+  podSecurityContext:
+    fsGroup: 1337
+    fsGroupChangePolicy: "OnRootMismatch"
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1337
+    runAsGroup: 1337
+
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /management/prometheus
+    prometheus.io/port: "8080"
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # ---- Functional configuration ----
+  config:
+    # Public base URL of this instance. MUST be the externally reachable host
+    # (the Gateway hostname), never a cluster-internal name: external Hades
+    # agents and browsers resolve it. Derived from gateway.hostname when empty.
+    serverUrl: ""
+
+    operator:
+      # Shown on the "About Us"/imprint pages.
+      name: "Example University"
+      adminName: "Max Mustermann"
+
+    # Initial internal admin account (created on first startup). REQUIRED.
+    admin:
+      username: "artemis_admin"
+      password: ""  # REQUIRED - set via --set or a values override / secret manager
+
+    # Base64-encoded JWT signing secret shared by all nodes and the registry.
+    # REQUIRED. Generate with: openssl rand -base64 64 | tr -d '\n'
+    jwtBase64Secret: ""
+
+    versionControl:
+      # LocalVC git username/password Artemis and Hades use to clone repos.
+      buildAgentGitUsername: "buildjob_user"
+      buildAgentGitPassword: ""  # REQUIRED
+
+    # External Hades build system (runs OUTSIDE this chart).
+    hades:
+      # Base URL of the Hades scheduler (POST /build, GET /ping).
+      # e.g. http://hades.hades-system.svc:8081 or a public URL.
+      url: ""  # REQUIRED
+      # Basic-Auth password Artemis sends to the scheduler (username "hades").
+      authKey: ""  # REQUIRED
+      # Where the hades-artemis-adapter is reachable from inside build
+      # containers (it forwards parsed results back to Artemis).
+      adapterEndpoint: ""  # REQUIRED
+      # Token the adapter presents on the Artemis new-result callback.
+      artemisAuthenticationTokenValue: "demo"  # change in production
+      # Container images for the Hades pipeline steps (public defaults).
+      cloneImage: "ghcr.io/ls1intum/hades/hades-clone-container:latest"
+      resultParserImage: "ghcr.io/ls1intum/hades/junit-result-parser:latest"
+
+# -----------------------------------------------------------------------------
+# Shared storage (ReadWriteMany) mounted at /opt/artemis/data on all nodes.
+# Holds git repos, uploads, exports, etc. that every node must see.
+# Requires an RWX StorageClass (NFS/CephFS/EFS/Longhorn...). Prefer a
+# performant backend - all nodes share the git repos.
+# -----------------------------------------------------------------------------
+sharedStorage:
+  # Reuse an existing PVC instead of creating one (leave empty to create).
+  existingClaim: ""
+  storageClassName: ""      # empty = cluster default (must support RWX!)
+  accessMode: ReadWriteMany
+  size: 8Gi
+
+# -----------------------------------------------------------------------------
+# PostgreSQL
+# -----------------------------------------------------------------------------
+postgresql:
+  # Deploy a bundled single-instance PostgreSQL. Set false to use an external DB.
+  deploy: true
+  image:
+    repository: postgres
+    tag: "18.4-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    database: "Artemis"
+    username: "Artemis"
+    password: ""  # REQUIRED (also used for the external case)
+  # Extra postgres args (the compose setup raises max_connections for CI load).
+  maxConnections: 10000
+  persistence:
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  # Used only when deploy=false. Point Artemis at an external PostgreSQL.
+  external:
+    host: ""
+    port: 5432
+    # sslmode appended to the JDBC URL (disable|require|verify-full...).
+    sslmode: "disable"
+
+# -----------------------------------------------------------------------------
+# JHipster Registry (Eureka) - required for Hazelcast member discovery.
+# Artemis disables all other Hazelcast joiners and injects TCP-IP members
+# from Eureka metadata, so this component is mandatory for multi-node.
+# -----------------------------------------------------------------------------
+registry:
+  image:
+    repository: jhipster/jhipster-registry
+    tag: "v7.5.0"
+    pullPolicy: IfNotPresent
+  # Admin password for the registry (also embedded in the Eureka service URL).
+  password: ""  # REQUIRED
+  service:
+    port: 8761
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# -----------------------------------------------------------------------------
+# ActiveMQ broker - STOMP relay distributing WebSocket messages across nodes.
+# Strictly required once replicaCount > 1; harmless (but idle) for a single node.
+# -----------------------------------------------------------------------------
+broker:
+  # Set false to skip (e.g. single-node dev) or to point at an external broker.
+  deploy: true
+  image:
+    repository: apache/artemis
+    tag: "2.54.0-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    username: "guest"
+    password: ""  # REQUIRED when deploy=true
+  # STOMP acceptor port INSIDE the container. ActiveMQ Artemis's default
+  # broker.xml has a dedicated STOMP acceptor on 61613 (the multiplexed
+  # "artemis" acceptor is 61616). The reference multi-node compose connects to
+  # 61613, so the Service exposes 61613->targetPort 61613 and Artemis relays via
+  # <broker-service>:61613.
+  stompPort: 61613
+  # Used only when deploy=false: address list Artemis relays through.
+  externalAddresses: ""  # e.g. "my-broker:61613"
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# -----------------------------------------------------------------------------
+# Networking - Kubernetes Gateway API (HTTP + git-over-SSH).
+# -----------------------------------------------------------------------------
+gateway:
+  # Public hostname for this instance (drives HTTPRoute + serverUrl). REQUIRED.
+  hostname: ""
+
+  # Create a Gateway resource. Set false to attach the routes to an EXISTING
+  # Gateway via `parentRef` below.
+  create: true
+  # gatewayClassName for the created Gateway (e.g. cilium, istio, envoy-gateway,
+  # nginx). Must be a controller that also supports TCPRoute if ssh.mode=tcproute.
+  className: ""
+  # When create=false, the routes attach to this existing Gateway.
+  parentRef:
+    name: ""
+    namespace: ""
+    # sectionName of the HTTPS listener on the existing Gateway (optional).
+    httpsSectionName: ""
+    # sectionName of the TCP/7921 listener on the existing Gateway (optional).
+    sshSectionName: ""
+
+  tls:
+    # Name of a Secret (kubernetes.io/tls) for the HTTPS listener. If empty and
+    # certManagerClusterIssuer is set, cert-manager provisions it.
+    secretName: ""
+    # Optional cert-manager ClusterIssuer to auto-provision the certificate.
+    certManagerClusterIssuer: ""
+
+  ssh:
+    # How git-over-SSH (port 7921) is exposed:
+    #   tcproute     - Gateway API TCPRoute (needs an L4-capable controller)
+    #   loadbalancer - a dedicated Service type=LoadBalancer on 7921
+    #   nodeport     - a dedicated Service type=NodePort on 7921
+    #   none         - do not expose SSH (HTTPS clone only)
+    mode: tcproute
+    port: 7921
+    # NodePort to use when mode=nodeport (30000-32767; empty = auto).
+    nodePort: ""
+    # Annotations for the loadbalancer Service (mode=loadbalancer).
+    loadBalancerAnnotations: {}
+
+# -----------------------------------------------------------------------------
+# Service account
+# -----------------------------------------------------------------------------
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
