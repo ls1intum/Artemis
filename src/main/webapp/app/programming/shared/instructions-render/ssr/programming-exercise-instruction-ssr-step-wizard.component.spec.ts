@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
-import { SsrTask } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr.component';
+import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
 describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionSsrStepWizardComponent>;
@@ -70,7 +70,7 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
     });
 
     // A click-and-assert test can never distinguish `track task.index` from `track $index`: whichever task
-    // object backs a given array position in the *current* render is emitted regardless of the track key — the
+    // object backs a given array position in the *current* render is emitted regardless of the track key. The
     // key only governs whether Angular reuses or recreates the underlying DOM node across a re-render. So this
     // test observes the one thing `track` actually controls: node identity across a reorder. Under
     // `track task.index`, moving a task to a new array position moves its existing button node with it; under

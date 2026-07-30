@@ -54,7 +54,7 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
     private applyToDom(html: string | undefined, tasks: SsrTask[], interactive: boolean): void {
         const host = this.renderTarget().nativeElement;
         if (html === this.currentHtml) {
-            // Only the interactivity gating changed — for example a participation arrived while the server output
+            // Only the interactivity gating changed, for example because a participation arrived while the server output
             // stayed byte-identical (possibly served from the render cache). Refreshing just the task attributes keeps
             // scroll position, focus and the already rendered formulas untouched.
             this.applyTaskAccessibility(host, tasks, interactive);
@@ -65,7 +65,7 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
         const scrollTop = this.scrollParent()?.scrollTop;
         this.currentHtml = html;
         // The markup is server-generated, sanitized server-side with a jsoup safelist, and every <script> was removed
-        // by the parent before it reached this component — the same trust decision a `bypassSecurityTrustHtml` binding
+        // by the parent before it reached this component. That is the same trust decision a `bypassSecurityTrustHtml` binding
         // would encode. It is written imperatively rather than through `[innerHTML]` because a template binding is
         // applied during this component's view refresh, which Angular runs *before* the view's effects; the focus and
         // scroll capture above would then already be looking at the replaced DOM.

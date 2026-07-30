@@ -10,7 +10,7 @@ import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-
  *
  * Chrome, not server content: it is hosted by the outer SSR component in the light DOM, never inside the
  * shadow-DOM content component (see that component's class comment for why Angular/Tailwind styling cannot
- * cross that boundary). Every circle's colour comes straight from the server-decided `SsrTask.status` — this
+ * cross that boundary). Every circle's colour comes straight from the server-decided `SsrTask.status`; this
  * component never recomputes test status from a `Result`, which is the whole point of the SSR migration.
  */
 @Component({

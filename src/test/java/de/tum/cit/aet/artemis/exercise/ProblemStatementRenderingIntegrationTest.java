@@ -538,7 +538,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         // The referenced id (99) carries no feedback, so data-feedback must not be emitted for it, but the stats
-        // line must still render using the authored count — results were supplied, just not for this task's tests.
+        // line must still render using the authored count: results were supplied, just not for this task's tests.
         assertThat(result.html()).doesNotContain("data-feedback");
         assertThat(result.html()).contains("0 of 1 tests passed");
     }
@@ -554,7 +554,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("data-test-status=\"not-executed\"");
         assertThat(result.html()).contains("data-authored-count=\"2\"");
         assertThat(result.html()).contains("data-not-executed-count=\"1\"");
-        // The stats denominator must be the authored count (2), not the resolved count (1) — this is the
+        // The stats denominator must be the authored count (2), not the resolved count (1). This is the
         // headline behavior of this task, so assert on the rendered text, not just the data attributes.
         assertThat(result.html()).contains("1 of 2 tests passed");
     }
@@ -571,7 +571,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         // 3 of 5 authored references resolve and pass; testD() and testE() are unresolvable. The denominator must
-        // read "5" (authored), not "3" (resolved) — a task with unresolvable refs must not look fully accounted for.
+        // read "5" (authored), not "3" (resolved). A task with unresolvable refs must not look fully accounted for.
         assertThat(result.html()).contains("data-authored-count=\"5\"");
         assertThat(result.html()).contains("data-not-executed-count=\"2\"");
         assertThat(result.html()).contains("3 of 5 tests passed");

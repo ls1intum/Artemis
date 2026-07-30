@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import katex from 'katex';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
-import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+import { SsrTask, SsrTaskStatus } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 // jsdom cannot lay out math, so KaTeX is mocked. The mock still writes into the passed element so the spec can assert
@@ -17,7 +17,7 @@ vi.mock('katex', () => ({
 
 const taskSpan = (name: string, testIds: string) => `<span class="artemis-task" data-task-name="${name}" data-test-ids="${testIds}">${name}</span>`;
 
-const task = (index: number, taskName: string, testIds: number[], status = 'success'): SsrTask => ({
+const task = (index: number, taskName: string, testIds: number[], status: SsrTaskStatus = 'success'): SsrTask => ({
     index,
     taskName,
     testIds,
@@ -107,7 +107,7 @@ describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
         const before = taskElements()[0];
         expect(before.getAttribute('role')).toBeNull();
 
-        // Same html — the DOM is deliberately not replaced, but the gating changed and must take effect anyway.
+        // Same html: the DOM is deliberately not replaced, but the gating changed and must take effect anyway.
         fixture.componentRef.setInput('interactive', true);
         fixture.detectChanges();
 
