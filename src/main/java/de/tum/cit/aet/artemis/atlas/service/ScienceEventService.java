@@ -56,8 +56,11 @@ public class ScienceEventService {
         if (eventDTO == null || eventDTO.type() == null || eventDTO.courseId() == null) {
             return;
         }
+        if (SCIENCE_AUDIT_EVENT_TYPES.contains(eventDTO.type())) {
+            return;
+        }
         final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        logEvent(eventDTO, auth.getName(), shouldApplyConsentGate(eventDTO.type()));
+        logEvent(eventDTO, auth.getName(), true);
     }
 
     /**
@@ -112,7 +115,4 @@ public class ScienceEventService {
         return user != null && scienceCourseConsentRepository.existsByUserIdAndCourseIdAndActiveTrue(user.getId(), courseId);
     }
 
-    private static boolean shouldApplyConsentGate(ScienceEventType type) {
-        return !SCIENCE_AUDIT_EVENT_TYPES.contains(type);
-    }
 }

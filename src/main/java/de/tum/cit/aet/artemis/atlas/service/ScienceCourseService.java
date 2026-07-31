@@ -34,7 +34,9 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceCourseConsentRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEnabledCourseRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceResearchExportAuditRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
@@ -59,9 +61,12 @@ public class ScienceCourseService {
 
     private final ScienceEventService scienceEventService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ScienceCourseService(CourseRepository courseRepository, UserRepository userRepository, ScienceEnabledCourseRepository scienceEnabledCourseRepository,
             ScienceCourseConsentRepository scienceCourseConsentRepository, ScienceEventRepository scienceEventRepository,
-            ScienceResearchExportAuditRepository scienceResearchExportAuditRepository, ScienceEventService scienceEventService) {
+            ScienceResearchExportAuditRepository scienceResearchExportAuditRepository, ScienceEventService scienceEventService,
+            AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.scienceEnabledCourseRepository = scienceEnabledCourseRepository;
@@ -69,6 +74,7 @@ public class ScienceCourseService {
         this.scienceEventRepository = scienceEventRepository;
         this.scienceResearchExportAuditRepository = scienceResearchExportAuditRepository;
         this.scienceEventService = scienceEventService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     @Transactional(readOnly = true)
@@ -97,10 +103,11 @@ public class ScienceCourseService {
     public ScienceCourseConsentDTO getConsentForCurrentUser(long courseId) {
         User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+        checkMayAccessConsent(course, user, consent);
         boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
-        return scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId)
-                .map(consent -> new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), consent.isActive(), consent.getLastModifiedDate(), scienceEnabled))
-                .orElseGet(() -> new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), null, null, scienceEnabled));
+        return consent == null ? new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), null, null, scienceEnabled)
+                : new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), consent.isActive(), consent.getLastModifiedDate(), scienceEnabled);
     }
 
     @Transactional(readOnly = true)
@@ -108,28 +115,64 @@ public class ScienceCourseService {
         User user = userRepository.getUser();
         return scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc().stream().map(enabledCourse -> {
             Course course = enabledCourse.getCourse();
-            return scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), course.getId())
-                    .map(consent -> new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), consent.isActive(), consent.getLastModifiedDate(),
-                            enabledCourse.isActive()))
-                    .orElseGet(() -> new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), null, null, enabledCourse.isActive()));
-        }).toList();
+            ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElse(null);
+            if (!mayAccessConsent(course, user, consent)) {
+                return null;
+            }
+            return consent == null ? new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), null, null, enabledCourse.isActive())
+                    : new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), consent.isActive(), consent.getLastModifiedDate(),
+                            enabledCourse.isActive());
+        }).filter(java.util.Objects::nonNull).toList();
+    }
+
+    private boolean mayAccessConsent(Course course, User user, ScienceCourseConsent consent) {
+        return consent != null || authorizationCheckService.isAtLeastStudentInCourse(course, user);
+    }
+
+    private void checkMayAccessConsent(Course course, User user, ScienceCourseConsent consent) {
+        if (!mayAccessConsent(course, user, consent)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    private void checkMayCreateOrActivateConsent(Course course, User user, ScienceCourseConsent consent, boolean active) {
+        if ((consent == null || active) && !authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+        if (consent != null) {
+            return;
+        }
+        if (!scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(course.getId())) {
+            throw new BadRequestAlertException("Course is not enabled for science collection", ENTITY_NAME, "scienceCourseNotEnabled");
+        }
+    }
+
+    private void checkMayDeleteScienceData(Course course, User user, ScienceCourseConsent consent) {
+        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
     }
 
     @Transactional
     public ScienceCourseConsentDTO saveConsentForCurrentUser(long courseId, boolean active) {
         User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+        checkMayCreateOrActivateConsent(course, user, consent, active);
         boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
-        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElseGet(ScienceCourseConsent::new);
-        boolean previousActive = consent.getId() != null && consent.isActive();
+        boolean isNewConsent = consent == null;
+        boolean previousActive = consent != null && consent.isActive();
+        if (consent == null) {
+            consent = new ScienceCourseConsent();
+        }
         consent.setUser(user);
         consent.setCourse(course);
         consent.setActive(active);
         ScienceCourseConsent savedConsent = scienceCourseConsentRepository.save(consent);
-        if (active && !previousActive) {
+        if (active && (isNewConsent || !previousActive)) {
             scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_IN, courseId);
         }
-        if (!active && previousActive) {
+        if (!active && (isNewConsent || previousActive)) {
             scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_OUT, courseId);
         }
         return new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), savedConsent.isActive(), savedConsent.getLastModifiedDate(), scienceEnabled);
@@ -138,7 +181,9 @@ public class ScienceCourseService {
     @Transactional
     public void deleteScienceDataForCurrentUser(long courseId) {
         User user = userRepository.getUser();
-        courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+        checkMayDeleteScienceData(course, user, consent);
         scienceEventRepository.deleteInteractionEventsByIdentityAndCourseId(user.getLogin(), courseId, ScienceEventService.SCIENCE_AUDIT_EVENT_TYPES);
         scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
     }

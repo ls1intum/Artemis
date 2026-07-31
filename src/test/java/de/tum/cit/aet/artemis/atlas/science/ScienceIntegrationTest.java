@@ -72,4 +72,29 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         sendPutRequest(event);
         assertThat(scienceEventRepository.findAllByType(ScienceEventType.EXERCISE__OPEN)).isEmpty();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testDoesNotLogClientSuppliedAuditEvent() throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+
+        final var event = new ScienceEventDTO(ScienceEventType.SCIENCE__OPT_IN, course.getId(), course.getId());
+        sendPutRequest(event);
+
+        assertThat(scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_IN)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testLogsInitialOptOutDecision() {
+        scienceCourseService.enableCourse(course.getId());
+
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), false);
+
+        final var loggedEvents = scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_OUT);
+        assertThat(loggedEvents).hasSize(1);
+        final var loggedEvent = loggedEvents.stream().findFirst().get();
+        assertThat(loggedEvent.getIdentity()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(loggedEvent.getCourseId()).isEqualTo(course.getId());
+    }
 }
