@@ -1543,6 +1543,7 @@ components:
         lastName: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
         email: {type: string, format: email, maxLength: 100, minLength: 0}
+        isTestUser: {type: boolean}
     DragItem:
       type: object
       properties:

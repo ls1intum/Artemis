@@ -178,6 +178,7 @@
                 "sessions": "Sessions",
                 "login": "Sign in",
                 "loginWithPasskey": "Sign in with a passkey",
+                "loginWithOidc": "Sign in with University Account",
                 "logout": "Sign out",
                 "register": "Register"
             },
@@ -513,7 +514,6 @@
         "competencies": "Competencies",
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
-        "dashboard": "Dashboard",
         "iris": "Iris",
         "exercise": "Exercise details",
         "exercises": "Exercises",

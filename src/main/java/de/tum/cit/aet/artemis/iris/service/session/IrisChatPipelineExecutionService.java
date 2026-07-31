@@ -16,8 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -91,8 +89,6 @@ public class IrisChatPipelineExecutionService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final Optional<LearningMetricsApi> learningMetricsApi;
-
     private final IrisSettingsService irisSettingsService;
 
     private final PyrisDTOService pyrisDTOService;
@@ -102,8 +98,8 @@ public class IrisChatPipelineExecutionService {
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LearningMetricsApi> learningMetricsApi,
-            IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -113,7 +109,6 @@ public class IrisChatPipelineExecutionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
-        this.learningMetricsApi = learningMetricsApi;
         this.irisSettingsService = irisSettingsService;
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
@@ -173,9 +168,7 @@ public class IrisChatPipelineExecutionService {
         long courseLoadStart = System.nanoTime();
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
-        long metricsStart = System.nanoTime();
-        StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
-        log.debug("Iris chat DTO base data loaded: course {} ms, metrics {} ms", (metricsStart - courseLoadStart) / 1_000_000, (System.nanoTime() - metricsStart) / 1_000_000);
+        log.debug("Iris chat DTO base data loaded: course {} ms", (System.nanoTime() - courseLoadStart) / 1_000_000);
 
         // Mode-specific fields (additive on top of base data)
         PyrisProgrammingExerciseDTO programmingExercise = null;
@@ -238,7 +231,7 @@ public class IrisChatPipelineExecutionService {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
-                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, safeContext.isEmpty() ? null : safeContext);
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
