@@ -26,6 +26,27 @@ describe('ProblemStatementSsrRenderService', () => {
             expect(service.mapFeedbacksToTestInputs({ id: 1, feedbacks: [] } as Result)).toBeUndefined();
         });
 
+        it('returns undefined for a successful result without feedbacks, a KNOWN divergence from the legacy renderer', () => {
+            // KNOWN AND ACCEPTED DIVERGENCE - READ BEFORE CHANGING THIS EXPECTATION.
+            //
+            // `successful: true` with no feedbacks is the legacy renderer's "all tests passed" case
+            // (ProgrammingExerciseInstructionService.testStatusForTask, case 1): it renders every task GREEN.
+            // The SSR path cannot reproduce that, because the render endpoint only understands per-test feedback and
+            // has no "all tests passed" signal. Mapping to undefined therefore sends `testResults: null` and the
+            // server renders neutral/grey tasks instead of green ones.
+            //
+            // Closing the gap properly needs a server-side "all tests passed" input; that work was deliberately
+            // deferred, which is safe only while the `SsrProblemStatement` feature toggle stays off by default.
+            // This MUST be revisited before the toggle is enabled in production.
+            //
+            // If you are here because you changed the mapping and this test went red: that is the point. Do not
+            // simply update the expectation. Confirm the server side actually renders these tasks as passed, then
+            // rewrite this test together with the comment above.
+            const result = { id: 1, successful: true, feedbacks: [] } as Result;
+
+            expect(service.mapFeedbacksToTestInputs(result)).toBeUndefined();
+        });
+
         it('returns an empty array when feedbacks exist but none map to a test case', () => {
             const result = { id: 1, feedbacks: [{ text: 'SCA issue', positive: false }] } as Result;
             expect(service.mapFeedbacksToTestInputs(result)).toEqual([]);
