@@ -19,7 +19,6 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -84,7 +83,6 @@ public class ScienceCourseService {
      *
      * @return the science-enabled course history
      */
-    @Transactional(readOnly = true)
     public List<ScienceEnabledCourseDTO> getEnabledCourseHistory() {
         return scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc().stream().map(ScienceEnabledCourseDTO::of).toList();
     }
@@ -95,7 +93,6 @@ public class ScienceCourseService {
      * @param courseId the id of the course
      * @return the enabled-course entry
      */
-    @Transactional
     public ScienceEnabledCourseDTO enableCourse(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         ScienceEnabledCourse enabledCourse = scienceEnabledCourseRepository.findByCourseId(courseId).orElseGet(ScienceEnabledCourse::new);
@@ -110,7 +107,6 @@ public class ScienceCourseService {
      * @param courseId the id of the course
      * @return the updated enabled-course entry
      */
-    @Transactional
     public ScienceEnabledCourseDTO disableCourse(long courseId) {
         ScienceEnabledCourse enabledCourse = scienceEnabledCourseRepository.findByCourseId(courseId)
                 .orElseThrow(() -> new BadRequestAlertException("Course was never enabled for science collection", ENTITY_NAME, "scienceCourseNotEnabled"));
@@ -124,7 +120,6 @@ public class ScienceCourseService {
      * @param courseId the id of the course
      * @return the consent state for the course
      */
-    @Transactional(readOnly = true)
     public ScienceCourseConsentDTO getConsentForCurrentUser(long courseId) {
         User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -140,7 +135,6 @@ public class ScienceCourseService {
      *
      * @return the current user's course consent states
      */
-    @Transactional(readOnly = true)
     public List<ScienceCourseConsentDTO> getConsentsForCurrentUser() {
         User user = userRepository.getUser();
         List<ScienceEnabledCourse> enabledCourses = scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc();
@@ -194,7 +188,6 @@ public class ScienceCourseService {
      * @param active   whether the user consents to science data collection
      * @return the updated consent state
      */
-    @Transactional
     public ScienceCourseConsentDTO saveConsentForCurrentUser(long courseId, boolean active) {
         User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -224,7 +217,6 @@ public class ScienceCourseService {
      *
      * @param courseId the id of the course
      */
-    @Transactional
     public void deleteScienceDataForCurrentUser(long courseId) {
         User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -261,7 +253,6 @@ public class ScienceCourseService {
      *
      * @return the export audit history
      */
-    @Transactional(readOnly = true)
     public List<ScienceResearchExportAuditDTO> getResearchExportAudits() {
         return scienceResearchExportAuditRepository.findAllByOrderByCreatedDateDesc().stream().map(ScienceResearchExportAuditDTO::of).toList();
     }

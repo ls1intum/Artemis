@@ -1,21 +1,15 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceConsentUpdateDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceCourseConsentDTO;
-import de.tum.cit.aet.artemis.atlas.dto.ScienceEnabledCourseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
-import de.tum.cit.aet.artemis.atlas.dto.ScienceResearchExportAuditDTO;
-import de.tum.cit.aet.artemis.atlas.dto.ScienceResearchExportRequestDTO;
 import de.tum.cit.aet.artemis.atlas.service.ScienceCourseService;
 import de.tum.cit.aet.artemis.atlas.service.ScienceEventService;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -70,62 +60,52 @@ public class ScienceResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET science/courses/{courseId}/consent : Returns the current user's consent state for a course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the consent state
+     */
     @GetMapping("science/courses/{courseId}/consent")
     @EnforceAtLeastStudent
     public ResponseEntity<ScienceCourseConsentDTO> getConsentForCurrentUser(@PathVariable long courseId) {
         return ResponseEntity.ok(scienceCourseService.getConsentForCurrentUser(courseId));
     }
 
+    /**
+     * PUT science/courses/{courseId}/consent : Stores the current user's consent state for a course.
+     *
+     * @param courseId      the id of the course
+     * @param consentUpdate the updated consent state
+     * @return the ResponseEntity with status 200 (OK) and the stored consent state
+     */
     @PutMapping("science/courses/{courseId}/consent")
     @EnforceAtLeastStudent
     public ResponseEntity<ScienceCourseConsentDTO> saveConsentForCurrentUser(@PathVariable long courseId, @RequestBody ScienceConsentUpdateDTO consentUpdate) {
         return ResponseEntity.ok(scienceCourseService.saveConsentForCurrentUser(courseId, consentUpdate.active()));
     }
 
+    /**
+     * GET science/consents : Returns the current user's course-level science consent states.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the consent states
+     */
     @GetMapping("science/consents")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ScienceCourseConsentDTO>> getConsentsForCurrentUser() {
         return ResponseEntity.ok(scienceCourseService.getConsentsForCurrentUser());
     }
 
+    /**
+     * DELETE science/courses/{courseId}/data : Deletes the current user's science interaction data for a course.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @DeleteMapping("science/courses/{courseId}/data")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteScienceDataForCurrentUser(@PathVariable long courseId) {
         scienceCourseService.deleteScienceDataForCurrentUser(courseId);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("admin/science/courses")
-    @EnforceAdmin
-    public ResponseEntity<List<ScienceEnabledCourseDTO>> getScienceEnabledCourseHistory() {
-        return ResponseEntity.ok(scienceCourseService.getEnabledCourseHistory());
-    }
-
-    @PutMapping("admin/science/courses/{courseId}")
-    @EnforceAdmin
-    public ResponseEntity<ScienceEnabledCourseDTO> enableScienceForCourse(@PathVariable long courseId) {
-        return ResponseEntity.ok(scienceCourseService.enableCourse(courseId));
-    }
-
-    @DeleteMapping("admin/science/courses/{courseId}")
-    @EnforceAdmin
-    public ResponseEntity<ScienceEnabledCourseDTO> disableScienceForCourse(@PathVariable long courseId) {
-        return ResponseEntity.ok(scienceCourseService.disableCourse(courseId));
-    }
-
-    @GetMapping("admin/science/export-audits")
-    @EnforceAdmin
-    public ResponseEntity<List<ScienceResearchExportAuditDTO>> getScienceResearchExportAudits() {
-        return ResponseEntity.ok(scienceCourseService.getResearchExportAudits());
-    }
-
-    @PostMapping("admin/science/exports")
-    @EnforceAdmin
-    public ResponseEntity<ByteArrayResource> createScienceResearchExport(@RequestBody ScienceResearchExportRequestDTO request) {
-        byte[] csvBytes = scienceCourseService.createResearchExport(request);
-        String filename = "science-research-export-" + ZonedDateTime.now().toInstant().toEpochMilli() + ".csv";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
-        return ResponseEntity.ok().headers(headers).contentLength(csvBytes.length).contentType(MediaType.TEXT_PLAIN).body(new ByteArrayResource(csvBytes));
     }
 }
