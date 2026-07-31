@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -13,7 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -29,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -209,6 +214,25 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
 
             request.performMvcRequest(get(assessmentUrl(exercise, submission))).andExpect(status().isOk());
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatingAnAssessmentIsForbiddenWhileTheExamIsRunningEvenForInstructors() throws Exception {
+        // This endpoint creates a result when none exists yet, and isAllowedToCreateOrOverrideResult neither includes
+        // the grace period nor applies to instructors at all. Without the gate on the write side, assessment data could
+        // therefore be persisted while the student can still change their submission.
+        FileUploadExercise fileUploadExercise = exerciseOfType(FileUploadExercise.class);
+        Submission submission = saveSubmission(fileUploadExercise);
+        var assessment = new FileUploadAssessmentDTO(List.of(), null);
+
+        String response = request
+                .performMvcRequest(put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback").param("submit", "true")
+                        .contentType(MediaType.APPLICATION_JSON).content(new ObjectMapper().writeValueAsString(assessment)))
+                .andExpect(status().isForbidden()).andReturn().getResponse().getContentAsString();
+
+        assertThat(response).contains(ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING);
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result may be persisted while the exam is still running").isEmpty();
     }
 
     @Test
