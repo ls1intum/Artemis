@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailedAnalysisDetail;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureBreakdownEntry;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
@@ -141,7 +143,7 @@ public class DeimosBatchService {
             long totalCandidates = participationIds.size();
             long failed = totalCandidates > 0 ? totalCandidates : 1;
             String failureReason = ex.getClass().getSimpleName() + ": " + ex.getMessage();
-            List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(0, failureReason));
+            List<DeimosBatchSummaryDTO.FailedAnalysis> failedAnalyses = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(0, DeimosFailureType.OTHER, failureReason));
             DeimosBatchSummaryDTO failureSummary = new DeimosBatchSummaryDTO(runId, DeimosTriggerType.MANUAL.name(), scope.name(), from, to, totalCandidates, 0, 0, 0, failed,
                     List.of(), failedAnalyses);
             log.error("Deimos manual batch {} failed for scope {} with id {}", runId, scope, scopeId, ex);
@@ -203,11 +205,14 @@ public class DeimosBatchService {
             maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
         }
 
-        List<DeimosFailedAnalysisDetail> failedAnalysisDetails = summary.failedAnalyses().stream().map(fa -> new DeimosFailedAnalysisDetail(fa.participationId(), fa.reason()))
-                .toList();
+        List<DeimosFailedAnalysisDetail> failedAnalysisDetails = summary.failedAnalyses().stream()
+                .map(fa -> new DeimosFailedAnalysisDetail(fa.participationId(), fa.failureType(), fa.reason())).toList();
+
+        List<DeimosFailureBreakdownEntry> failureBreakdown = summary.failureCountsByType().entrySet().stream()
+                .map(entry -> DeimosFailureBreakdownEntry.of(entry.getKey(), entry.getValue())).toList();
 
         var emailData = new DeimosAnalysisCompleteEmailDTO(courseId, courseTitle, scopeTitle, summary.analyzed(), summary.maliciousCount(), summary.benignCount(), summary.failed(),
-                notificationUrl, maliciousParticipationLinks, failedAnalysisDetails);
+                notificationUrl, maliciousParticipationLinks, failedAnalysisDetails, failureBreakdown);
         mailSendingService.buildAndSendAsync(MailRecipientDTO.from(triggerUser), DEIMOS_ANALYSIS_COMPLETE_EMAIL_SUBJECT, DEIMOS_ANALYSIS_COMPLETE_EMAIL_TEMPLATE,
                 Map.of("analysis", emailData, "notificationUrl", notificationUrl));
     }
