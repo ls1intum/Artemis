@@ -210,13 +210,14 @@ Organized by feature module:
     - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
-- **UI components: Use PrimeNG instead of Bootstrap components**
-    - All new UI elements must be implemented using PrimeNG components
-    - We are migrating from Bootstrap to **Tailwind CSS v4 (utilities) + PrimeNG (components)**; do not introduce new Bootstrap components, classes, or raw colours
-    - Existing Bootstrap usage will be migrated incrementally
-    - **Colours use semantic tokens, never primitives or Bootstrap classes**: `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` (named state tokens; or PrimeNG `severity`, or `text-muted-color`/`bg-surface-*`) — never `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full standard, decision rules, and the Bootstrap→Tailwind/PrimeNG quick reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling)
-    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`): PrimeNG injects component CSS lazily, so a bare element renders non-deterministically. Render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) — enforced by `localRules/no-primeng-component-classes`
-    - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
+- **UI components: use TUM UI and Tailwind CSS**
+    - TUM UI is the target component system; use an existing `@tumaet/ui-angular` component whenever it covers the required behavior.
+    - Use Tailwind CSS v4 utilities for application layout. Do not introduce Bootstrap or ng-bootstrap in new work.
+    - If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or stable Angular CDK primitives. Keep Artemis-specific composition and policy in the application.
+    - PrimeNG is a transitional fallback only when the TUM UI gap cannot reasonably be closed in the same change. Explain the contained fallback in the pull request.
+    - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
+    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
+    - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
 
 ### General
 
