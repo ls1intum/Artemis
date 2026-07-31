@@ -1,4 +1,4 @@
 export interface LoginOptionsDTO {
-    loginMethod: string;
+    loginMethod: 'PASSWORD' | 'OIDC' | 'SAML2';
     idpName: string | null;
 }

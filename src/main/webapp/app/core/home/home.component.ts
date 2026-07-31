@@ -23,6 +23,7 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-home',
@@ -38,6 +39,7 @@ import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-messa
         TumUiInputDirective,
         TumUiCheckboxComponent,
         TumUiMessageComponent,
+        NgTemplateOutlet,
     ],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -299,9 +301,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                     this.isCheckingIdentifier.set(false);
 
                     const allowedMethods: ('PASSWORD' | 'OIDC' | 'SAML2')[] = ['PASSWORD', 'OIDC', 'SAML2'];
-                    const resolvedMethod = allowedMethods.includes(options.loginMethod as 'PASSWORD' | 'OIDC' | 'SAML2')
-                        ? (options.loginMethod as 'PASSWORD' | 'OIDC' | 'SAML2')
-                        : 'PASSWORD';
+                    const resolvedMethod = allowedMethods.includes(options.loginMethod) ? options.loginMethod : 'PASSWORD';
 
                     this.loginMethod.set(resolvedMethod);
 

@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -235,8 +236,8 @@ public class PublicAccountResource {
      */
     @GetMapping("login-options")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
-    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") @Size(max = 255) String usernameOrEmail) {
         LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
         return ResponseEntity.ok(loginOptions);
     }

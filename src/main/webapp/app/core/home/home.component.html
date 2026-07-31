@@ -99,22 +99,8 @@
                                     />
                                 </div>
 
-                                <div class="form-group">
-                                    <div class="form-check d-flex align-items-center gap-2 ps-0">
-                                        <tum-ui-checkbox inputId="rememberMe" name="rememberMe" [(checked)]="rememberMe" />
-                                        <label class="form-check-label cursor-pointer" for="rememberMe" jhiTranslate="login.form.rememberme">Remember me</label>
-                                    </div>
-                                    @if (needsToAcceptTerms()) {
-                                        <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
-                                            <tum-ui-checkbox inputId="acceptTerms" name="acceptTerms" [(checked)]="userAcceptedTerms" />
-                                            <label class="form-check-label cursor-pointer" for="acceptTerms">
-                                                <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept terms of use</a>
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
+                                <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'password' }" />
 
-                                <!-- CHANGED: Stacked Sign In and Back buttons vertically (flex-column) -->
                                 <div class="d-flex flex-column gap-3 mt-4">
                                     <tum-ui-button
                                         id="login-button"
@@ -141,22 +127,8 @@
 
                         <!-- Option B: OIDC SSO Flow -->
                         @if (loginMethod() === 'OIDC') {
-                            <div class="form-group mt-3">
-                                <div class="form-check d-flex align-items-center gap-2 ps-0">
-                                    <tum-ui-checkbox inputId="rememberMeOidc" name="rememberMeOidc" [(checked)]="rememberMe" />
-                                    <label class="form-check-label cursor-pointer" for="rememberMeOidc" jhiTranslate="login.form.rememberme">Remember me</label>
-                                </div>
-                                @if (needsToAcceptTerms()) {
-                                    <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
-                                        <tum-ui-checkbox inputId="acceptTermsOidc" name="acceptTermsOidc" [(checked)]="userAcceptedTerms" />
-                                        <label class="form-check-label cursor-pointer" for="acceptTermsOidc">
-                                            <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
-                                        </label>
-                                    </div>
-                                }
-                            </div>
+                            <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'oidc' }" />
 
-                            <!-- CHANGED: Stacked OIDC Sign In and Back buttons vertically -->
                             <div class="d-flex flex-column gap-3 mt-4">
                                 <tum-ui-button
                                     id="oidc-login-button"
@@ -184,22 +156,8 @@
 
                         <!-- Option C: SAML2 SSO Flow -->
                         @if (loginMethod() === 'SAML2') {
-                            <div class="form-group mt-3">
-                                <div class="form-check d-flex align-items-center gap-2 ps-0">
-                                    <tum-ui-checkbox inputId="rememberMeSaml" name="rememberMeSaml" [(checked)]="rememberMe" />
-                                    <label class="form-check-label cursor-pointer" for="rememberMeSaml" jhiTranslate="login.form.rememberme">Remember me</label>
-                                </div>
-                                @if (needsToAcceptTerms()) {
-                                    <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
-                                        <tum-ui-checkbox inputId="acceptTermsSaml" name="acceptTermsSaml" [(checked)]="userAcceptedTerms" />
-                                        <label class="form-check-label cursor-pointer" for="acceptTermsSaml">
-                                            <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
-                                        </label>
-                                    </div>
-                                }
-                            </div>
+                            <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'saml' }" />
 
-                            <!-- CHANGED: Stacked SAML2 Sign In and Back buttons vertically -->
                             <div class="d-flex flex-column gap-3 mt-4">
                                 @if (profileInfo()?.saml2) {
                                     <jhi-saml2-login
@@ -255,6 +213,24 @@
                     }
                 </div>
             </div>
+
+            <!-- Single shared template fragment for remember-me and terms of use -->
+            <ng-template #termsAndRememberMe let-prefix>
+                <div class="form-group my-3">
+                    <div class="form-check d-flex align-items-center gap-2 ps-0">
+                        <tum-ui-checkbox [inputId]="'rememberMe_' + prefix" name="rememberMe" [(checked)]="rememberMe" />
+                        <label class="form-check-label cursor-pointer" [for]="'rememberMe_' + prefix" jhiTranslate="login.form.rememberme">Remember me</label>
+                    </div>
+                    @if (needsToAcceptTerms()) {
+                        <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
+                            <tum-ui-checkbox [inputId]="'acceptTerms_' + prefix" name="acceptTerms" [(checked)]="userAcceptedTerms" />
+                            <label class="form-check-label cursor-pointer" [for]="'acceptTerms_' + prefix">
+                                <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept terms of use</a>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </ng-template>
         </div>
     </div>
 </div>

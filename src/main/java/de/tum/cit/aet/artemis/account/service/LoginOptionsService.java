@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
+import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
@@ -54,15 +55,15 @@ public class LoginOptionsService {
      */
     public LoginOptionsDTO getLoginOptions(String emailOrLogin) {
         if (emailOrLogin == null || emailOrLogin.isBlank()) {
-            return new LoginOptionsDTO("PASSWORD", null);
+            return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
         }
-        String sanitizedInput = emailOrLogin.trim();
+        String sanitizedInput = emailOrLogin.trim().toLowerCase();
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
         Optional<User> user = isEmail ? userRepository.findOneByEmailIgnoreCase(sanitizedInput) : userRepository.findOneByLogin(sanitizedInput);
         // if user is already in database
         if (user.isPresent()) {
             if (user.get().isInternal()) {
-                return new LoginOptionsDTO("PASSWORD", null);
+                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
             }
             else {
                 return getExternalUser();
@@ -75,7 +76,7 @@ public class LoginOptionsService {
                 return getExternalUser();
             }
         }
-        return new LoginOptionsDTO("PASSWORD", null);
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
     }
 
     /**
@@ -85,11 +86,11 @@ public class LoginOptionsService {
      */
     private LoginOptionsDTO getExternalUser() {
         if (oidcEnabled) {
-            return new LoginOptionsDTO("OIDC", oidcDisplayName);
+            return new LoginOptionsDTO(LoginMethod.OIDC, oidcDisplayName);
         }
         if (samlEnabled) {
-            return new LoginOptionsDTO("SAML2", samlDisplayName);
+            return new LoginOptionsDTO(LoginMethod.SAML2, samlDisplayName);
         }
-        return new LoginOptionsDTO("PASSWORD", null);
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
     }
 }

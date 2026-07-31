@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -66,7 +67,7 @@ class LoginOptionsServiceTest {
     @ValueSource(strings = { "   ", "\t", "\n" })
     void testGetLoginOptions_NullOrBlankInput_ReturnsPassword(String input) {
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(input);
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
     }
 
@@ -82,7 +83,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
         verify(userRepository).findOneByLogin(login);
         verifyNoInteractions(ldapUserService);
@@ -100,7 +101,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(email);
 
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
         verify(userRepository).findOneByEmailIgnoreCase(email);
         verifyNoInteractions(ldapUserService);
@@ -118,7 +119,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("OIDC");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
     }
 
@@ -137,7 +138,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("SAML2");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.SAML2);
         assertThat(result.idpName()).isEqualTo(SAML_LABEL);
     }
 
@@ -156,7 +157,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
     }
 
@@ -173,7 +174,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("OIDC");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
         verify(userRepository).findOneByLogin(login);
         verify(ldapUserService).findByLogin(login);
@@ -192,7 +193,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(email);
 
-        assertThat(result.loginMethod()).isEqualTo("OIDC");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
         verify(userRepository).findOneByEmailIgnoreCase(email);
         verify(ldapUserService).findByAnyEmail(email);
@@ -209,7 +210,7 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
     }
 
@@ -227,8 +228,26 @@ class LoginOptionsServiceTest {
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
-        assertThat(result.loginMethod()).isEqualTo("PASSWORD");
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
         verifyNoInteractions(ldapUserService);
+    }
+
+    /**
+     * Verifies that if both oidc and saml2 profiles enables, the oidc option is provided
+     */
+    @Test
+    void testGetLoginOptions_whenBothOidcAndSaml2Enabled_prefersOidc() {
+        ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", true);
+        ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", true);
+
+        User externalUser = new User();
+        externalUser.setInternal(false);
+        when(userRepository.findOneByLogin(anyString())).thenReturn(Optional.of(externalUser));
+
+        LoginOptionsDTO result = loginOptionsService.getLoginOptions("externalUser");
+
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
+        assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
     }
 }
