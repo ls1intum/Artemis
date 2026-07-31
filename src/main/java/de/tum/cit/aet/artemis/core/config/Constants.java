@@ -85,6 +85,21 @@ public final class Constants {
 
     public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
 
+    // Must be consistent with the exam.title varchar(255) database column.
+    public static final int EXAM_TITLE_MAX_LENGTH = 255;
+
+    // Upper bound for configurable max-points values in a course or exam grading configuration (int database columns).
+    // Keep in sync with MAX_GRADING_POINTS in input.constants.ts.
+    public static final int MAX_GRADING_POINTS = 9999;
+
+    // Upper bound for the course presentation score. Must stay <= 127 because course.presentation_score is a tinyint column.
+    // Keep in sync with MAX_PRESENTATION_SCORE in input.constants.ts.
+    public static final int MAX_PRESENTATION_SCORE = 100;
+
+    // Upper bound for the number of graded presentations in a course. A domain limit, not a database constraint.
+    // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
+    public static final int MAX_PRESENTATION_COUNT = 100;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
@@ -137,6 +152,9 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
+    public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -558,6 +576,11 @@ public final class Constants {
      * The name of the property used to enable or disable SAML2-based single sign-on.
      */
     public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
+
+    /**
+     * The name of the property used to enable or disable OIDC-based single sign-on.
+     */
+    public static final String OIDC_ENABLED_PROPERTY_NAME = "artemis.user-management.oidc.enabled";
 
     /**
      * The name of the property used to enable or disable Theia functionality.

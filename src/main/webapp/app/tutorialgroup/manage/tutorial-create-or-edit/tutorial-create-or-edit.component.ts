@@ -5,24 +5,28 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { TumUiInputNumberComponent } from 'app/shared-ui/tum-ui/input-number/tum-ui-input-number.component';
+import { TumUiInputGroupComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group.component';
+import { TumUiInputGroupAddonComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group-addon.component';
+import { TumUiConfirmDialogComponent } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirm-dialog.component';
+import { TumUiConfirmationService } from 'app/shared-ui/tum-ui/confirm-dialog/tum-ui-confirmation.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/create-or-update-tutorial-group-request';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 enum Mode {
     ONLINE = 'Online',
@@ -49,25 +53,29 @@ export interface UpdateTutorialGroupEvent {
         FormsModule,
         ToggleSwitchModule,
         SelectModule,
-        InputNumberModule,
         DatePickerModule,
         TooltipModule,
         ButtonModule,
         RouterLink,
+        FaIconComponent,
         TutorialEditLanguagesInputComponent,
-        ConfirmDialogModule,
+        TumUiInputNumberComponent,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
+        TumUiConfirmDialogComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
-    providers: [ConfirmationService],
+    providers: [TumUiConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',
     styleUrl: './tutorial-create-or-edit.component.scss',
 })
 export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
-    private confirmationService = inject(ConfirmationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private confirmationService = inject(TumUiConfirmationService);
+    protected readonly faHashtag = faHashtag;
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
@@ -146,7 +154,7 @@ export class TutorialCreateOrEditComponent {
             }
         });
         effect(() => {
-            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId(), 'body').subscribe({
+            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId()).subscribe({
                 next: (languages) => {
                     this.alreadyUsedLanguages.set(languages);
                 },
@@ -180,8 +188,8 @@ export class TutorialCreateOrEditComponent {
             message: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.message'),
             acceptLabel: this.translateService.instant('artemisApp.pages.createOrEditTutorialGroup.confirmSaveDialog.acceptButtonLabel'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
+            acceptSeverity: 'danger',
+            rejectSeverity: 'secondary',
             accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupRequest }),
         });
     }

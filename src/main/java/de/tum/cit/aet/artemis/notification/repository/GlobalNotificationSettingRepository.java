@@ -32,6 +32,23 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
             """)
     Set<GlobalNotificationSetting> findByUserId(@Param("userId") long userId);
 
+    /**
+     * Returns the ids of the given users who explicitly disabled the given notification type. Users without an explicit setting are considered enabled (default) and are
+     * therefore not part of the result.
+     *
+     * @param userIds          the ids of the users to check
+     * @param notificationType the notification type to check
+     * @return the ids of the users who disabled the notification type
+     */
+    @Query("""
+            SELECT setting.userId
+            FROM GlobalNotificationSetting setting
+            WHERE setting.userId IN :userIds
+                AND setting.notificationType = :notificationType
+                AND setting.enabled = FALSE
+            """)
+    Set<Long> findUserIdsWithNotificationDisabled(@Param("userIds") Set<Long> userIds, @Param("notificationType") GlobalNotificationType notificationType);
+
     @Query("""
             SELECT setting
             FROM GlobalNotificationSetting setting

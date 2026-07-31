@@ -10,7 +10,9 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -58,8 +60,9 @@ public record CourseUpdateDTO(
         String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
+        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -114,7 +117,6 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -143,8 +145,7 @@ public record CourseUpdateDTO(
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
-                course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone());
+                course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(),
+                course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone());
     }
 }

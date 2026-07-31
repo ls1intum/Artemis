@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: "9.7"
+  version: "9.8"
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
@@ -1543,6 +1543,7 @@ components:
         lastName: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
         email: {type: string, format: email, maxLength: 100, minLength: 0}
+        isTestUser: {type: boolean}
     DragItem:
       type: object
       properties:

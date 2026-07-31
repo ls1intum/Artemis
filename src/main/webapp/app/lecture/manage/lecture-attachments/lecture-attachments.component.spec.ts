@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -8,7 +8,6 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -25,8 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('LectureAttachmentsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
     let attachmentService: AttachmentService;
@@ -103,7 +100,7 @@ describe('LectureAttachmentsComponent', () => {
                 FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
@@ -195,13 +192,14 @@ describe('LectureAttachmentsComponent', () => {
     it('should update Attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.attachmentToBeUpdatedOrCreated.set({
+        const attachmentToUpdate = {
             id: 1,
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
             version: 1,
             uploadDate: dayjs(),
-        } as Attachment);
+        } as Attachment;
+        comp.attachmentToBeUpdatedOrCreated.set(attachmentToUpdate);
         comp.notificationText = 'wow how did i get here';
         const attachmentServiceUpdateStub = vi.spyOn(attachmentService, 'update').mockReturnValue(
             of(
@@ -219,6 +217,7 @@ describe('LectureAttachmentsComponent', () => {
         );
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
+        expect(attachmentToUpdate.version).toBe(1);
         expect(comp.attachments()[1].version).toBe(2);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
@@ -295,9 +294,12 @@ describe('LectureAttachmentsComponent', () => {
     it('should download attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         comp.isDownloadingAttachmentLink.set(undefined);
         expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
-        comp.downloadAttachment('https://my/own/download/url', 'test');
+        comp.downloadAttachment('test', 'https://my/own/download/url', 5);
+        expect(downloadFileSpy).toHaveBeenCalledWith('https://my/own/download/url', 'test', 5);
         expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
     });
 

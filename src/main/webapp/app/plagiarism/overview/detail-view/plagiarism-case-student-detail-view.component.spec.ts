@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/plagiarism/overview/detail-view/plagiarism-case-student-detail-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -21,8 +20,6 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { MetisService } from 'app/communication/service/metis.service';
 
 describe('Plagiarism Cases Student View Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PlagiarismCaseStudentDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseStudentDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;

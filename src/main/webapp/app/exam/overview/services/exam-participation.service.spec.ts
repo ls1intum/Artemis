@@ -21,10 +21,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -77,6 +74,39 @@ describe('ExamParticipationService', () => {
             .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+    });
+
+    it('should fall back to the locally cached exam when the conduction request fails', async () => {
+        studentExam.id = 42;
+        service.saveStudentExamToLocalStorage(1, 1, studentExam);
+
+        let received: StudentExam | undefined;
+        service
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => (received = resp));
+
+        httpMock.expectOne({ method: 'GET' }).error(new ProgressEvent('error'), { status: 500 });
+
+        expect(received).toBeDefined();
+        expect(received!.id).toBe(42);
+    });
+
+    it('should propagate the error and not fall back to the locally cached exam when the summary request fails', async () => {
+        studentExam.id = 42;
+        service.saveStudentExamToLocalStorage(1, 1, studentExam);
+
+        let received: StudentExam | undefined;
+        let error: unknown;
+        service
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
+            .pipe(take(1))
+            .subscribe({ next: (resp) => (received = resp), error: (err) => (error = err) });
+
+        httpMock.expectOne({ method: 'GET' }).error(new ProgressEvent('error'), { status: 500 });
+
+        expect(received).toBeUndefined();
+        expect(error).toBeInstanceOf(HttpErrorResponse);
     });
 
     it('should load a student exam grade info for summary', async () => {

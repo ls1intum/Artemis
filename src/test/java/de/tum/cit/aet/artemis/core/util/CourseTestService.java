@@ -487,6 +487,84 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxPoints(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithTooHighPresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(10000);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativePresentationScore() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setPresentationScore(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testUpdateCourseWithTooHighMaxPoints() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(10000);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsAtLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(9999);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAtLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(100);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+    }
+
+    // Test
+    public void testUpdateCourseWithPresentationScoreAboveLimit() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setPresentationScore(101);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testUpdateCourseWithMaxPointsZero() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setMaxPoints(0);
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 
@@ -1518,6 +1596,33 @@ public class CourseTestService {
         assertThat(currentTutorLeaderboard.numberOfTutorMoreFeedbackRequests()).isZero();
         assertThat(currentTutorLeaderboard.numberOfAssessments()).isZero();
         assertThat(currentTutorLeaderboard.points()).isZero();
+    }
+
+    // Test
+    public void testGetAssessmentDashboardStats_countsOnlyLockedAssessments() throws Exception {
+        String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        String suffix = "assessmentlocks";
+        adjustUserGroupsToCustomGroups(suffix);
+        // One exercise with three submitted submissions and no assessments at all.
+        Course testCourse = courseUtilService.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 1, 3, 0, 0, true, 0, validModel);
+        Exercise exercise = testCourse.getExercises().iterator().next();
+
+        List<Submission> submissions = submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).stream()
+                .sorted(Comparator.comparing(Submission::getId)).toList();
+        assertThat(submissions).hasSize(3);
+
+        String assessorLogin = userPrefix + "tutor1";
+        // Locked: an assessment was started (an assessor is set) but never finished (no completion date).
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submissions.getFirst(), assessorLogin, List.of());
+        // Finished assessment, so not locked.
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now().minusHours(1), submissions.get(1), assessorLogin, List.of());
+        // submissions.get(2) deliberately keeps no result at all, so it is not locked either.
+
+        StatsForDashboardDTO stats = request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+
+        // Only the started-but-unfinished assessment is a lock. Verified to return 2 before the fix: the previous query used a LEFT JOIN and only
+        // checked "completionDate IS NULL", which is also true when the join produced no result row at all, so the unassessed submission was counted too.
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).as("only a started but unfinished assessment counts as an assessment lock").isEqualTo(1L);
     }
 
     // Test
@@ -3389,8 +3494,8 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
-                course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
+                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
+                course.getCourseInformationSharingConfiguration());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {

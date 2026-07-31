@@ -78,6 +78,8 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -769,9 +771,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        // generate individual student exams (the response masks the nested exam; re-fetch managed entities to modify them)
+        request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
+                HttpStatus.OK);
+        List<StudentExam> studentExams = new ArrayList<>(studentExamRepository.findByExamId(exam.getId()));
 
         // Modify working times
 
@@ -828,6 +831,72 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTime_failsIfIndividualEndReachesSummaryPublicationDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        // the submission overview becomes visible one hour after the nominal end date
+        exam1.setPublishResultsDate(null);
+        exam1.setExamSummaryPublicationDate(exam1.getEndDate().plusHours(1));
+        exam1 = examRepository.save(exam1);
+        int originalWorkingTime = studentExam1.getWorkingTime();
+        long secondsUntilPublication = Duration.between(exam1.getStartDate(), exam1.getExamSummaryPublicationDate()).getSeconds();
+
+        // an individual extension that would push this student past the publication date must be rejected: otherwise the summary and conduction gates open for students who
+        // already submitted while this student is still writing
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication + 60, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension landing exactly on the publication date is rejected as well (the summary must not open at the very moment the student is still allowed to submit)
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                (int) secondsUntilPublication, StudentExam.class, HttpStatus.BAD_REQUEST);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(originalWorkingTime);
+
+        // an extension that keeps the individual end before the publication date is still allowed
+        int allowedWorkingTime = (int) secondsUntilPublication - 60;
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", allowedWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(allowedWorkingTime);
+
+        // with the individual extension in place, the instructor may no longer pull the publication date in front of that student's individual end date
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        examWithExtension.setExamSummaryPublicationDate(examWithExtension.getStartDate().plusSeconds(allowedWorkingTime));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamDuration_failsWhenRescaledIndividualExtensionCrossesSummaryPublicationDate() throws Exception {
+        // NOTE: unlike the working-time PATCH tests above, this one goes through the full exam update, which validates
+        // the date ordering. The "active exam" fixture starts an hour in the past but keeps a visible date near now, so
+        // the visible date has to be pulled in front of the start date for any update of it to be accepted at all.
+        exam1.setVisibleDate(exam1.getStartDate().minusMinutes(30));
+        exam1.setPublishResultsDate(null);
+        exam1 = examRepository.save(exam1);
+        int examDuration = exam1.getDuration();
+
+        // Give the student a modest individual extension (+10% of the exam duration) and set the publication date just
+        // after that individual end, so the invariant holds for the current state.
+        int extendedWorkingTime = examDuration + examDuration / 10;
+        request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
+                extendedWorkingTime, StudentExam.class, HttpStatus.OK);
+        Exam examWithExtension = examRepository.findByIdElseThrow(exam1.getId());
+        ZonedDateTime individualEnd = examWithExtension.getStartDate().plusSeconds(extendedWorkingTime);
+        examWithExtension.setExamSummaryPublicationDate(individualEnd.plusMinutes(5));
+        Exam savedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examWithExtension), Exam.class, HttpStatus.OK);
+
+        // Now stretch the exam end date. The nominal end stays before the publication date, but updateStudentExamsAndRescheduleExercises
+        // rescales the individual extension proportionally, which pushes this student past it — so the update has to be rejected.
+        savedExam.setEndDate(savedExam.getExamSummaryPublicationDate().minusMinutes(1));
+        assertThat(savedExam.getEndDate()).isBefore(savedExam.getExamSummaryPublicationDate());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(savedExam), HttpStatus.BAD_REQUEST);
+
+        // the rejected update must not have touched the stored working time
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(extendedWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTimeLate() throws Exception {
         int newWorkingTime = 180 * 60;
         int oldWorkingTime = studentExam1.getWorkingTime();
@@ -843,6 +912,34 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
+        // The event also carries the exam's current schedule so a conducting student can refresh the countdown (#13071).
+        var examDb = examRepository.findById(exam1.getId()).orElseThrow();
+        assertThat(capturedEvent.newStartDate()).isEqualTo(examDb.getStartDate().toInstant());
+        assertThat(capturedEvent.newEndDate()).isEqualTo(examDb.getEndDate().toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTimeTestExamDoesNotCarrySchedule() throws Exception {
+        // For a test exam the exam start/end dates are only the availability window, not the student's conduction window
+        // (which is derived from their individual startedDate). A working time update must therefore NOT carry them, so
+        // the client keeps recomputing the timer from the student's startedDate rather than the wrong exam start (#13071).
+        int newWorkingTime = 180 * 60;
+        testExam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam1 = examRepository.save(testExam1);
+
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/working-time", newWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+
+        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExamForTestExam1.getId(), false);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        // Even though the (test) exam has start/end dates set above, the schedule must be omitted for test exams.
+        assertThat(capturedEvent.newStartDate()).isNull();
+        assertThat(capturedEvent.newEndDate()).isNull();
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
@@ -1332,6 +1429,42 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // assert that all repositories of programming exercises have been locked
         assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
         deleteExamWithInstructor(exam1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetStudentExamForSummary_examSummaryPublicationDate() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+
+        // configure a submission-overview publication date far in the future before the student conducts the exam
+        exam2.setPublishResultsDate(null);
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2 = examRepository.save(exam2);
+
+        final String conductionUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction";
+        final String summaryUrl = "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/summary";
+
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        // a student who has NOT submitted yet must still be able to fetch the conduction even though the summary is not published yet (the gate must not break ongoing exams)
+        var studentExamResponse = request.get(conductionUrl, HttpStatus.OK, StudentExam.class);
+        // submit early so the summary would generally be accessible (it only requires the student exam to be submitted)
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
+
+        // 1) summary publication date in the future: the submitted student may NOT access the summary yet, and must not be able to re-fetch the exam content via conduction either
+        request.get(summaryUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get(conductionUrl, HttpStatus.FORBIDDEN, StudentExam.class);
+
+        // 2) summary publication date in the past: the student may access the summary
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        var summary = request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
+        assertThat(summary.isSubmitted()).isTrue();
+
+        // 3) summary publication date still in the future, but results are already published: the summary is available as a safeguard
+        exam2.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam2.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        exam2 = examRepository.save(exam2);
+        request.get(summaryUrl, HttpStatus.OK, StudentExam.class);
     }
 
     @Test
@@ -2460,6 +2593,28 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestExamTestRunConductionDoesNotCreateAdditionalParticipations() throws Exception {
+        Exam testExam = examUtilService.addTestExam(course1);
+        testExam = examUtilService.addTextModelingProgrammingExercisesToExam(testExam, false, true);
+        StudentExam testRun = createTestRun(testExam);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        Set<Long> participationIdsBeforeConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsBeforeConduction).hasSize(testRun.getExercises().size());
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+
+        Set<Long> participationIdsAfterConduction = testRun.getExercises().stream()
+                .flatMap(exercise -> studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), instructor.getId()).stream()).map(StudentParticipation::getId)
+                .collect(Collectors.toSet());
+        assertThat(participationIdsAfterConduction).isEqualTo(participationIdsBeforeConduction);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -2953,15 +3108,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             exam1.setExamMaxPoints(19);
             exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
 
-            // Generate student exam
-            List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
-                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            // Generate student exam (the response masks the nested exam/user; re-fetch the single managed entity below)
+            List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
             assertThat(studentExams).hasSize(exam1.getExamUsers().size());
             assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
 
             // Prepare student exam
             ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-            StudentExam studentExam = studentExams.getFirst();
+            StudentExam studentExam = studentExamRepository.findByExamId(exam1.getId()).iterator().next();
             userUtilService.changeUser(studentExam.getUser().getLogin());
             studentExamForConduction = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);

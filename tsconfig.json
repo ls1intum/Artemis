@@ -24,9 +24,9 @@
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
-        "baseUrl": "./",
         "paths": {
-            "app/*": ["src/main/webapp/app/*"]
+            "app/*": ["./src/main/webapp/app/*"],
+            "src/*": ["./src/*"]
         },
         "importHelpers": true
     },
@@ -40,7 +40,15 @@
         "preserveWhitespaces": true,
         "extendedDiagnostics": {
             "checks": {
-                "optionalChainNotNullable": "suppress"
+                // Suppressed: with `noUncheckedIndexedAccess` off, index access (`arr[i]`, `record[key]`) is
+                // typed non-nullable, so the ~380 guarding `?.` on index results are flagged as redundant even
+                // though they are required runtime guards. Enabling this would require a `noUncheckedIndexedAccess`
+                // migration first.
+                "optionalChainNotNullable": "suppress",
+                // Enforced: every `??` whose left side is non-nullable has been removed (genuine dead code) or,
+                // where the guard is needed at runtime (index access / a lazily-initialized signal), moved into a
+                // typed component method so the fallback is expressed in TS rather than the template.
+                "nullishCoalescingNotNullable": "error"
             }
         }
     },

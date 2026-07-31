@@ -1,16 +1,18 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subscription, finalize } from 'rxjs';
 import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -19,7 +21,7 @@ import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, TumUiDialogComponent, TumUiButtonDirective, TumUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
@@ -35,10 +37,17 @@ export class CleanupOperationModalComponent {
     /** Whether the operation has been executed */
     readonly operationExecuted = signal(false);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    /** Whether a cleanup operation is currently being executed. */
+    readonly operationExecuting = signal(false);
+
+    /** Error shown inside the dialog for the current operation. */
+    readonly dialogError = signal<string | undefined>(undefined);
+
+    /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
+    private countSubscription?: Subscription;
 
     private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
@@ -53,7 +62,20 @@ export class CleanupOperationModalComponent {
     constructor() {
         effect(() => {
             if (this.visible()) {
-                untracked(() => this.updateCounts());
+                untracked(() => {
+                    // Reset per-open state so reopening the modal for a different operation does not flash the
+                    // previous run's result icons/counts (operationExecuted is only ever set true, and counts
+                    // refresh asynchronously): start clean, then fetch this operation's counts.
+                    this.operationExecuted.set(false);
+                    this.dialogError.set(undefined);
+                    this.counts.set({ totalCount: 0 });
+                    this.updateCounts();
+                });
+            } else {
+                // This modal instance persists across opens (its host @if never tears it down), so cancel any
+                // in-flight count request on close: otherwise a late response could overwrite the counts of the
+                // next operation opened here.
+                this.countSubscription?.unsubscribe();
             }
         });
     }
@@ -69,37 +91,62 @@ export class CleanupOperationModalComponent {
      * Execute the cleanup operation and update counts afterward.
      */
     executeCleanupOperation(): void {
+        if (this.operationExecuting()) {
+            return;
+        }
+
+        const operation = this.operation();
+        // Clear any error from a previous attempt so an in-place retry does not show a stale error banner next to
+        // the fresh success icons/counts (the open effect only clears it on a closed -> open transition).
+        this.dialogError.set(undefined);
+        this.operationExecuting.set(true);
         const operationHandler = {
             next: () => {
+                if (!this.visible() || this.operation() !== operation) {
+                    return;
+                }
                 this.operationExecuted.set(true);
                 this.updateCounts();
             },
             error: (error: unknown) => {
-                this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+                if (this.visible() && this.operation() === operation) {
+                    this.dialogError.set(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+                }
             },
         };
 
-        const operation = this.operation();
         // Range operations are only reachable once validateDates has confirmed both dates are set.
         const deleteFrom = operation.deleteFrom!;
         const deleteTo = operation.deleteTo!;
+        let executionRequest: Observable<unknown>;
         switch (operation.name) {
             case 'deleteOrphans':
-                this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOrphans();
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
                 break;
             case 'deleteOldSubmissionVersions':
-                this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo).subscribe(operationHandler);
+                executionRequest = this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
                 break;
+            default:
+                this.operationExecuting.set(false);
+                throw new Error(`Unsupported operation: ${operation.name}`);
         }
+        // Keep the request pending when the dialog closes. Unsubscribing cannot stop server-side deletion once it has
+        // started, and clearing the guard would allow a second destructive request after an immediate reopen.
+        executionRequest
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.operationExecuting.set(false)),
+            )
+            .subscribe(operationHandler);
     }
 
     /**
@@ -130,12 +177,15 @@ export class CleanupOperationModalComponent {
      * Fetch updated counts after operation execution.
      */
     private updateCounts(): void {
-        this.fetchCounts().subscribe({
+        // Supersede any previous, still-pending count request so an out-of-order response cannot overwrite the
+        // counts of the operation currently shown.
+        this.countSubscription?.unsubscribe();
+        this.countSubscription = this.fetchCounts().subscribe({
             next: (response: HttpResponse<CleanupCount>) => {
                 this.counts.set(response.body!);
             },
             error: () => {
-                this.dialogErrorSource.next('An error occurred while fetching updated counts.');
+                this.dialogError.set('An error occurred while fetching updated counts.');
             },
         });
     }

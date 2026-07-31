@@ -53,6 +53,7 @@ export class ExamAPIRequests {
         examStudentReviewStart?: dayjs.Dayjs;
         examStudentReviewEnd?: dayjs.Dayjs;
         publishResultsDate?: dayjs.Dayjs;
+        examSummaryPublicationDate?: dayjs.Dayjs;
         gracePeriod?: number;
         channelName?: string;
     }): Promise<Exam> {
@@ -72,6 +73,7 @@ export class ExamAPIRequests {
             examStudentReviewStart = null,
             examStudentReviewEnd = null,
             publishResultsDate = null,
+            examSummaryPublicationDate = null,
             gracePeriod = 30,
         } = options;
 
@@ -90,6 +92,7 @@ export class ExamAPIRequests {
             examStudentReviewStart,
             examStudentReviewEnd,
             publishResultsDate,
+            examSummaryPublicationDate,
             gracePeriod,
             channelName: titleLowercase(title),
         } as Exam;
@@ -115,10 +118,15 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Register the student for the exam
+     * Register the student for the exam.
+     * Uses the bulk students endpoint (POST .../students with a list of ExamUserDTOs); the server resolves each
+     * entry via UserService.findUser, which matches by login when a login is provided. The former
+     * POST .../students/{login} endpoint was removed during the exam-registration refactor.
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students`, {
+            data: [{ login: student.username }],
+        });
     }
 
     /**

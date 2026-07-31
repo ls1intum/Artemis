@@ -171,6 +171,7 @@
             "visible": "Visible",
             "startDate": "Start Date",
             "endDate": "End Date",
+            "examSummaryPublicationDate": "Submission Overview Visible From",
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
@@ -380,7 +381,13 @@
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
-                "button": "Show exam summary{{countdown}}"
+                "button": "Show exam summary{{countdown}}",
+                "summaryAvailableFrom": "Your submission overview will be available from {{date}}."
+            },
+            "summaryLoadFailed": {
+                "title": "The exam summary could not be loaded.",
+                "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
+                "retry": "Retry"
             },
             "saveExercise": "Save exercise",
             "exerciseSaved": "Exercise saved",
@@ -516,6 +523,8 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
+            "examSummaryPublicationDate": "Submission Overview Visible From",
+            "examSummaryPublicationDateTooltip": "Students can only see the overview of their submitted exam (exam questions, their own answers and the PDF export) from this time onwards. Leave blank to show the overview immediately after submission. This is useful for exams written in several shifts, so early submitters cannot leak the exam content to later shifts.",
             "studentReviewEnabled": "Student review enabled",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
@@ -531,6 +540,7 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
+            "textTooLong": "This text is too long. Please use at most {{ max }} characters.",
             "assessmentDashboard": "Assessment",
             "studentExams": "Student Exams",
             "students": "Students",

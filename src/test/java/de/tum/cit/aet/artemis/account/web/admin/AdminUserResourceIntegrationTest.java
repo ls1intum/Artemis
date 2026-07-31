@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.web.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -678,6 +679,35 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             User updatedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
             assertThat(updatedAdmin.getFirstName()).isEqualTo("UpdatedDefaultAdmin");
             assertThat(updatedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        }
+    }
+
+    @Nested
+    class TestUserFlag {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_togglesTestUserFlagAndExposesItOnTheDTO() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "flaguser");
+            assertThat(user.isTestUser()).as("a freshly created user is not a test user").isFalse();
+
+            // set the flag via the admin user-management form
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setTestUser(true);
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+            assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().isTestUser()).as("the flag is persisted").isTrue();
+
+            // the flag is readable again, under the wire name the client uses
+            String body = mockMvc.perform(get("/api/account/admin/users/" + user.getLogin())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(objectMapper.readTree(body).path("isTestUser").asBoolean()).as("serialized as isTestUser, matching StudentDTO and the client model").isTrue();
+
+            // and it can be cleared again
+            managedUserVM.setTestUser(false);
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+            assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().isTestUser()).as("the flag is cleared").isFalse();
         }
     }
 }

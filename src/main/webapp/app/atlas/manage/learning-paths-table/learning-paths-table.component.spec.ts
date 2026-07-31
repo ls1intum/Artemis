@@ -14,13 +14,11 @@ import { SearchResult, SearchTermPageableSearch } from 'app/foundation/paginatio
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { DialogService } from 'primeng/dynamicdialog';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningPathsTableComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathsTableComponent;
     let fixture: ComponentFixture<LearningPathsTableComponent>;
     let learningPathApiService: LearningPathApiService;

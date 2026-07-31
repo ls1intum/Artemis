@@ -7,6 +7,7 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
+import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
@@ -15,12 +16,13 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -35,7 +37,6 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -75,6 +76,8 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,
+        TumUiDialogComponent,
+        OrganizationSelectorComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -87,7 +90,6 @@ export class CourseUpdateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
@@ -97,6 +99,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
+    protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -138,6 +141,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly requestMoreFeedbackEnabled = signal(true);
     readonly customizeGroupNames = signal(false);
     readonly courseOrganizations = signal<Organization[]>(undefined!);
+    /** Controls visibility of the declarative organization-selector dialog. */
+    readonly orgSelectorVisible = signal(false);
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
@@ -244,12 +249,11 @@ export class CourseUpdateComponent implements OnInit {
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
-                studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
                 maxPoints: new FormControl(this.course.maxPoints, {
-                    validators: [Validators.min(1)],
+                    validators: [Validators.min(1), Validators.max(MAX_GRADING_POINTS), integerValidator()],
                 }),
                 accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
@@ -646,21 +650,15 @@ export class CourseUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
-            width: '80vw',
-            modal: true,
-            closable: true,
-            dismissableMask: true,
-            data: {
-                organizations: this.courseOrganizations(),
-            },
-        });
-        dialogRef?.onClose.subscribe((organization) => {
-            if (organization !== undefined) {
-                this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
-            }
-        });
+        this.orgSelectorVisible.set(true);
+    }
+
+    /**
+     * Adds the organization chosen in the selector dialog to the course.
+     * @param organization the organization selected in the dialog
+     */
+    onOrgSelected(organization: Organization) {
+        this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
     }
 
     /**

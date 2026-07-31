@@ -69,10 +69,10 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { Select } from 'primeng/select';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
@@ -102,13 +102,13 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         RouterLink,
         ButtonModule,
         TextareaModule,
-        SelectModule,
         CheckboxModule,
         InputTextModule,
         InputNumberModule,
         FormDateTimePickerComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
+        Select,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, ComponentCanDeactivate {
@@ -137,6 +137,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     isRefinementFabOpen = signal(false);
     isGlobalRefining = signal(false);
     globalRefinementPrompt = signal('');
+    courseCompetenciesCount = signal(0);
     private globalRefinementSubscription?: Subscription;
 
     course?: Course;
@@ -203,10 +204,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     readonly difficultyOptions = computed(() => {
         this.currentLocale();
         return [
-            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null },
-            { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY },
-            { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM },
-            { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD },
+            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null, colorClass: undefined },
+            { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY, colorClass: 'easy' },
+            { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM, colorClass: 'medium' },
+            { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD, colorClass: 'hard' },
         ];
     });
 
@@ -456,12 +457,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 finalize(() => this.isGlobalRefining.set(false)),
             )
             .subscribe({
-                next: (results) => {
+                next: ({ results, previousSnapshots }) => {
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
                     }
-                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results, previousSnapshots);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },

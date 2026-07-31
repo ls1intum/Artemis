@@ -171,6 +171,7 @@
             "visible": "Sichtbar",
             "startDate": "Beginn",
             "endDate": "Ende",
+            "examSummaryPublicationDate": "Abgabenübersicht sichtbar ab",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
@@ -380,7 +381,13 @@
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
-                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
+                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}",
+                "summaryAvailableFrom": "Deine Abgabenübersicht ist ab dem {{ date }} verfügbar."
+            },
+            "summaryLoadFailed": {
+                "title": "Die Zusammenfassung der Klausur konnte nicht geladen werden.",
+                "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
+                "retry": "Erneut versuchen"
             },
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
@@ -516,6 +523,8 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
+            "examSummaryPublicationDate": "Abgabenübersicht sichtbar ab",
+            "examSummaryPublicationDateTooltip": "Studierende können die Übersicht ihrer abgegebenen Klausur (Prüfungsfragen, ihre eigenen Antworten und den PDF-Export) erst ab diesem Zeitpunkt sehen. Leer lassen, um die Übersicht direkt nach der Abgabe anzuzeigen. Das ist nützlich für Klausuren, die in mehreren Schichten geschrieben werden, damit frühe Teilnehmende die Inhalte nicht an spätere weitergeben können.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
@@ -531,6 +540,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
+            "textTooLong": "Dieser Text ist zu lang. Bitte verwende höchstens {{ max }} Zeichen.",
             "assessmentDashboard": "Bewertung",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",

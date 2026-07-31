@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -47,8 +46,6 @@ class MockLocalStorageService {
 }
 
 describe('TextUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
     let mockLocalStorageService: MockLocalStorageService;

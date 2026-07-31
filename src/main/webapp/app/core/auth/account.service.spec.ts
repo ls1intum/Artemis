@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -24,8 +24,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
-    setupTestBed({ zoneless: true });
-
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: ReturnType<typeof vi.spyOn>;
@@ -522,6 +520,50 @@ describe('AccountService', () => {
         });
     });
 
+    describe('test setImageUrl', () => {
+        it('should emit a NEW identity reference so the signal notifies (upload / edit)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl('new.png');
+
+            const after = accountService.userIdentity();
+            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBe('new.png');
+            expect(after?.login).toBe('user');
+        });
+
+        it('should emit a NEW identity reference when clearing the image (delete)', () => {
+            accountService.userIdentity.set({ login: 'user', imageUrl: 'old.png' } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setImageUrl(undefined);
+
+            const after = accountService.userIdentity();
+            expect(after).not.toBe(before);
+            expect(after?.imageUrl).toBeUndefined();
+        });
+
+        it('should trigger a dependent computed to recompute', () => {
+            accountService.userIdentity.set({ imageUrl: 'old.png' } as User);
+            const derived = computed(() => accountService.userIdentity()?.imageUrl);
+            expect(derived()).toBe('old.png');
+
+            accountService.setImageUrl('new.png');
+            expect(derived()).toBe('new.png');
+
+            accountService.setImageUrl(undefined);
+            expect(derived()).toBeUndefined();
+        });
+
+        it('should be a no-op when there is no user identity', () => {
+            accountService.userIdentity.set(undefined);
+            expect(() => accountService.setImageUrl('x.png')).not.toThrow();
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+    });
+
     it('should call update language url with language key', () => {
         accountService.updateLanguage('EN').subscribe(() => {});
 
@@ -670,6 +712,36 @@ describe('AccountService', () => {
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
 
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        describe('restoreUserLLMSelectionDecision', () => {
+            it('should restore "no decision yet" without stamping a timestamp', () => {
+                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+            });
+
+            it('should restore a previous decision and its original timestamp verbatim', () => {
+                const originalTimestamp = dayjs().subtract(5, 'day');
+                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+
+                accountService.restoreUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI, originalTimestamp);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(originalTimestamp);
+            });
+
+            it('should preserve unrelated user properties', () => {
+                accountService.userIdentity.set({ id: 42, login: 'ab12cde', groups: ['USER'] } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.id).toBe(42);
+                expect(accountService.userIdentity()?.login).toBe('ab12cde');
+            });
         });
 
         it('should update existing selectedLLMUsage value', () => {
@@ -954,6 +1026,21 @@ describe('AccountService', () => {
             req.flush({});
 
             expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
+        });
+
+        it('should emit a NEW identity reference so the signal notifies', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            const before = accountService.userIdentity();
+
+            accountService.setUserEnabledMemiris(true);
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
+            req.flush({});
+
+            const after = accountService.userIdentity();
+            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
+            expect(after).not.toBe(before);
+            expect(after?.memirisEnabled).toBe(true);
+            expect(after?.id).toBe(1);
         });
 
         it('should not update user when user identity is undefined', () => {

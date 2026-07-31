@@ -69,55 +69,70 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Imports a quiz exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyQuizExerciseBasis(QuizExercise)} to set up the basis of the exercise and
-     * {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
+     * Imports a quiz exercise: builds a new entity from {@code newExercise} (the destination and any caller overrides),
+     * backfills its basis and quiz settings from {@code sourceExercise} (the original), copies a hard copy of the
+     * questions, and saves it. Student-/tutor participations are not copied.
+     * This method calls {@link #copyQuizExerciseBasis(QuizExercise, QuizExercise)} to set up the basis of the exercise
+     * and {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param files            The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the source exercise whose content and settings are copied
+     * @param files          The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
     @NonNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
-        log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
-        copyQuizQuestions(importedExercise, newExercise);
-        copyQuizBatches(importedExercise, newExercise);
-
-        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
-
-        channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
-
-        QuizExercise finalNewQuizExercise = newQuizExercise;
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalNewQuizExercise));
-        if (files != null) {
-            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
+    public QuizExercise importQuizExercise(final QuizExercise newExercise, final QuizExercise sourceExercise, @Nullable List<MultipartFile> files) throws IOException {
+        log.debug("Creating a new quiz exercise based on exercise {}", sourceExercise);
+        copyQuizExerciseBasis(newExercise, sourceExercise);
+        copyQuizQuestions(sourceExercise, newExercise);
+        // Don't copy batches for exam exercises — exam timing controls quiz scheduling
+        if (!newExercise.isExamExercise()) {
+            copyQuizBatches(sourceExercise, newExercise);
         }
 
-        return newQuizExercise;
+        // The first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself), so we
+        // keep operating on the single newExercise reference instead of juggling the returned instances.
+        quizExerciseService.save(newExercise);
+
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
+
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
+        if (files != null) {
+            // This save operates on a detached entity and therefore merges into a new instance, which carries the file
+            // paths and the ids generated for the uploaded files, so it has to be returned instead of newExercise. The
+            // transient channel name does not survive the merge, so restore it on the returned exercise.
+            QuizExercise persistedExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
+            persistedExercise.setChannelName(newExercise.getChannelName());
+            return persistedExercise;
+        }
+
+        return newExercise;
     }
 
     /**
-     * This helper method copies all attributes of the {@code importedExercise} into a new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
+     * Backfills the quiz exercise basis and quiz-specific settings onto {@code newExercise} from {@code sourceExercise}.
+     * The generic basis follows the "keep the caller's value, else take the source's" rule (see
+     * {@link ExerciseImportService#copyExerciseBasis}). The quiz-specific settings are always taken from the source:
+     * quiz exercises have no standalone (user-editable) import path, and several settings are primitive or have non-null
+     * defaults, so a skeleton's default cannot be distinguished from an intentional override. The start-, end-, and
+     * assessment due dates are intentionally not copied here.
      *
-     * @param importedExercise The exercise from which to copy the basis
-     * @return the cloned QuizExercise basis
+     * @param newExercise    the exercise being built; mutated in place
+     * @param sourceExercise the source exercise providing the quiz content and settings
      */
-    @NonNull
-    private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise) {
-        log.debug("Copying the exercise basis from {}", importedExercise);
-        QuizExercise newExercise = new QuizExercise();
-
-        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
-        newExercise.setRandomizeQuestionOrder(importedExercise.isRandomizeQuestionOrder());
-        newExercise.setAllowedNumberOfAttempts(importedExercise.getAllowedNumberOfAttempts());
-        newExercise.setRemainingNumberOfAttempts(importedExercise.getRemainingNumberOfAttempts());
-        newExercise.setQuizMode(importedExercise.getQuizMode());
-        newExercise.setDuration(importedExercise.getDuration());
-        return newExercise;
+    private void copyQuizExerciseBasis(QuizExercise newExercise, QuizExercise sourceExercise) {
+        log.debug("Copying the quiz exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        // A caller may pass a full quiz (the import-exercise-group path binds request entities), whose managed/detached
+        // quiz statistic and batches cannot be persisted under the new exercise. Reset them: the statistic is recreated
+        // fresh on save, questions and (for non-exam) batches are re-copied from the source below.
+        newExercise.setQuizPointStatistic(null);
+        newExercise.setQuizBatches(new HashSet<>());
+        super.copyExerciseBasis(newExercise, sourceExercise, new HashMap<>());
+        newExercise.setRandomizeQuestionOrder(sourceExercise.isRandomizeQuestionOrder());
+        newExercise.setAllowedNumberOfAttempts(sourceExercise.getAllowedNumberOfAttempts());
+        newExercise.setQuizMode(sourceExercise.getQuizMode());
+        newExercise.setDuration(sourceExercise.getDuration());
     }
 
     /**

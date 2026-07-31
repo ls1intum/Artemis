@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -10,25 +9,21 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
-
 describe('CalendarMobileMonthPresentationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
     let component: CalendarMobileMonthPresentationComponent;
     let mockMap: Map<string, IdentifiableCalendarEvent[]>;
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events: IdentifiableCalendarEvent[] = [
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Lecture, 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.Tutorial, 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour')),
-        new IdentifiableCalendarEvent(CalendarEvent.TypeEnum.TextExercise, 'Start: Text Exercise', referenceDate.add(2, 'day')),
+        new IdentifiableCalendarEvent('EXAM', 'Exam', referenceDate, referenceDate.add(1, 'hour')),
+        new IdentifiableCalendarEvent('LECTURE', 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
+        new IdentifiableCalendarEvent('LECTURE', 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
+        new IdentifiableCalendarEvent('LECTURE', 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour')),
+        new IdentifiableCalendarEvent('TUTORIAL', 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour')),
+        new IdentifiableCalendarEvent('TEXT_EXERCISE', 'Start: Text Exercise', referenceDate.add(2, 'day')),
     ];
 
     afterEach(() => {

@@ -1,0 +1,75 @@
+---
+# Codacy configuration — read by Codacy Cloud from the default branch (develop).
+# Scopes security scanners to production code. Excluded from the SAST/security scanners:
+#   - test code (src/test/**, *.spec.ts): hardcoded test credentials, non-literal fs/regexp in
+#     test helpers, etc. are intentional fixtures, not vulnerabilities;
+#   - programming-exercise templates (src/main/resources/templates/**) and test resources
+#     (src/test/resources/**): sample/starter code shipped for exercises, not application code
+#     Artemis maintains for quality (e.g. npm-dependency checks on template package.json files);
+#   - supporting_scripts/** : internal developer/CI tooling (coverage reporting, course setup,
+#     transcription, benchmarks). Not part of the deployed application and not exposed to
+#     untrusted end-user input, so its subprocess/XML/tmp findings are advisory noise.
+# The quality linters below (CodeNarc, ShellCheck, PyLint) also exclude the programming-exercise
+# templates for the same reason: the Jenkins pipeline / build-script / helper scaffolding shipped
+# for exercises is starter code, not application code Artemis maintains for quality. They still
+# analyze the rest of the repository (e.g. supporting_scripts for PyLint). ESLint, Stylelint, and
+# PMD still analyze the code they apply to.
+engines:
+  opengrep: # Semgrep — SAST security scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "**/*.spec.ts"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
+  bandit: # Python security scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "**/test_*.py"
+      - "**/*_test.py"
+      - "**/tests/**"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
+  checkov: # IaC / secrets scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
+  trivy: # dependency-vulnerability / secret scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
+      - "docker/oidc-test/**"
+      - "docker/oidc-test/**/*"
+  codenarc: # Groovy linting — exercise-template Jenkins pipelines + docker Jenkins init scripts are scaffolding/infra, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      # Jenkins init.groovy.d scripts (e.g. disabling the CSRF crumb issuer) are dynamic-Groovy by
+      # design; @CompileStatic / explicit-type rules are inappropriate for them.
+      - "docker/jenkins/**"
+      - "docker/jenkins/**/*"
+  shellcheck: # shell linting — exercise-template build scripts are scaffolding, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+  pylintpython3: # Python linting — exercise-template scripts are scaffolding, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"

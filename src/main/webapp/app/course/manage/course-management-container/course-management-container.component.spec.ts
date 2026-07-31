@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
@@ -100,8 +99,6 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseManagementContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseManagementContainerComponent;
     let fixture: ComponentFixture<CourseManagementContainerComponent>;
     let courseService: CourseManagementService;
@@ -377,15 +374,26 @@ describe('CourseManagementContainerComponent', () => {
 
         component.handleToggleSidebar();
         expect(mockConversationsComponent.toggleSidebar).toHaveBeenCalled();
-        expect(component.isSidebarCollapsed()).toBe(false);
     });
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {
         component.activatedComponentReference.set(undefined);
-        component.handleToggleSidebar();
 
-        // No error should occur, and isCollapsed remains unchanged
-        expect(component.isSidebarCollapsed()).toBe(false);
+        expect(() => component.handleToggleSidebar()).not.toThrow();
+    });
+
+    it('should set the page title on the conversations sidebar when activated', () => {
+        route.snapshot.firstChild!.data = { pageTitle: 'overview.communication' };
+        const mockConversationsComponent = {
+            isCollapsed: signal(false),
+            setPageTitle: vi.fn(),
+        } as unknown as CourseConversationsComponent;
+        // we have to set this to trick the component into believing it is a CourseConversationsComponent
+        Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
+
+        component.onSubRouteActivate(mockConversationsComponent);
+
+        expect(mockConversationsComponent.setPageTitle).toHaveBeenCalledWith('overview.communication');
     });
 
     it('should fetch course deletion summary correctly', () => {

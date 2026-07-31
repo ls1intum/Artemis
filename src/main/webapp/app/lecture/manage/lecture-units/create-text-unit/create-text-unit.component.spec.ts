@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/manage/lecture-units/create-text-unit/create-text-unit.component';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
@@ -25,8 +24,6 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateTextUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
     let createTextUnitComponent: CreateTextUnitComponent;
 

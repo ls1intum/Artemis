@@ -56,6 +56,26 @@ export class LoginService {
     }
 
     /**
+     * Login the user with OIDC.
+     * @param rememberMe whether or not to remember the user
+     */
+    loginOIDC(rememberMe: boolean) {
+        return new Promise<void>((resolve, reject) => {
+            this.authServerProvider.loginOIDC(rememberMe).subscribe({
+                next: () => {
+                    void this.accountService.identity(true).then(() => {
+                        resolve();
+                    });
+                },
+                error: (err) => {
+                    this.logout(false);
+                    reject(err);
+                },
+            });
+        });
+    }
+
+    /**
      * Log out the user and remove all traces of the login from the browser:
      * Tokens, Alerts, User object in memory.
      * Will redirect to home when done.

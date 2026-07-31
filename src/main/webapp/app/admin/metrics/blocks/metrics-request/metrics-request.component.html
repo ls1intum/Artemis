@@ -1,27 +1,29 @@
 <h3 id="requestMetrics" jhiTranslate="metrics.jvm.http.title"></h3>
 @if (!updating() && requestMetrics()) {
-    <p-table [value]="requestMetrics()['percode'] | keyvalue" aria-describedby="requestMetrics" data-testid="request-table">
-        <ng-template #header>
+    <table tumUiTable aria-describedby="requestMetrics" data-testid="request-table">
+        <thead>
             <tr>
                 <th scope="col" jhiTranslate="metrics.jvm.http.table.code"></th>
                 <th scope="col" jhiTranslate="metrics.jvm.http.table.count"></th>
                 <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.mean"></th>
                 <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.max"></th>
             </tr>
-        </ng-template>
-        <ng-template #body let-entry>
-            <tr>
-                <td>{{ entry.key }}</td>
-                <td>
-                    <p-progressbar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" color="var(--success)">
-                        <ng-template #content>{{ entry.value.count }}</ng-template>
-                    </p-progressbar>
-                </td>
-                <td class="text-end">
-                    {{ filterNaN(entry.value.mean) | number: '1.0-2' }}
-                </td>
-                <td class="text-end">{{ entry.value.max | number: '1.0-2' }}</td>
-            </tr>
-        </ng-template>
-    </p-table>
+        </thead>
+        <tbody>
+            @for (entry of requestMetrics()['percode'] | keyvalue; track entry.key) {
+                <tr>
+                    <td>{{ entry.key }}</td>
+                    <td>
+                        <tum-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" color="var(--success)">
+                            {{ entry.value.count }}
+                        </tum-ui-progress-bar>
+                    </td>
+                    <td class="text-end">
+                        {{ filterNaN(entry.value.mean) | number: '1.0-2' }}
+                    </td>
+                    <td class="text-end">{{ entry.value.max | number: '1.0-2' }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
