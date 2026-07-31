@@ -96,8 +96,6 @@ fi
 echo
 confirm "Sanity checks completed and configuration. Do you want to continue?"
 
-# TODO verify migration.load does everything as expected https://pgloader.readthedocs.io/en/latest/tutorial/tutorial.html#id13
-
 echo "pgloader output:" >> "$log_file"
 docker run --rm -it --net=host \
   -v "$DIR:/home/migration" \
