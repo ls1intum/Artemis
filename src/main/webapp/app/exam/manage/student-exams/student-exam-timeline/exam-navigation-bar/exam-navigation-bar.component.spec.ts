@@ -21,7 +21,9 @@ describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
 
-    const breakpointsSubject = new BehaviorSubject<string[]>([]);
+    // Recreated per test: a BehaviorSubject shared across tests would replay the previous test's breakpoint into
+    // the next component's ngOnInit, silently making itemsVisiblePerSide order-dependent.
+    let breakpointsSubject: BehaviorSubject<string[]>;
     let activeBreakpoints: string[] = [];
     const mockLayoutService = {
         subscribeToLayoutChanges: () => breakpointsSubject.asObservable(),
@@ -38,6 +40,7 @@ describe('Exam Navigation Bar Component', () => {
 
     beforeEach(() => {
         activeBreakpoints = [];
+        breakpointsSubject = new BehaviorSubject<string[]>([]);
         TestBed.configureTestingModule({
             providers: [
                 { provide: LayoutService, useValue: mockLayoutService },
