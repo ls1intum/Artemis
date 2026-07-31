@@ -1,5 +1,5 @@
 ---
-description: Ownership, integration, contribution, and testing rules for the existing TUM UI component package and Storybook reference.
+description: Architecture, integration, contribution, and testing rules for the TUM UI design system and component reference.
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -7,13 +7,12 @@ import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # TUM UI package
 
-`@tumaet/ui-angular` is a private Angular package in `packages/tum-ui` that contains existing,
-reusable TUM UI components. Artemis production builds consume its compiled public entry point and
-stylesheet.
+`@tumaet/ui-angular` is the reusable component package for the in-house TUM UI design system.
+Artemis production builds consume its compiled public entry point and stylesheet.
 
-<Callout variant={CalloutVariant.warning}>
-    New Artemis UI uses PrimeNG. Do not add a package component for an Artemis-only need. A new public contract requires a concrete cross-application use case in the pull request.
-    Delegate interaction behavior to stable native HTML or Angular CDK primitives instead of reimplementing it.
+<Callout variant={CalloutVariant.info}>
+    TUM UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM UI component whenever it covers the
+    requirement. A new package contract needs a reusable design-system responsibility and a concrete Artemis consumer; adoption by another application is not an entry requirement.
 </Callout>
 
 Use the [TUM UI component reference](/developer/tum-ui-reference) to inspect
@@ -41,12 +40,21 @@ and compatibility testing against supported consumers.
 
 Before writing code:
 
-1. For Artemis-only UI, use the PrimeNG component selected by
-   [Client development](/developer/guidelines/client-development).
-2. For package work, confirm that a reusable TUM UI contract is required and that an existing
-   stable native or CDK primitive cannot supply the behavior.
-3. Keep host policy outside the package. Add an adapter in Artemis when integration requires
-   application translations, request types, routing, or theme values.
+1. Check the component reference and extend an existing contract when that preserves its
+   responsibility.
+2. Use semantic native HTML directly when it already supplies the required contract.
+3. Add a package component when the visual or interaction pattern is reusable across Artemis
+   features. Include its first real Artemis consumer rather than designing a speculative API.
+4. Keep a feature-specific composition in Artemis, built from TUM UI primitives. Application
+   translations, requests, routing, authorization, and domain models never move into the package.
+5. Build reusable interaction behavior on stable native HTML or Angular CDK. Do not create custom
+   focus, keyboard, overlay, directionality, selection, or virtualization infrastructure.
+
+This is a responsibility boundary, not a “second application” gate. A component does not belong in
+the package merely because it can be made generic, and it does not need an external adopter when
+Artemis already has a concrete reusable pattern. The pull request should explain the component
+responsibility, its first consumers, the native or CDK primitive underneath it, and any intentionally
+unsupported behavior.
 
 Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`, and
 semantic Tailwind utilities. Prefer stable native controls and CDK behavior over custom keyboard,
@@ -104,10 +112,10 @@ not compile package sources or need Tailwind. `themes.css` is an optional packag
 with complete standalone light and dark values. A custom host omits it and defines the documented
 `--tumaet-ui-*` contract instead.
 
-Artemis loads the component stylesheet after its framework styles and defines the package
+Artemis loads the component stylesheet after its application styles and defines the package
 properties from Artemis foundations and light and dark color roles in `src/main/webapp/tailwind.css`.
 Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
-remain owned by the Artemis Tailwind and PrimeUI configuration. Artemis sets `data-theme="dark"` on
+remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on
 the document element when dark mode is active.
 
 Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and

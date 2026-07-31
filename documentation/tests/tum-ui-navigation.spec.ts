@@ -30,10 +30,7 @@ test('connects the coding guidelines and component reference with the selected t
     await expect(page.getByRole('complementary').getByRole('link', { name: 'TUM UI component reference' })).toBeVisible();
 
     await selectDocumentationTheme(page, 'dark');
-    await page
-        .getByRole('main')
-        .getByRole('link', { name: /TUM UI component reference/ })
-        .click();
+    await page.getByRole('main').getByRole('link', { name: 'TUM UI component reference', exact: true }).click();
     const darkReferenceBackground = await expectReferenceTheme(page, 'dark');
     await expect(page.getByRole('link', { name: 'TUM UI package guide' })).toHaveAttribute('href', '/developer/guidelines/tum-ui-kit');
     const introduction = page.frameLocator('#storybook-preview-iframe');

@@ -1,193 +1,133 @@
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # Client Theming
 
-Artemis ships with two themes: Light Mode and Dark Mode. It is important to ensure that all UI components look
-consistent and good in both themes. Therefore, please follow the rules and hints below.
-
-In general, keep in mind: **All UI changes need to be verified in both themes!**
-
-<Callout variant={CalloutVariant.info}>
-For color design principles and standards, refer to the **[AET UI/UX Guidelines - Colors](https://ls1intum.github.io/ui-ux-guidelines/docs/colors)**. The guidelines below cover Artemis-specific theming implementation.
-</Callout>
-
-## Color Usage
-
-We use different colors for our UI elements in both themes. These colors are passed into Bootstrap, so if you use
-default components such as buttons, cards, forms, etc., they will be automagically themed correctly.
-
-For your custom components and custom stylesheets, please follow this strict global rule:
+Artemis supports light and dark themes. The active scheme is exposed as
+`data-theme="light"` or `data-theme="dark"` on the document element so application styles, TUM UI,
+and embedded content share one framework-neutral signal.
 
 <Callout variant={CalloutVariant.danger}>
-**Do not hard code any color values in your component stylesheets, templates or TypeScript files!**
+    Verify every visual change in light and dark mode. Do not hard-code colors in component stylesheets, templates, or TypeScript. Do not introduce Bootstrap, PrimeNG, or
+    package-owned color properties as a shortcut.
 </Callout>
 
-Most likely, any colors hard-coded in your component stylesheets will look bad in either the light mode or dark mode.
-So, you either need to specify different colors for both themes, or you could just use default colors, which is preferred.
+For design intent and accessibility requirements, follow the
+[AET UI/UX color guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/colors). This page
+documents how Artemis implements those decisions.
+
+## Theme architecture
+
+The theming boundary has four layers:
+
+1. The light and dark SCSS variable files define Artemis semantic roles and compile them to CSS
+   custom properties.
+2. `src/main/webapp/tailwind.css` exposes selected roles as semantic Tailwind utilities.
+3. The same file maps Artemis foundations and color roles to the public `--tumaet-ui-*` contract.
+   TUM UI components consume only that package-owned contract.
+4. Bootstrap and PrimeNG receive compatible values while they remain in the application. They are
+   migration consumers, not the source of Artemis design decisions.
+
+This keeps one semantic source of truth while allowing legacy frameworks to leave independently.
+Do not reference Artemis properties from package source, and do not reference `--tumaet-ui-*`
+directly from application components. Change the host mapping when a package-wide theme decision
+changes.
+
+## Choosing styles
+
+Use the first suitable option:
+
+1. **TUM UI component input or variant.** Use `severity`, `variant`, `size`, and other supported
+   contracts instead of overriding component internals.
+2. **Semantic Tailwind utility.** Use one when Artemis owns the mapping, such as
+   `text-state-danger`. PrimeUI surface scales are not Artemis design tokens.
+3. **Artemis semantic CSS property.** Use an existing role in component SCSS or an irreducible
+   dynamic style when a utility cannot express the requirement.
+4. **New semantic role.** Add one only when the concept recurs and no existing role has the correct
+   meaning. Define both light and dark values and expose it to TUM UI only when it is a supported
+   package customization axis.
 
 <Callout variant={CalloutVariant.warning}>
-- **Pull Requests with hard-coded colors in component files will not be merged.**
-- We want to avoid further color fragmentation in the future.
-  You need a good justification to not use default or already provided colors, be it derived or completely custom ones.
+    A raw palette value describes appearance, not intent. Do not use hexadecimal values, numbered Tailwind colors, `--p-*`, or `--bs-*` in new component code. Reusing an unsuitable
+    token because its current color looks right is also incorrect.
 </Callout>
 
-Please check your available options in this order:
+Common Artemis roles include:
 
-### 1. Use global default colors and Bootstrap classes *(preferred)*
+| Intent                       | Artemis role                                                              |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| primary action and link      | `--primary`, `--primary-dark`                                             |
+| default and muted text       | `--body-color`, `--text-body-secondary`                                   |
+| content and overlay surfaces | `--module-bg`, `--popover-bg`, `--hover-slightly-darker-body-bg`          |
+| border                       | `--border-color`                                                          |
+| state                        | `--danger`, `--success`, `--warning`, `--info`                            |
+| state message                | `--artemis-alert-{danger,success,warning,info}-{color,background,border}` |
 
-For most use-cases, using one of the pre-provided colors is the way to go. Really think deeply whether you need
-a custom color.
+Use the `state-*` Tailwind utilities for state-colored plain markup:
 
-Check out the top of `_default-variables.scss` to see the available default colors. While you should not
-use `black, gray-XXX, white` in your components as that would equal a hard-coded, not theme-aware color, you should re-use signal colors, base colors and pre-provided 'colorful' colors.
-
-All variables in this file are globally available in the application as native CSS variables.
-For example, `$danger` can be accessed in all SCSS files using `var(--danger)`.
-
-#### Important default and signal colors
-
-| Color | Use case | Usage |
-|-------|----------|-------|
-| `bs-body-color` | The default font color; will be black in light mode and white in dark mode. | CSS: `var(--bs-body-color)` |
-| `bs-body-bg` | The body background color; will be something bright in light mode and something darker in dark mode.<br/><br/>It can be used for smaller boxes in main content, as it's usually pretty distinguishable from the background color used in Artemis' primary content area. | CSS: `var(--bs-body-bg)` |
-| `artemis-dark` | A dark color that is typical for some of Artemis' UI elements, for example the navbar background. | CSS: `var(--artemis-dark)` |
-| `primary` | A blue-ish default color to indicate a primary action. Also used as link color. Use this to indicate the primary next step for the user (or one of them). | CSS: `var(--primary)`<br/><br/>For text: `<span class="text-primary">`<br/><br/>For buttons: `<button class="btn btn-primary">` |
-| `secondary` | A gray color. Use this for secondary action buttons and hint texts. | CSS: `var(--secondary)`<br/><br/>For text: `<span class="text-secondary">`<br/><br/>For buttons: `<button class="btn btn-secondary">` |
-| `success` | A green color indicating a successful operation, state, or safe action. | CSS: `var(--success)`<br/><br/>For text: `<span class="text-success">`<br/><br/>For buttons: `<button class="btn btn-success">` |
-| `danger` | A red color indicating a failed operation, error-state, or dangerous action. | CSS: `var(--danger)`<br/><br/>For text: `<span class="text-danger">`<br/><br/>For buttons: `<button class="btn btn-danger">` |
-| `warning` | An orange color indicating a partly failed operation, a warning, or an unsafe, yet not ultra-dangerous action. | CSS: `var(--warning)`<br/><br/>For text: `<span class="text-warning">`<br/><br/>For buttons: `<button class="btn btn-warning">` |
-| `info` | An teal-ish color indicating an informational element. | CSS: `var(--info)`<br/><br/>For text: `<span class="text-info">`<br/><br/>For buttons: `<button class="btn btn-info">` |
-
-There are more theme-aware colors to choose from; please see the variables file.
-
-If you need to design entire boxes using one of the signal colors, you should use alert boxes.
-
-Either add one of the Bootstrap alert classes to your box, such as `alert alert-danger`, or use our globally
-defined colors:
-
-```scss
-var(--artemis-alert-XXX-color); // The text color of the alert
-var(--artemis-alert-XXX-background); // The less intensive background color of the alert
-var(--artemis-alert-XXX-border); // The border color of the alert
+```html
+<small class="text-state-danger" id="title-error"> {{ 'entity.validation.required' | artemisTranslate }} </small>
 ```
 
-with `XXX` being one of: `info`, `danger`, `warning`, `success`, `neutral`.
+Use TUM UI for a component-shaped status:
 
-If you need to separate something from the background, try to use the `bg-light` class which should work in both themes.
+```html
+<tum-ui-message severity="error"> {{ 'entity.validation.required' | artemisTranslate }} </tum-ui-message>
+```
 
-### 2. Define your own colors for each theme
+Color must never be the only signal. Pair a state color with text, an icon, or another programmatic
+cue as required by
+[WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
 
-If the options above don't suit your use case, you can define your own color variables.
-These colors must be theme-aware, so you have to select a good color for both themes and add them to each
-theme's stylesheet.
+## Adding or changing a theme role
 
-<Callout variant={CalloutVariant.info}>
-Artemis uses `white` in light mode and `$neutral-dark` in dark mode
-as background for the main content area, cards, etc.
+Before adding a property, search the existing semantic roles and the
+[TUM UI theme contract](/developer/guidelines/tum-ui-kit#theme-contract). If a new role is necessary:
 
-For `$neutral-dark`, a few lightened default options exist: `$neutral-dark-l-5;` to `$neutral-dark-l-20;` in steps of 5.
-Therefore, if you need to separate something from the background, choose one of `gray-XXX` for light mode and a lightened option of `$neutral-dark` in dark mode.
+1. Name it after purpose rather than hue or a single screen.
+2. Add values to
+   `src/main/webapp/content/scss/themes/_default-variables.scss` and
+   `_dark-variables.scss`.
+3. Check text and non-text contrast on every surface where the role is used.
+4. Add a semantic Tailwind mapping only when application markup needs a utility.
+5. Add a `--tumaet-ui-*` mapping only when package components need that supported customization
+   axis; update the package reference theme and validation with it.
+6. Verify the real component in both themes, compact layouts, forced-colors mode, and its relevant
+   interaction states.
 
-Keep this in mind while you select the colors to use.
-</Callout>
+Avoid theme-specific component selectors in `theme-default.scss` or `theme-dark.scss`. They are a
+last resort for legacy global integrations. A new application or TUM UI component should consume
+semantic properties instead.
 
-Let's go through it step by step. Let's say, you want to give a box a special background color.
+## Reading and changing the active theme
 
-1. Define a class for it in your component's SCSS file, and use a new, unique variable name as value:
-
-    ```scss
-    .my-box {
-        background-color: var(--my-special-component-my-box-background-color);
-    }
-    ```
-
-2. Add the variable as SCSS variable to both theme variable sheets (`_default-variables.scss` and `_dark-variables.scss`):
-
-    ```scss
-    // My Special Component
-    $my-special-component-my-box-background-color: [...];
-    ```
-
-3. Select a value for each theme.
-
-    **Re-use preset colors where possible!** For example, choose `gray-700` in light mode and `gray-400` in dark mode.
-    This is still a good approach as you're reusing already provided colors.
-
-    ```scss
-    // My Special Component
-    $my-special-component-my-box-background-color: $gray-600;
-    ```
-
-    <Callout variant={CalloutVariant.warning}>
-    The two options below are meant as a fallback for special cases.
-    Please justify the use of these options in your PR description.
-    </Callout>
-
-    If you need a **slightly modified preset color**, use [SCSS functions](https://sass-lang.com/documentation/modules/color) to derive it.
-
-    ```scss
-    // My Special Component
-    $my-special-component-my-box-background-color: darken($success, 20);
-    ```
-
-    **If all of this doesn't work, define your own colors.**
-
-    ```scss
-    // My Special Component
-    $my-special-component-my-box-background-color: #123456;
-    ```
-
-## Theme-specific global styles
-
-It might happen that you need to modify a global style rule in one of the themes, for example if you're using an external library which styles need to be overridden.
-
-Each theme has its own file to which custom global styles can be added: `theme-dark.scss` and `theme-default.scss`.
-For styles that should be applied in both themes, use `global.scss`.
-
-## Theme Service
-
-There will be occasions where you need to know in your components which theme is currently applied.
-The `ThemeService` will provide this information where needed.
-For example, you could add a reactive flag to your component that indicates whether or not the current theme is dark:
+CSS should normally react through `data-theme` and semantic properties without TypeScript. When
+behavior genuinely depends on the active theme, consume the `ThemeService.currentTheme` signal:
 
 ```ts
-@Component({
-    selector: 'jhi-my-component',
-    templateUrl: './my-component.component.html',
-    styleUrls: ['my-component.component.scss'],
-})
-export class MyComponent implements OnInit, OnDestroy {
-    isDark = false;
-    themeSubscription: Subscription;
+private readonly themeService = inject(ThemeService);
 
-    private themeService = inject(ThemeService);
-
-    ngOnInit() {
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.isDark = theme === Theme.DARK;
-        });
-    }
-
-    ngOnDestroy() {
-       this.themeSubscription.unsubscribe();
-    }
-}
+protected readonly isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
 ```
 
-From there, you can do whatever you need to do to change the behavior of your component based on the theme.
-Alternatively, you can execute any actions directly in the `subscribe()` block.
-**The service will fire an event containing the current theme immediately as soon as you subscribe**, and one more
-event for each theme change from then on until you unsubscribe.
-You can get the current theme using `themeService.getCurrentTheme()` at any time.
+Code that reads resolved CSS values after a stylesheet swap, such as a canvas chart, must also
+depend on `ThemeService.appliedThemeRevision`. This signal changes only after the selected theme
+stylesheet is active.
 
-
-Additionally, it's possible to change the theme programmatically. **However, this should be rare**: Usually, the user decides which theme
-they want to use by using the theme-switching component in the navbar. Any use of this must therefore be justified and
-survive a detailed review.
-
-Example:
+Call `applyThemePreference()` only in response to an explicit user choice. Pass `undefined` to
+restore system-preference mode:
 
 ```ts
 this.themeService.applyThemePreference(Theme.DARK);
+this.themeService.applyThemePreference(undefined);
 ```
+
+Do not subscribe manually to theme changes or mirror the current theme into a mutable field.
+
+## Migration coexistence
+
+Bootstrap is still global, and PrimeNG remains in screens whose TUM UI capability is incomplete.
+Their cascade and source-scanning constraints are documented in
+[Client Development: Styling](/developer/guidelines/client-development#styling). Do not mix
+Bootstrap and Tailwind within a partially migrated rendering closure, and do not use legacy theme
+properties in new code merely because the dependencies are still installed.

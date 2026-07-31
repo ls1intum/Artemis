@@ -1,4 +1,4 @@
-/* Bootstrap Reboot remains the reset while Artemis migrates to PrimeNG and Tailwind. */
+/* Bootstrap Reboot remains the reset while legacy Bootstrap and PrimeNG coexist with TUM UI. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);

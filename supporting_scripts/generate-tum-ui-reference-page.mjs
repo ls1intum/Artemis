@@ -27,7 +27,7 @@ export function renderReferencePage(index) {
 id: tum-ui
 slug: /tum-ui-reference
 title: TUM UI component reference
-description: Browse the existing TUM UI package components, supported states, accessibility checks, and APIs.
+description: Browse the reusable TUM UI design-system components, supported states, accessibility checks, and APIs.
 pagination_prev: null
 pagination_next: null
 custom_edit_url: null
@@ -40,6 +40,10 @@ import StorybookRedirect from '../../src/components/StorybookRedirect/StorybookR
 # TUM UI component reference
 
 <StorybookRedirect references={${JSON.stringify(references, null, 4)}} />
+
+TUM UI is the target Artemis component system. Browse or search for a component here before adding
+another abstraction. The reference opens the package Storybook with supported states, controls,
+interaction examples, accessibility results, and generated APIs.
 
 The component reference is included in the combined Artemis documentation:
 
