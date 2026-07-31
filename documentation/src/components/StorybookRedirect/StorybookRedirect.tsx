@@ -1,8 +1,7 @@
-import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
 import { useColorMode } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { STORYBOOK_REFERENCES } from './storybook-references';
 
 const DEFAULT_STORY = 'introduction--docs';
@@ -23,16 +22,20 @@ export default function StorybookRedirect() {
     const storybookIncluded = siteConfig.customFields?.tumUiStorybookIncluded === true;
     const story = storyFromHash(hash);
     const storybookUrl = `/developer/tum-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
+    const redirectLink = useRef<HTMLAnchorElement>(null);
 
     useEffect(() => {
         if (storybookIncluded) {
-            window.location.replace(storybookUrl);
+            redirectLink.current?.click();
         }
     }, [storybookIncluded, storybookUrl]);
 
     return storybookIncluded ? (
         <p>
-            Opening the TUM UI component reference… <Link to={`pathname://${storybookUrl}`}>Continue to the reference</Link>
+            Opening the TUM UI component reference…{' '}
+            <a ref={redirectLink} href={storybookUrl}>
+                Continue to the reference
+            </a>
         </p>
     ) : null;
 }
