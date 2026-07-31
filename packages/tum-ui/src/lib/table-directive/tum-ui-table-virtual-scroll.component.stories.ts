@@ -71,15 +71,15 @@ export default meta;
 type Story = StoryObj<TumUiTableVirtualScrollComponent<(typeof items)[number]>>;
 
 export const Default: Story = {
-    play: async ({ canvas }) => {
+    play: async ({ args, canvas }) => {
         const table = canvas.getByRole('table');
         await expect(table).toHaveAccessibleDescription('Participant scores for the current course');
 
         const viewport = canvas.getByRole('rowgroup');
         const firstParticipant = canvas.getByText('Participant 1');
         await expect(firstParticipant).toBeVisible();
-        await expect(viewport.getBoundingClientRect().height).toBe(280);
-        await expect(firstParticipant.closest('[role="row"]')?.getBoundingClientRect().height).toBe(56);
+        await expect(viewport.getBoundingClientRect().height).toBe(Number.parseFloat(args.scrollHeight));
+        await expect(firstParticipant.closest('[role="row"]')?.getBoundingClientRect().height).toBe(args.itemSize);
     },
 };
 
@@ -96,7 +96,7 @@ export const FlexibleHeight: Story = {
     args: {
         scrollHeight: 'flex',
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByRole('rowgroup').getBoundingClientRect().height).toBeGreaterThan(280);
+    play: async ({ args, canvas }) => {
+        await expect(canvas.getByRole('rowgroup').getBoundingClientRect().height).toBeGreaterThan(args.itemSize * 5);
     },
 };

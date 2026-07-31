@@ -88,8 +88,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected readonly listboxId = `tum-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
 
     private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
-    // ControlValueAccessor may receive a value before the optional input is rendered.
-    private readonly textInput = viewChild<ElementRef<HTMLInputElement>>('textInput');
+    private readonly textInput = viewChild.required<ElementRef<HTMLInputElement>>('textInput');
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
 
@@ -112,6 +111,13 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     );
     protected readonly activeOptionId = computed(() => (this.panelVisible() && this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
     protected readonly inputPlaceholder = computed(() => (this.multiple() && this.selectedValues().length > 0 ? undefined : this.placeholder()));
+    protected readonly inputText = computed(() => {
+        if (this.multiple()) {
+            return this.query();
+        }
+        const value = this.singleValue();
+        return value == undefined ? '' : this.valueLabel(value);
+    });
 
     constructor() {
         this.destroyRef.onDestroy(() => {
@@ -133,7 +139,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
                 this.activeIndex.set(optionCount > 0 ? optionCount - 1 : -1);
             }
         });
-        effect(() => this.syncSingleInputText());
     }
 
     writeValue(value: unknown): void {
@@ -188,7 +193,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     protected focusInput(): void {
         if (!this.isDisabled()) {
-            this.textInput()?.nativeElement.focus();
+            this.textInput().nativeElement.focus();
         }
     }
 
@@ -281,7 +286,6 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
             this.singleValue.set(option);
             this.onChangeCallback(option);
             this.optionSelected.emit({ originalEvent: event, value: option });
-            this.syncSingleInputText();
         }
         this.clearInput();
         this.focusInput();
@@ -301,26 +305,9 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     }
 
     private clearInput(): void {
-        const el = this.textInput()?.nativeElement;
-        if (el && this.multiple()) {
-            el.value = '';
-        }
         this.query.set('');
         this.hasSearched.set(false);
         this.activeIndex.set(-1);
-    }
-    private syncSingleInputText(): void {
-        if (this.multiple()) {
-            return;
-        }
-        const el = this.textInput()?.nativeElement;
-        if (el) {
-            const value = this.singleValue();
-            const next = value == undefined ? '' : this.valueLabel(value);
-            if (el.value !== next) {
-                el.value = next;
-            }
-        }
     }
 
     private openPanel(): void {

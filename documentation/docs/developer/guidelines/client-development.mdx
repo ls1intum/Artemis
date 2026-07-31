@@ -14,7 +14,7 @@ Key principles:
 - Use lazy loading to keep the initial bundle size small.
 - Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
 
-**Angular 21 Best Practices**
+**Angular best practices**
 
 <Callout variant={CalloutVariant.danger}>
     **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
@@ -237,9 +237,11 @@ Reference migration: [PR #12872 (zoneless migration)](https://github.com/ls1intu
 Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based components.
 
 <Callout variant={CalloutVariant.info}>
-**`ngOnChanges` is _not_ dead code in Angular 21 — but `computed()` / `effect()` are the preferred, more consistent choice.**
+**`ngOnChanges` is not dead code for signal inputs, but `computed()` and `effect()` are usually the clearer choice.**
 
-A belief carried over from Angular 17–18 holds that `ngOnChanges` is never called for signal inputs. **That is no longer true.** In Angular 21, `ngOnChanges` **does** fire for signal inputs (`input()` / `input.required()` / `model()`) with a full `SimpleChanges` record, and the first `ngOnChanges` still runs before `ngOnInit`. (Internally, signal-input writes are routed through `NgOnChangesFeature` → `ngOnChangesSetInput`, which records a `SimpleChange` and applies the value to the input signal; `ngOnChanges` is registered as a per-change-detection pre-order check hook. See [`OnChanges`](https://angular.dev/api/core/OnChanges).)
+In the Angular version supported by Artemis, `ngOnChanges` receives a `SimpleChanges` record for
+signal inputs and its first call still precedes `ngOnInit`. See
+[`OnChanges`](https://angular.dev/api/core/OnChanges).
 
 So `ngOnChanges` is functional and not a correctness bug — but the Angular docs still recommend `computed`/`effect`, and a signal-first code base avoids a whole class of "I forgot to keep the derived field in sync" bugs.
 
@@ -637,27 +639,6 @@ When an application component needs owned class selectors, use [BEM](https://get
 }
 ```
 
-The target is **TUM UI for reusable components and [Tailwind CSS v4](https://tailwindcss.com/) for
-application layout**. Bootstrap, ng-bootstrap, and PrimeNG remain only while existing screens and
-missing TUM UI capabilities are migrated. Tailwind is wired through
-`src/main/webapp/tailwind.css` and enabled module by module while Bootstrap remains global.
-
-**Decision rule — what to reach for:**
-
-- **Native HTML** for established platform semantics such as links, headings, lists, and basic form
-  structure.
-- **TUM UI component** for a reusable control or visual contract. Inspect the
-  [component reference](/developer/tum-ui-reference) before adding another abstraction.
-- **Tailwind utility** for application-owned layout, spacing, sizing, typography, and an Artemis
-  semantic color utility where one exists (`flex`, `grid`, `gap-2`, `text-end`, `font-semibold`,
-  `w-full`).
-- **Angular CDK primitive** inside TUM UI when reusable behavior needs focus, overlay, directionality,
-  selection, or virtual-scrolling infrastructure.
-- **Artemis component** for domain composition. It may combine TUM UI components but must not move
-  routes, requests, or feature policy into the package.
-- **PrimeNG fallback** only for a missing TUM UI capability that cannot be delivered with the
-  current change. Do not add Bootstrap or ng-bootstrap.
-
 **Bootstrap → TUM UI/Tailwind quick reference** (apply when migrating a module):
 
 | Bootstrap                                                       | Target                                                                                                                                     |
@@ -692,18 +673,9 @@ for light and dark mode and feed the TUM UI host-token adapter. Legacy PrimeNG a
 roles during migration, but it does not own them. Semantic markup and TUM UI therefore share one
 source of truth without component-level `dark:` color branches.
 
-Why the **named** `state-*` form (`text-state-danger`) rather than a bare `text-danger`? A `text-danger` utility would collide with Bootstrap's still-loaded **unlayered** `.text-danger { … !important }`, which beats any layered Tailwind utility unconditionally (an unlayered `!important` rule wins over any layered rule regardless of layer order — so even wrapping Bootstrap in a `@layer` does not help). The `state-` namespace shares no selector with Bootstrap, so it sidesteps the collision **and** needs no rename when Bootstrap is eventually removed — it is the permanent, idiomatic form, not a transitional one. The tokens are defined once, in `tailwind.css`:
-
-```css
-@theme inline {
-    --color-state-danger: var(--danger);
-    --color-state-success: var(--success);
-    --color-state-warning: var(--warning);
-    --color-state-info: var(--info);
-}
-```
-
-`@theme inline` emits each utility as a direct `var(--danger)` **reference** (e.g. `.text-state-danger { color: var(--danger) }`) instead of also creating a redundant `--color-state-*` global. Both `@theme` and `@theme inline` are dark-mode-correct — CSS variables resolve lazily at the element, so `--danger`'s dark value wins either way — so `inline` is a cleanliness choice (no extra indirection), not a correctness one. There is no exit-gate rename — these tokens survive Bootstrap removal as-is.
+The `state-*` names are Artemis's semantic namespace and avoid collisions with Bootstrap's
+unlayered color utilities during migration. `@theme inline` maps them directly to Artemis theme
+properties in `src/main/webapp/tailwind.css`.
 
 **Pick the tool by meaning, not by syntax.** Render a labelled status with `tum-ui-tag` or
 `tum-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.

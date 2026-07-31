@@ -1,4 +1,4 @@
-import { moduleMetadata } from '@storybook/angular-vite';
+import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect, screen, waitForElementToBeRemoved } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
@@ -28,22 +28,12 @@ const meta = {
     },
     decorators: [
         moduleMetadata({
-            imports: [TumUiButtonDirective, TumUiTooltipDirective],
+            imports: [TumUiButtonDirective],
         }),
     ],
     render: (args) => ({
-        props: { tooltip: args },
-        template: `
-            <button
-                tumUiButton
-                [tumUiTooltip]="tooltip.tumUiTooltip"
-                [tumUiTooltipPlacement]="tooltip.tumUiTooltipPlacement"
-                [showDelayMs]="tooltip.showDelayMs"
-                [hideDelayMs]="tooltip.hideDelayMs"
-            >
-                Export
-            </button>
-        `,
+        props: args,
+        template: `<button tumUiButton ${argsToTemplate(args)}>Export</button>`,
     }),
 } satisfies Meta<TooltipStoryArgs>;
 

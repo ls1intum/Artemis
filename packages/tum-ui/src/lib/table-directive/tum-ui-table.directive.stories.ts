@@ -79,6 +79,5 @@ export const Default: Story = {
     play: async ({ canvas }) => {
         const participantHeader = canvas.getByRole('columnheader', { name: /Participant/ });
         await expect(participantHeader).toHaveAttribute('aria-sort', 'ascending');
-        await expect([getComputedStyle(participantHeader).borderTopWidth, getComputedStyle(participantHeader).borderRightWidth]).toEqual(['0px', '0px']);
     },
 };

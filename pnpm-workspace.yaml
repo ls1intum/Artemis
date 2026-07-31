@@ -212,15 +212,8 @@ overrides:
   tough-cookie: '6.0.2'
   undici: '7.29.0'
   uuid: '14.0.1'
-  # Scoped to the Vitest toolchain only. The Angular dev server needs the vite version
-  # @angular/build pins (see the note above this block), but the client test suite does not work on
-  # it: spec helpers under src/test/javascript/spec are not in the Angular plugin's TypeScript
-  # program, so their decorators fall through to Vite's own TS transform, which stopped downleveling
-  # them in 8.x. `@Injectable()` then survives into the SSR-rewritten output as
-  # `@(0,__vite_ssr_import_0__.Injectable)(...)` and the module fails to parse. Keep these on 7.x —
-  # including when `check_client_override_version_updates.sh` reports a newer release — until
-  # @analogjs/vite-plugin-angular handles Vite 8 (2.6.4 claims support but does not deliver it).
-  # These entries are scoped, so they cannot reach @angular/build and reintroduce the dev-server bug.
+  # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
+  # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
   'vitest>vite': '7.3.6'
   '@vitest/mocker>vite': '7.3.6'
   '@analogjs/vite-plugin-angular>vite': '7.3.6'

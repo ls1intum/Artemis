@@ -83,6 +83,31 @@ test('aligns select-like overlays to their trigger', async ({ page }) => {
     }
 });
 
+test('keeps select text and controls separate at compact widths in both directions', async ({ page }) => {
+    await page.setViewportSize({ width: 280, height: 640 });
+    await page.goto('./iframe.html?id=forms-select--selected&viewMode=story');
+
+    const root = page.locator('tum-ui-select');
+    const trigger = root.getByRole('combobox', { name: 'Course language' });
+    const label = trigger.locator('span');
+    const clear = root.getByRole('button', { name: 'Clear selection' });
+    const indicator = root.locator(':scope > div > span').last();
+
+    const overlap = async (first: Locator, second: Locator) => {
+        const firstBox = (await first.boundingBox())!;
+        const secondBox = (await second.boundingBox())!;
+        return Math.max(0, Math.min(firstBox.x + firstBox.width, secondBox.x + secondBox.width) - Math.max(firstBox.x, secondBox.x));
+    };
+
+    await expect(clear).toBeVisible();
+    expect(await overlap(label, clear)).toBe(0);
+    expect(await overlap(clear, indicator)).toBe(0);
+
+    await page.locator('html').evaluate((element) => element.setAttribute('dir', 'rtl'));
+    expect(await overlap(label, clear)).toBe(0);
+    expect(await overlap(clear, indicator)).toBe(0);
+});
+
 test('keeps selected dates visually selected on hover', async ({ page }) => {
     await page.goto('./iframe.html?id=forms-date-picker--default&viewMode=story');
     await page.getByRole('button', { name: 'Open calendar' }).click();
@@ -156,19 +181,37 @@ test('keeps input-group seams logical in both text directions', async ({ page })
             }),
         );
 
-    expect(await radii()).toEqual([
-        ['6px', '0px'],
-        ['0px', '0px'],
-        ['0px', '6px'],
-    ]);
+    const ltrRadii = await radii();
+    expect(ltrRadii[0][0]).not.toBe('0px');
+    expect(ltrRadii[0][1]).toBe('0px');
+    expect(ltrRadii[1]).toEqual(['0px', '0px']);
+    expect(ltrRadii[2][0]).toBe('0px');
+    expect(ltrRadii[2][1]).toBe(ltrRadii[0][0]);
     await page.locator('html').evaluate((element) => element.setAttribute('dir', 'rtl'));
     await expect(addons.first()).toBeVisible();
     await expect(input).toBeVisible();
-    expect(await radii()).toEqual([
-        ['0px', '6px'],
-        ['0px', '0px'],
-        ['6px', '0px'],
-    ]);
+    expect(await radii()).toEqual([[ltrRadii[0][1], ltrRadii[0][0]], ltrRadii[1], [ltrRadii[2][1], ltrRadii[2][0]]]);
+
+    await page.goto('./iframe.html?id=forms-input-number--in-input-group&viewMode=story');
+    const numberGroup = page.locator('tum-ui-input-group');
+    const numberInput = page.getByRole('spinbutton', { name: 'Capacity' });
+    const increment = page.locator('.tum-ui-input-number-increment');
+    const decrement = page.locator('.tum-ui-input-number-decrement');
+    const numberRadii = async () => numberInput.evaluate((element) => [getComputedStyle(element).borderTopLeftRadius, getComputedStyle(element).borderTopRightRadius]);
+    const ltrNumberRadii = await numberRadii();
+    expect(ltrNumberRadii[0]).toBe('0px');
+    expect(ltrNumberRadii[1]).toBe('0px');
+    expect(await numberGroup.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await numberInput.focus();
+    await increment.click();
+    await expect(numberInput).toBeFocused();
+    await expect(numberInput).toHaveValue('1');
+    await decrement.click();
+    await expect(numberInput).toBeFocused();
+    await expect(numberInput).toHaveValue('0');
+    await page.locator('html').evaluate((element) => element.setAttribute('dir', 'rtl'));
+    await expect(numberGroup).toBeVisible();
+    expect(await numberRadii()).toEqual([ltrNumberRadii[1], ltrNumberRadii[0]]);
 
     await page.goto('./iframe.html?id=forms-select-button--default&viewMode=story');
     await page.locator('html').evaluate((element) => element.setAttribute('dir', 'rtl'));

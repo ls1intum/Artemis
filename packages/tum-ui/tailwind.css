@@ -15,11 +15,13 @@
     tum-ui-card,
     tum-ui-checkbox,
     tum-ui-chip,
+    tum-ui-confirm-dialog,
     tum-ui-date-picker,
     tum-ui-dialog,
     tum-ui-icon-field,
     tum-ui-input-group,
     tum-ui-input-group-addon,
+    tum-ui-input-number,
     tum-ui-message,
     tum-ui-paginator,
     tum-ui-panel,
@@ -55,6 +57,7 @@
         tum-ui-chip,
         tum-ui-date-picker,
         tum-ui-dialog,
+        tum-ui-input-number,
         tum-ui-paginator,
         tum-ui-panel,
         tum-ui-radio-button,
@@ -109,13 +112,31 @@
     border-end-start-radius: 0;
 }
 
-.tum-ui-input-group > .tum-ui-input {
+.tum-ui-input-group > :is(.tum-ui-input, tum-ui-input-number) {
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .tum-ui-input-group > .tum-ui-input:not(:last-child) {
     border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:first-child) > .tum-ui-input-number-input {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-input {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-button-group > .tum-ui-input-number-increment {
+    border-start-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-button-group > .tum-ui-input-number-decrement {
     border-end-end-radius: 0;
 }
 

@@ -39,19 +39,24 @@ function displayLabel(value: unknown): string | undefined {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiSelectButtonComponent implements ControlValueAccessor {
+    /** Options that yield neither a primitive label nor an item template are omitted. */
     readonly options = input<readonly TumUiSelectButtonOption[]>([]);
 
+    /** Object property used as the visible option label. */
     readonly optionLabel = input<string>();
 
+    /** Object property written to the form value; omit it to write the option. */
     readonly optionValue = input<string>();
     readonly size = input<TumUiSelectButtonSize>();
 
+    /** Allows the selected option to be toggled back to `undefined`. */
     readonly allowEmpty = input(true);
     readonly disabled = input(false);
 
     /** Optional presentation template; the option remains its implicit context value. */
     readonly itemTemplate = input<TemplateRef<{ $implicit: TumUiSelectButtonOption }>>();
 
+    /** Emits the selected value, or `undefined` when cleared. */
     readonly changed = output<unknown>();
 
     private readonly value = signal<unknown>(undefined);

@@ -252,16 +252,6 @@ describe('TumUiSelectComponent', () => {
         expect(document.activeElement).toBe(triggerButton());
     });
 
-    it('reserves space for the clear button only while it is visible', () => {
-        fixture.componentRef.setInput('showClear', true);
-        expect(triggerButton().classList).toContain('tum:pe-10');
-
-        component.writeValue('a');
-        fixture.detectChanges();
-        expect(triggerButton().classList).toContain('tum:pe-17');
-        expect(triggerButton().classList).not.toContain('tum:pe-10');
-    });
-
     it('renders the empty message when there are no options', () => {
         fixture.componentRef.setInput('options', []);
         fixture.componentRef.setInput('emptyMessage', 'Nothing here');

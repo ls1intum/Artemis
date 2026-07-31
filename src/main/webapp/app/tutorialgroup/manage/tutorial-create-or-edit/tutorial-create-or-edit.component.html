@@ -97,18 +97,18 @@
 
             <div class="label-and-input">
                 <label for="capacity-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
-                <p-inputgroup>
-                    <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
-                    <p-inputnumber
+                <tum-ui-input-group class="w-full">
+                    <tum-ui-input-group-addon><fa-icon [icon]="faHashtag" /></tum-ui-input-group-addon>
+                    <tum-ui-input-number
+                        [fluid]="true"
                         inputId="capacity-input"
                         [(ngModel)]="capacity"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
                         [min]="1"
                         [max]="5000"
-                        [maxFractionDigits]="0"
                         [showButtons]="true"
                     />
-                </p-inputgroup>
+                </tum-ui-input-group>
             </div>
         </div>
 
@@ -189,18 +189,18 @@
             <div class="label-and-input-row">
                 <div class="label-and-input">
                     <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
-                    <p-inputgroup>
-                        <p-inputnumber
+                    <tum-ui-input-group class="w-full">
+                        <tum-ui-input-number
+                            [fluid]="true"
                             inputId="repetition-frequency-input"
                             [(ngModel)]="repetitionFrequency"
                             [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
                             [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
                             [min]="1"
                             [max]="48"
-                            [maxFractionDigits]="0"
                             [showButtons]="true"
                         />
-                    </p-inputgroup>
+                    </tum-ui-input-group>
                 </div>
 
                 <div class="label-and-input">
@@ -264,4 +264,4 @@
         ></button>
     </div>
 </div>
-<p-confirmdialog />
+<tum-ui-confirm-dialog />

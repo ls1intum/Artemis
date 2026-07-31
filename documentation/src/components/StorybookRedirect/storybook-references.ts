@@ -20,11 +20,13 @@ export const STORYBOOK_REFERENCES: Readonly<Record<string, string>> = {
     'forms-icon-field': 'forms-icon-field--docs',
     'forms-input': 'forms-input--docs',
     'forms-input-group': 'forms-input-group--docs',
+    'forms-input-number': 'forms-input-number--docs',
     'forms-radio-button': 'forms-radio-button--docs',
     'forms-select': 'forms-select--docs',
     'forms-select-button': 'forms-select-button--docs',
     'forms-toggle-switch': 'forms-toggle-switch--docs',
     'navigation-tabs': 'navigation-tabs--docs',
+    'overlays-confirm-dialog': 'overlays-confirm-dialog--docs',
     'overlays-dialog': 'overlays-dialog--docs',
     'overlays-tooltip': 'overlays-tooltip--docs',
 };

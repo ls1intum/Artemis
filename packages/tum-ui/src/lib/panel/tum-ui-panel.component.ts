@@ -21,10 +21,13 @@ export class TumUiPanelComponent {
 
     readonly header = input<string>('');
 
+    /** Enables disclosure behavior for the projected content. */
     readonly toggleable = input(false);
 
+    /** Overrides the toggle name; otherwise the header or package translation is used. */
     readonly toggleAriaLabel = input<string>();
 
+    /** Controlled disclosure state, applied only when `toggleable` is enabled. */
     readonly collapsed = model(false);
 
     readonly styleClass = input<string>('');

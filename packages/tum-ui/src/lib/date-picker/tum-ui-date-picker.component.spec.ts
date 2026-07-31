@@ -62,7 +62,7 @@ describe('TumUiDatePickerComponent', () => {
         expect(component.isValid()).toBe(true);
     });
 
-    it('flags invalid typed text without changing the value or wiping the text (keepInvalid)', () => {
+    it('flags invalid typed text without changing the value or wiping the text', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         input().value = '13.06.2026 08:30xx';
@@ -84,7 +84,7 @@ describe('TumUiDatePickerComponent', () => {
         expect(document.activeElement).toBe(input());
     });
 
-    it('re-validates when the value changes externally after invalid input (no stuck error border)', () => {
+    it('re-validates when the value changes externally after invalid input', () => {
         input().value = 'garbage';
         input().dispatchEvent(new Event('input'));
         expect(component.isValid()).toBe(false);
@@ -266,7 +266,7 @@ describe('TumUiDatePickerComponent', () => {
             return host.debugElement.query(By.css('input[type="text"]')).nativeElement;
         }
 
-        it('writes a committed value back to the parent (model output is not shadowed)', () => {
+        it('writes a committed value back to the parent', () => {
             const host = TestBed.createComponent(TwoWayHostComponent);
             host.detectChanges();
             const inp = hostInput(host);
@@ -276,7 +276,7 @@ describe('TumUiDatePickerComponent', () => {
             expect(host.componentInstance.value?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 09:15');
         });
 
-        it('does not wipe the typed text on an invalid edit (no undefined echo through the parent)', () => {
+        it('does not wipe the typed text on an invalid edit', () => {
             const host = TestBed.createComponent(TwoWayHostComponent);
             host.componentInstance.value = dayjs('2026-06-13T08:30');
             host.detectChanges();

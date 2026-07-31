@@ -124,7 +124,7 @@ class TwoWayGroupHostComponent {
 }
 
 describe('TumUiRadioButtonComponent (two-way [(ngModel)] group via CVA)', () => {
-    it('reflects the initial model and writes the picked value back (data-export dialog pattern)', async () => {
+    it('reflects the initial model and writes the picked value back', async () => {
         await TestBed.configureTestingModule({
             imports: [TwoWayGroupHostComponent],
         }).compileComponents();

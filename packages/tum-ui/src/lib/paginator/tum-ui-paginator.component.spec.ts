@@ -98,7 +98,7 @@ describe('TumUiPaginatorComponent', () => {
         expect(spy).toHaveBeenCalledWith(2);
     });
 
-    it('clamps the display when the page input exceeds the last valid page (no stranded/empty state)', () => {
+    it('clamps the display when the page input exceeds the last valid page', () => {
         setInputs(30, 5, 50);
         expect(navButton('Next').disabled).toBe(true);
         expect(navButton('Last').disabled).toBe(true);

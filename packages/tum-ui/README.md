@@ -1,11 +1,8 @@
 # @tumaet/ui-angular
 
-Internal Angular component package maintained in the Artemis workspace. The built artifact exposes
-package-owned APIs and assets; Artemis-specific integration remains in the host.
-
-The package contains the reusable components of the in-house TUM UI design system. TUM UI is the
-target component system for Artemis; Bootstrap, ng-bootstrap, and PrimeNG remain migration-only
-dependencies in the host application.
+Reusable Angular components and precompiled styles for the TUM UI design system, currently
+maintained in the Artemis workspace. The built artifact exposes package-owned APIs and assets;
+application-specific integration remains in the host.
 
 ## Consumer setup
 

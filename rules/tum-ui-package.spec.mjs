@@ -307,7 +307,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['./packages/tum-ui/src/public-api.ts']);
         expect(angularWorkspace.projects.artemis.architect.build.configurations['tum-ui-source'].tsConfig).toBe('tsconfig.serve.json');
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
-        expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toBe(false);
+        expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toEqual({ exclude: ['@tumaet/ui-angular'] });
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
@@ -399,7 +399,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageStyles).not.toContain('--artemis-');
         expect(packageRuntimeSources).not.toContain('--artemis-');
         expect(packageRuntimeSources).not.toContain('tum:dark:');
-        expect(packageRuntimeSources).not.toContain(":host-context(html[data-theme='dark'])");
+        expect(packageRuntimeSources).not.toContain(':host-context(');
         expect(consumedProperties).toEqual(packageProperties);
         expect(referenceProperties).toEqual(packageProperties);
         expect(hostProperties).toEqual(packageProperties);

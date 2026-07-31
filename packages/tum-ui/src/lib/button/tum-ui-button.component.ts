@@ -20,9 +20,11 @@ export class TumUiButtonComponent {
 
     readonly rounded = input(false, { transform: booleanAttribute });
 
+    /** Replaces the icon with a spinner and disables the button. */
     readonly loading = input(false, { transform: booleanAttribute });
     readonly icon = input<IconProp | undefined>(undefined);
     readonly type = input<'button' | 'submit'>('button');
+    /** Accessible name required when projected content does not label the button. */
     readonly ariaLabel = input<string | undefined>(undefined);
     readonly ariaExpanded = input<boolean | undefined>(undefined);
     readonly ariaPressed = input<boolean | undefined>(undefined);

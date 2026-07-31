@@ -17,10 +17,6 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Client Guidelines',
-                    link: {
-                        type: 'doc',
-                        id: 'guidelines/client',
-                    },
                     items: [
                         'guidelines/client-development',
                         'guidelines/client-theming',

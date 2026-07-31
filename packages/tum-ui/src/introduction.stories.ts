@@ -8,7 +8,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Overview: Story = {
+export const ThemeContext: Story = {
     tags: ['!autodocs', '!dev', '!test'],
     render: () => ({ template: '' }),
 };

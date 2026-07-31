@@ -30,12 +30,16 @@ export default function StorybookRedirect() {
         }
     }, [storybookIncluded, storybookUrl]);
 
-    return storybookIncluded ? (
+    if (!storybookIncluded) {
+        return <p>The interactive component reference is available in the combined Artemis documentation build.</p>;
+    }
+
+    return (
         <p>
             Opening the TUM UI component reference…{' '}
             <a ref={redirectLink} href={storybookUrl}>
                 Continue to the reference
             </a>
         </p>
-    ) : null;
+    );
 }

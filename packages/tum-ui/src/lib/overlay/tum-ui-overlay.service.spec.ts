@@ -51,7 +51,7 @@ describe('TumUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('derives the applied placement from a resolved connection pair (drives caret flip-tracking)', () => {
+    it('derives the applied placement from the resolved connection pair', () => {
         expect(service.placementFromPosition({ originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom' })).toBe('top');
         expect(service.placementFromPosition({ originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top' })).toBe('bottom');
         expect(service.placementFromPosition({ originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center' })).toBe('left');

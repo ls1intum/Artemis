@@ -6,12 +6,15 @@ export type { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from '.
 export { TumUiCardComponent } from './lib/card/tum-ui-card.component';
 export { TumUiCheckboxComponent, type TumUiCheckboxChangeEvent } from './lib/checkbox/tum-ui-checkbox.component';
 export { TumUiChipComponent, type TumUiChipSize } from './lib/chip/tum-ui-chip.component';
+export { TumUiConfirmDialogComponent } from './lib/confirm-dialog/tum-ui-confirm-dialog.component';
+export { TumUiConfirmationService, type TumUiConfirmationRequest } from './lib/confirm-dialog/tum-ui-confirmation.service';
 export { TumUiDatePickerComponent } from './lib/date-picker/tum-ui-date-picker.component';
 export { TumUiDialogComponent } from './lib/dialog/tum-ui-dialog.component';
 export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationKey, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';
 export { TumUiIconFieldComponent, type TumUiIconFieldPosition } from './lib/icon-field/tum-ui-icon-field.component';
 export { TumUiInputGroupAddonComponent } from './lib/input-group/tum-ui-input-group-addon.component';
 export { TumUiInputGroupComponent } from './lib/input-group/tum-ui-input-group.component';
+export { TumUiInputNumberComponent } from './lib/input-number/tum-ui-input-number.component';
 export { TumUiInputDirective } from './lib/input/tum-ui-input.directive';
 export type { TumUiInputSize } from './lib/input/tum-ui-input.variants';
 export { TumUiMessageComponent, type TumUiMessageSeverity } from './lib/message/tum-ui-message.component';

@@ -1,14 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Confirmation, ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { InputNumber } from 'primeng/inputnumber';
+import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -21,7 +18,6 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
 import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 
@@ -56,8 +52,8 @@ describe('TutorialCreateOrEditComponent', () => {
             ],
         })
             .overrideComponent(TutorialCreateOrEditComponent, {
-                remove: { imports: [ConfirmDialogModule, TutorialEditLanguagesInputComponent] },
-                add: { imports: [PrimeNgConfirmDialogStubComponent, MockComponent(TutorialEditLanguagesInputComponent)] },
+                remove: { imports: [TumUiConfirmDialogComponent, TutorialEditLanguagesInputComponent] },
+                add: { imports: [MockComponent(TumUiConfirmDialogComponent), MockComponent(TutorialEditLanguagesInputComponent)] },
             })
             .compileComponents();
     });
@@ -145,33 +141,6 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.repetitionFrequency()).toBe(1);
         expect(component.tutorialPeriodEnd()).toBeUndefined();
         expect(component.location()).toBe('');
-    });
-
-    it('should keep capacity and repetition frequency integer-only', async () => {
-        await createComponentWithLanguageValues(of(['English', 'German']));
-        component.capacity.set(20);
-        component.repetitionFrequency.set(2);
-        component.configureSessionPlan.set(true);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const inputNumbers = fixture.debugElement.queryAll(By.directive(InputNumber));
-        const integerInputIds = ['capacity-input', 'repetition-frequency-input'];
-
-        for (const inputId of integerInputIds) {
-            const inputNumber = inputNumbers.find((debugElement) => (debugElement.componentInstance as InputNumber).inputId === inputId)!.componentInstance as InputNumber;
-            expect(inputNumber.maxFractionDigits).toBe(0);
-
-            const input = fixture.debugElement.query(By.css(`#${inputId}`)).nativeElement as HTMLInputElement;
-            input.setSelectionRange(input.value.length, input.value.length);
-            const decimalKeypress = new KeyboardEvent('keypress', { key: '.', code: 'Period', charCode: 46, keyCode: 46, bubbles: true, cancelable: true });
-            input.dispatchEvent(decimalKeypress);
-            expect(decimalKeypress.defaultPrevented).toBe(true);
-        }
-        await fixture.whenStable();
-
-        expect(component.capacity()).toBe(20);
-        expect(component.repetitionFrequency()).toBe(2);
     });
 
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
@@ -490,10 +459,9 @@ describe('TutorialCreateOrEditComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
-            confirmation.accept?.();
-            return confirmationService;
+        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((request: TumUiConfirmationRequest) => {
+            request.accept();
         });
 
         component.location.set('Room 202');

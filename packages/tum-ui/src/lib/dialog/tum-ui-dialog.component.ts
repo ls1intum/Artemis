@@ -32,14 +32,21 @@ export class TumUiDialogComponent implements OnDestroy {
     private readonly dialog = inject(Dialog);
     private readonly viewContainerRef = inject(ViewContainerRef);
 
+    /** Controlled open state; dismissal writes `false`. */
     readonly visible = model(false);
+    /** Visible title and default accessible name. */
     readonly header = input<string>();
+    /** Hides the header; an `ariaLabel` is then required. */
     readonly showHeader = input(true);
+    /** Shows the close button without changing Escape or backdrop behavior. */
     readonly closable = input(true);
+    /** Allows Escape to close the dialog. */
     readonly closeOnEscape = input(true);
+    /** Allows a backdrop click to close the dialog. */
     readonly dismissableMask = input(false);
     readonly style = input<Record<string, string>>({});
     readonly contentStyle = input<Record<string, string>>({});
+    /** Accessible name used when no visible header or header template is present. */
     readonly ariaLabel = input<string>();
     readonly closeButtonAriaLabel = input<string>();
     readonly role = input<DialogRole>('dialog');

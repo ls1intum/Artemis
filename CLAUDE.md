@@ -9,7 +9,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ## Tech Stack
 
 - **Server**: Spring Boot 4.1 (Java 25), MySQL, Hibernate, Hazelcast
-- **Client**: Angular 21, TypeScript, SCSS
+- **Client**: Angular 22, TypeScript, SCSS
 - **Build**: Gradle 9.6, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
 - **Testing**: JUnit 6, Vitest, Playwright
 
@@ -189,7 +189,7 @@ Organized by feature module:
 - PascalCase for classes, camelCase for members
 - Single quotes, 4-space indentation
 - Standalone components preferred
-- **Angular 21 signal-based APIs are mandatory for new code:**
+- **Signal-based Angular APIs are mandatory for new code:**
     - Use `input()` / `input.required()` instead of `@Input()`
     - Use `output()` instead of `@Output()`
     - Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`
@@ -199,7 +199,7 @@ Organized by feature module:
     - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
     - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
     - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
-    - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` _does_ fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
+    - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Signal inputs participate in `ngOnChanges` in the supported Angular version, so do not treat the hook as dead code. Use it only when `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering is required. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) protects the clean baseline; rare exceptions need a justified line-level disable. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
 - **Copy objects with `deepClone`, never with object spread, `Object.assign`, or `structuredClone`**

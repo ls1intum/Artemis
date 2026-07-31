@@ -38,23 +38,11 @@ and compatibility testing against supported consumers.
 
 ## Adding or changing a component
 
-Before writing code:
-
-1. Check the component reference and extend an existing contract when that preserves its
-   responsibility.
-2. Use semantic native HTML directly when it already supplies the required contract.
-3. Add a package component when the visual or interaction pattern is reusable across Artemis
-   features. Include its first real Artemis consumer rather than designing a speculative API.
-4. Keep a feature-specific composition in Artemis, built from TUM UI primitives. Application
-   translations, requests, routing, authorization, and domain models never move into the package.
-5. Build reusable interaction behavior on stable native HTML or Angular CDK. Do not create custom
-   focus, keyboard, overlay, directionality, selection, or virtualization infrastructure.
-
-This is a responsibility boundary, not a “second application” gate. A component does not belong in
-the package merely because it can be made generic, and it does not need an external adopter when
-Artemis already has a concrete reusable pattern. The pull request should explain the component
-responsibility, its first consumers, the native or CDK primitive underneath it, and any intentionally
-unsupported behavior.
+Follow the [component decision order](/developer/guidelines/client-development#ui-components). A
+new package API needs a reusable design-system responsibility and a concrete Artemis consumer;
+generic-looking application policy is not sufficient. Keep feature translations, requests, routes,
+authorization, and domain models in Artemis. Build reusable behavior on native HTML or stable
+Angular CDK primitives, and state intentionally unsupported behavior in the pull request.
 
 Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`, and
 semantic Tailwind utilities. Prefer stable native controls and CDK behavior over custom keyboard,
@@ -69,9 +57,9 @@ details or static class maps.
 Colocate each top-level consumer story with its component or directive. Document supporting pieces
 of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
 package's [CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
-TypeScript's `satisfies` operator. Type component stories with the component or explicit story args,
-following the Angular Vite examples. Keep configuration in `packages/tum-ui/.storybook`; do not add
-root Storybook configuration or import Artemis into a story.
+TypeScript's `satisfies` operator. Type component stories with the component or explicit story args.
+Keep configuration in `packages/tum-ui/.storybook`; do not add root Storybook configuration or
+import Artemis into a story.
 
 Prefer an args-driven default story and only the additional states that expose a meaningful visual
 or behavioral contract. Let Storybook render the component directly when inputs and outputs are
@@ -80,17 +68,11 @@ forms, a `TemplateRef`, or compound components. Use args for initial state and C
 interaction state in Angular bindings when a transition depends on preserving the rendered element;
 updating Storybook args rerenders an inline AutoDocs story.
 
-The default story must present the component at a realistic consumer width with its accessible name
-and ordinary content. Use a Storybook decorator for presentation context and explicit CSS grid or
-flex layout for multi-element examples; do not rely on incidental inline flow. A story-specific
-wrapper may arrange the example, but must not repair or restyle the component itself.
-
-Controls are for serializable public decisions that a reader can change meaningfully. Give bounded
-values explicit options, disable controls for callbacks, templates, and opaque framework objects,
-and keep small data fixtures editable only when doing so explains the contract. Source JSDoc is the
-canonical description for non-obvious inputs and outputs; do not duplicate generated API tables in
-story prose. For select-like overlays, verify trigger-width alignment. Check compact, narrow, dark,
-reduced-motion, and right-to-left behavior whenever those conditions affect the component.
+Stories should provide the minimum realistic context needed to understand the contract. A
+presentation wrapper may arrange an example but must not repair or restyle the component. Expose
+meaningful serializable controls; keep callbacks, templates, and framework objects read-only.
+Source JSDoc is the canonical description for non-obvious inputs and outputs. Test compact, narrow,
+dark, reduced-motion, or right-to-left conditions only when they affect the contract.
 
 Add a `play` function for browser-only behavior such as focus, keyboard navigation, overlays, or
 dismissal. Hide a tested story from the sidebar and AutoDocs only when the interaction is valuable

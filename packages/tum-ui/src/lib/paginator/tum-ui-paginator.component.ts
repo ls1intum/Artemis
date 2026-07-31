@@ -22,9 +22,11 @@ export class TumUiPaginatorComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly ariaLabel = input('Pagination');
+    /** Total records in the consumer-owned result set. */
     readonly totalRecords = input(0);
     /** Zero-based active page index. */
     readonly page = input(0);
+    /** Controlled number of records per page. */
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
     readonly disabled = input(false);
@@ -33,7 +35,9 @@ export class TumUiPaginatorComponent {
 
     readonly showRowsPerPage = input(true);
 
+    /** Requests a zero-based page without mutating `page`. */
     readonly pageChange = output<number>();
+    /** Requests a page size without mutating `pageSize`. */
     readonly pageSizeChange = output<number>();
 
     protected readonly firstPageIcon = computed(() => (this.direction() === 'rtl' ? faAnglesRight : faAnglesLeft));
