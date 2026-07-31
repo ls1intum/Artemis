@@ -26,10 +26,10 @@ const publicApi = readFileSync(resolve(repoRoot, 'packages/tum-ui/src/public-api
 const artemisTranslatorSource = readFileSync(resolve(repoRoot, 'src/main/webapp/app/shared-ui/tum-ui-integration/artemis-tum-ui-translator.ts'), 'utf8');
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind.css'), 'utf8');
 const packageTailwindTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind-theme.css'), 'utf8');
-const packageRuntimeSources = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
+const packageRuntimeFiles = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
-    .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
-    .join('\n');
+    .map((file) => ({ file, source: readFileSync(resolve(repoRoot, file), 'utf8') }));
+const packageRuntimeSources = packageRuntimeFiles.map(({ source }) => source).join('\n');
 const packageTemplates = globSync('packages/tum-ui/src/**/*.html', { cwd: repoRoot }).map((file) => ({
     file,
     source: readFileSync(resolve(repoRoot, file), 'utf8'),
@@ -59,6 +59,18 @@ function customProperties(marker) {
             .map((match) => [match[1], [...match[2].matchAll(/#[\da-f]{3}(?:[\da-f]{3})?/gi)].at(-1)?.[0]])
             .filter((entry) => entry[1]),
     );
+}
+
+function uniqueSorted(values) {
+    return [...new Set(values)].sort();
+}
+
+function componentElementSelectors(source) {
+    return [...source.matchAll(/selector:\s*['`](tum-ui-[\w-]+)['`]/g)].map((match) => match[1]);
+}
+
+function ruleElementSelectors(rule) {
+    return uniqueSorted([...(rule?.selector ?? '').matchAll(/(?<![.\w-])(tum-ui-[\w-]+)/g)].map((match) => match[1]));
 }
 
 function relativeLuminance(color) {
@@ -303,6 +315,28 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageTailwindTheme).toMatch(/--breakpoint-lg:\s*64rem/);
         expect(packageTailwindTheme).toMatch(/--breakpoint-xl:\s*80rem/);
         expect(packageTailwindTheme).toMatch(/--breakpoint-2xl:\s*96rem/);
+    });
+
+    it('keeps package typography coverage in sync with component selectors', () => {
+        const packageElementSelectors = uniqueSorted(packageRuntimeFiles.flatMap(({ source }) => componentElementSelectors(source)));
+        const templatesWithNativeControls = new Set(
+            packageRuntimeFiles
+                .filter(({ file, source }) => file.endsWith('.component.html') && /<(?:button|input|select|textarea)\b/.test(source))
+                .map(({ file }) => file.replace(/\.html$/, '.ts')),
+        );
+        const packageElementsWithNativeControls = uniqueSorted(
+            packageRuntimeFiles.filter(({ file }) => templatesWithNativeControls.has(file)).flatMap(({ source }) => componentElementSelectors(source)),
+        );
+        const stylesheet = postcss.parse(packageTailwind);
+        const typographyRule = stylesheet.nodes.find(
+            (node) => node.type === 'rule' && node.nodes.some((child) => child.type === 'decl' && child.prop === 'font-family' && child.value === 'var(--tumaet-ui-font-family)'),
+        );
+        const nativeControlRule = stylesheet.nodes.find(
+            (node) => node.type === 'rule' && node.nodes.some((child) => child.type === 'decl' && child.prop === 'font' && child.value === 'inherit'),
+        );
+
+        expect(ruleElementSelectors(typographyRule)).toEqual(packageElementSelectors);
+        expect(ruleElementSelectors(nativeControlRule)).toEqual(packageElementsWithNativeControls);
     });
 
     it('prefixes every static template class', () => {
