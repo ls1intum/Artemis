@@ -50,6 +50,13 @@ function isResponseBodyEvicted(error: unknown): boolean {
 const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
 
 /**
+ * In-flight reads of response bodies for requests we continued instead of replaying (see
+ * {@link captureBodyWithoutReplaying}). Keyed by the same Request instance {@link readResponseJson}
+ * sees via `response.request()`.
+ */
+const pendingApiResponseBodies = new WeakMap<Request, Promise<Buffer | undefined>>();
+
+/**
  * Largest multipart request body we re-issue from Node in {@link installApiResponseCapture}, inclusive:
  * a body of exactly this size is still captured, anything larger is not.
  * Multipart requests up to this size are the metadata-carrying ones whose response bodies tests
@@ -118,6 +125,32 @@ function isBodyFaithfullyReplayable(request: Request): boolean {
 }
 
 /**
+ * Hold the response body for a request we deliberately did NOT replay through `route.fetch()`.
+ *
+ * Skipping the replay keeps a file-backed upload intact, but it also gives up the Node-held body that
+ * {@link readResponseJson} relies on — and a non-GET response cannot be recovered read-side, because
+ * replaying it would repeat the side effect. Under parallel CI load Chromium then evicts the body from
+ * its bounded per-renderer network buffer before the test reads it, which failed the file-upload
+ * submission POST and the drag-and-drop quiz creation POST (its background image is a disk-backed file,
+ * so it takes this same path). Reading the body here, as soon as the response arrives, closes that gap
+ * without touching the request the browser sent.
+ *
+ * Best-effort by design: any failure leaves the entry absent and `readResponseJson` behaves exactly as
+ * it would have without this call, so this can only ever add robustness.
+ */
+function captureBodyWithoutReplaying(request: Request): void {
+    const read = request
+        .response()
+        .then((response) => (response && response.status() < 300 ? response.body() : undefined))
+        .catch(() => undefined);
+    // Store the in-flight read, not its result: `waitForResponse` resolves at the same moment this
+    // promise is created, so a test that immediately calls readResponseJson would otherwise race ahead
+    // of the buffer being stored, issue its own second CDP read, and hit the eviction anyway. Handing
+    // out the promise makes the test await this single earliest-possible read.
+    pendingApiResponseBodies.set(request, read);
+}
+
+/**
  * Capture non-GET /api response bodies at the network layer for a whole browser context:
  * `route.fetch()` performs the request from Node, we keep the body in Node memory for
  * {@link readResponseJson}, and fulfill the page with the same response. This only works because
@@ -157,6 +190,9 @@ export async function installApiResponseCapture(context: BrowserContext): Promis
                 // Playwright, so replaying it would upload an empty file. See isBodyFaithfullyReplayable.
                 if (bodySize === undefined || bodySize > MAX_CAPTURED_MULTIPART_BODY_BYTES || !isBodyFaithfullyReplayable(request)) {
                     await route.continue();
+                    // Fire-and-forget: awaiting here would hold the route handler open until the response
+                    // arrives, delaying Playwright's routing for no benefit — the read cannot start earlier.
+                    void captureBodyWithoutReplaying(request);
                     return;
                 }
             }
@@ -215,6 +251,12 @@ export async function readResponseJson<T = any>(response: Response): Promise<T> 
     const capturedBody = capturedApiResponseBodies.get(response.request());
     if (capturedBody) {
         return JSON.parse(capturedBody.toString('utf-8')) as T;
+    }
+    // A request we deliberately continued rather than replayed (a file-backed upload) has no Node-held
+    // body, but its read was started the moment the response arrived. Await that one instead of racing it.
+    const pendingBody = await pendingApiResponseBodies.get(response.request());
+    if (pendingBody) {
+        return JSON.parse(pendingBody.toString('utf-8')) as T;
     }
     try {
         return (await response.json()) as T;

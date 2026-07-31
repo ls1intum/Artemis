@@ -68,9 +68,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     readonly isCollapsed = signal(false);
     exerciseId?: string;
-    // Bumped whenever submission sync state is mutated in place (async callbacks) so the pure
-    // template methods below re-evaluate under zoneless change detection.
-    private readonly syncStateVersion = signal(0);
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
@@ -103,7 +100,10 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
-                            this.syncStateVersion.update((version) => version + 1);
+                            // Use the service-wide notifier rather than a private signal: the exercise overview
+                            // page and the exam save button observe only that one, so a private bump would leave
+                            // them showing a stale saved icon for this resumed-session case.
+                            this.examParticipationService.notifySubmissionSyncStateChanged();
                         }
                     });
             });
@@ -159,21 +159,20 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     /**
-     * Read every signal that marks a submission's `isSynced` flag as changed, so the template bindings
-     * below re-evaluate under zoneless change detection.
+     * Read the signal that marks a submission's sync state as changed, so the template bindings here
+     * re-evaluate under zoneless change detection.
      *
-     * `isSynced` is mutated in place on a plain submission object, which schedules no change detection
-     * on its own. Two independent producers exist: {@link syncStateVersion}, bumped locally when a
-     * programming repository reports uncommitted changes, and the service-wide
-     * {@link ExamParticipationService.submissionSyncVersion}, bumped by every exam submission editor
-     * (text, quiz, modeling, file upload, programming) when the student edits their answer. Reading
-     * only the local one left this sidebar blind to ordinary edits: after typing into a text exercise
-     * the status icon kept showing the "not started" hourglass and the "Exercise not saved" tooltip
-     * never appeared, until some unrelated interaction happened to trigger change detection. During an
-     * exam that hid the unsaved-changes warning from students.
+     * `isSynced` and `submitted` are mutated in place on a plain submission object, which schedules no
+     * change detection on its own. Every producer therefore calls
+     * {@link ExamParticipationService.notifySubmissionSyncStateChanged}: each exam submission editor on
+     * an `isSynced` transition, the participation component on save success/failure, and this
+     * component's own repository-status subscription above. Reading that one signal used to be missing
+     * here, which left the sidebar blind to ordinary edits: after typing into a text exercise the status
+     * icon kept showing the "not started" hourglass and the "Exercise not saved" tooltip never appeared,
+     * until some unrelated interaction happened to trigger change detection. During an exam that hid the
+     * unsaved-changes warning from students.
      */
     private trackSyncState(): void {
-        this.syncStateVersion();
         this.examParticipationService.submissionSyncVersion();
     }
 

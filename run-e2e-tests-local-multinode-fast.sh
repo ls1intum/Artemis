@@ -249,6 +249,12 @@ if [ "$SKIP_BUILD" = false ]; then
     # bootWar without `-Psbom` skips the SBOM dependency chain entirely; the
     # cyclonedxBom and generateClientSbom tasks are not wired into copySbomsToResources.
     ./gradlew -Pprod -Pwar bootWar -x test
+    # The handoff directory must not outlive this build. gradle/profile_prod.gradle picks the copy-only
+    # `webapp` task at CONFIGURATION time based on build/webapp-dist existing, so a leftover copy would
+    # (a) make any later `-Pprod` build silently package this stale bundle instead of rebuilding the
+    # client, and (b) break `./gradlew -Pprod -Pwar clean bootWar` — which run-e2e-tests-local-multinode.sh
+    # and the documented production build both use — because `clean` deletes the task's declared input.
+    rm -rf build/webapp-dist
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
