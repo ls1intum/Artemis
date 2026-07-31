@@ -5,6 +5,12 @@
         { "files": ["**/*.scss"], "customSyntax": "postcss-scss" },
         { "files": ["**/*.html"], "customSyntax": "postcss-html" },
         {
+            "files": ["documentation/**/*.module.css"],
+            "rules": {
+                "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global"] }]
+            }
+        },
+        {
             "files": [
                 "src/main/webapp/app/admin/**/*.scss",
                 "src/main/webapp/app/course/request/**/*.scss",

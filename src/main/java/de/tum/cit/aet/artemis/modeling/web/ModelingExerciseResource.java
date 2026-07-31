@@ -440,7 +440,7 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedExercise, ENTITY_NAME);
 
-        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
+        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(importedExercise, originalModelingExercise);
         modelingExerciseRepository.save(newModelingExercise);
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
