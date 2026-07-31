@@ -137,7 +137,14 @@ overrides:
   tough-cookie: '6.0.2'
   undici: '7.29.0'
   uuid: '14.0.1'
-  vite: '7.3.6'
+  # MUST match the exact `vite` version that the installed `@angular/build` depends on
+  # (`node_modules/@angular/build/package.json` -> dependencies.vite). Angular 22.1 moved the
+  # dev-server dependency pre-bundling from esbuild to rolldown and now passes its Angular-linker
+  # plugin via `optimizeDeps.rolldownOptions`, an option only Vite 8 understands. Overriding Vite
+  # back to 7.x makes Vite silently ignore that block, so pre-bundled partially-compiled Angular
+  # libraries reach the browser unlinked and bootstrap dies with "The injectable '_PlatformLocation'
+  # needs to be compiled using the JIT compiler". `pnpm run check:vite-override` guards this pin.
+  vite: '8.1.5'
   webpack: '5.109.2'
   webpack-dev-middleware: '7.4.5'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
