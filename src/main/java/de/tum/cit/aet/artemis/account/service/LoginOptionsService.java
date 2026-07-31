@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +58,7 @@ public class LoginOptionsService {
         if (emailOrLogin == null || emailOrLogin.isBlank()) {
             return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
         }
-        String sanitizedInput = emailOrLogin.trim().toLowerCase();
+        String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
         Optional<User> user = isEmail ? userRepository.findOneByEmailIgnoreCase(sanitizedInput) : userRepository.findOneByLogin(sanitizedInput);
         // if user is already in database
