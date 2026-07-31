@@ -44,6 +44,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 /**
  * Type guard mirroring the domain rule that a student participation is any participation that is neither a
@@ -82,6 +83,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
     private courseStorageService = inject(CourseStorageService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
@@ -306,20 +308,23 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._irisChatEnabled.set(false);
         this._irisPromptingModeEnabled.set(false);
 
-        const exerciseId = this.exercise?.id;
         if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
             const courseId = this.courseId;
+            const exerciseId = this.exercise.id;
+
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+
             if (this.irisEnabled()) {
-                this.irisSettingsService
-                    .getCourseSettingsWithRateLimit(courseId)
+                combineLatest([this.irisSettingsService.getCourseSettingsWithRateLimit(courseId), this.featureToggleService.getFeatureToggleActive(FeatureToggle.PromptingMode)])
                     .pipe(takeUntilDestroyed(this.destroyRef))
-                    .subscribe((response) => {
+                    .subscribe(([response, promptingModeFeatureEnabled]) => {
                         if (this.courseId !== courseId || this.exercise?.id !== exerciseId) {
                             return;
                         }
+
                         this._irisChatEnabled.set(response?.settings?.enabled ?? false);
-                        this._irisPromptingModeEnabled.set(response?.settings?.promptingModeEnabled ?? false);
+
+                        this._irisPromptingModeEnabled.set(promptingModeFeatureEnabled && (response?.settings?.promptingModeEnabled ?? false));
                     });
             }
         }

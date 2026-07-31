@@ -188,7 +188,7 @@
                 <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                 <span class="d-none d-xl-inline ms-1">Online editor</span>
             </a>
-            @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+            @if (irisPromptingEnabled()) {
                 <jhi-iris-review-assessment-button
                     class="me-1"
                     [smallButton]="true"

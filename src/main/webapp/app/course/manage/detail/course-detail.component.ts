@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subscription, map, startWith, switchMap } from 'rxjs';
+import { Subscription, catchError, combineLatest, of, startWith, switchMap } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
@@ -24,7 +25,7 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -89,10 +90,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private organizationService = inject(OrganizationManagementService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
+    private readonly profileService = inject(ProfileService);
     private accountService = inject(AccountService);
-    private irisSettingsService = inject(IrisSettingsService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -101,9 +103,33 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     readonly messagingEnabled = signal(false);
     readonly communicationEnabled = signal(false);
-    readonly irisEnabled = signal(false);
-    readonly irisChatEnabled = signal(false);
-    readonly irisPromptingModeEnabled = signal(false);
+
+    readonly irisEnabled = signal(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+
+    // Keep the settings reactive so the assessment attention box updates after changes in the control center.
+    private readonly irisSettings = toSignal(
+        combineLatest([toObservable(this.course), this.irisSettingsService.refresh$.pipe(startWith(undefined))]).pipe(
+            switchMap(([course]) => {
+                if (!this.irisEnabled() || !course?.isAtLeastInstructor || course.id === undefined) {
+                    return of(undefined);
+                }
+
+                return this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).pipe(
+                    catchError((error: HttpErrorResponse) => {
+                        onError(this.alertService, error);
+                        return of(undefined);
+                    }),
+                );
+            }),
+        ),
+        { initialValue: undefined },
+    );
+
+    private readonly promptingModeFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.PromptingMode), { initialValue: false });
+
+    readonly irisChatEnabled = computed(() => this.irisSettings()?.settings?.enabled ?? false);
+    readonly irisPromptingModeEnabled = computed(() => this.promptingModeFeatureEnabled() && (this.irisSettings()?.settings?.promptingModeEnabled ?? false));
+
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
     readonly isHyperionEnabled = signal(false);
@@ -114,7 +140,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     private eventSubscription?: Subscription;
     paramSub?: Subscription;
-    private irisSettingsSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -122,7 +147,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.ltiEnabled.set(this.profileService.isProfileActive(PROFILE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
-        this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.isAtlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.fromOnboarding.set(this.route.snapshot.queryParamMap.get('fromOnboarding') === 'true');
@@ -130,7 +154,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.setCourse(course);
-                this.setupIrisSettingsSubscription(course);
             }
             this.isAdmin.set(this.accountService.isAdmin());
             this.getCourseDetailSections();
@@ -361,7 +384,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.eventSubscription) {
             this.eventManager.destroy(this.eventSubscription);
         }
-        this.irisSettingsSub?.unsubscribe();
     }
 
     /**
@@ -394,31 +416,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (course.id !== undefined) {
             this.fetchOrganizations(course.id);
         }
-    }
-
-    private setupIrisSettingsSubscription(course: Course) {
-        this.irisSettingsSub?.unsubscribe();
-        this.irisChatEnabled.set(false);
-        this.irisPromptingModeEnabled.set(false);
-
-        if (!this.irisEnabled() || !course.isAtLeastInstructor || course.id === undefined) {
-            return;
-        }
-
-        // This subscription is needed to show the assessment attention box whether iris is being disabled/enabled in control center
-        this.irisSettingsSub = this.irisSettingsService.refresh$
-            .pipe(
-                startWith(void 0),
-                switchMap(() => this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!)),
-                map((settings) => ({
-                    promptingEnabled: settings?.settings?.promptingModeEnabled ?? false,
-                    chatEnabled: settings?.settings?.enabled ?? false,
-                })),
-            )
-            .subscribe((result) => {
-                this.irisPromptingModeEnabled.set(result.promptingEnabled);
-                this.irisChatEnabled.set(result.chatEnabled);
-            });
     }
 
     private requireCourse(): Course {

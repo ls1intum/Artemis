@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -114,14 +115,15 @@ public class ParticipationService {
 
     private final ModuleFeatureService moduleFeatureService;
 
-    private IrisSettingsService irisSettingsService;
+    // ObjectProvider is needed here, because IrisSettingsService is not injected if Iris module is not enabled
+    private final ObjectProvider<IrisSettingsService> irisSettingsServiceProvider;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                ModuleFeatureService moduleFeatureService, IrisSettingsService irisSettingsService) {
+                                ModuleFeatureService moduleFeatureService, ObjectProvider<IrisSettingsService> irisSettingsServiceProvider) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -135,7 +137,7 @@ public class ParticipationService {
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.moduleFeatureService = moduleFeatureService;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsServiceProvider = irisSettingsServiceProvider;
     }
 
     /**
@@ -1014,17 +1016,28 @@ public class ParticipationService {
         }
 
         // Step 2: Load full entity data for those IDs
+        boolean loadIrisAssessment = false;
         List<StudentParticipation> participations;
         if (teamMode) {
             participations = studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids);
         }
-        else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()
-                && irisSettingsService.isPromptingModeEnabledForExercise(exercise)) {
-            participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));
+        else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()) {
+
+            loadIrisAssessment = Optional.ofNullable(irisSettingsServiceProvider.getIfAvailable()).map(service -> service.isPromptingModeEnabledForExercise(exercise))
+                    .orElse(false);
+
+            if (loadIrisAssessment) {
+                participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));
+            }
+            else {
+                participations = studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+            }
         }
         else {
             participations = studentParticipationRepository.findByIdsWithLatestSubmission(ids);
         }
+
+        final boolean shouldMapIrisAssessment = loadIrisAssessment;
 
         // Load latest results with assessment notes
         Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
@@ -1040,12 +1053,14 @@ public class ParticipationService {
         // Step 3: Map to DTOs, preserving the ID query order
         Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
-        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToDTO(p, submissionCountMap, finalResultMap)).toList();
+        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
+                .map(p -> mapToDTO(p, submissionCountMap, finalResultMap, shouldMapIrisAssessment)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId) {
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+            boolean shouldMapIrisAssessment) {
         // Participant info
         String participantName;
         String participantIdentifier;
@@ -1100,7 +1115,7 @@ public class ParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
             buildPlanId = progParticipation.getBuildPlanId();
             repositoryUri = progParticipation.getRepositoryUri();
-            irisAssessment = IrisAssessmentDTO.of(progParticipation.getIrisAssessment());
+            irisAssessment = shouldMapIrisAssessment ? IrisAssessmentDTO.of(progParticipation.getIrisAssessment()) : null;
         }
 
         boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
