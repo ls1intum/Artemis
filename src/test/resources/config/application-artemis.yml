@@ -78,6 +78,14 @@ artemis:
             enabled: true
             base-url: https://fake.fake
             auth-token: fake-token
+    # Deimos LLM settings for tests. The endpoint is never called: integration tests use windows with no candidate
+    # participations, and unit tests mock the client. These values only satisfy the startup validation, which
+    # deliberately refuses to boot with a blank endpoint so no instance can silently send student code somewhere.
+    deimos:
+        llm:
+            base-url: https://fake.fake
+            api-key: fake-token
+            model: fake-model
     apollon:
         enabled: true
         conversion-service-url: http://localhost:8080

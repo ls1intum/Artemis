@@ -163,7 +163,10 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
-    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint.
+    # Deimos sends student source code to this endpoint, so there is deliberately NO default endpoint: base-url and model
+    # must be set explicitly to an endpoint you operate and are permitted to send student data to. Enabling Deimos without
+    # them fails fast at startup (see ConfigurationValidator).
     deimos:
         enabled: false
         executor:
@@ -171,12 +174,15 @@ artemis:
             max-pool-size: 4
             queue-capacity: 25
         llm:
-            base-url: https://gpu.aet.cit.tum.de
-            api-key: dummy
-            model: openai/gpt-oss-120b
+            base-url: # required when enabled, e.g. https://llm.example.com
+            api-key: # optional; leave empty for an unauthenticated self-hosted endpoint
+            model: # required when enabled, e.g. openai/gpt-oss-120b
             # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
             completions-path: /api/chat/completions
             temperature: 0
+            timeout-seconds: 90
+            # Transport-level retries performed by the OpenAI SDK (timeouts, 408, 409, 429, 5xx). This is the only retry layer.
+            max-retries: 3
 
     weaviate:
         enabled: false

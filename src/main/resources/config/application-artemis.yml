@@ -211,6 +211,9 @@ artemis:
       # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
       completions-path: /api/chat/completions
       temperature: 0
+      timeout-seconds: 90
+      # Transport-level retries performed by the OpenAI SDK (timeouts, 408, 409, 429, 5xx). This is the only retry layer.
+      max-retries: 3
 
   weaviate:
     enabled: false
