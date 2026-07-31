@@ -59,7 +59,7 @@
             "result": "Ergebnis",
             "score": "Ergebnis",
             "action": "Aktion",
-            "assessmentNotPossibleYetTooltip": "Die Bewertung beginnt am {{ date }}",
+            "assessmentNotPossibleYetTooltip": "Die Bewertung ist ab {{ date }} möglich",
             "continueAssessment": "Bewertung fortsetzen",
             "openAssessment": "Bewertung öffnen",
             "startAssessment": "Neue Bewertung starten",
