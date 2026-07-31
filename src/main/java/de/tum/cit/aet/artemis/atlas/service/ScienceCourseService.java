@@ -9,7 +9,9 @@ import java.time.ZonedDateTime;
 import java.util.EnumSet;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
@@ -77,11 +79,22 @@ public class ScienceCourseService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Returns all courses that are or were configured for science data collection.
+     *
+     * @return the science-enabled course history
+     */
     @Transactional(readOnly = true)
     public List<ScienceEnabledCourseDTO> getEnabledCourseHistory() {
         return scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc().stream().map(ScienceEnabledCourseDTO::of).toList();
     }
 
+    /**
+     * Enables science data collection for a course.
+     *
+     * @param courseId the id of the course
+     * @return the enabled-course entry
+     */
     @Transactional
     public ScienceEnabledCourseDTO enableCourse(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -91,6 +104,12 @@ public class ScienceCourseService {
         return ScienceEnabledCourseDTO.of(scienceEnabledCourseRepository.save(enabledCourse));
     }
 
+    /**
+     * Disables science data collection for a course while keeping the historical entry.
+     *
+     * @param courseId the id of the course
+     * @return the updated enabled-course entry
+     */
     @Transactional
     public ScienceEnabledCourseDTO disableCourse(long courseId) {
         ScienceEnabledCourse enabledCourse = scienceEnabledCourseRepository.findByCourseId(courseId)
@@ -99,6 +118,12 @@ public class ScienceCourseService {
         return ScienceEnabledCourseDTO.of(scienceEnabledCourseRepository.save(enabledCourse));
     }
 
+    /**
+     * Returns the current user's science consent state for a course.
+     *
+     * @param courseId the id of the course
+     * @return the consent state for the course
+     */
     @Transactional(readOnly = true)
     public ScienceCourseConsentDTO getConsentForCurrentUser(long courseId) {
         User user = userRepository.getUser();
@@ -110,12 +135,24 @@ public class ScienceCourseService {
                 : new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), consent.isActive(), consent.getLastModifiedDate(), scienceEnabled);
     }
 
+    /**
+     * Returns science consent states for courses the current user may access or has historical consent for.
+     *
+     * @return the current user's course consent states
+     */
     @Transactional(readOnly = true)
     public List<ScienceCourseConsentDTO> getConsentsForCurrentUser() {
         User user = userRepository.getUser();
-        return scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc().stream().map(enabledCourse -> {
+        List<ScienceEnabledCourse> enabledCourses = scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc();
+        Set<Long> courseIds = enabledCourses.stream().map(enabledCourse -> enabledCourse.getCourse().getId()).collect(Collectors.toSet());
+        if (courseIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, ScienceCourseConsent> consentsByCourseId = scienceCourseConsentRepository.findAllByUserIdAndCourseIdIn(user.getId(), courseIds).stream()
+                .collect(Collectors.toMap(consent -> consent.getCourse().getId(), consent -> consent));
+        return enabledCourses.stream().map(enabledCourse -> {
             Course course = enabledCourse.getCourse();
-            ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElse(null);
+            ScienceCourseConsent consent = consentsByCourseId.get(course.getId());
             if (!mayAccessConsent(course, user, consent)) {
                 return null;
             }
@@ -153,6 +190,13 @@ public class ScienceCourseService {
         }
     }
 
+    /**
+     * Stores the current user's science consent decision for a course.
+     *
+     * @param courseId the id of the course
+     * @param active   whether the user consents to science data collection
+     * @return the updated consent state
+     */
     @Transactional
     public ScienceCourseConsentDTO saveConsentForCurrentUser(long courseId, boolean active) {
         User user = userRepository.getUser();
@@ -178,6 +222,11 @@ public class ScienceCourseService {
         return new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), savedConsent.isActive(), savedConsent.getLastModifiedDate(), scienceEnabled);
     }
 
+    /**
+     * Deletes the current user's interaction science data for a course while retaining audit events.
+     *
+     * @param courseId the id of the course
+     */
     @Transactional
     public void deleteScienceDataForCurrentUser(long courseId) {
         User user = userRepository.getUser();
@@ -188,12 +237,18 @@ public class ScienceCourseService {
         scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
     }
 
+    /**
+     * Creates a research CSV export for the selected courses, dates, and event types.
+     *
+     * @param request the export filter and purpose
+     * @return the generated CSV file bytes
+     */
     @Transactional
     public byte[] createResearchExport(ScienceResearchExportRequestDTO request) {
         validateResearchExportRequest(request);
         Set<ScienceEventType> eventTypes = request.eventTypes() == null || request.eventTypes().isEmpty() ? EnumSet.allOf(ScienceEventType.class) : request.eventTypes();
         var scienceEvents = scienceEventRepository.findForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes);
-        byte[] csvBytes = createScienceEventCsv(scienceEvents);
+        byte[] csvBytes = createScienceEventCsv(scienceEvents, UUID.randomUUID().toString());
         ScienceResearchExportAudit audit = new ScienceResearchExportAudit();
         audit.setPurpose(request.purpose().trim());
         audit.setCourseFilter(request.courseIds().stream().sorted().map(String::valueOf).collect(Collectors.joining(",")));
@@ -205,6 +260,11 @@ public class ScienceCourseService {
         return csvBytes;
     }
 
+    /**
+     * Returns the audit history for research exports.
+     *
+     * @return the export audit history
+     */
     @Transactional(readOnly = true)
     public List<ScienceResearchExportAuditDTO> getResearchExportAudits() {
         return scienceResearchExportAuditRepository.findAllByOrderByCreatedDateDesc().stream().map(ScienceResearchExportAuditDTO::of).toList();
@@ -224,12 +284,13 @@ public class ScienceCourseService {
         }
     }
 
-    private static byte[] createScienceEventCsv(List<de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent> scienceEvents) {
+    private static byte[] createScienceEventCsv(List<de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent> scienceEvents, String exportSalt) {
         String[] header = { "identity", "timestamp", "event_type", "course_id", "resource_id" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
         try (StringWriter writer = new StringWriter(); CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
             for (var scienceEvent : scienceEvents) {
-                printer.printRecord(scienceEvent.getIdentity(), scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getCourseId(), scienceEvent.getResourceId());
+                printer.printRecord(pseudonymizeIdentity(scienceEvent.getIdentity(), exportSalt), scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getCourseId(),
+                        scienceEvent.getResourceId());
             }
             printer.flush();
             return writer.toString().getBytes(StandardCharsets.UTF_8);
@@ -237,6 +298,10 @@ public class ScienceCourseService {
         catch (IOException e) {
             throw new BadRequestAlertException("Could not create science export", ENTITY_NAME, "scienceExportFailed");
         }
+    }
+
+    private static String pseudonymizeIdentity(String identity, String exportSalt) {
+        return sha256Hex((exportSalt + ":" + identity).getBytes(StandardCharsets.UTF_8));
     }
 
     private static String sha256Hex(byte[] bytes) {

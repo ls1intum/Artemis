@@ -53,7 +53,7 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
         final var event = new ScienceEventDTO(type, 3L, course.getId());
         sendPutRequest(event);
-        final var loggedEvents = scienceEventRepository.findAllByType(type);
+        final var loggedEvents = scienceEventRepository.findAllByType(type).stream().filter(scienceEvent -> course.getId().equals(scienceEvent.getCourseId())).toList();
         assertThat(loggedEvents).hasSize(1);
         final var loggedEvent = loggedEvents.stream().findFirst().get();
         final var principal = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,7 +70,9 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
         final var event = new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, course.getId());
         sendPutRequest(event);
-        assertThat(scienceEventRepository.findAllByType(ScienceEventType.EXERCISE__OPEN)).isEmpty();
+        assertThat(
+                scienceEventRepository.findAllByType(ScienceEventType.EXERCISE__OPEN).stream().filter(scienceEvent -> course.getId().equals(scienceEvent.getCourseId())).toList())
+                .isEmpty();
     }
 
     @Test
@@ -81,7 +83,9 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         final var event = new ScienceEventDTO(ScienceEventType.SCIENCE__OPT_IN, course.getId(), course.getId());
         sendPutRequest(event);
 
-        assertThat(scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_IN)).isEmpty();
+        assertThat(
+                scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_IN).stream().filter(scienceEvent -> course.getId().equals(scienceEvent.getCourseId())).toList())
+                .isEmpty();
     }
 
     @Test
@@ -91,7 +95,8 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
         scienceCourseService.saveConsentForCurrentUser(course.getId(), false);
 
-        final var loggedEvents = scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_OUT);
+        final var loggedEvents = scienceEventRepository.findAllByType(ScienceEventType.SCIENCE__OPT_OUT).stream()
+                .filter(scienceEvent -> course.getId().equals(scienceEvent.getCourseId())).toList();
         assertThat(loggedEvents).hasSize(1);
         final var loggedEvent = loggedEvents.stream().findFirst().get();
         assertThat(loggedEvent.getIdentity()).isEqualTo(TEST_PREFIX + "student1");

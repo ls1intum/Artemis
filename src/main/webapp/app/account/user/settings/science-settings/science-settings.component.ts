@@ -1,10 +1,14 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ScienceCourseConsent, ScienceSettingsService, isScienceCourseConsent } from 'app/account/user/settings/science-settings/science-settings.service';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
@@ -13,11 +17,13 @@ import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/t
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss', 'science-settings.component.scss'],
-    imports: [FormsModule, FaIconComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiToggleSwitchComponent],
+    imports: [FormsModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiMessageComponent, TumUiToggleSwitchComponent],
 })
 export class ScienceSettingsComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly scienceSettingsService = inject(ScienceSettingsService);
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
 
     readonly consents = signal<ScienceCourseConsent[]>([]);
     readonly userSettings = signal<UserSettingsStructure<Setting> | undefined>(undefined);
@@ -33,11 +39,22 @@ export class ScienceSettingsComponent implements OnInit {
 
     loadConsents(): void {
         this.loading.set(true);
-        this.scienceSettingsService.getScienceSettingsUpdates().subscribe((consents) => {
-            this.consents.set(consents.filter(isScienceCourseConsent));
-        });
-        this.scienceSettingsService.refreshScienceSettings();
-        this.loading.set(false);
+        this.scienceSettingsService
+            .getScienceSettingsUpdates()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((consents) => {
+                this.consents.set(consents.filter(isScienceCourseConsent));
+            });
+        this.scienceSettingsService
+            .refreshScienceSettings()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.loading.set(false),
+                error: () => {
+                    this.loading.set(false);
+                    this.alertService.error('error.unexpectedError');
+                },
+            });
     }
 
     toggleConsent(consent: ScienceCourseConsent): void {
@@ -56,7 +73,11 @@ export class ScienceSettingsComponent implements OnInit {
     }
 
     deleteData(consent: ScienceCourseConsent): void {
-        const confirmed = window.confirm(`Delete your science interaction data for ${consent.courseTitle ?? 'this course'}? Consent audit events will be retained.`);
+        const confirmed = window.confirm(
+            this.translateService.instant('artemisApp.userSettings.scienceSettingsPage.deleteDataQuestion', {
+                courseTitle: consent.courseTitle ?? this.translateService.instant('artemisApp.userSettings.scienceSettingsPage.thisCourse'),
+            }),
+        );
         if (!confirmed) {
             return;
         }

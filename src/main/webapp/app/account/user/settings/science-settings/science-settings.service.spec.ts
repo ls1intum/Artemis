@@ -61,7 +61,7 @@ describe('ScienceSettingsService', () => {
     it('should refresh per-course science consents from the science endpoint', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
 
-        scienceSettingsService.refreshScienceSettings();
+        scienceSettingsService.refreshScienceSettings().subscribe();
 
         const request = httpMock.expectOne({ method: 'GET', url: 'api/atlas/science/consents' });
         request.flush([activeConsent, inactiveConsent]);
@@ -87,7 +87,7 @@ describe('ScienceSettingsService', () => {
     it('should not refresh settings when ATLAS module is not active', () => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
-        scienceSettingsService.refreshScienceSettings();
+        scienceSettingsService.refreshScienceSettings().subscribe();
 
         httpMock.expectNone('api/atlas/science/consents');
     });

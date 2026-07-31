@@ -6,6 +6,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminScienceService } from 'app/admin/science/admin-science.service';
 import { ScienceEnabledCourse, ScienceResearchExportAudit } from 'app/admin/science/admin-science.model';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
@@ -22,6 +24,8 @@ import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component
     imports: [
         FormsModule,
         FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         TumUiButtonDirective,
         TumUiCheckboxComponent,
@@ -67,7 +71,10 @@ export class AdminScienceComponent implements OnInit {
                 this.alertService.error('error.unexpectedError');
             },
         });
-        this.adminScienceService.getExportAudits().subscribe((audits) => this.audits.set(audits));
+        this.adminScienceService.getExportAudits().subscribe({
+            next: (audits) => this.audits.set(audits),
+            error: () => this.alertService.error('error.unexpectedError'),
+        });
     }
 
     enableCourse(): void {
@@ -96,12 +103,9 @@ export class AdminScienceComponent implements OnInit {
     }
 
     createExport(): void {
-        const courseIds = this.exportCourseIds
-            .split(',')
-            .map((courseId) => Number(courseId.trim()))
-            .filter((courseId) => Number.isFinite(courseId));
+        const courseIds = this.parseCourseIds(this.exportCourseIds);
         if (courseIds.length === 0 || this.exportPurpose.trim().length === 0) {
-            this.alertService.error('At least one course id and a purpose are required.');
+            this.alertService.error('artemisApp.admin.science.export.validation');
             return;
         }
         this.adminScienceService
@@ -124,5 +128,17 @@ export class AdminScienceComponent implements OnInit {
                 },
                 error: () => this.alertService.error('error.unexpectedError'),
             });
+    }
+
+    private parseCourseIds(courseIds: string): number[] {
+        const tokens = courseIds.split(',').map((courseId) => courseId.trim());
+        if (tokens.some((courseId) => courseId.length === 0)) {
+            return [];
+        }
+        const parsedCourseIds = tokens.map((courseId) => Number(courseId));
+        if (parsedCourseIds.some((courseId) => !Number.isInteger(courseId) || courseId <= 0)) {
+            return [];
+        }
+        return parsedCourseIds;
     }
 }

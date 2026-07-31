@@ -50,10 +50,6 @@
     grid-column: 1 / -1;
 }
 
-.admin-science-muted {
-    color: var(--secondary);
-}
-
 .admin-science-event-types {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));

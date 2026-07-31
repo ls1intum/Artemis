@@ -1,0 +1,41 @@
+{
+    "artemisApp": {
+        "admin": {
+            "science": {
+                "title": "Science data collection",
+                "courseActivation": "Course activation",
+                "courseId": "Course ID",
+                "enable": "Enable",
+                "disable": "Disable",
+                "loadingCourses": "Loading science courses",
+                "course": "Course",
+                "shortName": "Short name",
+                "status": "Status",
+                "lastChanged": "Last changed",
+                "active": "Active",
+                "inactive": "Inactive",
+                "noCourses": "No courses have been configured for science collection.",
+                "export": {
+                    "title": "Research CSV export",
+                    "description": "Exports contain pseudonymized/personal behavioral data. Provide a purpose and narrow filters for every export.",
+                    "courseIds": "Course IDs",
+                    "courseIdsPlaceholder": "1, 2, 3",
+                    "from": "From",
+                    "to": "To",
+                    "purpose": "Purpose",
+                    "create": "Create CSV export",
+                    "validation": "At least one valid positive course id and a purpose are required."
+                },
+                "audit": {
+                    "title": "Export audit",
+                    "created": "Created",
+                    "admin": "Admin",
+                    "courses": "Courses",
+                    "purpose": "Purpose",
+                    "checksum": "Checksum",
+                    "empty": "No research exports have been created."
+                }
+            }
+        }
+    }
+}

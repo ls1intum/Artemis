@@ -34,6 +34,7 @@ import { CourseTitleBarService } from 'app/course/shared/services/course-title-b
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
@@ -62,6 +63,7 @@ function readComponentCollapsed(componentRef: unknown): boolean | undefined {
         CourseSidebarComponent,
         CourseUnenrollmentModalComponent,
         CourseTitleBarComponent,
+        ArtemisTranslatePipe,
         TumUiButtonDirective,
         TumUiDialogComponent,
     ],
@@ -263,9 +265,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (!consentCourse) {
             return;
         }
-        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, true).subscribe(() => {
-            this.showScienceConsentModal.set(false);
-            this.scienceConsentCourse.set(undefined);
+        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, true).subscribe({
+            next: () => {
+                this.showScienceConsentModal.set(false);
+                this.scienceConsentCourse.set(undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
         });
     }
 
@@ -274,9 +279,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (!consentCourse) {
             return;
         }
-        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, false).subscribe(() => {
-            this.showScienceConsentModal.set(false);
-            this.scienceConsentCourse.set(undefined);
+        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, false).subscribe({
+            next: () => {
+                this.showScienceConsentModal.set(false);
+                this.scienceConsentCourse.set(undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
         });
     }
 
@@ -284,9 +292,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (!courseId) {
             return;
         }
-        this.scienceSettingsService.getConsentForCourse(courseId).subscribe((consent) => {
-            this.scienceConsentCourse.set(consent);
-            this.showScienceConsentModal.set(consent.scienceEnabled && consent.active === undefined);
+        this.scienceSettingsService.getConsentForCourse(courseId).subscribe({
+            next: (consent) => {
+                this.scienceConsentCourse.set(consent);
+                this.showScienceConsentModal.set(consent.scienceEnabled && consent.active === undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
         });
     }
 

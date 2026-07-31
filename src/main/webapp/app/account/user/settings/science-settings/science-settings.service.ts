@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { Observable, ReplaySubject, tap } from 'rxjs';
+import { Observable, ReplaySubject, catchError, map, of, tap, throwError } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
@@ -61,18 +61,21 @@ export class ScienceSettingsService {
         this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
     }
 
-    refreshScienceSettings(): void {
+    refreshScienceSettings(): Observable<ScienceCourseConsent[]> {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            return;
+            return of([]);
         }
 
-        this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { observe: 'response' }).subscribe({
-            next: (res: HttpResponse<ScienceCourseConsent[]>) => {
-                const currentScienceSettings = res.body ?? [];
+        return this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ScienceCourseConsent[]>) => res.body ?? []),
+            tap((currentScienceSettings) => {
                 this.storeScienceSettings(currentScienceSettings);
-                this.currentScienceSettingsSubject.next(currentScienceSettings);
-            },
-        });
+            }),
+            catchError((error) => {
+                this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
+                return throwError(() => error);
+            }),
+        );
     }
 
     getScienceSettings(): ScienceSettingsStorageEntry[] {
@@ -120,7 +123,7 @@ export class ScienceSettingsService {
 
     private listenForScienceSettingsChanges(): void {
         this.userSettingsService.userSettingsChangeEvent.subscribe(() => {
-            this.refreshScienceSettings();
+            this.refreshScienceSettings().subscribe({ error: () => undefined });
         });
     }
 }

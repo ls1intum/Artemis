@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.EnumSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
@@ -27,6 +29,8 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 @Lazy
 @Service
 public class ScienceEventService {
+
+    private static final Logger log = LoggerFactory.getLogger(ScienceEventService.class);
 
     public static final Set<ScienceEventType> SCIENCE_AUDIT_EVENT_TYPES = EnumSet.of(ScienceEventType.SCIENCE__OPT_IN, ScienceEventType.SCIENCE__OPT_OUT,
             ScienceEventType.SCIENCE__DATA_DELETED);
@@ -54,6 +58,9 @@ public class ScienceEventService {
      */
     public void logEvent(ScienceEventDTO eventDTO) {
         if (eventDTO == null || eventDTO.type() == null || eventDTO.courseId() == null) {
+            if (eventDTO != null && eventDTO.type() != null && eventDTO.courseId() == null) {
+                log.debug("Dropped science event {} because no course id was provided", eventDTO.type());
+            }
             return;
         }
         if (SCIENCE_AUDIT_EVENT_TYPES.contains(eventDTO.type())) {
@@ -107,6 +114,13 @@ public class ScienceEventService {
         scienceEventRepository.save(event);
     }
 
+    /**
+     * Checks whether the current science configuration allows interaction event logging for a principal in a course.
+     *
+     * @param principal the user login
+     * @param courseId  the course id
+     * @return true if science logging is enabled and the user has active consent
+     */
     public boolean mayLogInteractionEvent(String principal, long courseId) {
         if (!scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId)) {
             return false;

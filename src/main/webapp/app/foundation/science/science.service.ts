@@ -29,7 +29,7 @@ export class ScienceService {
 
     private onUserIdentityChange(user: User | undefined): void {
         if (user) {
-            this.scienceSettingsService.refreshScienceSettings();
+            this.scienceSettingsService.refreshScienceSettings().subscribe({ error: () => undefined });
         }
     }
 

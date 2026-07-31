@@ -1,0 +1,41 @@
+{
+    "artemisApp": {
+        "admin": {
+            "science": {
+                "title": "Forschungsdaten-Erhebung",
+                "courseActivation": "Kursaktivierung",
+                "courseId": "Kurs-ID",
+                "enable": "Aktivieren",
+                "disable": "Deaktivieren",
+                "loadingCourses": "Forschungskurse werden geladen",
+                "course": "Kurs",
+                "shortName": "Kurzname",
+                "status": "Status",
+                "lastChanged": "Zuletzt geändert",
+                "active": "Aktiv",
+                "inactive": "Inaktiv",
+                "noCourses": "Es wurden keine Kurse für die Forschungsdaten-Erhebung konfiguriert.",
+                "export": {
+                    "title": "Forschungs-CSV-Export",
+                    "description": "Exporte enthalten pseudonymisierte/personenbezogene Verhaltensdaten. Gib für jeden Export einen Zweck an und nutze möglichst enge Filter.",
+                    "courseIds": "Kurs-IDs",
+                    "courseIdsPlaceholder": "1, 2, 3",
+                    "from": "Von",
+                    "to": "Bis",
+                    "purpose": "Zweck",
+                    "create": "CSV-Export erstellen",
+                    "validation": "Mindestens eine gültige positive Kurs-ID und ein Zweck sind erforderlich."
+                },
+                "audit": {
+                    "title": "Export-Audit",
+                    "created": "Erstellt",
+                    "admin": "Admin",
+                    "courses": "Kurse",
+                    "purpose": "Zweck",
+                    "checksum": "Prüfsumme",
+                    "empty": "Es wurden noch keine Forschungsexporte erstellt."
+                }
+            }
+        }
+    }
+}

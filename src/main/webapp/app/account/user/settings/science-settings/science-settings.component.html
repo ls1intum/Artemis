@@ -1,7 +1,7 @@
 <div>
-    <h2>Science data collection</h2>
+    <h2 jhiTranslate="artemisApp.userSettings.scienceSettingsPage.title"></h2>
     <tum-ui-message severity="info" [icon]="faInfoCircle" styleClass="science-settings-info">
-        Science data collection is voluntary and configured per course. You can change your decision or delete interaction data for a course at any time.
+        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.description"></span>
     </tum-ui-message>
 </div>
 
@@ -10,10 +10,10 @@
         <div class="science-settings-item">
             <div>
                 <div class="science-settings-course-title">{{ consent.courseTitle }}</div>
-                <div class="science-settings-course-meta">
+                <div class="science-settings-course-meta text-muted-color">
                     {{ consent.courseShortName }}
                     @if (!consent.scienceEnabled) {
-                        <span> | science collection currently disabled</span>
+                        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.disabled"></span>
                     }
                 </div>
             </div>
@@ -25,7 +25,7 @@
                         [disabled]="!consent.scienceEnabled"
                         (changed)="toggleConsent(consent)"
                     />
-                    Contribute
+                    <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
                 </label>
                 <button
                     type="button"
@@ -33,7 +33,10 @@
                     severity="danger"
                     size="small"
                     variant="outlined"
-                    [attr.aria-label]="'Delete science data for ' + consent.courseTitle"
+                    [attr.aria-label]="
+                        'artemisApp.userSettings.scienceSettingsPage.deleteData'
+                            | artemisTranslate: { courseTitle: consent.courseTitle ?? ('artemisApp.userSettings.scienceSettingsPage.thisCourse' | artemisTranslate) }
+                    "
                     (click)="deleteData(consent)"
                 >
                     <fa-icon [icon]="faTrash" />
@@ -41,6 +44,6 @@
             </div>
         </div>
     } @empty {
-        <div class="science-settings-empty">No courses are configured for science data collection.</div>
+        <div class="science-settings-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></div>
     }
 </div>
