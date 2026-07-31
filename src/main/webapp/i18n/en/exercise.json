@@ -395,7 +395,9 @@
             },
             "isUsedForTutorial": "Tutor needs to review",
             "action": "Action",
-            "exerciseAssessmentDashboard": "Assessment Dashboard"
+            "exerciseAssessmentDashboard": "Assessment Dashboard",
+            "applyInstruction": "Apply this assessment instruction",
+            "applyInstructionHint": "Tick an assessment instruction to add it to the feedback, or drag & drop it onto a feedback element"
         }
     }
 }

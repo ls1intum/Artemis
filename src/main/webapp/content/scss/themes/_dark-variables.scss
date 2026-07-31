@@ -437,6 +437,9 @@ $sgi-assessment-layout-positive-background: darken($success, 30);
 $sgi-assessment-layout-negative-background: darken($danger, 45);
 
 // Code Editor
+$code-editor-panel-header-background: $neutral-dark;
+$code-editor-panel-header-color: $body-color;
+$code-editor-panel-header-border: $neutral-dark-l-10;
 $code-editor-file-browser-header-background: $neutral-dark-l-5;
 $code-editor-file-browser-header-border: $neutral-dark-l-10;
 $code-editor-file-browser-tree-hover: $neutral-dark-l-5;

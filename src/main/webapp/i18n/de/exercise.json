@@ -395,7 +395,9 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
-            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element"
         }
     }
 }
