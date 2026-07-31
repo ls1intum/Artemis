@@ -45,7 +45,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly sidebarData = input<SidebarData>(undefined!);
     readonly exercises = input<Exercise[]>([]);
     readonly exerciseIndex = input(0);
-    readonly overviewPageOpen = input<boolean>(undefined!);
     readonly examSessions = input<ExamSession[] | undefined>([]);
     readonly examTimeLineView = input(false);
     readonly isTestRun = input(0);
@@ -56,10 +55,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
 
-    /**
-     * Index indicating that the content is exercise overview
-     */
-    readonly EXERCISE_OVERVIEW_INDEX = -1;
     subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons

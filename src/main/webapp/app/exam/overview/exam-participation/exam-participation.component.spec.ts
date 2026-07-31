@@ -29,7 +29,6 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
-import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
@@ -118,7 +117,6 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(ExamParticipationCoverComponent),
                 MockComponent(ExamBarComponent),
                 MockComponent(ExamNavigationSidebarComponent),
-                MockComponent(ExamNavigationBarComponent),
                 MockComponent(QuizExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),
                 MockComponent(ModelingExamSubmissionComponent),
