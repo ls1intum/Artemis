@@ -714,6 +714,36 @@ describe('AccountService', () => {
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
         });
 
+        describe('restoreUserLLMSelectionDecision', () => {
+            it('should restore "no decision yet" without stamping a timestamp', () => {
+                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+            });
+
+            it('should restore a previous decision and its original timestamp verbatim', () => {
+                const originalTimestamp = dayjs().subtract(5, 'day');
+                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+
+                accountService.restoreUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI, originalTimestamp);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(originalTimestamp);
+            });
+
+            it('should preserve unrelated user properties', () => {
+                accountService.userIdentity.set({ id: 42, login: 'ab12cde', groups: ['USER'] } as User);
+
+                accountService.restoreUserLLMSelectionDecision(undefined, undefined);
+
+                expect(accountService.userIdentity()?.id).toBe(42);
+                expect(accountService.userIdentity()?.login).toBe('ab12cde');
+            });
+        });
+
         it('should update existing selectedLLMUsage value', () => {
             accountService.userIdentity.set({
                 id: 1,
