@@ -595,10 +595,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise body = importBodyFor(source);
         body.setGradingCriteria(sourceCriteria);
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId());
+        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.id());
         assertThat(importedCriteria).hasSameSizeAs(sourceCriteria);
         assertThat(importedCriteria).extracting(GradingCriterion::getTitle).containsExactlyInAnyOrderElementsOf(sourceCriteria.stream().map(GradingCriterion::getTitle).toList());
         assertThat(importedCriteria).extracting(GradingCriterion::getId).doesNotContainAnyElementsOf(sourceCriteria.stream().map(GradingCriterion::getId).toList());
@@ -616,10 +616,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise body = importBodyFor(source);
         body.setGradingCriteria(new HashSet<>());
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), ImportModelingExerciseDTO.of(body),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId())).isEmpty();
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.id())).isEmpty();
         assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId())).as("the source keeps its own criteria").hasSameSizeAs(sourceCriteria);
     }
 
@@ -668,11 +668,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToImport.setChannelName(uniqueChannelName);
         exerciseToImport.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(targetCompetency, exerciseToImport, 1))));
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId, exerciseToImport,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId,
+                ImportModelingExerciseDTO.of(exerciseToImport), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
 
-        assertThat(importedExercise.getId()).isNotEqualTo(sourceExerciseId);
-        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.getId());
+        assertThat(importedExercise.id()).isNotEqualTo(sourceExerciseId);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.id());
         assertThat(reloaded.getCompetencyLinks()).hasSize(1);
         assertThat(reloaded.getCompetencyLinks().iterator().next().getCompetency().getId()).isEqualTo(targetCompetency.getId());
     }
