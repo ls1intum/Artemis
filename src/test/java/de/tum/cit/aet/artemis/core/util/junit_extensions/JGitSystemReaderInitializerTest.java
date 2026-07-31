@@ -32,6 +32,10 @@ class JGitSystemReaderInitializerTest {
 
     private static final int THREAD_COUNT = 16;
 
+    /**
+     * Covers the second race ingredient: the reader has to be installed before any test executes. Fails if the
+     * {@link GlobalCleanupListener#testPlanExecutionStarted} call is ever dropped, which would move the installation back into a running, parallel test plan.
+     */
     @Test
     void shouldBeConfiguredBeforeAnyTestRuns() {
         assertThat(JGitSystemReaderInitializer.isConfigured())
@@ -40,6 +44,9 @@ class JGitSystemReaderInitializerTest {
                 .isTrue();
     }
 
+    /**
+     * Covers the first race ingredient: only a single {@code setInstance} call may ever happen, so no later call can null the static platform caches again.
+     */
     @Test
     void shouldInstallSystemReaderOnlyOnce() throws Exception {
         JGitSystemReaderInitializer.configureOnce();

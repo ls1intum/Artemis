@@ -67,6 +67,10 @@ class LocalRepositoryTest {
                 pushResult -> assertThat(pushResult.getRemoteUpdates()).isNotEmpty().allSatisfy(update -> assertThat(update.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK)));
     }
 
+    /**
+     * The complementary case: for an origin repository that does not exist yet, the helper still has to create the default branch with an initial commit, so
+     * LocalCI sees an existing branch to update.
+     */
     @Test
     void shouldCreateInitialHistoryWhenOriginRepositoryDoesNotExist() throws Exception {
         Path originRepositoryFolder = repositoryBasePath.resolve("TESTPROJECT").resolve("testproject-student2.git");
