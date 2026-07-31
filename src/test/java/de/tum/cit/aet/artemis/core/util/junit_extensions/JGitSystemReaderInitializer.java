@@ -32,6 +32,17 @@ public final class JGitSystemReaderInitializer {
     }
 
     /**
+     * Whether the custom {@link SystemReader} has already been installed in this JVM.
+     * Tests assert this to detect the regression where the up-front installation is dropped and the first
+     * {@link SystemReader#setInstance(SystemReader)} call happens lazily, while other test classes already run git operations.
+     *
+     * @return true once {@link #configureOnce()} has installed the reader
+     */
+    public static boolean isConfigured() {
+        return CONFIGURED.get();
+    }
+
+    /**
      * Installs the custom {@link SystemReader} the first time it is called and does nothing on every subsequent call.
      */
     public static void configureOnce() {

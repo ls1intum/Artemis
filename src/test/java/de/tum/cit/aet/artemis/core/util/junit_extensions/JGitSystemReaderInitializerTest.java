@@ -12,15 +12,33 @@ import org.eclipse.jgit.util.SystemReader;
 import org.junit.jupiter.api.Test;
 
 /**
- * Guards the invariant that JGit's {@link SystemReader} is installed exactly once per JVM.
+ * Guards the two invariants that keep JGit's {@link SystemReader} from breaking parallel tests.
  * <p>
  * {@link SystemReader#setInstance(SystemReader)} nulls JGit's static platform detection caches before re-deriving them. Calling it while other threads run git
  * operations makes {@code SystemReader#isWindows()} throw a {@link NullPointerException}, which is what happened when the reader was installed from a
  * {@code @BeforeAll} of the integration test base class (once per test class, with test classes running in parallel).
+ * <p>
+ * The race therefore has two ingredients, and each is covered by one invariant:
+ * <ol>
+ * <li>more than one {@code setInstance} call: prevented by the guard in {@link JGitSystemReaderInitializer#configureOnce()},</li>
+ * <li>a {@code setInstance} call concurrent with git work: prevented by installing the reader in
+ * {@link GlobalCleanupListener#testPlanExecutionStarted} before any test runs.</li>
+ * </ol>
+ * Note that the second ingredient cannot be reproduced from within a test: every test already runs inside the test plan, so by then the reader is installed and
+ * {@code configureOnce()} is a no-op. It is asserted structurally instead, via {@link JGitSystemReaderInitializer#isConfigured()}, plus the ArchUnit rule
+ * {@code ArchitectureTest#testNoJGitSystemReaderConfigurationOutsideInitializer}.
  */
 class JGitSystemReaderInitializerTest {
 
     private static final int THREAD_COUNT = 16;
+
+    @Test
+    void shouldBeConfiguredBeforeAnyTestRuns() {
+        assertThat(JGitSystemReaderInitializer.isConfigured())
+                .as("the SystemReader must already be installed before the first test runs, otherwise the first installation resets JGit's platform caches "
+                        + "while other test classes are already executing git operations")
+                .isTrue();
+    }
 
     @Test
     void shouldInstallSystemReaderOnlyOnce() throws Exception {
@@ -32,6 +50,10 @@ class JGitSystemReaderInitializerTest {
         assertThat(SystemReader.getInstance()).as("repeated configuration must not replace the installed SystemReader").isSameAs(installedReader);
     }
 
+    /**
+     * Exercises the idempotent path that every test class hits: concurrent {@code configureOnce()} calls must stay no-ops and must not disturb git platform
+     * detection running in parallel.
+     */
     @Test
     void shouldKeepPlatformDetectionUsableWhileConfiguringConcurrently() throws Exception {
         List<Throwable> failures = new CopyOnWriteArrayList<>();
