@@ -47,8 +47,11 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
 
     /**
      * Builds the reference from an {@link ExerciseGroup}; expects the group (and its exam) to be loaded. The exam's
-     * course is included only when it is already initialized (the detail endpoint resolves it during its access check);
-     * otherwise it is left {@code null} to avoid forcing a lazy load on list/other paths.
+     * course is included only when it is already initialized; otherwise it is left {@code null} rather than forcing a
+     * lazy load. Management endpoints deterministically initialize it before calling this method (see
+     * {@code ModelingExerciseResource.ensureExamCourseInitialized}); the masked student-facing path
+     * ({@code ModelingSubmissionResource}) instead clears the exam reference entirely before mapping, so this guard
+     * only ever sees a genuinely uninitialized course on paths that do not need it.
      *
      * @param exerciseGroup the exercise group (may be {@code null})
      * @return the reference, or {@code null} if the input was {@code null}

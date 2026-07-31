@@ -240,6 +240,9 @@ public class ModelingExerciseResource {
         });
         exerciseVersionService.createExerciseVersion(result);
 
+        // Guarantee exam.course is initialized before mapping: a second save() above (competency links) would
+        // otherwise merge result into a detached instance whose exerciseGroup can come back an uninitialized proxy.
+        ensureExamCourseInitialized(result);
         return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + result.getId())).body(ModelingExerciseResponseDTO.of(result));
     }
 
@@ -342,6 +345,9 @@ public class ModelingExerciseResource {
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
+        // Guarantee exam.course is initialized before mapping: save() merges the detached originalExercise, and merge
+        // can resolve the non-cascaded exerciseGroup association to an uninitialized proxy.
+        ensureExamCourseInitialized(persistedExercise);
         return ResponseEntity.ok(ModelingExerciseResponseDTO.of(persistedExercise));
     }
 
@@ -388,6 +394,9 @@ public class ModelingExerciseResource {
             }
         }
 
+        // Guarantee exam.course is initialized before mapping, deterministically rather than relying on the access
+        // check above happening to touch it.
+        ensureExamCourseInitialized(modelingExercise);
         return ResponseEntity.ok().body(ModelingExerciseResponseDTO.of(modelingExercise));
     }
 
@@ -468,6 +477,9 @@ public class ModelingExerciseResource {
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
 
+        // Guarantee exam.course is initialized before mapping: the import service's second save() (competency links)
+        // merges a detached instance whose exerciseGroup can come back an uninitialized proxy.
+        ensureExamCourseInitialized(newModelingExercise);
         return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + newModelingExercise.getId())).body(ModelingExerciseResponseDTO.of(newModelingExercise));
     }
 
@@ -551,6 +563,9 @@ public class ModelingExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedExercise));
         exerciseVersionService.createExerciseVersion(savedExercise);
 
+        // Guarantee exam.course is initialized before mapping: save() merges the detached exercise, and merge can
+        // resolve the non-cascaded exerciseGroup association to an uninitialized proxy.
+        ensureExamCourseInitialized(savedExercise);
         return ResponseEntity.ok(ModelingExerciseResponseDTO.of(savedExercise));
     }
 
@@ -877,6 +892,25 @@ public class ModelingExerciseResource {
             exercise.setExerciseGroup(exerciseGroup);
         }
         return exercise;
+    }
+
+    /**
+     * Ensures {@code exercise.exerciseGroup.exam.course} is initialized before the exercise is mapped to a response
+     * DTO. Management screens build the "Exam" link from {@code exerciseGroup.exam.course.id}; a second
+     * {@code repository.save()} call on an already-persisted exercise merges a detached instance, and JPA merge
+     * resolves non-cascaded to-one associations (such as {@code exerciseGroup}) to a fresh, uninitialized proxy even
+     * though the mapping default is eager. Re-fetching the group here, inside its own transactional repository call,
+     * deterministically hydrates the chain before the DTO mapper (which runs with no active session) touches it, so
+     * this cannot throw a {@code LazyInitializationException}.
+     *
+     * @param exercise the exercise about to be mapped to a {@link ModelingExerciseResponseDTO}
+     */
+    private void ensureExamCourseInitialized(ModelingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class))
+                    .findByIdElseThrow(exercise.getExerciseGroup().getId());
+            exercise.setExerciseGroup(exerciseGroup);
+        }
     }
 
     private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {

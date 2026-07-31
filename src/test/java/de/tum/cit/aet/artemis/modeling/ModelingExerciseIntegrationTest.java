@@ -729,6 +729,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.id());
         assertThat(channelFromDB).isNull();
+
+        // The import response must carry the same exerciseGroup/exam/course wiring as create/update/GET, so the
+        // management detail page can build the "Exam" link instead of navigating to /course-management/undefined/...
+        assertThat(importedExercise.exerciseGroup()).isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam()).as("exam was set correctly").isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam().id()).isEqualTo(exerciseGroup1.getExam().getId());
+        assertThat(importedExercise.exerciseGroup().exam().course()).as("exam course was set correctly").isNotNull();
+        assertThat(importedExercise.exerciseGroup().exam().course().id()).isEqualTo(exerciseGroup1.getExam().getCourse().getId());
     }
 
     @Test
@@ -1698,7 +1706,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
                 response.competencyLinks());
 
-        request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+        ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        // The PUT response must carry the same exerciseGroup.exam.course wiring as the GET above.
+        assertThat(updated.exerciseGroup()).isNotNull();
+        assertThat(updated.exerciseGroup().exam()).isNotNull();
+        assertThat(updated.exerciseGroup().exam().course()).isNotNull();
+        assertThat(updated.exerciseGroup().exam().course().id()).isEqualTo(exerciseGroup.getExam().getCourse().getId());
     }
 
     /**
