@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { expect, fn } from 'storybook/test';
 
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiSelectButtonComponent, TumUiSelectButtonSize } from './tum-ui-select-button.component';
 
 interface IntervalOption {
@@ -40,7 +41,20 @@ const meta = {
         disabled: false,
         changed: fn(),
     },
+    argTypes: {
+        changed: { control: false },
+        options: { control: 'object' },
+        selected: {
+            control: 'inline-radio',
+            options: [undefined, ...OPTIONS.map((option) => option.value)],
+        },
+        size: {
+            control: 'inline-radio',
+            options: [undefined, 'small', 'large'],
+        },
+    },
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [FormsModule],
         }),
@@ -54,7 +68,7 @@ const meta = {
                 setSelected: (nextSelected: string | undefined) => updateArgs({ selected: nextSelected }),
             },
             template: `
-                <span id="interval-label">{{ label }}</span>
+                <span id="interval-label" class="tum-ui-story-label">{{ label }}</span>
                 <tum-ui-select-button
                     aria-labelledby="interval-label"
                     [options]="options"
@@ -119,7 +133,7 @@ export const CustomItemTemplate: Story = {
                 setSelected: (nextSelected: string | undefined) => updateArgs({ selected: nextSelected }),
             },
             template: `
-                <span id="compact-interval-label">{{ label }}</span>
+                <span id="compact-interval-label" class="tum-ui-story-label">{{ label }}</span>
                 <tum-ui-select-button
                     aria-labelledby="compact-interval-label"
                     [options]="options"

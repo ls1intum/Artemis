@@ -23,6 +23,13 @@ const meta = {
         totalRecords: 128,
         disabled: false,
     },
+    argTypes: {
+        page: { control: { type: 'number', min: 0, step: 1 } },
+        pageChange: { control: false },
+        pageSize: { control: { type: 'number', min: 1, step: 1 } },
+        pageSizeChange: { control: false },
+        totalRecords: { control: { type: 'number', min: 0, step: 1 } },
+    },
     render: function Render(args) {
         const [{ page, pageSize }, updateArgs] = useArgs<PaginatorStoryArgs>();
         return {

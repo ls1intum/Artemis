@@ -52,7 +52,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
 
-    /** Suggestions supplied in response to {@link searchRequested}. */
+    /** Suggestions supplied in response to a search request. */
     readonly suggestions = input<readonly unknown[]>([]);
 
     /** Property name used as the visible label for object values. */
@@ -64,10 +64,13 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
 
     readonly disabled = input(false);
 
+    /** Minimum query length before a search request emits. */
     readonly minLength = input(1);
 
+    /** Delay between the latest input and a search request. */
     readonly debounceMs = input(300);
 
+    /** Requests suggestions when the empty input receives focus. */
     readonly completeOnFocus = input(false);
 
     readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
@@ -75,7 +78,9 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     readonly ariaLabel = input<string>();
     readonly removeAriaLabel = input<string>();
     readonly styleClass = input<string>('');
+    /** Message shown when a completed search returns no suggestions. */
     readonly emptyMessage = input<string>();
+    /** Requests suggestions for the current text query. */
     readonly searchRequested = output<TumUiAutoCompleteSearchEvent>();
     readonly optionSelected = output<TumUiAutoCompleteOptionEvent>();
     readonly optionRemoved = output<TumUiAutoCompleteOptionEvent>();
@@ -323,8 +328,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
             return;
         }
         const origin = this.container();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom');
-        this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
     }
 

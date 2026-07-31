@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import dayjs from 'dayjs/esm';
 import { expect, screen, waitForElementToBeRemoved, within } from 'storybook/test';
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiDatePickerComponent } from './tum-ui-date-picker.component';
 
 const meta = {
@@ -16,6 +17,7 @@ const meta = {
             control: false,
         },
     },
+    decorators: [formStoryDecorator],
 } satisfies Meta<TumUiDatePickerComponent>;
 
 export default meta;

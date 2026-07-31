@@ -2,6 +2,7 @@ import { FormsModule } from '@angular/forms';
 import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect, fn, screen, waitForElementToBeRemoved } from 'storybook/test';
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiAutoCompleteComponent } from './tum-ui-autocomplete.component';
 
 const meta = {
@@ -18,14 +19,16 @@ const meta = {
         placeholder: 'Search people',
         suggestions: ['Ada Lovelace', 'Grace Hopper', 'Margaret Hamilton'],
     },
+    argTypes: {
+        debounceMs: { control: { type: 'number', min: 0, step: 50 } },
+        minLength: { control: { type: 'number', min: 0, step: 1 } },
+    },
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [FormsModule],
         }),
     ],
-    parameters: {
-        layout: 'centered',
-    },
 } satisfies Meta<TumUiAutoCompleteComponent>;
 
 export default meta;

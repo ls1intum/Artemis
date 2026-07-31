@@ -32,6 +32,7 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 let nextDatePickerId = 0;
 
+/** Date-and-time field with typed input and an accessible calendar dialog. */
 @Component({
     selector: 'tum-ui-date-picker',
     templateUrl: './tum-ui-date-picker.component.html',
@@ -47,7 +48,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     /**
      * Last committed date. Invalid text remains visible without updating it.
-     * Observe {@link inputValidityChange} when validity must react to uncommitted text.
+     * Observe `inputValidityChange` when validity must react to uncommitted text.
      */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
@@ -60,7 +61,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);
     readonly labelName = input<string>();
     readonly ariaLabel = input<string>();
-    /** Emits text-input validity independently of the external {@link invalid} state. */
+    /** Emits text-input validity independently of the external `invalid` state. */
     readonly inputValidityChange = output<boolean>();
     readonly touch = output<void>();
 
@@ -109,7 +110,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
             }
         });
     }
-    /** Whether the entered text parses successfully and the external {@link invalid} state is clear. */
+    /** Whether the entered text parses successfully and the external `invalid` state is clear. */
     readonly isValid = computed(() => !this.invalid() && this.isInputValid());
 
     protected onInput(raw: string): void {

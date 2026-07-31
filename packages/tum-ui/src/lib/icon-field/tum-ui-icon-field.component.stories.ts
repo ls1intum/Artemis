@@ -2,6 +2,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 import { TumUiIconFieldComponent, TumUiIconFieldPosition } from './tum-ui-icon-field.component';
 
@@ -20,6 +21,7 @@ const meta = {
         iconPosition: 'left',
     },
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [TumUiInputDirective],
         }),

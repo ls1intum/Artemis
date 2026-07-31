@@ -24,6 +24,7 @@ function displayLabel(value: unknown): string | undefined {
     return typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean' ? String(value) : undefined;
 }
 
+/** ControlValueAccessor for choosing one value from a small, persistent option set. */
 @Component({
     selector: 'tum-ui-select-button',
     templateUrl: './tum-ui-select-button.component.html',
@@ -48,6 +49,7 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
     readonly allowEmpty = input(true);
     readonly disabled = input(false);
 
+    /** Optional presentation template; the option remains its implicit context value. */
     readonly itemTemplate = input<TemplateRef<{ $implicit: TumUiSelectButtonOption }>>();
 
     readonly changed = output<unknown>();

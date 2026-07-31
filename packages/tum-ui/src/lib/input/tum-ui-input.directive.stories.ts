@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect } from 'storybook/test';
 
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiInputDirective } from './tum-ui-input.directive';
 import { TumUiInputSize } from './tum-ui-input.variants';
 
@@ -28,6 +29,7 @@ const meta = {
             options: [undefined, 'small', 'large'],
         },
     },
+    decorators: [formStoryDecorator],
     render: (args) => ({
         props: args,
         template: `
@@ -43,7 +45,7 @@ const meta = {
                 [attr.aria-describedby]="tumUiInputInvalid ? 'course-title-error' : null"
             />
             @if (tumUiInputInvalid) {
-                <div id="course-title-error">Enter a course title.</div>
+                <div id="course-title-error" class="tum-ui-story-error" role="alert">Enter a course title.</div>
             }
         `,
     }),
@@ -94,7 +96,7 @@ export const Multiline: Story = {
                 [attr.aria-describedby]="tumUiInputInvalid ? 'course-description-error' : null"
             ></textarea>
             @if (tumUiInputInvalid) {
-                <div id="course-description-error">Enter a course description.</div>
+                <div id="course-description-error" class="tum-ui-story-error" role="alert">Enter a course description.</div>
             }
         `,
     }),

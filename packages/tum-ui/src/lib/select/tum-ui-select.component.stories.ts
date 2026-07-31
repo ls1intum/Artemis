@@ -2,6 +2,7 @@ import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect, fireEvent, fn, screen, waitForElementToBeRemoved } from 'storybook/test';
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiSelectComponent } from './tum-ui-select.component';
 
 const languages = [
@@ -28,10 +29,8 @@ const meta = {
             options: [undefined, 'small', 'large'],
         },
     },
-    parameters: {
-        layout: 'centered',
-    },
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [FormsModule],
         }),

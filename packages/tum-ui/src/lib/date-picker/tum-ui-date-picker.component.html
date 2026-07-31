@@ -82,74 +82,74 @@
         cdkTrapFocus
     >
         <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" [focusOnInit]="true" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
-        <div class="tum:mt-3 tum:flex tum:items-center tum:justify-center tum:gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate">
-            <div class="tum:flex tum:flex-col tum:items-center">
-                <button
-                    type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepHour(1)"
-                    [attr.aria-label]="'tumUi.datePicker.incrementHour' | tumUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <input
-                    #hourInput
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="2"
-                    [value]="displayHour()"
-                    [disabled]="disabled()"
-                    (change)="onHourInput(hourInput)"
-                    (keydown)="onTimeKeydown($event, hourInput, 'hour')"
-                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
-                    [attr.aria-label]="'tumUi.datePicker.hour' | tumUiTranslate"
-                />
-                <button
-                    type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepHour(-1)"
-                    [attr.aria-label]="'tumUi.datePicker.decrementHour' | tumUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
+        <div class="tum:mt-3 tum:flex tum:items-center tum:justify-between tum:gap-4 tum:border-t tum:border-border tum:pt-3">
+            <div class="tum:flex tum:items-center tum:gap-2" role="group" [attr.aria-label]="'tumUi.datePicker.time' | tumUiTranslate">
+                <div class="tum:flex tum:flex-col tum:items-center">
+                    <button
+                        type="button"
+                        class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                        [disabled]="disabled()"
+                        (click)="stepHour(1)"
+                        [attr.aria-label]="'tumUi.datePicker.incrementHour' | tumUiTranslate"
+                    >
+                        <fa-icon [icon]="faChevronUp" />
+                    </button>
+                    <input
+                        #hourInput
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="2"
+                        [value]="displayHour()"
+                        [disabled]="disabled()"
+                        (change)="onHourInput(hourInput)"
+                        (keydown)="onTimeKeydown($event, hourInput, 'hour')"
+                        class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
+                        [attr.aria-label]="'tumUi.datePicker.hour' | tumUiTranslate"
+                    />
+                    <button
+                        type="button"
+                        class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                        [disabled]="disabled()"
+                        (click)="stepHour(-1)"
+                        [attr.aria-label]="'tumUi.datePicker.decrementHour' | tumUiTranslate"
+                    >
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                </div>
+                <span class="tum:pb-0.5 tum:font-semibold tum:text-text">:</span>
+                <div class="tum:flex tum:flex-col tum:items-center">
+                    <button
+                        type="button"
+                        class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                        [disabled]="disabled()"
+                        (click)="stepMinute(1)"
+                        [attr.aria-label]="'tumUi.datePicker.incrementMinute' | tumUiTranslate"
+                    >
+                        <fa-icon [icon]="faChevronUp" />
+                    </button>
+                    <input
+                        #minuteInput
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="2"
+                        [value]="displayMinute()"
+                        [disabled]="disabled()"
+                        (change)="onMinuteInput(minuteInput)"
+                        (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
+                        class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
+                        [attr.aria-label]="'tumUi.datePicker.minute' | tumUiTranslate"
+                    />
+                    <button
+                        type="button"
+                        class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
+                        [disabled]="disabled()"
+                        (click)="stepMinute(-1)"
+                        [attr.aria-label]="'tumUi.datePicker.decrementMinute' | tumUiTranslate"
+                    >
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                </div>
             </div>
-            <span class="tum:pb-0.5 tum:font-semibold tum:text-text">:</span>
-            <div class="tum:flex tum:flex-col tum:items-center">
-                <button
-                    type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepMinute(1)"
-                    [attr.aria-label]="'tumUi.datePicker.incrementMinute' | tumUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <input
-                    #minuteInput
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="2"
-                    [value]="displayMinute()"
-                    [disabled]="disabled()"
-                    (change)="onMinuteInput(minuteInput)"
-                    (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
-                    class="tum:w-9 tum:appearance-none tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1 tum:text-center tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
-                    [attr.aria-label]="'tumUi.datePicker.minute' | tumUiTranslate"
-                />
-                <button
-                    type="button"
-                    class="tum:appearance-none tum:border-0 tum:bg-transparent tum:p-1 tum:text-muted tum:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepMinute(-1)"
-                    [attr.aria-label]="'tumUi.datePicker.decrementMinute' | tumUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-            </div>
-        </div>
-        <div class="tum:mt-3 tum:flex tum:justify-end">
             <tum-ui-button severity="secondary" variant="text" size="small" (clicked)="close()">
                 <span>{{ 'tumUi.datePicker.done' | tumUiTranslate }}</span>
             </tum-ui-button>

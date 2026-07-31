@@ -79,6 +79,18 @@ enough. Use an Angular template only when the public contract requires projectio
 forms, a `TemplateRef`, or compound components. Synchronize controlled template state with
 Storybook args.
 
+The default story must present the component at a realistic consumer width with its accessible name
+and ordinary content. Use a Storybook decorator for presentation context and explicit CSS grid or
+flex layout for multi-element examples; do not rely on incidental inline flow. A story-specific
+wrapper may arrange the example, but must not repair or restyle the component itself.
+
+Controls are for serializable public decisions that a reader can change meaningfully. Give bounded
+values explicit options, disable controls for callbacks, templates, and opaque framework objects,
+and keep small data fixtures editable only when doing so explains the contract. Source JSDoc is the
+canonical description for non-obvious inputs and outputs; do not duplicate generated API tables in
+story prose. For select-like overlays, verify trigger-width alignment. Check compact, narrow, dark,
+reduced-motion, and right-to-left behavior whenever those conditions affect the component.
+
 Add a `play` function for browser-only behavior such as focus, keyboard navigation, overlays, or
 dismissal. Hide a tested story from the sidebar and AutoDocs only when the interaction is valuable
 but its final state is not a useful reference; do not create hidden duplicates of unit tests. Query

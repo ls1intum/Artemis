@@ -42,6 +42,7 @@ export default definePreview({
             toc: true,
         },
         controls: {
+            expanded: true,
             sort: 'requiredFirst',
         },
         layout: 'centered',

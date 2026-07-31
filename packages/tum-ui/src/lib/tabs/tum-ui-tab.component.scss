@@ -5,18 +5,14 @@
     flex-shrink: 0;
     gap: calc(var(--tumaet-ui-spacing) * 2);
     padding: calc(var(--tumaet-ui-spacing) * 4) calc(var(--tumaet-ui-spacing) * 4.5);
-    margin: 0 0 -1px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
     background: transparent;
-    border-style: solid;
-    border-width: 0 0 1px;
     outline-color: transparent;
     transition:
         color 0.2s,
-        border-color 0.2s,
         background 0.2s,
         outline-color 0.2s;
 }

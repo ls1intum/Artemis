@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Directionality } from '@angular/cdk/bidi';
+import { vi } from 'vitest';
 import { TumUiOverlayPlacement, TumUiOverlayService } from './tum-ui-overlay.service';
 
 describe('TumUiOverlayService', () => {
@@ -29,6 +30,14 @@ describe('TumUiOverlayService', () => {
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         expect(overlayRef).toBeTruthy();
         expect(overlayRef.hasAttached()).toBe(false);
+        overlayRef.dispose();
+    });
+
+    it('can match the overlay width to its origin', () => {
+        vi.spyOn(origin, 'getBoundingClientRect').mockReturnValue({ width: 288 } as DOMRect);
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
+
+        expect(overlayRef.getConfig().width).toBe(288);
         overlayRef.dispose();
     });
 

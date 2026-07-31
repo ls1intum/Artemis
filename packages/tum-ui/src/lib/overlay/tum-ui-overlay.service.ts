@@ -4,6 +4,11 @@ import { Directionality } from '@angular/cdk/bidi';
 
 export type TumUiOverlayPlacement = 'top' | 'bottom' | 'left' | 'right';
 
+interface TumUiConnectedOverlayOptions {
+    hasBackdrop?: boolean;
+    matchOriginWidth?: boolean;
+}
+
 const OFFSET = 8;
 
 const VERTICAL_POSITIONS: Record<'top' | 'bottom', ConnectedPosition[]> = {
@@ -35,13 +40,15 @@ export class TumUiOverlayService {
         return pos.overlayY === 'bottom' ? 'top' : 'bottom';
     }
 
-    createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, options: { hasBackdrop?: boolean } = {}): OverlayRef {
+    createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, options: TumUiConnectedOverlayOptions = {}): OverlayRef {
+        const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
         return this.overlay.create({
             positionStrategy: this.positionStrategy(origin, placement),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: options.hasBackdrop ?? false,
             backdropClass: 'cdk-overlay-transparent-backdrop',
             direction: this.directionality,
+            width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
         });
     }
 

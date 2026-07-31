@@ -36,7 +36,7 @@ export class TumUiTabComponent {
     protected readonly panelId = computed(() => this.tabsService.panelId(this.value()));
 
     protected readonly hostClasses = computed(() => {
-        const state = this.active() ? 'tum:text-accent tum:border-b-primary' : 'tum:border-b-border tum:text-muted tum:hover:text-text';
+        const state = this.active() ? 'tum:text-accent' : 'tum:text-muted tum:hover:text-text';
         const disabled = this.disabled ? 'tum-ui-tab-disabled' : '';
         return `tum-ui-tab tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus ${state} ${disabled}`.trim();
     });

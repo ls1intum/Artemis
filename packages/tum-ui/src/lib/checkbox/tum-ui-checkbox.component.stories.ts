@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { fn } from 'storybook/test';
 
+import { inlineControlStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiCheckboxChangeEvent, TumUiCheckboxComponent } from './tum-ui-checkbox.component';
 
 interface CheckboxStoryArgs {
@@ -21,6 +22,10 @@ const meta = {
         disabled: false,
         changed: fn(),
     },
+    argTypes: {
+        changed: { control: false },
+    },
+    decorators: [inlineControlStoryDecorator],
     render: function Render(args) {
         const [{ checked }, updateArgs] = useArgs<CheckboxStoryArgs>();
         return {

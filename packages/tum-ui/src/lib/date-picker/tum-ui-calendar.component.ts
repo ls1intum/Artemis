@@ -84,15 +84,14 @@ export class TumUiCalendarComponent {
     }
 
     protected dayButtonClasses(day: dayjs.Dayjs): string {
-        const base =
-            'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:hover:bg-hover-background tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus';
+        const base = 'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus';
         let color: string;
         if (this.isSelected(day)) {
             color = 'tum:bg-primary tum:text-primary-contrast';
         } else if (this.isOtherMonth(day)) {
-            color = 'tum:bg-transparent tum:text-muted';
+            color = 'tum:bg-transparent tum:text-muted tum:hover:bg-hover-background';
         } else {
-            color = 'tum:bg-transparent tum:text-text';
+            color = 'tum:bg-transparent tum:text-text tum:hover:bg-hover-background';
         }
         const today = this.isToday(day) && !this.isSelected(day) ? 'tum:ring-1 tum:ring-primary' : '';
         return `${base} ${color} ${today}`.trim();

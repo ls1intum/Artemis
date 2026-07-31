@@ -35,16 +35,18 @@
     </button>
 
     @if (showRowsPerPage()) {
-        <select
-            class="tum:ms-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-text"
-            [ngModel]="pageSize()"
-            [disabled]="disabled()"
-            (ngModelChange)="onPageSizeChange($event)"
-            [attr.aria-label]="'tumUi.paginator.rowsPerPage' | tumUiTranslate"
-        >
-            @for (option of pageSizeOptions(); track option) {
-                <option [ngValue]="option">{{ option }}</option>
-            }
-        </select>
+        <label class="tum:ms-2 tum:flex tum:items-center tum:gap-2 tum:whitespace-nowrap">
+            <span>{{ 'tumUi.paginator.rowsPerPage' | tumUiTranslate }}</span>
+            <select
+                class="tum:h-9 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:text-sm tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
+                [ngModel]="pageSize()"
+                [disabled]="disabled()"
+                (ngModelChange)="onPageSizeChange($event)"
+            >
+                @for (option of pageSizeOptions(); track option) {
+                    <option [ngValue]="option">{{ option }}</option>
+                }
+            </select>
+        </label>
     }
 </nav>

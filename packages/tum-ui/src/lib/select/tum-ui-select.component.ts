@@ -222,8 +222,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         const initialIndex = selectedIndex >= 0 ? selectedIndex : this.options().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
-        this.overlayRef.updateSize({ minWidth: origin.nativeElement.getBoundingClientRect().width });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true, matchOriginWidth: true });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
         this.overlayRef.backdropClick().subscribe(() => this.close());

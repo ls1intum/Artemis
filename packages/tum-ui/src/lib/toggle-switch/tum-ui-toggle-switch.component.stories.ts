@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { fn } from 'storybook/test';
 
+import { inlineControlStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiToggleSwitchComponent } from './tum-ui-toggle-switch.component';
 
 interface ToggleSwitchStoryArgs {
@@ -22,7 +23,11 @@ const meta = {
         disabled: false,
         changed: fn(),
     },
+    argTypes: {
+        changed: { control: false },
+    },
     decorators: [
+        inlineControlStoryDecorator,
         moduleMetadata({
             imports: [FormsModule],
         }),

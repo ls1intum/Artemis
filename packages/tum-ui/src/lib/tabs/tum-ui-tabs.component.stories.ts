@@ -26,6 +26,13 @@ const meta = {
         value: 'overview',
         valueChange: fn(),
     },
+    argTypes: {
+        value: {
+            control: 'inline-radio',
+            options: ['overview', 'exercises', 'settings'],
+        },
+        valueChange: { control: false },
+    },
     parameters: {
         layout: 'padded',
     },

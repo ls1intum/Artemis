@@ -53,6 +53,55 @@ test('keeps tab navigation inside a compact viewport and reveals the focused tab
     await expect.poll(async () => tabList.evaluate((element) => element.scrollLeft)).toBeGreaterThan(initialScrollPosition);
 });
 
+test('aligns select-like overlays to their trigger', async ({ page }) => {
+    for (const story of [
+        { id: 'forms-autocomplete--default', name: 'Assignee', origin: '.tum-ui-autocomplete-container', panel: '.tum-ui-autocomplete-panel' },
+        { id: 'forms-select--default', name: 'Course language', origin: '.tum-ui-select-trigger', panel: '.tum-ui-select-panel' },
+    ]) {
+        await page.goto(`./iframe.html?id=${story.id}&viewMode=story`);
+        const trigger = page.getByRole('combobox', { name: story.name });
+        await trigger.click();
+        const origin = page.locator(story.origin);
+        const panel = page.locator(story.panel);
+        await expect(panel).toBeVisible();
+        await expect.poll(async () => (await panel.boundingBox())?.width).toBe((await origin.boundingBox())?.width);
+    }
+});
+
+test('keeps selected dates visually selected on hover', async ({ page }) => {
+    await page.goto('./iframe.html?id=forms-date-picker--default&viewMode=story');
+    await page.getByRole('button', { name: 'Open calendar' }).click();
+    const selectedDay = page.getByRole('gridcell', { selected: true }).locator('button');
+    const selectedBackground = await selectedDay.evaluate((element) => getComputedStyle(element).backgroundColor);
+
+    await selectedDay.hover();
+    await expect(selectedDay).toHaveCSS('background-color', selectedBackground);
+});
+
+test('renders the initial radio selection without a transient empty state', async ({ page }) => {
+    await page.goto('./iframe.html?id=forms-radio-button--default&viewMode=story');
+    const checked = page.getByRole('radio', { name: 'Weekly' });
+    const box = checked.locator('xpath=following-sibling::*[1]');
+    const uncheckedBox = page.getByRole('radio', { name: 'Daily' }).locator('xpath=following-sibling::*[1]');
+    const marker = box.locator('.tum-ui-radio-button-icon');
+
+    await expect(checked).toBeChecked();
+    expect(await box.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(
+        await uncheckedBox.evaluate((element) => getComputedStyle(element).backgroundColor),
+    );
+    await expect(marker).toHaveCSS('visibility', 'visible');
+});
+
+test('positions the tab indicator under the active tab', async ({ page }) => {
+    await page.goto('./iframe.html?id=navigation-tabs--default&viewMode=story');
+    const indicator = page.locator('.tum-ui-tab-indicator');
+    const settings = page.getByRole('tab', { name: 'Settings' });
+
+    await settings.click();
+    await expect.poll(async () => Math.round((await indicator.boundingBox())?.width ?? 0)).toBe(Math.round((await settings.boundingBox())?.width ?? 0));
+    await expect.poll(async () => Math.round((await indicator.boundingBox())?.x ?? 0)).toBe(Math.round((await settings.boundingBox())?.x ?? 0));
+});
+
 test('keeps input-group seams logical in both text directions', async ({ page }) => {
     await page.goto('./iframe.html?id=forms-input-group--default&viewMode=story');
     const addons = page.locator('tum-ui-input-group-addon');

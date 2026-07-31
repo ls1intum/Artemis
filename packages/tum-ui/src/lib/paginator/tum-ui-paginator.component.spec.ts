@@ -67,6 +67,7 @@ describe('TumUiPaginatorComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
         const select: HTMLSelectElement = fixture.debugElement.query(By.css('select')).nativeElement;
+        expect(select.labels?.[0]?.textContent).toContain('Rows per page');
         expect(select.selectedOptions[0].textContent).toBe('50');
         select.value = Array.from(select.options).find((option) => option.textContent === '20')!.value;
         select.dispatchEvent(new Event('change'));

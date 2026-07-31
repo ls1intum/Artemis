@@ -40,8 +40,6 @@
         0 0 transparent,
         0 1px 2px 0 color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     transition:
-        background 0.2s,
-        border-color 0.2s,
         box-shadow 0.2s,
         outline-color 0.2s;
 
@@ -60,16 +58,10 @@
     width: calc(var(--tumaet-ui-spacing) * 3);
     height: calc(var(--tumaet-ui-spacing) * 3);
     border-radius: 50%;
-    backface-visibility: hidden;
-    transform: translateZ(0) scale(0.1);
     visibility: hidden;
-    transition:
-        transform 0.2s,
-        background 0.2s;
 }
 
 :host:has(.tum-ui-radio-button-input:checked) .tum-ui-radio-button-icon {
-    transform: translateZ(0) scale(1);
     visibility: visible;
 }
 
@@ -80,12 +72,6 @@
 :host:has(.tum-ui-radio-button-input:focus-visible) .tum-ui-radio-button-box {
     outline: 2px solid var(--tumaet-ui-focus-color);
     outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .tum-ui-radio-button-icon {
-        transition-property: background;
-    }
 }
 
 @media (forced-colors: active) {

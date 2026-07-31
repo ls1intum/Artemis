@@ -1,6 +1,7 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 import { TumUiInputGroupAddonComponent } from './tum-ui-input-group-addon.component';
 import { TumUiInputGroupComponent } from './tum-ui-input-group.component';
@@ -26,6 +27,7 @@ const meta = {
         suffix: 'EUR',
     },
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [TumUiInputDirective, TumUiInputGroupAddonComponent],
         }),

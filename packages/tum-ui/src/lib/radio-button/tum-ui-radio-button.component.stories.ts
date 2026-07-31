@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { expect, fn, waitFor } from 'storybook/test';
 
+import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumUiRadioButtonComponent, TumUiRadioButtonSelectEvent } from './tum-ui-radio-button.component';
 
 interface RadioOption {
@@ -29,6 +30,7 @@ const meta = {
     title: 'Forms/Radio Button',
     component: TumUiRadioButtonComponent,
     decorators: [
+        formStoryDecorator,
         moduleMetadata({
             imports: [FormsModule],
         }),
@@ -47,6 +49,9 @@ const meta = {
         selectedValue: {
             control: 'inline-radio',
             options: OPTIONS.map((option) => option.value),
+        },
+        selected: {
+            control: false,
         },
     },
     render: function Render(args) {
