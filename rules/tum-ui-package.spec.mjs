@@ -258,16 +258,17 @@ describe('@tumaet/ui-angular integration contract', () => {
 
     it('keeps the package private and declares its stylesheet subpath', () => {
         expect(packageJson.private).toBe(true);
-        expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'themes.css', 'tailwind-theme.css', 'README.md', 'LICENSE']));
-        expect(packageJson.sideEffects).toEqual(expect.arrayContaining(['./styles.css', './themes.css', './tailwind-theme.css']));
+        expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'themes.css', 'README.md', 'LICENSE']));
+        expect(packageJson.files).not.toContain('tailwind-theme.css');
+        expect(packageJson.sideEffects).toEqual(['./styles.css', './themes.css']);
         expect(packageJson.exports).toMatchObject({
             './styles.css': './styles.css',
             './themes.css': './themes.css',
-            './tailwind-theme.css': './tailwind-theme.css',
         });
+        expect(packageJson.exports).not.toHaveProperty('./tailwind-theme.css');
         expect(productionBuild.assets).toContain('styles.css');
         expect(productionBuild.assets).toContain('themes.css');
-        expect(productionBuild.assets).toContain('tailwind-theme.css');
+        expect(productionBuild.assets).not.toContain('tailwind-theme.css');
     });
 
     it('keeps production on the built entry point and development on the public source entry point', () => {
@@ -297,6 +298,11 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageTailwind).toContain("@source './src'");
         expect(packageTailwind).toContain("@source not './src/**/*.spec.ts'");
         expect(packageTailwind).toContain("@source not './src/**/*.stories.ts'");
+        expect(packageTailwindTheme).toMatch(/--breakpoint-sm:\s*40rem/);
+        expect(packageTailwindTheme).toMatch(/--breakpoint-md:\s*48rem/);
+        expect(packageTailwindTheme).toMatch(/--breakpoint-lg:\s*64rem/);
+        expect(packageTailwindTheme).toMatch(/--breakpoint-xl:\s*80rem/);
+        expect(packageTailwindTheme).toMatch(/--breakpoint-2xl:\s*96rem/);
     });
 
     it('prefixes every static template class', () => {
@@ -311,42 +317,34 @@ describe('@tumaet/ui-angular integration contract', () => {
     });
 
     it('keeps the package theme namespaced and fully mapped by Artemis', () => {
-        const consumedProperties = [...`${packageRuntimeSources}\n${packageTailwindTheme}`.matchAll(/var\((--[\w-]+)/g)].map((match) => match[1]);
-        const packageProperties = [...new Set([...packageStyles.matchAll(/--artemis-[\w-]+/g)].map((match) => match[0]))]
-            .filter((property) => !property.startsWith('--artemis-alert-'))
-            .sort();
-        const storybookProperties = [...new Set([...storybookTheme.matchAll(/--artemis-[\w-]+/g)].map((match) => match[0]))]
-            .filter((property) => !property.startsWith('--artemis-alert-'))
-            .sort();
-        const tailwindProperties = [...new Set([...packageTailwindTheme.matchAll(/var\((--artemis-[\w-]+)/g)].map((match) => match[1]))].sort();
-        const primitiveHostTokens = [];
+        const consumedProperties = [
+            ...new Set([...`${packageRuntimeSources}\n${packageTailwind}\n${packageTailwindTheme}`.matchAll(/var\((--tumaet-ui-[\w-]+)/g)].map((match) => match[1])),
+        ].sort();
+        const packageProperties = [...new Set([...packageStyles.matchAll(/--tumaet-ui-[\w-]+/g)].map((match) => match[0]))].sort();
+        const referenceProperties = [...new Set([...storybookTheme.matchAll(/--tumaet-ui-[\w-]+/g)].map((match) => match[0]))].sort();
+        const tailwindProperties = [...new Set([...packageTailwindTheme.matchAll(/var\((--tumaet-ui-[\w-]+)/g)].map((match) => match[1]))].sort();
         const hostPropertyNames = [];
         const hostTokens = {};
-        postcss.parse(hostTailwind).walkDecls(/^--artemis-/, (declaration) => {
-            if (!declaration.prop.startsWith('--artemis-alert-')) {
-                hostPropertyNames.push(declaration.prop);
-            }
-            if (declaration.prop.startsWith('--artemis-state-')) {
+        postcss.parse(hostTailwind).walkDecls(/^--tumaet-ui-/, (declaration) => {
+            hostPropertyNames.push(declaration.prop);
+            if (declaration.prop.startsWith('--tumaet-ui-state-')) {
                 hostTokens[declaration.prop] = declaration.value;
-                if (/var\(--p-/.test(declaration.value)) {
-                    primitiveHostTokens.push(`${declaration.prop}: ${declaration.value}`);
-                }
             }
         });
         const hostProperties = [...new Set(hostPropertyNames)].sort();
 
-        expect(consumedProperties.filter((property) => !property.startsWith('--artemis-'))).toEqual([]);
+        expect(packageStyles).not.toContain('--artemis-');
         expect(packageRuntimeSources).not.toContain('tum:dark:');
         expect(packageRuntimeSources).not.toContain(":host-context(html[data-theme='dark'])");
-        expect(storybookProperties).toEqual(packageProperties);
+        expect(consumedProperties).toEqual(packageProperties);
+        expect(referenceProperties).toEqual(packageProperties);
         expect(hostProperties).toEqual(packageProperties);
-        expect(tailwindProperties).toEqual(packageProperties);
-        expect(primitiveHostTokens).toEqual([]);
-        expect(hostTailwind).toContain("@import '../../../packages/tum-ui/tailwind-theme.css'");
+        expect(tailwindProperties.every((property) => packageProperties.includes(property))).toBe(true);
+        expect(hostTailwind).not.toContain('packages/tum-ui/tailwind-theme.css');
         for (const state of ['danger', 'success', 'warning', 'info']) {
-            expect(hostTokens[`--artemis-state-${state}`]).toContain(`var(--artemis-alert-${state}-color`);
-            expect(hostTokens[`--artemis-state-${state}-contrast`]).toContain(`var(--artemis-alert-${state}-background`);
-            expect(hostTokens[`--artemis-state-${state}-foreground`]).toContain(`var(--artemis-alert-${state}-color`);
+            expect(hostTokens[`--tumaet-ui-state-${state}`]).toContain(`var(--artemis-alert-${state}-color`);
+            expect(hostTokens[`--tumaet-ui-state-${state}-contrast`]).toContain(`var(--artemis-alert-${state}-background`);
+            expect(hostTokens[`--tumaet-ui-state-${state}-foreground`]).toContain(`var(--artemis-alert-${state}-color`);
         }
     });
 
@@ -385,17 +383,20 @@ describe('@tumaet/ui-angular integration contract', () => {
             dark: customProperties("[data-theme='dark']"),
         };
         const pairs = [
-            ['--artemis-primary-contrast-color', '--artemis-primary-color', 4.5],
-            ['--artemis-accent-color', '--artemis-content-background', 4.5],
-            ['--artemis-text-color', '--artemis-content-background', 4.5],
-            ['--artemis-muted-color', '--artemis-content-background', 4.5],
-            ['--artemis-muted-color', '--artemis-control-background', 4.5],
-            ['--artemis-highlight-color', '--artemis-highlight-background', 4.5],
-            ['--artemis-contrast-color', '--artemis-contrast-background', 4.5],
-            ['--artemis-tooltip-color', '--artemis-tooltip-background', 4.5],
-            ['--artemis-control-border-color', '--artemis-control-background', 3],
-            ['--artemis-control-border-hover-color', '--artemis-control-background', 3],
-            ...['danger', 'success', 'warning', 'info'].map((state) => [`--artemis-state-${state}-contrast`, `--artemis-state-${state}`, 4.5]),
+            ['--tumaet-ui-primary-contrast-color', '--tumaet-ui-primary-color', 4.5],
+            ['--tumaet-ui-accent-color', '--tumaet-ui-content-background', 4.5],
+            ['--tumaet-ui-text-color', '--tumaet-ui-content-background', 4.5],
+            ['--tumaet-ui-muted-color', '--tumaet-ui-content-background', 4.5],
+            ['--tumaet-ui-muted-color', '--tumaet-ui-control-background', 4.5],
+            ['--tumaet-ui-highlight-color', '--tumaet-ui-highlight-background', 4.5],
+            ['--tumaet-ui-contrast-color', '--tumaet-ui-contrast-background', 4.5],
+            ['--tumaet-ui-tooltip-color', '--tumaet-ui-tooltip-background', 4.5],
+            ['--tumaet-ui-control-border-color', '--tumaet-ui-control-background', 3],
+            ['--tumaet-ui-control-border-hover-color', '--tumaet-ui-control-background', 3],
+            ['--tumaet-ui-focus-color', '--tumaet-ui-content-background', 3],
+            ['--tumaet-ui-focus-color', '--tumaet-ui-control-background', 3],
+            ['--tumaet-ui-focus-color', '--tumaet-ui-overlay-background', 3],
+            ...['danger', 'success', 'warning', 'info'].map((state) => [`--tumaet-ui-state-${state}-contrast`, `--tumaet-ui-state-${state}`, 4.5]),
         ];
 
         for (const [theme, properties] of Object.entries(themes)) {

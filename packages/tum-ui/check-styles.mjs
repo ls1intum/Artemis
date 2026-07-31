@@ -22,6 +22,9 @@ const errors = [];
 if (css.includes('--tw-')) {
     errors.push('an unnamespaced Tailwind custom property remains');
 }
+if (css.includes('--artemis-')) {
+    errors.push('the package stylesheet references an Artemis-owned custom property');
+}
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
 stylesheet.walkAtRules((atRule) => {
@@ -64,14 +67,35 @@ function declarationValue(rule, property) {
 }
 
 const contrastRule = ruleFor('tum:text-primary-contrast');
-if (declarationValue(contrastRule, 'color') !== 'var(--artemis-primary-contrast-color)') {
+if (declarationValue(contrastRule, 'color') !== 'var(--tumaet-ui-primary-contrast-color)') {
     errors.push('the primary contrast selector does not use its package token');
 }
 const controlBackgroundRule = ruleFor('tum:bg-control-background');
-if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--artemis-control-background)') {
+if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tumaet-ui-control-background)') {
     errors.push('the control background selector does not use its semantic package token');
 }
-if (css.includes('--artemis-surface-')) {
+const buttonFontRule = ruleFor('tum-ui-btn');
+if (
+    declarationValue(buttonFontRule, 'font-family') !== 'var(--tumaet-ui-font-family)' ||
+    declarationValue(buttonFontRule, 'font-size') !== 'var(--tumaet-ui-font-size-base)' ||
+    declarationValue(buttonFontRule, 'line-height') !== 'var(--tumaet-ui-line-height-base)'
+) {
+    errors.push('package hosts do not use the package typography contract');
+}
+let nativeControlsInheritTypography = false;
+stylesheet.walkDecls('font', (declaration) => {
+    if (declaration.value === 'inherit' && declaration.parent.selector.includes('tum-ui-')) {
+        nativeControlsInheritTypography = true;
+    }
+});
+if (!nativeControlsInheritTypography) {
+    errors.push('native package controls do not inherit package typography');
+}
+const focusRule = ruleFor('tum:focus-visible:outline-focus');
+if (declarationValue(focusRule, 'outline-color') !== 'var(--tumaet-ui-focus-color)') {
+    errors.push('the focus selector does not use its semantic package token');
+}
+if (css.includes('--tumaet-ui-surface-')) {
     errors.push('the compiled stylesheet exposes a primitive surface token');
 }
 if ([...compiledClasses].some((className) => className.startsWith('tum:dark:'))) {
@@ -100,7 +124,7 @@ stylesheet.walkRules((rule) => {
                 errors.push(`global selector ${rule.selector} sets ${declaration.prop}`);
             }
         });
-    } else if (selectorClasses.length === 0) {
+    } else if (selectorClasses.length === 0 && !rule.selector.includes('tum-ui-')) {
         errors.push(`unexpected element selector ${rule.selector}`);
     }
 });
@@ -120,8 +144,8 @@ stylesheet.walkDecls(/^--tum-animate-/, (declaration) => {
 if (
     manifest.exports?.['./styles.css'] !== './styles.css' ||
     manifest.exports?.['./themes.css'] !== './themes.css' ||
-    manifest.exports?.['./tailwind-theme.css'] !== './tailwind-theme.css' ||
-    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css","./tailwind-theme.css"]'
+    manifest.exports?.['./tailwind-theme.css'] ||
+    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css"]'
 ) {
     errors.push('the built manifest does not expose the stylesheet and theme contracts');
 }

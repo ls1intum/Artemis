@@ -12,9 +12,9 @@
 }
 
 :host[data-position='right'] .tum-ui-input-icon {
-    inset-inline-end: 0.75rem;
+    inset-inline-end: calc(var(--tumaet-ui-spacing) * 3);
 }
 
 :host:not([data-position='right']) .tum-ui-input-icon {
-    inset-inline-start: 0.75rem;
+    inset-inline-start: calc(var(--tumaet-ui-spacing) * 3);
 }

@@ -6,6 +6,66 @@
 @source not './src/**/*.spec.ts';
 @source not './src/**/*.stories.ts';
 
+:where(
+    tum-ui-autocomplete,
+    tum-ui-button,
+    tum-ui-button-group,
+    tum-ui-calendar,
+    tum-ui-card,
+    tum-ui-checkbox,
+    tum-ui-chip,
+    tum-ui-date-picker,
+    tum-ui-dialog,
+    tum-ui-icon-field,
+    tum-ui-input-group,
+    tum-ui-input-group-addon,
+    tum-ui-message,
+    tum-ui-paginator,
+    tum-ui-panel,
+    tum-ui-progress-bar,
+    tum-ui-progress-spinner,
+    tum-ui-radio-button,
+    tum-ui-select,
+    tum-ui-select-button,
+    tum-ui-tab,
+    tum-ui-tab-list,
+    tum-ui-tab-panel,
+    tum-ui-tab-panels,
+    tum-ui-table,
+    tum-ui-table-virtual-scroll,
+    tum-ui-tabs,
+    tum-ui-tag,
+    tum-ui-toggle-switch,
+    tum-ui-tooltip-content,
+    .tum-ui-btn,
+    .tum-ui-input,
+    .tum-ui-table
+) {
+    font-family: var(--tumaet-ui-font-family);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+:where(
+        tum-ui-autocomplete,
+        tum-ui-button,
+        tum-ui-calendar,
+        tum-ui-checkbox,
+        tum-ui-chip,
+        tum-ui-date-picker,
+        tum-ui-dialog,
+        tum-ui-paginator,
+        tum-ui-panel,
+        tum-ui-radio-button,
+        tum-ui-select,
+        tum-ui-select-button,
+        tum-ui-table,
+        tum-ui-toggle-switch
+    )
+    :where(button, input, select, textarea) {
+    font: inherit;
+}
+
 .tum-ui-button-group {
     display: inline-flex;
 }

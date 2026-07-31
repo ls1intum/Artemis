@@ -16,56 +16,67 @@ import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 
 Deep imports are not supported.
 
-Configure the host bundler to load the precompiled stylesheet once, globally, after resets and
-framework styles. For an Angular CLI application:
+For a complete light and dark default theme, load the reference theme and precompiled component
+stylesheet once, globally, after resets and framework styles:
 
 ```json
 {
-    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.scss", "@tumaet/ui-angular/themes.css", "@tumaet/ui-angular/styles.css"]
 }
 ```
 
-Every component must inherit valid values for the Artemis semantic custom properties:
+Set `data-theme="dark"` on the document element to activate the dark reference theme. The theme
+also sets the matching `color-scheme` and a system font stack. No Tailwind dependency,
+configuration, or package source scanning is required.
 
-- brand: `--artemis-primary-color`, `--artemis-primary-contrast-color`,
-  `--artemis-accent-color`;
-- text: `--artemis-text-color`, `--artemis-text-hover-color`, `--artemis-muted-color`,
-  `--artemis-disabled-color`;
-- backgrounds: `--artemis-content-background`, `--artemis-control-background`,
-  `--artemis-overlay-background`, `--artemis-hover-background`, `--artemis-disabled-background`;
-- borders: `--artemis-border-color`, `--artemis-control-border-color`,
-  `--artemis-control-border-hover-color`;
-- selection: `--artemis-highlight-color`, `--artemis-highlight-background`,
-  `--artemis-highlight-focus-background`;
-- states: `--artemis-state-{danger,success,warning,info}` and each corresponding
-  `--artemis-state-*-contrast` and `--artemis-state-*-foreground`;
-- specialized roles: `--artemis-contrast-background`, `--artemis-contrast-color`,
-  `--artemis-table-striped-background`, `--artemis-tooltip-background`,
-  `--artemis-tooltip-color`.
+## Custom theme
 
-The values describe the active theme and must change with it. Contrast tokens must remain readable
+To integrate an application theme, omit `themes.css`, load `styles.css`, and define every
+`--tumaet-ui-*` property below where it can reach package components and overlay content. Defining
+them on the document element is the safest default. Do not load the reference theme and a custom
+theme together.
+
+Foundations:
+
+- spacing: `--tumaet-ui-spacing`;
+- type: `--tumaet-ui-font-family`, `--tumaet-ui-font-size-{xs,sm,base,lg,xl}`, and the
+  corresponding `--tumaet-ui-line-height-*` properties;
+- shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
+- elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
+- focus: `--tumaet-ui-focus-color`.
+
+Colors:
+
+- brand: `--tumaet-ui-primary-color`, `--tumaet-ui-primary-contrast-color`,
+  `--tumaet-ui-accent-color`;
+- text: `--tumaet-ui-text-color`, `--tumaet-ui-text-hover-color`, `--tumaet-ui-muted-color`,
+  `--tumaet-ui-disabled-color`;
+- backgrounds: `--tumaet-ui-content-background`, `--tumaet-ui-control-background`,
+  `--tumaet-ui-overlay-background`, `--tumaet-ui-hover-background`, `--tumaet-ui-disabled-background`;
+- borders: `--tumaet-ui-border-color`, `--tumaet-ui-control-border-color`,
+  `--tumaet-ui-control-border-hover-color`;
+- selection: `--tumaet-ui-highlight-color`, `--tumaet-ui-highlight-background`,
+  `--tumaet-ui-highlight-focus-background`;
+- states: `--tumaet-ui-state-{danger,success,warning,info}` and each corresponding
+  `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
+- specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
+  `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
+  `--tumaet-ui-tooltip-color`.
+
+Color values must remain valid for each active color scheme. Contrast tokens must remain readable
 on their matching background. Primary is the brand fill; accent is the accessible brand foreground
-for content and controls. The package exposes semantic roles rather than a numbered color ramp.
-
-Applications that do not provide the token contract can load the reference theme before the
-component stylesheet:
-
-```json
-{
-    "styles": ["@tumaet/ui-angular/themes.css", "@tumaet/ui-angular/styles.css"]
-}
-```
-
-Set `data-theme="dark"` on the document element to activate the dark reference theme. Artemis maps
-the same contract directly to its existing light and dark design tokens instead.
-
-Tailwind hosts can also import `@tumaet/ui-angular/tailwind-theme.css` to expose the same semantic
-tokens through their own unprefixed utilities.
+for content and controls. Each state token is a solid fill or border, its `-contrast` token is text
+on that fill, and its `-foreground` token is text on content or a tinted state surface. Focus must
+remain distinguishable from adjacent content and control surfaces. The package exposes semantic
+roles rather than a numbered color ramp. Artemis maps the package contract to its existing
+foundations and light and dark color roles in its own stylesheet.
 
 The component stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and
-does not depend on the host's source scanner. The prefix is internal; semantic utility names after
-it match the shared Tailwind theme. Theme changes flow through the custom properties, and package
-components do not contain light/dark palette branches.
+does not depend on the host's source scanner. The prefix and package Tailwind configuration are
+internal implementation details. Theme changes flow through the custom properties, and package
+components do not contain light/dark palette branches. Responsive component thresholds are
+package-owned compile-time values at 40rem, 48rem, 64rem, 80rem, and 96rem; they do not follow a
+host's Tailwind breakpoints.
 
 `styleClass` inputs append classes already defined by the host; they do not cause the package
 Tailwind build to generate utilities. Use them for non-conflicting layout hooks. Prefer component

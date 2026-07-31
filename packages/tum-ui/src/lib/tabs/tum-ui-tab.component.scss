@@ -3,8 +3,8 @@
     align-items: center;
     position: relative;
     flex-shrink: 0;
-    gap: 0.5rem;
-    padding: 1rem 1.125rem;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 4) calc(var(--tumaet-ui-spacing) * 4.5);
     margin: 0 0 -1px;
     font-weight: 600;
     white-space: nowrap;

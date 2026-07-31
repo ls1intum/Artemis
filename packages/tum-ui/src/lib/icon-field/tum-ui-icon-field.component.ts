@@ -25,7 +25,7 @@ export class TumUiIconFieldComponent {
     private readonly field = contentChild(TumUiInputDirective, { read: ElementRef });
 
     private readonly iconSidePadding = computed<{ side: 'padding-inline-start' | 'padding-inline-end'; value: string } | undefined>(() =>
-        this.icon() ? { side: this.iconPosition() === 'right' ? 'padding-inline-end' : 'padding-inline-start', value: '2.5rem' } : undefined,
+        this.icon() ? { side: this.iconPosition() === 'right' ? 'padding-inline-end' : 'padding-inline-start', value: 'calc(var(--tumaet-ui-spacing) * 10)' } : undefined,
     );
 
     constructor() {

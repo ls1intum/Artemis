@@ -2,7 +2,7 @@
     display: inline-flex;
     vertical-align: bottom;
     user-select: none;
-    border-radius: 0.375rem;
+    border-radius: var(--tumaet-ui-radius-md);
     outline-color: transparent;
 }
 
@@ -12,8 +12,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
     font-weight: 500;
     line-height: 1.25;
     white-space: nowrap;
@@ -32,13 +32,13 @@
 
 .tum-ui-select-button-option:first-child {
     border-inline-start-width: 1px;
-    border-start-start-radius: 0.375rem;
-    border-end-start-radius: 0.375rem;
+    border-start-start-radius: var(--tumaet-ui-radius-md);
+    border-end-start-radius: var(--tumaet-ui-radius-md);
 }
 
 .tum-ui-select-button-option:last-child {
-    border-start-end-radius: 0.375rem;
-    border-end-end-radius: 0.375rem;
+    border-start-end-radius: var(--tumaet-ui-radius-md);
+    border-end-end-radius: var(--tumaet-ui-radius-md);
 }
 
 .tum-ui-select-button-option:disabled {
@@ -48,8 +48,8 @@
 .tum-ui-select-button-option:focus-visible {
     position: relative;
     z-index: 1;
-    outline: 1px solid var(--artemis-primary-color);
-    outline-offset: -1px;
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
 }
 
 .tum-ui-select-button-option::after {
@@ -62,5 +62,5 @@
 }
 
 .tum-ui-select-button-option:not(:disabled):hover::after {
-    background-color: color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
 }

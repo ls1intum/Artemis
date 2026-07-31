@@ -1,20 +1,20 @@
 @mixin tag-state($background, $foreground) {
-    background: color-mix(in srgb, var($background) 20%, var(--artemis-content-background));
+    background: color-mix(in srgb, var($background) 20%, var(--tumaet-ui-content-background));
     color: var($foreground);
 }
 
 :host span[data-severity='success'] {
-    @include tag-state(--artemis-state-success, --artemis-state-success-foreground);
+    @include tag-state(--tumaet-ui-state-success, --tumaet-ui-state-success-foreground);
 }
 
 :host span[data-severity='info'] {
-    @include tag-state(--artemis-state-info, --artemis-state-info-foreground);
+    @include tag-state(--tumaet-ui-state-info, --tumaet-ui-state-info-foreground);
 }
 
 :host span[data-severity='warn'] {
-    @include tag-state(--artemis-state-warning, --artemis-state-warning-foreground);
+    @include tag-state(--tumaet-ui-state-warning, --tumaet-ui-state-warning-foreground);
 }
 
 :host span[data-severity='danger'] {
-    @include tag-state(--artemis-state-danger, --artemis-state-danger-foreground);
+    @include tag-state(--tumaet-ui-state-danger, --tumaet-ui-state-danger-foreground);
 }

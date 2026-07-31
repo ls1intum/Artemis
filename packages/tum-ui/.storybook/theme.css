@@ -6,7 +6,7 @@ body,
 
 body {
     margin: 0;
-    background: var(--artemis-content-background);
-    color: var(--artemis-text-color);
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    background: var(--tumaet-ui-content-background);
+    color: var(--tumaet-ui-text-color);
+    font-family: var(--tumaet-ui-font-family);
 }

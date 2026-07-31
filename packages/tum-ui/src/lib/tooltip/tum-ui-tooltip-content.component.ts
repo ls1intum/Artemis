@@ -16,7 +16,7 @@ const ARROW_POSITION: Record<TumUiOverlayPlacement, string> = {
     host: {
         role: 'tooltip',
         '[attr.id]': 'id()',
-        class: 'tum-ui-tooltip-bubble tum:relative tum:inline-block tum:max-w-[12.5rem] tum:rounded-md tum:bg-tooltip-background tum:px-[0.75rem] tum:py-[0.5rem] tum:text-sm tum:text-tooltip tum:shadow-md',
+        class: 'tum-ui-tooltip-bubble tum:relative tum:inline-block tum:max-w-50 tum:rounded-md tum:bg-tooltip-background tum:px-3 tum:py-2 tum:text-sm tum:text-tooltip tum:shadow-md',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

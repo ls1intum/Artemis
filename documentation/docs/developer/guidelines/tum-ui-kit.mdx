@@ -26,8 +26,9 @@ Package code:
 
 - imports only its declared dependencies;
 - exposes supported contracts through `src/public-api.ts`;
-- uses package-owned translation keys and the shared semantic theme contract;
-- contains no Artemis routes, services, translation keys outside that contract, or request models.
+- uses package-owned translation keys and `--tumaet-ui-*` theme properties;
+- contains no Artemis routes, services, Artemis-owned theme properties or translation keys, or
+  request models.
 
 Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integration`. Artemis
 imports package symbols from `@tumaet/ui-angular`; deep imports and imports from the former
@@ -95,15 +96,23 @@ reload cycle.
 
 ### Theme contract
 
-The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md) is
-the source of truth for stylesheet loading, token semantics, dark mode, and `styleClass`.
+The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md)
+documents stylesheet loading, token semantics, dark mode, and `styleClass`.
 
-The style build emits the ignored package-root `styles.css`; ng-packagr copies that asset into the
-compiled package. Artemis loads the component styles after its framework styles and maps the shared
-semantic contract directly to its light and dark design tokens. Both Tailwind builds import
-`tailwind-theme.css`, so prefixed package utilities and unprefixed Artemis utilities use the same
-vocabulary. `themes.css` supplies standalone defaults for Storybook and other hosts without a token
-implementation. Artemis sets `data-theme="dark"` on the document element when dark mode is active.
+The package build emits and validates `styles.css` as the required global stylesheet. Consumers do
+not compile package sources or need Tailwind. `themes.css` is an optional package-owned provider
+with complete standalone light and dark values. A custom host omits it and defines the documented
+`--tumaet-ui-*` contract instead.
+
+Artemis loads the component stylesheet after its framework styles and defines the package
+properties from Artemis foundations and light and dark color roles in `src/main/webapp/tailwind.css`.
+Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
+remain owned by the Artemis Tailwind and PrimeUI configuration. Artemis sets `data-theme="dark"` on
+the document element when dark mode is active.
+
+Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
+96rem as public styling contracts. Add a token only when a host needs a supported customization
+axis; do not expose Tailwind's full primitive theme.
 
 ### Translation contract
 

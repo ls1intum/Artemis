@@ -1,11 +1,12 @@
 export type TumUiInputSize = 'small' | 'large';
 
 const INPUT_BASE =
-    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-control-background tum:text-text tum:shadow-xs tum:outline-none ' +
+    'tum-ui-input tum:appearance-none tum:rounded-md tum:border tum:bg-control-background tum:text-text tum:shadow-xs ' +
+    'tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2 ' +
     'tum:transition-colors tum:duration-200 tum:placeholder:text-muted ' +
     'tum:disabled:opacity-100 tum:disabled:bg-disabled-background tum:disabled:text-disabled';
 
-const INPUT_BORDER = 'tum:border-control-border tum:enabled:hover:border-control-border-hover tum:enabled:focus:border-primary';
+const INPUT_BORDER = 'tum:border-control-border tum:enabled:hover:border-control-border-hover tum:enabled:focus:border-focus';
 
 const INPUT_BORDER_INVALID = 'tum:border-state-danger';
 

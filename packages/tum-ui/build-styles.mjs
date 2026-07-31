@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/postcss';
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 const componentSourcePath = resolve(packageRoot, 'src');
 const sourcePath = resolve(packageRoot, 'tailwind.css');
+const themePath = resolve(packageRoot, 'tailwind-theme.css');
 const outputPath = resolve(packageRoot, 'styles.css');
 const watching = process.argv.includes('--watch');
 const development = process.argv.includes('--development');
@@ -89,10 +90,13 @@ if (watching) {
     }
 
     chokidar
-        .watch([componentSourcePath, sourcePath], {
+        .watch([componentSourcePath, sourcePath, themePath], {
             ignoreInitial: true,
             ignored: (path, stats) =>
-                stats?.isFile() && path !== sourcePath && (path.endsWith('.spec.ts') || path.endsWith('.stories.ts') || (!path.endsWith('.html') && !path.endsWith('.ts'))),
+                stats?.isFile() &&
+                path !== sourcePath &&
+                path !== themePath &&
+                (path.endsWith('.spec.ts') || path.endsWith('.stories.ts') || (!path.endsWith('.html') && !path.endsWith('.ts'))),
         })
         .on('all', scheduleRebuild);
 }

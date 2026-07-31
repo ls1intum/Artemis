@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { expect } from 'storybook/test';
 
 import { TumUiInputDirective } from './tum-ui-input.directive';
 import { TumUiInputSize } from './tum-ui-input.variants';
@@ -57,6 +58,12 @@ export const Default: Story = {};
 export const Invalid: Story = {
     args: {
         tumUiInputInvalid: true,
+    },
+    play: async ({ canvas, userEvent }) => {
+        await userEvent.tab();
+        const input = canvas.getByRole('textbox', { name: 'Course title' });
+        await expect(input).toHaveFocus();
+        await expect(getComputedStyle(input).outlineWidth).toBe('2px');
     },
 };
 

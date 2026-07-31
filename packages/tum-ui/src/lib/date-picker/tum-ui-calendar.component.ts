@@ -79,7 +79,7 @@ export class TumUiCalendarComponent {
 
     protected dayButtonClasses(day: dayjs.Dayjs): string {
         const base =
-            'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:hover:bg-hover-background tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-primary';
+            'tum:appearance-none tum:border-0 tum:h-8 tum:w-8 tum:rounded-full tum:hover:bg-hover-background tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus';
         let color: string;
         if (this.isSelected(day)) {
             color = 'tum:bg-primary tum:text-primary-contrast';

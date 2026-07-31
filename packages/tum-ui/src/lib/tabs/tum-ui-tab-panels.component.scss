@@ -1,4 +1,4 @@
 :host {
     display: block;
-    padding: 0.875rem 1.125rem 1.125rem;
+    padding: calc(var(--tumaet-ui-spacing) * 3.5) calc(var(--tumaet-ui-spacing) * 4.5) calc(var(--tumaet-ui-spacing) * 4.5);
 }

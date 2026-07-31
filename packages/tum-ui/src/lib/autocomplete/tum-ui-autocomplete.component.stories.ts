@@ -40,6 +40,7 @@ export const SelectsSuggestion: Story = {
         const input = canvas.getByRole('combobox', { name: 'Assignee' });
         await userEvent.click(input);
         await expect(args.searchRequested).toHaveBeenCalledWith({ originalEvent: expect.any(FocusEvent), query: '' });
+        await expect(getComputedStyle(input.parentElement!).outlineWidth).toBe('2px');
 
         const listbox = await screen.findByRole('listbox', { name: 'Assignee' });
         const listboxRemoved = waitForElementToBeRemoved(listbox);

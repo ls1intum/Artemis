@@ -41,7 +41,9 @@ export const CalendarInteraction: Story = {
         await expect(trigger).toHaveFocus();
 
         await userEvent.click(canvas.getByRole('button', { name: 'Clear date' }));
-        await expect(canvas.getByRole('combobox', { name: 'Deadline' })).toHaveFocus();
+        const input = canvas.getByRole('combobox', { name: 'Deadline' });
+        await expect(input).toHaveFocus();
+        await expect(getComputedStyle(input).outlineWidth).toBe('2px');
     },
 };
 

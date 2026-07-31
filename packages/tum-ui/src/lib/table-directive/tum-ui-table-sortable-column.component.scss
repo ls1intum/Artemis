@@ -21,9 +21,9 @@
 
 .tum-ui-sort-icon {
     display: inline-block;
-    width: 0.875rem;
-    height: 0.875rem;
-    margin-inline-start: 0.5rem;
+    width: calc(var(--tumaet-ui-spacing) * 3.5);
+    height: calc(var(--tumaet-ui-spacing) * 3.5);
+    margin-inline-start: calc(var(--tumaet-ui-spacing) * 2);
     vertical-align: middle;
     flex-shrink: 0;
 }

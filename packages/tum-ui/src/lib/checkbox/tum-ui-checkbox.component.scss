@@ -1,8 +1,8 @@
 :host {
     position: relative;
     display: inline-flex;
-    width: 1.25rem;
-    height: 1.25rem;
+    width: calc(var(--tumaet-ui-spacing) * 5);
+    height: calc(var(--tumaet-ui-spacing) * 5);
     vertical-align: bottom;
     user-select: none;
 }
@@ -33,11 +33,11 @@
     height: 100%;
     border-width: 1px;
     border-style: solid;
-    border-radius: 0.25rem;
+    border-radius: var(--tumaet-ui-radius-sm);
     box-shadow:
         0 0 transparent,
         0 0 transparent,
-        0 1px 2px 0 color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
+        0 1px 2px 0 color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     transition:
         background 0.2s,
         border-color 0.2s,
@@ -56,15 +56,15 @@
 }
 
 .tum-ui-checkbox-icon {
-    font-size: 0.875rem;
+    font-size: var(--tumaet-ui-font-size-sm);
     line-height: 1;
 }
 
 :host:has(.tum-ui-checkbox-input:hover:not(:disabled)) .tum-ui-checkbox-box::after {
-    background-color: color-mix(in srgb, var(--artemis-text-color) 5%, transparent);
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
 }
 
 :host:has(.tum-ui-checkbox-input:focus-visible) .tum-ui-checkbox-box {
-    outline: 2px solid var(--artemis-primary-color);
+    outline: 2px solid var(--tumaet-ui-focus-color);
     outline-offset: 2px;
 }

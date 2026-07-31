@@ -2,8 +2,8 @@
     display: block;
     position: relative;
     overflow: hidden;
-    height: 1.25rem;
-    border-radius: 0.375rem;
+    height: calc(var(--tumaet-ui-spacing) * 5);
+    border-radius: var(--tumaet-ui-radius-md);
 }
 
 .tum-ui-progress-bar-value {
@@ -18,7 +18,7 @@
 }
 
 .tum-ui-progress-bar-label {
-    font-size: 0.75rem;
+    font-size: var(--tumaet-ui-font-size-xs);
     font-weight: 600;
 }
 

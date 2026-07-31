@@ -2,7 +2,7 @@
     "$schema": "./node_modules/ng-packagr/ng-package.schema.json",
     "deleteDestPath": false,
     "dest": "./dist",
-    "assets": ["README.md", "LICENSE", "styles.css", "themes.css", "tailwind-theme.css"],
+    "assets": ["README.md", "LICENSE", "styles.css", "themes.css"],
     "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
     "lib": {
         "entryFile": "src/public-api.ts"

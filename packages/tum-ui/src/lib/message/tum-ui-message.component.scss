@@ -1,11 +1,11 @@
 :host {
     display: grid;
     grid-template-rows: 1fr;
-    border-radius: 0.375rem;
+    border-radius: var(--tumaet-ui-radius-md);
     outline-width: 1px;
     outline-style: solid;
     outline-offset: 0;
-    font-size: 1rem;
+    font-size: var(--tumaet-ui-font-size-base);
     font-weight: 500;
 }
 
@@ -13,34 +13,34 @@
     display: flex;
     align-items: center;
     min-height: 0;
-    padding: 0.5rem 0.75rem;
-    gap: 0.5rem;
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    gap: calc(var(--tumaet-ui-spacing) * 2);
 }
 
 .tum-ui-message-icon {
     flex-shrink: 0;
-    font-size: 1.125rem;
+    font-size: var(--tumaet-ui-font-size-lg);
 }
 
 @mixin message-state($background, $foreground) {
-    background: color-mix(in srgb, var($background) 10%, var(--artemis-content-background));
-    outline-color: color-mix(in srgb, var($background) 40%, var(--artemis-content-background));
+    background: color-mix(in srgb, var($background) 10%, var(--tumaet-ui-content-background));
+    outline-color: color-mix(in srgb, var($background) 40%, var(--tumaet-ui-content-background));
     color: var($foreground);
     box-shadow: 0 4px 8px 0 color-mix(in srgb, var($background), transparent 96%);
 }
 
 :host[data-severity='info'] {
-    @include message-state(--artemis-state-info, --artemis-state-info-foreground);
+    @include message-state(--tumaet-ui-state-info, --tumaet-ui-state-info-foreground);
 }
 
 :host[data-severity='success'] {
-    @include message-state(--artemis-state-success, --artemis-state-success-foreground);
+    @include message-state(--tumaet-ui-state-success, --tumaet-ui-state-success-foreground);
 }
 
 :host[data-severity='warn'] {
-    @include message-state(--artemis-state-warning, --artemis-state-warning-foreground);
+    @include message-state(--tumaet-ui-state-warning, --tumaet-ui-state-warning-foreground);
 }
 
 :host[data-severity='error'] {
-    @include message-state(--artemis-state-danger, --artemis-state-danger-foreground);
+    @include message-state(--tumaet-ui-state-danger, --tumaet-ui-state-danger-foreground);
 }

@@ -14,7 +14,6 @@
         "types",
         "styles.css",
         "themes.css",
-        "tailwind-theme.css",
         "README.md",
         "LICENSE"
     ],
@@ -49,8 +48,7 @@
     },
     "exports": {
         "./styles.css": "./styles.css",
-        "./themes.css": "./themes.css",
-        "./tailwind-theme.css": "./tailwind-theme.css"
+        "./themes.css": "./themes.css"
     },
     "peerDependencies": {
         "@angular/cdk": "^22.1.0",
@@ -118,7 +116,6 @@
     },
     "sideEffects": [
         "./styles.css",
-        "./themes.css",
-        "./tailwind-theme.css"
+        "./themes.css"
     ]
 }

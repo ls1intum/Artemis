@@ -6,11 +6,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.125rem;
+    padding: calc(var(--tumaet-ui-spacing) * 4.5);
 }
 
 .tum-ui-panel-header-toggleable {
-    padding: 0.375rem 1.125rem;
+    padding: calc(var(--tumaet-ui-spacing) * 1.5) calc(var(--tumaet-ui-spacing) * 4.5);
 }
 
 .tum-ui-panel-title {
@@ -22,8 +22,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: calc(var(--tumaet-ui-spacing) * 8);
+    height: calc(var(--tumaet-ui-spacing) * 8);
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -37,7 +37,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid var(--artemis-primary-color);
+        outline: 2px solid var(--tumaet-ui-focus-color);
         outline-offset: 1px;
     }
 }
@@ -58,7 +58,7 @@
 }
 
 .tum-ui-panel-content {
-    padding: 0 1.125rem 1.125rem;
+    padding: 0 calc(var(--tumaet-ui-spacing) * 4.5) calc(var(--tumaet-ui-spacing) * 4.5);
 }
 
 @media (prefers-reduced-motion: reduce) {
