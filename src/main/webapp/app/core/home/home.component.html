@@ -22,7 +22,8 @@
                                     [ngModelOptions]="{ updateOn: 'change' }"
                                     [pattern]="usernameRegexPattern()"
                                     autocomplete="username webauthn"
-                                    class="form-control"
+                                    tumUiInput
+                                    class="w-100"
                                     id="username"
                                     name="username"
                                     [placeholder]="usernamePlaceholderTranslated()"
@@ -37,23 +38,31 @@
                                 }
                             </div>
 
-                            <div class="btn-toolbar">
-                                <button [disabled]="isCheckingIdentifier() || !isIdentifierValid()" class="btn btn-primary w-100" id="continue-button" type="submit" tabindex="2">
+                            <div class="btn-toolbar mt-3">
+                                <tum-ui-button
+                                    id="continue-button"
+                                    type="submit"
+                                    severity="primary"
+                                    variant="solid"
+                                    class="w-100"
+                                    [disabled]="isCheckingIdentifier() || !isIdentifierValid()"
+                                    tabindex="2"
+                                >
                                     @if (isCheckingIdentifier()) {
-                                        <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                     }
                                     <span jhiTranslate="entity.action.continue">Continue</span>
-                                </button>
+                                </tum-ui-button>
                             </div>
                         </form>
                     }
 
                     <!-- STAGE 2: Password or SSO Auth -->
                     @if (currentStage() === 2) {
-                        <!-- Disabled Login/Email Field (Keeps UI stable, prevents jumping) -->
+                        <!-- Disabled Login/Email Field -->
                         <div class="form-group pb-2">
                             <label class="mb-2" for="usernameDisabled" jhiTranslate="global.form.username">Login or email</label>
-                            <input class="form-control" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
+                            <input tumUiInput class="w-100" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
                         </div>
 
                         <!-- Option A: Password Flow -->
@@ -61,9 +70,9 @@
                             <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
                                 <div class="form-group">
                                     @if (authenticationError()) {
-                                        <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
-                                            <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
-                                        </div>
+                                        <tum-ui-message severity="error" styleClass="my-3 w-100" aria-live="assertive">
+                                            <span [jhiTranslate]="'home.errors.failedToLogin'"> Failed to sign in! Please check your login and password and try again. </span>
+                                        </tum-ui-message>
                                     }
                                 </div>
 
@@ -79,7 +88,8 @@
                                         #passwordForm="ngModel"
                                         [(ngModel)]="password"
                                         autocomplete="current-password webauthn"
-                                        class="form-control"
+                                        tumUiInput
+                                        class="w-100"
                                         id="password"
                                         name="password"
                                         type="password"
@@ -90,40 +100,41 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <div class="form-check">
-                                        <label class="form-check-label" for="rememberMe">
-                                            <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
-                                            <span jhiTranslate="login.form.rememberme">Remember me</span>
-                                        </label>
+                                    <div class="form-check d-flex align-items-center gap-2 ps-0">
+                                        <tum-ui-checkbox inputId="rememberMe" name="rememberMe" [(checked)]="rememberMe" />
+                                        <label class="form-check-label cursor-pointer" for="rememberMe" jhiTranslate="login.form.rememberme">Remember me</label>
                                     </div>
                                     @if (needsToAcceptTerms()) {
-                                        <div class="form-check mt-2">
-                                            <label class="form-check-label" for="acceptTerms">
-                                                <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
+                                        <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
+                                            <tum-ui-checkbox inputId="acceptTerms" name="acceptTerms" [(checked)]="userAcceptedTerms" />
+                                            <label class="form-check-label cursor-pointer" for="acceptTerms">
                                                 <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept terms of use</a>
                                             </label>
                                         </div>
                                     }
                                 </div>
 
+                                <!-- CHANGED: Stacked Sign In and Back buttons vertically (flex-column) -->
                                 <div class="d-flex flex-column gap-3 mt-4">
-                                    <button
-                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !password"
-                                        class="btn btn-primary w-100"
+                                    <tum-ui-button
                                         id="login-button"
                                         type="submit"
+                                        severity="primary"
+                                        variant="solid"
+                                        class="w-100"
+                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !password"
                                         tabindex="2"
                                     >
                                         @if (isSubmittingLogin()) {
-                                            <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                         }
                                         <span jhiTranslate="login.form.button">Sign in</span>
-                                    </button>
+                                    </tum-ui-button>
 
-                                    <button (click)="goBack()" class="btn btn-outline-secondary w-100" type="button" tabindex="3">
+                                    <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()" tabindex="3">
                                         <fa-icon [icon]="faArrowLeft" class="me-1" />
                                         <span jhiTranslate="entity.action.back">Back</span>
-                                    </button>
+                                    </tum-ui-button>
                                 </div>
                             </form>
                         }
@@ -131,64 +142,64 @@
                         <!-- Option B: OIDC SSO Flow -->
                         @if (loginMethod() === 'OIDC') {
                             <div class="form-group mt-3">
-                                <div class="form-check">
-                                    <label class="form-check-label" for="rememberMeOidc">
-                                        <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMeOidc" name="rememberMe" type="checkbox" />
-                                        <span jhiTranslate="login.form.rememberme">Remember me</span>
-                                    </label>
+                                <div class="form-check d-flex align-items-center gap-2 ps-0">
+                                    <tum-ui-checkbox inputId="rememberMeOidc" name="rememberMeOidc" [(checked)]="rememberMe" />
+                                    <label class="form-check-label cursor-pointer" for="rememberMeOidc" jhiTranslate="login.form.rememberme">Remember me</label>
                                 </div>
                                 @if (needsToAcceptTerms()) {
-                                    <div class="form-check mt-2">
-                                        <label class="form-check-label" for="acceptTermsOidc">
-                                            <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTermsOidc" name="acceptTerms" type="checkbox" />
+                                    <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
+                                        <tum-ui-checkbox inputId="acceptTermsOidc" name="acceptTermsOidc" [(checked)]="userAcceptedTerms" />
+                                        <label class="form-check-label cursor-pointer" for="acceptTermsOidc">
                                             <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
                                         </label>
                                     </div>
                                 }
                             </div>
 
+                            <!-- CHANGED: Stacked OIDC Sign In and Back buttons vertically -->
                             <div class="d-flex flex-column gap-3 mt-4">
-                                <button
-                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
-                                    class="btn btn-primary w-100 py-2"
+                                <tum-ui-button
                                     id="oidc-login-button"
                                     type="button"
-                                    (click)="loginWithOidc()"
+                                    severity="primary"
+                                    variant="solid"
+                                    class="w-100"
+                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
+                                    (clicked)="loginWithOidc()"
                                 >
                                     @if (isSubmittingLogin()) {
-                                        <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                     }
                                     <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'OIDC' }">
                                         Sign in with {{ externalIdpName() || 'OIDC' }}
                                     </span>
-                                </button>
+                                </tum-ui-button>
 
-                                <button (click)="goBack()" class="btn btn-outline-secondary w-100" type="button">
+                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
                                     <fa-icon [icon]="faArrowLeft" class="me-1" />
                                     <span jhiTranslate="entity.action.back">Back</span>
-                                </button>
+                                </tum-ui-button>
                             </div>
                         }
 
                         <!-- Option C: SAML2 SSO Flow -->
                         @if (loginMethod() === 'SAML2') {
                             <div class="form-group mt-3">
-                                <div class="form-check">
-                                    <label class="form-check-label" for="rememberMeSaml">
-                                        <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMeSaml" name="rememberMe" type="checkbox" />
-                                        <span jhiTranslate="login.form.rememberme">Remember me</span>
-                                    </label>
+                                <div class="form-check d-flex align-items-center gap-2 ps-0">
+                                    <tum-ui-checkbox inputId="rememberMeSaml" name="rememberMeSaml" [(checked)]="rememberMe" />
+                                    <label class="form-check-label cursor-pointer" for="rememberMeSaml" jhiTranslate="login.form.rememberme">Remember me</label>
                                 </div>
                                 @if (needsToAcceptTerms()) {
-                                    <div class="form-check mt-2">
-                                        <label class="form-check-label" for="acceptTermsSaml">
-                                            <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTermsSaml" name="acceptTerms" type="checkbox" />
+                                    <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
+                                        <tum-ui-checkbox inputId="acceptTermsSaml" name="acceptTermsSaml" [(checked)]="userAcceptedTerms" />
+                                        <label class="form-check-label cursor-pointer" for="acceptTermsSaml">
                                             <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept the terms of use</a>
                                         </label>
                                     </div>
                                 }
                             </div>
 
+                            <!-- CHANGED: Stacked SAML2 Sign In and Back buttons vertically -->
                             <div class="d-flex flex-column gap-3 mt-4">
                                 @if (profileInfo()?.saml2) {
                                     <jhi-saml2-login
@@ -198,21 +209,21 @@
                                         class="d-block w-100"
                                     />
                                 } @else {
-                                    <button [disabled]="true" class="btn btn-primary w-100" id="saml2-fallback-button" type="button">
+                                    <tum-ui-button id="saml2-fallback-button" type="button" severity="primary" variant="solid" class="w-100" [disabled]="true">
                                         <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'SAML2' }">
                                             Sign in with {{ externalIdpName() || 'SAML2 Login' }}
                                         </span>
-                                    </button>
+                                    </tum-ui-button>
                                 }
-                                <button (click)="goBack()" class="btn btn-outline-secondary w-100" type="button">
+                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
                                     <fa-icon [icon]="faArrowLeft" class="me-1" />
                                     <span jhiTranslate="entity.action.back">Back</span>
-                                </button>
+                                </tum-ui-button>
                             </div>
                         }
                     }
 
-                    <!-- ALWAYS VISIBLE: Passkey Option (if passkeys are enabled) -->
+                    <!-- ALWAYS VISIBLE: Passkey Option -->
                     @if (isPasskeyEnabled()) {
                         <div class="d-flex align-items-center my-3">
                             <div class="flex-grow-1 border-top"></div>
@@ -221,16 +232,17 @@
                         </div>
 
                         <div class="d-flex flex-column gap-2">
-                            <jhi-button
-                                class="d-block w-100"
+                            <tum-ui-button
                                 id="passkey-login-button"
-                                [btnType]="ButtonType.PRIMARY_OUTLINE"
-                                [fullWidth]="true"
-                                [icon]="faKey"
-                                title="global.menu.account.loginWithPasskey"
                                 type="button"
-                                (onClick)="loginWithPasskey()"
-                            />
+                                severity="primary"
+                                variant="outlined"
+                                class="w-100"
+                                [icon]="faKey"
+                                (clicked)="loginWithPasskey()"
+                            >
+                                <span jhiTranslate="global.menu.account.loginWithPasskey">Sign in with a passkey</span>
+                            </tum-ui-button>
                         </div>
                     }
 

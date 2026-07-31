@@ -16,22 +16,34 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        RouterLink,
+        FaIconComponent,
+        Saml2LoginComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiMessageComponent,
+    ],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
     protected readonly faArrowLeft = faArrowLeft;
-    protected readonly ButtonType = ButtonType;
 
     private readonly router = inject(Router);
     private readonly activatedRoute = inject(ActivatedRoute);

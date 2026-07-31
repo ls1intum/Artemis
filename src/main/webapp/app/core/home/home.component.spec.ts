@@ -9,7 +9,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,8 +20,13 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { RouterLink } from '@angular/router';
+
+// TUM UI Kit imports
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -60,8 +65,19 @@ describe('HomeComponent', () => {
             ],
         })
             .overrideComponent(HomeComponent, {
-                remove: { imports: [Saml2LoginComponent, ButtonComponent, RouterLink] },
-                add: { imports: [MockComponent(Saml2LoginComponent), MockComponent(ButtonComponent), MockRouterLinkDirective] },
+                remove: {
+                    imports: [Saml2LoginComponent, RouterLink, TumUiButtonComponent, TumUiInputDirective, TumUiCheckboxComponent, TumUiMessageComponent],
+                },
+                add: {
+                    imports: [
+                        MockComponent(Saml2LoginComponent),
+                        MockRouterLinkDirective,
+                        MockComponent(TumUiButtonComponent),
+                        MockDirective(TumUiInputDirective),
+                        MockComponent(TumUiCheckboxComponent),
+                        MockComponent(TumUiMessageComponent),
+                    ],
+                },
             })
             .compileComponents();
 
