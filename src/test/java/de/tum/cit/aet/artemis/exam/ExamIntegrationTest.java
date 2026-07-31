@@ -42,6 +42,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -678,24 +679,53 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExam_failsWithBlankTitle() throws Exception {
-        Exam exam = ExamFactory.generateExam(course1, "examBlankTitleTest");
-        exam.setTitle("   "); // stripped to an empty title
+    void testCreateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        // A missing (null), empty or whitespace-only title has to be rejected with a clean 400, not persisted and not failing while mapping the null title to the entity
+        ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examTitleValidationTest")), title);
 
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
     }
 
-    @Test
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExam_failsWithMissingTitle() throws Exception {
-        Exam exam = ExamFactory.generateExam(course1, "examMissingTitleTest");
-        // A crafted request without a title has to be rejected cleanly, not fail while mapping the null title to the entity
-        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(exam));
-        examJson.putNull("title");
+    void testUpdateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(exam1), title);
 
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST);
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @ParameterizedTest(name = "title=\"{0}\"")
+    @NullSource
+    @ValueSource(strings = { "", "   " })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+        ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), title);
+
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    /**
+     * Serialises the given exam DTO and overwrites its title, so a missing (null), empty or whitespace-only title can be sent as a raw request body.
+     *
+     * @param examDto the exam create/update/import DTO to serialise
+     * @param title   the title to set, or null to omit it
+     * @return the request body as a JSON object with the adjusted title
+     */
+    private ObjectNode examBodyWithTitle(Object examDto, String title) {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(examDto);
+        if (title == null) {
+            examJson.putNull("title");
+        }
+        else {
+            examJson.put("title", title);
+        }
+        return examJson;
     }
 
     @Test
