@@ -1,6 +1,7 @@
 LOAD DATABASE
  FROM {{FROM_DB}}
  INTO {{INTO_DB}}
+ alter schema 'Artemis' rename to 'public'
  alter schema 'artemis' rename to 'public'
 
 WITH data only,
