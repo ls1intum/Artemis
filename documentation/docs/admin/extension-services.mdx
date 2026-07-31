@@ -4,13 +4,13 @@ title: Setup of Extension Services
 sidebar_label: Extensions Setup
 ---
 
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import sharingHealth1 from "./assets/sharing/sharing_health1.png";
-import sharingHealth2 from "./assets/sharing/sharing_health2.png";
-import sharingButton1 from "./assets/sharing/sharingButtonArtemis.png";
-import sharingButton2 from "./assets/sharing/sharingButtonSharing.png";
-import Callout from "../../src/components/Callout/Callout";
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../src/components/Image/Image';
+import sharingHealth1 from './assets/sharing/sharing_health1.png';
+import sharingHealth2 from './assets/sharing/sharing_health2.png';
+import sharingButton1 from './assets/sharing/sharingButtonArtemis.png';
+import sharingButton2 from './assets/sharing/sharingButtonSharing.png';
+import Callout from '../../src/components/Callout/Callout';
 
 # Setup of Extension Services
 
@@ -38,25 +38,25 @@ In your `application-artemis.yml` (or your deployment-specific override), enable
 
 ```yaml
 artemis:
-  iris:
-    enabled: true
-    url: https://pyris.your-domain.com   # Or http://localhost:8000 for local development
-    secret-token: your-shared-secret      # Must match the token configured in Pyris
+    iris:
+        enabled: true
+        url: https://pyris.your-domain.com # Or http://localhost:8000 for local development
+        secret-token: your-shared-secret # Must match the token configured in Pyris
 ```
 
 Optionally, configure per-user rate limiting:
 
 ```yaml
 artemis:
-  iris:
-    ratelimit:
-      default-limit: 100             # Max requests per user (-1 for unlimited)
-      default-timeframe-hours: 3     # Time window for the limit
+    iris:
+        ratelimit:
+            default-limit: 100 # Max requests per user (-1 for unlimited)
+            default-timeframe-hours: 3 # Time window for the limit
 ```
 
 ### Deploying Pyris and managing Iris
 
-For Pyris deployment (Docker, configuration files, LLM model setup, and end-to-end verification), refer to the <a href="https://ls1intum.github.io/edutelligence/iris/">Iris admin documentation</a>.
+For Pyris deployment and configuration, refer to the <a href="https://ls1intum.github.io/edutelligence/iris/">Iris admin documentation</a>. For the Artemis request, callback, WebSocket, ingestion, search, and memory boundaries, see the [AI Pipelines catalog](../developer/ai-pipelines#iris-and-pyris); service-owned execution and retrieval details are documented in the [Iris pipeline system](https://ls1intum.github.io/edutelligence/iris/docs/developer/pipeline-system) and [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline).
 
 ### Global search (Weaviate)
 
@@ -66,39 +66,38 @@ Artemis's keyword and semantic search feature (global search) uses Weaviate inde
 
 ## Athena Service
 
-The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
+Athena is an EduTelligence assessment service that Artemis uses for configured feedback-suggestion modules and related assessment workflows. To enable Athena, special configuration is required. The [AI Pipelines catalog](../developer/ai-pipelines#athena) describes the Artemis-side selection, forwarding, scheduling, and repository-export boundaries; the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/) documents the service-owned module contract.
 
 <Callout variant={CalloutVariant.info}>
 
-  Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
 
 </Callout>
 
 ### Enable Athena
 
 Set the Athena module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+
 ```yaml
 artemis:
-  athena:
-    enabled: true
+    athena:
+        enabled: true
 ```
 
-### Configure API Endpoints
+### Configure the Athena boundary
 
-The Athena service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+Configure the Athena endpoint and shared secret in the active deployment-specific configuration. Artemis discovers available modules from Athena; exercise configuration selects an allowed module rather than using a static per-type module mapping.
+
 ```yaml
 artemis:
-  # ...
-  athena:
-     url: http://localhost:5100
-     secret: abcdef12345
-     modules:
-        # See https://github.com/ls1intum/edutelligence/tree/main/athena for a list of available modules
-        text: module_text_cofee
-        programming: module_programming_themisml
+    athena:
+        url: https://<athena-service>
+        secret: <shared-secret>
+        # Optional: restrict modules unless a course grants restricted-module access.
+        restricted-modules: <comma-separated-module-names>
 ```
 
-The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
+Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
 
 ---
 
@@ -119,9 +118,10 @@ Text Assessment Analytics is an internal analytics service used to gather data r
 9. Clicking the Assess Next button when assessing a text submission
 
 These events are tracked by attaching a POST call to the respective DOM elements on the client side. The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table. This feature is disabled by default. We can enable it by modifying the configuration in the file: `src/main/resources/config/application-artemis.yml` like so:
+
 ```yaml
 info:
-   textAssessmentAnalyticsEnabled: true
+    textAssessmentAnalyticsEnabled: true
 ```
 
 ---
@@ -133,18 +133,21 @@ info:
 #### Enable Apollon
 
 Set the Apollon module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+
 ```yaml
 artemis:
-  apollon:
-    enabled: true
+    apollon:
+        enabled: true
 ```
 
 #### Configure API Endpoints
 
-The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. Add its endpoint to the same active deployment-specific override used above:
+
 ```yaml
-apollon:
-   conversion-service-url: http://localhost:8080
+artemis:
+    apollon:
+        conversion-service-url: http://localhost:8080
 ```
 
 ---
@@ -159,15 +162,15 @@ To run Hermes, you need to clone the <a href="https://github.com/ls1intum/Hermes
 
 The following environment variables need to be updated for push notifications to Apple devices:
 
-* `APNS_CERTIFICATE_PATH`: String - Path to the APNs certificate .p12 file as described <a href="https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns">here</a>
-* `APNS_CERTIFICATE_PWD`: String - The APNS certificate password
-* `APNS_PROD_ENVIRONMENT`: Bool - True if it should use the Production APNS Server (Default false)
+- `APNS_CERTIFICATE_PATH`: String - Path to the APNs certificate .p12 file as described <a href="https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns">here</a>
+- `APNS_CERTIFICATE_PWD`: String - The APNS certificate password
+- `APNS_PROD_ENVIRONMENT`: Bool - True if it should use the Production APNS Server (Default false)
 
 Furthermore, the `<APNS_Key>.p12` needs to be mounted into the Docker under the above specified path.
 
 To run the services for Android support the following environment variable is required:
 
-* `GOOGLE_APPLICATION_CREDENTIALS`: String - Path to the firebase.json
+- `GOOGLE_APPLICATION_CREDENTIALS`: String - Path to the firebase.json
 
 Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
 
@@ -178,10 +181,11 @@ To start Hermes, run the `docker compose up` command in the folder where the `do
 #### Artemis Configuration
 
 The Hermes service is running on a dedicated machine and is addressed via HTTPS. We need to extend the Artemis configuration in the file `src/main/resources/config/application-artemis.yml` like:
+
 ```yaml
 artemis:
-  # ...
- push-notification-relay: <url>
+    # ...
+    push-notification-relay: <url>
 ```
 
 ---
@@ -190,7 +194,7 @@ artemis:
 
 <Callout variant={CalloutVariant.info}>
 
-  This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
 
 </Callout>
 
@@ -208,6 +212,7 @@ This section outlines how to set up Aeolus in your own Artemis instance.
 - Set up a running instance of Aeolus. See the <a href="https://ls1intum.github.io/Aeolus/">Aeolus documentation</a> for more information.
 
 #### Enable the aeolus Spring profile
+
 ```
 --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,aeolus
 ```
@@ -222,7 +227,9 @@ The Aeolus service can run on a dedicated machine since Artemis accesses it via 
 
 #### Background
 
-<a href="https://search.sharing-codeability.uibk.ac.at/">Sharing Platform</a> is an open platform for sharing teaching materials related to programming. It is operated by the <a href="https://www.uibk.ac.at/en/">University of Innsbruck</a>. While primarily designed as an open exchange platform, it also provides features such as private group exchanges and the ability to restrict public access to certain content, such as the solution repository of an Artemis exercise.
+<a href="https://search.sharing-codeability.uibk.ac.at/">Sharing Platform</a> is an open platform for sharing teaching materials related to programming. It is operated by the
+<a href="https://www.uibk.ac.at/en/">University of Innsbruck</a>. While primarily designed as an open exchange platform, it also provides features such as private group exchanges
+and the ability to restrict public access to certain content, such as the solution repository of an Artemis exercise.
 
 For more details, visit <a href="https://search.sharing-codeability.uibk.ac.at/">help menu</a> of the sharing platform.
 
@@ -241,17 +248,19 @@ To connect to the sharing platform, you need an API key. To request one, contact
 Once you receive your API key, you should add it to the configuration file **`application-core.yml`** or your `.env` file:
 
 **Option 1: application-artemis.yml**
+
 ```yaml
 artemis:
-  sharing:
-    enabled: true
-    # Shared common secret
-    apikey: <your API Key>
-    serverurl: https://search.sharing-codeability.uibk.ac.at/
-    actionname: Export to Artemis@myUniversity
+    sharing:
+        enabled: true
+        # Shared common secret
+        apikey: <your API Key>
+        serverurl: https://search.sharing-codeability.uibk.ac.at/
+        actionname: Export to Artemis@myUniversity
 ```
 
 **Option 2: .env file for Docker initialization**
+
 ```bash
 ARTEMIS_SHARING_ENABLED=true
 ARTEMIS_SHARING_SERVERURL=https://search.sharing-codeability.uibk.ac.at/
@@ -272,11 +281,11 @@ For instructors to exchange programming exercises, they need an account on the s
 
 To assist in troubleshooting, the **sharing profile** includes an additional health indicator, accessible via the **`Administration -> Health`** menu.
 
-<Image src={sharingHealth1} alt={"Sharing health indicator 1"} size={ImageSize.medium} />
+<Image src={sharingHealth1} alt={'Sharing health indicator 1'} size={ImageSize.medium} />
 
 Under **Details**, you will typically find the following entries:
 
-<Image src={sharingHealth2} alt={"Sharing health indicator 2"} size={ImageSize.medium} />
+<Image src={sharingHealth2} alt={'Sharing health indicator 2'} size={ImageSize.medium} />
 
 - The **first entry** is an initialization request sent after startup.
 - The **second entry** reflects the subsequent receipt of the connector configuration from the sharing platform.

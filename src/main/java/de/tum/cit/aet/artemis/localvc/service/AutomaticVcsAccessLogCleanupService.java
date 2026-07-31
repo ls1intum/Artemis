@@ -29,7 +29,8 @@ public class AutomaticVcsAccessLogCleanupService {
     }
 
     /**
-     * Deletes all vcs access log entries from the database which have a timestamp older than vcsAccessLogRetentionPeriod days (120 by default)
+     * Deletes all vcs access log entries from the database which have a timestamp older than vcsAccessLogRetentionPeriod days (365 by default).
+     * The lookup is backed by the index on vcs_access_log(timestamp) so it no longer performs a full table scan.
      */
     @Scheduled(cron = "0 30 2 * * *") // execute this every night at 2:30:00 am
     public void cleanup() {
