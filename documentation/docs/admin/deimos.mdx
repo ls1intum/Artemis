@@ -1,0 +1,128 @@
+---
+id: deimos
+title: Deimos Malicious Participation Analysis
+sidebar_label: Deimos Setup
+---
+
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from "../../src/components/Callout/Callout";
+
+# Deimos Malicious Participation Analysis
+
+Deimos is an instructor-facing tool that screens programming exercise participations for signs of malicious intent
+against the CI infrastructure, such as code execution exploits, resource abuse, data exfiltration, sandbox escape, and
+shell injection. An instructor triggers a batch manually from the assessment dashboard (course scope) or a programming
+exercise detail page (exercise scope). Artemis reconstructs each selected participation's observed submission snapshot
+history, asks a dedicated LLM to classify it, and emails the initiator a summary with deep links to every flagged
+participation.
+
+<Callout variant={CalloutVariant.warning}>
+    Deimos sends student source code to the LLM endpoint you configure. There is deliberately no default endpoint.
+    Decide whether you are permitted to send student data to that endpoint before enabling the module, and involve your
+    data protection officer if you are unsure.
+</Callout>
+
+## What data leaves the Artemis instance
+
+For every analysed participation, Deimos sends the following to the configured LLM endpoint:
+
+- Unified diffs between consecutive submission snapshots, and a cumulative diff of the final state against the
+  exercise template. Diffs contain the changed lines and their surrounding context, so they expose **portions** of the
+  student's source, of earlier versions of that source, and of the exercise template. They do not necessarily contain
+  the complete source of any file.
+- File paths, abbreviated commit hashes, and submission timestamps.
+- The Artemis participation ID.
+
+No student name, login, email address, or matriculation number is included.
+
+<Callout variant={CalloutVariant.info}>
+    The selected date range chooses **which participations** are analysed: a participation is included if it has at
+    least one submission inside the window. Each selected participation's complete observed submission history is then
+    analysed, including activity before and after the window. This is intentional, because malicious behaviour is often
+    only visible across a longer sequence of commits. Keep it in mind when you scope a run.
+</Callout>
+
+The payload is size-limited. Individual files above a size threshold are not diffed, very large per-file diffs are
+truncated, and snapshots beyond the total budget are dropped. Every omission is marked explicitly in the data sent to
+the model and does not silently change the verdict.
+
+Deimos reads repositories through Artemis' integrated version control. It reconstructs the history from Artemis
+`ProgrammingSubmission` records rather than by walking the git commit graph, so several commits pushed together can
+appear collapsed into a single snapshot.
+
+## Prerequisites
+
+- A running Artemis instance that loads the `core` profile.
+- Network access to an OpenAI-compatible chat completions endpoint that you are permitted to send student code to.
+- Programming exercises with student participations and submissions.
+
+## Enable the Deimos module
+
+Deimos is disabled by default and requires **two** independent steps.
+
+### 1. Startup property
+
+Set `artemis.deimos.enabled` and the LLM configuration in the configuration the server reads on startup (for example
+`application-prod.yml`):
+
+```yaml
+artemis:
+  deimos:
+    enabled: true
+    executor:
+      core-pool-size: 2
+      max-pool-size: 4
+      queue-capacity: 25
+    llm:
+      base-url: https://llm.example.com
+      api-key: "${DEIMOS_LLM_API_KEY:}"
+      model: openai/gpt-oss-120b
+      completions-path: /api/chat/completions
+      temperature: 0
+      timeout-seconds: 90
+      max-retries: 3
+```
+
+| Property | Required | Description |
+| --- | --- | --- |
+| `artemis.deimos.enabled` | yes | Loads the Deimos beans. When `false`, no Deimos endpoint or bean exists. |
+| `artemis.deimos.llm.base-url` | yes | Absolute HTTP(S) URL of the endpoint, including a host. No default. |
+| `artemis.deimos.llm.model` | yes | Model identifier sent with each request. No default. |
+| `artemis.deimos.llm.api-key` | no | Leave empty for an unauthenticated self-hosted endpoint. |
+| `artemis.deimos.llm.completions-path` | no | Must end with `/chat/completions`. Defaults to `/api/chat/completions`. |
+| `artemis.deimos.llm.temperature` | no | Sampling temperature. Defaults to `0`. |
+| `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout. Defaults to `90`. |
+| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK. Defaults to `3`. |
+| `artemis.deimos.executor.*` | no | Sizing of the dedicated batch executor. |
+
+If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path`, `timeout-seconds`, or
+`max-retries`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
+endpoint would mean student code being sent somewhere you did not intend.
+
+### 2. Runtime feature toggle
+
+Enable the `Deimos` toggle under **Admin → Feature Toggles**. It is off by default even when the startup property is
+set. While it is off, the trigger buttons are hidden and the REST endpoints return `403`.
+
+## Limits
+
+- Maximum analysis window: **31 days**.
+- Maximum participations per run: **5000**. A run exceeding this is rejected.
+- Runs execute on a dedicated bounded executor; when its queue is full the endpoint returns `503`.
+
+## Interpreting the results
+
+The completion email reports how many participations were analysed, how many were classified malicious or benign, and
+how many failed. Failures are broken down by category, which distinguishes "there was nothing to analyse" from "the
+model was unreachable". Any category other than *Nothing to analyze* means those participations were **not** examined,
+and the run should be repeated for the affected window.
+
+<Callout variant={CalloutVariant.warning}>
+    Classifications are LLM-generated and can be wrong in both directions. A flagged participation is a pointer for
+    human review, not a finding. Never act against a student on a Deimos classification alone; always inspect the
+    linked participation yourself.
+</Callout>
+
+Deimos is also an adversarial setting: the analysed code is written by the people the analysis is meant to catch.
+Prompts fence student content between random per-request markers and instruct the model to treat it strictly as
+evidence, but no prompt construction makes injection impossible. Treat the output accordingly.

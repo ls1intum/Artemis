@@ -142,7 +142,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
-        [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/deimos',
     };
 
     /** Documentation links for profile-based features */
@@ -157,7 +157,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
-        [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/deimos',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
         [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
         [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise',

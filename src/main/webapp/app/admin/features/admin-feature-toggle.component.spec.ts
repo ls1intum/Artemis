@@ -14,7 +14,15 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_JENKINS } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATHENA,
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_DEIMOS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
+    PROFILE_JENKINS,
+} from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
@@ -161,6 +169,15 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(plagiarismChecks?.documentationLink).toBeDefined();
         });
 
+        it('should link the Deimos toggle to the Deimos documentation page', () => {
+            comp.ngOnInit();
+
+            const deimos = comp.featureToggles().find((t) => t.feature === FeatureToggle.Deimos);
+            // Deimos previously pointed at the generic Artemis Intelligence page, which does not describe it or the
+            // student data it sends. The link has to reach the page that documents that.
+            expect(deimos?.documentationLink).toBe('https://docs.artemis.tum.de/admin/deimos');
+        });
+
         it('should not set documentation links for features without them', () => {
             comp.ngOnInit();
             const toggles = comp.featureToggles();
@@ -205,6 +222,14 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
             expect(comp.moduleFeatures()).toHaveLength(20);
+        });
+
+        it('should link the Deimos module feature to the Deimos documentation page', () => {
+            comp.ngOnInit();
+
+            const deimos = comp.moduleFeatures().find((m) => m.feature === MODULE_FEATURE_DEIMOS);
+            expect(deimos).toBeDefined();
+            expect(deimos?.documentationLink).toBe('https://docs.artemis.tum.de/admin/deimos');
         });
 
         it('should set isActive based on active module features', () => {
