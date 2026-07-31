@@ -14,8 +14,7 @@ describe('TUM UI reference page generation', () => {
         });
 
         expect(page).toContain('### Actions: Button\n\n### Forms: Radio Button');
-        expect(page).toContain('"actions-button": "actions-button--docs"');
-        expect(page).toContain('"forms-radio-button": "forms-radio-button--docs"');
+        expect(page).toContain('<StorybookRedirect />');
         expect(page).not.toContain('### Introduction');
         expect(page.match(/Actions: Button/g)).toHaveLength(1);
         expect(page).toContain('custom_edit_url: null');

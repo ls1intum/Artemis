@@ -58,3 +58,9 @@ test('routes an indexed component name to its component reference', async ({ pag
     await page.goto(`.${radioButton!.u}${radioButton!.h}`);
     await expectReferenceTheme(page, 'light', 'forms-radio-button--docs');
 });
+
+test('rejects an invalid component-reference hash', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('./developer/tum-ui-reference#https%3A%2F%2Fexample.com');
+    await expectReferenceTheme(page, 'light');
+});

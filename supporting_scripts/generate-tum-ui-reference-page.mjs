@@ -20,7 +20,6 @@ export function renderReferencePage(index) {
         }))
         .filter((entry, index, entries) => entries.findIndex(({ title }) => title === entry.title) === index)
         .sort((first, second) => first.title.localeCompare(second.title));
-    const references = Object.fromEntries(components.map(({ anchor, id }) => [anchor, id]));
     const componentList = components.map(({ label }) => `### ${label}`).join('\n\n');
 
     return `---
@@ -39,7 +38,7 @@ import StorybookRedirect from '../../src/components/StorybookRedirect/StorybookR
 
 # TUM UI component reference
 
-<StorybookRedirect references={${JSON.stringify(references, null, 4)}} />
+<StorybookRedirect />
 
 TUM UI is the target Artemis component system. Browse or search for a component here before adding
 another abstraction. The reference opens the package Storybook with supported states, controls,

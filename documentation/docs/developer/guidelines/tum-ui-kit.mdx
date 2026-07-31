@@ -160,7 +160,8 @@ editor resolution, then serve package sources. Restart the client after changing
 manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
 validation writes to `packages/tum-ui/dist-pack`.
 
-The workspace catalog pins the exact versions installed by Artemis. Package dependencies use those
-same versions, while peer dependencies declare compatible ranges containing the catalog version.
-`pnpm run test:rules` enforces that contract and verifies the development and production package
-configurations remain equivalent apart from incremental-output cleanup.
+The workspace catalog pins the exact versions installed and supported by this private package.
+Package and peer dependencies match those versions; `pnpm run test:rules` prevents drift. Widen a
+peer range only after another application provides a concrete compatibility target and CI verifies
+it. The same rule verifies that development and production package configurations remain equivalent
+apart from incremental-output cleanup.

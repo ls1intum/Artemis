@@ -245,7 +245,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         ]);
     });
 
-    it('uses the catalog as the installed version and keeps it within every peer range', () => {
+    it('uses the catalog as the single dependency version source', () => {
         const rootDependencies = { ...rootPackageJson.dependencies, ...rootPackageJson.devDependencies };
 
         expect(rootPackageJson.dependencies['@tumaet/ui-angular']).toBe('workspace:*');
@@ -255,9 +255,9 @@ describe('@tumaet/ui-angular integration contract', () => {
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
         }
-        for (const [name, range] of Object.entries(packageJson.peerDependencies)) {
-            expect(semver.validRange(range), `${name} must declare a valid compatibility range`).not.toBeNull();
-            expect(semver.satisfies(catalog[name], range), `${name} catalog version must satisfy ${range}`).toBe(true);
+        for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
+            expect(semver.valid(version), `${name} must declare the exact tested peer version`).not.toBeNull();
+            expect(version, `${name} peer version must match the workspace catalog`).toBe(catalog[name]);
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(packageJson.devDependencies[name], `${name} must be installed for isolated package development`).toBe('catalog:');
         }
