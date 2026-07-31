@@ -876,6 +876,44 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(alertServiceSpy).not.toHaveBeenCalled();
         });
 
+        it('should render the explanation and make the assessment actions unreachable, also via the keyboard', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            fixture.detectChanges();
+
+            const banner = fixture.nativeElement.querySelector('#assessment-not-possible-yet');
+            expect(banner).not.toBeNull();
+
+            const continueAssessment = fixture.nativeElement.querySelector('#continue-assessment');
+            expect(continueAssessment).not.toBeNull();
+            expect(continueAssessment.classList).toContain('disabled');
+            // the disabled class only stops mouse clicks, so the route must be gone and the link out of the tab order
+            expect(continueAssessment.getAttribute('href')).toBeNull();
+            expect(continueAssessment.getAttribute('aria-disabled')).toBe('true');
+            expect(continueAssessment.getAttribute('tabindex')).toBe('-1');
+        });
+
+        it('should not overflow the timer delay for an exam that is still more than 24 days away', () => {
+            vi.useFakeTimers();
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            try {
+                const assessmentPossibleFrom = dayjs().add(60, 'days');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+
+                // a larger delay would overflow setTimeout's signed 32-bit delay and fire immediately, spinning the loop
+                const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+                expect(delays).toContain(2_147_483_647);
+                expect(Math.max(...(delays as number[]))).toBeLessThanOrEqual(2_147_483_647);
+            } finally {
+                setTimeoutSpy.mockRestore();
+                vi.useRealTimers();
+            }
+        });
+
         it('should offer no explanation once assessment is possible', () => {
             exerciseServiceGetForTutorsStub.mockReturnValue(
                 of(

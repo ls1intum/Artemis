@@ -65,6 +65,7 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TooltipModule } from 'primeng/tooltip';
+import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
@@ -81,6 +82,9 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { getAssessmentNotPossibleYetAlert, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+
+/** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
+const MAX_TIMEOUT_DELAY = 2_147_483_647;
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -108,6 +112,7 @@ export interface ExampleSubmissionQueryParams {
         StructuredGradingInstructionsAssessmentLayoutComponent,
         NgbTooltip,
         TooltipModule,
+        Message,
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
@@ -546,8 +551,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             return;
         }
         // Wake up at the next date the message depends on: for a programming exercise that is first the exam end (when
-        // the message changes to "the tests still have to run") and only then the date assessment opens at.
-        const millisecondsUntilNextChange = reason.date.diff(dayjs()) + 1000;
+        // the message changes to "the tests still have to run") and only then the date assessment opens at. A delay
+        // beyond MAX_TIMEOUT_DELAY would overflow the signed 32-bit delay and fire immediately, so for exams that are
+        // still weeks away we wake up early and simply schedule again.
+        const millisecondsUntilNextChange = Math.min(reason.date.diff(dayjs()) + 1000, MAX_TIMEOUT_DELAY);
         this.assessmentAvailabilityTimeout = setTimeout(() => {
             this.assessmentAvailabilityTick.update((tick) => tick + 1);
             if (this.assessmentNotPossibleYetReason()) {
