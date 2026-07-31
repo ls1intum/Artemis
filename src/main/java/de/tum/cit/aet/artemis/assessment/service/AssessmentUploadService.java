@@ -26,11 +26,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;

@@ -21,24 +21,26 @@ describe('AssessmentUploadDialogComponent', () => {
     let component: AssessmentUploadDialogComponent;
     let fixture: ComponentFixture<AssessmentUploadDialogComponent>;
     let uploadSpy: ReturnType<typeof vi.fn>;
-    let alertError: ReturnType<typeof vi.fn>;
-    let alertSuccess: ReturnType<typeof vi.fn>;
+    let alertError: ReturnType<typeof vi.spyOn>;
+    let alertSuccess: ReturnType<typeof vi.spyOn>;
 
     const zipFile = new File(['dummy'], 'assessments.zip', { type: 'application/zip' });
 
     beforeEach(async () => {
         uploadSpy = vi.fn();
-        alertError = vi.fn();
-        alertSuccess = vi.fn();
 
         await TestBed.configureTestingModule({
             imports: [AssessmentUploadDialogComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AssessmentUploadService, useValue: { uploadManualAssessments: uploadSpy } },
-                MockProvider(AlertService, { error: alertError, success: alertSuccess }),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
+
+        const alertService = TestBed.inject(AlertService);
+        alertError = vi.spyOn(alertService, 'error');
+        alertSuccess = vi.spyOn(alertService, 'success');
 
         fixture = TestBed.createComponent(AssessmentUploadDialogComponent);
         component = fixture.componentInstance;

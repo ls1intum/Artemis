@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.assessment.dto;
+package de.tum.cit.aet.artemis.assessment.domain;
 
 /**
  * Types of validation errors that can occur while parsing a upload of manual assessments for a programming exercise.

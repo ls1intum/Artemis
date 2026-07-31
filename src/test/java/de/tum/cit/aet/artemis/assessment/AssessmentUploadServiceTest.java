@@ -19,10 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.course.domain.Course;
