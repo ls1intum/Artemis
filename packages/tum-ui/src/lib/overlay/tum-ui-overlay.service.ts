@@ -42,7 +42,7 @@ export class TumUiOverlayService {
 
     createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement, options: TumUiConnectedOverlayOptions = {}): OverlayRef {
         const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
-        return this.overlay.create({
+        const overlayRef = this.overlay.create({
             positionStrategy: this.positionStrategy(origin, placement),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: options.hasBackdrop ?? false,
@@ -50,6 +50,13 @@ export class TumUiOverlayService {
             direction: this.directionality,
             width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
         });
+        if (options.matchOriginWidth && typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => overlayRef.updateSize({ width: originElement.getBoundingClientRect().width }));
+            const disconnect = () => resizeObserver.disconnect();
+            resizeObserver.observe(originElement);
+            overlayRef.detachments().subscribe({ next: disconnect, complete: disconnect });
+        }
+        return overlayRef;
     }
 
     private horizontalPositions(placement: 'left' | 'right'): ConnectedPosition[] {

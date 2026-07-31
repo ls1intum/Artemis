@@ -349,7 +349,7 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected containerClasses(): string {
         const padding = this.multiple() && this.selectedValues().length > 0 ? 'tum:p-1' : 'tum:py-1 tum:px-3';
         const base =
-            `tum-ui-autocomplete-container tum:flex tum:w-full tum:cursor-text tum:flex-wrap tum:items-center tum:gap-1 tum:rounded-md tum:border tum:text-base tum:transition-colors ` +
+            `tum-ui-autocomplete-container tum:box-border tum:flex tum:w-full tum:cursor-text tum:flex-wrap tum:items-center tum:gap-1 tum:rounded-md tum:border tum:text-base tum:transition-colors ` +
             `tum:focus-within:outline tum:focus-within:outline-2 tum:focus-within:outline-focus tum:focus-within:outline-offset-2 ${padding}`;
         let state: string;
         if (this.isDisabled()) {

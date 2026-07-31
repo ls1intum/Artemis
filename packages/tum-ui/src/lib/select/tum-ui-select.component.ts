@@ -359,7 +359,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     }
 
     private buildTriggerClasses(): string {
-        const base = 'tum-ui-select-trigger tum:flex tum:w-full tum:items-center tum:border tum:text-start tum:transition-colors';
+        const base = 'tum-ui-select-trigger tum:box-border tum:flex tum:w-full tum:items-center tum:border tum:text-start tum:transition-colors';
         const size = TRIGGER_SIZE[this.size() ?? 'default'];
         let state: string;
         if (this.isDisabled()) {

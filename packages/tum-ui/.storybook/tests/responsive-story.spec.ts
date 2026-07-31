@@ -58,12 +58,16 @@ test('aligns select-like overlays to their trigger', async ({ page }) => {
         { id: 'forms-autocomplete--default', name: 'Assignee', origin: '.tum-ui-autocomplete-container', panel: '.tum-ui-autocomplete-panel' },
         { id: 'forms-select--default', name: 'Course language', origin: '.tum-ui-select-trigger', panel: '.tum-ui-select-panel' },
     ]) {
+        await page.setViewportSize({ width: 900, height: 700 });
         await page.goto(`./iframe.html?id=${story.id}&viewMode=story`);
         const trigger = page.getByRole('combobox', { name: story.name });
         await trigger.click();
         const origin = page.locator(story.origin);
         const panel = page.locator(story.panel);
         await expect(panel).toBeVisible();
+        await expect.poll(async () => (await panel.boundingBox())?.width).toBe((await origin.boundingBox())?.width);
+
+        await page.setViewportSize({ width: 280, height: 700 });
         await expect.poll(async () => (await panel.boundingBox())?.width).toBe((await origin.boundingBox())?.width);
     }
 });

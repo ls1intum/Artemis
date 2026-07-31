@@ -13,7 +13,7 @@ body {
 
 .tum-ui-story-form {
     display: grid;
-    width: 20rem;
+    width: min(20rem, calc(100vw - 2rem));
     max-width: 100%;
     gap: calc(var(--tumaet-ui-spacing) * 2);
 }
