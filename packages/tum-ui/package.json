@@ -95,7 +95,7 @@
         "@types/react": "catalog:",
         "@vitest/browser": "catalog:",
         "@vitest/browser-playwright": "catalog:",
-        "@vitest/coverage-istanbul": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "chokidar": "catalog:",
         "concurrently": "catalog:",
         "eslint": "catalog:",
