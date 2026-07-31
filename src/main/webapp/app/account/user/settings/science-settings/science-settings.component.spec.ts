@@ -64,6 +64,17 @@ describe('ScienceSettingsComponent', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.saveSettingsSuccessAlert');
     });
 
+    it('shows an error when saving consent fails', () => {
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(throwError(() => new Error('failed')));
+        const successSpy = vi.spyOn(alertService, 'success');
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.toggleConsent(activeConsent);
+
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('error.unexpectedError');
+    });
+
     it('deletes science data after confirmation', () => {
         vi.spyOn(window, 'confirm').mockReturnValue(true);
         const deleteSpy = vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
@@ -73,6 +84,18 @@ describe('ScienceSettingsComponent', () => {
 
         expect(deleteSpy).toHaveBeenCalledWith(activeConsent.courseId);
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.userSettings.saveSettingsSuccessAlert');
+    });
+
+    it('shows an error when deleting science data fails', () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(throwError(() => new Error('failed')));
+        const successSpy = vi.spyOn(alertService, 'success');
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.deleteData(activeConsent);
+
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('error.unexpectedError');
     });
 
     it('does not delete science data when confirmation is rejected', () => {

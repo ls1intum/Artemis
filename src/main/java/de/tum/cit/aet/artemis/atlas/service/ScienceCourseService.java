@@ -176,10 +176,7 @@ public class ScienceCourseService {
         if ((consent == null || active) && !authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
-        if (consent != null) {
-            return;
-        }
-        if (!scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(course.getId())) {
+        if ((consent == null || active) && !scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(course.getId())) {
             throw new BadRequestAlertException("Course is not enabled for science collection", ENTITY_NAME, "scienceCourseNotEnabled");
         }
     }
@@ -243,7 +240,6 @@ public class ScienceCourseService {
      * @param request the export filter and purpose
      * @return the generated CSV file bytes
      */
-    @Transactional
     public byte[] createResearchExport(ScienceResearchExportRequestDTO request) {
         validateResearchExportRequest(request);
         Set<ScienceEventType> eventTypes = request.eventTypes() == null || request.eventTypes().isEmpty() ? EnumSet.allOf(ScienceEventType.class) : request.eventTypes();

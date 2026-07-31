@@ -22,7 +22,7 @@
                     <tum-ui-toggle-switch
                         inputId="science-course-{{ consent.courseId }}"
                         [ngModel]="consent.active === true"
-                        [disabled]="!consent.scienceEnabled"
+                        [disabled]="!consent.scienceEnabled && consent.active !== true"
                         (changed)="toggleConsent(consent)"
                     />
                     <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
