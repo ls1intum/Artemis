@@ -5,8 +5,8 @@ LOAD DATABASE
 
 WITH data only,
  workers = 8, concurrency = 1,
- multiple readers per thread, rows per range = 10000,
- prefetch rows = 10000, batch rows = 2500,
+ multiple readers per thread, rows per range = 100,
+ prefetch rows = 100, batch rows = 100,
  create no tables, create no indexes,
  preserve index names,
  reset sequences,

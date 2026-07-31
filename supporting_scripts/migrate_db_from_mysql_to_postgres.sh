@@ -104,7 +104,7 @@ docker run --rm -it --net=host \
   -e "FROM_DB=$FROM_DB" \
   -e "INTO_DB=$INTO_DB" \
   "$PGLOADER_IMAGE" \
-  pgloader --debug $opt /home/migration/migration.load | tee -a "$log_file"
+  pgloader --dynamic-space-size 12000 --debug $opt /home/migration/migration.load | tee -a "$log_file"
 
 case "$?" in
     125 |126|127)
