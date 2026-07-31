@@ -75,6 +75,18 @@ function ruleElementSelectors(rule) {
     return uniqueSorted([...(rule?.selector ?? '').matchAll(/(?<![.\w-])(tum-ui-[\w-]+)/g)].map((match) => match[1]));
 }
 
+function physicalTailwindUtilities(files) {
+    return files.flatMap(({ file, source }) =>
+        [...source.matchAll(/\btum:[^\s"'`]+/g)]
+            .map((match) => match[0])
+            .filter((className) => {
+                const utility = className.split(':').at(-1);
+                return /^(?:!?-?(?:left|right|ml|mr|pl|pr)(?:-|$)|text-(?:left|right)$)/.test(utility);
+            })
+            .map((className) => `${file}: ${className}`),
+    );
+}
+
 function relativeLuminance(color) {
     const channels = cssColorChannels(color).map((value) => {
         return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
@@ -360,12 +372,10 @@ describe('@tumaet/ui-angular integration contract', () => {
     });
 
     it('uses logical Tailwind utilities for direction-sensitive package layout', () => {
-        const physicalUtilities = packageRuntimeFiles
-            .filter(({ file }) => !file.includes('/tooltip/'))
-            .flatMap(({ file, source }) =>
-                [...source.matchAll(/\btum:(?:[\w[\]&:.()-]+:)*(?:left|right|ml|mr|pl|pr|text-left|text-right)(?=$|[\s"'`]|[-[])\S*/g)].map((match) => `${file}: ${match[0]}`),
-            );
+        const fixture = [{ file: 'fixture.html', source: 'class="tum:md:ml-2 tum:ms-2 tum:text-right tum:text-start"' }];
+        const physicalUtilities = physicalTailwindUtilities(packageRuntimeFiles.filter(({ file }) => !file.includes('/tooltip/')));
 
+        expect(physicalTailwindUtilities(fixture)).toEqual(['fixture.html: tum:md:ml-2', 'fixture.html: tum:text-right']);
         expect(physicalUtilities).toEqual([]);
     });
 
