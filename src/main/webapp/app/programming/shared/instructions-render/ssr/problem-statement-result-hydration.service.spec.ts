@@ -80,14 +80,37 @@ describe('ProblemStatementResultHydrationService', () => {
             expect(received).toBe(latestResult);
         });
 
-        it('returns undefined when getLatestResultWithFeedback fails', () => {
+        it('errors when getLatestResultWithFeedback fails, instead of emitting "no result"', () => {
             const participation: Participation = { id: 5 };
             vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback').mockReturnValue(throwError(() => new Error('fatal')));
 
-            let received: Result | undefined = { id: -1 };
-            service.initialResult(participation).subscribe((r) => (received = r));
+            let errored: unknown;
+            let emitted = false;
+            service.initialResult(participation).subscribe({
+                next: () => (emitted = true),
+                error: (e) => (errored = e),
+            });
 
-            expect(received).toBeUndefined();
+            // A swallowed failure would emit undefined here, which downstream is indistinguishable from "this
+            // participation has no result" and renders neutral task statuses instead of the load-failure banner.
+            expect(emitted).toBe(false);
+            expect(errored).toBeDefined();
+        });
+
+        it('errors when the feedback details of the fetched latest result cannot be loaded', () => {
+            const participation: Participation = { id: 5 };
+            vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback').mockReturnValue(of({ id: 7 }));
+            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(throwError(() => new Error('fatal')));
+
+            let errored: unknown;
+            let emitted = false;
+            service.initialResult(participation).subscribe({
+                next: () => (emitted = true),
+                error: (e) => (errored = e),
+            });
+
+            expect(emitted).toBe(false);
+            expect(errored).toBeDefined();
         });
     });
 

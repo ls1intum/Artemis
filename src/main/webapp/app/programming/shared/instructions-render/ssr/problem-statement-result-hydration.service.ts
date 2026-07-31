@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, mergeMap, of } from 'rxjs';
+import { Observable, map, mergeMap, of } from 'rxjs';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -21,6 +21,11 @@ export class ProblemStatementResultHydrationService {
 
     /**
      * Resolves the latest result of the given participation, including its feedback details.
+     *
+     * A failed lookup errors instead of emitting `undefined`, for the same reason as {@link withFeedbackDetails}:
+     * "the result could not be loaded" and "there is no result" render differently, and swallowing the failure would
+     * silently show neutral task statuses instead of the load-failure banner. Callers must treat the error as a load
+     * failure.
      */
     initialResult(participation: Participation | undefined): Observable<Result | undefined> {
         if (!participation?.id) {
@@ -31,10 +36,9 @@ export class ProblemStatementResultHydrationService {
             const latest = findLatestResult(results);
             return latest ? this.withFeedbackDetails(participation, latest) : of(undefined);
         }
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participation.id).pipe(
-            catchError(() => of(undefined)),
-            mergeMap((latest?: Result) => (latest ? this.withFeedbackDetails(participation, latest) : of(undefined))),
-        );
+        return this.programmingExerciseParticipationService
+            .getLatestResultWithFeedback(participation.id)
+            .pipe(mergeMap((latest?: Result) => (latest ? this.withFeedbackDetails(participation, latest) : of(undefined))));
     }
 
     /**

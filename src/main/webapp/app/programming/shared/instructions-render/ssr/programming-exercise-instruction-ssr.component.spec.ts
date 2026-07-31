@@ -405,6 +405,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
     let comp: ProgrammingExerciseInstructionSsrComponent;
     let httpMock: HttpTestingController;
     let resultService: ResultService;
+    let participationService: ProgrammingExerciseParticipationService;
 
     const exercise = { id: 42, problemStatement: '[task][A](<testid>1</testid>)' } as ProgrammingExercise;
 
@@ -426,6 +427,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         comp = fixture.componentInstance;
         httpMock = TestBed.inject(HttpTestingController);
         resultService = TestBed.inject(ResultService);
+        participationService = TestBed.inject(ProgrammingExerciseParticipationService);
     });
 
     afterEach(() => httpMock.verify({ ignoreCancelled: true }));
@@ -462,5 +464,44 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         expect(comp.initialLoadFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
         expect(comp.renderedHtml()).toBeUndefined();
+    });
+
+    it('reports a load failure when the latest result of the participation cannot be fetched', () => {
+        // No bound result and no submissions, so hydration goes through the participation lookup. If that failure were
+        // swallowed into "there is no result", the statement would silently render with neutral task statuses.
+        vi.spyOn(participationService, 'getLatestResultWithFeedback').mockReturnValue(throwError(() => new Error('latest result unavailable')));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.detectChanges();
+
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        expect(comp.initialLoadFailed()).toBe(true);
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.renderedHtml()).toBeUndefined();
+    });
+
+    it('keeps an already rendered statement when a later latest-result fetch fails', () => {
+        const getLatestResultSpy = vi.spyOn(participationService, 'getLatestResultWithFeedback').mockReturnValue(of({ id: 3, feedbacks: passingFeedback() } as Result));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush({
+            html: `<!DOCTYPE html><html><body><div class="artemis-problem-statement">${taskSpan('A', '1')}</div></body></html>`,
+            contentHash: 'hydrated',
+            rendererVersion: '1.0.0',
+        });
+        fixture.detectChanges();
+        expect(comp.tasks()[0].status).toBe('success');
+
+        getLatestResultSpy.mockReturnValue(throwError(() => new Error('latest result unavailable')));
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        // The stale content survives; only the refresh banner appears.
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        expect(comp.refreshFailed()).toBe(true);
+        expect(comp.initialLoadFailed()).toBe(false);
+        expect(comp.renderedHtml()).toBeDefined();
+        expect(comp.tasks()[0].status).toBe('success');
     });
 });
