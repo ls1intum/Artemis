@@ -10,6 +10,17 @@ import path from 'path';
 import { hashElement } from 'folder-hash';
 import { fileURLToPath } from 'url';
 import * as esbuild from 'esbuild';
+import { checkViteOverride } from './check-vite-override.mjs';
+
+// Runs on every `ng serve` and every client build: a vite version that does not match what
+// @angular/build expects breaks the dev server silently (blank page), so fail here instead.
+try {
+    checkViteOverride();
+} catch (error) {
+    // The message is self-contained and actionable; a stack trace would only bury it.
+    console.error(error.message);
+    process.exit(1);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

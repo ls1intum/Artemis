@@ -3,6 +3,7 @@ import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 export interface DialogData {
     slideToReference: string;
+    imageAlt: string;
 }
 
 @Component({ templateUrl: './enlarge-slide-image.component.html' })
