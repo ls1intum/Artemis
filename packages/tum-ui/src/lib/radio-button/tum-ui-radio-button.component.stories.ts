@@ -13,6 +13,7 @@ interface RadioOption {
 }
 
 interface RadioButtonStoryArgs {
+    groupId: string;
     legend: string;
     options: readonly RadioOption[];
     selectedValue: string | undefined;
@@ -36,6 +37,7 @@ const meta = {
         }),
     ],
     args: {
+        groupId: 'email-summary-default',
         legend: 'Email summary',
         options: OPTIONS,
         selectedValue: 'weekly',
@@ -43,6 +45,9 @@ const meta = {
         selected: fn(),
     },
     argTypes: {
+        groupId: {
+            table: { disable: true },
+        },
         options: {
             control: false,
         },
@@ -66,24 +71,26 @@ const meta = {
                 },
             },
             template: `
-                <fieldset>
-                    <legend>{{ legend }}</legend>
-                    @for (option of options; track option.value) {
-                        <label [for]="'summary-' + option.value">
-                            <tum-ui-radio-button
-                                [inputId]="'summary-' + option.value"
-                                name="summary"
-                                [value]="option.value"
-                                [ngModel]="selectedValue"
-                                (ngModelChange)="selectValue($event)"
-                                [ngModelOptions]="{ standalone: true }"
-                                [disabled]="disabled"
-                                (selected)="selected($event)"
-                            />
-                            {{ option.label }}
-                        </label>
-                    }
-                </fieldset>
+                <form>
+                    <fieldset>
+                        <legend>{{ legend }}</legend>
+                        @for (option of options; track option.value) {
+                            <label [for]="groupId + '-' + option.value">
+                                <tum-ui-radio-button
+                                    [inputId]="groupId + '-' + option.value"
+                                    [name]="groupId"
+                                    [value]="option.value"
+                                    [ngModel]="selectedValue"
+                                    (ngModelChange)="selectValue($event)"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="disabled"
+                                    (selected)="selected($event)"
+                                />
+                                {{ option.label }}
+                            </label>
+                        }
+                    </fieldset>
+                </form>
             `,
         };
     },
@@ -96,6 +103,9 @@ type Story = StoryObj<RadioButtonStoryArgs>;
 export const Default: Story = {};
 
 export const Selection: Story = {
+    args: {
+        groupId: 'email-summary-selection',
+    },
     tags: ['!dev', '!autodocs'],
     play: async ({ args, canvas, userEvent }) => {
         await expect(canvas.getByRole('radio', { name: 'Weekly' })).toBeChecked();
@@ -118,6 +128,7 @@ export const Selection: Story = {
 
 export const Disabled: Story = {
     args: {
+        groupId: 'email-summary-disabled',
         disabled: true,
     },
 };

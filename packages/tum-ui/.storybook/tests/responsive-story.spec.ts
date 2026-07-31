@@ -82,11 +82,26 @@ test('keeps selected dates visually selected on hover', async ({ page }) => {
     await expect(selectedDay).toHaveCSS('background-color', selectedBackground);
 });
 
-test('renders the initial radio selection without a transient empty state', async ({ page }) => {
-    await page.goto('./iframe.html?id=forms-radio-button--default&viewMode=story');
-    const checked = page.getByRole('radio', { name: 'Weekly' });
+test('centers the native time control and commits its normalized value', async ({ page }) => {
+    await page.goto('./iframe.html?id=forms-date-picker--default&viewMode=story');
+    await page.getByRole('button', { name: 'Open calendar' }).click();
+    const dialog = page.getByRole('dialog');
+    const time = dialog.locator('input[type="time"]');
+    const dialogBox = (await dialog.boundingBox())!;
+    const timeBox = (await time.boundingBox())!;
+
+    expect(timeBox.x + timeBox.width / 2).toBeCloseTo(dialogBox.x + dialogBox.width / 2, 0);
+    await expect(time).toHaveAttribute('type', 'time');
+    await expect(time).toHaveAttribute('step', '60');
+    await time.fill('12:34');
+    await expect(page.getByRole('combobox', { name: 'Deadline' })).toHaveValue('13.06.2026 12:34');
+});
+
+test('renders the initial radio selection in AutoDocs', async ({ page }) => {
+    await page.goto('./iframe.html?id=forms-radio-button--docs&viewMode=docs');
+    const checked = page.getByRole('radio', { name: 'Weekly' }).first();
     const box = checked.locator('xpath=following-sibling::*[1]');
-    const uncheckedBox = page.getByRole('radio', { name: 'Daily' }).locator('xpath=following-sibling::*[1]');
+    const uncheckedBox = page.getByRole('radio', { name: 'Daily' }).first().locator('xpath=following-sibling::*[1]');
     const marker = box.locator('.tum-ui-radio-button-icon');
 
     await expect(checked).toBeChecked();
@@ -101,7 +116,15 @@ test('positions the tab indicator under the active tab', async ({ page }) => {
     const indicator = page.locator('.tum-ui-tab-indicator');
     const settings = page.getByRole('tab', { name: 'Settings' });
 
+    const transitionStarted = indicator.evaluate(
+        (element) =>
+            new Promise<boolean>((resolve) => {
+                element.addEventListener('transitionrun', () => resolve(true), { once: true });
+                setTimeout(() => resolve(false), 500);
+            }),
+    );
     await settings.click();
+    expect(await transitionStarted).toBe(true);
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.width ?? 0)).toBe(Math.round((await settings.boundingBox())?.width ?? 0));
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.x ?? 0)).toBe(Math.round((await settings.boundingBox())?.x ?? 0));
 });

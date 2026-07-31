@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TumUiTabsService } from './tum-ui-tabs.service';
 
+/** Content panel shown when its value matches the containing tabs value. */
 @Component({
     selector: 'tum-ui-tab-panel',
     template: '@if (active()) { <ng-content /> }',
@@ -17,6 +18,7 @@ import { TumUiTabsService } from './tum-ui-tabs.service';
 export class TumUiTabPanelComponent {
     private readonly tabsService = inject(TumUiTabsService);
 
+    /** Value that associates this panel with a tab. */
     readonly value = input.required<number | string>();
 
     protected readonly active = computed(() => this.tabsService.active() === this.value());

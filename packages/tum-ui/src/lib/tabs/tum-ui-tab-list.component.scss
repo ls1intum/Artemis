@@ -13,8 +13,8 @@
 
 .tum-ui-tab-indicator-animated {
     transition:
-        width 0.2s ease,
-        transform 0.2s ease;
+        width 250ms cubic-bezier(0.35, 0, 0.25, 1),
+        transform 250ms cubic-bezier(0.35, 0, 0.25, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

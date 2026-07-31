@@ -8,6 +8,7 @@ export interface TumUiRadioButtonSelectEvent {
 
 const UNSET = Symbol('tum-ui-radio-unset');
 
+/** Native radio control with TUM UI styling and Angular forms integration. */
 @Component({
     selector: 'tum-ui-radio-button',
     templateUrl: './tum-ui-radio-button.component.html',
@@ -17,15 +18,20 @@ const UNSET = Symbol('tum-ui-radio-unset');
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiRadioButtonComponent implements ControlValueAccessor {
+    /** Value written to the containing form when this option is selected. */
     readonly value = input<unknown>();
 
+    /** Native radio-group name. Radios belong together when they share a form owner and name. */
     readonly name = input<string>();
 
+    /** ID used to associate a consumer-provided label with the native radio. */
     readonly inputId = input<string>();
     readonly disabled = input(false);
 
+    /** Accessible name used when no associated label is rendered. */
     readonly ariaLabel = input<string>();
 
+    /** Emits the originating click and selected option value. */
     readonly selected = output<TumUiRadioButtonSelectEvent>();
 
     private readonly cvaValue = signal<unknown>(UNSET);

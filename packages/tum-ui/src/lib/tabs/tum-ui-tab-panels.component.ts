@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+/** Layout container for the panels in a tabs composition. */
 @Component({
     selector: 'tum-ui-tab-panels',
     template: '<ng-content />',

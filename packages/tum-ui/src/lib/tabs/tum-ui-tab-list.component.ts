@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { TumUiTabsService } from './tum-ui-tabs.service';
 import { TumUiTabComponent } from './tum-ui-tab.component';
 
+/** Scrollable tab-list container with keyboard navigation and an animated selection indicator. */
 @Component({
     selector: 'tum-ui-tab-list',
     templateUrl: './tum-ui-tab-list.component.html',

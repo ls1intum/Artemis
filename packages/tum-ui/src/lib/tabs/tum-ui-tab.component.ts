@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, compu
 import type { FocusOrigin } from '@angular/cdk/a11y';
 import { TumUiTabsService } from './tum-ui-tabs.service';
 
+/** Selectable tab associated with the panel that has the same value. */
 @Component({
     selector: 'tum-ui-tab',
     template: '<ng-content />',
@@ -23,6 +24,7 @@ export class TumUiTabComponent {
 
     readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
+    /** Value that associates this tab with a tab panel. */
     readonly value = input.required<number | string>();
     // eslint-disable-next-line @angular-eslint/no-input-rename -- FocusKeyManager requires disabled to be a boolean property.
     readonly disabledInput = input(false, { alias: 'disabled', transform: booleanAttribute });
