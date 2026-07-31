@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
