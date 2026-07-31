@@ -915,6 +915,9 @@ public class ModelingExerciseResource {
 
     private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {
         PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
+        // Carry the id so Hibernate merges the existing row instead of orphan-deleting it and inserting a new one:
+        // Exercise.plagiarismDetectionConfig is a @OneToOne(cascade = ALL, orphanRemoval = true) association.
+        config.setId(dto.id());
         config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());

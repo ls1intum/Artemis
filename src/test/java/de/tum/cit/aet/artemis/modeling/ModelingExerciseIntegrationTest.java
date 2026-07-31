@@ -1460,13 +1460,18 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
         ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
         assertThat(reloaded.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
+        Long originalConfigId = reloaded.getPlagiarismDetectionConfig().getId();
 
         ObjectNode updateBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(reloaded));
         ((ObjectNode) updateBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 73);
         request.putWithResponseBody("/api/modeling/modeling-exercises", updateBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
+        // Reload through a fresh persistence context (not the in-memory managed object) and pin that the PUT merged
+        // into the existing plagiarism config row instead of orphan-deleting it and inserting a new one: the config's
+        // OneToOne is cascade=ALL, orphanRemoval=true, so dropping the id on write-back silently swaps the row's PK.
         ModelingExercise updated = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
         assertThat(updated.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(73);
+        assertThat(updated.getPlagiarismDetectionConfig().getId()).as("PUT must keep the plagiarism config row id stable").isEqualTo(originalConfigId);
     }
 
     @Test
