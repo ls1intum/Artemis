@@ -147,7 +147,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly showGroupEdit = signal(false);
     readonly groupEditGroup = signal<CourseExerciseGroup | undefined>(undefined);
     /** Whether the group-edit modal is creating (vs. updating) — chooses the persistence path on save. */
-    private readonly groupEditIsNew = signal(false);
+    protected readonly groupEditIsNew = signal(false);
     readonly showConsistencyCheck = signal(false);
     readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
     readonly showQuizExport = signal(false);

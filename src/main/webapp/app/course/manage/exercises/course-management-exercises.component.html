@@ -243,7 +243,7 @@
     <!-- Declarative modals (were opened programmatically via DialogService / NgbModal). Each is gated by its data
          signal where its input is required, so it is only instantiated once the data exists. -->
     @if (groupEditGroup(); as group) {
-        <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" (saved)="onGroupEditSaved($event)" />
+        <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
     }
     <jhi-consistency-check [(visible)]="showConsistencyCheck" [exercisesToCheck]="consistencyExercises()" />
     @if (courseId(); as id) {

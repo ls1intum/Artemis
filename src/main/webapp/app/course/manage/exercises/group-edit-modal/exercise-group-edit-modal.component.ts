@@ -48,6 +48,8 @@ export class ExerciseGroupEditModalComponent {
     readonly visible = model<boolean>(false);
     /** The group being edited, supplied by the parent. */
     readonly group = input.required<CourseExerciseGroup>();
+    /** True when the group does not exist yet, so the dialog is titled "Create Group" instead of "Edit Group". */
+    readonly isNew = input(false);
     /** Emits the edited group on save (only when something actually changed); cancel/close emit nothing. */
     readonly saved = output<CourseExerciseGroup>();
 
@@ -58,6 +60,8 @@ export class ExerciseGroupEditModalComponent {
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
+
+    readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
