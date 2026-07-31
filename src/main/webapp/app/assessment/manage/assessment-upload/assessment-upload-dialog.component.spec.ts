@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { of, Subject } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,6 +69,22 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(alertError).not.toHaveBeenCalled();
     });
 
+    it('should update the drop-zone state and suppress the browser drag behavior', () => {
+        const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as DragEvent;
+
+        component.onDragOver(event);
+
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(component['isDragOver']()).toBe(true);
+
+        component.onDragLeave(event);
+
+        expect(event.preventDefault).toHaveBeenCalledTimes(2);
+        expect(event.stopPropagation).toHaveBeenCalledTimes(2);
+        expect(component['isDragOver']()).toBe(false);
+    });
+
     it('should upload for the bound exercise id and store the success result', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 2, createdStudentIdentifiers: ['1-a', '2-b'] };
         uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
@@ -92,6 +108,36 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['errors']()).toEqual(result.errors);
         expect(component['successResult']()).toBeUndefined();
         expect(alertSuccess).not.toHaveBeenCalled();
+    });
+
+    it('should leave the dialog ready for another attempt after an HTTP error', () => {
+        const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
+        uploadSpy.mockReturnValue(upload);
+        component.onFileInputChange(fileInputEvent(zipFile));
+
+        component.upload();
+        expect(component['isUploading']()).toBe(true);
+
+        upload.error(new HttpErrorResponse({ status: 400 }));
+
+        expect(component['isUploading']()).toBe(false);
+        expect(component['selectedFile']()).toBe(zipFile);
+        expect(component['errors']()).toEqual([]);
+        expect(component['successResult']()).toBeUndefined();
+    });
+
+    it('should clear the selected file and previous result when reset', () => {
+        const result: AssessmentUploadResult = { numberOfCreatedAssessments: 1, createdStudentIdentifiers: ['1-a'] };
+        uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
+        component.onFileInputChange(fileInputEvent(zipFile));
+        component.upload();
+
+        component.resetState();
+
+        expect(component['selectedFile']()).toBeUndefined();
+        expect(component['errors']()).toEqual([]);
+        expect(component['successResult']()).toBeUndefined();
+        expect(component['isUploading']()).toBe(false);
     });
 
     it('should hide the dialog on cancel', () => {
