@@ -28,7 +28,7 @@ describe('TUM UI reference page generation', () => {
             },
         });
 
-        expect(references).toContain('"actions-button": "actions-button--docs"');
+        expect(references).toContain("'actions-button': 'actions-button--docs'");
         expect(references).not.toContain('actions-button--default');
     });
 
