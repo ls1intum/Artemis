@@ -635,6 +635,28 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Looks a quiz exercise up by its title within a course.
+     *
+     * Recovery path for a quiz created through the UI: that POST carries a disk-backed background image,
+     * so its response body cannot be held in Node and Chrome discards it when the editor navigates away
+     * on save (see readResponseJson). This GET re-derives the created quiz without repeating the create.
+     *
+     * @param courseId - The ID of the course the quiz belongs to.
+     * @param title - The exact title the quiz was created with.
+     * @throws if no quiz with that title exists in the course, which would otherwise surface later as a
+     *         confusing "undefined id" failure.
+     */
+    async getQuizExerciseByTitle(courseId: number, title: string): Promise<QuizExercise> {
+        const response = await this.page.request.get(`api/quiz/courses/${courseId}/quiz-exercises`);
+        const quizzes: QuizExercise[] = await response.json();
+        const quiz = quizzes.find((candidate) => candidate.title === title);
+        if (!quiz) {
+            throw new Error(`No quiz titled "${title}" found in course ${courseId}. Available titles: ${quizzes.map((candidate) => candidate.title).join(', ') || '(none)'}`);
+        }
+        return quiz;
+    }
+
+    /**
      * Deletes a quiz exercise with the specified exercise ID.
      *
      * @param exerciseId - The ID of the quiz exercise to be deleted.

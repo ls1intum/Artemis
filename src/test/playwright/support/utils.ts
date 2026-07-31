@@ -240,14 +240,26 @@ export async function installApiResponseCapture(context: BrowserContext): Promis
  *   3. for idempotent **GET** requests, replay the request to fetch a fresh body — the only read-side
  *      recovery from a true eviction (a non-idempotent request must not be replayed: it would repeat
  *      the side effect, e.g. create a second entity);
- *   4. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
+ *   4. for a non-GET, use the caller's `recoverIdempotently` callback if one was supplied — see below;
+ *   5. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
+ *
+ * `recoverIdempotently` exists for one unavoidable gap. A multipart request with a **file-backed** part
+ * cannot be replayed from Node (Chromium streams those bytes from disk and never hands them to the
+ * driver), so its response body lives only in Chrome and the capture above has to fall back to a CDP
+ * read. When the page then navigates — as the quiz editor does on a successful save — Chrome discards
+ * the body of the document being left, and CDP answers "Response body is not available for a response
+ * that was navigated away from". That is a race no read-side retry can win, because the bytes are gone.
+ * A caller that can re-derive the same information with an **idempotent GET** (looking the just-created
+ * entity up by title, say) passes a callback here and stops depending on the discarded body.
+ * Only ever pass something side-effect-free: it runs in place of reading a response, not in place of
+ * making the request.
  *
  * Historical note: an enlarged CDP network buffer and whole-run body retention were both reverted
  * (they OOM-crashed Chromium under parallel CI load) — do not reintroduce those. A page-scoped
  * route capture was also once removed because the service worker bypassed it; the context-scoped
  * capture above works only in combination with `serviceWorkers: 'block'`.
  */
-export async function readResponseJson<T = any>(response: Response): Promise<T> {
+export async function readResponseJson<T = any>(response: Response, recoverIdempotently?: () => Promise<T>): Promise<T> {
     const capturedBody = capturedApiResponseBodies.get(response.request());
     if (capturedBody) {
         return JSON.parse(capturedBody.toString('utf-8')) as T;
@@ -275,6 +287,9 @@ export async function readResponseJson<T = any>(response: Response): Promise<T> 
         if (request.method() === 'GET') {
             const replay = await response.frame().page().request.fetch(request);
             return (await replay.json()) as T;
+        }
+        if (recoverIdempotently) {
+            return await recoverIdempotently();
         }
         throw new Error(
             `Response body for ${request.method()} ${request.url()} was evicted from Chrome's network buffer before it could be read ` +
