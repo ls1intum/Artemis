@@ -723,6 +723,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
+        // Link a competency of the exam's course so the import runs its second, merge-based save: that merge resolves
+        // the non-cascaded exerciseGroup to an uninitialized proxy, which is exactly the state the response mapping
+        // must survive for the exerciseGroup/exam/course assertions below to mean anything.
+        Competency examCourseCompetency = competencyUtilService.createCompetency(exerciseGroup1.getExam().getCourse());
+        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(examCourseCompetency, modelingExercise, 1)));
 
         var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
                 ImportModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
