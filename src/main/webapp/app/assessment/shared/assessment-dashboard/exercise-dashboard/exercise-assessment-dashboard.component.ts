@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -53,7 +53,7 @@ import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
 import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -64,6 +64,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
@@ -79,6 +80,7 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { getAssessmentNotPossibleYetAlert, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -105,6 +107,7 @@ export interface ExampleSubmissionQueryParams {
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         NgbTooltip,
+        TooltipModule,
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
@@ -118,7 +121,7 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDurationFromSecondsPipe,
     ],
 })
-export class ExerciseAssessmentDashboardComponent implements OnInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     complaintService = inject(ComplaintService);
     private exerciseService = inject(ExerciseService);
     private alertService = inject(AlertService);
@@ -134,6 +137,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private router = inject(Router);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private sortService = inject(SortService);
+    private datePipe = inject(ArtemisDatePipe);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -238,6 +242,40 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     );
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
+    /**
+     * Bumped once the moment assessment becomes possible has passed, so that the reason below stops applying without the
+     * tutor having to reload the page. `dayjs()` is not signal-tracked, so the passage of time needs an explicit trigger.
+     */
+    private readonly assessmentAvailabilityTick = signal(0);
+
+    /** Cleared on destroy so that a closed dashboard does not keep a pending timer alive. Not template-read, so plain. */
+    private assessmentAvailabilityTimeout?: ReturnType<typeof setTimeout>;
+
+    /** Bumped on every language change so that translations built outside the template are rebuilt as well. */
+    private readonly currentLanguage = signal<string | undefined>(undefined);
+
+    /**
+     * For exam exercises: why assessment is not possible yet, or undefined once it is (also for course exercises and for
+     * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
+     * exercise types agree and the banner never contradicts the alert shown after a 403.
+     */
+    readonly assessmentNotPossibleYetReason = computed(() => {
+        this.assessmentAvailabilityTick();
+        if (this.isTestRun()) {
+            return undefined;
+        }
+        return getAssessmentNotPossibleYetReason(this.exercise());
+    });
+
+    /** Tooltip for the disabled assessment buttons, empty while assessment is possible so that no tooltip is shown. */
+    readonly assessmentNotPossibleYetTooltip = computed(() => {
+        this.currentLanguage();
+        const reason = this.assessmentNotPossibleYetReason();
+        return reason
+            ? this.translateService.instant('artemisApp.exerciseAssessmentDashboard.assessmentNotPossibleYetTooltip', { date: this.datePipe.transform(reason.date) })
+            : '';
+    });
+
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
     readonly complaintsLink = signal<(string | number)[]>(undefined!);
     readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
@@ -250,6 +288,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
+    faCircleInfo = faCircleInfo;
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
@@ -268,9 +307,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         this.loadAll();
 
+        this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
         this.translateService.onLangChange.subscribe(() => {
+            this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
             this.setupGraph();
         });
+    }
+
+    ngOnDestroy(): void {
+        clearTimeout(this.assessmentAvailabilityTimeout);
     }
 
     setupGraph() {
@@ -387,9 +432,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
-                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun()) {
+                // While the exam is still running the server rejects this, and the banner already explains why
+                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun() && !this.assessmentNotPossibleYetReason()) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
+                this.scheduleAssessmentAvailabilityUpdate();
 
                 this.setupLinks();
             },
@@ -485,6 +532,34 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
+    }
+
+    /**
+     * Re-enables the assessment actions the moment assessment becomes possible, so that a tutor who already had the
+     * dashboard open when the exam ended does not have to reload the page to start correcting.
+     */
+    private scheduleAssessmentAvailabilityUpdate(): void {
+        clearTimeout(this.assessmentAvailabilityTimeout);
+        this.assessmentAvailabilityTimeout = undefined;
+        const reason = this.assessmentNotPossibleYetReason();
+        if (!reason) {
+            return;
+        }
+        // Wake up at the next date the message depends on: for a programming exercise that is first the exam end (when
+        // the message changes to "the tests still have to run") and only then the date assessment opens at.
+        const millisecondsUntilNextChange = reason.date.diff(dayjs()) + 1000;
+        this.assessmentAvailabilityTimeout = setTimeout(() => {
+            this.assessmentAvailabilityTick.update((tick) => tick + 1);
+            if (this.assessmentNotPossibleYetReason()) {
+                this.scheduleAssessmentAvailabilityUpdate();
+                return;
+            }
+            // the submissions could not be fetched while assessment was blocked, so fetch them now
+            const exercise = this.exercise();
+            if (exercise && !exercise.teamMode && !this.isTestRun()) {
+                this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
+            }
+        }, millisecondsUntilNextChange);
     }
 
     get yourStatusTitle(): string {
@@ -658,7 +733,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             error: (error: HttpErrorResponse) => {
                 if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached.set(true);
-                } else {
+                } else if (!getAssessmentNotPossibleYetAlert(error, this.datePipe)) {
+                    // the banner explains the "assessment is not possible yet" case, so it needs no additional toast
                     this.onError(error.error?.detail || error.message);
                 }
             },

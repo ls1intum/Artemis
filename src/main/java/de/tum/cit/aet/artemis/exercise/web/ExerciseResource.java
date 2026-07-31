@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -105,11 +106,13 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final ExerciseDateService exerciseDateService;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ExerciseDateService exerciseDateService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -125,6 +128,7 @@ public class ExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -249,6 +253,15 @@ public class ExerciseResource {
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        }
+
+        if (exercise.isExamExercise()) {
+            // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
+            var examAssessmentDates = exerciseDateService.getExamAssessmentDates(exercise);
+            if (examAssessmentDates != null) {
+                exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
+                exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
+            }
         }
 
         Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);

@@ -26,6 +26,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { onError } from 'app/foundation/util/global.utils';
+import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
@@ -57,6 +59,7 @@ import { FileService } from 'app/foundation/service/file.service';
 })
 export class FileUploadAssessmentComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -186,7 +189,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
-                } else {
+                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
             },
@@ -208,7 +211,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
-                    } else {
+                    } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                         onError(this.alertService, error);
                     }
                 },

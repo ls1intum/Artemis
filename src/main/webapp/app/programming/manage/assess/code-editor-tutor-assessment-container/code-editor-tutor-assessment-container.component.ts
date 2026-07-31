@@ -36,7 +36,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalReposi
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
-import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -48,6 +48,8 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetAlert } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -83,6 +85,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
+    private datePipe = inject(ArtemisDatePipe);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -114,6 +117,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     readonly loadingParticipation = signal(false);
     readonly participationCouldNotBeFetched = signal(false);
+    // Set instead of participationCouldNotBeFetched when the exam is simply not over yet: the assessment editor is
+    // unusable for a reason the tutor can act on, so we say when they can come back instead of "participation not found".
+    // Kept as key + params (not a translated string) so the panel follows language changes.
+    readonly assessmentNotPossibleYet = signal<{ translationKey: string; params: { date: string } } | undefined>(undefined);
     // Written only synchronously / never reassigned — may stay plain.
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
@@ -154,6 +161,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Icons
     faTimesCircle = faTimesCircle;
     faExternalLink = faExternalLink;
+    faCircleInfo = faCircleInfo;
 
     /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
@@ -320,6 +328,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission.set(false);
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetAlert(error, this.datePipe);
+        if (assessmentNotPossibleYet) {
+            // the panel below the header explains this permanently, so an additional toast would only repeat it
+            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.alertService.closeAll();
+            return;
+        }
         this.participationCouldNotBeFetched.set(true);
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
             this.lockLimitReached.set(true);
@@ -444,7 +459,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.avoidCircularStructure();
         this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
-            error: (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
+            error: (error: HttpErrorResponse) => {
+                if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    this.onError(`error.${error?.error?.errorKey}`);
+                }
+                this.saveBusy.set(false);
+                this.submitBusy.set(false);
+            },
         });
     }
 
@@ -501,7 +522,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
-                } else {
+                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError(error?.message);
                 }
             },

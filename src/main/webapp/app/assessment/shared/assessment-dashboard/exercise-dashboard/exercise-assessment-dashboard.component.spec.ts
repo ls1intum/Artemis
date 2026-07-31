@@ -69,6 +69,8 @@ import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-das
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import dayjs from 'dayjs/esm';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -799,5 +801,96 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         };
         expect(comp.language(textSubmissionWithoutLanguage)).toBe(unkownLanguage);
         expect(comp.language(programmingSubmission)).toBe(unkownLanguage);
+    });
+
+    describe('assessment not possible yet', () => {
+        const exerciseWithRunningExam = {
+            ...modelingExercise,
+            latestExamEndDate: dayjs().add(1, 'hour'),
+            assessmentPossibleFrom: dayjs().add(1, 'hour'),
+        } as ModelingExercise;
+
+        it('should explain why assessment is not possible yet while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toEqual({
+                translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`,
+                date: exerciseWithRunningExam.latestExamEndDate,
+            });
+        });
+
+        it('should keep test runs assessable, because they happen before the exam starts', () => {
+            comp.exercise.set(exerciseWithRunningExam);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+
+            comp.isTestRun.set(true);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+        });
+
+        it('should re-enable assessment once the moment it becomes possible has passed, without a page reload', () => {
+            vi.useFakeTimers();
+            try {
+                const assessmentPossibleFrom = dayjs().add(5, 'minutes');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+                expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+                expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+
+                vi.advanceTimersByTime(5 * 60 * 1000 + 2000);
+
+                expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+                // the submissions that could not be fetched while assessment was blocked are fetched now
+                expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should not ask the server for submissions to assess while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+        });
+
+        it('should not show a toast for the "assessment is not possible yet" error, because the banner explains it', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const errorResponse = new HttpErrorResponse({
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: dayjs().add(1, 'hour').toISOString() } },
+            });
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => errorResponse));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(alertServiceSpy).not.toHaveBeenCalled();
+        });
+
+        it('should offer no explanation once assessment is possible', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: { ...modelingExercise, latestExamEndDate: dayjs().subtract(1, 'hour'), assessmentPossibleFrom: dayjs().subtract(1, 'hour') } as ModelingExercise,
+                        headers: new HttpHeaders(),
+                    }),
+                ),
+            );
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+            expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+        });
     });
 });

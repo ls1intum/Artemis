@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -62,13 +63,17 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final SubmissionService submissionService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            SubmissionService submissionService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -87,6 +92,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
+        submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, programmingSubmission.getParticipation());
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException();
         }
@@ -156,6 +162,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
+        submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }

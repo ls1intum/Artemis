@@ -19,6 +19,8 @@ import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
  * Test suite for TextAssessment Service.
@@ -71,7 +73,13 @@ describe('TextAssessment Service', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                // the resolvers report the "assessment is not possible yet" 403 themselves, which needs the AlertService
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         service = TestBed.inject(TextAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);

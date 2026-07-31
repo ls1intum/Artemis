@@ -18,6 +18,12 @@ import { ExamNavigationBar } from './pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
+
+/**
+ * The grace period `prepareExam` configures. Assessment only becomes possible after the exam end plus this period, so
+ * `waitForExamEnd` has to wait it out as well.
+ */
+export const EXAM_GRACE_PERIOD_IN_SECONDS = 10;
 import { admin, studentOne } from './users';
 import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
@@ -761,7 +767,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         examStudentReviewStart: resultDate,
         examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
-        gracePeriod: 10,
+        gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
     let additionalData = {};
@@ -809,15 +815,19 @@ export async function makeExamSubmission(
 }
 
 /**
- * Waits for the exam to end if it hasn't already.
- * This is necessary because the assessment dashboard button only appears after the exam ends.
+ * Waits for the exam to end if it hasn't already, including its grace period.
+ * This is necessary because the assessment dashboard button only appears after the exam ends, and because the server
+ * refuses to open an assessment until the last student can no longer hand in, which is the exam end plus the grace
+ * period (see SubmissionService#checkThatAssessmentIsPossibleElseThrow).
  * @param examEnd - The exam end date
  * @param page - The Playwright page object (used for waitForTimeout)
+ * @param gracePeriodInSeconds - The exam's grace period, defaults to the one `prepareExam` configures
  */
-export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
-    if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
-        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page, gracePeriodInSeconds = EXAM_GRACE_PERIOD_IN_SECONDS) {
+    const assessableFrom = examEnd.add(gracePeriodInSeconds, 'seconds');
+    if (assessableFrom.isAfter(dayjs())) {
+        const timeToWait = assessableFrom.diff(dayjs()) + 2000; // Add 2 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam (including its ${gracePeriodInSeconds}s grace period) to end...`);
         await page.waitForTimeout(timeToWait);
     }
 }

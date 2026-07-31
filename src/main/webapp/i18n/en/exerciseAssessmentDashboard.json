@@ -59,6 +59,7 @@
             "result": "Result",
             "score": "Score",
             "action": "Action",
+            "assessmentNotPossibleYetTooltip": "Assessment starts on {{ date }}",
             "continueAssessment": "Continue assessment",
             "openAssessment": "Open assessment",
             "startAssessment": "Start new assessment",

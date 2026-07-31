@@ -400,6 +400,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // return forbidden if caller is not allowed to assess
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
+        textSubmissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation);
 
         Result result;
         if (resultId != null) {

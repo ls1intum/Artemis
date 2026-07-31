@@ -27,6 +27,8 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -54,6 +56,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -405,16 +408,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading.set(false);
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
+        } else if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+            // the alert already says when assessment is possible, a generic "could not load" on top would only confuse
+            this.resetAssessmentState();
         } else {
             this.onError();
         }
     }
 
-    onError(): void {
+    private resetAssessmentState(): void {
         this.submission.set(undefined);
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
+    }
+
+    onError(): void {
+        this.resetAssessmentState();
         this.alertService.closeAll();
         this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadSubmissionFailed');
     }

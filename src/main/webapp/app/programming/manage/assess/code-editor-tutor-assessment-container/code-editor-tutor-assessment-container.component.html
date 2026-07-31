@@ -1,6 +1,12 @@
-@if (participationCouldNotBeFetched() || lockLimitReached()) {
+@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet()) {
     <nav class="card">
         <div class="card-body">
+            @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+                <span id="assessment-not-possible-yet">
+                    <fa-icon [icon]="faCircleInfo" class="text-state-info" [fixedWidth]="true" />
+                    <span [jhiTranslate]="assessmentNotPossibleYetReason.translationKey" [translateValues]="assessmentNotPossibleYetReason.params"></span>
+                </span>
+            }
             @if (participationCouldNotBeFetched()) {
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
