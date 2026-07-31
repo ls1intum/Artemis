@@ -409,12 +409,32 @@ export class AccountService implements IAccountService {
      * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
+        this.applyLLMSelectionDecision(accepted, dayjs());
+    }
+
+    /**
+     * Restores a previously captured decision verbatim, including "no decision made yet" ({@code undefined}) and an
+     * absent timestamp. Used to roll back an optimistic update whose persistence failed; unlike
+     * {@link setUserLLMSelectionDecision} it must never stamp the current time, because that would claim the user
+     * decided just now.
+     */
+    restoreUserLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
+        this.applyLLMSelectionDecision(accepted, timestamp);
+    }
+
+    private applyLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() });
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification. deepClone (not Object.assign) because User carries a Day.js
+            // date — see deep-clone.util.ts. Mirrors setImageUrl.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
         });
     }
 

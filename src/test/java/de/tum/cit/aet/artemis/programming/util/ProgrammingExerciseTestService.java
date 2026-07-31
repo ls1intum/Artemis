@@ -30,6 +30,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -92,6 +93,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -2160,11 +2162,14 @@ public class ProgrammingExerciseTestService {
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examTestRepository.save(exam);
 
-        // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        // generate individual student exams (the endpoint now returns a slim, exam-masked projection)
+        List<StudentExamDTO> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).hasSize(exam.getExamUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
+        // Re-fetch the managed student exams (with exercises; exam + user are eager) so callers can read the full graph.
+        List<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().sorted(Comparator.comparing(StudentExam::getId))
+                .collect(Collectors.toCollection(ArrayList::new));
 
         // start exercises
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
