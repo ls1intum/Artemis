@@ -34,12 +34,24 @@ public final class TestReferenceParser {
      * the single implementation for every consumer, so the task spans and the PlantUML diagram colors cannot classify
      * the same reference differently.
      *
+     * A digit sequence that does not fit into a {@code long} is treated exactly like a missing wrapper, mirroring
+     * {@code ProgrammingExerciseTaskService}: problem statements are author-controlled, so an out-of-range id is
+     * ordinary input that must render as an unresolved reference rather than fail the whole render request.
+     *
      * @param reference the authored test reference
-     * @return the wrapped test id, or {@code null} if the reference carries no {@code <testid>} wrapper
+     * @return the wrapped test id, or {@code null} if the reference carries no {@code <testid>} wrapper or its id is out of range
      */
     public static @Nullable Long extractTestId(String reference) {
         Matcher matcher = TESTID_PATTERN.matcher(reference);
-        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+        if (!matcher.find()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(matcher.group(1));
+        }
+        catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     /**

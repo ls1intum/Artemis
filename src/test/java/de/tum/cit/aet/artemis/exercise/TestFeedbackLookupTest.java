@@ -48,6 +48,14 @@ class TestFeedbackLookupTest {
     }
 
     @Test
+    void shouldTreatOutOfRangeTestIdAsUnresolved() {
+        // The id overflows a long, so it can never name a test case. It must degrade to an unresolved reference
+        // rather than propagate a NumberFormatException out of the renderer.
+        assertThat(lookup().resolve("<testid>999999999999999999999999</testid>")).isNull();
+        assertThat(lookup().outcomeOf("<testid>999999999999999999999999</testid>")).isEqualTo(TestOutcome.NOT_EXECUTED);
+    }
+
+    @Test
     void shouldReportMissingResults() {
         var empty = TestFeedbackLookup.of(null);
         assertThat(empty.hasResults()).isFalse();

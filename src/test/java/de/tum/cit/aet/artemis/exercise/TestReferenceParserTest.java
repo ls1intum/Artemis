@@ -49,4 +49,23 @@ class TestReferenceParserTest {
     void shouldDropAllEmptyRefs() {
         assertThat(TestReferenceParser.splitTestReferences("testA,,testB")).containsExactly("testA", "testB");
     }
+
+    @Test
+    void shouldExtractWrappedTestId() {
+        assertThat(TestReferenceParser.extractTestId("<testid>17</testid>")).isEqualTo(17L);
+        assertThat(TestReferenceParser.extractTestId("testBubbleSort<testid>5</testid>")).isEqualTo(5L);
+    }
+
+    @Test
+    void shouldReturnNullForReferenceWithoutWrapper() {
+        assertThat(TestReferenceParser.extractTestId("testBubbleSort")).isNull();
+    }
+
+    @Test
+    void shouldReturnNullForOutOfRangeTestId() {
+        // Problem statements are author-controlled, so a digit sequence that overflows a long is ordinary input.
+        // It must resolve to "unresolved reference", never throw: a NumberFormatException here would turn a render
+        // request into an internal server error.
+        assertThat(TestReferenceParser.extractTestId("<testid>999999999999999999999999</testid>")).isNull();
+    }
 }

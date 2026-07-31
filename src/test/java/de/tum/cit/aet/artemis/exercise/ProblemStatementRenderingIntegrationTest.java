@@ -238,6 +238,22 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatOutOfRangeTestIdAsUnresolvedInsteadOfFailing() throws Exception {
+        // Problem statements are author-controlled: a digit sequence that does not fit into a long must render as an
+        // unresolved reference, not blow up the request with an internal server error.
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>,<testid>999999999999999999999999</testid>)", testResults, null, "en", false, false, false,
+                null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).contains("data-test-ids=\"1\"");
+        assertThat(result.html()).doesNotContain("999999999999999999999999");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldShowNoTestsForWhitespaceOnlyRefs() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("[task][Sort]( )", null, null, "en", false, false, false, null);
 
