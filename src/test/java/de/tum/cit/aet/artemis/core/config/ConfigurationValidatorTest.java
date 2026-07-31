@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,8 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
+import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
+import de.tum.cit.aet.artemis.deimos.exception.failureAnalyzer.DeimosConfigurationFailureAnalyzer;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
@@ -40,12 +44,105 @@ class ConfigurationValidatorTest {
         return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule, null, null);
     }
 
+    private static final String VALID_DEIMOS_BASE_URL = "https://llm.example.com";
+
+    private static final String VALID_DEIMOS_MODEL = "openai/gpt-oss-120b";
+
+    private static final String VALID_DEIMOS_COMPLETIONS_PATH = "/api/chat/completions";
+
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
             String vectorizerModule, String openAiBaseUrl, String gpuApiKey) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.getProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
-                openAiBaseUrl, gpuApiKey, false, "http://localhost");
+                openAiBaseUrl, gpuApiKey, false, "http://localhost", VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+    }
+
+    private ConfigurationValidator createDeimosValidator(boolean deimosEnabled, String baseUrl, String model, String completionsPath, long timeoutSeconds, int maxRetries) {
+        Environment mockEnvironment = mock(Environment.class);
+        when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.getProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(deimosEnabled);
+        return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, 0, 0, null, VALID_VECTORIZER_MODULE, null, null, false, "http://localhost", baseUrl,
+                model, completionsPath, timeoutSeconds, maxRetries);
+    }
+
+    @Nested
+    class DeimosConfigurationTest {
+
+        @Test
+        void testDeimosDisabledShouldSkipValidationEvenWithInvalidConfiguration() {
+            ConfigurationValidator validator = createDeimosValidator(false, "", "", "not-a-completions-path", -1, -1);
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @Test
+        void testValidDeimosConfigurationShouldPass() {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = { "   " })
+        void testBlankBaseUrlShouldFailValidation(String baseUrl) {
+            ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.base-url");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "mailto:someone@example.com", "llm.example.com", "ftp://llm.example.com", "file:///tmp/llm" })
+        void testInvalidBaseUrlShouldFailValidation(String baseUrl) {
+            ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.base-url");
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = { "   " })
+        void testBlankModelShouldFailValidation(String model) {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, model, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.model");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "/api/completions", "/api/chat/completions/", "" })
+        void testInvalidCompletionsPathShouldFailValidation(String completionsPath) {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, completionsPath, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.completions-path");
+        }
+
+        @Test
+        void testNonPositiveTimeoutShouldFailValidation() {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 0, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.timeout-seconds");
+        }
+
+        @Test
+        void testNegativeMaxRetriesShouldFailValidation() {
+            ConfigurationValidator validator = createDeimosValidator(true, VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, -1);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.max-retries");
+        }
+
+        @Test
+        void testFailureAnalyzerProducesActionableMessage() {
+            ConfigurationValidator validator = createDeimosValidator(true, "", "", VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            var exception = catchThrowableOfType(DeimosConfigurationException.class, validator::validateConfigurations);
+            var analysis = new DeimosConfigurationFailureAnalyzer().analyze(exception);
+
+            assertThat(analysis).isNotNull();
+            assertThat(analysis.getDescription()).contains("artemis.deimos.enabled=true").contains("artemis.deimos.llm.base-url");
+            assertThat(analysis.getAction()).contains("artemis.deimos.llm.model").contains("enabled: false");
+        }
     }
 
     @Nested
