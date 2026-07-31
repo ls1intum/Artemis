@@ -5,10 +5,11 @@
 
     <!--
     Change the build_plan_configuration and docker_flags columns of programming_exercise_build_config from LONGTEXT
-    to MEDIUMTEXT on MySQL. Both columns are nullable with no default, so modifyDataType does not drop NOT NULL/DEFAULT.
-    Any row that exceeds the MEDIUMTEXT byte limit (16777215) is shortened before the type is narrowed, so the
-    modifyDataType cannot fail or truncate silently. The shortening uses LEFT (by character), which keeps the value
-    valid and, at MySQL's maximum of 4 bytes per character, stays within the limit (4194303 * 4 = 16777212 bytes).
+    to MEDIUMTEXT on MySQL. Both columns are nullable with no default, so modifyDataType keeps them nullable.
+    Both columns store JSON. Any row whose value exceeds the MEDIUMTEXT byte limit (16777215) is reset to NULL before
+    the type is narrowed, so the modifyDataType cannot fail or leave a value truncated into malformed JSON. NULL is the
+    "use the default configuration" state for both fields, so the row stays valid. This discards the oversized value
+    (data loss); these values are above the supported build configuration size limit.
     PostgreSQL has no MEDIUMTEXT; the column stays text there.
     -->
     <changeSet id="20260730111430-1" author="harbeck">
@@ -16,15 +17,15 @@
             <dbms type="mysql"/>
         </preConditions>
 
-        <!-- Shorten values that exceed the MEDIUMTEXT byte limit before narrowing the column type. -->
+        <!-- Reset values that exceed the MEDIUMTEXT byte limit to NULL (the default configuration) before narrowing the column type. -->
         <sql>
             UPDATE programming_exercise_build_config
-            SET build_plan_configuration = LEFT(build_plan_configuration, 4194303)
+            SET build_plan_configuration = NULL
             WHERE OCTET_LENGTH(build_plan_configuration) > 16777215;
         </sql>
         <sql>
             UPDATE programming_exercise_build_config
-            SET docker_flags = LEFT(docker_flags, 4194303)
+            SET docker_flags = NULL
             WHERE OCTET_LENGTH(docker_flags) > 16777215;
         </sql>
 
