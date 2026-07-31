@@ -59,15 +59,22 @@ public class AsyncConfiguration implements AsyncConfigurer {
 
     /**
      * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}: the batch then runs on the calling thread, so a test
+     * can assert on the outcome right after the HTTP response instead of racing the queued task, and the database is not
+     * torn down while a background batch is still reading from it.
      *
      * @param corePoolSize  minimum number of threads kept in the Deimos executor
      * @param maxPoolSize   maximum number of threads used by the Deimos executor
      * @param queueCapacity maximum number of queued Deimos batch tasks
-     * @return async executor dedicated to Deimos workloads
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated bounded thread pool
      */
     @Bean(name = "deimosTaskExecutor")
     public Executor deimosTaskExecutor(@Value("${artemis.deimos.executor.core-pool-size:2}") int corePoolSize, @Value("${artemis.deimos.executor.max-pool-size:4}") int maxPoolSize,
             @Value("${artemis.deimos.executor.queue-capacity:25}") int queueCapacity) {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
         log.debug("Creating Deimos Async Task Executor (core={}, max={}, queue={})", corePoolSize, maxPoolSize, queueCapacity);
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
