@@ -1,7 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
-@Injectable()
 export class MockCalendarService {
     eventMap;
 
