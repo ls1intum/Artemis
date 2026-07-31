@@ -301,7 +301,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 

@@ -1,15 +1,6 @@
 <div id="course-title-bar" class="module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 sticky-top flex-column" [style.display]="displayStyle()">
     <div class="d-flex justify-content-between">
         <div class="align-self-center d-flex">
-            @if (hasSidebar()) {
-                <jhi-course-sidebar-toggle-button
-                    class="me-3"
-                    [isCollapsed]="isSidebarCollapsed()"
-                    [isCommunicationModule]="pageTitle() === 'communication'"
-                    (toggleSidebar)="toggleSidebar.emit()"
-                />
-            }
-
             <div class="align-self-center">
                 @if (customTitleTemplate()) {
                     <ng-container *ngTemplateOutlet="customTitleTemplate()!" />

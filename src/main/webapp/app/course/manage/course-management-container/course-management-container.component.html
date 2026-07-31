@@ -21,58 +21,61 @@
 
             <div class="layout-content">
                 @if (course()) {
-                    <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
-                        <!-- Only rendered on the settings page; its contents are all gated by isSettingsPage(). Skipping
-                             the (otherwise empty) div on other pages avoids a phantom right-aligned flex item (margin-left:
-                             auto) that would push projected title-bar actions away from the right edge. -->
-                        @if (isSettingsPage()) {
-                            <div class="controls">
-                                @if (course()?.isAtLeastInstructor) {
-                                    <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                                }
-                                <button
-                                    id="reset-course"
-                                    *jhiHasAnyAuthority="'ROLE_ADMIN'"
-                                    [buttonSize]="ButtonSize.SMALL"
-                                    jhiDeleteButton
-                                    [entityTitle]="course()?.title || ''"
-                                    [fetchCategorizedEntitySummary]="fetchCourseResetSummary()"
-                                    deleteQuestion="artemisApp.course.reset.question"
-                                    [translateValues]="{
-                                        courseType: course()?.testCourse
-                                            ? ('artemisApp.course.reset.testCourse' | artemisTranslate)
-                                            : ('artemisApp.course.reset.realCourse' | artemisTranslate),
-                                    }"
-                                    deleteConfirmationText="artemisApp.course.reset.typeNameToConfirm"
-                                    [actionType]="ActionType.Reset"
-                                    (delete)="resetCourse(course()!.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faUndo" />
-                                </button>
-                                <button
-                                    id="delete-course"
-                                    *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN"
-                                    [buttonSize]="ButtonSize.SMALL"
-                                    jhiDeleteButton
-                                    [entityTitle]="course()?.title || ''"
-                                    [fetchCategorizedEntitySummary]="fetchCourseDeletionSummary()"
-                                    deleteQuestion="artemisApp.course.delete.question"
-                                    [translateValues]="{
-                                        courseType: course()?.testCourse
-                                            ? ('artemisApp.course.delete.testCourse' | artemisTranslate)
-                                            : ('artemisApp.course.delete.realCourse' | artemisTranslate),
-                                    }"
-                                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                                    (delete)="deleteCourse(course()!.id!)"
-                                    [dialogError]="dialogError$"
-                                    style="margin-right: 0 !important"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
-                            </div>
-                        }
-                    </jhi-course-title-bar>
+                    <!-- The communication page renders its title (and sidebar toggle) inside its own sidebar, mirroring the student view, so the container title bar is hidden there. -->
+                    @if (!hasSidebar()) {
+                        <jhi-course-title-bar [pageTitle]="pageTitle()">
+                            <!-- Only rendered on the settings page; its contents are all gated by isSettingsPage(). Skipping
+                                 the (otherwise empty) div on other pages avoids a phantom right-aligned flex item (margin-left:
+                                 auto) that would push projected title-bar actions away from the right edge. -->
+                            @if (isSettingsPage()) {
+                                <div class="controls">
+                                    @if (course()?.isAtLeastInstructor) {
+                                        <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                                    }
+                                    <button
+                                        id="reset-course"
+                                        *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                                        [buttonSize]="ButtonSize.SMALL"
+                                        jhiDeleteButton
+                                        [entityTitle]="course()?.title || ''"
+                                        [fetchCategorizedEntitySummary]="fetchCourseResetSummary()"
+                                        deleteQuestion="artemisApp.course.reset.question"
+                                        [translateValues]="{
+                                            courseType: course()?.testCourse
+                                                ? ('artemisApp.course.reset.testCourse' | artemisTranslate)
+                                                : ('artemisApp.course.reset.realCourse' | artemisTranslate),
+                                        }"
+                                        deleteConfirmationText="artemisApp.course.reset.typeNameToConfirm"
+                                        [actionType]="ActionType.Reset"
+                                        (delete)="resetCourse(course()!.id!)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faUndo" />
+                                    </button>
+                                    <button
+                                        id="delete-course"
+                                        *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN"
+                                        [buttonSize]="ButtonSize.SMALL"
+                                        jhiDeleteButton
+                                        [entityTitle]="course()?.title || ''"
+                                        [fetchCategorizedEntitySummary]="fetchCourseDeletionSummary()"
+                                        deleteQuestion="artemisApp.course.delete.question"
+                                        [translateValues]="{
+                                            courseType: course()?.testCourse
+                                                ? ('artemisApp.course.delete.testCourse' | artemisTranslate)
+                                                : ('artemisApp.course.delete.realCourse' | artemisTranslate),
+                                        }"
+                                        deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                                        (delete)="deleteCourse(course()!.id!)"
+                                        [dialogError]="dialogError$"
+                                        style="margin-right: 0 !important"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
+                            }
+                        </jhi-course-title-bar>
+                    }
 
                     <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
                     <div

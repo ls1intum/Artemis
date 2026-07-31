@@ -152,21 +152,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
-     * Get the number of currently locked submissions for the given course.
-     *
-     * @param courseId the id of the course
-     * @return the number of currently locked submissions for the given course
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM Submission s
-                LEFT JOIN s.results r
-            WHERE r.completionDate IS NULL
-                AND s.participation.exercise.course.id = :courseId
-            """)
-    long countLockedSubmissionsByCourseId(@Param("courseId") Long courseId);
-
-    /**
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
@@ -185,19 +170,22 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     long countLockedSubmissionsByUserIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
-     * assessments.
+     * Get the number of currently locked submissions across the given exercises (used for both a course and an exam). These are all submissions for which some tutor started an
+     * assessment, but has not yet finished it, i.e. an assessor is set while the completion date is still missing.
+     * <p>
+     * Counts via the denormalized {@code result.exerciseId} so no join through submission → participation → exercise is needed. Submissions without any result are not locked and
+     * are therefore not counted. Example results are excluded explicitly, because the join this replaced went through the participation and example submissions have none.
      *
-     * @param exerciseIds the id of the exercises
-     * @return the number of currently locked submissions for a specific user in the given course
+     * @param exerciseIds the ids of the exercises
+     * @return the number of currently locked submissions across the given exercises
      */
     @Query("""
-            SELECT COUNT(DISTINCT s)
-            FROM Submission s
-                LEFT JOIN s.results r
+            SELECT COUNT(DISTINCT r.submission.id)
+            FROM Result r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
     long countLockedSubmissionsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 

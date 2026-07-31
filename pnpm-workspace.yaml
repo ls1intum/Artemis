@@ -26,23 +26,34 @@ enablePrePostScripts: true
 # (by then the gate passes on its own). Entries for versions that have already aged out
 # have been removed — keep this list minimal.
 minimumReleaseAgeExclude:
-  # katex 0.18.1 was published 2026-07-19 (<24h before this bump), so the frozen
-  # supply-chain gate rejects it until it ages past the 24h cutoff (~2026-07-20T08:40).
-  # Remove this entry once 0.18.1 is older than the cutoff (the gate then passes on its own).
-  - katex
-  - '@analogjs/vite-plugin-angular@2.6.4'
-  - '@analogjs/vitest-angular@2.6.4'
-  - '@angular-devkit/architect@0.2200.8'
-  - '@angular-devkit/build-angular@22.0.8'
-  - '@angular-devkit/build-webpack@0.2200.8'
-  - '@angular-devkit/core@22.0.8'
-  - '@angular-devkit/schematics@22.0.8'
-  - '@angular/build@22.0.8'
-  - '@angular/cli@22.0.8'
-  - '@ngtools/webpack@22.0.8'
-  - '@schematics/angular@22.0.8'
-  - lint-staged@17.2.0
-  - sass@1.101.7
+  # Angular 22.1.0 (framework) was published 2026-07-29T20:40 and the 22.1.1 CLI/build
+  # train on 2026-07-30T09:45, both <24h before this bump. brace-expansion 5.0.9 and
+  # postcss 8.5.25 are transitive pins published in the same window. Remove each entry
+  # once its version has aged past the 24h cutoff (the gate then passes on its own).
+  - '@angular-devkit/architect@0.2201.1'
+  - '@angular-devkit/build-angular@22.1.1'
+  - '@angular-devkit/build-webpack@0.2201.1'
+  - '@angular-devkit/core@22.1.1'
+  - '@angular-devkit/schematics@22.1.1'
+  - '@angular/build@22.1.1'
+  - '@angular/cdk@22.1.0'
+  - '@angular/cli@22.1.1'
+  - '@angular/common@22.1.0'
+  - '@angular/compiler-cli@22.1.0'
+  - '@angular/compiler@22.1.0'
+  - '@angular/core@22.1.0'
+  - '@angular/forms@22.1.0'
+  - '@angular/language-service@22.1.0'
+  - '@angular/localize@22.1.0'
+  - '@angular/platform-browser-dynamic@22.1.0'
+  - '@angular/platform-browser@22.1.0'
+  - '@angular/router@22.1.0'
+  - '@angular/service-worker@22.1.0'
+  - '@angular/youtube-player@22.1.0'
+  - '@ngtools/webpack@22.1.1'
+  - '@schematics/angular@22.1.1'
+  - brace-expansion@5.0.9
+  - postcss@8.5.25
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
@@ -79,16 +90,16 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires ^22.0.0). Without this pin it resolves to an older 21.x
   # straggler that violates that peer range; force it to match the @angular/core version.
-  '@angular/localize': '22.0.6'
+  '@angular/localize': '22.1.0'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
-  '@babel/runtime': '7.29.2'
-  '@babel/plugin-transform-modules-systemjs': '7.29.4'
+  '@babel/runtime': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.7'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
-  brace-expansion: '5.0.8'
+  brace-expansion: '5.0.9'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
@@ -98,47 +109,54 @@ overrides:
   express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3).
   fast-uri: '3.1.4'
-  globals: '17.6.0'
+  globals: '17.8.0'
   # Only reached dev-side via @modelcontextprotocol/sdk -> @angular/cli (never run by Artemis).
-  hono: '4.12.31'
-  '@hono/node-server': '2.0.11'
+  hono: '4.12.32'
+  '@hono/node-server': '2.0.12'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.2.0'
+  ip-address: '10.3.1'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.0'
-  jsdom: '29.1.1'
+  jsdom: '30.0.1'
   katex: '0.18.1'
-  minimatch: '10.2.5'
-  piscina: '5.2.0'
-  postcss: '8.5.23'
+  minimatch: '10.2.6'
+  piscina: '5.3.0'
+  postcss: '8.5.25'
   punycode: '2.3.1'
   # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
   # Apollon but has no direct React code, so force the whole React subtree to 19
   # (matches the version used in the documentation/ project).
-  react: '19.2.7'
-  react-dom: '19.2.7'
-  semver: '7.8.0'
-  serialize-javascript: '7.0.5'
+  react: '19.2.8'
+  react-dom: '19.2.8'
+  semver: '7.8.5'
+  serialize-javascript: '7.0.7'
   shell-quote: '1.10.0'
-  tar: '7.5.21'
-  tmp: '0.2.5'
-  tough-cookie: '6.0.1'
-  undici: '7.28.0'
-  uuid: '14.0.0'
-  vite: '7.3.5'
-  webpack: '5.106.2'
+  tar: '7.5.22'
+  tmp: '0.2.7'
+  tough-cookie: '6.0.2'
+  undici: '7.29.0'
+  uuid: '14.0.1'
+  # MUST match the exact `vite` version that the installed `@angular/build` depends on
+  # (`node_modules/@angular/build/package.json` -> dependencies.vite). Angular 22.1 moved the
+  # dev-server dependency pre-bundling from esbuild to rolldown and now passes its Angular-linker
+  # plugin via `optimizeDeps.rolldownOptions`, an option only Vite 8 understands. Overriding Vite
+  # back to 7.x makes Vite silently ignore that block, so pre-bundled partially-compiled Angular
+  # libraries reach the browser unlinked and bootstrap dies with "The injectable '_PlatformLocation'
+  # needs to be compiled using the JIT compiler". `pnpm run check:vite-override` guards this pin.
+  vite: '8.1.5'
+  webpack: '5.109.2'
   webpack-dev-middleware: '7.4.5'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
-  ws: '8.21.0'
+  ws: '8.21.1'
   yargs-parser: '22.0.0'
 
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.7.0': 'patches/eslint+10.7.0.patch'
+  'eslint@10.8.0': 'patches/eslint+10.8.0.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.

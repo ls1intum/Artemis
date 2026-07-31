@@ -91,6 +91,8 @@
             "registrationNumber": "Matrikelnummer",
             "activated": "Aktiv",
             "deactivated": "Deaktiviert",
+            "isTestUser": "Testkonto",
+            "isTestUserTooltip": "Markiert dieses Konto als Test- oder QA-Konto. Testkonten werden aus allen Nutzungsstatistiken ausgeschlossen (z. B. den Admin-Diagrammen und der Zahl aktiver Nutzer:innen). Dieses Kennzeichen wird explizit verwaltet und ist unabhängig vom Login.",
             "globalRoles": "Globale Rollen",
             "roles": {
                 "superAdmin": "Super-Administrator:in",

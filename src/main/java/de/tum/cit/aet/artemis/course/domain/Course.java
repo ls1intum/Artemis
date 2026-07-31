@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_GRADING_POINTS;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PRESENTATION_SCORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -831,6 +833,22 @@ public class Course extends DomainObject {
         if (getAccuracyOfScores() < 0 || getAccuracyOfScores() > 5) {
             throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
                     "accuracyOfScoresInvalid", true);
+        }
+    }
+
+    /**
+     * Validates that the configurable point values of the course stay within the allowed range. Both {@code maxPoints}
+     * and {@code presentationScore} are optional; when set, {@code maxPoints} must be between 1 and
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_GRADING_POINTS} and {@code presentationScore} must be
+     * between 0 (disabled) and {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PRESENTATION_SCORE}.
+     */
+    public void validatePointBounds() {
+        if (getMaxPoints() != null && (getMaxPoints() < 1 || getMaxPoints() > MAX_GRADING_POINTS)) {
+            throw new BadRequestAlertException("The maximum number of points for the course must be between 1 and " + MAX_GRADING_POINTS, ENTITY_NAME, "maxPointsInvalid", true);
+        }
+        if (getPresentationScore() != null && (getPresentationScore() < 0 || getPresentationScore() > MAX_PRESENTATION_SCORE)) {
+            throw new BadRequestAlertException("The presentation score for the course must be between 0 and " + MAX_PRESENTATION_SCORE, ENTITY_NAME, "presentationScoreInvalid",
+                    true);
         }
     }
 
