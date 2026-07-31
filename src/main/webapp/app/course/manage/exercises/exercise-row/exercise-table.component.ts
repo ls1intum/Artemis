@@ -28,9 +28,8 @@ import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-r
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
 /**
- * Value of the group dropdown's "no group" entry. It cannot simply be `undefined`: `tum-ui-select` treats an
- * undefined model value as "nothing selected" and would render a blank trigger for every ungrouped exercise
- * instead of the "no group" label. A negative id can never collide with a real (auto-increment) group id.
+ * Value of the group dropdown's "no group" entry. Not `undefined`, which `tum-ui-select` reads as "nothing
+ * selected" and renders as a blank trigger. A negative id cannot collide with a real group id.
  */
 export const NO_GROUP_OPTION_VALUE = -1;
 
@@ -46,9 +45,8 @@ export interface TableGroupChange {
 }
 
 /**
- * Everything one table row renders, derived once per row instead of per change-detection cycle. Template bindings must
- * read these fields rather than call the (argument-taking) helper methods they are built from — a method call in a
- * binding cannot be memoized by Angular and re-runs on every check, which on a table this size adds up.
+ * Everything one table row renders, derived once per row instead of per change-detection cycle. Bindings must read
+ * these fields rather than call the helper methods behind them, which Angular cannot memoize.
  */
 interface ExerciseRow {
     /** The raw entity, still needed for drag payloads, the child components and the plain field reads. */
@@ -77,9 +75,8 @@ interface ExerciseRow {
     selector: 'jhi-exercise-table',
     templateUrl: './exercise-table.component.html',
     styleUrl: './exercise-table.component.scss',
-    // Floor the actions column at `--actions-min-width` — the widest always-visible quiz-button + ellipsis width the rows
-    // actually report — so it collapses every main button into the ellipsis before the table scrolls, yet never clips the
-    // (non-collapsing) quiz buttons. Stays unset when no row has quiz buttons, so the column collapses fully (SCSS default).
+    // Floor the actions column at the widest quiz-button + ellipsis width its rows report, so the main buttons
+    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons.
     host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
     imports: [
         RouterLink,
@@ -108,10 +105,7 @@ export class ExerciseTableComponent {
 
     private readonly translateService = inject(TranslateService);
 
-    /**
-     * Emits on every language switch. `TranslateService.instant` is not signal-tracked, so any computed that builds a
-     * translated string must read this to be re-derived when the language changes (same approach as ArtemisTranslatePipe).
-     */
+    /** Emits on every language switch, so computeds building translated strings read it to be re-derived. */
     private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
     readonly exercises = input.required<Exercise[]>();
@@ -155,9 +149,8 @@ export class ExerciseTableComponent {
                     const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
                     const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
                     if (da === undefined || db === undefined) {
-                        // Undated exercises must sort last regardless of asc/desc. The shared `asc ? cmp : -cmp` flip
-                        // below negates cmp for desc, so pre-negate here for desc to cancel that out and keep the
-                        // "undefined sorts last" result stable in both directions (mirrors course-exercise-cards.ts).
+                        // Undated exercises sort last in both directions, so pre-negate to cancel the flip below
+                        // (mirrors course-exercise-cards.ts).
                         const undefinedLast = da === undefined && db === undefined ? 0 : da === undefined ? 1 : -1;
                         cmp = asc ? undefinedLast : -undefinedLast;
                     } else {
@@ -205,14 +198,12 @@ export class ExerciseTableComponent {
     });
 
     /**
-     * Largest actions-column width (px) any row has reported for its always-visible quiz buttons + ellipsis. Kept as a
-     * running max so the shared column fits the widest quiz row. It only grows: if the widest quiz row later disappears
-     * the floor may stay marginally larger than needed, which at worst makes the table scroll a touch sooner — never
-     * clips a quiz button. Stays 0 when no row has quiz lifecycle buttons (no quizzes, or quizzes in a state with no
-     * actions), so the column falls back to the narrow default and the ellipsis can collapse fully.
+     * Largest actions-column width (px) reported by any row, so the shared column fits the widest quiz row. Only
+     * grows — a stale floor at worst makes the table scroll a touch sooner, but never clips a button. Stays 0 when
+     * no row has quiz lifecycle buttons, so the column keeps the narrow SCSS default.
      */
     private readonly maxQuizActionsMinWidth = signal(0);
-    /** CSS value for the actions-column floor, or undefined when no quiz buttons are present (so the SCSS default applies). */
+    /** CSS value for the actions-column floor, or undefined when no quiz buttons are present. */
     readonly actionsMinWidthVar = computed(() => {
         const width = this.maxQuizActionsMinWidth();
         return width > 0 ? `${width}px` : undefined;
@@ -237,8 +228,7 @@ export class ExerciseTableComponent {
 
     /**
      * Precomputed exercise-id → owning-group lookup, rebuilt only when {@link groups} changes. Keeps
-     * {@link owningGroupForExercise} O(1) instead of re-scanning every group (and its members) per call — it is invoked
-     * from the sort comparator (once per comparison) and from every effective-date cell binding on each row.
+     * {@link owningGroupForExercise} O(1); it is called from the sort comparator and every date cell.
      */
     private readonly owningGroupByExerciseId = computed<ReadonlyMap<number, CourseExerciseGroup>>(() => {
         const map = new Map<number, CourseExerciseGroup>();
@@ -274,10 +264,8 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * Applies a sort requested by a `[tumUiSortableColumn]` header. The kit table is *controlled*: it holds no sort
-     * state of its own, it only reports the field and the order (1 ascending / -1 descending) that the click implies,
-     * so the state stays in {@link sortColumn} / {@link sortAsc} here and {@link sortedExercises} keeps driving the
-     * rendering. The kit's toggle rule mirrors {@link sortBy}, so clicking and calling `sortBy` behave identically.
+     * Applies a sort requested by a `[tumUiSortableColumn]` header. The kit table is controlled: it only reports the
+     * field and order (1 ascending / -1 descending), the state stays here. Its toggle rule mirrors {@link sortBy}.
      */
     protected onSortChange(event: TumUiTableSortEvent): void {
         this.sortColumn.set(event.field as SortColumn);
@@ -285,10 +273,9 @@ export class ExerciseTableComponent {
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {
-        // Same-container drops are ignored: a manual order would only live in the rendered card and be discarded by the
-        // next rebuild (search, view switch, group refresh, reload), so drag-and-drop is limited to moving between groups.
+        // Same-container drops are ignored: a manual order would be discarded by the next card rebuild, so
+        // drag-and-drop only moves exercises between groups.
         if (event.previousContainer !== event.container) {
-            // Dropped from another group's table: move the exercise into this table's group.
             this.groupChange.emit({ exercise: event.item.data, group: this.group() });
         }
     }
@@ -310,9 +297,8 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * The group whose timeline governs this exercise. In the group view the card's group is passed in
-     * directly; in the type/week/list views the card has no single group, so we resolve the exercise's
-     * owning group from the full groups list. This keeps the displayed dates consistent across all views.
+     * The group whose timeline governs this exercise: the card's group in the group view, otherwise resolved
+     * from the full groups list, so the displayed dates stay consistent across views.
      */
     private effectiveGroupFor(exercise: Exercise): CourseExerciseGroup | undefined {
         return this.group() ?? this.owningGroupForExercise(exercise);
@@ -368,17 +354,12 @@ export class ExerciseTableComponent {
     exerciseTrackKey(exercise: Exercise): unknown {
         if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) return exercise.id ?? exercise;
         const q = exercise as QuizExercise;
-        // In zoneless Angular, ngFor embedded views may not re-evaluate when the row gets a new
-        // object reference with the same id. Including the properties that drive lifecycle-button
-        // rendering forces the row to be destroyed/recreated when they change, so the fresh
-        // exercise-actions instance always sees the up-to-date exercise.
+        // A same-id row may not re-evaluate in zoneless Angular, so key on the properties that drive the
+        // lifecycle buttons to force a recreate when they change.
         return `${exercise.id}|${q.exerciseVariantGroup?.id ?? ''}|${q.status ?? ''}|${q.visibleToStudents ?? ''}`;
     }
 
-    /**
-     * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.
-     * Synchronized/batched quizzes must stay out of groups; the server enforces this independently.
-     */
+    /** Only individual-mode quizzes support per-student dates, so only they can share a group's timeline. */
     isQuizNonIndividual(exercise: Exercise): boolean {
         return exercise.type === ExerciseType.QUIZ && this.asQuiz(exercise).quizMode !== undefined && this.asQuiz(exercise).quizMode !== QuizMode.INDIVIDUAL;
     }
@@ -409,11 +390,8 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * Under `p-tag` the practice state relied on an *unset* severity falling through to the brand-primary base tag.
-     * The kit tag has no `primary` and defaults to `secondary`, which would make practice mode indistinguishable from
-     * both the invisible badge and the quiz-mode badge beside it, so it shares `info` with the visible state instead.
-     * The two never collide on screen — a quiz has exactly one status, so a row shows either the visible badge or the
-     * practice one, never both.
+     * The practice state shares `info` with the visible state: the kit tag has no `primary`, and its `secondary`
+     * default would be indistinguishable from the badges beside it. A quiz has one status, so the two never collide.
      */
     quizStatusSeverity(exercise: QuizExercise): TumUiTagSeverity {
         switch (exercise.status) {

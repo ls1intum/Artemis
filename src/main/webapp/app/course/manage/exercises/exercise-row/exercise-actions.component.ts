@@ -81,17 +81,15 @@ interface ActionItem {
     disabledTooltip?: string;
 }
 
-// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
-// safety margin so a button is always collapsed slightly before it would be clipped — never shown partially.
+// Flex gap (gap-1), the fixed ellipsis-trigger width (SCSS `.action-more`), and a margin so a button collapses
+// slightly before it would be clipped.
 const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 40;
 const SAFETY_MARGIN_PX = 8;
 
 /**
- * Keep-priority per action id when the row runs out of width: a lower number stays inline longer, a higher number
- * collapses into the ellipsis menu first. Delete, Edit and Scores rank highest so every exercise type keeps the same
- * three buttons inline; the type-specific extras (Preview, Solution, Statistics, Participations, …) all share
- * {@link EXTRA_ACTION_PRIORITY} and therefore overflow first, in their original display order (the sort is stable).
+ * Keep-priority per action id when the row runs out of width: lower stays inline longer. Delete, Edit and Scores
+ * rank highest so every exercise type keeps the same three inline; the type-specific extras overflow first.
  */
 const ACTION_KEEP_PRIORITY: Readonly<Record<string, number>> = { delete: 0, edit: 1, scores: 2 };
 const EXTRA_ACTION_PRIORITY = 3;
@@ -100,11 +98,7 @@ function keepPriorityOf(action: ActionItem): number {
     return ACTION_KEEP_PRIORITY[action.id] ?? EXTRA_ACTION_PRIORITY;
 }
 
-/**
- * Element width in fractional CSS pixels. Unlike `offsetWidth`/`clientWidth`, `getBoundingClientRect` keeps the
- * fraction, so summing many button widths stays exact at non-100% zoom and never understates the total enough to clip
- * the leftmost button.
- */
+/** Element width in fractional CSS pixels — `offsetWidth` rounds, which understates a sum at non-100% zoom. */
 function widthOf(element: HTMLElement): number {
     return element.getBoundingClientRect().width;
 }
@@ -136,9 +130,8 @@ export class ExerciseActionsComponent {
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
     /**
-     * Width (px) the actions column must reserve to keep this row's always-visible quiz buttons plus the ellipsis
-     * trigger on screen; 0 for non-quiz rows. The table floors the shared column at the max reported across its rows
-     * (see exercise-table), so the column collapses the main buttons before scrolling, never clipping the quiz buttons.
+     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
+     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
      */
     readonly quizActionsMinWidth = output<number>();
 
@@ -160,9 +153,8 @@ export class ExerciseActionsComponent {
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /**
-     * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions are
-     * modelled as data, not markup, so the toggle is folded into `ActionItem.disabled` rather than the `jhiFeatureToggle`
-     * directives the type-specific tables used.
+     * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
+     * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
      */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
@@ -279,8 +271,7 @@ export class ExerciseActionsComponent {
                 });
             }
         }
-        // Example submissions require editor rights: both destination routes are IS_AT_LEAST_EDITOR, so tutors (who can
-        // reach this page) must not see an action that only leads to an access denial.
+        // Both example-submission routes are IS_AT_LEAST_EDITOR, so tutors would only hit an access denial.
         if (ex.isAtLeastEditor && (ex.type === ExerciseType.MODELING || ex.type === ExerciseType.TEXT)) {
             items.push({
                 id: 'examples',
@@ -291,11 +282,9 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
-        // Programming-only actions stay visible but go inert while the ProgrammingExercises feature toggle is off,
-        // matching how the type-specific programming table used to grey them out.
+        // Programming-only actions stay visible but go inert while the feature toggle is off.
         const programmingDisabled = ex.type === ExerciseType.PROGRAMMING && !this.programmingEnabled();
-        // Editing (in-editor and the plain edit form) requires editor rights. Tutors can reach this page but must not
-        // see edit controls for routes they cannot use.
+        // Editing requires editor rights, so tutors must not see the edit controls.
         if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
             items.push({
                 id: 'edit-in-editor',
@@ -320,8 +309,7 @@ export class ExerciseActionsComponent {
                 });
             } else {
                 const q2 = ex as QuizExercise;
-                // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
-                // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
+                // Prefer the server-supplied isEditable (set by loadQuizBatches); until it arrives, check client-side.
                 const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
                 const editDisabled = !editable || !!q2.quizEnded;
                 items.push({
@@ -342,7 +330,6 @@ export class ExerciseActionsComponent {
                 });
             }
         }
-        // Deleting an exercise is an instructor-only action.
         if (ex.isAtLeastInstructor) {
             items.push({
                 id: 'delete',
@@ -364,9 +351,8 @@ export class ExerciseActionsComponent {
     }
 
     /**
-     * Ids of the main actions that do not fit and are collapsed into the ellipsis menu. Computed from the cached button
-     * widths and the available width — the DOM stays stable, only the buttons' `display` toggles, so resizing never
-     * recreates button elements. Collapses from the left so Delete (rightmost) stays visible longest.
+     * Ids of the main actions that do not fit and are collapsed into the ellipsis menu. Derived from the cached
+     * button widths, so resizing only toggles their `display` and never recreates elements.
      */
     readonly hiddenIds = computed<ReadonlySet<string>>(() => {
         const actions = this.mainActions();
@@ -386,10 +372,8 @@ export class ExerciseActionsComponent {
             return new Set();
         }
 
-        // Collapsing: reserve the ellipsis (plus the gap before it) and keep buttons in priority order (Delete, Edit,
-        // Scores first, then the type-specific extras), stopping at the first that no longer fits. Keeping by priority
-        // rather than by position makes every exercise type keep the same core buttons inline; the template still
-        // renders the kept buttons in their original display order (only their `display` toggles).
+        // Collapsing: reserve the ellipsis plus its gap, then keep buttons in priority order (not display order, so
+        // every exercise type keeps the same core buttons inline) until one no longer fits.
         const budget = available - ELLIPSIS_WIDTH_PX - GAP_PX;
         const byPriority = [...actions].sort((a, b) => keepPriorityOf(a) - keepPriorityOf(b));
         const keptIds = new Set<string>();
@@ -407,9 +391,8 @@ export class ExerciseActionsComponent {
     });
 
     /**
-     * The inline main buttons with their per-item render state precomputed, so the template reads plain fields instead of
-     * calling `signatureOf(...)` and `hiddenIds().has(...)` on every change-detection cycle. `context` is built here too
-     * so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
+     * The inline main buttons with their render state precomputed, so the template reads plain fields instead of
+     * calling helpers per cycle. `context` is built here too, to keep the `ngTemplateOutlet` binding identity stable.
      */
     protected readonly inlineActions = computed(() => {
         // The signature embeds a translated label, so re-derive it on a language switch.
@@ -431,9 +414,8 @@ export class ExerciseActionsComponent {
     readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
     /**
-     * Cleanup checkboxes for the delete dialog. Programming exercises on external CI expose an opt-out for deleting
-     * the base/student repositories and build plans; under LocalCI the checks stay hidden so the server applies its
-     * defaults (the flags are then undefined and the delete request omits the query parameters).
+     * Cleanup checkboxes for the delete dialog: on external CI, programming exercises offer an opt-out for deleting
+     * repositories and build plans. Hidden under LocalCI, where the request omits the flags and the server decides.
      */
     readonly deleteAdditionalChecks = computed((): { [key: string]: string } => {
         if (this.exercise().type !== ExerciseType.PROGRAMMING || this.localCIEnabled) {
@@ -464,10 +446,8 @@ export class ExerciseActionsComponent {
             this.languageVersion.update((version) => version + 1);
         });
 
-        // Observe (not read once) the row width and the reserved quiz-button width: the quiz lifecycle buttons are still
-        // PrimeNG with lazily-injected CSS, so a single measurement can catch them unstyled and too narrow, and the
-        // observer also tracks the quiz group appearing/disappearing and label-width changes. Change detection is flushed synchronously
-        // in the callback (after layout, before paint) so the show/hide lands on the same frame.
+        // Observe rather than measure once: the quiz buttons' PrimeNG CSS is injected lazily, so a single read can
+        // catch them unstyled. Change detection is flushed in the callback so the show/hide lands on the same frame.
         afterNextRender(() => {
             const rowEl = this.actionsRow()?.nativeElement;
             const quizEl = this.quizGroup()?.nativeElement;
@@ -492,13 +472,11 @@ export class ExerciseActionsComponent {
             measure();
         });
 
-        // Keep each distinct button's natural width up to date: a web font, a longer label, or the quiz buttons'
-        // lazily-injected PrimeNG CSS can change a width after the first layout, so a one-shot measurement would cache
-        // a too-narrow width and the overflow calculation would keep a button inline that then gets clipped.
+        // Keep each button's natural width up to date: a web font or a longer label can change it after the first
+        // layout, and a cached too-narrow width would keep a button inline that then gets clipped.
         afterRenderEffect(() => {
-            // Re-observe whenever the buttons or their labels change. Observing always emits an initial callback, so this
-            // also seeds a brand-new signature after a language switch. The elements persist across a collapse (only
-            // their `display` toggles), so this does not re-run on every resize.
+            // Re-observe whenever the buttons or their labels change; the initial callback seeds new signatures
+            // after a language switch. The elements persist across a collapse, so this does not re-run on resize.
             this.languageVersion();
             this.mainActions();
             const items = this.inlineItems();
@@ -508,9 +486,8 @@ export class ExerciseActionsComponent {
             }
         });
 
-        // Report the width this row's actions column must reserve: the quiz buttons (their measured width already
-        // includes the trailing separator) plus the gap, the ellipsis trigger, and a safety margin against sub-pixel
-        // clipping. Quiz-button widths don't depend on the column width, so this never feeds back. Non-quiz rows report 0.
+        // Report the width this row's actions column must reserve: the quiz buttons (measured width includes the
+        // trailing separator), the gap, the ellipsis trigger and a safety margin. Non-quiz rows report 0.
         effect(() => {
             const quizWidth = this.quizWidth();
             this.quizActionsMinWidth.emit(quizWidth > 0 ? quizWidth + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
@@ -518,10 +495,8 @@ export class ExerciseActionsComponent {
     }
 
     /**
-     * Caches the measured width of every button that is currently laid out. Collapsed buttons are `display: none` and
-     * measure 0 — their last known width is kept, since that is exactly the width the overflow calculation needs in
-     * order to decide whether they could be shown again. Writes only on a real change, so toggling a button's
-     * visibility settles instead of feeding back into itself.
+     * Caches the measured width of every laid-out button. Collapsed buttons measure 0, so their last known width is
+     * kept — that is what decides whether they fit again. Writes only on a real change, so the toggling settles.
      */
     private onButtonsResized(entries: ResizeObserverEntry[]): void {
         const current = this.buttonWidths();
@@ -565,9 +540,8 @@ export class ExerciseActionsComponent {
     }
 
     /**
-     * The lifecycle component emits `loadOne` to reload a quiz from the server (e.g. after a failed mutation reverts the
-     * optimistic state). Re-emitting the stale local exercise would keep offering an action the server just rejected, so
-     * we re-fetch the quiz by id, recompute its client-derived status, and emit the fresh value to the parent.
+     * Re-fetches the quiz when the lifecycle component asks for a reload (e.g. after a failed mutation reverted the
+     * optimistic state), since the stale local copy would keep offering an action the server just rejected.
      */
     protected onQuizReload(): void {
         const exerciseId = this.exercise().id;

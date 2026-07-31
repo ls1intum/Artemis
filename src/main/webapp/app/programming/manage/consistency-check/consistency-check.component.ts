@@ -34,8 +34,7 @@ export class ConsistencyCheckComponent {
     faCheck = faCheck;
 
     constructor() {
-        // Run the check each time the dialog opens (reading the inputs untracked so a mid-open change doesn't re-trigger),
-        // matching the admin declarative-modal pattern; ngOnInit would only run once and miss a reopen for a new selection.
+        // Run the check on each open, not just once in ngOnInit; untracked so a mid-open change doesn't re-trigger.
         effect(() => {
             if (this.visible()) {
                 untracked(() => this.runCheck());

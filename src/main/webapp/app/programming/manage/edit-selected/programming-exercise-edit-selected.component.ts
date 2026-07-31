@@ -50,8 +50,7 @@ export class ProgrammingExerciseEditSelectedComponent {
     faSave = faSave;
 
     constructor() {
-        // Reset per-open state each time the dialog opens, so reopening the editor for a different selection does not
-        // carry over a stale draft, notification text, or a previous run's failure/progress (matches the admin pattern).
+        // Reset on each open, so a reopen for a different selection starts without a stale draft or previous result.
         effect(() => {
             if (this.visible()) {
                 untracked(() => {
@@ -144,9 +143,7 @@ export class ProgrammingExerciseEditSelectedComponent {
         this.visible.set(false);
     }
 
-    /**
-     * Closes the modal (× / cancel).
-     */
+    /** Closes the modal (× / cancel). */
     clear() {
         this.visible.set(false);
     }

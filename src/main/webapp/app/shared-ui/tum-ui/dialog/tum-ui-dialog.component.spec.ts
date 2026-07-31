@@ -221,8 +221,6 @@ describe('TumUiDialogComponent', () => {
         host.open.set(true);
         fixture.detectChanges();
 
-        // A native popover (CDK 22's default) sits in the browser's top layer and paints above everything
-        // regardless of z-index, burying any panel a dialog's content opens outside the CDK container.
         const overlayHost = panel()?.closest('.cdk-overlay-pane')?.parentElement;
         expect(overlayHost?.hasAttribute('popover')).toBe(false);
         expect(overlayHost?.classList.contains('cdk-overlay-popover')).toBe(false);
@@ -236,8 +234,6 @@ describe('TumUiDialogComponent', () => {
         fixture.detectChanges();
 
         expect(root.style.overflow).toBe('hidden');
-        // The CDK's block() strategy would set these; they are exactly what displaces a body-appended,
-        // absolutely-positioned overlay panel (e.g. a PrimeNG appendTo="body" datepicker) while the dialog is open.
         expect(root.classList.contains('cdk-global-scrollblock')).toBe(false);
         expect(root.style.position).not.toBe('fixed');
         expect(root.style.top).toBe('');
@@ -259,7 +255,6 @@ describe('TumUiDialogComponent', () => {
         nested.detectChanges();
         expect(root.style.overflow).toBe('hidden');
 
-        // Closing the inner dialog must NOT restore scrolling while the outer one is still open.
         nested.componentInstance.open.set(false);
         nested.detectChanges();
         expect(root.style.overflow).toBe('hidden');

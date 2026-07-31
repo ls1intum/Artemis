@@ -3,8 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
-// TooltipModule remains for the still-PrimeNG `pTooltip` on the per-item invalid-date info icon; the variant-group
-// lock overlay below uses the tum-ui kit tooltip.
+// Still needed for the `pTooltip` on the invalid-date info icon; the lock overlay uses the kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
@@ -19,11 +18,9 @@ export interface TimelineItem {
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
     /**
-     * Overrides which earlier items this item's date is checked against for ordering. By default (when undefined) an
-     * item must not precede any earlier item in the {@link ExerciseTimelineComponent.timelineItems} array. Pass an
-     * explicit list to restrict the check to only those items instead — e.g. an exercise-variant-group's example
-     * solution publication date only needs to be `>= releaseDate` (see `ExerciseVariantGroup#areDatesValid`), not
-     * `>= dueDate` as a single exercise's date would.
+     * Restricts the ordering check to these items. By default an item must not precede any earlier item in
+     * {@link ExerciseTimelineComponent.timelineItems}, which is too strict for e.g. a variant group's example
+     * solution publication date (only `>= releaseDate`, see `ExerciseVariantGroup#areDatesValid`).
      */
     orderCheckAgainst?: TimelineItem[];
 }
@@ -55,16 +52,12 @@ export class ExerciseTimelineComponent {
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
     protected readonly faLock = faLock;
-    /** Label keys of items whose currently-typed text is non-empty but not a valid date. Drives the
-     *  invalid (red border + tooltip) state so a malformed entry is flagged instead of silently dropped. */
+    /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
-    /**
-     * When true the dates are governed by the exercise's variant group: every datepicker is disabled and a click
-     * anywhere on the timeline emits {@link lockedClick} so the host can open the group-edit dialog.
-     */
+    /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
     lockedClick = output<void>();
@@ -100,17 +93,14 @@ export class ExerciseTimelineComponent {
             this.setDateIfChanged(item, undefined);
             this.setInvalidInput(item, false);
         }
-        // A non-empty, not-yet-parseable value is left untouched while the user is still typing; it is
-        // only flagged as invalid once they leave the field (see handleBlur).
+        // A not-yet-parseable value is left alone while typing and only flagged on blur (see handleBlur).
     }
 
     handleBlur(item: TimelineItem, event: Event) {
         const input = (event.target as HTMLInputElement).value;
         const inputWasCleared = input === '';
         const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
-        // Previously an invalid entry was silently reverted to the last valid value, leaving the user
-        // unaware of the mistake (PR #13009 review). Instead keep the entered text (keepInvalid) and flag
-        // the field invalid so the red border + tooltip explain the problem and the form blocks saving.
+        // Keep the entered text (keepInvalid) and flag it instead of silently reverting it (PR #13009 review).
         this.setInvalidInput(item, currentInputIsInvalidDate && !inputWasCleared);
     }
 
