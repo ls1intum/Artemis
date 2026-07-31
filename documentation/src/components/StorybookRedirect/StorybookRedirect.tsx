@@ -3,14 +3,14 @@ import { useLocation } from '@docusaurus/router';
 import { useColorMode } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useEffect } from 'react';
+import { STORYBOOK_REFERENCES } from './storybook-references';
 
 const DEFAULT_STORY = 'introduction--docs';
-const STORY_ANCHOR_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function storyFromHash(hash: string) {
     try {
         const anchor = decodeURIComponent(hash.replace(/^#/, ''));
-        return STORY_ANCHOR_PATTERN.test(anchor) ? `${anchor}--docs` : DEFAULT_STORY;
+        return STORYBOOK_REFERENCES[anchor] ?? DEFAULT_STORY;
     } catch {
         return DEFAULT_STORY;
     }
