@@ -1472,6 +1472,17 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise updated = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
         assertThat(updated.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(73);
         assertThat(updated.getPlagiarismDetectionConfig().getId()).as("PUT must keep the plagiarism config row id stable").isEqualTo(originalConfigId);
+
+        // A client-sent config id must be ignored: the server re-attaches the exercise's own stored row id, so a
+        // tampered id can neither adopt another exercise's config row nor swap this exercise's row.
+        ObjectNode tamperedBody = (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(updated));
+        ((ObjectNode) tamperedBody.get("plagiarismDetectionConfig")).put("id", originalConfigId + 12345L);
+        ((ObjectNode) tamperedBody.get("plagiarismDetectionConfig")).put("similarityThreshold", 81);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", tamperedBody, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise afterTamper = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(afterTamper.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(81);
+        assertThat(afterTamper.getPlagiarismDetectionConfig().getId()).as("a tampered client-sent config id must not replace the exercise's own row").isEqualTo(originalConfigId);
     }
 
     @Test

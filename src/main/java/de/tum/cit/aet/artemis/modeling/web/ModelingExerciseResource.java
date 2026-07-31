@@ -682,7 +682,15 @@ public class ModelingExerciseResource {
         exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
         if (updateModelingExerciseDTO.plagiarismDetectionConfig() != null) {
-            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig()));
+            PlagiarismDetectionConfig config = toPlagiarismDetectionConfig(updateModelingExerciseDTO.plagiarismDetectionConfig());
+            PlagiarismDetectionConfig existingConfig = exercise.getPlagiarismDetectionConfig();
+            if (existingConfig != null) {
+                // Reuse the exercise's own row id (never a client-sent one) so Hibernate merges the existing row
+                // instead of orphan-deleting it and inserting a new one: Exercise.plagiarismDetectionConfig is a
+                // @OneToOne(cascade = ALL, orphanRemoval = true) association.
+                config.setId(existingConfig.getId());
+            }
+            exercise.setPlagiarismDetectionConfig(config);
         }
 
         // The diagram type is immutable after creation because changing it would invalidate existing submissions.
@@ -914,10 +922,9 @@ public class ModelingExerciseResource {
     }
 
     private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {
+        // Deliberately id-less: create and import must always produce a fresh row, and update re-attaches the
+        // exercise's own stored config id at the call site — a client-sent id is never trusted.
         PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
-        // Carry the id so Hibernate merges the existing row instead of orphan-deleting it and inserting a new one:
-        // Exercise.plagiarismDetectionConfig is a @OneToOne(cascade = ALL, orphanRemoval = true) association.
-        config.setId(dto.id());
         config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
