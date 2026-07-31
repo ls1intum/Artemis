@@ -106,13 +106,11 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final ExerciseDateService exerciseDateService;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -128,7 +126,6 @@ public class ExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -257,7 +254,8 @@ public class ExerciseResource {
 
         if (exercise.isExamExercise()) {
             // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
-            var examAssessmentDates = exerciseDateService.getExamAssessmentDates(exercise);
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
             if (examAssessmentDates != null) {
                 exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
                 exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
