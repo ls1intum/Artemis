@@ -35,7 +35,8 @@ configuration, or package source scanning is required.
 To integrate an application theme, omit `themes.css`, load `styles.css`, and define every
 `--tumaet-ui-*` property below where it can reach package components and overlay content. Defining
 them on the document element is the safest default. Do not load the reference theme and a custom
-theme together.
+theme together. Set the standard `color-scheme` property on the same theme root so browser-owned
+controls match its light or dark appearance.
 
 Foundations:
 

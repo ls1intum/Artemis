@@ -1,6 +1,5 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { expect, fireEvent, fn, waitFor } from 'storybook/test';
 import { TumUiTabListComponent } from './tum-ui-tab-list.component';
 import { TumUiTabPanelComponent } from './tum-ui-tab-panel.component';
@@ -36,19 +35,11 @@ const meta = {
     parameters: {
         layout: 'padded',
     },
-    render: function Render(args) {
-        const [{ value }, updateArgs] = useArgs<{ value: number | string | undefined }>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                value,
-                setValue: (nextValue: number | string | undefined) => {
-                    updateArgs({ value: nextValue });
-                    args.valueChange(nextValue);
-                },
-            },
+            props: { ...args },
             template: `
-                <tum-ui-tabs [value]="value" (valueChange)="setValue($event)">
+                <tum-ui-tabs [value]="value" (valueChange)="value = $event; valueChange($event)">
                     <tum-ui-tab-list aria-label="Course">
                         <tum-ui-tab value="overview">Overview</tum-ui-tab>
                         <tum-ui-tab value="exercises">Exercises</tum-ui-tab>

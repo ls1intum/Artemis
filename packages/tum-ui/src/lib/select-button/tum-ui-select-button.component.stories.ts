@@ -1,7 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { expect, fn } from 'storybook/test';
 
 import { formStoryDecorator } from '../../../.storybook/story-decorators';
@@ -59,14 +58,9 @@ const meta = {
             imports: [FormsModule],
         }),
     ],
-    render: function Render(args) {
-        const [{ selected }, updateArgs] = useArgs<SelectButtonStoryArgs>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                selected,
-                setSelected: (nextSelected: string | undefined) => updateArgs({ selected: nextSelected }),
-            },
+            props: { ...args },
             template: `
                 <span id="interval-label" class="tum-ui-story-label">{{ label }}</span>
                 <tum-ui-select-button
@@ -77,8 +71,7 @@ const meta = {
                     [size]="size"
                     [allowEmpty]="allowEmpty"
                     [disabled]="disabled"
-                    [ngModel]="selected"
-                    (ngModelChange)="setSelected($event)"
+                    [(ngModel)]="selected"
                     (changed)="changed($event)"
                 />
             `,
@@ -124,14 +117,9 @@ export const KeyboardInteraction: Story = {
 };
 
 export const CustomItemTemplate: Story = {
-    render: function Render(args) {
-        const [{ selected }, updateArgs] = useArgs<SelectButtonStoryArgs>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                selected,
-                setSelected: (nextSelected: string | undefined) => updateArgs({ selected: nextSelected }),
-            },
+            props: { ...args },
             template: `
                 <span id="compact-interval-label" class="tum-ui-story-label">{{ label }}</span>
                 <tum-ui-select-button
@@ -140,8 +128,7 @@ export const CustomItemTemplate: Story = {
                     optionLabel="label"
                     optionValue="value"
                     [itemTemplate]="item"
-                    [ngModel]="selected"
-                    (ngModelChange)="setSelected($event)"
+                    [(ngModel)]="selected"
                     (changed)="changed($event)"
                 />
                 <ng-template #item let-option>

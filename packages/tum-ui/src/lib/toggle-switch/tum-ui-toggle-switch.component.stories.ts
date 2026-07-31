@@ -1,7 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { fn } from 'storybook/test';
 
 import { inlineControlStoryDecorator } from '../../../.storybook/story-decorators';
@@ -32,21 +31,15 @@ const meta = {
             imports: [FormsModule],
         }),
     ],
-    render: function Render(args) {
-        const [{ enabled }, updateArgs] = useArgs<ToggleSwitchStoryArgs>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                enabled,
-                setEnabled: (nextEnabled: boolean) => updateArgs({ enabled: nextEnabled }),
-            },
+            props: { ...args },
             template: `
                 <span id="notification-label">{{ label }}</span>
                 <tum-ui-toggle-switch
                     inputId="notifications"
                     aria-labelledby="notification-label"
-                    [ngModel]="enabled"
-                    (ngModelChange)="setEnabled($event)"
+                    [(ngModel)]="enabled"
                     [disabled]="disabled"
                     (changed)="changed($event)"
                 />

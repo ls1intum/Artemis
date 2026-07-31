@@ -40,6 +40,8 @@
         0 0 transparent,
         0 1px 2px 0 color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     transition:
+        background-color 0.2s,
+        border-color 0.2s,
         box-shadow 0.2s,
         outline-color 0.2s;
 

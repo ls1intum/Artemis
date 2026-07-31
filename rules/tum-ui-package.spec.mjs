@@ -405,6 +405,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(hostProperties).toEqual(packageProperties);
         expect(tailwindProperties.every((property) => packageProperties.includes(property))).toBe(true);
         expect(hostTailwind).not.toContain('packages/tum-ui/tailwind-theme.css');
+        expect(hostTailwind).toMatch(/:root\s*{[^}]*color-scheme:\s*light;/s);
+        expect(hostTailwind).toMatch(/\[data-theme='dark']\s*{[^}]*color-scheme:\s*dark;/s);
         for (const state of ['danger', 'success', 'warning', 'info']) {
             expect(hostTokens[`--tumaet-ui-state-${state}`]).toContain(`var(--artemis-alert-${state}-color`);
             expect(hostTokens[`--tumaet-ui-state-${state}-contrast`]).toContain(`var(--artemis-alert-${state}-background`);

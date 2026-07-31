@@ -1,6 +1,5 @@
 import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { TumUiPanelComponent } from './tum-ui-panel.component';
 
 interface PanelStoryArgs {
@@ -19,20 +18,16 @@ const meta = {
         toggleable: false,
         collapsed: false,
     },
-    render: function Render({ content, ...args }) {
-        const [{ collapsed }, updateArgs] = useArgs<PanelStoryArgs>();
+    render: ({ content, ...args }) => {
         return {
             props: {
                 ...args,
-                collapsed,
                 content,
-                setCollapsed: (nextCollapsed: boolean) => updateArgs({ collapsed: nextCollapsed }),
             },
             template: `
                 <tum-ui-panel
-                    [collapsed]="collapsed"
+                    [(collapsed)]="collapsed"
                     ${argsToTemplate(args, { exclude: ['collapsed'] })}
-                    (collapsedChange)="setCollapsed($event)"
                     style="display: block; width: min(28rem, 100%);"
                 >
                     <p style="margin: 0;">{{ content }}</p>

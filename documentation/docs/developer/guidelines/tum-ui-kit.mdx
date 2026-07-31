@@ -76,8 +76,9 @@ root Storybook configuration or import Artemis into a story.
 Prefer an args-driven default story and only the additional states that expose a meaningful visual
 or behavioral contract. Let Storybook render the component directly when inputs and outputs are
 enough. Use an Angular template only when the public contract requires projection, a directive host,
-forms, a `TemplateRef`, or compound components. Synchronize controlled template state with
-Storybook args.
+forms, a `TemplateRef`, or compound components. Use args for initial state and Controls. Keep
+interaction state in Angular bindings when a transition depends on preserving the rendered element;
+updating Storybook args rerenders an inline AutoDocs story.
 
 The default story must present the component at a realistic consumer width with its accessible name
 and ordinary content. Use a Storybook decorator for presentation context and explicit CSS grid or
@@ -128,7 +129,8 @@ Artemis loads the component stylesheet after its application styles and defines 
 properties from Artemis foundations and light and dark color roles in `src/main/webapp/tailwind.css`.
 Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
 remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on
-the document element when dark mode is active.
+the document element when dark mode is active and advertises the corresponding CSS `color-scheme`
+so browser-owned controls use the same light or dark appearance.
 
 Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
 96rem as public styling contracts. Add a token only when a host needs a supported customization

@@ -1,4 +1,15 @@
 import { expect, test } from '@playwright/test';
+import type { Locator } from '@playwright/test';
+
+function observeTransition(element: Locator): Promise<boolean> {
+    return element.evaluate(
+        (node) =>
+            new Promise<boolean>((resolve) => {
+                node.addEventListener('transitionrun', () => resolve(true), { once: true });
+                setTimeout(() => resolve(false), 500);
+            }),
+    );
+}
 
 test('applies the compact viewport to responsive table columns', async ({ page }) => {
     await page.goto('./?path=/story/data-display-table--compact-viewport');
@@ -111,20 +122,23 @@ test('renders the initial radio selection in AutoDocs', async ({ page }) => {
     await expect(marker).toHaveCSS('visibility', 'visible');
 });
 
-test('positions the tab indicator under the active tab', async ({ page }) => {
-    await page.goto('./iframe.html?id=navigation-tabs--default&viewMode=story');
-    const indicator = page.locator('.tum-ui-tab-indicator');
-    const settings = page.getByRole('tab', { name: 'Settings' });
+test('preserves component transitions in AutoDocs', async ({ page }) => {
+    await page.goto('./iframe.html?id=forms-toggle-switch--docs&viewMode=docs');
+    const toggle = page.getByRole('switch').first();
+    const handle = page.locator('.tum-ui-toggle-switch-handle').first();
 
-    const transitionStarted = indicator.evaluate(
-        (element) =>
-            new Promise<boolean>((resolve) => {
-                element.addEventListener('transitionrun', () => resolve(true), { once: true });
-                setTimeout(() => resolve(false), 500);
-            }),
-    );
+    const toggleTransition = observeTransition(handle);
+    await toggle.click();
+    expect(await toggleTransition).toBe(true);
+    await expect(toggle).toBeChecked();
+
+    await page.goto('./iframe.html?id=navigation-tabs--docs&viewMode=docs');
+    const indicator = page.locator('.tum-ui-tab-indicator').first();
+    const settings = page.getByRole('tab', { name: 'Settings' }).first();
+
+    const tabTransition = observeTransition(indicator);
     await settings.click();
-    expect(await transitionStarted).toBe(true);
+    expect(await tabTransition).toBe(true);
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.width ?? 0)).toBe(Math.round((await settings.boundingBox())?.width ?? 0));
     await expect.poll(async () => Math.round((await indicator.boundingBox())?.x ?? 0)).toBe(Math.round((await settings.boundingBox())?.x ?? 0));
 });

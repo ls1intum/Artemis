@@ -51,6 +51,8 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
+    color-scheme: light;
+
     --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-font-family: var(--bs-body-font-family);
     --tumaet-ui-font-size-xs: calc(var(--bs-body-font-size) * 0.8333);
@@ -111,6 +113,8 @@
 }
 
 [data-theme='dark'] {
+    color-scheme: dark;
+
     --tumaet-ui-accent-color: color-mix(in srgb, var(--link-color), var(--body-color) 35%);
     --tumaet-ui-focus-color: color-mix(in srgb, var(--link-color), var(--body-color) 35%);
     --tumaet-ui-muted-color: var(--gray-500);

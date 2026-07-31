@@ -1,6 +1,5 @@
 import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { fn } from 'storybook/test';
 
 import { inlineControlStoryDecorator } from '../../../.storybook/story-decorators';
@@ -26,17 +25,9 @@ const meta = {
         changed: { control: false },
     },
     decorators: [inlineControlStoryDecorator],
-    render: function Render(args) {
-        const [{ checked }, updateArgs] = useArgs<CheckboxStoryArgs>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                checked,
-                change: (event: TumUiCheckboxChangeEvent) => {
-                    updateArgs({ checked: event.checked });
-                    args.changed(event);
-                },
-            },
+            props: { ...args },
             template: `
                 <label for="terms">
                     <tum-ui-checkbox
@@ -44,7 +35,7 @@ const meta = {
                         name="terms"
                         [checked]="checked"
                         ${argsToTemplate(args, { exclude: ['checked', 'label', 'changed'] })}
-                        (changed)="change($event)"
+                        (changed)="checked = $event.checked; changed($event)"
                     />
                     {{ label }}
                 </label>

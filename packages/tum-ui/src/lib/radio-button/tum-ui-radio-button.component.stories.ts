@@ -1,7 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { useArgs } from 'storybook/preview-api';
 import { expect, fn, waitFor } from 'storybook/test';
 
 import { formStoryDecorator } from '../../../.storybook/story-decorators';
@@ -59,17 +58,9 @@ const meta = {
             control: false,
         },
     },
-    render: function Render(args) {
-        const [{ selectedValue }, updateArgs] = useArgs<RadioButtonStoryArgs>();
+    render: (args) => {
         return {
-            props: {
-                ...args,
-                selectedValue,
-                selectValue(this: RadioButtonStoryArgs, value: string) {
-                    this.selectedValue = value;
-                    updateArgs({ selectedValue: value });
-                },
-            },
+            props: { ...args },
             template: `
                 <form>
                     <fieldset>
@@ -81,7 +72,7 @@ const meta = {
                                     [name]="groupId"
                                     [value]="option.value"
                                     [ngModel]="selectedValue"
-                                    (ngModelChange)="selectValue($event)"
+                                    (ngModelChange)="selectedValue = $event"
                                     [ngModelOptions]="{ standalone: true }"
                                     [disabled]="disabled"
                                     (selected)="selected($event)"
