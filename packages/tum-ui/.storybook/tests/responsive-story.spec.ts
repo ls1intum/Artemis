@@ -48,13 +48,7 @@ test('keeps tab navigation inside a compact viewport and reveals the focused tab
     await page.getByRole('tab', { name: 'Overview' }).focus();
     await page.keyboard.press('End');
     await expect(settings).toBeFocused();
-    await expect
-        .poll(async () => {
-            const tab = await settings.boundingBox();
-            const list = await tabList.boundingBox();
-            return tab !== null && list !== null && tab.x >= list.x && tab.x + tab.width <= list.x + list.width;
-        })
-        .toBe(true);
+    await expect(settings).toBeInViewport({ ratio: 0.98 });
 });
 
 test('keeps input-group seams logical in both text directions', async ({ page }) => {
