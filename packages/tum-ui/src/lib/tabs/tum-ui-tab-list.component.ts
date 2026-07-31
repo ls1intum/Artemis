@@ -10,7 +10,7 @@ import { TumUiTabComponent } from './tum-ui-tab.component';
     template: '<ng-content />',
     host: {
         role: 'tablist',
-        class: 'tum-ui-tab-list tum:relative tum:flex tum:border-b tum:border-border',
+        class: 'tum-ui-tab-list tum:relative tum:flex tum:w-full tum:min-w-0 tum:max-w-full tum:overflow-x-auto tum:border-b tum:border-border',
         '(keydown)': 'onKeydown($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,

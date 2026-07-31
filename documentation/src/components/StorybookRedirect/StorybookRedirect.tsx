@@ -2,11 +2,17 @@ import { useColorMode } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useEffect } from 'react';
 
-export default function StorybookRedirect() {
+interface StorybookRedirectProps {
+    references: Record<string, string>;
+}
+
+export default function StorybookRedirect({ references }: StorybookRedirectProps) {
     const { siteConfig } = useDocusaurusContext();
     const { colorMode } = useColorMode();
     const storybookIncluded = siteConfig.customFields?.tumUiStorybookIncluded === true;
-    const storybookUrl = `/developer/tum-ui/?path=/docs/introduction--docs&globals=theme:${colorMode}`;
+    const reference = typeof window === 'undefined' ? '' : decodeURIComponent(window.location.hash.slice(1));
+    const story = references[reference] ?? 'introduction--docs';
+    const storybookUrl = `/developer/tum-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
 
     useEffect(() => {
         if (storybookIncluded) {

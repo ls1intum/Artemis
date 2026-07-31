@@ -25,6 +25,8 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.datePicker.time': 'global.datePicker.time',
     'tumUi.datePicker.timeZoneWarning': 'entity.timeZoneWarning',
     'tumUi.dialog.close': 'entity.action.close',
+    'tumUi.panel.collapse': 'global.generic.collapse',
+    'tumUi.panel.expand': 'global.generic.expand',
     'tumUi.paginator.currentPageReport': 'global.item-count',
     'tumUi.paginator.first': 'global.paginator.first',
     'tumUi.paginator.last': 'global.paginator.last',

@@ -78,7 +78,7 @@ if (prebuiltWebappDir.exists()) {
         inputs.dir("src/main/webapp/")
             .withPropertyName("webapp-source-dir")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir("packages/tum-ui/src/")
+        inputs.files(tumUiRuntimeSources)
             .withPropertyName("tum-ui-source-dir")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(
@@ -88,6 +88,7 @@ if (prebuiltWebappDir.exists()) {
             "packages/tum-ui/tsconfig.lib.json",
             "packages/tum-ui/tsconfig.lib.prod.json",
             "packages/tum-ui/tailwind.css",
+            "packages/tum-ui/tailwind-theme.css",
             "packages/tum-ui/themes.css",
             "packages/tum-ui/build-styles.mjs",
             "packages/tum-ui/check-styles.mjs",

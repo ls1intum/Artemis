@@ -23,6 +23,8 @@ export const TUM_UI_DEFAULT_TRANSLATIONS = {
     'tumUi.datePicker.previousMonth': 'Previous month: {month}',
     'tumUi.datePicker.time': 'Time',
     'tumUi.dialog.close': 'Close',
+    'tumUi.panel.collapse': 'Collapse',
+    'tumUi.panel.expand': 'Expand',
     'tumUi.paginator.currentPageReport': 'Showing {first} to {second} of {total}',
     'tumUi.paginator.first': 'First page',
     'tumUi.paginator.last': 'Last page',

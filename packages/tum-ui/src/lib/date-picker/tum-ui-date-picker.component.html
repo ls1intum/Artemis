@@ -37,13 +37,13 @@
             (input)="onInput(dateInput.value)"
             (blur)="onBlur(dateInput.value)"
             (keydown.arrowdown)="openFromInput($event)"
-            class="tum:w-full tum:rounded-md tum:border tum:bg-control-background tum:py-2 tum:pl-3 tum:pr-17 tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
+            class="tum:w-full tum:rounded-md tum:border tum:bg-control-background tum:py-2 tum:ps-3 tum:pe-17 tum:text-text tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus tum:focus-visible:outline-offset-2"
             [class]="showErrorBorder() ? 'tum:border-state-danger' : 'tum:border-control-border'"
         />
         @if (showClear() && !disabled()) {
             <button
                 type="button"
-                class="tum:absolute tum:right-9 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
+                class="tum:absolute tum:end-9 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
                 (click)="clear()"
                 [attr.aria-label]="'tumUi.datePicker.clear' | tumUiTranslate"
             >
@@ -53,7 +53,7 @@
         <button
             type="button"
             tabindex="-1"
-            class="tum:absolute tum:right-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-accent"
+            class="tum:absolute tum:end-2 tum:flex tum:h-6 tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-accent"
             [disabled]="disabled()"
             (click)="toggle()"
             [attr.aria-label]="'tumUi.datePicker.open' | tumUiTranslate"

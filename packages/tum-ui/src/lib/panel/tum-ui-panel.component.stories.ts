@@ -33,7 +33,7 @@ const meta = {
                     [collapsed]="collapsed"
                     ${argsToTemplate(args, { exclude: ['collapsed'] })}
                     (collapsedChange)="setCollapsed($event)"
-                    style="display: block; width: 28rem;"
+                    style="display: block; width: min(28rem, 100%);"
                 >
                     <p style="margin: 0;">{{ content }}</p>
                 </tum-ui-panel>

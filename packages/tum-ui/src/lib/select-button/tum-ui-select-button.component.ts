@@ -16,6 +16,14 @@ interface NormalizedOption {
     readonly selected: boolean;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object';
+}
+
+function displayLabel(value: unknown): string | undefined {
+    return typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean' ? String(value) : undefined;
+}
+
 @Component({
     selector: 'tum-ui-select-button',
     templateUrl: './tum-ui-select-button.component.html',
@@ -55,10 +63,15 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
         const labelKey = this.optionLabel();
         const valueKey = this.optionValue();
         const current = this.value();
-        return this.options().map((raw) => {
-            const value = valueKey != undefined ? (raw as Record<string, unknown>)[valueKey] : raw;
-            const label = labelKey != undefined ? String((raw as Record<string, unknown>)[labelKey]) : String(raw);
-            return { raw, value, label, selected: value === current };
+        return this.options().flatMap((raw) => {
+            const record = isRecord(raw) ? raw : undefined;
+            if ((labelKey !== undefined || valueKey !== undefined) && !record) {
+                return [];
+            }
+            const value = valueKey !== undefined ? record![valueKey] : raw;
+            const labelValue = labelKey !== undefined ? record![labelKey] : raw;
+            const label = displayLabel(labelValue);
+            return label === undefined && !this.itemTemplate() ? [] : [{ raw, value, label: label ?? '', selected: value === current }];
         });
     });
 

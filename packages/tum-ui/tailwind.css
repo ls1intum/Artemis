@@ -3,6 +3,7 @@
 @import './tailwind-theme.css';
 
 @source './src';
+@source not './src/**/*.mdx';
 @source not './src/**/*.spec.ts';
 @source not './src/**/*.stories.ts';
 
@@ -101,4 +102,14 @@
 .tum-ui-button-group > button:not(.tum-ui-btn):focus-visible {
     position: relative;
     z-index: 1;
+}
+
+.tum-ui-input-group > .tum-ui-input:not(:first-child) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-input-group > .tum-ui-input:not(:last-child) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
 }

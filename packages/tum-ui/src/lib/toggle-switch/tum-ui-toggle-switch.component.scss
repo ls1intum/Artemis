@@ -63,3 +63,14 @@
         transition-property: background-color;
     }
 }
+
+@media (forced-colors: active) {
+    .tum-ui-toggle-switch-input {
+        appearance: auto;
+        opacity: 1;
+    }
+
+    .tum-ui-toggle-switch-handle {
+        display: none;
+    }
+}

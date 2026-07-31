@@ -24,6 +24,8 @@ if (rootTsconfigError) {
 }
 const publicApi = readFileSync(resolve(repoRoot, 'packages/tum-ui/src/public-api.ts'), 'utf8');
 const artemisTranslatorSource = readFileSync(resolve(repoRoot, 'src/main/webapp/app/shared-ui/tum-ui-integration/artemis-tum-ui-translator.ts'), 'utf8');
+const developmentGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_dev.gradle'), 'utf8');
+const productionGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_prod.gradle'), 'utf8');
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind.css'), 'utf8');
 const packageTailwindTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind-theme.css'), 'utf8');
 const packageRuntimeFiles = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
@@ -249,7 +251,11 @@ describe('@tumaet/ui-angular integration contract', () => {
         }
         for (const [name, version] of Object.entries(packageJson.devDependencies)) {
             expect(version, `${name} is package-only tooling and must use a workspace catalog`).toMatch(/^catalog:(?:[\w-]+)?$/);
-            expect(dependencyCatalog(version)?.[name], `${name} must exist in its selected workspace catalog`).toBeDefined();
+            const catalogVersion = dependencyCatalog(version)?.[name];
+            expect(catalogVersion, `${name} must exist in its selected workspace catalog`).toBeDefined();
+            if (workspace.overrides?.[name]) {
+                expect(catalogVersion, `${name} catalog and root override must describe the same installed version`).toBe(workspace.overrides[name]);
+            }
             if (rootDependencies[name] && version === 'catalog:') {
                 expect(rootDependencies[name], `${name} must use the same workspace catalog entry`).toBe('catalog:');
             }
@@ -291,6 +297,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
         expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toBe(false);
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
+        expect(developmentGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
+        expect(productionGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
     });
 
     it('loads the validated package stylesheet after host framework styles', () => {
@@ -308,6 +316,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageTailwind).toContain('prefix(tum)');
         expect(packageTailwind).toContain('source(none)');
         expect(packageTailwind).toContain("@source './src'");
+        expect(packageTailwind).toContain("@source not './src/**/*.mdx'");
         expect(packageTailwind).toContain("@source not './src/**/*.spec.ts'");
         expect(packageTailwind).toContain("@source not './src/**/*.stories.ts'");
         expect(packageTailwindTheme).toMatch(/--breakpoint-sm:\s*40rem/);
@@ -350,6 +359,16 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(invalidClasses).toEqual([]);
     });
 
+    it('uses logical Tailwind utilities for direction-sensitive package layout', () => {
+        const physicalUtilities = packageRuntimeFiles
+            .filter(({ file }) => !file.includes('/tooltip/'))
+            .flatMap(({ file, source }) =>
+                [...source.matchAll(/\btum:(?:[\w[\]&:.()-]+:)*(?:left|right|ml|mr|pl|pr|text-left|text-right)(?=$|[\s"'`]|[-[])\S*/g)].map((match) => `${file}: ${match[0]}`),
+            );
+
+        expect(physicalUtilities).toEqual([]);
+    });
+
     it('keeps the package theme namespaced and fully mapped by Artemis', () => {
         const consumedProperties = [
             ...new Set([...`${packageRuntimeSources}\n${packageTailwind}\n${packageTailwindTheme}`.matchAll(/var\((--tumaet-ui-[\w-]+)/g)].map((match) => match[1])),
@@ -368,6 +387,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         const hostProperties = [...new Set(hostPropertyNames)].sort();
 
         expect(packageStyles).not.toContain('--artemis-');
+        expect(packageRuntimeSources).not.toContain('--artemis-');
         expect(packageRuntimeSources).not.toContain('tum:dark:');
         expect(packageRuntimeSources).not.toContain(":host-context(html[data-theme='dark'])");
         expect(consumedProperties).toEqual(packageProperties);
@@ -437,6 +457,13 @@ describe('@tumaet/ui-angular integration contract', () => {
             for (const [foreground, background, minimum] of pairs) {
                 const actual = contrastRatio(properties[foreground], properties[background]);
                 expect(actual, `${theme}: ${foreground} on ${background}`).toBeGreaterThanOrEqual(minimum);
+            }
+            for (const state of ['danger', 'success', 'warning', 'info']) {
+                const foreground = properties[`--tumaet-ui-state-${state}-foreground`];
+                const content = properties['--tumaet-ui-content-background'];
+                const tint = mixColors(properties[`--tumaet-ui-state-${state}`], content, 0.2);
+                expect(contrastRatio(foreground, content), `${theme}: ${state} foreground on content`).toBeGreaterThanOrEqual(4.5);
+                expect(contrastRatio(foreground, tint), `${theme}: ${state} foreground on tint`).toBeGreaterThanOrEqual(4.5);
             }
         }
     });

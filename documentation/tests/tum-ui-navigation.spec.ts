@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-async function expectReferenceTheme(page: Page, theme: 'light' | 'dark') {
-    await expect(page).toHaveURL(new RegExp(`/developer/tum-ui/\\?path=/docs/introduction--docs&globals=theme:${theme}$`));
+async function expectReferenceTheme(page: Page, theme: 'light' | 'dark', story = 'introduction--docs') {
+    await expect(page).toHaveURL(new RegExp(`/developer/tum-ui/\\?path=/docs/${story}&globals=theme:${theme}$`));
     await expect(page.getByRole('button', { name: /Theme/ })).toContainText(`${theme} theme`);
     const documentation = page.frameLocator('#storybook-preview-iframe').locator('.sbdocs-wrapper');
     await expect(documentation).toBeVisible();
@@ -50,8 +50,14 @@ test('connects the coding guidelines and component reference with the selected t
     expect(lightReferenceBackground.manager).not.toBe(darkReferenceBackground.manager);
 });
 
-test('indexes component names in the developer documentation search', async ({ request }) => {
+test('routes an indexed component name to its component reference', async ({ page, request }) => {
     const response = await request.get('./search-index-developer.json');
     await expect(response).toBeOK();
-    await expect(await response.text()).toContain('Radio Button');
+    const sections = (await response.json()) as { documents: { t: string; u: string; h: string }[] }[];
+    const radioButton = sections.flatMap(({ documents }) => documents).find(({ t }) => t === 'Forms: Radio Button');
+    expect(radioButton).toEqual(expect.objectContaining({ u: '/developer/tum-ui-reference', h: '#forms-radio-button' }));
+
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(`.${radioButton!.u}${radioButton!.h}`);
+    await expectReferenceTheme(page, 'light', 'forms-radio-button--docs');
 });

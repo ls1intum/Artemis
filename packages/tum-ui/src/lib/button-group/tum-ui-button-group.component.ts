@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     selector: 'tum-ui-button-group',
     template: '<ng-content />',
     host: {
+        role: 'group',
         '[class]': 'hostClasses()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,

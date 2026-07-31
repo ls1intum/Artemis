@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
 
 let nextPanelId = 0;
 
@@ -16,9 +17,13 @@ let nextPanelId = 0;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPanelComponent {
+    private readonly translator = inject(TUM_UI_TRANSLATOR);
+
     readonly header = input<string>('');
 
     readonly toggleable = input(false);
+
+    readonly toggleAriaLabel = input<string>();
 
     readonly collapsed = model(false);
 
@@ -29,6 +34,17 @@ export class TumUiPanelComponent {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
     protected readonly isCollapsed = computed(() => this.toggleable() && this.collapsed());
+    protected readonly toggleLabelledBy = computed(() => (!this.toggleAriaLabel()?.trim() && this.header().trim() ? this.headerId : null));
+    protected readonly toggleLabel = computed(() => {
+        const customLabel = this.toggleAriaLabel()?.trim();
+        if (customLabel) {
+            return customLabel;
+        }
+        if (this.header().trim()) {
+            return null;
+        }
+        return this.translator.translate(this.collapsed() ? 'tumUi.panel.expand' : 'tumUi.panel.collapse');
+    });
 
     protected readonly hostClasses = computed(() => `tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text ${this.styleClass()}`.trim());
 

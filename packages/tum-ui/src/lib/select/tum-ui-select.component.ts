@@ -27,9 +27,9 @@ import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
-    small: 'tum:min-h-8 tum:py-1.5 tum:pl-2.5 tum:pr-10 tum:text-sm',
-    default: 'tum:min-h-10 tum:py-2 tum:pl-3 tum:pr-10 tum:text-base',
-    large: 'tum:min-h-12 tum:py-2.5 tum:pl-3.5 tum:pr-10 tum:text-lg',
+    small: 'tum:min-h-8 tum:py-1.5 tum:ps-2.5 tum:text-sm',
+    default: 'tum:min-h-10 tum:py-2 tum:ps-3 tum:text-base',
+    large: 'tum:min-h-12 tum:py-2.5 tum:ps-3.5 tum:text-lg',
 };
 
 let nextSelectId = 0;
@@ -112,7 +112,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         return option !== undefined ? this.label(option) : (this.placeholder() ?? '');
     });
     protected readonly showClearButton = computed(() => this.showClear() && this.hasSelection() && !this.isDisabled());
-    protected readonly triggerClasses = computed(() => this.buildTriggerClasses());
+    protected readonly triggerClasses = computed(() => `${this.buildTriggerClasses()} ${this.showClearButton() ? 'tum:pe-17' : 'tum:pe-10'}`);
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
     private readonly keyManagerOptions = computed(() => this.options().map((option) => ({ getLabel: () => this.label(option) })));
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(TYPEAHEAD_DEBOUNCE_MS);
@@ -360,7 +360,7 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     }
 
     private buildTriggerClasses(): string {
-        const base = 'tum-ui-select-trigger tum:flex tum:w-full tum:items-center tum:border tum:text-left tum:transition-colors';
+        const base = 'tum-ui-select-trigger tum:flex tum:w-full tum:items-center tum:border tum:text-start tum:transition-colors';
         const size = TRIGGER_SIZE[this.size() ?? 'default'];
         let state: string;
         if (this.isDisabled()) {

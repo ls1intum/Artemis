@@ -26,6 +26,9 @@ const meta = {
         value: 'overview',
         valueChange: fn(),
     },
+    parameters: {
+        layout: 'padded',
+    },
     render: function Render(args) {
         const [{ value }, updateArgs] = useArgs<{ value: number | string | undefined }>();
         return {

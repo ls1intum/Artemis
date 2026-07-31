@@ -29,7 +29,7 @@ const meta = {
     render: (args) => ({
         props: args,
         template: `
-            <tum-ui-button-group>
+            <tum-ui-button-group aria-label="Date navigation">
                 <tum-ui-button severity="secondary">{{ firstLabel }}</tum-ui-button>
                 <tum-ui-button severity="secondary">{{ secondLabel }}</tum-ui-button>
                 <tum-ui-button severity="secondary">{{ thirdLabel }}</tum-ui-button>

@@ -10,14 +10,18 @@ export function renderReferencePage(index) {
     if (!index?.entries || typeof index.entries !== 'object' || Array.isArray(index.entries)) {
         throw new Error('Storybook index.json does not contain an entries object');
     }
-    const components = [
-        ...new Set(
-            Object.values(index.entries)
-                .filter((entry) => entry.type === 'docs' && entry.title !== 'Introduction')
-                .map((entry) => entry.title),
-        ),
-    ].sort((first, second) => first.localeCompare(second));
-    const componentList = components.map((title) => `- ${title.replace('/', ' — ')}`).join('\n');
+    const components = Object.values(index.entries)
+        .filter((entry) => entry.type === 'docs' && entry.title !== 'Introduction')
+        .map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            label: entry.title.replace('/', ': '),
+            anchor: entry.id.replace(/--docs$/, ''),
+        }))
+        .filter((entry, index, entries) => entries.findIndex(({ title }) => title === entry.title) === index)
+        .sort((first, second) => first.title.localeCompare(second.title));
+    const references = Object.fromEntries(components.map(({ anchor, id }) => [anchor, id]));
+    const componentList = components.map(({ label }) => `### ${label}`).join('\n\n');
 
     return `---
 id: tum-ui
@@ -35,7 +39,7 @@ import StorybookRedirect from '../../src/components/StorybookRedirect/StorybookR
 
 # TUM UI component reference
 
-<StorybookRedirect />
+<StorybookRedirect references={${JSON.stringify(references, null, 4)}} />
 
 The component reference is included in the combined Artemis documentation:
 

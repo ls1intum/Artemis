@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { Directionality } from '@angular/cdk/bidi';
 import { TumUiOverlayPlacement, TumUiOverlayService } from './tum-ui-overlay.service';
 
 describe('TumUiOverlayService', () => {
@@ -28,6 +29,16 @@ describe('TumUiOverlayService', () => {
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         expect(overlayRef).toBeTruthy();
         expect(overlayRef.hasAttached()).toBe(false);
+        overlayRef.dispose();
+    });
+
+    it('propagates right-to-left direction while preserving physical horizontal placements', () => {
+        Object.defineProperty(TestBed.inject(Directionality), 'value', { value: 'rtl' });
+        const overlayRef = service.createConnectedOverlay(origin, 'left');
+
+        expect(overlayRef.getDirection()).toBe('rtl');
+        expect(service.placementFromPosition({ originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center' })).toBe('left');
+        expect(service.placementFromPosition({ originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center' })).toBe('right');
         overlayRef.dispose();
     });
 

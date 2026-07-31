@@ -13,7 +13,9 @@
             "edit": "Editieren",
             "copy": "Kopieren",
             "copied": "Kopiert",
-            "new": "Neu"
+            "new": "Neu",
+            "expand": "Erweitern",
+            "collapse": "Einklappen"
         },
         "weekdays": {
             "monday": "Montag",

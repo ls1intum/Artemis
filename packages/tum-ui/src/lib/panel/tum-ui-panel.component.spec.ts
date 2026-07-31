@@ -42,7 +42,19 @@ describe('TumUiPanelComponent', () => {
         expect(content.id).toBe(controls);
         expect(content.getAttribute('role')).toBe('region');
         expect(content.getAttribute('aria-labelledby')).toBe(title.id);
-        expect(button.getAttribute('aria-label')).toBe('Configuration');
+        expect(button.getAttribute('aria-label')).toBeNull();
+        expect(button.getAttribute('aria-labelledby')).toBe(title.id);
+    });
+
+    it('provides a state-aware accessible name without a visible header', () => {
+        fixture.componentRef.setInput('header', '');
+        fixture.componentRef.setInput('toggleable', true);
+        fixture.detectChanges();
+        expect(toggler()!.getAttribute('aria-label')).toBe('Collapse');
+
+        toggler()!.click();
+        fixture.detectChanges();
+        expect(toggler()!.getAttribute('aria-label')).toBe('Expand');
     });
 
     it('removes collapsed content from interaction and the accessibility tree', () => {

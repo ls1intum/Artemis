@@ -18,6 +18,10 @@ on:
         description: 'Whether Java sources changed — gates the Java-specific analyses.'
         required: true
         type: boolean
+      has_tum_ui:
+        description: 'Whether TUM UI or its application integration changed.'
+        required: true
+        type: boolean
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -93,7 +97,7 @@ jobs:
         if: ${{ !cancelled() }}
       - name: TUM UI Styles
         run: pnpm run tum-ui:stylelint
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -127,29 +131,32 @@ jobs:
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
       - name: Compile Artemis With TUM UI Source
-        run: pnpm run tum-ui:source:check
-        if: ${{ !cancelled() }}
+        run: pnpm run tum-ui:source:check:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Test TUM UI in Isolation
         run: pnpm run tum-ui:test:coverage
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Prepare TUM UI Storybook
+        run: pnpm --dir packages/tum-ui run storybook:prepare
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Type Check TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:typecheck
-        if: ${{ !cancelled() }}
+        run: pnpm --dir packages/tum-ui run storybook:typecheck:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Install TUM UI Storybook Browser
         run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Test TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:test
-        if: ${{ !cancelled() }}
+        run: pnpm --dir packages/tum-ui run storybook:test:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Build TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:build
-        if: ${{ !cancelled() }}
+        run: pnpm --dir packages/tum-ui run storybook:build:prepared
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Test TUM UI AutoDocs
         run: pnpm --dir packages/tum-ui run storybook:docs:test:built
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Validate TUM UI Package Artifact
         run: pnpm run tum-ui:pack:check
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && inputs.has_tum_ui }}
 
   code-quality:
     name: Server Code Quality

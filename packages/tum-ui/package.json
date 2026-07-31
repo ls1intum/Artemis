@@ -110,7 +110,7 @@
         "stylelint": "catalog:",
         "tailwindcss": "catalog:",
         "typescript": "catalog:",
-        "vite": "catalog:storybook",
+        "vite": "catalog:",
         "vitest": "catalog:",
         "zone.js": "catalog:"
     },

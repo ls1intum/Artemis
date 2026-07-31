@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Directionality } from '@angular/cdk/bidi';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +17,10 @@ const NAV_BUTTON_CLASSES =
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiPaginatorComponent {
+    private readonly directionality = inject(Directionality);
+    private readonly direction = signal(this.directionality.value);
+    private readonly destroyRef = inject(DestroyRef);
+
     readonly ariaLabel = input('Pagination');
     readonly totalRecords = input(0);
     /** Zero-based active page index. */
@@ -31,10 +36,10 @@ export class TumUiPaginatorComponent {
     readonly pageChange = output<number>();
     readonly pageSizeChange = output<number>();
 
-    protected readonly faAnglesLeft = faAnglesLeft;
-    protected readonly faAngleLeft = faAngleLeft;
-    protected readonly faAngleRight = faAngleRight;
-    protected readonly faAnglesRight = faAnglesRight;
+    protected readonly firstPageIcon = computed(() => (this.direction() === 'rtl' ? faAnglesRight : faAnglesLeft));
+    protected readonly previousPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleRight : faAngleLeft));
+    protected readonly nextPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleLeft : faAngleRight));
+    protected readonly lastPageIcon = computed(() => (this.direction() === 'rtl' ? faAnglesLeft : faAnglesRight));
 
     protected readonly navButtonClasses = NAV_BUTTON_CLASSES;
     protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('tum:bg-transparent', 'tum:bg-primary/15').replace('tum:text-muted', 'tum:font-semibold tum:text-accent');
@@ -54,6 +59,11 @@ export class TumUiPaginatorComponent {
         start = Math.max(0, end - size);
         return Array.from({ length: end - start }, (_, i) => start + i);
     });
+
+    constructor() {
+        const directionChanges = this.directionality.change.subscribe((direction) => this.direction.set(direction));
+        this.destroyRef.onDestroy(() => directionChanges.unsubscribe());
+    }
 
     protected goToPage(target: number): void {
         if (!this.disabled() && target !== this.page() && target >= 0 && target < this.totalPages()) {

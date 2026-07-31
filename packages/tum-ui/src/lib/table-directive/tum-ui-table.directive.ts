@@ -14,7 +14,7 @@ const SIZE_PADDING: Record<TumUiTableSize, string> = {
 };
 
 const HEADER_CLASSES =
-    'tum:[&_thead_th]:text-left tum:[&_thead_th]:font-semibold tum:[&_thead_th]:whitespace-nowrap ' +
+    'tum:[&_thead_th]:text-start tum:[&_thead_th]:font-semibold tum:[&_thead_th]:whitespace-nowrap ' +
     'tum:[&_thead_th]:bg-content-background tum:[&_thead_th]:text-text ' +
     'tum:[&_thead_th]:border-b tum:[&_thead_th]:border-border';
 

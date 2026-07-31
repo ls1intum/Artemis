@@ -51,7 +51,7 @@ catalog:
   postcss: 8.5.25
   publint: 0.3.22
   playwright: 1.62.0
-  react: 19.2.7
+  react: 19.2.8
   rxjs: 7.8.2
   sass: 1.102.0
   semver: 7.8.5
@@ -64,10 +64,6 @@ catalog:
   vitest: 4.1.10
   yaml: 2.9.0
   zone.js: 0.16.2
-
-catalogs:
-  storybook:
-    vite: 8.1.5
 
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
 # project imports is declared as a direct dependency in package.json; patches

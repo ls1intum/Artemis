@@ -49,5 +49,6 @@ export class TumUiTabComponent {
 
     focus(_origin?: FocusOrigin): void {
         this.elementRef.nativeElement.focus();
+        this.elementRef.nativeElement.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
 }

@@ -6,7 +6,7 @@
             (click)="previousMonth()"
             [attr.aria-label]="previousMonthLabel()"
         >
-            <fa-icon [icon]="faChevronLeft" />
+            <fa-icon [icon]="previousMonthIcon()" />
         </button>
         <span class="tum:font-semibold tum:text-text" aria-live="polite">{{ monthLabel() }}</span>
         <button
@@ -15,7 +15,7 @@
             (click)="nextMonth()"
             [attr.aria-label]="nextMonthLabel()"
         >
-            <fa-icon [icon]="faChevronRight" />
+            <fa-icon [icon]="nextMonthIcon()" />
         </button>
     </div>
     <table role="grid" [attr.aria-label]="monthLabel()" class="tum:w-full tum:border-collapse tum:text-center tum:text-sm">

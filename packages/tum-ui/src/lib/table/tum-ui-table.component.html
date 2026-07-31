@@ -1,22 +1,22 @@
 @if (showSearch()) {
     <div class="tum:mb-3">
         <div class="tum:relative">
-            <fa-icon [icon]="faMagnifyingGlass" class="tum:pointer-events-none tum:absolute tum:left-3 tum:top-1/2 tum:-translate-y-1/2 tum:text-muted" />
+            <fa-icon [icon]="faMagnifyingGlass" class="tum:pointer-events-none tum:absolute tum:start-3 tum:top-1/2 tum:-translate-y-1/2 tum:text-muted" />
             <input
                 #searchInput
                 type="search"
                 [placeholder]="searchPlaceholder() | tumUiTranslate"
                 [attr.aria-label]="searchPlaceholder() | tumUiTranslate"
                 (input)="onSearchInput(searchInput.value)"
-                class="tum:w-full tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1.5 tum:pl-10 tum:pr-3 tum:text-sm tum:text-text"
+                class="tum:w-full tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:py-1.5 tum:ps-10 tum:pe-3 tum:text-sm tum:text-text"
             />
         </div>
     </div>
 }
 
 <div
-    class="tum:relative"
-    [style.overflow]="scrollable() ? 'auto' : null"
+    class="tum:relative tum:w-full tum:max-w-full tum:overflow-x-auto"
+    [style.overflow-y]="scrollable() ? 'auto' : null"
     [style.flex]="scrollHeight() === 'flex' ? '1 1 0%' : null"
     [style.min-height]="scrollHeight() === 'flex' ? 0 : null"
     [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
@@ -31,7 +31,7 @@
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
                     [ngClass]="columnVisibilityClasses(col)"
-                    class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-left tum:font-semibold tum:text-text"
+                    class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-start tum:font-semibold tum:text-text"
                 >
                     @if (col.sort && col.field) {
                         <button
@@ -67,7 +67,7 @@
                 <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tum:border-border tum:bg-content-background tum:px-4 tum:py-2">
                     <span class="tum:sr-only">{{ 'tumUi.table.actions' | tumUiTranslate }}</span>
                 </th>
-                <td cdk-cell *cdkCellDef="let row" class="tum:border-border tum:px-4 tum:py-2 tum:text-right">
+                <td cdk-cell *cdkCellDef="let row" class="tum:border-border tum:px-4 tum:py-2 tum:text-end">
                     <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
                 </td>
             </ng-container>

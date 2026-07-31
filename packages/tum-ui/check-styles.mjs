@@ -10,11 +10,15 @@ const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[pa
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
 const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
-const [css, manifestSource, ...runtimeSources] = await Promise.all([
+const artifactRuntimePaths = globSync(resolve(packageDirectory, 'fesm2022/**/*.mjs'));
+const [css, manifestSource, ...sources] = await Promise.all([
     readFile(stylesheetPath, 'utf8'),
     readFile(manifestPath, 'utf8'),
     ...runtimePaths.map((path) => readFile(path, 'utf8')),
+    ...artifactRuntimePaths.map((path) => readFile(path, 'utf8')),
 ]);
+const runtimeSources = sources.slice(0, runtimePaths.length);
+const artifactRuntimeSources = sources.slice(runtimePaths.length);
 const stylesheet = postcss.parse(css, { from: stylesheetPath });
 const manifest = JSON.parse(manifestSource);
 const errors = [];
@@ -24,6 +28,9 @@ if (css.includes('--tw-')) {
 }
 if (css.includes('--artemis-')) {
     errors.push('the package stylesheet references an Artemis-owned custom property');
+}
+if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRuntimeSources.some((source) => source.includes('--artemis-'))) {
+    errors.push('the package runtime references an Artemis-owned custom property');
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);

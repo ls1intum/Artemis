@@ -5,17 +5,19 @@ describe('TUM UI reference page generation', () => {
     it('deduplicates, sorts, and humanizes the documented component titles', () => {
         const page = renderReferencePage({
             entries: {
-                button: { type: 'docs', title: 'Actions/Button' },
-                intro: { type: 'docs', title: 'Introduction' },
-                radio: { type: 'docs', title: 'Forms/Radio Button' },
-                duplicate: { type: 'docs', title: 'Actions/Button' },
-                state: { type: 'story', title: 'Forms/Radio Button' },
+                button: { id: 'actions-button--docs', type: 'docs', title: 'Actions/Button' },
+                intro: { id: 'introduction--docs', type: 'docs', title: 'Introduction' },
+                radio: { id: 'forms-radio-button--docs', type: 'docs', title: 'Forms/Radio Button' },
+                duplicate: { id: 'actions-button-copy--docs', type: 'docs', title: 'Actions/Button' },
+                state: { id: 'forms-radio-button--default', type: 'story', title: 'Forms/Radio Button' },
             },
         });
 
-        expect(page).toContain('- Actions — Button\n- Forms — Radio Button');
-        expect(page).not.toContain('- Introduction');
-        expect(page.match(/Actions — Button/g)).toHaveLength(1);
+        expect(page).toContain('### Actions: Button\n\n### Forms: Radio Button');
+        expect(page).toContain('"actions-button": "actions-button--docs"');
+        expect(page).toContain('"forms-radio-button": "forms-radio-button--docs"');
+        expect(page).not.toContain('### Introduction');
+        expect(page.match(/Actions: Button/g)).toHaveLength(1);
         expect(page).toContain('custom_edit_url: null');
     });
 

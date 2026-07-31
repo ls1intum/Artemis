@@ -48,6 +48,13 @@ describe('TumUiSelectButtonComponent', () => {
         expect(rendered.map((b) => b.textContent?.trim())).toEqual(['Day', 'Week', 'Month']);
     });
 
+    it('ignores malformed keyed options instead of rendering unnamed controls', () => {
+        fixture.componentRef.setInput('options', [null, undefined, {}, { label: null, value: 'EMPTY' }, OPTIONS[0]]);
+        fixture.detectChanges();
+
+        expect(buttons().map((button) => button.textContent?.trim())).toEqual(['Day']);
+    });
+
     it('selects on click, updates the CVA value, and emits', () => {
         const changed = vi.fn();
         const onChange = vi.fn();

@@ -68,3 +68,14 @@
     outline: 2px solid var(--tumaet-ui-focus-color);
     outline-offset: 2px;
 }
+
+@media (forced-colors: active) {
+    .tum-ui-checkbox-input {
+        appearance: auto;
+        opacity: 1;
+    }
+
+    .tum-ui-checkbox-box {
+        display: none;
+    }
+}

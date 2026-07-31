@@ -18,14 +18,14 @@
     >
         <span class="tum:flex-1 tum:truncate" [class]="!hasSelection() ? 'tum:text-muted' : ''">{{ displayLabel() }}</span>
     </button>
-    <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:right-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-muted">
+    <span class="tum:pointer-events-none tum:absolute tum:inset-y-0 tum:end-0 tum:flex tum:w-10 tum:items-center tum:justify-center tum:text-muted">
         <fa-icon [icon]="faChevronDown" />
     </span>
 
     @if (showClearButton()) {
         <button
             type="button"
-            class="tum:absolute tum:inset-y-0 tum:right-10 tum:flex tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
+            class="tum:absolute tum:inset-y-0 tum:end-10 tum:flex tum:w-6 tum:appearance-none tum:items-center tum:justify-center tum:border-0 tum:bg-transparent tum:p-0 tum:text-muted tum:hover:text-text-hover"
             (click)="clear($event)"
             [attr.aria-label]="clearAriaLabel() ?? ('tumUi.select.clear' | tumUiTranslate)"
         >
@@ -53,7 +53,7 @@
                 >
                     <span class="tum:flex-1 tum:truncate">{{ label(option) }}</span>
                     @if (isSelected(option)) {
-                        <fa-icon [icon]="faCheck" class="tum:ml-2 tum:shrink-0" />
+                        <fa-icon [icon]="faCheck" class="tum:ms-2 tum:shrink-0" />
                     }
                 </li>
             } @empty {

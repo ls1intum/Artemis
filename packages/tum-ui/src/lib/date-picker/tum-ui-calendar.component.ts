@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, inject, input, linkedSignal, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, linkedSignal, output, signal, viewChildren } from '@angular/core';
+import { Directionality } from '@angular/cdk/bidi';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +14,9 @@ import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
 })
 export class TumUiCalendarComponent {
     private readonly translator = inject(TUM_UI_TRANSLATOR);
+    private readonly directionality = inject(Directionality);
+    private readonly direction = signal(this.directionality.value);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly selected = input<dayjs.Dayjs | undefined>(undefined);
     readonly activeMonth = input.required<dayjs.Dayjs>();
@@ -20,8 +24,8 @@ export class TumUiCalendarComponent {
     readonly daySelected = output<dayjs.Dayjs>();
     readonly monthChange = output<dayjs.Dayjs>();
 
-    protected readonly faChevronLeft = faChevronLeft;
-    protected readonly faChevronRight = faChevronRight;
+    protected readonly previousMonthIcon = computed(() => (this.direction() === 'rtl' ? faChevronRight : faChevronLeft));
+    protected readonly nextMonthIcon = computed(() => (this.direction() === 'rtl' ? faChevronLeft : faChevronRight));
 
     protected readonly weeks = computed(() => buildMonthMatrix(this.activeMonth()));
     protected readonly flatDays = computed(() => this.weeks().flat());
@@ -61,6 +65,8 @@ export class TumUiCalendarComponent {
     private restoreFocusAfterRender = false;
 
     constructor() {
+        const directionChanges = this.directionality.change.subscribe((direction) => this.direction.set(direction));
+        this.destroyRef.onDestroy(() => directionChanges.unsubscribe());
         afterRenderEffect(() => {
             this.flatDays();
             if (this.focusOnInit() && !this.focusedOnInit) {

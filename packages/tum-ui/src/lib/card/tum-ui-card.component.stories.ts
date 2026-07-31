@@ -24,7 +24,7 @@ const meta = {
         template: `
             <tum-ui-card ${argsToTemplate(componentArgs)} style="display: block; width: 24rem;">
                 <p style="margin: 0;">{{ body }}</p>
-                <small tumUiCardFooter style="color: var(--muted-color);">{{ footer }}</small>
+                <small tumUiCardFooter style="color: var(--tumaet-ui-muted-color);">{{ footer }}</small>
             </tum-ui-card>
         `,
     }),

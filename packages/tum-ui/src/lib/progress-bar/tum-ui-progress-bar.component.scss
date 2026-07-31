@@ -14,6 +14,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    background: var(--tum-ui-progress-bar-color, var(--tumaet-ui-primary-color));
     transition: width 1s ease-in-out;
 }
 
@@ -25,5 +26,19 @@
 @media (prefers-reduced-motion: reduce) {
     .tum-ui-progress-bar-value {
         transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    :host {
+        border: 1px solid CanvasText;
+    }
+
+    .tum-ui-progress-bar-value {
+        background: Highlight;
+    }
+
+    .tum-ui-progress-bar-label {
+        color: HighlightText;
     }
 }

@@ -87,3 +87,14 @@
         transition-property: background;
     }
 }
+
+@media (forced-colors: active) {
+    .tum-ui-radio-button-input {
+        appearance: auto;
+        opacity: 1;
+    }
+
+    .tum-ui-radio-button-box {
+        display: none;
+    }
+}

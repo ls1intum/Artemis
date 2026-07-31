@@ -18,7 +18,9 @@
     line-height: 1.25;
     white-space: nowrap;
     cursor: pointer;
-    border-width: 1px 1px 1px 0;
+    border-block-width: 1px;
+    border-inline-start-width: 0;
+    border-inline-end-width: 1px;
     border-style: solid;
     border-radius: 0;
     transition:
@@ -63,4 +65,12 @@
 
 .tum-ui-select-button-option:not(:disabled):hover::after {
     background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+}
+
+@media (forced-colors: active) {
+    .tum-ui-select-button-option[aria-pressed='true'] {
+        color: HighlightText;
+        background: Highlight;
+        border-color: Highlight;
+    }
 }

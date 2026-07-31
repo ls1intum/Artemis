@@ -9,10 +9,10 @@
     }
 
     <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToFirst()" [attr.aria-label]="'tumUi.paginator.first' | tumUiTranslate">
-        <fa-icon [icon]="faAnglesLeft" />
+        <fa-icon [icon]="firstPageIcon()" />
     </button>
     <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToPrevious()" [attr.aria-label]="'tumUi.paginator.previous' | tumUiTranslate">
-        <fa-icon [icon]="faAngleLeft" />
+        <fa-icon [icon]="previousPageIcon()" />
     </button>
 
     @for (p of visiblePages(); track p) {
@@ -28,15 +28,15 @@
     }
 
     <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToNext()" [attr.aria-label]="'tumUi.paginator.next' | tumUiTranslate">
-        <fa-icon [icon]="faAngleRight" />
+        <fa-icon [icon]="nextPageIcon()" />
     </button>
     <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToLast()" [attr.aria-label]="'tumUi.paginator.last' | tumUiTranslate">
-        <fa-icon [icon]="faAnglesRight" />
+        <fa-icon [icon]="lastPageIcon()" />
     </button>
 
     @if (showRowsPerPage()) {
         <select
-            class="tum:ml-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-text"
+            class="tum:ms-1 tum:cursor-pointer tum:rounded-md tum:border tum:border-control-border tum:bg-control-background tum:px-2.5 tum:py-1.5 tum:text-sm tum:text-text"
             [ngModel]="pageSize()"
             [disabled]="disabled()"
             (ngModelChange)="onPageSizeChange($event)"
