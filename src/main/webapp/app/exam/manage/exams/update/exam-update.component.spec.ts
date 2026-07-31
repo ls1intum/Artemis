@@ -146,6 +146,18 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.workingTime).toBe(0);
         });
 
+        it('should show the title validation message when the title is missing and hide it once a title is set', () => {
+            fixture.detectChanges();
+            const titleValidationSelector = By.css('[data-testid="title-validation-message"]');
+            expect(fixture.debugElement.query(titleValidationSelector)).not.toBeNull();
+
+            const examWithTitle = cloneDeep(component.exam);
+            examWithTitle.title = 'A valid exam title';
+            component.exam = examWithTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
+        });
+
         it('should validate the dates correctly', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');

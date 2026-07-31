@@ -680,6 +680,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithBlankTitle() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examBlankTitleTest");
+        exam.setTitle("   "); // stripped to an empty title
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithMissingTitle() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMissingTitleTest");
+        // A crafted request without a title has to be rejected cleanly, not fail while mapping the null title to the entity
+        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(exam));
+        examJson.putNull("title");
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
         Exam exam = ExamFactory.generateExam(course1, "examGracePeriodTest");
         exam.setGracePeriod(3601); // Max allowed is 3600 seconds
