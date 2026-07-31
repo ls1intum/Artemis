@@ -7,9 +7,6 @@ const meta = {
     component: TumUiProgressSpinnerComponent,
     args: {
         ariaLabel: 'Loading course data',
-        animationDuration: '2s',
-        fill: 'none',
-        strokeWidth: 2,
     },
 } satisfies Meta<TumUiProgressSpinnerComponent>;
 

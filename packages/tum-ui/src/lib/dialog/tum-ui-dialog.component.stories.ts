@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { useArgs } from 'storybook/preview-api';
 import { expect, fn, screen, waitForElementToBeRemoved, within } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
-import { TumUiDialogComponent } from './tum-ui-dialog.component';
+import { TumUiDialogComponent, type TumUiDialogSize } from './tum-ui-dialog.component';
 
 interface DialogStoryArgs {
     ariaDescribedBy: string;
@@ -16,6 +16,7 @@ interface DialogStoryArgs {
     hidden: () => void;
     shown: () => void;
     openLabel: string;
+    size: TumUiDialogSize;
     visible: boolean;
 }
 
@@ -33,6 +34,7 @@ const meta = {
         hidden: fn(),
         shown: fn(),
         openLabel: 'Open confirmation',
+        size: 'medium',
         visible: false,
     },
     decorators: [

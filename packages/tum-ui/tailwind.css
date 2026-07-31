@@ -143,3 +143,11 @@
 .tum-ui-icon-field > .tum-ui-input {
     width: 100%;
 }
+
+.tum-ui-icon-field[data-has-icon][data-position='left'] > .tum-ui-input {
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 10);
+}
+
+.tum-ui-icon-field[data-has-icon][data-position='right'] > .tum-ui-input {
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 10);
+}

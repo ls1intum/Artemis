@@ -12,7 +12,7 @@
                 optionLabel="label"
                 (ngModelChange)="onTimeSpanChange($event)"
                 size="small"
-                styleClass="w-auto"
+                class="w-auto"
             />
             <tum-ui-button
                 severity="secondary"
@@ -32,7 +32,7 @@
     }
 
     @if (error()) {
-        <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.irisDashboard.error' | artemisTranslate }}</tum-ui-message>
+        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.irisDashboard.error' | artemisTranslate }}</tum-ui-message>
     }
 
     @if (overview()) {

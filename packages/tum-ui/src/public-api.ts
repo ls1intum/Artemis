@@ -9,7 +9,7 @@ export { TumUiChipComponent, type TumUiChipSize } from './lib/chip/tum-ui-chip.c
 export { TumUiConfirmDialogComponent } from './lib/confirm-dialog/tum-ui-confirm-dialog.component';
 export { TumUiConfirmationService, type TumUiConfirmationRequest } from './lib/confirm-dialog/tum-ui-confirmation.service';
 export { TumUiDatePickerComponent } from './lib/date-picker/tum-ui-date-picker.component';
-export { TumUiDialogComponent } from './lib/dialog/tum-ui-dialog.component';
+export { TumUiDialogComponent, type TumUiDialogSize } from './lib/dialog/tum-ui-dialog.component';
 export { TUM_UI_TRANSLATOR, provideTumUiTranslator, type TumUiTranslationKey, type TumUiTranslationParams, type TumUiTranslator } from './lib/i18n/tum-ui-translations';
 export { TumUiIconFieldComponent, type TumUiIconFieldPosition } from './lib/icon-field/tum-ui-icon-field.component';
 export { TumUiInputGroupAddonComponent } from './lib/input-group/tum-ui-input-group-addon.component';
@@ -20,7 +20,7 @@ export type { TumUiInputSize } from './lib/input/tum-ui-input.variants';
 export { TumUiMessageComponent, type TumUiMessageSeverity } from './lib/message/tum-ui-message.component';
 export { TumUiPaginatorComponent } from './lib/paginator/tum-ui-paginator.component';
 export { TumUiPanelComponent } from './lib/panel/tum-ui-panel.component';
-export { TumUiProgressBarComponent } from './lib/progress-bar/tum-ui-progress-bar.component';
+export { TumUiProgressBarComponent, type TumUiProgressBarSeverity } from './lib/progress-bar/tum-ui-progress-bar.component';
 export { TumUiProgressSpinnerComponent } from './lib/progress-spinner/tum-ui-progress-spinner.component';
 export { TumUiRadioButtonComponent, type TumUiRadioButtonSelectEvent } from './lib/radio-button/tum-ui-radio-button.component';
 export { TumUiSelectButtonComponent, type TumUiSelectButtonOption, type TumUiSelectButtonSize } from './lib/select-button/tum-ui-select-button.component';

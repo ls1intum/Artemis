@@ -1,8 +1,5 @@
 <ng-template #panel>
-    <div
-        class="tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-xl"
-        [style]="style()"
-    >
+    <div [class]="panelClasses()">
         @if (showHeader()) {
             <div class="tum-ui-dialog-header tum:flex tum:shrink-0 tum:items-center tum:justify-between tum:gap-2 tum:p-4">
                 <div [id]="titleId" class="tum-ui-dialog-title tum:text-xl tum:font-semibold">
@@ -25,7 +22,7 @@
             </div>
         }
 
-        <div class="tum-ui-dialog-content tum:grow tum:overflow-y-auto tum:px-4 tum:pb-4" [style]="contentStyle()">
+        <div class="tum-ui-dialog-content tum:grow tum:overflow-y-auto tum:px-4 tum:pb-4">
             <ng-content />
         </div>
 

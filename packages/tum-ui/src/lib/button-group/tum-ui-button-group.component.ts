@@ -1,16 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
     selector: 'tum-ui-button-group',
     template: '<ng-content />',
     host: {
         role: 'group',
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-button-group',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumUiButtonGroupComponent {
-    readonly styleClass = input<string>('');
-
-    protected readonly hostClasses = computed(() => `tum-ui-button-group ${this.styleClass()}`.trim());
-}
+export class TumUiButtonGroupComponent {}

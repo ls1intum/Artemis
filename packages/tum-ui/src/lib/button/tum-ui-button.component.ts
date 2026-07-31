@@ -31,8 +31,6 @@ export class TumUiButtonComponent {
     readonly ariaControls = input<string | undefined>(undefined);
     readonly ariaDescribedBy = input<string | undefined>(undefined);
 
-    readonly styleClass = input<string>('');
-
     readonly clicked = output<MouseEvent>();
 
     protected readonly faSpinner = faSpinner;
@@ -40,7 +38,7 @@ export class TumUiButtonComponent {
 
     protected readonly buttonClasses = computed(() => {
         const rounded = this.rounded() ? 'tum-ui-btn-rounded' : '';
-        return `${tumUiButtonClasses({ severity: this.severity(), size: this.size(), variant: this.variant() })} ${rounded} ${this.styleClass()}`.replace(/\s+/g, ' ').trim();
+        return `${tumUiButtonClasses({ severity: this.severity(), size: this.size(), variant: this.variant() })} ${rounded}`.trim();
     });
 
     protected onClick(event: MouseEvent): void {

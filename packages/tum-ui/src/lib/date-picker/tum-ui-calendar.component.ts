@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, linkedSignal, output, signal, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    afterRenderEffect,
+    booleanAttribute,
+    computed,
+    inject,
+    input,
+    linkedSignal,
+    output,
+    signal,
+    viewChildren,
+} from '@angular/core';
 import { Directionality } from '@angular/cdk/bidi';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -20,7 +34,7 @@ export class TumUiCalendarComponent {
 
     readonly selected = input<dayjs.Dayjs | undefined>(undefined);
     readonly activeMonth = input.required<dayjs.Dayjs>();
-    readonly focusOnInit = input(false);
+    readonly focusOnInit = input(false, { transform: booleanAttribute });
     readonly daySelected = output<dayjs.Dayjs>();
     readonly monthChange = output<dayjs.Dayjs>();
 

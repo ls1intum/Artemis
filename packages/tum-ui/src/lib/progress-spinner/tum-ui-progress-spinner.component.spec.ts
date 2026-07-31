@@ -40,19 +40,4 @@ describe('TumUiProgressSpinnerComponent', () => {
         fixture.detectChanges();
         expect(host.getAttribute('aria-label')).toBe('Loading competencies');
     });
-
-    it('reflects a custom stroke width and fill', () => {
-        fixture.componentRef.setInput('strokeWidth', '4');
-        fixture.componentRef.setInput('fill', 'transparent');
-        fixture.detectChanges();
-        expect(circle().getAttribute('stroke-width')).toBe('4');
-        expect(circle().getAttribute('fill')).toBe('transparent');
-    });
-
-    it('reflects a custom animation duration onto the spin element', () => {
-        fixture.componentRef.setInput('animationDuration', '1s');
-        fixture.detectChanges();
-        const spin = fixture.debugElement.query(By.css('.tum-ui-progress-spinner-spin')).nativeElement as SVGElement;
-        expect(spin.style.animationDuration).toBe('1s');
-    });
 });

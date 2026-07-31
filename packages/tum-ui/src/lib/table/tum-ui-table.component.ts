@@ -1,4 +1,4 @@
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { CdkTable, CdkTableModule } from '@angular/cdk/table';
 import {
     ChangeDetectionStrategy,
@@ -7,10 +7,12 @@ import {
     TemplateRef,
     TrackByFunction,
     afterNextRender,
+    booleanAttribute,
     computed,
     effect,
     inject,
     input,
+    numberAttribute,
     output,
     signal,
     untracked,
@@ -40,7 +42,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     selector: 'tum-ui-table',
     templateUrl: './tum-ui-table.component.html',
     styleUrl: './tum-ui-table.component.scss',
-    imports: [CdkTableModule, NgClass, NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe, TumUiPaginatorComponent],
+    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumUiTranslatePipe, TumUiPaginatorComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableComponent<T> {
@@ -48,25 +50,25 @@ export class TumUiTableComponent<T> {
     readonly columns = input.required<ColumnDef<T>[]>();
     /** Rows for the current page. Sorting and filtering are not applied locally. */
     readonly rows = input.required<T[]>();
-    readonly totalRecords = input(0);
-    readonly loading = input(false);
+    readonly totalRecords = input(0, { transform: numberAttribute });
+    readonly loading = input(false, { transform: booleanAttribute });
     /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
 
     /** Identity function forwarded to the CDK table. */
     readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
-    readonly striped = input(false);
-    readonly scrollable = input(false);
+    readonly striped = input(false, { transform: booleanAttribute });
+    readonly scrollable = input(false, { transform: booleanAttribute });
     readonly scrollHeight = input<string | undefined>(undefined);
-    readonly showSearch = input(true);
+    readonly showSearch = input(true, { transform: booleanAttribute });
     readonly searchPlaceholder = input('tumUi.table.searchPlaceholder');
     readonly emptyMessage = input('tumUi.table.noResults');
-    readonly pageSize = input(50);
+    readonly pageSize = input(50, { transform: numberAttribute });
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
 
-    readonly showRowsPerPage = input(true);
+    readonly showRowsPerPage = input(true, { transform: booleanAttribute });
 
-    readonly showCurrentPageReport = input(true);
+    readonly showCurrentPageReport = input(true, { transform: booleanAttribute });
     readonly initialSortField = input<string | undefined>(undefined);
     readonly initialSortDirection = input<TumUiSortDirection>('asc');
 

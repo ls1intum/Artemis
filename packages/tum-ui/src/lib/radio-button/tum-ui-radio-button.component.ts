@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, forwardRef, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface TumUiRadioButtonSelectEvent {
@@ -26,7 +26,7 @@ export class TumUiRadioButtonComponent implements ControlValueAccessor {
 
     /** ID used to associate a consumer-provided label with the native radio. */
     readonly inputId = input<string>();
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
     /** Accessible name used when no associated label is rendered. */
     readonly ariaLabel = input<string>();

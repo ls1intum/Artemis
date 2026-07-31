@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, forwardRef, input, model, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, forwardRef, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +18,7 @@ export interface TumUiCheckboxChangeEvent {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiCheckboxComponent implements ControlValueAccessor {
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
     readonly inputId = input<string>();
 

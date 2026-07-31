@@ -30,7 +30,7 @@
                     scope="col"
                     [style.min-width]="col.width"
                     [attr.aria-sort]="ariaSortFor(col)"
-                    [ngClass]="columnVisibilityClasses(col)"
+                    [class]="columnVisibilityClasses(col)"
                     class="tum:whitespace-nowrap tum:border-border tum:bg-content-background tum:px-4 tum:py-2 tum:text-start tum:font-semibold tum:text-text"
                 >
                     @if (col.sort && col.field) {
@@ -52,7 +52,7 @@
                         <span>{{ col.header }}</span>
                     }
                 </th>
-                <td cdk-cell *cdkCellDef="let row; let i = index" [ngClass]="columnVisibilityClasses(col)" class="tum:border-border tum:px-4 tum:py-2 tum:text-text">
+                <td cdk-cell *cdkCellDef="let row; let i = index" [class]="columnVisibilityClasses(col)" class="tum:border-border tum:px-4 tum:py-2 tum:text-text">
                     @if (col.templateRef) {
                         <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: cellParams(row, col, i) }" />
                     } @else {

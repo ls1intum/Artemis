@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, computed, forwardRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, booleanAttribute, computed, forwardRef, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -50,8 +50,8 @@ export class TumUiSelectButtonComponent implements ControlValueAccessor {
     readonly size = input<TumUiSelectButtonSize>();
 
     /** Allows the selected option to be toggled back to `undefined`. */
-    readonly allowEmpty = input(true);
-    readonly disabled = input(false);
+    readonly allowEmpty = input(true, { transform: booleanAttribute });
+    readonly disabled = input(false, { transform: booleanAttribute });
 
     /** Optional presentation template; the option remains its implicit context value. */
     readonly itemTemplate = input<TemplateRef<{ $implicit: TumUiSelectButtonOption }>>();

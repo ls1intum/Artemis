@@ -14,13 +14,46 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: var(--tum-ui-progress-bar-color, var(--tumaet-ui-primary-color));
+    background: var(--tumaet-ui-primary-color);
     transition: width 1s ease-in-out;
+}
+
+.tum-ui-progress-bar-value[data-severity='success'] {
+    background: var(--tumaet-ui-state-success);
+}
+
+.tum-ui-progress-bar-value[data-severity='warn'] {
+    background: var(--tumaet-ui-state-warning);
+}
+
+.tum-ui-progress-bar-value[data-severity='danger'] {
+    background: var(--tumaet-ui-state-danger);
+}
+
+.tum-ui-progress-bar-value[data-severity='info'] {
+    background: var(--tumaet-ui-state-info);
 }
 
 .tum-ui-progress-bar-label {
     font-size: var(--tumaet-ui-font-size-xs);
     font-weight: 600;
+    color: var(--tumaet-ui-primary-contrast-color);
+}
+
+.tum-ui-progress-bar-value[data-severity='success'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-success-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='warn'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-warning-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='danger'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='info'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-info-contrast);
 }
 
 @media (prefers-reduced-motion: reduce) {

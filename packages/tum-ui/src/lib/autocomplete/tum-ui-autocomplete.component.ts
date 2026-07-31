@@ -5,11 +5,13 @@ import {
     ElementRef,
     TemplateRef,
     ViewContainerRef,
+    booleanAttribute,
     computed,
     effect,
     forwardRef,
     inject,
     input,
+    numberAttribute,
     output,
     signal,
     viewChild,
@@ -40,9 +42,6 @@ let nextAutoCompleteId = 0;
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
     imports: [TumUiChipComponent, TumUiTranslatePipe],
-    host: {
-        '[class]': 'styleClass()',
-    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiAutoCompleteComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,26 +57,25 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     /** Property name used as the visible label for object values. */
     readonly optionLabel = input<string>();
 
-    readonly multiple = input(false);
+    readonly multiple = input(false, { transform: booleanAttribute });
 
     readonly placeholder = input<string>();
 
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
     /** Minimum query length before a search request emits. */
-    readonly minLength = input(1);
+    readonly minLength = input(1, { transform: numberAttribute });
 
     /** Delay between the latest input and a search request. */
-    readonly debounceMs = input(300);
+    readonly debounceMs = input(300, { transform: numberAttribute });
 
     /** Requests suggestions when the empty input receives focus. */
-    readonly completeOnFocus = input(false);
+    readonly completeOnFocus = input(false, { transform: booleanAttribute });
 
     readonly inputId = input(`tum-ui-autocomplete-${nextAutoCompleteId++}`);
     readonly name = input<string>();
     readonly ariaLabel = input<string>();
     readonly removeAriaLabel = input<string>();
-    readonly styleClass = input<string>('');
     /** Message shown when a completed search returns no suggestions. */
     readonly emptyMessage = input<string>();
     /** Requests suggestions for the current text query. */

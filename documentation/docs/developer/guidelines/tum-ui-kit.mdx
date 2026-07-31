@@ -44,9 +44,9 @@ generic-looking application policy is not sufficient. Keep feature translations,
 authorization, and domain models in Artemis. Build reusable behavior on native HTML or stable
 Angular CDK primitives, and state intentionally unsupported behavior in the pull request.
 
-Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`, and
-semantic Tailwind utilities. Prefer stable native controls and CDK behavior over custom keyboard,
-focus, overlay, or selection machinery.
+Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`,
+native input coercion, and semantic Tailwind utilities. Prefer stable native controls and CDK
+behavior over custom keyboard, focus, overlay, or selection machinery.
 
 Tests should assert public behavior: accessible role and name, keyboard interaction, focus changes,
 disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
@@ -100,7 +100,7 @@ reload cycle.
 ### Theme contract
 
 The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md)
-documents stylesheet loading, token semantics, dark mode, and `styleClass`.
+documents stylesheet loading, token semantics, dark mode, and host styling.
 
 The package build emits and validates `styles.css` as the required global stylesheet. Consumers do
 not compile package sources or need Tailwind. `themes.css` is an optional package-owned provider
@@ -117,6 +117,10 @@ so browser-owned controls use the same light or dark appearance.
 Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
 96rem as public styling contracts. Add a token only when a host needs a supported customization
 axis; do not expose Tailwind's full primitive theme.
+
+Apply application layout classes directly to the component host with the native `class` attribute.
+Do not add `styleClass`-style compatibility inputs or expose internal element classes. Add a
+semantic input or theme token only when the customization is a supported component contract.
 
 ### Translation contract
 

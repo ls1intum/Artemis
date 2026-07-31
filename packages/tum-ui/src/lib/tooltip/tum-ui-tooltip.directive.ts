@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, ElementRef, OnDestroy, effect, inject, input } from '@angular/core';
+import { ComponentRef, Directive, ElementRef, OnDestroy, effect, inject, input, numberAttribute } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Subscription, fromEvent } from 'rxjs';
@@ -24,8 +24,8 @@ export class TumUiTooltipDirective implements OnDestroy {
 
     readonly content = input.required<string>({ alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
-    readonly showDelayMs = input(150);
-    readonly hideDelayMs = input(100);
+    readonly showDelayMs = input(150, { transform: numberAttribute });
+    readonly hideDelayMs = input(100, { transform: numberAttribute });
 
     private overlayRef?: OverlayRef;
     private contentRef?: ComponentRef<TumUiTooltipContentComponent>;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostAttributeToken, computed, forwardRef, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostAttributeToken, booleanAttribute, computed, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -17,7 +17,7 @@ export class TumUiToggleSwitchComponent implements ControlValueAccessor {
     private readonly hostAriaLabel = inject(new HostAttributeToken('aria-label'), { optional: true });
     private readonly hostAriaLabelledBy = inject(new HostAttributeToken('aria-labelledby'), { optional: true });
 
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
     readonly inputId = input<string>();
 
@@ -40,8 +40,6 @@ export class TumUiToggleSwitchComponent implements ControlValueAccessor {
         const track = this.checked() ? 'tum:bg-primary' : 'tum:bg-control-border';
         return `tum-ui-toggle-switch ${track} ${this.effectiveDisabled() ? 'tum:opacity-60' : ''}`.trim();
     });
-
-    protected readonly handleClasses = computed(() => 'tum-ui-toggle-switch-handle tum:bg-content-background');
 
     protected onInputChange(event: Event): void {
         const next = (event.target as HTMLInputElement).checked;

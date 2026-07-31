@@ -4,6 +4,7 @@ import {
     OnDestroy,
     TemplateRef,
     ViewContainerRef,
+    booleanAttribute,
     computed,
     contentChild,
     effect,
@@ -18,6 +19,15 @@ import { Dialog, DialogRef, DialogRole } from '@angular/cdk/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
+
+export type TumUiDialogSize = 'small' | 'medium' | 'large' | 'full';
+
+const DIALOG_SIZE_CLASSES: Record<TumUiDialogSize, string> = {
+    small: 'tum:w-[min(32rem,90dvw)]',
+    medium: 'tum:w-[min(48rem,90dvw)]',
+    large: 'tum:w-[min(72rem,90dvw)]',
+    full: 'tum:h-[90dvh] tum:w-[90dvw]',
+};
 
 let nextDialogId = 0;
 
@@ -37,15 +47,15 @@ export class TumUiDialogComponent implements OnDestroy {
     /** Visible title and default accessible name. */
     readonly header = input<string>();
     /** Hides the header; an `ariaLabel` is then required. */
-    readonly showHeader = input(true);
+    readonly showHeader = input(true, { transform: booleanAttribute });
     /** Shows the close button without changing Escape or backdrop behavior. */
-    readonly closable = input(true);
+    readonly closable = input(true, { transform: booleanAttribute });
     /** Allows Escape to close the dialog. */
-    readonly closeOnEscape = input(true);
+    readonly closeOnEscape = input(true, { transform: booleanAttribute });
     /** Allows a backdrop click to close the dialog. */
-    readonly dismissableMask = input(false);
-    readonly style = input<Record<string, string>>({});
-    readonly contentStyle = input<Record<string, string>>({});
+    readonly dismissableMask = input(false, { transform: booleanAttribute });
+    /** Responsive dialog dimensions. Omit for content-sized dialogs. */
+    readonly size = input<TumUiDialogSize>();
     /** Accessible name used when no visible header or header template is present. */
     readonly ariaLabel = input<string>();
     readonly closeButtonAriaLabel = input<string>();
@@ -62,6 +72,12 @@ export class TumUiDialogComponent implements OnDestroy {
     protected readonly titleId = `tum-ui-dialog-title-${nextDialogId++}`;
     protected readonly faXmark = faXmark;
     protected readonly labelledBy = computed(() => (this.showHeader() && (this.header()?.trim() || this.headerTemplate()) ? this.titleId : undefined));
+    protected readonly panelClasses = computed(() => {
+        const base =
+            'tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-xl';
+        const size = this.size();
+        return size ? `${base} ${DIALOG_SIZE_CLASSES[size]}` : base;
+    });
 
     private dialogRef?: DialogRef;
 

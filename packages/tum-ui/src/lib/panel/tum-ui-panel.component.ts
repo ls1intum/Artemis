@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
@@ -11,7 +11,7 @@ let nextPanelId = 0;
     styleUrl: './tum-ui-panel.component.scss',
     imports: [FaIconComponent],
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,15 +22,13 @@ export class TumUiPanelComponent {
     readonly header = input<string>('');
 
     /** Enables disclosure behavior for the projected content. */
-    readonly toggleable = input(false);
+    readonly toggleable = input(false, { transform: booleanAttribute });
 
     /** Overrides the toggle name; otherwise the header or package translation is used. */
     readonly toggleAriaLabel = input<string>();
 
     /** Controlled disclosure state, applied only when `toggleable` is enabled. */
     readonly collapsed = model(false);
-
-    readonly styleClass = input<string>('');
 
     protected readonly headerId = `tum-ui-panel-header-${nextPanelId}`;
     protected readonly contentId = `tum-ui-panel-content-${nextPanelId++}`;
@@ -48,8 +46,6 @@ export class TumUiPanelComponent {
         }
         return this.translator.translate(this.collapsed() ? 'tumUi.panel.expand' : 'tumUi.panel.collapse');
     });
-
-    protected readonly hostClasses = computed(() => `tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text ${this.styleClass()}`.trim());
 
     protected toggle(): void {
         if (this.toggleable()) {

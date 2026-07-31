@@ -1,4 +1,4 @@
-import { Directive, booleanAttribute, computed, input, output } from '@angular/core';
+import { Directive, booleanAttribute, computed, input, numberAttribute, output } from '@angular/core';
 
 export type TumUiTableSize = 'small' | 'normal' | 'large';
 
@@ -41,13 +41,11 @@ export class TumUiTableDirective {
 
     readonly rowHover = input(false, { transform: booleanAttribute });
 
-    readonly styleClass = input('');
-
     readonly sortField = input<string | undefined>(undefined);
 
-    readonly sortOrder = input<number>(1);
+    readonly sortOrder = input(1, { transform: numberAttribute });
 
-    readonly defaultSortOrder = input<number>(1);
+    readonly defaultSortOrder = input(1, { transform: numberAttribute });
 
     readonly sortChange = output<TumUiTableSortEvent>();
 
@@ -61,10 +59,6 @@ export class TumUiTableDirective {
         }
         if (this.scrollable()) {
             parts.push(SCROLLABLE_CLASSES);
-        }
-        const styleClass = this.styleClass();
-        if (styleClass) {
-            parts.push(styleClass);
         }
         return parts.join(' ');
     });

@@ -1,5 +1,5 @@
 import { Directionality } from '@angular/cdk/bidi';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, booleanAttribute, computed, inject, input, numberAttribute, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
@@ -23,17 +23,17 @@ export class TumUiPaginatorComponent {
 
     readonly ariaLabel = input('Pagination');
     /** Total records in the consumer-owned result set. */
-    readonly totalRecords = input(0);
+    readonly totalRecords = input(0, { transform: numberAttribute });
     /** Zero-based active page index. */
-    readonly page = input(0);
+    readonly page = input(0, { transform: numberAttribute });
     /** Controlled number of records per page. */
-    readonly pageSize = input(50);
+    readonly pageSize = input(50, { transform: numberAttribute });
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
-    readonly showCurrentPageReport = input(true);
+    readonly showCurrentPageReport = input(true, { transform: booleanAttribute });
 
-    readonly showRowsPerPage = input(true);
+    readonly showRowsPerPage = input(true, { transform: booleanAttribute });
 
     /** Requests a zero-based page without mutating `page`. */
     readonly pageChange = output<number>();

@@ -5,6 +5,7 @@ import {
     ElementRef,
     TemplateRef,
     ViewContainerRef,
+    booleanAttribute,
     computed,
     effect,
     inject,
@@ -53,14 +54,14 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
     /** Adds an external validation error without discarding the last committed value. */
-    readonly invalid = input(false);
-    readonly disabled = input(false);
+    readonly invalid = input(false, { transform: booleanAttribute });
+    readonly disabled = input(false, { transform: booleanAttribute });
     /** Hides the visible label while retaining the input's accessible name. */
-    readonly hideLabelName = input(false);
+    readonly hideLabelName = input(false, { transform: booleanAttribute });
     /** Hides the built-in validation message without changing validity or `aria-invalid`. */
-    readonly hideValidationMessage = input(false);
+    readonly hideValidationMessage = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
-    readonly shouldDisplayTimeZoneWarning = input(true);
+    readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
 
     /** ID used to associate the input, label, validation message, and dialog. */
     readonly inputId = input(`tum-ui-date-picker-${nextDatePickerId++}`);

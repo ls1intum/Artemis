@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, forwardRef, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, forwardRef, input, linkedSignal, numberAttribute, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
@@ -12,7 +12,11 @@ let nextInputNumberId = 0;
     templateUrl: './tum-ui-input-number.component.html',
     styleUrl: './tum-ui-input-number.component.scss',
     imports: [TumUiInputDirective, FaIconComponent],
-    host: { '[class]': 'hostClasses()' },
+    host: {
+        class: 'tum-ui-input-number',
+        '[class.tum-ui-input-number-fluid]': 'fluid()',
+        '[class.tum-ui-input-number-buttons]': 'showButtons()',
+    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiInputNumberComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -22,21 +26,21 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     /** Upper bound applied on blur and stepping. */
     readonly max = input<number>();
     /** Increment / decrement applied by the stepper buttons and Arrow Up / Down keys. */
-    readonly step = input<number>(1);
+    readonly step = input(1, { transform: numberAttribute });
     /** Shows increment and decrement controls. */
-    readonly showButtons = input(false);
+    readonly showButtons = input(false, { transform: booleanAttribute });
     /** Text displayed before the formatted number. */
     readonly prefix = input<string>();
     /** Text displayed after the formatted number. */
     readonly suffix = input<string>();
     readonly placeholder = input<string>();
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
     /** Marks the field invalid without changing its value. */
-    readonly invalid = input(false);
+    readonly invalid = input(false, { transform: booleanAttribute });
     /** Expands the field to the available width. */
-    readonly fluid = input(false);
+    readonly fluid = input(false, { transform: booleanAttribute });
     /** Enables locale-specific digit grouping. */
-    readonly useGrouping = input(true);
+    readonly useGrouping = input(true, { transform: booleanAttribute });
     /** Locale used for formatting; omit it to use the browser locale. */
     readonly locale = input<string>();
     /** `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to a unique per-instance id. */
@@ -49,11 +53,6 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly ariaLabelledBy = input<string>();
     /** Element `id` values that describe the inner `<input>`. */
     readonly ariaDescribedBy = input<string>();
-    /** Classes appended to the component host. */
-    readonly styleClass = input('');
-    /** Classes appended to the native input. */
-    readonly inputStyleClass = input('');
-
     private readonly inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
     private readonly cvaValue = signal<number | undefined>(undefined);
     private readonly cvaDisabled = signal(false);
@@ -61,19 +60,6 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
 
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
-
-    protected readonly hostClasses = computed(() => {
-        const parts = ['tum-ui-input-number'];
-        if (this.fluid()) {
-            parts.push('tum-ui-input-number-fluid');
-        }
-        if (this.showButtons()) {
-            parts.push('tum-ui-input-number-buttons');
-        }
-        const style = this.styleClass();
-        return style ? `${parts.join(' ')} ${style}` : parts.join(' ');
-    });
-    protected readonly inputClasses = computed(() => `tum-ui-input-number-input ${this.inputStyleClass()}`.trim());
 
     private readonly formattedValue = computed(() => this.format(this.cvaValue()));
     protected readonly displayText = linkedSignal(() => this.formattedValue());

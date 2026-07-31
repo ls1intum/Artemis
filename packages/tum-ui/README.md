@@ -77,9 +77,10 @@ components do not contain light/dark palette branches. Responsive component thre
 package-owned compile-time values at 40rem, 48rem, 64rem, 80rem, and 96rem; they do not follow a
 host's Tailwind breakpoints.
 
-`styleClass` inputs append classes already defined by the host; they do not cause the package
-Tailwind build to generate utilities. Use them for non-conflicting layout hooks. Prefer component
-inputs and theme tokens over overriding internal component styles.
+Apply host-owned layout classes with the native `class` attribute on a package component. Those
+classes style the component host; they do not cause the package Tailwind build to generate
+utilities. Use component inputs and theme tokens for supported internal customization instead of
+targeting implementation elements.
 
 Package text defaults to English. A translated host can replace it with an adapter:
 

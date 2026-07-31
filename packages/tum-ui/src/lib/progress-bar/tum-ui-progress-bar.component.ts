@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, numberAttribute } from '@angular/core';
+
+export type TumUiProgressBarSeverity = 'primary' | 'success' | 'warn' | 'danger' | 'info';
 
 @Component({
     selector: 'tum-ui-progress-bar',
     templateUrl: './tum-ui-progress-bar.component.html',
     styleUrl: './tum-ui-progress-bar.component.scss',
     host: {
-        '[class]': 'hostClasses()',
+        class: 'tum-ui-progress-bar tum:bg-border',
         role: 'progressbar',
         '[attr.aria-valuemin]': '0',
         '[attr.aria-valuemax]': '100',
@@ -15,21 +17,19 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiProgressBarComponent {
-    readonly value = input<number>(0);
+    readonly value = input(0, { transform: numberAttribute });
 
     readonly ariaLabel = input<string>();
 
-    readonly showValue = input(true);
+    readonly showValue = input(true, { transform: booleanAttribute });
 
-    readonly color = input<string>();
+    /** Semantic color of the filled track. */
+    readonly severity = input<TumUiProgressBarSeverity>('primary');
 
     readonly unit = input<string>('%');
-
-    readonly styleClass = input<string>('');
 
     protected readonly normalizedValue = computed(() => {
         const value = this.value();
         return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
     });
-    protected readonly hostClasses = computed(() => `tum-ui-progress-bar tum:bg-border ${this.styleClass()}`.trim());
 }

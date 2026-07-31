@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
 
 export type TumUiTagSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast';
 
@@ -22,11 +22,9 @@ const TAG_SEVERITY: Record<TumUiTagSeverity, string> = {
 export class TumUiTagComponent {
     readonly severity = input<TumUiTagSeverity>('secondary');
     readonly value = input<string>();
-    readonly rounded = input(false);
-
-    readonly styleClass = input<string>('');
+    readonly rounded = input(false, { transform: booleanAttribute });
 
     protected readonly tagClasses = computed(() =>
-        `${TAG_BASE} ${this.rounded() ? 'tum:rounded-full' : 'tum:rounded-md'} ${TAG_SEVERITY[this.severity()]} ${this.styleClass()}`.replace(/\s+/g, ' ').trim(),
+        `${TAG_BASE} ${this.rounded() ? 'tum:rounded-full' : 'tum:rounded-md'} ${TAG_SEVERITY[this.severity()]}`.replace(/\s+/g, ' ').trim(),
     );
 }

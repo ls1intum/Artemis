@@ -6,6 +6,7 @@ import {
     Injector,
     TemplateRef,
     ViewContainerRef,
+    booleanAttribute,
     computed,
     effect,
     forwardRef,
@@ -41,9 +42,6 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],
-    host: {
-        '[class]': 'styleClass()',
-    },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -64,13 +62,11 @@ export class TumUiSelectComponent implements ControlValueAccessor {
 
     readonly placeholder = input<string>();
 
-    readonly disabled = input(false);
+    readonly disabled = input(false, { transform: booleanAttribute });
 
-    readonly showClear = input(false);
+    readonly showClear = input(false, { transform: booleanAttribute });
 
     readonly size = input<TumUiSelectSize>();
-
-    readonly styleClass = input<string>('');
 
     readonly inputId = input(`tum-ui-select-${nextSelectId++}`);
     readonly name = input<string>();

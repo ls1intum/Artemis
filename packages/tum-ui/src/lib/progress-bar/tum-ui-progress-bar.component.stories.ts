@@ -7,13 +7,15 @@ const meta = {
     component: TumUiProgressBarComponent,
     args: {
         ariaLabel: 'Course completion',
+        severity: 'primary',
         value: 60,
         showValue: true,
         unit: '%',
     },
     argTypes: {
-        color: {
-            control: false,
+        severity: {
+            control: 'select',
+            options: ['primary', 'success', 'warn', 'danger', 'info'],
         },
         value: {
             control: {
