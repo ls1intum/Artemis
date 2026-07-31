@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -70,7 +71,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     // Session lookup by entity (exercise, lecture, or course)
     // -------------------------------------------------------------------------
 
-    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
+    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDescIdDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
 
     /**
      * Finds the latest chat sessions for the given entity and chat mode, with messages eagerly loaded.
@@ -83,11 +84,17 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @return list of sessions with messages
      */
     default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
-        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
+
+        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDescIdDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
+
         if (ids.isEmpty()) {
             return List.of();
         }
-        return findSessionsWithMessagesByIdIn(ids);
+
+        var sessionsById = findSessionsWithMessagesByIdIn(ids).stream().collect(Collectors.toMap(IrisChatSession::getId, session -> session));
+
+        // Die Reihenfolge der ersten, sortierten Abfrage wiederherstellen
+        return ids.stream().map(sessionsById::get).filter(session -> session != null).toList();
     }
 
     /**
@@ -98,14 +105,19 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @return the latest finished prompting-mode session
      * @throws EntityNotFoundException if no finished prompting-mode session exists
      */
-    default IrisChatSession findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+    default IrisChatSession findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(long exerciseId, long userId, boolean inClass)
+            throws EntityNotFoundException {
+
         var result = findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, userId, Pageable.unpaged()).stream()
-                .filter(session -> !session.isInPromptingModePipeline() && session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInPromptingMode())))
-                .findFirst();
+                .filter(session -> !session.isInPromptingModePipeline()).filter(session -> session.isInClassQuiz() == inClass)
+                .filter(session -> session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInPromptingMode()))).findFirst();
 
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Chat Session with Prompting Mode");
+            var sessionType = inClass ? "finished in-class prompting-mode session" : "finished regular prompting-mode session";
+
+            throw new EntityNotFoundException("Iris Chat Session: no " + sessionType + " found");
         }
+
         return result.get();
     }
 

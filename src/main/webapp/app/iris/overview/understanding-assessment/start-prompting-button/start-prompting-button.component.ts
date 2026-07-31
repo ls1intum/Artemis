@@ -49,7 +49,6 @@ export class IrisStartPromptingButtonComponent {
     );
 
     protected readonly latestEvent = toSignal(this.irisChatService.currentLatestEvent(), { initialValue: undefined });
-    private readonly hasBuildWithPoints = computed(() => this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
 
     private readonly quizAlreadyDoneFromServer = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -78,11 +77,15 @@ export class IrisStartPromptingButtonComponent {
     );
 
     protected readonly quizAlreadyDone = computed(
-        () => (!this.hasBuildWithPoints() && this.quizAlreadyDoneFromServer()) || this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED,
+        () => (this.latestEvent() !== IrisPipeEvent.BUILD_WITH_POINTS && this.quizAlreadyDoneFromServer()) || this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED,
     );
 
     protected readonly canBeStarted = computed(
-        () => (this.hasBuildWithPoints() || this.latestSubmissionHasPoints()) && !this.quizAlreadyDone() && !this.isPromptingMode() && !this.inClassPromptingModeStarted(),
+        () =>
+            (this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS || this.latestSubmissionHasPoints()) &&
+            !this.quizAlreadyDone() &&
+            !this.isPromptingMode() &&
+            !this.inClassPromptingModeStarted(),
     );
 
     protected readonly buttonLabel = computed(() => {

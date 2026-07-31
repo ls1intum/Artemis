@@ -408,4 +408,28 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id IN :participationIds
             """)
     Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
+
+    /**
+     * Load participations by their IDs with the latest submission (individual mode).
+     * Used as the data-loading step after the paginated ID query.
+     *
+     * @param ids the participation IDs to load
+     * @return participations with student and latest submission eagerly fetched
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.irisAssessment
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
+            WHERE p.id IN :ids
+                AND (s.id IS NULL
+                    OR s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation = p
+                    ))
+            """)
+    List<ProgrammingExerciseStudentParticipation> findByIdsWithLatestSubmissionAndIrisAssessment(@Param("ids") Collection<Long> ids);
 }

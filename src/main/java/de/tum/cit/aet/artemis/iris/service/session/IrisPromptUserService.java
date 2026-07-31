@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisPipeEvent;
@@ -301,11 +303,12 @@ public class IrisPromptUserService {
      * @param user       the student
      * @return the ordered question-answer exchanges
      */
-    public List<IrisQAExchangeDTO> getQAExchangeDTOList(IrisAssessment assessment, Exercise exercise, User user) {
+    public List<IrisQAExchangeDTO> getQAExchangeDTOList(IrisAssessment assessment, Exercise exercise, User user, boolean inClass) {
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new ConflictException("Prompting mode is only supported for programming exercises", "Iris", "irisExerciseTypeUnsupported");
         }
-        var session = irisChatSessionRepository.findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+
+        var session = irisChatSessionRepository.findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(exercise.getId(), user.getId(), inClass);
         if (assessment == null) {
             throw new ConflictException("Iris Assessment is missing so QAExchangeList cannot be retrieved", "Iris", "irisAssessmentMissing");
         }
@@ -314,9 +317,11 @@ public class IrisPromptUserService {
             throw new ConflictException("Iris reasoning is missing for assessment", "Iris", "irisReasoningMissing");
         }
 
-        var promptingMessages = session.getMessages().stream().filter(message -> Boolean.TRUE.equals(message.getInPromptingMode())).skip(1).toList();
-        var irisMessages = promptingMessages.stream().filter(message -> message.getSender().equals(IrisMessageSender.LLM)).toList();
-        var userMessages = promptingMessages.stream().filter(message -> message.getSender().equals(IrisMessageSender.USER)).toList();
+        // skip(1) and drop last message because quiz explanation and prompting_finished messages are not needed
+        List<IrisMessage> irisMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.LLM) && message.getInPromptingMode()).skip(1)
+                .collect(Collectors.collectingAndThen(Collectors.toList(), messages -> messages.isEmpty() ? List.of() : messages.subList(0, messages.size() - 1)));
+        List<IrisMessage> userMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.USER) && message.getInPromptingMode())
+                .toList();
 
         int maxSize = Math.max(Math.max(irisMessages.size(), userMessages.size()), reasoning.size());
 
@@ -500,7 +505,6 @@ public class IrisPromptUserService {
     private void handlePromptingFinished(IrisChatSession session, User user, ProgrammingExercise exercise, PyrisChatStatusUpdateDTO statusUpdate, boolean inClassQuiz) {
         irisSettingsService.ensurePromptingModeEnabledForExerciseOrElseThrow(exercise);
         session.setInPromptingModePipeline(false);
-        session.setInClassQuiz(false);
         irisChatSessionRepository.save(session);
 
         try {

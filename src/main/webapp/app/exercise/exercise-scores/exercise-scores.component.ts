@@ -465,7 +465,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     toProgrammingParticipation(dto: ParticipationScoreDTO): ProgrammingExerciseStudentParticipation {
-        return this.toParticipation(dto);
+        const participation = this.toParticipation(dto);
+
+        return {
+            ...participation,
+            type: ParticipationType.PROGRAMMING,
+            exercise: this.toProgrammingExercise(),
+            irisAssessment: dto.irisAssessment,
+        };
     }
 
     /**

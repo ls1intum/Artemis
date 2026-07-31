@@ -320,6 +320,7 @@ export const courseManagementRoutes: Routes = [
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',
+                            inClass: false,
                         },
                         canActivate: [UserRouteAccessService, IrisGuard],
                         resolve: {
@@ -350,6 +351,7 @@ export const courseManagementRoutes: Routes = [
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',
+                            inClass: true,
                         },
                         canActivate: [UserRouteAccessService, IrisGuard],
                         resolve: {

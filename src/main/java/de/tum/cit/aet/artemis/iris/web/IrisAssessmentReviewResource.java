@@ -76,12 +76,12 @@ public class IrisAssessmentReviewResource {
      */
     @GetMapping("assessments/{assessmentId}/chat")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long assessmentId) {
+    public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long assessmentId, @RequestParam(defaultValue = "false") boolean inClass) {
         var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(assessmentId);
         var user = assessment.getStudent();
         var exercise = validate(assessment.getExercise());
 
-        return ResponseEntity.ok(irisPromptUserService.getQAExchangeDTOList(assessment, exercise, user));
+        return ResponseEntity.ok(irisPromptUserService.getQAExchangeDTOList(assessment, exercise, user, inClass));
     }
 
     /**
@@ -161,6 +161,22 @@ public class IrisAssessmentReviewResource {
 
         return participationDTOs;
     }
+
+    /*
+     * public ResponseEntity<Set<ProgrammingExerciseStudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
+     * Set<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exercise.getId())
+     * .stream().filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
+     * .filter(participation -> participation.findLatestResult() != null && participation.findLatestResult().getScore() > 0).collect(Collectors.toSet());
+     * Map<Long, Integer> submissionCountMap = studentParticipationRepository
+     * .countSubmissionsPerParticipationByIdsAsMap(participations.stream().map(StudentParticipation::getId).toList());
+     * participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+     * participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+     * // remove unnecessary data to reduce response size
+     * participation.setExercise(null);
+     * }).collect(Collectors.toSet());
+     * return ResponseEntity.ok(participations);
+     * }
+     */
 
     private Exercise validate(Exercise exercise) {
         if (exercise.isExamExercise()) {

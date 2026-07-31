@@ -26,11 +26,12 @@ export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentRevie
     resolve(route: ActivatedRouteSnapshot): Observable<IrisAssessmentReviewResolvedData> {
         const courseId = this.getRequiredId(route, 'courseId');
         const assessmentId = this.getRequiredId(route, 'assessmentId');
+        const inClass = route.data['inClass'] as boolean;
 
         return forkJoin({
             courseResponse: this.courseService.find(courseId),
             assessmentResponse: this.irisAssessmentReviewService.findWithPoints(assessmentId),
-            rowsResponse: this.irisAssessmentReviewService.getAssessmentChat(assessmentId),
+            rowsResponse: this.irisAssessmentReviewService.getAssessmentChat(assessmentId, inClass),
         }).pipe(
             map(({ courseResponse, assessmentResponse, rowsResponse }) => {
                 const course = this.requireBody(courseResponse, 'Course');

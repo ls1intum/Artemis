@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
  * REST controller for retrieving information about participations.
@@ -259,32 +258,4 @@ public class ParticipationRetrievalResource {
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
-
-    /**
-     * GET /exercises/:exerciseId/participations/non-zero-latest-score : get all the participations for a programming exercise if latest score > 0 was achieved
-     *
-     * @param exerciseId The exerciseId of the programming exercise
-     * @return A list of all programming student participations for the exercise
-     */
-    @GetMapping("exercises/{exerciseId}/participations/non-zero-latest-score")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Set<ProgrammingExerciseStudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all Participations with non-zero highest score for Exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        Set<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exercise.getId())
-                .stream().filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
-                .filter(participation -> participation.findLatestResult() != null && participation.findLatestResult().getScore() > 0).collect(Collectors.toSet());
-
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository
-                .countSubmissionsPerParticipationByIdsAsMap(participations.stream().map(StudentParticipation::getId).toList());
-        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-        participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
-            // remove unnecessary data to reduce response size
-            participation.setExercise(null);
-        }).collect(Collectors.toSet());
-
-        return ResponseEntity.ok(participations);
-    }
-
 }

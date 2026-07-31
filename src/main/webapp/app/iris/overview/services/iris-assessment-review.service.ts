@@ -12,7 +12,6 @@ export class IrisAssessmentReviewService {
     private participationService = inject(ParticipationService);
 
     public resourceUrl = 'api/iris/assessments';
-    public programmingExerciseResourceUrl = 'api/iris/programming-exercises';
 
     /**
      * accepts the answers of the last prompting mode chat and makes the submission points count
@@ -33,9 +32,12 @@ export class IrisAssessmentReviewService {
     /**
      * gets the QAExchange objects of the last prompting mode chat
      * @param assessmentId The unique identifier of the assessment
+     * @param inClass Whether the wanted chat is part of an in-class quiz session
      */
-    getAssessmentChat(assessmentId: number): Observable<HttpResponse<QAExchangeDTO[]>> {
-        return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${assessmentId}/chat`, { observe: 'response' });
+    getAssessmentChat(assessmentId: number, inClass = false): Observable<HttpResponse<QAExchangeDTO[]>> {
+        const params = inClass ? new HttpParams().set('inClass', inClass) : undefined;
+
+        return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${assessmentId}/chat`, { observe: 'response', params });
     }
 
     findWithPoints(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
@@ -46,7 +48,7 @@ export class IrisAssessmentReviewService {
         const params = inClass ? new HttpParams().set('inClass', inClass) : undefined;
 
         return this.http
-            .get<ProgrammingExerciseStudentParticipation[]>(`${this.programmingExerciseResourceUrl}/${exerciseId}/participations/non-zero-latest-score`, {
+            .get<ProgrammingExerciseStudentParticipation[]>(`api/iris/programming-exercises/${exerciseId}/participations/non-zero-latest-score`, {
                 observe: 'response',
                 params,
             })

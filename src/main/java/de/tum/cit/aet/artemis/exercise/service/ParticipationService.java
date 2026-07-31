@@ -33,7 +33,9 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -52,6 +54,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -108,11 +112,16 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final ModuleFeatureService moduleFeatureService;
+
+    private IrisSettingsService irisSettingsService;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                ModuleFeatureService moduleFeatureService, IrisSettingsService irisSettingsService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -125,6 +134,8 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.moduleFeatureService = moduleFeatureService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -1003,8 +1014,17 @@ public class ParticipationService {
         }
 
         // Step 2: Load full entity data for those IDs
-        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
-                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+        List<StudentParticipation> participations;
+        if (teamMode) {
+            participations = studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids);
+        }
+        else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()
+                && irisSettingsService.isPromptingModeEnabledForExercise(exercise)) {
+            participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));
+        }
+        else {
+            participations = studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+        }
 
         // Load latest results with assessment notes
         Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
@@ -1076,9 +1096,11 @@ public class ParticipationService {
         // Programming participation info
         String buildPlanId = null;
         String repositoryUri = null;
+        IrisAssessmentDTO irisAssessment = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
             buildPlanId = progParticipation.getBuildPlanId();
             repositoryUri = progParticipation.getRepositoryUri();
+            irisAssessment = IrisAssessmentDTO.of(progParticipation.getIrisAssessment());
         }
 
         boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
@@ -1090,7 +1112,7 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun,
-                testCaseCount, passedTestCaseCount, codeIssueCount);
+                testCaseCount, passedTestCaseCount, codeIssueCount, irisAssessment);
     }
 
     /**
