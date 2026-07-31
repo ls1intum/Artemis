@@ -32,6 +32,7 @@ import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -632,6 +633,22 @@ export class ExerciseAPIRequests {
             multipart: multipartData,
         });
         return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Reads the current user's file upload submission for a participation.
+     *
+     * Recovery path for a submission made through the UI: the upload is a file-backed multipart POST, so
+     * its response body cannot be held in Node and Chrome can drop it from its bounded network buffer
+     * before the test reads it (see readResponseJson). This GET re-derives the same submission without
+     * repeating the upload. It is the endpoint the file upload editor itself loads, so a student may call
+     * it for their own participation.
+     *
+     * @param participationId - The ID of the student's participation in the file upload exercise.
+     */
+    async getFileUploadSubmissionForParticipation(participationId: number): Promise<FileUploadSubmission> {
+        const response = await this.page.request.get(`api/fileupload/participations/${participationId}/file-upload-editor`);
+        return await response.json();
     }
 
     /**
