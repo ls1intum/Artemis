@@ -67,7 +67,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faChevronRight = faChevronRight;
 
     readonly isCollapsed = signal(false);
-    exerciseId?: string;
 
     ngOnInit(): void {
         if (!this.examTimeLineView()) {
