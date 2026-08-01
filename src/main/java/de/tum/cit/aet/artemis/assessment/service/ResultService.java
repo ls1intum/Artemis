@@ -169,34 +169,51 @@ public class ResultService {
      * @param result      newly created Result
      * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
-     */
+    */
     public Result createNewManualResult(Result result, boolean ratedResult) {
-        User user = userRepository.getUserWithAuthorities();
+        return createNewManualResults(List.of(result), ratedResult).getFirst();
+    }
 
+    /**
+     * Creates multiple manual results while loading the current assessor and the websocket payload graph only once for the whole batch.
+     *
+     * @param results     newly created results
+     * @param ratedResult override value for the rated property of every result
+     * @return the stored results with eagerly loaded submissions and feedback
+     */
+    public List<Result> createNewManualResults(Collection<Result> results, boolean ratedResult) {
+        if (results.isEmpty()) {
+            return List.of();
+        }
+
+        final User assessor = userRepository.getUserWithAuthorities();
+        final ZonedDateTime completionDate = ZonedDateTime.now();
+        results.forEach(result -> initializeManualResult(result, ratedResult, assessor, completionDate));
+
+        resultRepository.saveAll(results);
+        final List<Long> resultIds = results.stream().map(Result::getId).toList();
+        final List<Result> savedResults = resultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
+        savedResults.forEach(this::notifyAboutNewResult);
+        return savedResults;
+    }
+
+    private void initializeManualResult(Result result, boolean ratedResult, User assessor, ZonedDateTime completionDate) {
         result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
-        result.setCompletionDate(ZonedDateTime.now());
-
-        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        result.setAssessor(assessor);
+        result.setCompletionDate(completionDate);
+        // Manual feedback is always rated, but can be overwritten for an external submission.
         result.setRated(ratedResult);
-
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
+    }
 
-        // this call should cascade all feedback relevant changed and save them accordingly
-        resultRepository.save(result);
-        // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
-
-        // if it is an example result we do not have any participation (isExampleResult can be also null)
+    private void notifyAboutNewResult(Result savedResult) {
+        // If it is an example result we do not have any participation (isExampleResult can also be null).
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
-
             if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
                 ltiApi.get().onNewResult((StudentParticipation) savedResult.getSubmission().getParticipation());
             }
-
             resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
-        return savedResult;
     }
 
     public void createNewRatedManualResult(Result result) {
@@ -266,6 +283,40 @@ public class ResultService {
             assessmentNoteRepository.deleteByResultId(resultId);
             resultRepository.deleteResultById(resultId);
         }
+    }
+
+    /**
+     * Bulk-deletes results and every dependent database row in foreign-key order. This path is intended for replacing a known batch of results and deliberately bypasses entity
+     * loading and lifecycle callbacks. Callers that create replacement results immediately afterwards retain participant-score scheduling through the new results' lifecycle
+     * callbacks.
+     *
+     * @param resultIds ids of the results to delete
+     */
+    public void deleteResultsByIds(Collection<Long> resultIds) {
+        if (resultIds.isEmpty()) {
+            return;
+        }
+        complaintResponseRepository.deleteByResultIds(resultIds);
+        complaintRepository.deleteByResultIds(resultIds);
+        ratingRepository.deleteByResultIds(resultIds);
+        participantScoreRepository.clearAllByResultIds(resultIds);
+        longFeedbackTextRepository.deleteByFeedbackResultIds(resultIds);
+        feedbackRepository.deleteByResultIds(resultIds);
+        assessmentNoteRepository.deleteByResultIds(resultIds);
+        resultRepository.deleteAllByIds(resultIds);
+    }
+
+    /**
+     * Deletes all manual results for the requested participations of one exercise using a fixed number of bulk statements. Automatic results are not selected.
+     *
+     * @param exerciseId       target exercise id
+     * @param participationIds participations whose manual results are being replaced
+     */
+    public void deleteManualResultsForAssessmentUpload(long exerciseId, Collection<Long> participationIds) {
+        if (participationIds.isEmpty()) {
+            return;
+        }
+        deleteResultsByIds(resultRepository.findManualResultIdsForAssessmentUpload(exerciseId, participationIds));
     }
 
     /**

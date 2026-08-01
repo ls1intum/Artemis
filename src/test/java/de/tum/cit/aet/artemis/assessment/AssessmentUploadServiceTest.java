@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.within;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +51,11 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     private String identifier2;
 
+    private List<String> identifiers;
+
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 1);
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise.setMaxPoints(100.0);
@@ -64,6 +67,11 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         identifier1 = participation1.getId() + "-" + TEST_PREFIX + "student1";
         identifier2 = participation2.getId() + "-" + TEST_PREFIX + "student2";
+        identifiers = new ArrayList<>(List.of(identifier1, identifier2));
+        for (int studentNumber = 3; studentNumber <= 6; studentNumber++) {
+            final var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student" + studentNumber);
+            identifiers.add(participation.getId() + "-" + TEST_PREFIX + "student" + studentNumber);
+        }
     }
 
     @Test
@@ -174,6 +182,19 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUseConstantNumberOfQueriesWhenValidatingMultipleParticipants() throws Exception {
+        final AssessmentUploadResultDTO threeParticipantResult = assertThatDb(
+                () -> assessmentUploadService.importAssessments(programmingExercise, buildZip(buildCsvWithoutTextFiles(identifiers.subList(0, 3)), Map.of())))
+                .hasBeenCalledTimes(1);
+        final AssessmentUploadResultDTO sixParticipantResult = assertThatDb(
+                () -> assessmentUploadService.importAssessments(programmingExercise, buildZip(buildCsvWithoutTextFiles(identifiers), Map.of()))).hasBeenCalledTimes(1);
+
+        assertThat(threeParticipantResult.errors()).hasSize(3).allMatch(error -> error.type() == AssessmentUploadErrorType.MISSING_TEXT_FILE);
+        assertThat(sixParticipantResult.errors()).hasSize(6).allMatch(error -> error.type() == AssessmentUploadErrorType.MISSING_TEXT_FILE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectNullArguments() {
         final MockMultipartFile zip = buildZip("Identifier,Overall points\n", new LinkedHashMap<>());
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(null, zip));
@@ -216,5 +237,9 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
             throw new RuntimeException(e);
         }
         return new MockMultipartFile("file", "assessments.zip", "application/zip", byteArrayOutputStream.toByteArray());
+    }
+
+    private String buildCsvWithoutTextFiles(final List<String> participantIdentifiers) {
+        return "Identifier,Overall points\n" + participantIdentifiers.stream().map(identifier -> identifier + ",80").collect(java.util.stream.Collectors.joining("\n")) + "\n";
     }
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,6 +39,11 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
     @Transactional // ok because of delete
     @Modifying
     void deleteByResult_Id(long resultId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM Rating rating WHERE rating.result.id IN :resultIds")
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
 
     /**
      * Find all ratings for a course as DTOs for the instructor dashboard with pagination.

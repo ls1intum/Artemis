@@ -13,6 +13,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -24,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -128,6 +132,7 @@ public class AssessmentUploadService {
      * @return a result describing either the created assessments (on success) or the collected validation errors (on failure); nothing is stored in the latter case
      * @throws IllegalArgumentException if {@code exercise} or {@code zipFile} is {@code null}
      */
+    @Transactional
     public AssessmentUploadResultDTO importAssessments(final ProgrammingExercise exercise, final MultipartFile zipFile) {
         if (exercise == null) {
             throw new IllegalArgumentException("The exercise for a manual assessment upload must not be null");
@@ -296,6 +301,15 @@ public class AssessmentUploadService {
         final List<ValidatedRow> validatedRows = new ArrayList<>();
         final Set<String> seenIdentifiers = new HashSet<>();
         final Set<String> matchedTextKeys = new HashSet<>();
+        final Set<Long> requestedParticipationIds = csv.records().stream().map(record -> record.size() > 0 && record.get(0) != null ? record.get(0).trim() : "")
+                .map(this::parseParticipationId).flatMap(Optional::stream).collect(Collectors.toSet());
+        final Map<Long, AssessmentUploadParticipationDTO> participationsById = requestedParticipationIds.isEmpty() ? Map.of()
+                : studentParticipationRepository.findAssessmentUploadParticipations(exercise.getId(), requestedParticipationIds).stream()
+                        .collect(Collectors.toMap(AssessmentUploadParticipationDTO::participationId, Function.identity()));
+        final Set<Long> unresolvedParticipationIds = new HashSet<>(requestedParticipationIds);
+        unresolvedParticipationIds.removeAll(participationsById.keySet());
+        final Set<Long> participationIdsOutsideExercise = unresolvedParticipationIds.isEmpty() ? Set.of()
+                : studentParticipationRepository.findIdsOutsideExercise(exercise.getId(), unresolvedParticipationIds);
 
         for (final CSVRecord csvRecord : csv.records()) {
             final String identifier = csvRecord.size() > 0 && csvRecord.get(0) != null ? csvRecord.get(0).trim() : "";
@@ -308,7 +322,7 @@ public class AssessmentUploadService {
                 continue;
             }
 
-            switch (validateRow(exercise, identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName)) {
+            switch (validateRow(identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName, participationsById, participationIdsOutsideExercise)) {
                 case ValidRow(ValidatedRow row, String matchedTextKey) -> {
                     matchedTextKeys.add(matchedTextKey);
                     validatedRows.add(row);
@@ -341,16 +355,17 @@ public class AssessmentUploadService {
      * <p>
      * <b>Postcondition:</b> read-only; returns a {@link ValidRow} (with the matched text-file key) if all checks pass, otherwise an {@link InvalidRow} carrying the first error.
      *
-     * @param exercise               the programming exercise the row's participation must belong to
-     * @param identifier             the student identifier from the first CSV column ({@code <participationId>-<login>})
-     * @param csvRecord              the CSV row being validated
-     * @param pointsColumn           the resolved header name of the {@code Overall points} column
-     * @param textContentsByBaseName the available text files keyed by base name
+     * @param identifier                      the student identifier from the first CSV column ({@code <participationId>-<login>})
+     * @param csvRecord                       the CSV row being validated
+     * @param pointsColumn                    the resolved header name of the {@code Overall points} column
+     * @param textContentsByBaseName          the available text files keyed by base name
+     * @param participationsById              exercise-scoped participation data resolved for the entire upload
+     * @param participationIdsOutsideExercise ids that exist but belong to another exercise
      * @return a {@link ValidRow} if the row is valid, otherwise an {@link InvalidRow}
      */
-    private RowValidationResult validateRow(final ProgrammingExercise exercise, final String identifier, final CSVRecord csvRecord, final String pointsColumn,
-            final Map<String, String> textContentsByBaseName) {
-        assert exercise != null && csvRecord != null && textContentsByBaseName != null : "exercise, csvRecord and textContentsByBaseName must not be null";
+    private RowValidationResult validateRow(final String identifier, final CSVRecord csvRecord, final String pointsColumn, final Map<String, String> textContentsByBaseName,
+            final Map<Long, AssessmentUploadParticipationDTO> participationsById, final Set<Long> participationIdsOutsideExercise) {
+        assert csvRecord != null && textContentsByBaseName != null : "csvRecord and textContentsByBaseName must not be null";
         assert identifier != null && !identifier.isBlank() : "identifier must not be blank";
         assert pointsColumn != null : "pointsColumn must be resolved";
 
@@ -360,16 +375,15 @@ public class AssessmentUploadService {
         }
         final String login = identifier.substring(identifier.indexOf('-') + 1);
 
-        final Optional<StudentParticipation> optionalParticipation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId.get());
-        if (optionalParticipation.isEmpty()) {
-            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.PARTICIPATION_NOT_FOUND));
-        }
-        final StudentParticipation participation = optionalParticipation.get();
-        if (participation.getExercise() == null || !exercise.getId().equals(participation.getExercise().getId())) {
+        final AssessmentUploadParticipationDTO participation = participationsById.get(participationId.get());
+        if (participation == null && participationIdsOutsideExercise.contains(participationId.get())) {
             return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.PARTICIPATION_WRONG_EXERCISE));
         }
-        if (!login.equals(participation.getParticipantIdentifier())) {
-            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.IDENTIFIER_MISMATCH, participation.getParticipantIdentifier()));
+        if (participation == null) {
+            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.PARTICIPATION_NOT_FOUND));
+        }
+        if (!login.equals(participation.participantIdentifier())) {
+            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.IDENTIFIER_MISMATCH, participation.participantIdentifier()));
         }
 
         // An unset cell is represented as an empty string so no null is passed on; parsePoints then treats it as a missing value.
@@ -384,7 +398,7 @@ public class AssessmentUploadService {
             return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.MISSING_TEXT_FILE));
         }
 
-        return new ValidRow(new ValidatedRow(identifier, participation, points.get(), textContentsByBaseName.get(textKey.get())), textKey.get());
+        return new ValidRow(new ValidatedRow(identifier, participation.participationId(), points.get(), textContentsByBaseName.get(textKey.get())), textKey.get());
     }
 
     /**
@@ -401,49 +415,26 @@ public class AssessmentUploadService {
      */
     private AssessmentUploadResultDTO storeValidatedRows(final ProgrammingExercise exercise, final List<ValidatedRow> validatedRows) {
         assert exercise != null && validatedRows != null : "exercise and validatedRows must not be null";
-        final List<String> createdIdentifiers = new ArrayList<>();
-        for (final ValidatedRow row : validatedRows) {
-            storeAssessment(exercise, row);
-            createdIdentifiers.add(row.identifier());
-        }
+        final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
+        final Map<Long, StudentParticipation> participationsById = studentParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
+                .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
+        final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
+                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
+
+        resultService.deleteManualResultsForAssessmentUpload(exercise.getId(), participationIds);
+
+        final List<Result> manualResults = validatedRows.stream().map(row -> {
+            final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
+                    .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
+            final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
+                    .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
+            return buildManualResult(exercise, submission, row);
+        }).toList();
+        resultService.createNewManualResults(manualResults, true);
+
+        final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();
         log.info("Stored {} manual assessments for programming exercise {} from an upload", createdIdentifiers.size(), exercise.getId());
         return AssessmentUploadResultDTO.success(createdIdentifiers);
-    }
-
-    /**
-     * Stores a single manual assessment: attaches a manual result (with the score derived from the points and one unreferenced feedback carrying the text) to the participant's
-     * latest submission, creating an empty submission if none exists and overwriting any existing manual result of the participation.
-     * <p>
-     * <b>Preconditions:</b> {@code row.participation()} belongs to {@code exercise} and {@code row.points()} is a non-negative number.
-     * <p>
-     * <b>Postconditions:</b> the participation has exactly one manual result afterwards (any previous manual results were deleted), rated, with {@code score = points / maxPoints *
-     * 100} and a single {@code MANUAL_UNREFERENCED} feedback whose detail text is {@code row.feedbackText()}; automatic results of the participation are left untouched.
-     *
-     * @param exercise the programming exercise the assessment belongs to
-     * @param row      the validated row to turn into a manual assessment
-     */
-    private void storeAssessment(final ProgrammingExercise exercise, final ValidatedRow row) {
-        assert exercise != null && row != null : "exercise and row must not be null";
-        assert row.points() >= 0 : "points must not be negative";
-        final StudentParticipation participation = row.participation();
-        assert participation != null && participation.getExercise() != null
-                && exercise.getId().equals(participation.getExercise().getId()) : "the participation must belong to the exercise";
-
-        deleteExistingManualResults(participation);
-        final Submission submission = participation.<Submission>findLatestSubmission()
-                .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
-        final Result manualResult = buildManualResult(exercise, submission, row);
-        resultService.createNewManualResult(manualResult, true);
-    }
-
-    /**
-     * Deletes every existing manual result of the participation so the upload overwrites it, while keeping automatic results.
-     *
-     * @param participation the participation whose manual results are removed
-     */
-    private void deleteExistingManualResults(final StudentParticipation participation) {
-        participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Result::isManual).toList()
-                .forEach(existingManualResult -> resultService.deleteResult(existingManualResult, true));
     }
 
     /**
@@ -644,27 +635,23 @@ public class AssessmentUploadService {
     /**
      * A CSV row that passed validation and can be turned into a manual assessment.
      * <p>
-     * Invariant: all components are non-{@code null} (apart from the primitive {@code points}), {@code participation} belongs to the target exercise, and {@code points >= 0}.
+     * Invariant: all reference components are non-{@code null}, {@code participationId} identifies a participation in the target exercise, and {@code points >= 0}.
      *
-     * @param identifier    the student identifier from the CSV ({@code <participationId>-<login>})
-     * @param participation the resolved participation of the participant
-     * @param points        the achieved points
-     * @param feedbackText  the content of the matching text file, used as the manual feedback
+     * @param identifier      the student identifier from the CSV ({@code <participationId>-<login>})
+     * @param participationId the resolved participation id
+     * @param points          the achieved points
+     * @param feedbackText    the content of the matching text file, used as the manual feedback
      */
-    private record ValidatedRow(String identifier, StudentParticipation participation, double points, String feedbackText) {
+    private record ValidatedRow(String identifier, long participationId, double points, String feedbackText) {
 
         /**
-         * <b>Preconditions:</b> {@code identifier} is non-blank, {@code participation} and {@code feedbackText} are non-{@code null}, and {@code points} is finite and
-         * non-negative.
+         * <b>Preconditions:</b> {@code identifier} is non-blank, {@code feedbackText} is non-{@code null}, and {@code points} is finite and non-negative.
          *
          * @throws IllegalArgumentException if a precondition is violated
          */
         ValidatedRow {
             if (identifier == null || identifier.isBlank()) {
                 throw new IllegalArgumentException("The student identifier must not be null or blank");
-            }
-            if (participation == null) {
-                throw new IllegalArgumentException("The student participation must not be null");
             }
             if (!Double.isFinite(points) || points < 0) {
                 throw new IllegalArgumentException("The achieved points must be finite and non-negative");

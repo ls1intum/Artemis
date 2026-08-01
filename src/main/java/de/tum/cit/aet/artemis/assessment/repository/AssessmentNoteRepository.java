@@ -2,9 +2,13 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,4 +33,9 @@ public interface AssessmentNoteRepository extends ArtemisJpaRepository<Assessmen
     @Modifying
     @Transactional // ok because of delete
     void deleteByResultId(long resultId);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM AssessmentNote note WHERE note.resultId IN :resultIds")
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
 }

@@ -117,6 +117,17 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
         this.clearLastRatedResultByResultId(resultId);
     }
 
+    /**
+     * Clears all participant-score references to a batch of results before those results are deleted.
+     *
+     * @param resultIds result ids that are about to be replaced
+     */
+    @Transactional // ok because of delete
+    default void clearAllByResultIds(Collection<Long> resultIds) {
+        this.clearLastResultByResultIds(resultIds);
+        this.clearLastRatedResultByResultIds(resultIds);
+    }
+
     @Query("""
             SELECT MAX(ps.lastModifiedDate) AS latestModifiedDate
             FROM ParticipantScore ps
@@ -173,6 +184,24 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             """)
     // Do not update last modified date
     void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
+            WHERE p.lastResult.id IN :resultIds
+            """)
+    void clearLastResultByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
+            WHERE p.lastRatedResult.id IN :resultIds
+            """)
+    void clearLastRatedResultByResultIds(@Param("resultIds") Collection<Long> resultIds);
 
     /**
      * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>

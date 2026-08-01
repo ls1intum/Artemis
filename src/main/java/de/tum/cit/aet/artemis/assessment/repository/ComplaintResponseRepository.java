@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -121,4 +122,9 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
     @Modifying
     @Query("DELETE FROM ComplaintResponse cr WHERE cr.complaint.id IN (SELECT c.id FROM Complaint c WHERE c.result.id = :resultId)")
     void deleteByComplaint_Result_Id(@Param("resultId") long resultId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM ComplaintResponse cr WHERE cr.complaint.id IN (SELECT c.id FROM Complaint c WHERE c.result.id IN :resultIds)")
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
 }

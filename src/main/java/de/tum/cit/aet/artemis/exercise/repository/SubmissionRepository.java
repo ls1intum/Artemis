@@ -610,4 +610,24 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                  )
             """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
+    /**
+     * Loads the latest submission for every requested participation in a single exercise-scoped query. Participations without a submission are intentionally absent.
+     *
+     * @param exerciseId       the target exercise id
+     * @param participationIds the participations being imported
+     * @return at most one submission per participation
+     */
+    @Query("""
+            SELECT s
+            FROM Submission s
+            WHERE s.participation.exercise.id = :exerciseId
+                AND s.participation.id IN :participationIds
+                AND s.id = (
+                    SELECT MAX(s2.id)
+                    FROM Submission s2
+                    WHERE s2.participation.id = s.participation.id
+                )
+            """)
+    List<Submission> findLatestSubmissionsForAssessmentUpload(@Param("exerciseId") long exerciseId, @Param("participationIds") Collection<Long> participationIds);
 }

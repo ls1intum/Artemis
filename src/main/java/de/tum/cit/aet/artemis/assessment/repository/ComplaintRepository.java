@@ -34,6 +34,11 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Long> {
 
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM Complaint c WHERE c.result.id IN :resultIds")
+    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
     @Query("""
             SELECT c
             FROM Complaint c
