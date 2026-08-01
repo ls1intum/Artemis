@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
@@ -65,10 +66,10 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         long exerciseId = programmingExerciseRepository.findAllWithCategoriesByCourseId(course.getId()).getFirst().getId();
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId).orElseThrow();
-        // Keep the in-memory course (with its group names) attached so the service can resolve staff without a lazy load in the test.
+        // Keep the in-memory course attached so the service can resolve staff without a lazy load in the test.
         exercise.setCourse(course);
 
         // The util-created exercise does not set base repository URIs, so we set deterministic ones here (the token is scoped by exactly this URI).
@@ -148,8 +149,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
 
         // Once the user is no longer staff in the course, their tokens for that course's exercises are removed — asynchronously, as the staff-leave request path does.
-        tutor.getGroups().remove(course.getTeachingAssistantGroupName());
-        userRepository.save(tutor);
+        userService.removeUserFromCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
         repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaffAsync(tutor, course);
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty());
 
@@ -161,15 +161,14 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void addStaffToCourseGroup_asynchronouslyProvisionsTokens_andRemovalDeletesThem() {
+    void addStaffToCourse_asynchronouslyProvisionsTokens_andRemovalDeletesThem() {
         // A dedicated user that is not yet staff in the course (so soft state of the shared per-prefix users is untouched).
         User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "joiningstaff");
-        String instructorGroup = course.getInstructorGroupName();
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
 
-        // Adding the user to a staff group triggers ASYNCHRONOUS provisioning of repository tokens for every base repository of the course's exercises (the request itself returns
+        // Adding the user as a staff role triggers ASYNCHRONOUS provisioning of repository tokens for every base repository of the course's exercises (the request itself returns
         // without waiting for token creation).
-        courseAccessService.addUserToGroup(joiningStaff, instructorGroup, course);
+        courseAccessService.addUserToCourse(joiningStaff, course, CourseRole.INSTRUCTOR);
 
         // The provisioning runs off the request thread, so poll until the tokens for all base repositories of the exercise exist.
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -178,8 +177,8 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isPresent();
         });
 
-        // Removing the user from the staff group (they are no longer staff in the course) deletes their repository tokens for the course — also asynchronously, so poll again.
-        courseAccessService.removeUserFromGroup(joiningStaff, instructorGroup, course);
+        // Removing the user's staff role (they are no longer staff in the course) deletes their repository tokens for the course — also asynchronously, so poll again.
+        courseAccessService.removeUserFromCourse(joiningStaff, course, CourseRole.INSTRUCTOR);
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();

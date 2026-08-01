@@ -131,7 +131,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
      *
      * @param partialTitle course or exam title search term
-     * @param groups       user groups
+     * @param userId       id of the user
      * @param pageable     Pageable
      * @return Page with search results
      */
@@ -143,13 +143,17 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 LEFT JOIN gs.exam.course
             WHERE gs.gradeType = de.tum.cit.aet.artemis.assessment.domain.GradeType.BONUS
                 AND (
-                    (gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
-                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%)
+                    (gs.course IS NOT NULL
+                        AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                        AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam IS NOT NULL
+                        AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = gs.exam.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                        AND gs.exam.title LIKE %:partialTitle%)
                 )
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
     // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
-    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups,
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("userId") long userId,
             Pageable pageable);
 
     /**
