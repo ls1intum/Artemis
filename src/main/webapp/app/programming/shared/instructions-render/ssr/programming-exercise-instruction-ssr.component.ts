@@ -297,8 +297,11 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             this.onNoInstructionsAvailable.emit();
             return;
         }
+        // A successful result without any feedback is the "everything passed" case: nothing maps to a test input, so
+        // the outcome has to travel as its own flag or every task would render as if no result existed at all.
+        const allTestsPassed = result?.successful === true && !result?.feedbacks?.length;
         this.renderRequests.next({
-            request: { markdown, testResults: this.renderService.mapFeedbacksToTestInputs(result), locale, darkMode },
+            request: { markdown, testResults: this.renderService.mapFeedbacksToTestInputs(result), allTestsPassed, locale, darkMode },
             context: { exerciseId: exercise.id, participationId: this.participation()?.id },
         });
     }

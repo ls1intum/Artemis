@@ -42,24 +42,34 @@ public final class PlantUmlTaskColorResolver {
      * Rewrites every {@code testsColor(...)} token in the given PlantUML source to a concrete color
      * (green, red, or grey) based on the test results. Other PlantUML content is returned unchanged.
      *
-     * @param source      the PlantUML source text
-     * @param testResults map of test id → feedback, or {@code null} if no results are available
+     * @param source         the PlantUML source text
+     * @param testResults    map of test id → feedback, or {@code null} if no results are available
+     * @param allTestsPassed whether the request declared that every test passed although it carries no per-test
+     *                           feedback. Only honored when {@code testResults} is {@code null}: individual test
+     *                           outcomes always win, so a request that carries both never colors a failing test green.
      * @return PlantUML source with test-color tokens resolved
      */
-    public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+    public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean allTestsPassed) {
         TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
+        // Same effective predicate as ProblemStatementRenderingService: task markers and the diagram beside them must
+        // never disagree. Re-derived here rather than trusted, because this is a public utility.
+        boolean allPassed = allTestsPassed && testResults == null;
 
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
-            String color = colorFor(lookup, match.group(1));
+            String color = colorFor(lookup, match.group(1), allPassed);
             return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
         });
         // Text coloring must be checked before plain arrow/element coloring to avoid partial matches.
-        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#text:" + colorFor(lookup, match.group(1))));
-        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#" + colorFor(lookup, match.group(1))));
+        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#text:" + colorFor(lookup, match.group(1), allPassed)));
+        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#" + colorFor(lookup, match.group(1), allPassed)));
         return resolved;
     }
 
-    private static String colorFor(TestFeedbackLookup lookup, String testRef) {
+    private static String colorFor(TestFeedbackLookup lookup, String testRef, boolean allPassed) {
+        if (allPassed) {
+            // No feedback can resolve at all in this case, so every reference (by id or by name) is green.
+            return "green";
+        }
         return switch (lookup.outcomeOf(testRef)) {
             case PASSED -> "green";
             case FAILED -> "red";

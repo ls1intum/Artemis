@@ -22,6 +22,12 @@ export interface ProblemStatementRenderRequest {
     markdown: string;
     /** `undefined` is sent as `null` (no result at all); `[]` means a result exists but carries no mappable test feedback. */
     testResults: TestFeedbackInput[] | undefined;
+    /**
+     * A successful result that carries no feedback at all: every test passed. This cannot be expressed through
+     * `testResults`, which would be `undefined` ("no result") in exactly that case. The server only honours the flag
+     * when `testResults` is `undefined`; individual test outcomes always win over it.
+     */
+    allTestsPassed: boolean;
     locale: string;
     darkMode: boolean;
 }

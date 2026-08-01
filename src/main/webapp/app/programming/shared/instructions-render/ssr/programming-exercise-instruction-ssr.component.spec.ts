@@ -377,6 +377,41 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(contentShadowRoot().querySelector('style')).toBeTruthy();
     });
 
+    it('sends the all-tests-passed signal for a successful result that carries no feedback', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        // The legacy "everything passed" case: no feedback maps to a test input, so the outcome can only travel as
+        // its own flag. Without it the server would render neutral tasks for a fully passing submission.
+        fixture.componentRef.setInput('result', { id: 3, successful: true, feedbacks: [] } as Result);
+        fixture.detectChanges();
+
+        const req = httpMock.expectOne(RENDER_URL_MATCHER);
+        expect(req.request.body.allTestsPassed).toBe(true);
+        expect(req.request.body.testResults).toBeNull();
+        req.flush(renderResponse('success'));
+    });
+
+    it('does not claim all tests passed for a result with feedback or an unsuccessful one', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, successful: true, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+
+        const withFeedback = httpMock.expectOne(RENDER_URL_MATCHER);
+        expect(withFeedback.request.body.allTestsPassed).toBe(false);
+        withFeedback.flush(renderResponse('success'));
+        fixture.detectChanges();
+
+        // An unsuccessful result without feedback is not "everything passed"; it stays a plain "no result" render.
+        fixture.componentRef.setInput('result', { id: 4, successful: false, feedbacks: [] } as Result);
+        fixture.detectChanges();
+
+        const withoutFeedback = httpMock.expectOne(RENDER_URL_MATCHER);
+        expect(withoutFeedback.request.body.allTestsPassed).toBe(false);
+        expect(withoutFeedback.request.body.testResults).toBeNull();
+        withoutFeedback.flush(renderResponse('no-result'));
+    });
+
     it('cancels an in-flight render when a newer one supersedes it', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();

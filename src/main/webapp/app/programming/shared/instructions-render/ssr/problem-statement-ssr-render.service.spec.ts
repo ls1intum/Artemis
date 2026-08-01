@@ -26,22 +26,11 @@ describe('ProblemStatementSsrRenderService', () => {
             expect(service.mapFeedbacksToTestInputs({ id: 1, feedbacks: [] } as Result)).toBeUndefined();
         });
 
-        it('returns undefined for a successful result without feedbacks, a KNOWN divergence from the legacy renderer', () => {
-            // KNOWN AND ACCEPTED DIVERGENCE - READ BEFORE CHANGING THIS EXPECTATION.
-            //
+        it('returns undefined for a successful result without feedbacks, whose outcome travels in allTestsPassed instead', () => {
             // `successful: true` with no feedbacks is the legacy renderer's "all tests passed" case
-            // (ProgrammingExerciseInstructionService.testStatusForTask, case 1): it renders every task GREEN.
-            // The SSR path cannot reproduce that, because the render endpoint only understands per-test feedback and
-            // has no "all tests passed" signal. Mapping to undefined therefore sends `testResults: null` and the
-            // server renders neutral/grey tasks instead of green ones.
-            //
-            // Closing the gap properly needs a server-side "all tests passed" input; that work was deliberately
-            // deferred, which is safe only while the `SsrProblemStatement` feature toggle stays off by default.
-            // This MUST be revisited before the toggle is enabled in production.
-            //
-            // If you are here because you changed the mapping and this test went red: that is the point. Do not
-            // simply update the expectation. Confirm the server side actually renders these tasks as passed, then
-            // rewrite this test together with the comment above.
+            // (ProgrammingExerciseInstructionService.testStatusForTask, case 1): every task renders GREEN. There is
+            // no feedback to map here, so this mapping cannot express it; the caller sends `allTestsPassed: true`
+            // alongside the resulting `testResults: null` and the server colours the tasks from that flag.
             const result = { id: 1, successful: true, feedbacks: [] } as Result;
 
             expect(service.mapFeedbacksToTestInputs(result)).toBeUndefined();
@@ -91,7 +80,7 @@ describe('ProblemStatementSsrRenderService', () => {
     describe('render', () => {
         it('posts the request and returns the rendered document', () => {
             let received: string | undefined;
-            service.render({ markdown: '# Hi', testResults: undefined, locale: 'en', darkMode: false }).subscribe((r) => (received = r.html));
+            service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe((r) => (received = r.html));
 
             const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(req.request.method).toBe('POST');
@@ -99,13 +88,36 @@ describe('ProblemStatementSsrRenderService', () => {
             expect(req.request.body.includeJs).toBe(false);
             expect(req.request.body.includeCss).toBe(true);
             expect(req.request.body.inlineImages).toBe(false);
+            expect(req.request.body.allTestsPassed).toBe(false);
             req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
 
             expect(received).toBe('<p>Hi</p>');
         });
 
+        it('sends the all-tests-passed signal to the server', () => {
+            service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: true, locale: 'en', darkMode: false }).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
+            expect(req.request.body.allTestsPassed).toBe(true);
+            expect(req.request.body.testResults).toBeNull();
+            req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
+        });
+
+        it('distinguishes all-tests-passed from no result in the cache key', () => {
+            // Both requests send `testResults: null`; only the flag decides between all-green and neutral tasks, so
+            // they must not collide on one cache entry.
+            service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: true, locale: 'en', darkMode: false }).subscribe();
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>green</p>', contentHash: 'g', rendererVersion: '1.0.0' });
+
+            let second: string | undefined;
+            service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe((r) => (second = r.html));
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>neutral</p>', contentHash: 'n', rendererVersion: '1.0.0' });
+
+            expect(second).toBe('<p>neutral</p>');
+        });
+
         it('serves a repeated identical request from cache without a second request', () => {
-            const request = { markdown: '# Hi', testResults: undefined, locale: 'en', darkMode: false };
+            const request = { markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false };
             service.render(request).subscribe();
             httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
 
@@ -116,12 +128,12 @@ describe('ProblemStatementSsrRenderService', () => {
         });
 
         it('distinguishes an empty test result list from no test results in the cache key', () => {
-            service.render({ markdown: '# Hi', testResults: [], locale: 'en', darkMode: false }).subscribe();
+            service.render({ markdown: '# Hi', testResults: [], allTestsPassed: false, locale: 'en', darkMode: false }).subscribe();
             const first = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(first.request.body.testResults).toEqual([]);
             first.flush({ html: '<p>empty</p>', contentHash: 'e', rendererVersion: '1.0.0' });
 
-            service.render({ markdown: '# Hi', testResults: undefined, locale: 'en', darkMode: false }).subscribe();
+            service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe();
             const second = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(second.request.body.testResults).toBeNull();
             second.flush({ html: '<p>none</p>', contentHash: 'n', rendererVersion: '1.0.0' });
@@ -129,7 +141,7 @@ describe('ProblemStatementSsrRenderService', () => {
 
         it('defaults html to an empty string when the server omits it for a blank rendering', () => {
             let received: RenderedProblemStatement | undefined;
-            service.render({ markdown: '', testResults: undefined, locale: 'en', darkMode: false }).subscribe((r) => (received = r));
+            service.render({ markdown: '', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe((r) => (received = r));
 
             const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             // The server serializes with @JsonInclude(NON_EMPTY), so a blank rendering omits `html` from the JSON entirely.

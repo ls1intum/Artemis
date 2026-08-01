@@ -156,22 +156,29 @@ public class ProblemStatementRenderingService {
     /**
      * Renders the given markdown into a self-contained HTML document.
      *
-     * @param markdown      the raw problem statement markdown
-     * @param testResults   client-provided test results keyed by test id, or {@code null}
-     * @param resultSummary client-provided submission summary, or {@code null}
-     * @param locale        the locale for user-visible text (task stats, modal labels)
-     * @param darkMode      if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
-     * @param includeJs     if {@code true}, the interactive feedback modal JS is included
-     * @param includeCss    if {@code true}, embedded CSS and KaTeX CSS are included
-     * @param inlineImages  if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
+     * @param markdown       the raw problem statement markdown
+     * @param testResults    client-provided test results keyed by test id, or {@code null}
+     * @param resultSummary  client-provided submission summary, or {@code null}
+     * @param locale         the locale for user-visible text (task stats, modal labels)
+     * @param darkMode       if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
+     * @param includeJs      if {@code true}, the interactive feedback modal JS is included
+     * @param includeCss     if {@code true}, embedded CSS and KaTeX CSS are included
+     * @param inlineImages   if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
+     * @param allTestsPassed if {@code true}, the client reported a successful result that carries no per-test feedback,
+     *                           so every test counts as passed. Only honored when {@code testResults} is {@code null}.
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
-            boolean darkMode, boolean includeJs, boolean includeCss, boolean inlineImages) {
+            boolean darkMode, boolean includeJs, boolean includeCss, boolean inlineImages, boolean allTestsPassed) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
         }
+
+        // Individual test outcomes always win: the flag is only a substitute for feedback the client does not have. A
+        // request carrying both is decided by the feedback. This one predicate drives task status, task counts and
+        // diagram colors alike, so the three can never disagree.
+        boolean allPassed = allTestsPassed && testResults == null;
 
         // 1. Mask code blocks so downstream passes skip over them.
         List<String> codeBlocks = new ArrayList<>();
@@ -179,7 +186,7 @@ public class ProblemStatementRenderingService {
 
         // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark.
         List<String> inlineSvgs = new ArrayList<>();
-        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode);
+        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allPassed);
 
         // 3. Normalize math notation, then extract formulas (still while code blocks are masked).
         processed = MathFormulaExtractor.applyCompatibility(processed);
@@ -187,7 +194,7 @@ public class ProblemStatementRenderingService {
         processed = MathFormulaExtractor.extract(processed, mathFormulas);
 
         // 4. Expand tasks.
-        processed = extractTasks(processed, testResults, locale);
+        processed = extractTasks(processed, testResults, locale, allPassed);
 
         // 5. Strip leftover <testid>N</testid> wrappers in prose/PlantUML placeholders. Code blocks are
         // still masked, so their contents stay untouched and display as written.
@@ -246,7 +253,7 @@ public class ProblemStatementRenderingService {
         return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode, boolean allPassed) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -259,7 +266,7 @@ public class ProblemStatementRenderingService {
 
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
-            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults);
+            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults, allPassed);
             // Strip <testid> wrappers inside PlantUML: the layout engine does not understand them.
             resolvedSource = TestReferenceParser.stripTestIdWrappers(resolvedSource);
 
@@ -288,7 +295,7 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
+    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale, boolean allPassed) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         // Loop-invariant: the lookup only depends on the request's test results.
@@ -319,17 +326,21 @@ public class ProblemStatementRenderingService {
                 }
             }
 
-            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, unresolvedRefs > 0, testResults);
-            int successCount = countPassedTests(testIds, testResults);
+            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, unresolvedRefs > 0, testResults, allPassed);
             int authoredCount = authoredRefs.size();
-            int notExecutedCount = unresolvedRefs + countNotExecutedTests(testIds, testResults);
+            // The counts are computed independently of the status, so they must follow the same signal. Otherwise an
+            // all-passed task would render green while reporting every one of its tests as not executed, and the
+            // success count would be the number of *resolvable* ids ("1 of 3 passed") rather than all authored tests:
+            // without test results a name-only reference cannot resolve at all.
+            int successCount = allPassed ? authoredCount : countPassedTests(testIds, testResults);
+            int notExecutedCount = allPassed ? 0 : unresolvedRefs + countNotExecutedTests(testIds, testResults);
 
             // Only emit data-feedback when at least one referenced test actually has feedback. Authored ids are always
             // added to testIds, so `!testIds.isEmpty()` alone would emit an empty data-feedback="[]" for an empty
-            // (but present) result map. This gates data-feedback only: the stats line below is driven by whether
-            // test results were supplied at all, not by whether any of *this* task's tests are among them.
+            // (but present) result map. This gates data-feedback only: the stats line below is driven by whether the
+            // task's outcome is known at all, not by whether any of *this* task's tests are among the results.
             boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
-            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, testResults, hasFeedback, locale);
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, testResults, hasFeedback, allPassed, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
         }
@@ -338,7 +349,7 @@ public class ProblemStatementRenderingService {
     }
 
     private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int authoredCount, int notExecutedCount,
-            @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean hasFeedback, Locale locale) {
+            @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean hasFeedback, boolean allPassed, Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         StringBuilder html = new StringBuilder();
@@ -358,7 +369,9 @@ public class ProblemStatementRenderingService {
         };
         html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
         html.append(HtmlEscaper.escapeText(taskName));
-        if (testResults != null && authoredCount > 0) {
+        // An all-passed task has no test results, but it does know its outcome, so it shows the same stats line
+        // ("n of n tests passed") instead of the "no result" text a missing result would otherwise produce.
+        if ((testResults != null || allPassed) && authoredCount > 0) {
             String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, authoredCount }, locale);
             html.append(" <span class=\"artemis-task-stats\">").append(HtmlEscaper.escapeText(statsText)).append("</span>");
         }
@@ -413,12 +426,16 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static String computeTaskTestStatus(List<Long> testIds, boolean hasTestRefs, boolean hasUnresolvedRefs, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+    private static String computeTaskTestStatus(List<Long> testIds, boolean hasTestRefs, boolean hasUnresolvedRefs, @Nullable Map<Long, TestFeedbackInputDTO> testResults,
+            boolean allPassed) {
         if (!hasTestRefs) {
+            // A task without references has nothing that could have passed, so it stays "no tests" even when the
+            // request declares that every test passed.
             return "no-tests";
         }
         if (testResults == null) {
-            return "no-result";
+            // A successful result without any feedback means every test passed; without that signal nothing is known.
+            return allPassed ? "success" : "no-result";
         }
         boolean anyFailed = false;
         // Unresolved (name-only) refs cannot be matched to feedback, so they count as not executed.

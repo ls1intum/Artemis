@@ -16,9 +16,10 @@ export class ProblemStatementSsrRenderService {
     /**
      * Maps the feedbacks of a result to the endpoint's test-result inputs.
      *
-     * Returns `undefined` when no result exists or the result carries no feedback at all: both must render as
-     * "no result", matching the legacy client renderer. Returns an empty array when feedback exists but none of it
-     * belongs to a test case (e.g. only static-code-analysis feedback), which renders as "not executed".
+     * Returns `undefined` when no result exists or the result carries no feedback at all: neither can map a single
+     * test. A *successful* result without feedback means every test passed, which the caller carries separately in
+     * `allTestsPassed` (this mapping has no way to express it). Returns an empty array when feedback exists but none
+     * of it belongs to a test case (e.g. only static-code-analysis feedback), which renders as "not executed".
      * Callers must load feedback details before calling this; an unloaded `feedbacks` array is indistinguishable
      * from an empty one here.
      */
@@ -56,6 +57,7 @@ export class ProblemStatementSsrRenderService {
         const body = {
             markdown: request.markdown,
             testResults: request.testResults ?? null,
+            allTestsPassed: request.allTestsPassed,
             locale: request.locale,
             darkMode: request.darkMode,
             includeJs: false,
@@ -78,7 +80,9 @@ export class ProblemStatementSsrRenderService {
         const tests = request.testResults === undefined ? undefined : [...request.testResults].sort((a, b) => a.testId - b.testId).map((t) => [t.testId, t.testName, t.passed]);
         // Structured rather than delimiter-joined: a test name or a markdown body containing the delimiter could
         // otherwise shift the field boundaries and make two different requests collide on one cache entry.
-        return JSON.stringify([request.locale, request.darkMode, tests, request.markdown]);
+        // `allTestsPassed` is part of the key: with the same (absent) test results it decides between all-green and
+        // neutral tasks, so leaving it out would serve one rendering for two different requests.
+        return JSON.stringify([request.locale, request.darkMode, request.allTestsPassed, tests, request.markdown]);
     }
 
     /** FIFO eviction: insertion order is not refreshed on a hit, which is sufficient for this small cache. */

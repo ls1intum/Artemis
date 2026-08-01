@@ -252,6 +252,97 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).doesNotContain("999999999999999999999999");
     }
 
+    // --- "All tests passed" without per-test feedback ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowSuccessWhenAllTestsPassedWithoutFeedback() throws Exception {
+        // A successful result carrying no feedback at all: the client cannot map any test, so it only sends the flag.
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>,testBubbleSort())", null, null, "en", false, false, false, null, true);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-success");
+        assertThat(result.html()).contains("data-test-status=\"success\"");
+        assertThat(result.html()).contains("artemis-icon-success");
+        // The counts must follow the status: the name-only reference cannot resolve without results, so counting
+        // resolved ids would claim "1 of 2" and mark the rest as not executed under a green icon.
+        assertThat(result.html()).contains("data-authored-count=\"2\"");
+        assertThat(result.html()).contains("data-not-executed-count=\"0\"");
+        assertThat(result.html()).contains("2 of 2 tests passed");
+        assertThat(result.html()).doesNotContain("No results");
+        assertThat(result.html()).doesNotContain("data-feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepNoTestsWhenAllTestsPassedAndTaskHasNoRefs() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Empty]()", null, null, "en", false, false, false, null, true);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-tests");
+        assertThat(result.html()).contains("No tests");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLetPassingTestResultsWinOverAllTestsPassed() throws Exception {
+        // Contradictory request: the flag plus actual results. The results decide, so the unresolvable second
+        // reference keeps the task at "not executed" instead of turning it green.
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", true, null, 1.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>,<testid>999</testid>)", testResults, null, "en", false, false, false, null, true);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+        assertThat(result.html()).contains("data-not-executed-count=\"1\"");
+        assertThat(result.html()).contains("1 of 2 tests passed");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLetAFailingTestResultWinOverAllTestsPassed() throws Exception {
+        var testResults = List.of(new TestFeedbackInputDTO(1L, "testA", false, "boom", 0.0));
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", testResults, null, "en", false, false, false, null, true);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-fail");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+        assertThat(result.html()).contains("0 of 1 tests passed");
+        assertThat(result.html()).contains("data-not-executed-count=\"0\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIgnoreAllTestsPassedForAnEmptyResultList() throws Exception {
+        // An empty list is "a result exists but maps no test case", which must stay not executed. Sent as raw JSON
+        // because the DTO serializes with NON_EMPTY, which would drop an empty list before it reaches the server.
+        String rawBody = """
+                {"markdown":"[task][Sort](<testid>1</testid>)","testResults":[],"locale":"en","darkMode":false,"includeJs":false,"includeCss":false,"allTestsPassed":true}""";
+
+        var mvcResult = request.performMvcRequest(post(new URI(POST_URL)).contentType(MediaType.APPLICATION_JSON).content(rawBody)).andExpect(status().isOk()).andReturn();
+        var result = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("artemis-task-not-executed");
+        assertThat(result.html()).doesNotContain("artemis-task-success");
+        assertThat(result.html()).contains("data-not-executed-count=\"1\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNoResultWhenAllTestsPassedIsFalse() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][Sort](<testid>1</testid>)", null, null, "en", false, false, false, null, false);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("artemis-task-no-result");
+        assertThat(result.html()).contains("No results");
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldShowNoTestsForWhitespaceOnlyRefs() throws Exception {
