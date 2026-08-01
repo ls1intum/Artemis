@@ -198,6 +198,12 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetTemplateRepositoryFilesWithContentReflectsLatestCommit() throws Exception {
+        programmingExerciseIntegrationTestService.testGetTemplateRepositoryFilesWithContentReflectsLatestCommit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSolutionRepositoryFilesWithContent() throws Exception {
         programmingExerciseIntegrationTestService.testGetSolutionRepositoryFilesWithContent();
     }

@@ -2237,6 +2237,23 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
     }
 
+    void testGetTemplateRepositoryFilesWithContentReflectsLatestCommit() throws Exception {
+        // The endpoint reads the latest commit of the bare repository rather than a checked-out working copy, so a
+        // newly pushed commit has to be visible immediately without the server checking the repository out again.
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "first"), "seed template files");
+        var filesAfterFirstPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterFirstPush).containsEntry("A.java", "first");
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "second", "New.java", "added"), "update template files");
+        var filesAfterSecondPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterSecondPush).containsEntry("A.java", "second").containsEntry("New.java", "added");
+    }
+
     void testGetSolutionRepositoryFilesWithContent() throws Exception {
         // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
         var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);

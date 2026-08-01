@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -85,6 +86,30 @@ public class RepositoryParticipationService {
             return repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
         }
         catch (GitAPIException e) {
+            throw new InternalServerErrorException("Could not retrieve the repository files content for participation " + participation.getId());
+        }
+    }
+
+    /**
+     * Returns the files of the participation's repository as they are in its latest commit, read directly from the bare
+     * repository.
+     * <p>
+     * Prefer this over {@link #getFilesContentFromWorkingCopy(ProgrammingExerciseParticipation, ProgrammingExercise, boolean)}
+     * whenever the caller only needs the committed state. The working copy variant checks the repository out on the
+     * server and pulls it on every single request, which costs a clone, a pull and disk space, while this one reads the
+     * bare repository in place. Only use the working copy when uncommitted changes made through the online editor have
+     * to be visible.
+     * <p>
+     * Binary files are never included, because the content is returned as a {@link String}.
+     *
+     * @param participation the participation whose repository files are requested
+     * @return a map of file path to file content, empty if the repository has no commit yet
+     */
+    public Map<String, String> getFilesContentFromLastCommit(ProgrammingExerciseParticipation participation) {
+        try {
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri());
+        }
+        catch (IOException e) {
             throw new InternalServerErrorException("Could not retrieve the repository files content for participation " + participation.getId());
         }
     }
