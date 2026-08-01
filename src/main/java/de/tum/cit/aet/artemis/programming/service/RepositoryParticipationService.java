@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,8 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Lazy
 @Service
 public class RepositoryParticipationService {
+
+    private static final Logger log = LoggerFactory.getLogger(RepositoryParticipationService.class);
 
     private final ParticipationRepository participationRepository;
 
@@ -110,6 +114,8 @@ public class RepositoryParticipationService {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri());
         }
         catch (IOException e) {
+            // Log the cause before it is replaced by a generic 500, otherwise the JGit or filesystem stack trace is lost.
+            log.error("Could not read the repository files of participation {} from the bare repository", participation.getId(), e);
             throw new InternalServerErrorException("Could not retrieve the repository files content for participation " + participation.getId());
         }
     }
