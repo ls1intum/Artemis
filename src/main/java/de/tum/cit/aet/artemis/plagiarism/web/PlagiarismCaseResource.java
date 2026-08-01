@@ -138,7 +138,7 @@ public class PlagiarismCaseResource {
     public ResponseEntity<PlagiarismCaseDetailDTO> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for instructor with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
@@ -178,7 +178,7 @@ public class PlagiarismCaseResource {
             @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
         log.debug("REST request to save plagiarism verdict for plagiarism case with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
@@ -198,7 +198,7 @@ public class PlagiarismCaseResource {
     public ResponseEntity<PlagiarismCaseInfoDTO> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         return ResponseEntity.ok(plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exerciseId, user.getId()).orElse(null));
@@ -217,7 +217,7 @@ public class PlagiarismCaseResource {
             @RequestParam(name = "exerciseId") Set<Long> exerciseIds) {
         log.debug("REST request to all plagiarism cases for student and exercises with ids: {}", exerciseIds);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         List<PlagiarismCase> plagiarismCasePerExerciseList = plagiarismCaseRepository.findByStudentIdAndExerciseIdsWithPost(user.getId(), exerciseIds);
@@ -268,7 +268,7 @@ public class PlagiarismCaseResource {
     public ResponseEntity<PlagiarismCaseDetailDTO> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);

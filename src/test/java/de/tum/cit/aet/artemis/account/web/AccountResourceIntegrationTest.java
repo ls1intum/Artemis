@@ -277,7 +277,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.addOrganizationToUser(user.getId(), organization);
 
         // Load user exactly as the account endpoint does — organizations are NOT in the entity graph
-        User lazyUser = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
+        User lazyUser = userTestRepository.findOneWithAuthoritiesByLogin(AUTHENTICATEDUSER).orElseThrow();
 
         // Build DTO outside the transaction (session is closed because open-in-view=false)
         UserDTO dto = new UserDTO(lazyUser);
