@@ -174,6 +174,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         User student = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
+        student.setInternal(true); // OIDC users are external by default; make internal for password auth test
         userTestRepository.saveAndFlush(student);
 
         HttpHeaders httpHeaders = new HttpHeaders();

@@ -215,13 +215,32 @@ class LoginOptionsServiceTest {
     }
 
     /**
-     * Verifies that if LDAP service is completely missing/disabled, we fall back to PASSWORD.
+     * Verifies that if LDAP service is missing but OIDC is enabled, new users are routed to OIDC for JIT provisioning.
      */
     @Test
-    void testGetLoginOptions_UserNotInDb_LdapServiceMissing_ReturnsPassword() {
+    void testGetLoginOptions_UserNotInDb_LdapServiceMissing_OidcEnabled_ReturnsOidc() {
         loginOptionsService = new LoginOptionsService(userRepository, Optional.empty());
         ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", true);
         ReflectionTestUtils.setField(loginOptionsService, "oidcDisplayName", OIDC_LABEL);
+
+        String login = "new_student";
+        when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
+
+        LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
+
+        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
+        assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
+        verifyNoInteractions(ldapUserService);
+    }
+
+    /**
+     * Verifies that if both LDAP service and OIDC/SAML providers are disabled, we fall back to PASSWORD.
+     */
+    @Test
+    void testGetLoginOptions_UserNotInDb_LdapServiceMissing_SSODisabled_ReturnsPassword() {
+        loginOptionsService = new LoginOptionsService(userRepository, Optional.empty());
+        ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", false);
+        ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", false);
 
         String login = "new_student";
         when(userRepository.findOneByLogin(login)).thenReturn(Optional.empty());
