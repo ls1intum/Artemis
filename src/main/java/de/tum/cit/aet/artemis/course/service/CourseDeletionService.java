@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -51,7 +49,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 /**
  * Service for deleting a course and all its associated elements.
  * This service handles the deletion of exercises, lectures, exams, grading scales, competencies, tutorial groups, conversations, notifications,
- * and default user groups associated with the course.
+ * and course memberships (user_course_role rows are removed by DB cascade on course deletion).
  */
 @Service
 @Profile(PROFILE_CORE)
@@ -60,13 +58,11 @@ public class CourseDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseDeletionService.class);
 
-    private static final int TOTAL_DELETE_STEPS = 15;
+    private static final int TOTAL_DELETE_STEPS = 14;
 
     private final ExerciseDeletionService exerciseDeletionService;
 
     private final ExerciseRepository exerciseRepository;
-
-    private final UserService userService;
 
     private final Optional<LectureApi> lectureApi;
 
@@ -120,7 +116,7 @@ public class CourseDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, UserService userService, Optional<LectureApi> lectureApi,
+    public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<PyrisFaqApi> pyrisFaqApi,
@@ -133,7 +129,6 @@ public class CourseDeletionService {
             SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
-        this.userService = userService;
         this.lectureApi = lectureApi;
         this.tutorialGroupApi = tutorialGroupApi;
         this.examDeletionApi = examDeletionApi;
@@ -169,7 +164,6 @@ public class CourseDeletionService {
      * <li>All Exercises including:
      * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      * <li>All Lectures and their Attachments, see {@link de.tum.cit.aet.artemis.lecture.service.LectureService#delete}</li>
-     * <li>All default groups created by Artemis, see {@link UserService#removeGroupFromAllUsers}</li>
      * <li>All Exams, see {@link ExamDeletionApi#deleteByCourseId(long)}</li>
      * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * <li>All Iris course settings and chat sessions</li>
@@ -254,25 +248,18 @@ public class CourseDeletionService {
             completedWeight += CourseOperationWeights.getWeightNotificationSettings();
             stepsCompleted++;
 
-            // Step 8: Remove users from course groups
-            progressService.updateProgress(courseId, CourseOperationType.DELETE, "Removing users from groups", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
-                    calculateProgressPercent(completedWeight, totalWeight));
-            removeUsersFromCourseDefaultGroups(courseId);
-            completedWeight += CourseOperationWeights.getWeightUserGroups();
-            stepsCompleted++;
-
-            // Step 9: Delete exams (with per-exam progress updates)
+            // Step 8: Delete exams (with per-exam progress updates)
             completedWeight = deleteExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight);
             stepsCompleted++;
 
-            // Step 10: Delete grading scale
+            // Step 9: Delete grading scale
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting grading scale", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             deleteGradingScaleOfCourse(courseId);
             completedWeight += CourseOperationWeights.getWeightGradingScale();
             stepsCompleted++;
 
-            // Step 11: Delete FAQs
+            // Step 10: Delete FAQs
             double faqWeight = summary.numberOfFaqs() * CourseOperationWeights.getWeightPerFaq();
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting FAQs", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
@@ -280,14 +267,14 @@ public class CourseDeletionService {
             completedWeight += faqWeight;
             stepsCompleted++;
 
-            // Step 12: Delete course requests
+            // Step 11: Delete course requests
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course requests", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             deleteCourseRequests(courseId);
             completedWeight += CourseOperationWeights.getWeightCourseRequests();
             stepsCompleted++;
 
-            // Step 13: Delete Iris data
+            // Step 12: Delete Iris data
             double irisWeight = summary.numberOfIrisChatSessions() * CourseOperationWeights.getWeightPerIrisSession();
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting Iris data", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
@@ -295,7 +282,7 @@ public class CourseDeletionService {
             completedWeight += irisWeight;
             stepsCompleted++;
 
-            // Step 14: Delete LLM token usage traces and learner profiles
+            // Step 13: Delete LLM token usage traces and learner profiles
             double aiDataWeight = summary.numberOfLLMTraces() * CourseOperationWeights.getWeightPerLlmTrace()
                     + summary.numberOfLearnerProfiles() * CourseOperationWeights.getWeightPerLearnerProfile();
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting AI usage data", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
@@ -305,10 +292,10 @@ public class CourseDeletionService {
             completedWeight += aiDataWeight;
             stepsCompleted++;
 
-            // Step 15: Clean up all Weaviate rows for the course (exercises, lectures, etc.)
+            // Step 14a: Clean up all Weaviate rows for the course (exercises, lectures, etc.) — async, no stepsCompleted increment
             searchableEntityWeaviateService.ifPresent(service -> service.deleteAllForCourseAsync(courseId));
 
-            // Step 16: Delete the course itself
+            // Step 14: Delete the course itself (cascades user_course_role rows via FK onDelete=CASCADE)
             progressService.updateProgress(courseId, CourseOperationType.DELETE, "Deleting course", stepsCompleted, TOTAL_DELETE_STEPS, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
             courseRepository.deleteById(courseId);
@@ -461,40 +448,6 @@ public class CourseDeletionService {
         // delete course grading scale if it exists
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         gradingScale.ifPresent(gradingScaleRepository::delete);
-    }
-
-    /**
-     * Deletes default user groups that were created by Artemis for the course.
-     * Only groups matching the default naming convention (using ARTEMIS_GROUP_DEFAULT_PREFIX)
-     * are deleted. Custom groups are preserved.
-     *
-     * @param courseId the ID of the course whose default groups should be deleted
-     */
-    private void removeUsersFromCourseDefaultGroups(long courseId) {
-        // only delete (default) groups which have been created by Artemis before
-        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        String defaultStudentGroupName = courseRepository.getDefaultStudentGroupNameById(courseId);
-        if (Objects.equals(studentGroupName, defaultStudentGroupName)) {
-            userService.removeGroupFromAllUsers(studentGroupName);
-        }
-
-        String taGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
-        String defaultTaGroupName = courseRepository.getDefaultTeachingAssistantGroupNameById(courseId);
-        if (Objects.equals(taGroupName, defaultTaGroupName)) {
-            userService.removeGroupFromAllUsers(taGroupName);
-        }
-
-        String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
-        String defaultEditorGroupName = courseRepository.getDefaultEditorGroupNameById(courseId);
-        if (Objects.equals(editorGroupName, defaultEditorGroupName)) {
-            userService.removeGroupFromAllUsers(editorGroupName);
-        }
-
-        String instructorGroupName = courseRepository.getInstructorGroupNameById(courseId);
-        String defaultInstructorGroupName = courseRepository.getDefaultInstructorGroupNameById(courseId);
-        if (Objects.equals(instructorGroupName, defaultInstructorGroupName)) {
-            userService.removeGroupFromAllUsers(instructorGroupName);
-        }
     }
 
     /**

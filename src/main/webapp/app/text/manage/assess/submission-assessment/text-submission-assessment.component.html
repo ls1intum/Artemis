@@ -74,7 +74,9 @@
             }
         </div>
     } @else {
-        @if (!loadingInitialSubmission()) {
+        @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+            <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
+        } @else if (!loadingInitialSubmission()) {
             <div>
                 @if (noNewSubmissions()) {
                     <div class="alert alert-warning text-center mt-4" role="alert">
