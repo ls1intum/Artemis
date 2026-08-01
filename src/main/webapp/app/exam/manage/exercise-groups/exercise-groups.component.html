@@ -26,10 +26,20 @@
     <div class="exercise-group mt-3" id="{{ 'group-' + exerciseGroup.id }}">
         <div class="d-flex p-3 header flex-wrap">
             <div class="me-3 d-flex justify-content-center" style="align-items: center">
-                <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
+                <a
+                    (click)="moveUp(i)"
+                    [class.disabled]="i === 0 || orderSavePending()"
+                    class="border-0 p-0 me-1 bg-transparent"
+                    [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveUp' | artemisTranslate"
+                >
                     <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem" />
                 </a>
-                <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups()!.length - 1" class="border-0 p-0 bg-transparent">
+                <a
+                    (click)="moveDown(i)"
+                    [class.disabled]="i >= exerciseGroups()!.length - 1 || orderSavePending()"
+                    class="border-0 p-0 bg-transparent"
+                    [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveDown' | artemisTranslate"
+                >
                     <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem" />
                 </a>
             </div>
