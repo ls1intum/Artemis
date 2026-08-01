@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.assessment.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,14 +62,8 @@ public class AssessmentUploadResource {
      */
     public AssessmentUploadResource(final AssessmentUploadService assessmentUploadService, final ProgrammingExerciseRepository programmingExerciseRepository,
             final MultipartProperties multipartProperties) {
-        if (assessmentUploadService == null) {
-            throw new IllegalArgumentException("The assessment upload service must not be null");
-        }
-        if (programmingExerciseRepository == null) {
-            throw new IllegalArgumentException("The programming exercise repository must not be null");
-        }
-        if (multipartProperties == null) {
-            throw new IllegalArgumentException("The multipart properties must not be null");
+        if (Stream.of(assessmentUploadService, programmingExerciseRepository, multipartProperties).anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("The assessment upload resource dependencies must not be null");
         }
         this.assessmentUploadService = assessmentUploadService;
         this.programmingExerciseRepository = programmingExerciseRepository;

@@ -11,10 +11,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -101,14 +103,8 @@ public class AssessmentUploadService {
      */
     public AssessmentUploadService(final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository, final SubmissionRepository submissionRepository,
             final AssessmentUploadResultService assessmentUploadResultService) {
-        if (assessmentUploadParticipationRepository == null) {
-            throw new IllegalArgumentException("The assessment upload participation repository must not be null");
-        }
-        if (submissionRepository == null) {
-            throw new IllegalArgumentException("The submission repository must not be null");
-        }
-        if (assessmentUploadResultService == null) {
-            throw new IllegalArgumentException("The assessment upload result service must not be null");
+        if (Stream.of(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService).anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.assessmentUploadParticipationRepository = assessmentUploadParticipationRepository;
         this.submissionRepository = submissionRepository;

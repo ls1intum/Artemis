@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -82,9 +83,8 @@ public class AssessmentUploadResultService {
             final ComplaintResponseRepository complaintResponseRepository, final RatingRepository ratingRepository, final FeedbackRepository feedbackRepository,
             final ComplaintRepository complaintRepository, final ParticipantScoreRepository participantScoreRepository,
             final LongFeedbackTextRepository longFeedbackTextRepository) {
-        if (userRepository == null || assessmentUploadResultRepository == null || assessmentNoteRepository == null || ltiApi == null || resultWebsocketService == null
-                || complaintResponseRepository == null || ratingRepository == null || feedbackRepository == null || complaintRepository == null
-                || participantScoreRepository == null || longFeedbackTextRepository == null) {
+        if (Stream.of(userRepository, assessmentUploadResultRepository, assessmentNoteRepository, ltiApi, resultWebsocketService, complaintResponseRepository, ratingRepository,
+                feedbackRepository, complaintRepository, participantScoreRepository, longFeedbackTextRepository).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
         this.userRepository = userRepository;
