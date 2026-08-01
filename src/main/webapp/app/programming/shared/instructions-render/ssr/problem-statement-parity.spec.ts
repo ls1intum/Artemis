@@ -10,6 +10,9 @@ import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instr
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const CORPUS = 'src/test/resources/test-data/problem-statements';
 
@@ -88,6 +91,8 @@ describe('problem statement rendering parity', () => {
                 // Stubbed: the wrapper transitively needs HttpClient and ThemeService, and diagrams are excluded
                 // from this comparison anyway.
                 { provide: ProgrammingExercisePlantUmlService, useValue: { getPlantUmlSvg: () => of('<svg></svg>'), getPlantUmlImage: () => of('') } },
+                // Needed by the content component, which the highlighting measurement below renders the fixture through.
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
         instructionService = TestBed.inject(ProgrammingExerciseInstructionService);
@@ -123,6 +128,20 @@ describe('problem statement rendering parity', () => {
             }
         }
         return distinctRefs.map((ref, index) => ({ id: index + 1, testName: ref }) as ProgrammingExerciseTestCase);
+    };
+
+    /**
+     * The highlighted code blocks a user actually ends up seeing: the fixture's statement fragment rendered through
+     * the content component, which runs the client-side highlight.js pass the server has no equivalent for.
+     */
+    const highlightedAfterClientRendering = (serverHtml: string): number => {
+        // The same fragment the app hands the component (programming-exercise-instruction-ssr.component.ts:369).
+        const fragment = new DOMParser().parseFromString(serverHtml, 'text/html').querySelector('.artemis-problem-statement');
+        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
+        fixture.componentRef.setInput('html', fragment?.outerHTML ?? '');
+        fixture.detectChanges();
+        const shadowRoot = (fixture.nativeElement as HTMLElement).shadowRoot;
+        return structure(shadowRoot?.innerHTML ?? '').highlightedCodeBlocks;
     };
 
     /** The legacy engine's status per task, in document order, translated into the server's vocabulary. */
@@ -184,8 +203,14 @@ describe('problem statement rendering parity', () => {
 
         // Both sides are pinned to their observed counts, so closing a gap server-side deliberately fails this test
         // and forces the numbers (and the recorded parity findings) to be updated.
+        // Syntax highlighting is the exception: it is a *client-side* pass. No Java highlighter matches highlight.js'
+        // language coverage, and the hljs theme stylesheets cannot reach into the shadow root the markup is rendered
+        // in, so the content component highlights the code blocks itself. The raw server fixture therefore contains
+        // zero highlighted blocks by design and will keep doing so; the count that has to match the legacy pipeline is
+        // the one after that component has run. Do not "fix" this measurement back onto `server.highlightedCodeBlocks`.
         expect(legacy.highlightedCodeBlocks).toBe(1);
         expect(server.highlightedCodeBlocks).toBe(0);
+        expect(highlightedAfterClientRendering(serverHtml)).toBe(legacy.highlightedCodeBlocks);
         expect(legacy.alerts).toBe(1);
         expect(server.alerts).toBe(1);
         expect(legacy.links).toBe(1);

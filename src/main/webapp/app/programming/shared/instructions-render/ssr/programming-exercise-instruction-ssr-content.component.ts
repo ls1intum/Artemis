@@ -1,7 +1,13 @@
 import { Component, ElementRef, ViewEncapsulation, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import katex from 'katex';
+import hljs from 'app/foundation/util/highlight-languages.util';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
+
+/** Marks a code block that has already been highlighted, so a re-render that reuses the DOM cannot highlight it twice. */
+const HIGHLIGHTED_MARKER = 'data-highlighted';
+/** The class CommonMark puts on a fenced code block, and the only place the authored language survives in the markup. */
+const LANGUAGE_CLASS_PREFIX = 'language-';
 
 /**
  * Holds the server-rendered problem statement inside a shadow root, and owns everything that has to touch that DOM.
@@ -9,15 +15,17 @@ import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-
  * Shadow DOM is used because the render endpoint returns a self-contained stylesheet: the encapsulation scopes it to
  * this component and shields the statement from Artemis' global styles in both directions.
  *
- * Nothing but the server's own markup may live in here. Angular component styles, Tailwind utilities and the UI kit's
+ * Nothing but the server's own markup may live in here. Other components' styles, Tailwind utilities and the UI kit's
  * CSS are all injected into `document.head` and none of that crosses a shadow boundary, so any Angular UI component
  * placed inside this shadow root would render completely unstyled. All chrome (spinner, banners) therefore stays in
- * the parent component, which uses default encapsulation.
+ * the parent component, which uses default encapsulation. This component's own stylesheet is the one exception: the
+ * shadow encapsulation makes Angular put it inside the shadow root, which is the only way to give the server's markup
+ * a highlight.js palette.
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr-content',
     template: '<div #renderTarget class="artemis-problem-statement-host"></div>',
-    styles: ':host { display: block; }',
+    styleUrls: ['./programming-exercise-instruction-ssr-content.component.scss'],
     encapsulation: ViewEncapsulation.ShadowDom,
     host: {
         '(click)': 'onActivate($event)',
@@ -71,6 +79,7 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
         // scroll capture above would then already be looking at the replaced DOM.
         host.innerHTML = html ?? '';
         this.renderFormulas(host);
+        this.highlightCodeBlocks(host);
         this.applyTaskAccessibility(host, tasks, interactive);
         const scrollParent = this.scrollParent();
         if (scrollTop !== undefined && scrollParent) {
@@ -94,6 +103,43 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
                 element.textContent = formula;
             }
         });
+    }
+
+    /**
+     * Syntax-highlights the server's code blocks with highlight.js, inside the shadow root.
+     *
+     * The server emits plain `<pre><code class="language-x">` (no Java highlighter matches highlight.js' language
+     * coverage), and the stock hljs theme stylesheets are imported by the global themes, which cannot reach into a
+     * shadow root. So both the highlighting and its palette have to live in this component.
+     *
+     * The branches mirror the legacy markdown pipeline exactly ({@link file://../../../../foundation/util/markdown.conversion.util.ts},
+     * `highlightWithHljs` / `addHljsClass`): an explicit known language is highlighted as that language, an explicit
+     * unknown language keeps the escaped source, a block without a language is auto-detected, and every code block
+     * gets the `hljs` class in all three cases. `hljs.highlightElement()` is deliberately not used: it auto-detects
+     * for an unknown language, which is precisely where the legacy pipeline falls back to plain text.
+     */
+    private highlightCodeBlocks(host: HTMLElement): void {
+        // The marker keeps the pass idempotent per code block, so re-running it over retained markup is a no-op.
+        host.querySelectorAll<HTMLElement>(`pre code:not([${HIGHLIGHTED_MARKER}])`).forEach((element) => {
+            element.setAttribute(HIGHLIGHTED_MARKER, 'true');
+            // The palette keys off this class, and the legacy pipeline sets it on every code block, highlighted or not.
+            element.classList.add('hljs');
+            const code = element.textContent ?? '';
+            const language = this.codeLanguage(element);
+            if (!language) {
+                element.innerHTML = hljs.highlightAuto(code).value;
+            } else if (hljs.getLanguage(language)) {
+                element.innerHTML = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+            }
+            // Unknown language: the legacy pipeline emits the escaped source, which is what the server already put
+            // into this element, so its content is left untouched.
+        });
+    }
+
+    /** The authored language of a code block, or undefined when the fence declared none. */
+    private codeLanguage(element: HTMLElement): string | undefined {
+        const languageClass = [...element.classList].find((name) => name.startsWith(LANGUAGE_CLASS_PREFIX));
+        return languageClass?.slice(LANGUAGE_CLASS_PREFIX.length) || undefined;
     }
 
     /**
