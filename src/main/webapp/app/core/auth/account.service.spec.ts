@@ -664,7 +664,7 @@ describe('AccountService', () => {
 
         describe('restoreUserLLMSelectionDecision', () => {
             it('should restore "no decision yet" without stamping a timestamp', () => {
-                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
 
                 accountService.restoreUserLLMSelectionDecision(undefined, undefined);
 
@@ -674,7 +674,7 @@ describe('AccountService', () => {
 
             it('should restore a previous decision and its original timestamp verbatim', () => {
                 const originalTimestamp = dayjs().subtract(5, 'day');
-                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
 
                 accountService.restoreUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI, originalTimestamp);
 
@@ -683,7 +683,7 @@ describe('AccountService', () => {
             });
 
             it('should preserve unrelated user properties', () => {
-                accountService.userIdentity.set({ id: 42, login: 'ab12cde', groups: ['USER'] } as User);
+                accountService.userIdentity.set({ id: 42, login: 'ab12cde' } as User);
 
                 accountService.restoreUserLLMSelectionDecision(undefined, undefined);
 
@@ -964,7 +964,7 @@ describe('AccountService', () => {
         });
 
         it('should emit a NEW identity reference so the signal notifies', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
             const before = accountService.userIdentity();
 
             accountService.setUserEnabledMemiris(true);
