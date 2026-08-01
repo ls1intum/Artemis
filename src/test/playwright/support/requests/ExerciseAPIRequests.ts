@@ -55,7 +55,7 @@ const RETRY_DELAY: number = 3000;
 const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
 
 function fileUploadDateToString(date: dayjs.Dayjs | string | undefined): string | undefined {
-    return typeof date === 'string' ? date : dayjsToString(date);
+    return date === undefined || typeof date === 'string' ? date : dayjsToString(date);
 }
 
 function fileUploadCategoriesToStrings(categories: unknown[] | undefined): string[] | undefined {
