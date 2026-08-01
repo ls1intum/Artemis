@@ -77,6 +77,11 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseIconStatus(item: ExamExerciseOverviewItem): ExerciseButtonStatus {
+        // `isSynced` is mutated in place on a plain submission object, so it schedules no change
+        // detection by itself. Read the version signal the submission editors bump so this binding
+        // re-evaluates under zoneless change detection; without it the row keeps the stale icon after
+        // the student edits an answer. Kept consistent with exam-navigation-sidebar.component.ts.
+        this.examParticipationService.submissionSyncVersion();
         const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
         // start with exercise not started icon
         item.icon = faHourglassHalf;
