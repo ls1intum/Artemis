@@ -5,7 +5,7 @@ import { IMessage } from '@stomp/stompjs';
 import { parseJson } from 'app/foundation/util/json.util';
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
-import { distinctUntilChanged, finalize, map, share, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, finalize, map, mergeMap, share, switchMap } from 'rxjs/operators';
 
 /**
  * Name of the STOMP header that indicates whether a message payload is compressed.
@@ -597,8 +597,19 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             return existing as Observable<T>;
         }
         const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
+        const decode = this.handleIncomingMessage<T>();
         const shared = this.rxStomp.watch(params).pipe(
-            map(this.handleIncomingMessage<T>()),
+            // Drop a frame that cannot be decoded instead of letting it error the stream. All consumers of a
+            // destination share one subscription, so an error would disconnect every one of them (and, because
+            // `share` resets on error, silently leave them without a subscription) over a single bad message.
+            // The failure itself is still reported to Sentry inside the decoder.
+            mergeMap((message) => {
+                try {
+                    return of(decode(message));
+                } catch {
+                    return EMPTY;
+                }
+            }),
             // Drop the cache entry as soon as the underlying STOMP subscription is torn down, so a later caller
             // gets a fresh subscription instead of a dead stream.
             finalize(() => this.sharedChannelObservables.delete(channel)),

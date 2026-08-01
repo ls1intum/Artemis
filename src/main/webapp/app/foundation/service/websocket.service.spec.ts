@@ -180,6 +180,32 @@ describe('WebsocketService', () => {
         second.unsubscribe();
     });
 
+    it('drops an undecodable message and keeps the shared stream alive for all callers', () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        const firstReceived: unknown[] = [];
+        const secondReceived: unknown[] = [];
+        let errored = false;
+        const first = websocketService.subscribe('/topic/shared').subscribe({ next: (value) => firstReceived.push(value), error: () => (errored = true) });
+        const second = websocketService.subscribe('/topic/shared').subscribe({ next: (value) => secondReceived.push(value), error: () => (errored = true) });
+
+        // Claims to be compressed but is not, so decoding throws. Since every consumer of a destination shares one
+        // subscription, this must not tear the stream down for any of them.
+        messages.next({ ...baseMessage, body: 'not actually compressed', headers: { [COMPRESSION_HEADER_KEY]: 'true' } });
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'after the bad frame' }) });
+
+        expect(errored).toBe(false);
+        expect(captureExceptionMock).toHaveBeenCalled();
+        expect(firstReceived).toEqual([{ data: 'after the bad frame' }]);
+        expect(secondReceived).toEqual([{ data: 'after the bad frame' }]);
+        expect(first.closed).toBe(false);
+        expect(second.closed).toBe(false);
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
     it('subscribes again after the last caller of a destination unsubscribed', () => {
         watchMock.mockReturnValue(new Subject<IMessage>());
 
@@ -201,19 +227,30 @@ describe('WebsocketService', () => {
         expect(result).toEqual({ data: 'test' });
     });
 
-    it('reports decompression errors and propagates them', async () => {
+    it('reports decompression errors and drops the offending message without erroring the stream', () => {
         const decodeSpy = vi.spyOn(WebsocketService as any, 'decodeAndDecompress').mockImplementation(() => {
             throw new Error('boom');
         });
-        const message: IMessage = { ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } };
-        watchMock.mockReturnValue(of(message));
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
 
-        const resultPromise = firstValueFrom(websocketService.subscribe('/topic/test')!);
-        await expect(resultPromise).rejects.toThrow('boom');
+        const received: unknown[] = [];
+        let errored: unknown;
+        const subscription = websocketService.subscribe('/topic/test').subscribe({ next: (value) => received.push(value), error: (error) => (errored = error) });
+
+        messages.next({ ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } });
+
+        // The error used to be propagated to the subscriber, which terminated the stream. Consumers of a destination
+        // now share a single subscription, so one bad frame would disconnect all of them. It is reported and dropped.
         expect(decodeSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
             mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } },
         });
+        expect(errored).toBeUndefined();
+        expect(received).toHaveLength(0);
+        expect(subscription.closed).toBe(false);
+
+        subscription.unsubscribe();
     });
 
     it('send does nothing when disconnected', () => {
