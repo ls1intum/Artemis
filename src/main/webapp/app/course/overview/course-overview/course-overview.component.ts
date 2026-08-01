@@ -33,6 +33,10 @@ import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/cour
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 
 /**
  * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
@@ -50,7 +54,19 @@ function readComponentCollapsed(componentRef: unknown): boolean | undefined {
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
+    imports: [
+        CdkScrollable,
+        NgClass,
+        RouterOutlet,
+        NgTemplateOutlet,
+        FaIconComponent,
+        CourseSidebarComponent,
+        CourseUnenrollmentModalComponent,
+        CourseTitleBarComponent,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+    ],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -64,6 +80,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private calendarService = inject(CalendarService);
     private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
+    private scienceSettingsService = inject(ScienceSettingsService);
 
     // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
     protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
@@ -75,6 +92,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examStartedSubscription?: Subscription;
 
     showUnenrollModal = signal<boolean>(false);
+    showScienceConsentModal = signal<boolean>(false);
+    scienceConsentCourse = signal<ScienceCourseConsent | undefined>(undefined);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     activatedComponentReference = signal<
@@ -152,6 +171,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             // because on an in-place course switch the guard is not re-evaluated.
             this.checkChildRouteAccess(storedCourse);
             this.course.set(storedCourse);
+            this.checkScienceConsent(storedCourse.id);
             this.refreshingCourse.set(false);
             return of(undefined);
         }
@@ -162,6 +182,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     // the target child route now that the course is loaded so an inaccessible tab is redirected away.
                     this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
+                    this.checkScienceConsent(res.body.id);
                 }
 
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
@@ -237,6 +258,47 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         childRouteComponent?.toggleSidebar();
         const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : childRouteComponent!.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed);
+    }
+
+    acceptScienceConsent(): void {
+        const consentCourse = this.scienceConsentCourse();
+        if (!consentCourse) {
+            return;
+        }
+        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, true).subscribe({
+            next: () => {
+                this.showScienceConsentModal.set(false);
+                this.scienceConsentCourse.set(undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
+        });
+    }
+
+    declineScienceConsent(): void {
+        const consentCourse = this.scienceConsentCourse();
+        if (!consentCourse) {
+            return;
+        }
+        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, false).subscribe({
+            next: () => {
+                this.showScienceConsentModal.set(false);
+                this.scienceConsentCourse.set(undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
+        });
+    }
+
+    private checkScienceConsent(courseId?: number): void {
+        if (!courseId) {
+            return;
+        }
+        this.scienceSettingsService.getConsentForCourse(courseId).subscribe({
+            next: (consent) => {
+                this.scienceConsentCourse.set(consent);
+                this.showScienceConsentModal.set(consent.scienceEnabled && consent.active === undefined);
+            },
+            error: () => this.alertService.error('error.unexpectedError'),
+        });
     }
 
     getSidebarItems(): SidebarItem[] {

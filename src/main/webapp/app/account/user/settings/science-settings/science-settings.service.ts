@@ -1,33 +1,45 @@
 import { Injectable, inject } from '@angular/core';
-import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, ReplaySubject, catchError, map, of, tap, throwError } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
 import { Setting } from 'app/account/user/settings/user-settings.model';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
+export interface ScienceCourseConsent {
+    courseId: number;
+    courseTitle?: string;
+    courseShortName?: string;
+    active?: boolean;
+    decisionDate?: string;
+    scienceEnabled: boolean;
+}
+
+export type ScienceSettingsStorageEntry = ScienceCourseConsent | ScienceSetting;
+
 @Injectable({ providedIn: 'root' })
 export class ScienceSettingsService {
-    private userSettingsService = inject(UserSettingsService);
-    private localStorageService = inject(LocalStorageService);
-    private profileService = inject(ProfileService);
+    private readonly httpClient = inject(HttpClient);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
+    private readonly userSettingsService = inject(UserSettingsService);
 
-    private currentScienceSettingsSubject = new ReplaySubject<ScienceSetting[]>(1);
+    private readonly resourceURL = 'api/atlas/science';
+    private readonly currentScienceSettingsSubject = new ReplaySubject<ScienceSettingsStorageEntry[]>(1);
 
     constructor() {
-        // we need to handle the subscription here as this service is initialized independently of any component
         if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             this.initialize();
             this.listenForScienceSettingsChanges();
         }
     }
 
-    initialize() {
+    initialize(): void {
         addEventListener('storage', (event) => {
             if (event.key === 'jhi-' + SCIENCE_SETTING_LOCAL_STORAGE_KEY) {
                 this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
@@ -36,11 +48,11 @@ export class ScienceSettingsService {
         this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
     }
 
-    private getStoredScienceSettings(): ScienceSetting[] {
-        return this.localStorageService.retrieve<ScienceSetting[]>(SCIENCE_SETTING_LOCAL_STORAGE_KEY) || [];
+    private getStoredScienceSettings(): ScienceSettingsStorageEntry[] {
+        return this.localStorageService.retrieve<ScienceSettingsStorageEntry[]>(SCIENCE_SETTING_LOCAL_STORAGE_KEY) || [];
     }
 
-    private storeScienceSettings(settings?: ScienceSetting[]): void {
+    private storeScienceSettings(settings?: ScienceSettingsStorageEntry[]): void {
         if (settings) {
             this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, settings);
         } else {
@@ -49,42 +61,75 @@ export class ScienceSettingsService {
         this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
     }
 
-    public refreshScienceSettings(): void {
+    refreshScienceSettings(): Observable<ScienceCourseConsent[]> {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            return;
+            return of([]);
         }
 
-        this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
-            next: (res: HttpResponse<Setting[]>) => {
-                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(res.body!, UserSettingsCategory.SCIENCE_SETTINGS);
-
+        return this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ScienceCourseConsent[]>) => res.body ?? []),
+            tap((currentScienceSettings) => {
                 this.storeScienceSettings(currentScienceSettings);
-                this.currentScienceSettingsSubject.next(currentScienceSettings);
-            },
-        });
+            }),
+            catchError((error) => {
+                this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
+                return throwError(() => error);
+            }),
+        );
     }
 
-    getScienceSettings(): ScienceSetting[] {
+    getScienceSettings(): ScienceSettingsStorageEntry[] {
         return this.getStoredScienceSettings();
     }
 
-    getScienceSettingsUpdates(): Observable<ScienceSetting[]> {
+    getScienceSettingsUpdates(): Observable<ScienceSettingsStorageEntry[]> {
         return this.currentScienceSettingsSubject.asObservable();
     }
 
-    /**
-     * Subscribes and listens for changes related to science
-     */
-    private listenForScienceSettingsChanges(): void {
-        this.userSettingsService.userSettingsChangeEvent.subscribe(() => {
-            this.refreshScienceSettings();
-        });
+    getConsentForCourse(courseId: number): Observable<ScienceCourseConsent> {
+        return this.httpClient.get<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`);
     }
 
-    eventLoggingAllowed(): boolean {
-        const setting = this.getStoredScienceSettings().find((setting) => {
-            return setting.key === 'activity';
+    saveConsentForCourse(courseId: number, active: boolean): Observable<ScienceCourseConsent> {
+        return this.httpClient.put<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { active }).pipe(
+            tap((updatedConsent) => {
+                const settings = this.getStoredScienceSettings().filter((setting) => !isScienceCourseConsent(setting) || setting.courseId !== courseId);
+                this.storeScienceSettings([updatedConsent, ...settings]);
+                this.userSettingsService.sendApplyChangesEvent('scienceSettings');
+            }),
+        );
+    }
+
+    deleteScienceDataForCourse(courseId: number): Observable<void> {
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/data`);
+    }
+
+    /**
+     * Compatibility wrapper for older tests and the generic user settings infrastructure.
+     */
+    loadLegacySettings(): Observable<HttpResponse<Setting[]>> {
+        return this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS);
+    }
+
+    eventLoggingAllowed(courseId?: number): boolean {
+        if (!courseId) {
+            return false;
+        }
+        const setting = this.getStoredScienceSettings()
+            .filter(isScienceCourseConsent)
+            .find((storedSetting) => storedSetting.courseId === courseId);
+        return !!setting && setting.scienceEnabled === true && setting.active === true;
+    }
+
+    private listenForScienceSettingsChanges(): void {
+        this.userSettingsService.userSettingsChangeEvent.subscribe(() => {
+            this.refreshScienceSettings().subscribe({ error: () => undefined });
         });
-        return setting?.active ?? true;
     }
 }
+
+export function isScienceCourseConsent(setting: ScienceSettingsStorageEntry): setting is ScienceCourseConsent {
+    return 'courseId' in setting && typeof setting.courseId === 'number';
+}
+
+export type { ScienceSetting };

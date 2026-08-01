@@ -40,6 +40,16 @@
             "scienceSettings": "Forschung",
             "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
             "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
+            "scienceSettingsPage": {
+                "title": "Kursinteraktionsdaten für die Forschung",
+                "description": "Die Erhebung von Kursinteraktionsdaten ist freiwillig und wird pro Kurs konfiguriert. Du kannst deine Entscheidung jederzeit ändern oder Kursinteraktionsdaten für einen Kurs löschen.",
+                "disabled": " | Erhebung von Kursinteraktionsdaten derzeit deaktiviert",
+                "contribute": "Beitragen",
+                "deleteData": "Kursinteraktionsdaten für {{ courseTitle }} löschen",
+                "deleteDataQuestion": "Möchtest du deine Kursinteraktionsdaten für {{ courseTitle }} löschen? Zustimmungs-Audit-Ereignisse bleiben erhalten.",
+                "thisCourse": "diesen Kurs",
+                "empty": "Es sind keine Kurse für die Erhebung von Kursinteraktionsdaten konfiguriert."
+            },
             "idePreferencesPage": {
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",

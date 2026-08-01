@@ -39,6 +39,12 @@
             "noCourseIcon": "Kein Kurs Icon verfügbar",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
+            "scienceConsent": {
+                "title": "Kursinteraktionsdaten für die Forschung freigeben?",
+                "description": "{{ courseTitle }} nutzt freiwillige Kursinteraktionsdaten für Bildungsforschung und Plattformverbesserung. Artemis zeichnet ausgewählte Kursinteraktionen nur auf, wenn du zustimmst. Du kannst deine Zustimmung später in den Benutzereinstellungen widerrufen oder deine Kursinteraktionsdaten löschen.",
+                "decline": "Nicht beitragen",
+                "accept": "Daten beitragen"
+            },
             "general": {
                 "noDataFound": "Keine Einträge gefunden.",
                 "noElementFoundWithAppliedFilter": "Keine Einträge für die angewendeten Filtereinstellungen gefunden."

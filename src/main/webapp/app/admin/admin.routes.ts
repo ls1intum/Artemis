@@ -44,6 +44,14 @@ const childRoutes: Routes = [
         },
     },
     {
+        path: 'science',
+        loadComponent: () => import('app/admin/science/admin-science.component').then((m) => m.AdminScienceComponent),
+        data: {
+            pageTitle: 'artemisApp.admin.science.title',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+    },
+    {
         path: 'health',
         loadComponent: () => import('app/admin/health/health.component').then((m) => m.HealthComponent),
         data: {

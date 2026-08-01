@@ -9,6 +9,7 @@ import {
     faDownload,
     faEye,
     faFlag,
+    faFlask,
     faGears,
     faHeart,
     faKey,
@@ -156,6 +157,15 @@ export class AdminSidebarComponent {
             translation: 'global.menu.admin.sidebar.upcoming',
             testId: 'admin-upcoming-exams-and-exercises',
         });
+        if (this.atlasEnabled()) {
+            contentItems.push({
+                routerLink: '/admin/science',
+                icon: faFlask,
+                title: 'Science',
+                translation: 'global.menu.admin.sidebar.science',
+                testId: 'admin-science',
+            });
+        }
 
         // Sort alphabetically by title
         contentItems.sort((a, b) => a.title.localeCompare(b.title));

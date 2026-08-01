@@ -40,6 +40,16 @@
             "scienceSettings": "Science",
             "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
+            "scienceSettingsPage": {
+                "title": "Science data collection",
+                "description": "Science data collection is voluntary and configured per course. You can change your decision or delete interaction data for a course at any time.",
+                "disabled": " | science collection currently disabled",
+                "contribute": "Contribute",
+                "deleteData": "Delete science data for {{ courseTitle }}",
+                "deleteDataQuestion": "Delete your science interaction data for {{ courseTitle }}? Consent audit events will be retained.",
+                "thisCourse": "this course",
+                "empty": "No courses are configured for science data collection."
+            },
             "idePreferencesPage": {
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",

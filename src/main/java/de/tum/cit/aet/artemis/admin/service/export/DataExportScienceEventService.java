@@ -61,12 +61,12 @@ public class DataExportScienceEventService {
             return;
         }
 
-        String[] header = { "timestamp", "event_type", "resource_id" };
+        String[] header = { "timestamp", "event_type", "course_id", "resource_id" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(workingDirectory.resolve("science_events" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var scienceEvent : scienceEvents) {
-                printer.printRecord(scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getResourceId());
+                printer.printRecord(scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getCourseId(), scienceEvent.getResourceId());
             }
         }
     }

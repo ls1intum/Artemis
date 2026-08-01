@@ -1,0 +1,127 @@
+<div>
+    <h5 *adminTitleBarTitle class="admin-science-title" jhiTranslate="artemisApp.admin.science.title"></h5>
+
+    <section class="admin-science-section">
+        <h3 jhiTranslate="artemisApp.admin.science.courseActivation"></h3>
+        <div class="admin-science-inline-form">
+            <input type="number" tumUiInput [placeholder]="'artemisApp.admin.science.courseId' | artemisTranslate" [(ngModel)]="courseIdToEnable" />
+            <button type="button" tumUiButton (click)="enableCourse()">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.admin.science.enable"></span>
+            </button>
+        </div>
+
+        @if (loading()) {
+            <tum-ui-progress-spinner [ariaLabel]="'artemisApp.admin.science.loadingCourses' | artemisTranslate" styleClass="admin-science-spinner" />
+        } @else {
+            <table tumUiTable [size]="'small'" [striped]="true" [rowHover]="true" styleClass="admin-science-table">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.admin.science.course"></th>
+                        <th jhiTranslate="artemisApp.admin.science.shortName"></th>
+                        <th jhiTranslate="artemisApp.admin.science.status"></th>
+                        <th jhiTranslate="artemisApp.admin.science.lastChanged"></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (course of courses(); track course.courseId) {
+                        <tr>
+                            <td>{{ course.courseTitle }} ({{ course.courseId }})</td>
+                            <td>{{ course.courseShortName }}</td>
+                            <td>
+                                @if (course.active) {
+                                    <tum-ui-tag severity="success" [value]="'artemisApp.admin.science.active' | artemisTranslate" />
+                                } @else {
+                                    <tum-ui-tag severity="secondary" [value]="'artemisApp.admin.science.inactive' | artemisTranslate" />
+                                }
+                            </td>
+                            <td>{{ course.lastModifiedDate ?? course.createdDate }}</td>
+                            <td>
+                                @if (course.active) {
+                                    <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="disableCourse(course)">
+                                        <fa-icon [icon]="faToggleOff" />
+                                        <span jhiTranslate="artemisApp.admin.science.disable"></span>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="5" jhiTranslate="artemisApp.admin.science.noCourses"></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="admin-science-section">
+        <h3 jhiTranslate="artemisApp.admin.science.export.title"></h3>
+        <p class="text-muted-color" jhiTranslate="artemisApp.admin.science.export.description"></p>
+        <div class="admin-science-export-grid">
+            <label>
+                <span jhiTranslate="artemisApp.admin.science.export.courseIds"></span>
+                <input type="text" tumUiInput [placeholder]="'artemisApp.admin.science.export.courseIdsPlaceholder' | artemisTranslate" [(ngModel)]="exportCourseIds" />
+            </label>
+            <label>
+                <span jhiTranslate="artemisApp.admin.science.export.from"></span>
+                <input type="datetime-local" tumUiInput [(ngModel)]="exportFrom" />
+            </label>
+            <label>
+                <span jhiTranslate="artemisApp.admin.science.export.to"></span>
+                <input type="datetime-local" tumUiInput [(ngModel)]="exportTo" />
+            </label>
+            <label class="admin-science-purpose">
+                <span jhiTranslate="artemisApp.admin.science.export.purpose"></span>
+                <textarea tumUiTextarea rows="3" [(ngModel)]="exportPurpose"></textarea>
+            </label>
+        </div>
+        <div class="admin-science-event-types">
+            @for (eventType of eventTypes; track eventType) {
+                <label class="admin-science-event-type">
+                    <tum-ui-checkbox
+                        [inputId]="'science-event-type-' + eventType"
+                        [ngModel]="selectedEventTypes().includes(eventType)"
+                        (onChange)="toggleEventType(eventType, $event.checked)"
+                    />
+                    {{ eventType }}
+                </label>
+            }
+        </div>
+        <button type="button" tumUiButton class="admin-science-export-button" (click)="createExport()">
+            <fa-icon [icon]="faDownload" />
+            <span jhiTranslate="artemisApp.admin.science.export.create"></span>
+        </button>
+    </section>
+
+    <section class="admin-science-section">
+        <h3 jhiTranslate="artemisApp.admin.science.audit.title"></h3>
+        <table tumUiTable [size]="'small'" [striped]="true" [rowHover]="true" styleClass="admin-science-table">
+            <thead>
+                <tr>
+                    <th jhiTranslate="artemisApp.admin.science.audit.created"></th>
+                    <th jhiTranslate="artemisApp.admin.science.audit.admin"></th>
+                    <th jhiTranslate="artemisApp.admin.science.audit.courses"></th>
+                    <th jhiTranslate="artemisApp.admin.science.audit.purpose"></th>
+                    <th jhiTranslate="artemisApp.admin.science.audit.checksum"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (audit of audits(); track audit.id) {
+                    <tr>
+                        <td>{{ audit.createdDate }}</td>
+                        <td>{{ audit.createdBy }}</td>
+                        <td>{{ audit.courseFilter }}</td>
+                        <td>{{ audit.purpose }}</td>
+                        <td class="admin-science-checksum">{{ audit.fileChecksum }}</td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="5" jhiTranslate="artemisApp.admin.science.audit.empty"></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>

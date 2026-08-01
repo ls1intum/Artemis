@@ -39,6 +39,12 @@
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
+            "scienceConsent": {
+                "title": "Contribute course interaction data?",
+                "description": "{{ courseTitle }} uses voluntary science data collection for educational research and platform improvement. Artemis records selected course interaction events only if you agree. You can withdraw consent or delete your course interaction data later in user settings.",
+                "decline": "Do not contribute",
+                "accept": "Contribute data"
+            },
             "general": {
                 "noDataFound": "No data found.",
                 "noElementFoundWithAppliedFilter": "No element matches the applied filter."

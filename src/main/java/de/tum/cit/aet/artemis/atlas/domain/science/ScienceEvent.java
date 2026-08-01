@@ -34,6 +34,9 @@ public class ScienceEvent extends DomainObject {
     @Column(name = "resource_id")
     private Long resourceId;
 
+    @Column(name = "course_id")
+    private Long courseId;
+
     public String getIdentity() {
         return identity;
     }
@@ -64,5 +67,13 @@ public class ScienceEvent extends DomainObject {
 
     public void setResourceId(Long resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
     }
 }
