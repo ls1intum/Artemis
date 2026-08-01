@@ -1,13 +1,11 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-3">
     <div class="col m-0">
-        @if (exercises() && exercises().length > 0 && !overviewPageOpen()) {
+        @if (exercises() && exercises().length > 0) {
             <div
                 class="col d-none d-lg-block h3 m-0 text-overflow"
                 jhiTranslate="artemisApp.examParticipation.progress"
                 [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
             ></div>
-        }
-        @if (exercises() && exercises().length > 0 && !overviewPageOpen()) {
             <div
                 class="col d-block d-lg-none h3 m-0 text-overflow"
                 style="flex: 0.2"
@@ -15,30 +13,11 @@
                 [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
             ></div>
         }
-        @if (overviewPageOpen()) {
-            <div class="h3 m-0 text-overflow d-block col" jhiTranslate="artemisApp.examParticipation.examOverview"></div>
-        }
-        <div class="mt-2">
-            <jhi-exam-live-events-button />
-        </div>
     </div>
     <div class="col">
         <div class="d-flex justify-content-center">
-            <!-- exam overview item -->
-            <div class="navigation-item overview">
-                @if (!examTimeLineView()) {
-                    <button
-                        class="btn btn-primary w-100 synced"
-                        [ngClass]="getOverviewStatus()"
-                        [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
-                        (click)="changePage(true, -1)"
-                    >
-                        <fa-icon [icon]="faBars" />
-                    </button>
-                }
-            </div>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex() - 1, false)" [disabled]="exerciseIndex() <= 0">
+                <button class="btn btn-secondary w-100" (click)="changePage(exerciseIndex() - 1)" [disabled]="exerciseIndex() <= 0">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.previousButton"></span>
                 </button>
@@ -52,46 +31,28 @@
                     i <= exerciseIndex() + itemsVisiblePerSide() - (exerciseIndex() - itemsVisiblePerSide() <= 0 ? exerciseIndex() - itemsVisiblePerSide() : 0)
                 ) {
                     <div class="navigation-item">
-                        <button
-                            id="exam-exercise-{{ i }}"
-                            class="btn btn-primary w-100"
-                            [ngClass]="computeExerciseButtonStatus(i).status"
-                            [ngbTooltip]="!examTimeLineView() ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate) : ''"
-                            (click)="changePage(false, i, false)"
-                        >
-                            <fa-icon [icon]="getExerciseButtonIcon(i)" />
+                        <button id="exam-exercise-{{ i }}" class="btn btn-primary w-100" [ngClass]="getExerciseButtonStatus(i)" (click)="changePage(i)">
+                            <fa-icon [icon]="faCheck" [attr.aria-hidden]="true" />
+                            <span
+                                class="visually-hidden"
+                                jhiTranslate="artemisApp.examParticipation.navigation.exerciseButton"
+                                [translateValues]="{ number: i + 1, title: exercise.title }"
+                            ></span>
                         </button>
                         <div class="exerciseIndex">{{ i + 1 }}</div>
                     </div>
                 }
             }
             <div class="navigation-item">
-                <button
-                    class="btn btn-secondary w-100"
-                    (click)="changePage(false, overviewPageOpen() ? 0 : exerciseIndex() + 1, false)"
-                    [disabled]="exerciseIndex() >= exercises().length - 1 || exerciseIndex() < 0"
-                >
+                <button class="btn btn-secondary w-100" (click)="changePage(exerciseIndex() + 1)" [disabled]="exerciseIndex() >= exercises().length - 1 || exerciseIndex() < 0">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.nextButton"></span>
                 </button>
             </div>
         </div>
     </div>
-    <div class="col">
-        @if (!examTimeLineView()) {
-            <div class="row justify-content-end align-items-start pe-2">
-                <div class="d-flex mb-2 justify-content-end">
-                    @if (!overviewPageOpen()) {
-                        <button id="save" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
-                            {{ 'artemisApp.examParticipation.' + (exerciseIndex() >= exercises().length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
-                        </button>
-                    }
-                    <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()" jhiTranslate="artemisApp.examParticipation.handInEarly"></button>
-                </div>
-                <div class="ms-3 mb-2">
-                    <jhi-exam-timer class="d-flex justify-content-end mx-0" [criticalTime]="criticalTime" [endDate]="endDate()" (timerAboutToEnd)="triggerExamAboutToEnd()" />
-                </div>
-            </div>
-        }
-    </div>
+    <!-- Empty third column: it balances the first one so that the middle column stays centered in the
+         `justify-content-between` row. It used to hold the save button, the hand-in-early button and the exam timer,
+         none of which apply to the timeline. -->
+    <div class="col"></div>
 </div>
