@@ -68,11 +68,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
-        Course textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 

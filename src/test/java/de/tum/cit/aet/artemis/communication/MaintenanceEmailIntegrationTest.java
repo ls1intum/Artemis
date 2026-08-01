@@ -11,7 +11,7 @@ import java.time.format.FormatStyle;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Stream;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -32,6 +32,8 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
@@ -65,6 +67,9 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private MailSendingService testMailService;
 
@@ -105,7 +110,10 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void tearDown() {
         // Clean up entities created during tests to ensure isolation
         globalNotificationSettingRepository.deleteAll();
-        courseRepository.findAll().stream().filter(c -> c.getInstructorGroupName() != null && c.getInstructorGroupName().startsWith(TEST_PREFIX)).forEach(courseRepository::delete);
+        // Revoke UCR entries for TEST_PREFIX instructors — courses without UCR entries are
+        // invisible to findInstructorRecipientsForMaintenanceEmail, so course deletion is unnecessary
+        Stream.of(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2").flatMap(login -> userTestRepository.findOneByLogin(login).stream()).map(User::getId)
+                .forEach(userCourseRoleTestRepository::deleteByUser_Id);
     }
 
     // ---- Template rendering tests ----
@@ -176,10 +184,11 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldReturnInstructorsOfOngoingCourse() {
         var now = ZonedDateTime.now();
-        // Create ongoing course with instructor group matching user group
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        // Create ongoing course and enroll instructor1 as INSTRUCTOR
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
+        var instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.enrollUserInCourse(instructor1, ongoingCourse, CourseRole.INSTRUCTOR);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).isNotEmpty();
@@ -189,18 +198,13 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldNotIncludeInstructorsOnlyInExpiredCourses() {
         var now = ZonedDateTime.now();
-        // Use a unique group name that no other test will use
-        var uniqueInstructorGroup = TEST_PREFIX + "expired_only_instr";
+        // Enroll instructor1 only in the expired course (not in any ongoing course)
+        var expiredOnlyInstructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
 
-        // Create a user only in the unique group (not in any generic group)
-        var expiredOnlyInstructor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        expiredOnlyInstructor.setGroups(Set.of(uniqueInstructorGroup));
-        userTestRepository.save(expiredOnlyInstructor);
-
-        // Create only an expired course using this unique group
-        Course expiredCourse = CourseFactory.generateCourse(null, now.minusDays(60), now.minusDays(1), new HashSet<>(), "someStudents", "someTutors", "someEditors",
-                uniqueInstructorGroup);
+        // Create only an expired course
+        Course expiredCourse = CourseFactory.generateCourse(null, now.minusDays(60), now.minusDays(1), new HashSet<>());
         courseRepository.save(expiredCourse);
+        userUtilService.enrollUserInCourse(expiredOnlyInstructor, expiredCourse, CourseRole.INSTRUCTOR);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         var recipientIds = recipients.stream().map(r -> r.id()).toList();
@@ -210,12 +214,16 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldExcludeOptedOutUsers() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
-        // Get one instructor and opt them out
-        var instructorUser = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        // Enroll instructor2 so the course has at least one recipient (instructor1 is opted out)
+        var instructor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor2").orElseThrow();
+        userUtilService.enrollUserInCourse(instructor2, ongoingCourse, CourseRole.INSTRUCTOR);
+
+        // Get instructor1 and opt them out
+        var instructorUser = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.enrollUserInCourse(instructorUser, ongoingCourse, CourseRole.INSTRUCTOR);
         var setting = new GlobalNotificationSetting();
         setting.setUserId(instructorUser.getId());
         setting.setNotificationType(GlobalNotificationType.MAINTENANCE);
@@ -229,8 +237,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void countInstructorRecipients_shouldMatchFindSize() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
@@ -242,9 +249,10 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void findInstructorRecipients_shouldIncludeInstructorsOfCourseWithNullDates() {
         var now = ZonedDateTime.now();
         // Course with null start and end dates should be considered ongoing
-        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
-                TEST_PREFIX + "instructor");
+        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         courseRepository.save(openCourse);
+        var instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.enrollUserInCourse(instructor1, openCourse, CourseRole.INSTRUCTOR);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).isNotEmpty();
@@ -253,14 +261,18 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldExcludeUsersWithNoEmail() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
-        // Remove email from one instructor
-        var instructor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        // Remove email from instructor1
+        var instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         instructor.setEmail(null);
         userTestRepository.save(instructor);
+
+        // Enroll both instructors; instructor1 has no email so should be excluded
+        userUtilService.enrollUserInCourse(instructor, ongoingCourse, CourseRole.INSTRUCTOR);
+        var instructor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor2").orElseThrow();
+        userUtilService.enrollUserInCourse(instructor2, ongoingCourse, CourseRole.INSTRUCTOR);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         assertThat(recipients).noneMatch(r -> r.id().equals(instructor.getId()));

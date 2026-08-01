@@ -80,7 +80,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
 
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();
-            Optional<User> user = this.userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+            Optional<User> user = this.userRepository.findOneWithAuthoritiesByLogin(username);
             if (user.isEmpty()) {
                 throw new BadCredentialsException("User " + username + " was not found in the database");
             }

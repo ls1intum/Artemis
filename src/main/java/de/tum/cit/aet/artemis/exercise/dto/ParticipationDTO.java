@@ -12,14 +12,17 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationDTO(Long id, boolean testRun, String type, Integer submissionCount, ParticipationExerciseDTO exercise) implements Serializable {
+public record ParticipationDTO(Long id, boolean testRun, String type, InitializationState initializationState, Integer submissionCount, ParticipationExerciseDTO exercise)
+        implements Serializable {
 
     public static ParticipationDTO of(Participation participation) {
-        return Optional.ofNullable(participation)
-                .map(p -> new ParticipationDTO(p.getId(), p.isTestRun(), p.getType(), p.getSubmissionCount(), ParticipationExerciseDTO.of(p.getExercise()))).orElse(null);
+        return Optional.ofNullable(participation).map(
+                p -> new ParticipationDTO(p.getId(), p.isTestRun(), p.getType(), p.getInitializationState(), p.getSubmissionCount(), ParticipationExerciseDTO.of(p.getExercise())))
+                .orElse(null);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
