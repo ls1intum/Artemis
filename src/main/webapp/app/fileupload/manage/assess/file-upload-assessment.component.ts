@@ -140,9 +140,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
 
         this.route.params.subscribe((params) => {
-            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
-            // the previous submission has to be cleared before loading the next one
-            this.assessmentNotPossibleYet.set(undefined);
+            this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             this.resultId = Number(params['resultId']) || 0;
@@ -224,6 +222,22 @@ export class FileUploadAssessmentComponent implements OnInit {
                     }
                 },
             });
+    }
+
+    /**
+     * Clears everything that belongs to the previously assessed submission. Angular reuses this component for
+     * param-only navigations, so without this the page would keep showing the previous assessment while the next one
+     * loads — and would keep showing it instead of the explanation if that load is refused because the exam is not over
+     * yet, for example because a student was granted more working time in the meantime.
+     */
+    private resetSubmissionState(): void {
+        this.loadingInitialSubmission.set(true);
+        this.isLoading.set(true);
+        this.assessmentNotPossibleYet.set(undefined);
+        this.submission.set(undefined);
+        this.result.set(undefined);
+        this.unreferencedFeedback.set([]);
+        this.complaint.set(undefined!);
     }
 
     /**
@@ -349,7 +363,11 @@ export class FileUploadAssessmentComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
-                onError(this.alertService, error);
+                // the current assessment stays on the page, so here the explanation belongs in an alert rather than in
+                // place of it — without this the tutor would read "You are not authorized to access this page"
+                if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    onError(this.alertService, error);
+                }
             },
         });
     }

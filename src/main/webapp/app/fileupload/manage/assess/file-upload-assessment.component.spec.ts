@@ -442,6 +442,26 @@ describe('FileUploadAssessmentComponent', () => {
             expect(component.assessmentNotPossibleYet()).toBeUndefined();
             expect(component.submission()).toBe(submission);
         });
+
+        it('should replace an already loaded assessment when the next submission turns out to be blocked', () => {
+            // the exam can be extended while the tutor is correcting, so a loaded assessment does not mean the next
+            // one is assessable — the previous submission must not stay on screen in place of the explanation
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+
+            component.ngOnInit();
+            expect(component.submission()).toBe(submission);
+
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+            fixture.detectChanges();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.result()).toBeUndefined();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+        });
     });
 
     describe('feedback management', () => {
@@ -732,6 +752,26 @@ describe('FileUploadAssessmentComponent', () => {
             component.assessNext();
 
             expect(component.unreferencedFeedback()).toHaveLength(0);
+        });
+
+        it('should say when assessment is possible instead of reporting a missing authorization', () => {
+            // an exam can re-open while the tutor is correcting, e.g. when a student is granted more working time
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 403,
+                            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+                        }),
+                ),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.assessNext();
+
+            // the current assessment stays on the page, so this one belongs in an alert
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+            expect(alertErrorSpy).not.toHaveBeenCalledWith('error.http.403');
         });
     });
 
