@@ -34,8 +34,17 @@ public interface AssessmentNoteRepository extends ArtemisJpaRepository<Assessmen
     @Transactional // ok because of delete
     void deleteByResultId(long resultId);
 
+    /**
+     * Deletes the assessment notes of the supplied results.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
+     * <p>
+     * <b>Postcondition:</b> no assessment note references one of the supplied results.
+     *
+     * @param resultIds ids of the results whose notes are deleted
+     */
     @Modifying
     @Transactional // ok because of delete
     @Query("DELETE FROM AssessmentNote note WHERE note.resultId IN :resultIds")
-    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
+    void deleteByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 }

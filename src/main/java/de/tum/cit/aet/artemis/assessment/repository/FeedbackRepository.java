@@ -35,10 +35,19 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
     @Transactional // ok because of delete
     void deleteByResult_Id(long resultId);
 
+    /**
+     * Deletes feedback associated with the supplied results.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and associated long feedback texts have been deleted.
+     * <p>
+     * <b>Postcondition:</b> no feedback references one of the supplied results.
+     *
+     * @param resultIds ids of the results whose feedback is deleted
+     */
     @Modifying
     @Transactional // ok because of delete
     @Query("DELETE FROM Feedback feedback WHERE feedback.result.id IN :resultIds")
-    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
+    void deleteByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     @Query("""
             SELECT feedback

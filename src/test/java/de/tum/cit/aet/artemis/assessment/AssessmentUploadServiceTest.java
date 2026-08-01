@@ -201,6 +201,16 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, null));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseWithoutPositiveMaximumPoints() {
+        final MockMultipartFile zip = buildZip("Identifier,Overall points\n", new LinkedHashMap<>());
+        programmingExercise.setMaxPoints(0.0);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip))
+                .withMessage("The exercise for a manual assessment upload must have positive maximum points");
+    }
+
     private void assertManualAssessment(final long participationId, final double expectedScore, final String expectedFeedback) {
         final List<Result> manualResults = getManualResults(participationId);
         assertThat(manualResults).hasSize(1);

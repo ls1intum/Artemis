@@ -40,10 +40,19 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
     @Modifying
     void deleteByResult_Id(long resultId);
 
+    /**
+     * Deletes ratings associated with the supplied results.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
+     * <p>
+     * <b>Postcondition:</b> no rating references one of the supplied results.
+     *
+     * @param resultIds ids of the results whose ratings are deleted
+     */
     @Transactional // ok because of delete
     @Modifying
     @Query("DELETE FROM Rating rating WHERE rating.result.id IN :resultIds")
-    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
+    void deleteByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     /**
      * Find all ratings for a course as DTOs for the instructor dashboard with pagination.

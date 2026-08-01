@@ -130,7 +130,7 @@ public class AssessmentUploadService {
      * @param exercise the programming exercise the assessments belong to; must not be {@code null}
      * @param zipFile  the uploaded zip file containing {@code assessment-scores.csv} and one {@code .txt} file per participant; must not be {@code null}
      * @return a result describing either the created assessments (on success) or the collected validation errors (on failure); nothing is stored in the latter case
-     * @throws IllegalArgumentException if {@code exercise} or {@code zipFile} is {@code null}
+     * @throws IllegalArgumentException if a precondition is violated
      */
     @Transactional
     public AssessmentUploadResultDTO importAssessments(final ProgrammingExercise exercise, final MultipartFile zipFile) {
@@ -139,6 +139,15 @@ public class AssessmentUploadService {
         }
         if (zipFile == null) {
             throw new IllegalArgumentException("The zip file for a manual assessment upload must not be null");
+        }
+        if (exercise.getId() == null) {
+            throw new IllegalArgumentException("The exercise for a manual assessment upload must be persisted");
+        }
+        if (exercise.getCourseViaExerciseGroupOrCourseMember() == null) {
+            throw new IllegalArgumentException("The exercise for a manual assessment upload must belong to a course");
+        }
+        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
+            throw new IllegalArgumentException("The exercise for a manual assessment upload must have positive maximum points");
         }
 
         final ZipContents contents = readZipContents(zipFile);
@@ -196,6 +205,10 @@ public class AssessmentUploadService {
     /**
      * Collects a single zip entry into the accumulators: appends the bytes of an {@code assessment-scores.csv} entry to {@code csvFiles}, and stores the content of a {@code .txt}
      * entry in {@code textContentsByBaseName} keyed by its name without the extension. Directories, macOS resource-fork entries and hidden files are ignored.
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null}; {@code zipInputStream} is positioned at {@code entry}; both collections are mutable.
+     * <p>
+     * <b>Postcondition:</b> at most one relevant entry has been appended to the appropriate accumulator.
      *
      * @param entry                  the current zip entry
      * @param zipInputStream         the stream positioned at the entry, used to read its bytes
@@ -205,6 +218,8 @@ public class AssessmentUploadService {
      */
     private void collectEntry(final ZipEntry entry, final ZipInputStream zipInputStream, final List<byte[]> csvFiles, final Map<String, String> textContentsByBaseName)
             throws IOException {
+        assert entry != null && zipInputStream != null : "entry and zipInputStream must not be null";
+        assert csvFiles != null && textContentsByBaseName != null : "csvFiles and textContentsByBaseName must not be null";
         if (entry.isDirectory()) {
             return;
         }
@@ -254,6 +269,8 @@ public class AssessmentUploadService {
     /**
      * Parses the text of the single CSV file into records, resolving the mandatory {@code Overall points} column.
      * <p>
+     * <b>Precondition:</b> {@code csvContent} is non-{@code null}.
+     * <p>
      * <b>Postcondition:</b> returns a {@link ParsedCsv} with non-empty records and a resolved points column, or a {@link CsvParseError} if the column is missing, there are no data
      * rows, or the text cannot be parsed as CSV.
      *
@@ -261,6 +278,7 @@ public class AssessmentUploadService {
      * @return the parsed CSV, or a terminal parse error
      */
     private CsvParseResult parseCsvContent(final String csvContent) {
+        assert csvContent != null : "csvContent must not be null";
         final CSVFormat format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).setIgnoreSurroundingSpaces(true).setIgnoreEmptyLines(true).setTrim(true).get();
         try (CSVParser parser = CSVParser.parse(new StringReader(csvContent), format)) {
             final Optional<String> pointsColumn = parser.getHeaderNames().stream().filter(header -> header != null && header.trim().equalsIgnoreCase(OVERALL_POINTS_COLUMN))
@@ -337,12 +355,17 @@ public class AssessmentUploadService {
 
     /**
      * Adds an {@code UNMATCHED_TEXT_FILE} error for every text file that no CSV row referenced (each text file must belong to exactly one row).
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null} and {@code errors} is mutable.
+     * <p>
+     * <b>Postcondition:</b> one error has been appended for every key in {@code textKeys} that is absent from {@code matchedTextKeys}.
      *
      * @param textKeys        the base names of all text files in the upload
      * @param matchedTextKeys the base names that were matched to a CSV row
      * @param errors          out-parameter the unmatched-file errors are appended to
      */
     private void addErrorsForUnmatchedTextFiles(final Set<String> textKeys, final Set<String> matchedTextKeys, final List<AssessmentUploadErrorDTO> errors) {
+        assert textKeys != null && matchedTextKeys != null && errors != null : "textKeys, matchedTextKeys and errors must not be null";
         textKeys.stream().filter(key -> !matchedTextKeys.contains(key)).sorted()
                 .forEach(key -> errors.add(AssessmentUploadErrorDTO.of(key + TEXT_FILE_EXTENSION, AssessmentUploadErrorType.UNMATCHED_TEXT_FILE)));
     }
@@ -366,6 +389,7 @@ public class AssessmentUploadService {
     private RowValidationResult validateRow(final String identifier, final CSVRecord csvRecord, final String pointsColumn, final Map<String, String> textContentsByBaseName,
             final Map<Long, AssessmentUploadParticipationDTO> participationsById, final Set<Long> participationIdsOutsideExercise) {
         assert csvRecord != null && textContentsByBaseName != null : "csvRecord and textContentsByBaseName must not be null";
+        assert participationsById != null && participationIdsOutsideExercise != null : "resolved participation data must not be null";
         assert identifier != null && !identifier.isBlank() : "identifier must not be blank";
         assert pointsColumn != null : "pointsColumn must be resolved";
 
@@ -404,8 +428,8 @@ public class AssessmentUploadService {
     /**
      * Stores a manual assessment for every validated row and returns a success result listing the affected participants.
      * <p>
-     * <b>Precondition:</b> every element of {@code validatedRows} passed validation (participation resolved and belonging to {@code exercise}, points parsed, matching text file
-     * present) and the upload as a whole was error-free.
+     * <b>Preconditions:</b> {@code exercise} is persisted and belongs to a course, {@code validatedRows} is non-empty, every row passed validation (participation resolved and
+     * belonging to {@code exercise}, points parsed, matching text file present), and the upload as a whole was error-free.
      * <p>
      * <b>Postcondition:</b> a manual assessment has been created (or overwritten) for each row; the returned result lists the stored identifiers and carries no errors.
      *
@@ -414,7 +438,8 @@ public class AssessmentUploadService {
      * @return a success result listing the created assessments
      */
     private AssessmentUploadResultDTO storeValidatedRows(final ProgrammingExercise exercise, final List<ValidatedRow> validatedRows) {
-        assert exercise != null && validatedRows != null : "exercise and validatedRows must not be null";
+        assert exercise != null && exercise.getId() != null : "exercise must be persisted";
+        assert validatedRows != null && !validatedRows.isEmpty() : "validatedRows must not be null or empty";
         final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
         final Map<Long, StudentParticipation> participationsById = studentParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
@@ -441,6 +466,8 @@ public class AssessmentUploadService {
      * Builds a manual result with all required exercise and submission references, the uploaded score, and the uploaded feedback.
      * <p>
      * <b>Preconditions:</b> all parameters are non-{@code null}, and {@code row} contains validated assessment data for the exercise.
+     * <p>
+     * <b>Postcondition:</b> returns a transient result attached to {@code submission}, with the uploaded score and exactly one manual unreferenced feedback.
      *
      * @param exercise   the programming exercise the result belongs to
      * @param submission the submission the result belongs to
@@ -449,6 +476,9 @@ public class AssessmentUploadService {
      */
     private Result buildManualResult(final ProgrammingExercise exercise, final Submission submission, final ValidatedRow row) {
         assert exercise != null && submission != null && row != null : "exercise, submission and row must not be null";
+        assert exercise.getId() != null && exercise.getMaxPoints() != null && exercise.getMaxPoints() > 0 : "exercise must be persisted and have positive maximum points";
+        assert submission.getParticipation() != null && submission.getParticipation().getId() != null
+                && submission.getParticipation().getId() == row.participationId() : "submission must belong to the validated participation";
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final Result result = new Result();
         result.setSubmission(submission);
@@ -460,12 +490,18 @@ public class AssessmentUploadService {
 
     /**
      * Builds the single unreferenced manual feedback that carries the uploaded text and the achieved points.
+     * <p>
+     * <b>Preconditions:</b> {@code feedbackText} is non-{@code null}, and {@code points} is finite and non-negative.
+     * <p>
+     * <b>Postcondition:</b> returns positive-via-credits {@code MANUAL_UNREFERENCED} feedback with the supplied text and points.
      *
      * @param feedbackText the content of the participant's text file, stored as the feedback detail text
      * @param points       the achieved points, stored as the feedback credits
      * @return the manual feedback
      */
     private Feedback buildManualFeedback(final String feedbackText, final double points) {
+        assert feedbackText != null : "feedbackText must not be null";
+        assert Double.isFinite(points) && points >= 0 : "points must be finite and non-negative";
         final Feedback feedback = new Feedback();
         feedback.setType(FeedbackType.MANUAL_UNREFERENCED);
         feedback.setDetailText(feedbackText);
@@ -645,13 +681,17 @@ public class AssessmentUploadService {
     private record ValidatedRow(String identifier, long participationId, double points, String feedbackText) {
 
         /**
-         * <b>Preconditions:</b> {@code identifier} is non-blank, {@code feedbackText} is non-{@code null}, and {@code points} is finite and non-negative.
+         * <b>Preconditions:</b> {@code identifier} is non-blank, {@code participationId} identifies a persisted participation, {@code feedbackText} is non-{@code null}, and
+         * {@code points} is finite and non-negative.
          *
          * @throws IllegalArgumentException if a precondition is violated
          */
         ValidatedRow {
             if (identifier == null || identifier.isBlank()) {
                 throw new IllegalArgumentException("The student identifier must not be null or blank");
+            }
+            if (participationId <= 0) {
+                throw new IllegalArgumentException("The participation id must identify a persisted participation");
             }
             if (!Double.isFinite(points) || points < 0) {
                 throw new IllegalArgumentException("The achieved points must be finite and non-negative");

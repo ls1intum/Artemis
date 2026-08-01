@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -64,6 +68,9 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private RatingRepository ratingRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -107,6 +114,20 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
+    }
+
+    @Test
+    void shouldRejectInvalidBatchParameters() {
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.createNewManualResult(null, true));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.createNewManualResults(null, true));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.createNewManualResults(Collections.singletonList(null), true));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.deleteResultsByIds(null));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.deleteResultsByIds(List.of()));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.deleteManualResultsForAssessmentUpload(0, Set.of(1L)));
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.deleteManualResultsForAssessmentUpload(programmingExercise.getId(), Set.of()));
+        // Spring's repository exception translator wraps the IllegalArgumentException thrown by default repository methods.
+        assertThatThrownBy(() -> participantScoreRepository.clearAllByResultIds(null)).hasRootCauseInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> participantScoreRepository.clearAllByResultIds(Set.of())).hasRootCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

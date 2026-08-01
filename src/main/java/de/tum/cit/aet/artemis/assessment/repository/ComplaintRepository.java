@@ -34,10 +34,19 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Long> {
 
+    /**
+     * Deletes the complaints associated with the supplied results.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and the associated complaint responses have been deleted.
+     * <p>
+     * <b>Postcondition:</b> no complaint references one of the supplied results.
+     *
+     * @param resultIds ids of the results whose complaints are deleted
+     */
     @Transactional // ok because of delete
     @Modifying
     @Query("DELETE FROM Complaint c WHERE c.result.id IN :resultIds")
-    void deleteByResultIds(@Param("resultIds") Collection<Long> resultIds);
+    void deleteByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     @Query("""
             SELECT c
