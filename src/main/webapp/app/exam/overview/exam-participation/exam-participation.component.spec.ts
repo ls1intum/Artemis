@@ -29,7 +29,6 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
-import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
@@ -68,6 +67,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 describe('ExamParticipationComponent', () => {
+    // Backing signal for the mocked submission-sync contract; see the MockProvider below.
+    const submissionSyncVersion = signal(0);
     let fixture: ComponentFixture<ExamParticipationComponent>;
     let comp: ExamParticipationComponent;
     let examParticipationService: ExamParticipationService;
@@ -117,7 +118,6 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(ExamParticipationCoverComponent),
                 MockComponent(ExamBarComponent),
                 MockComponent(ExamNavigationSidebarComponent),
-                MockComponent(ExamNavigationBarComponent),
                 MockComponent(QuizExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),
                 MockComponent(ModelingExamSubmissionComponent),
@@ -142,7 +142,16 @@ describe('ExamParticipationComponent', () => {
                     useValue: setupActivatedRouteMock(),
                 },
                 { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
-                MockProvider(ExamParticipationService),
+                // submissionSyncVersion is a field-initialised readonly signal, which ng-mocks' MockProvider
+                // does not stub (it only mocks prototype members). The exam exercise overview page and the
+                // save button read it to stay reactive to in-place `isSynced` mutations, so without it they
+                // throw "submissionSyncVersion is not a function" as soon as they render. Wire the notifier to
+                // the same signal instance too: a no-op notifier would leave those bindings permanently stale,
+                // which is the staleness bug this contract exists to prevent.
+                MockProvider(ExamParticipationService, {
+                    submissionSyncVersion: submissionSyncVersion.asReadonly(),
+                    notifySubmissionSyncStateChanged: () => submissionSyncVersion.update((version) => version + 1),
+                }),
                 MockProvider(ModelingSubmissionService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(TextSubmissionService),

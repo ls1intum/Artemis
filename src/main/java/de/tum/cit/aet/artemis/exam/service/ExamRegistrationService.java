@@ -4,11 +4,14 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +26,12 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -74,6 +79,8 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final ExamUserService examUserService;
 
     private static final boolean IS_TEST_RUN = false;
@@ -83,7 +90,7 @@ public class ExamRegistrationService {
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
             ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
             StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ExamUserService examUserService, StudentExamService studentExamService) {
+            UserCourseRoleRepository userCourseRoleRepository, ExamUserService examUserService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -93,6 +100,7 @@ public class ExamRegistrationService {
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
         this.studentExamService = studentExamService;
@@ -122,12 +130,23 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
+        // Pre-fetch the ids of all course staff once to avoid one isStaffMemberOfCourse EXISTS query per submitted student.
+        Set<Long> staffUserIds = userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT)).stream()
+                .map(User::getId).collect(Collectors.toSet());
+
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExamForLogging = new ArrayList<>();
 
+        record ResolvedStudent(User student, String room, String seat) {
+        }
+        // Keyed by user id so a request (or an imported CSV) that lists the same user more than once yields exactly one
+        // ExamUser. exam_user has no unique constraint on (exam_id, student_id), so duplicates would otherwise be persisted
+        // and later break findByExamIdAndUserId, which returns an Optional. Insertion order is preserved for stable logging.
+        // Per field, the last non-blank value wins, which is how the previous row-by-row implementation behaved.
+        Map<Long, ResolvedStudent> resolvedStudentsByUserId = new LinkedHashMap<>();
         for (var examUserDto : examUserDTOs) {
-            // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
+            // Resolve the user WITHOUT enrolling them in the course yet, so that rejected staff leave no side effect
             Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
@@ -137,48 +156,63 @@ public class ExamRegistrationService {
             User student = optionalStudent.get();
 
             // Reject staff (instructor, editor, tutor, admin) BEFORE granting any course access
-            if (isStaffMemberOfCourse(course, student)) {
+            if (staffUserIds.contains(student.getId()) || authorizationCheckService.isAdmin(student)) {
                 rejectedStaffDTOs.add(examUserDto);
                 continue;
             }
 
-            // Only users who will actually be registered get added to the course student group
-            if (!student.getGroups().contains(course.getStudentGroupName())) {
-                userService.addUserToGroup(student, course.getStudentGroupName());
-            }
+            resolvedStudentsByUserId.merge(student.getId(), new ResolvedStudent(student, examUserDto.room(), examUserDto.seat()),
+                    (existingEntry, incoming) -> new ResolvedStudent(existingEntry.student(), StringUtils.hasText(incoming.room()) ? incoming.room() : existingEntry.room(),
+                            StringUtils.hasText(incoming.seat()) ? incoming.seat() : existingEntry.seat()));
+        }
+        Collection<ResolvedStudent> resolvedStudents = resolvedStudentsByUserId.values();
 
-            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+        // Only users who will actually be registered get enrolled. Batching them keeps this to a single round trip
+        // instead of one existsBy query + insert per student.
+        userService.addUsersToCourse(resolvedStudents.stream().map(ResolvedStudent::student).toList(), course, CourseRole.STUDENT);
 
-            if (examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) {
+        // exam.getExamUsers() is already eagerly loaded, so this avoids one findByExamIdAndUserId query per student.
+        // Duplicates cannot be ruled out for pre-existing data (no unique constraint), so keep the first row rather than throwing.
+        Map<Long, ExamUser> existingExamUsersByUserId = exam.getExamUsers().stream().collect(Collectors.toMap(eu -> eu.getUser().getId(), eu -> eu, (first, duplicate) -> first));
+
+        List<ExamUser> examUsersToCreate = new ArrayList<>();
+        List<ExamUser> examUsersToUpdate = new ArrayList<>();
+
+        for (var resolved : resolvedStudents) {
+            User student = resolved.student();
+            ExamUser existing = existingExamUsersByUserId.get(student.getId());
+
+            if (existing == null) {
                 ExamUser registeredExamUser = new ExamUser();
                 registeredExamUser.setUser(student);
                 registeredExamUser.setExam(exam);
 
-                if (StringUtils.hasText(examUserDto.room())) {
-                    registeredExamUser.setPlannedRoom(examUserDto.room());
+                if (StringUtils.hasText(resolved.room())) {
+                    registeredExamUser.setPlannedRoom(resolved.room());
                 }
-                if (StringUtils.hasText(examUserDto.seat())) {
-                    registeredExamUser.setPlannedSeat(examUserDto.seat());
+                if (StringUtils.hasText(resolved.seat())) {
+                    registeredExamUser.setPlannedSeat(resolved.seat());
                 }
-                registeredExamUser = examUserRepository.save(registeredExamUser);
-                exam.addExamUser(registeredExamUser);
-
-                usersAddedToExamForLogging.add(registeredExamUser.getUser().getLogin());
+                examUsersToCreate.add(registeredExamUser);
+                usersAddedToExamForLogging.add(student.getLogin());
             }
             else {
                 // Update room/seat of an already registered exam user
-                ExamUser examUser = examUserOptional.get();
-                if (StringUtils.hasText(examUserDto.room())) {
-                    examUser.setPlannedRoom(examUserDto.room());
+                if (StringUtils.hasText(resolved.room())) {
+                    existing.setPlannedRoom(resolved.room());
                 }
-                if (StringUtils.hasText(examUserDto.seat())) {
-                    examUser.setPlannedSeat(examUserDto.seat());
+                if (StringUtils.hasText(resolved.seat())) {
+                    existing.setPlannedSeat(resolved.seat());
                 }
-                examUser = examUserRepository.save(examUser);
-                exam.addExamUser(examUser);
-                usersAddedToExamForLogging.add(examUser.getUser().getLogin());
+                examUsersToUpdate.add(existing);
+                usersAddedToExamForLogging.add(existing.getUser().getLogin());
             }
         }
+
+        // Batch-insert/update all exam users in two round trips instead of one INSERT/UPDATE per student.
+        examUserRepository.saveAll(examUsersToCreate).forEach(exam::addExamUser);
+        examUserRepository.saveAll(examUsersToUpdate);
+
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
@@ -192,7 +226,7 @@ public class ExamRegistrationService {
         }
 
         try {
-            User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+            User currentUser = userRepository.getUserWithAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
             for (var i = 0; i < examUserDTOs.size(); i++) {
@@ -287,7 +321,7 @@ public class ExamRegistrationService {
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed user {} from the exam {} with id {}. This also deleted a potentially existing student exam with all its participations and submissions.",
@@ -328,7 +362,7 @@ public class ExamRegistrationService {
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",
@@ -343,19 +377,33 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = new ArrayList<>(userRepository.getStudents(course));
+        // Load students with their authorities eagerly so that isAdmin() can access
+        // user.getAuthorities() without triggering a LazyInitializationException on
+        // the detached entity after the Hibernate session has been closed.
+        var students = new ArrayList<>(userRepository.findAllByCourseIdAndCourseRolesInWithAuthorities(course.getId(), Set.of(CourseRole.STUDENT)));
+
+        // Pre-fetch already-registered user IDs from the eagerly loaded exam users to avoid one per-student DB query.
+        Set<Long> registeredUserIds = exam.getExamUsers() != null ? exam.getExamUsers().stream().map(eu -> eu.getUser().getId()).collect(Collectors.toSet()) : Set.of();
+        // Pre-fetch the ids of all course staff once to avoid one isStaffMemberOfCourse EXISTS query per student.
+        Set<Long> staffUserIds = userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT)).stream()
+                .map(User::getId).collect(Collectors.toSet());
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
+        List<ExamUser> newExamUsers = new ArrayList<>();
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            Optional<ExamUser> registeredExamUserCheckOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-            if (registeredExamUserCheckOptional.isEmpty() && !isStaffMemberOfCourse(course, student)) {
-                ExamUser registeredExamUser = createExamUser(exam, student);
-                exam.addExamUser(registeredExamUser);
+            if (!registeredUserIds.contains(student.getId()) && !staffUserIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
+                ExamUser examUser = new ExamUser();
+                examUser.setExam(exam);
+                examUser.setUser(student);
+                newExamUsers.add(examUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }
+
+        // Batch-insert all new exam users in one round trip instead of one INSERT per student.
+        examUserRepository.saveAll(newExamUsers).forEach(exam::addExamUser);
 
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());

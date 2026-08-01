@@ -48,19 +48,18 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testFindAllNotEnrolledUsers() {
-        List<User> expected = userRepository
-                .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 1, 3));
+        List<User> expected = userRepository.saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 1, 3));
         // Should not find administrators
-        List<User> unexpected = userRepository.saveAll(
-                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
+        List<User> unexpected = userRepository
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
         // Should not find super administrators
-        List<User> superAdmins = userRepository.saveAll(
-                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
+        List<User> superAdmins = userRepository
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
         unexpected.addAll(superAdmins);
         // Should not find deleted users
-        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 6, 7);
+        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 6, 7);
         deleted.forEach(user -> user.setDeleted(true));
-        unexpected.addAll(userRepository.saveAll(deleted));
+        unexpected.addAll(userRepository.saveAllOrUpdate(deleted));
 
         final List<String> actual = userRepository.findAllNotEnrolledUsers();
 
@@ -136,9 +135,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
         // Create regular admin users
-        List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 1,
-                2);
-        admins = userRepository.saveAll(admins);
+        List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 1, 2);
+        admins = userRepository.saveAllOrUpdate(admins);
 
         // Create an inactive admin user (should not be included)
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
@@ -216,7 +214,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course and exercise without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
 
         // Create a regular user who is not enrolled
@@ -253,7 +251,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course, exercise, and participation without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "student");
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());

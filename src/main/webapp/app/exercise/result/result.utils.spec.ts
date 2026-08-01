@@ -1,4 +1,4 @@
-import { expect } from 'vitest';
+import { afterEach, beforeEach, expect, vi } from 'vitest';
 import {
     MissingResultInformation,
     ResultTemplateStatus,
@@ -23,6 +23,9 @@ import dayjs from 'dayjs/esm';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 describe('ResultUtils', () => {
+    const fixedNow = new Date('2026-07-29T12:00:00.000Z');
+    const fixedDay = () => dayjs(fixedNow);
+
     describe('evaluateTemplateStatus exercise-type discrimination', () => {
         const ratedProgrammingResult: Result = { id: 1, score: 100, rated: true, completionDate: dayjs().subtract(1, 'minute') };
         const programmingExercise = { id: 6, type: ExerciseType.PROGRAMMING } as Exercise;
@@ -44,6 +47,15 @@ describe('ResultUtils', () => {
     });
 
     describe('evaluateTemplateStatus computes each status', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(fixedNow);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         const programmingExercise = { id: 6, type: ExerciseType.PROGRAMMING } as Exercise;
         const programmingParticipation = { type: ParticipationType.PROGRAMMING } as Participation;
         const textExerciseWith = (dueDate: dayjs.Dayjs, assessmentDueDate?: dayjs.Dayjs) => ({ id: 5, type: ExerciseType.TEXT, dueDate, assessmentDueDate }) as Exercise;
@@ -67,7 +79,7 @@ describe('ResultUtils', () => {
         });
 
         it('IS_GENERATING_FEEDBACK for an Athena result still being processed', () => {
-            const result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'hour') } as Result;
+            const result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: fixedDay().add(1, 'hour') } as Result;
             expect(evaluateTemplateStatus(programmingExercise, programmingParticipation, result, false)).toBe(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
         });
 
@@ -77,8 +89,27 @@ describe('ResultUtils', () => {
         });
 
         it('FEEDBACK_GENERATION_TIMED_OUT for a timed-out Athena result', () => {
-            const result = { id: 1, score: 50, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().subtract(1, 'hour') } as Result;
+            const result = {
+                id: 1,
+                score: 50,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: fixedDay().subtract(1, 'hour'),
+            } as Result;
             expect(evaluateTemplateStatus(programmingExercise, programmingParticipation, result, false)).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
+        });
+
+        it('FEEDBACK_GENERATION_TIMED_OUT for a timed-out text Athena result submitted in due time', () => {
+            const exercise = textExerciseWith(fixedDay().add(1, 'day'));
+            const result = {
+                id: 1,
+                score: 0,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: fixedDay().subtract(1, 'hour'),
+            } as Result;
+            const participation = textParticipationWith(fixedDay().subtract(1, 'hour'), [result]);
+            expect(evaluateTemplateStatus(exercise, participation, result, false)).toBe(ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT);
         });
 
         it('NO_RESULT for a programming exercise without a result', () => {
@@ -86,28 +117,28 @@ describe('ResultUtils', () => {
         });
 
         it('SUBMITTED for a text exercise submitted in due time without a result', () => {
-            const exercise = textExerciseWith(dayjs().add(1, 'day'));
-            const participation = textParticipationWith(dayjs().subtract(1, 'hour'));
+            const exercise = textExerciseWith(fixedDay().add(1, 'day'));
+            const participation = textParticipationWith(fixedDay().subtract(1, 'hour'));
             expect(evaluateTemplateStatus(exercise, participation, undefined, false)).toBe(ResultTemplateStatus.SUBMITTED);
         });
 
         it('SUBMITTED_WAITING_FOR_GRADING for a manual result while the assessment period is still active', () => {
-            const exercise = textExerciseWith(dayjs().add(1, 'day'), dayjs().add(2, 'day'));
+            const exercise = textExerciseWith(fixedDay().add(1, 'day'), fixedDay().add(2, 'day'));
             const result = { id: 1, score: 80, assessmentType: AssessmentType.MANUAL } as Result;
-            const participation = textParticipationWith(dayjs().subtract(1, 'hour'), [result]);
+            const participation = textParticipationWith(fixedDay().subtract(1, 'hour'), [result]);
             expect(evaluateTemplateStatus(exercise, participation, result, false)).toBe(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
         });
 
         it('LATE for a result submitted after the due date with no assessment due date', () => {
-            const exercise = textExerciseWith(dayjs().subtract(1, 'day'));
+            const exercise = textExerciseWith(fixedDay().subtract(1, 'day'));
             const result = { id: 1, score: 80, assessmentType: AssessmentType.MANUAL } as Result;
-            const participation = textParticipationWith(dayjs().subtract(2, 'hour'), [result]);
+            const participation = textParticipationWith(fixedDay().subtract(2, 'hour'), [result]);
             expect(evaluateTemplateStatus(exercise, participation, result, false)).toBe(ResultTemplateStatus.LATE);
         });
 
         it('LATE_NO_FEEDBACK for a late submission with no result', () => {
-            const exercise = textExerciseWith(dayjs().subtract(1, 'day'));
-            const participation = textParticipationWith(dayjs().subtract(2, 'hour'));
+            const exercise = textExerciseWith(fixedDay().subtract(1, 'day'));
+            const participation = textParticipationWith(fixedDay().subtract(2, 'hour'));
             expect(evaluateTemplateStatus(exercise, participation, undefined, false)).toBe(ResultTemplateStatus.LATE_NO_FEEDBACK);
         });
     });
@@ -223,95 +254,117 @@ describe('ResultUtils', () => {
         expect(getTextColorClass(result, participation, templateStatus!)).toBe(expected);
     });
 
-    it.each([
-        {
-            result: {} as Result,
-            participation: { exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faCheckCircle,
-        },
-        { result: undefined, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
-        {
-            result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faTimesCircle,
-        },
-        {
-            result: {} as Result,
-            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faQuestionCircle,
-        },
-        {
-            result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faCheckCircle,
-        },
-        {
-            result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faTimesCircle,
-        },
-        {
-            result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faCheckCircle,
-        },
-        {
-            result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faTimesCircle,
-        },
-        {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faTimesCircle,
-        },
-        {
-            result: {
-                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }],
-                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-                successful: undefined,
-                completionDate: dayjs().add(5, 'minutes'),
+    describe('getResultIconClass', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(fixedNow);
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it.each([
+            {
+                result: {} as Result,
+                participation: { exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faCheckCircle,
             },
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
-            expected: faCircleNotch,
-        },
-        {
-            result: {
-                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result >= 100' }],
-                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
-                successful: true,
-                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-                completionDate: dayjs().subtract(5, 'minutes'),
-            } as Result,
-            participation: {} as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faCheckCircle,
-        },
-        {
-            result: {
-                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result failed to generate' }],
+            { result: undefined, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
+            {
+                result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faTimesCircle,
             },
-            participation: {
-                type: ParticipationType.STUDENT,
-                exercise: { type: ExerciseType.TEXT } as Exercise,
-                successful: false,
-                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-                completionDate: dayjs().subtract(5, 'minutes'),
-            } as Participation,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faTimesCircle,
-        },
-    ])('should correctly determine result icon', ({ result, participation, templateStatus, expected }) => {
-        expect(getResultIconClass(result, participation, templateStatus!)).toBe(expected);
+            {
+                result: {} as Result,
+                participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faQuestionCircle,
+            },
+            {
+                result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faCheckCircle,
+            },
+            {
+                result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faTimesCircle,
+            },
+            {
+                result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faCheckCircle,
+            },
+            {
+                result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faTimesCircle,
+            },
+            {
+                result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faTimesCircle,
+            },
+            {
+                result: {
+                    feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }],
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    successful: undefined,
+                    completionDate: fixedDay().add(5, 'minutes'),
+                },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+                expected: faCircleNotch,
+            },
+            {
+                result: {
+                    feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result timed out' }],
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    successful: undefined,
+                    completionDate: fixedDay().subtract(5, 'minutes'),
+                },
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT,
+                expected: faQuestionCircle,
+            },
+            {
+                result: {
+                    feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result >= 100' }],
+                    participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+                    successful: true,
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    completionDate: fixedDay().subtract(5, 'minutes'),
+                } as Result,
+                participation: {} as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faCheckCircle,
+            },
+            {
+                result: {
+                    feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result failed to generate' }],
+                },
+                participation: {
+                    type: ParticipationType.STUDENT,
+                    exercise: { type: ExerciseType.TEXT } as Exercise,
+                    successful: false,
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    completionDate: fixedDay().subtract(5, 'minutes'),
+                } as Participation,
+                templateStatus: ResultTemplateStatus.HAS_RESULT,
+                expected: faTimesCircle,
+            },
+        ])('should correctly determine result icon', ({ result, participation, templateStatus, expected }) => {
+            expect(getResultIconClass(result, participation, templateStatus!)).toBe(expected);
+        });
     });
 
     describe('circular reference breaker', () => {

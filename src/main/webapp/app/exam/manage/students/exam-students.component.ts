@@ -42,7 +42,7 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
-import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { Tag } from 'primeng/tag';
 import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';

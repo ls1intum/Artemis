@@ -3,7 +3,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays, isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
-import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

@@ -1333,6 +1333,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         submissionCopy.submitted = true;
                         delete submissionCopy.participation;
                         exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                        // `submitted` was flipped on a plain object from a websocket callback, which schedules no
+                        // change detection. Without this the navigation sidebar and exercise overview keep the old
+                        // icon and saved counter — defeating this block's stated purpose of syncing the navigation
+                        // bar when the student submits from an IDE rather than the code editor.
+                        this.examParticipationService.notifySubmissionSyncStateChanged();
                     }
                 }
             });
