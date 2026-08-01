@@ -135,7 +135,7 @@ public class RepositoryParticipationService {
             throw new IllegalArgumentException("Participation is not a programming exercise participation");
         }
 
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
+        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithAuthorities(), RepositoryActionType.READ);
 
         return getRepositoryFromGitService(true, programmingParticipation);
     }

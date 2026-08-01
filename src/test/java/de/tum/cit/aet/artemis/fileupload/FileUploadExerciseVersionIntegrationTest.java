@@ -50,7 +50,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         exerciseVersionService.createExerciseVersion(fileUploadExercise);
     }
@@ -113,7 +113,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportFileUploadExercise_createsExerciseVersion() throws Exception {
         // Arrange: Create target course
-        Course targetCourse = courseUtilService.addEmptyCourse();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // Get original version
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(fileUploadExercise.getId(), TEST_PREFIX + "instructor1",

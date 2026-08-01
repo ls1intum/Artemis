@@ -143,18 +143,18 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
      *
      * @param partialTitle       lecture title search term
      * @param partialCourseTitle course title search term
-     * @param groups             user groups
+     * @param userId             id of the user
      * @param pageable           Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
+            WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = lecture.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR))
                 AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
-            @Param("groups") Set<String> groups, Pageable pageable);
+            @Param("userId") long userId, Pageable pageable);
 
     /**
      * Returns the title of the lecture with the given id.

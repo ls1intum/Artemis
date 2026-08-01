@@ -86,7 +86,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = "admin", roles = "ADMIN")
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");

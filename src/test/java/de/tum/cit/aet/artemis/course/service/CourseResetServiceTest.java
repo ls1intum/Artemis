@@ -50,7 +50,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
     }
 

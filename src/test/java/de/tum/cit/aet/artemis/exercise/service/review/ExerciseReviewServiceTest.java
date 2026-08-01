@@ -99,7 +99,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setProblemStatement("Line 1\nLine 2\nLine 3");
@@ -312,6 +312,29 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(thread.getInitialCommitSha()).isEqualTo(expectedCommitSha);
             assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldBuildInlineFixForTextFileWithBinaryListedExtension() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-shell-inline-fix");
+        pushFileToRepository(templateRepo, "check.sh", "#!/bin/sh\necho old\n");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Update shell check", "Use the new output",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "check.sh", 2, 2, "echo new")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        CommentThread thread = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId()).iterator().next();
+        ConsistencyIssueCommentContentDTO content = (ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent();
+        assertThat(content.suggestedFix()).isNotNull();
+        assertThat(content.suggestedFix().expectedCode()).isEqualTo("echo old");
+        assertThat(content.suggestedFix().replacementCode()).isEqualTo("echo new");
     }
 
     @Test

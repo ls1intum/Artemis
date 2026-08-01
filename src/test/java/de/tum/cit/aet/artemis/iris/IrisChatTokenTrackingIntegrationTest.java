@@ -90,7 +90,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);

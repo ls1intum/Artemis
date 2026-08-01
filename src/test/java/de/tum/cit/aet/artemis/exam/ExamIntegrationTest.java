@@ -65,9 +65,11 @@ import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
@@ -201,6 +203,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private ExamUserRepository examUserRepository;
 
     @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
@@ -247,25 +252,34 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // setup users
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
 
-        // Add users that are not in the course
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        // reset courses — must happen BEFORE outsider users are created so that
+        // enrollPrefixedUsersInCourse (called inside addEmptyCourse) does not pick them up.
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+
+        // Add users that are not in the course (created AFTER enrollment so they stay unenrolled)
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(UserFactory.USER_PASSWORD));
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
-        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-
-        // reset courses
-        course1 = courseUtilService.addEmptyCourse();
-        course2 = courseUtilService.addEmptyCourse();
+        // Enroll standard users (student1-4, tutor1, instructor1) in course1 and course2
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + i);
+            userUtilService.enrollUserInCourse(student, course1, CourseRole.STUDENT);
+            userUtilService.enrollUserInCourse(student, course2, CourseRole.STUDENT);
+        }
+        var tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.enrollUserInCourse(tutor1, course1, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(tutor1, course2, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(instructor, course1, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(instructor, course2, CourseRole.INSTRUCTOR);
 
         course10 = courseUtilService.createCourse();
-        course10.setInstructorGroupName("instructor10-test-group");
-        course10 = courseRepository.save(course10);
-
         User instructor10 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor10");
-        instructor10.setGroups(Set.of(course10.getInstructorGroupName()));
-        userTestRepository.save(instructor10);
+        userUtilService.enrollUserInCourse(instructor10, course10, CourseRole.INSTRUCTOR);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
@@ -316,15 +330,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAllActiveExams_Tutor() throws Exception {
         var now = ZonedDateTime.now();
-        // add two additional exams, one already visible, the other one visible tomorrow
-        var exam3 = examUtilService.addExam(course10, now.minusDays(1), now, now.plusHours(2));
-        var exam4 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
+        // Use course1 where tutor1 is enrolled; tutor1 is NOT enrolled in course10, so using course10
+        // would return no results at all with the UCR-based course-enrollment check.
+        // exam3: visible now (tutor sees it), exam4: visible tomorrow (not yet visible for TA), exam5: visible 10+ days ago (outside 7-day window)
+        var exam3 = examUtilService.addExam(course1, now.minusDays(1), now, now.plusHours(2));
+        var exam4 = examUtilService.addExam(course1, now.plusDays(1), now.plusDays(2), now.plusDays(3));
 
-        // add additional exam not active
-        var exam5 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
+        // add additional exam not active (visibleDate more than 7 days in the past)
+        var exam5 = examUtilService.addExam(course1, now.minusDays(10), now.plusDays(2), now.plusDays(3));
 
         List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
-        // only exam4 should be returned
+        // exam3 should be returned (visible and active), exam4 and exam5 should not
         assertThat(activeExams).contains(exam3);
         assertThat(activeExams).doesNotContain(exam4);
         assertThat(activeExams).doesNotContain(exam5);
@@ -467,7 +483,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testSaveExamWithExerciseGroupWithExerciseToDatabase() {
-        examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
     }
 
     private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
@@ -538,6 +554,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor_createsCourseMessagingChannel() throws Exception {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
+        // In the UCR-based authorization model, instructor1 must be explicitly enrolled in the
+        // new course as INSTRUCTOR; otherwise the course-access check returns 403.
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
         Exam exam = ExamFactory.generateExam(course, "examG");
 
         Exam savedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.CREATED);
@@ -942,7 +961,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
-        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var modelingExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         assertThat(modelingExercise.isExampleSolutionPublished()).isFalse();
 
@@ -962,7 +981,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_datesChangedReflectedInWeaviate() throws Exception {
-        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var modelingExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         var exam = modelingExercise.getExerciseGroup().getExam();
 
         // Insert the exercise into Weaviate with initial dates
@@ -1006,10 +1025,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedExam.id()).isEqualTo(exam1.getId());
         assertThat(returnedExam.course()).isNotNull();
         assertThat(returnedExam.course().id()).isEqualTo(course1.getId());
-        // The embedded course must carry the group names the client needs to compute access rights.
-        assertThat(returnedExam.course().instructorGroupName()).isEqualTo(course1.getInstructorGroupName());
-        assertThat(returnedExam.course().editorGroupName()).isEqualTo(course1.getEditorGroupName());
-        assertThat(returnedExam.course().teachingAssistantGroupName()).isEqualTo(course1.getTeachingAssistantGroupName());
+        // The embedded course must carry the id the client resolves access rights from (via the user's course roles).
 
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
     }
@@ -1315,7 +1331,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
-        assertThat(course1.getInstructorGroupName()).isIn(instructor.getGroups());
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course1.getId(), CourseRole.INSTRUCTOR)).isTrue();
         // Seed an exam with a quiz exercise in a course the instructor manages: the endpoint filters to exams that
         // contain a quiz exercise and for which the caller has instructor access.
         Exam quizExam = examUtilService.addExamWithExerciseGroup(course1, true);
@@ -1446,7 +1462,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamWithOptions() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true, true);
 
@@ -1654,7 +1670,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @ValueSource(ints = { 0, 1, 2 })
     void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         // we need an exam from the past, otherwise the tutor won't have access
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         Exam exam = course.getExams().iterator().next();
 
@@ -1678,7 +1694,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(firstExercise.tutorParticipations()).as("tutor participation is attached").isNotNull().first().satisfies(tp -> assertThat(tp.status()).isNotNull());
         // Pin the course projection the client turns into access rights + complaint/feedback flags
         assertThat(receivedExam.course()).isNotNull();
-        assertThat(receivedExam.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(receivedExam.course().id()).isEqualTo(course.getId());
     }
 
     @Test
@@ -1690,7 +1706,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // still pending (lengths differ -> orange). Both collections must be present on the wire, with the right
         // ids, for the client to even make that comparison; a TRAINED tutor with an unreviewed newly-added example
         // must not silently render green.
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         Exam exam = course.getExams().iterator().next();
         Exam examWithExerciseGroups = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(exam.getId(), false);
@@ -1945,7 +1961,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithExam() throws Exception {
-        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        Course course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         course.setEndDate(now().minusMinutes(5));
         course = courseRepository.save(course);
 
@@ -1965,7 +1981,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     private Course archiveExamAsInstructor() throws Exception {
-        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
 
         request.put("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
@@ -1989,7 +2005,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveExamBeforeEndDate_badRequest() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setEndDate(now().plusMinutes(5));
         course = courseRepository.save(course);
 
@@ -2028,8 +2044,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testDownloadExamArchiveAsInstructorNotInCourse_forbidden() throws Exception {
         // Create an exam with no archive
         Course course = courseUtilService.createCourse();
-        course.setInstructorGroupName("some-group");
-        course = courseRepository.save(course);
         var exam = examUtilService.addExam(course);
 
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
@@ -2611,8 +2625,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asInstructor_returnsNoExams() throws Exception {
         var title = "Another fancy exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("non-instructors");
-        courseRepository.save(course);
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
@@ -2626,8 +2638,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asAdmin_returnsExams() throws Exception {
         var title = "Yet another 3rd exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("non-instructors");
-        courseRepository.save(course);
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
@@ -3080,7 +3090,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
-        courseUtilService.updateCourseGroups("abc", course, "");
 
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
     }
@@ -3090,7 +3099,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
-        courseUtilService.updateCourseGroups("abc", course, "");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("differentStudentExamsSameIPAddress", "true");
@@ -3381,7 +3389,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamSidebarDataForRealExams() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         Exam testExam = examUtilService.addTestExam(course);
         StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
