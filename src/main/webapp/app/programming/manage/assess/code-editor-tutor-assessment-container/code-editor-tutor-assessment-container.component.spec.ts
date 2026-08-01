@@ -42,6 +42,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -933,5 +934,53 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
+    });
+
+    describe('when assessment is not possible yet', () => {
+        // The server rejects opening an assessment while the exam is still running and says when the tutor can come
+        // back. The editor is unusable until then, so the container explains that instead of the code editor.
+        const notPossibleYetResponse = () =>
+            new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+
+        it('should explain when assessment is possible instead of claiming the participation is missing', () => {
+            const alertService = TestBed.inject(AlertService);
+            const closeAllSpy = vi.spyOn(alertService, 'closeAll');
+            const errorSpy = vi.spyOn(alertService, 'error');
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            // detectChanges rather than a manual ngOnInit, so that the component initializes exactly once and renders
+            fixture.detectChanges();
+
+            expect(comp.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+            expect(debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            // the submission does exist, so the "no unassessed submissions" fallback must not contradict the explanation
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.editor.errors.participationNotFound"]'))).toBeNull();
+            // the panel explains this permanently, so the interceptor's toast is closed and no second one is added
+            expect(closeAllSpy).toHaveBeenCalledOnce();
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the reason when a submission is loaded into the reused component', async () => {
+            const params = new BehaviorSubject<{ submissionId: number }>({ submissionId: 123 });
+            TestBed.inject(ActivatedRoute).params = params;
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            comp.ngOnInit();
+            expect(comp.assessmentNotPossibleYet()).toBeDefined();
+
+            // The exam ends and the tutor opens the next submission: Angular reuses this component instance and only
+            // re-emits the route params, so the previous reason has to be cleared or it would hide the loaded editor.
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([submission], asapScheduler));
+            params.next({ submissionId: 456 });
+            await flushMicrotasks();
+
+            expect(comp.assessmentNotPossibleYet()).toBeUndefined();
+            expect(comp.submission()).toEqual(submission);
+        });
     });
 });
