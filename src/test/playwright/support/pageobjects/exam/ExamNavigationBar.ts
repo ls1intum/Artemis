@@ -63,8 +63,4 @@ export class ExamNavigationBar {
     async handInEarly() {
         await this.page.locator('#hand-in-early').click({ timeout: 30000 });
     }
-
-    async clickSave() {
-        await this.page.locator('#save').click();
-    }
 }
