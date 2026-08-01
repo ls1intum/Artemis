@@ -10,6 +10,7 @@ import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/mod
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Stub for ModelingEditorComponent to avoid Apollon editor initialization issues
@@ -263,5 +264,20 @@ describe('ModelingExamSubmissionComponent', () => {
         expect(comp.umlModel()!.version).toBe('4.0.0');
         expect(comp.umlModel()!.type).toBe('ClassDiagram');
         expect(comp.explanationText()).toBe('explanation');
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        resetComponent();
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        comp.modelChanged({} as UMLModel);
+        comp.explanationChanged('some explanation');
+
+        expect(comp.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(2);
     });
 });
