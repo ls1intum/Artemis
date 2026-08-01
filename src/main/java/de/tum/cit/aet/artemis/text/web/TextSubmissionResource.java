@@ -177,7 +177,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -252,7 +252,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
         }
         // Tutors must not see the student behind a submission; instructors may.
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         List<TextSubmissionResponseDTO> submissionDTOs = submissions.stream().map(submission -> TextSubmissionResponseDTO.of((TextSubmission) submission, includeStudent)).toList();
@@ -310,7 +310,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         textSubmissionService.hideDetails(textSubmission, user);
 
         // The client resolves the participation via submission.participation; it carries the exercise and the locked

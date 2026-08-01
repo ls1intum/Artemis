@@ -19,7 +19,9 @@ import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -40,6 +42,9 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     @Autowired
     private PasswordService passwordService;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
@@ -49,9 +54,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     @ValueSource(strings = { "student", "tutor", "editor", "instructor" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLDAPUsersInCourse(String user) throws Exception {
-        Course course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName("student");
-        courseRepository.save(course1);
+        Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
@@ -82,9 +85,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLdapEdgeCaseUserInCourse() throws Exception {
-        Course course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName("student");
-        courseRepository.save(course1);
+        Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Setup: the user already exists in the database, but does not have a registration number
         String userName = "go42tum";
@@ -100,12 +101,12 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         var failures = request.postListWithResponseBody("/api/course/courses/" + course1.getId() + "/students", List.of(dto1), StudentDTO.class, HttpStatus.OK);
         assertThat(failures).isEmpty();
 
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("go42tum");
+        var student = userRepository.findOneWithAuthoritiesByLogin("go42tum");
         assertThat(student).isPresent();
         assertThat(student.get().getRegistrationNumber()).isEqualTo("1234567");
         assertThat(student.get().getFirstName()).isEqualTo("Erika");
         assertThat(student.get().getLastName()).isEqualTo("Musterfrau");
         assertThat(student.get().getEmail()).isEqualTo(userName + "@tum.de");
-        assertThat(student.get().getGroups()).contains(course1.getStudentGroupName());
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.get().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
     }
 }

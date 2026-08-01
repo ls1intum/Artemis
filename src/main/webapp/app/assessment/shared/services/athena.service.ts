@@ -125,10 +125,11 @@ export class AthenaService {
                     feedback.credits = suggestion.credits;
                     feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath != undefined && (suggestion.lineEnd ?? suggestion.lineStart) != undefined) {
+                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
-                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineEnd ?? suggestion.lineStart}`; // Only use a single line for now because Artemis does not support line ranges
+                        const lineEnd = Number.isInteger(suggestion.lineEnd) && suggestion.lineEnd! > suggestion.lineStart! ? suggestion.lineEnd : suggestion.lineStart;
+                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}${lineEnd !== suggestion.lineStart ? `-${lineEnd}` : ''}`;
                     } else {
                         // Unreferenced feedback
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
